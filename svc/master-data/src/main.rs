@@ -1,4 +1,4 @@
-﻿use crate::shared::AppState;
+use crate::shared::AppState;
 use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
@@ -19,7 +19,7 @@ pub mod modules;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "master_data, public");
+    std::env::set_var("SEARCH_PATH", "public");
 
     let config = ServiceConfig {
         name: "topems-master-data",
@@ -31,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/master-data",
         legacy_prefixes: &[],
-        ..Default::default()
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

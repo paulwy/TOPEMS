@@ -5,6 +5,7 @@ use crate::shared::AppState;
 pub mod carrier;
 pub mod driver;
 pub mod openapi;
+pub mod optimization;
 pub mod route;
 pub mod shipment;
 pub mod tms_plugin;
@@ -21,4 +22,5 @@ where
         .merge(carrier::create_routes())
         .merge(route::create_routes())
         .merge(shipment::create_routes())
+        .merge(optimization::create_routes())
 }

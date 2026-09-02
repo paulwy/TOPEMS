@@ -304,79 +304,6 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("tenant_id", "UUID"),
         ],
     ),
-    // 客户分层（收敛自 plugin_crm.customer_segments）
-    (
-        "customer_segments",
-        &[
-            ("name", "VARCHAR(200) NOT NULL"),
-            ("description", "TEXT"),
-            ("criteria", "JSONB"),
-            ("customer_count", "INTEGER DEFAULT 0"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    // 客户评分（收敛自 plugin_crm.customer_scores）
-    (
-        "customer_scores",
-        &[
-            ("tenant_id", "UUID"),
-            ("customer_id", "UUID"),
-            ("customer_name", "VARCHAR(200)"),
-            ("score", "NUMERIC(8,2)"),
-            ("score_level", "VARCHAR(20)"),
-            ("scoring_date", "TIMESTAMPTZ"),
-            ("factors", "JSONB"),
-            ("trend", "VARCHAR(20)"),
-            ("last_score", "NUMERIC(8,2)"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    // 客户推荐（收敛自 plugin_crm.customer_recommendations）
-    (
-        "customer_recommendations",
-        &[
-            ("customer_id", "UUID"),
-            ("customer_name", "VARCHAR(200)"),
-            ("recommendations", "JSONB"),
-            ("recommendation_type", "VARCHAR(50)"),
-            ("model", "VARCHAR(100)"),
-            ("confidence", "NUMERIC(8,2)"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    // 销售预测（收敛自 plugin_crm.sales_forecasts）
-    (
-        "sales_forecasts",
-        &[
-            ("tenant_id", "UUID"),
-            ("period_type", "VARCHAR(20)"),
-            ("period", "VARCHAR(20)"),
-            ("predicted_amount", "NUMERIC(15,2)"),
-            ("actual_amount", "NUMERIC(15,2)"),
-            ("accuracy", "NUMERIC(8,2)"),
-            ("trend", "VARCHAR(20)"),
-            ("confidence_level", "NUMERIC(8,2)"),
-            ("factors", "JSONB"),
-            ("status", "VARCHAR(20) NOT NULL DEFAULT 'draft'"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    // 销售订单（收敛自 plugin_crm.sales_orders）
-    (
-        "sales_orders",
-        &[
-            ("order_number", "VARCHAR(100) NOT NULL"),
-            ("customer_id", "UUID"),
-            ("order_date", "TIMESTAMPTZ"),
-            ("total_amount", "NUMERIC(15,2)"),
-            ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
 ];
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
@@ -431,11 +358,6 @@ mod tests {
         assert!(names.contains(&"customer_tags"));
         assert!(names.contains(&"dashboard_metrics"));
         assert!(names.contains(&"customer_orders"));
-        assert!(names.contains(&"customer_segments"));
-        assert!(names.contains(&"customer_scores"));
-        assert!(names.contains(&"customer_recommendations"));
-        assert!(names.contains(&"sales_forecasts"));
-        assert!(names.contains(&"sales_orders"));
         // NOTE: crm_master_data_refs is created by shared-db ensure_master_data_refs_table()
         // in default_init_db path — intentionally excluded from TABLE_DEFS.
     }

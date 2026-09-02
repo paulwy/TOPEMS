@@ -38,6 +38,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/pdm",
         legacy_prefixes: &["/api/v1/pdm"],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

@@ -203,10 +203,7 @@ pub async fn list_feedbacks(
         args.len() + 2
     );
 
-    let count_query = format!(
-        "SELECT COUNT(*) FROM tickets WHERE {}",
-        where_clause
-    );
+    let count_query = format!("SELECT COUNT(*) FROM tickets WHERE {}", where_clause);
 
     let mut sqlx_query = sqlx::query_as::<_, Ticket>(&query);
     for arg in &args {

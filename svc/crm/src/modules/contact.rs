@@ -172,13 +172,15 @@ async fn create_contact(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
+    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let result = sqlx::query_as::<_, Contact>(
+
         r#"
         INSERT INTO crm.contacts (
-            id, tenant_id, customer_id, first_name, last_name, email, phone, position, notes, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
-        RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+            id, tenant_id, customer_id, first_name, last_name, email, phone, position, notes, status, approval_status, created_at, updated_at, org_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'none', $10, $11, $12)
+        RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
@@ -192,6 +194,7 @@ async fn create_contact(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
+    .bind(org_id)
     .fetch_one(&state.db)
     .await;
 
@@ -321,7 +324,7 @@ async fn update_contact(
             first_name = $2, last_name = $3, email = $4, phone = $5, position = $6,
             customer_id = $7, status = $8, notes = $9, updated_at = $10
         WHERE id = $1 AND tenant_id = $11
-        RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+        RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)

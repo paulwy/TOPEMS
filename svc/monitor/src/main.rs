@@ -31,6 +31,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/monitor",
         legacy_prefixes: &[],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

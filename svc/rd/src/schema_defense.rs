@@ -97,6 +97,38 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ DEFAULT NOW()"),
         ],
     ),
+    (
+        "change_requests",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("project_id", "UUID"),
+            ("title", "TEXT NOT NULL"),
+            ("description", "TEXT"),
+            ("change_type", "TEXT NOT NULL"),
+            ("priority", "TEXT NOT NULL DEFAULT 'medium'"),
+            ("status", "TEXT NOT NULL DEFAULT 'submitted'"),
+            ("impact_score", "INTEGER NOT NULL DEFAULT 0"),
+            ("scope_docs", "INTEGER NOT NULL DEFAULT 0"),
+            ("scope_phases", "INTEGER NOT NULL DEFAULT 0"),
+            ("proposed_by", "TEXT"),
+            ("created_at", "TIMESTAMPTZ DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "change_orders",
+        &[
+            ("change_request_id", "UUID NOT NULL"),
+            ("title", "TEXT NOT NULL"),
+            ("execution_plan", "TEXT"),
+            ("status", "TEXT NOT NULL DEFAULT 'planned'"),
+            ("executed_by", "TEXT"),
+            ("executed_at", "TIMESTAMPTZ"),
+            ("notes", "TEXT"),
+            ("created_at", "TIMESTAMPTZ DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ DEFAULT NOW()"),
+        ],
+    ),
 ];
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {

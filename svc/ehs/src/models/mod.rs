@@ -2,6 +2,7 @@ pub mod audit_log;
 
 use sqlx::PgPool;
 use std::collections::BTreeSet;
+use topems_shared_boundary::only_own_schema_query;
 
 // =====================================================================
 // 📋 开发规范：新增列必须两处同步（详见 docs/development/backend/database-development.md）
@@ -855,13 +856,14 @@ async fn verify_table_columns(
     table: &str,
     expected: &[&str],
 ) -> Result<(), sqlx::Error> {
-    let rows: Vec<(String,)> = sqlx::query_as(
+    let rows: Vec<(String,)> = sqlx::query_as(only_own_schema_query!(
+        "public",
         r#"
         SELECT column_name
         FROM information_schema.columns
         WHERE table_schema = $1 AND table_name = $2
-        "#,
-    )
+        "#
+    ))
     .bind(schema)
     .bind(table)
     .fetch_all(pool)
@@ -886,7 +888,8 @@ async fn verify_table_columns(
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_risks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -905,12 +908,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_inspection_plans (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -926,12 +930,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_inspection_items (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -945,12 +950,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_inspection_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -968,12 +974,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_inspection_record_items (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -985,12 +992,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             remarks TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_hazards (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1008,12 +1016,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_hazard_rectifications (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1028,12 +1037,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_hazard_verifications (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1044,12 +1054,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             verified_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_accidents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1067,12 +1078,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_accident_investigations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1087,12 +1099,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_accident_treatments (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1105,12 +1118,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_accident_reviews (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1122,12 +1136,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             reviewed_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_environment (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1140,12 +1155,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_trainings (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1160,42 +1176,56 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_risks_no ON qa_ehs_risks(risk_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_no ON qa_ehs_accidents(accident_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_risks_no ON qa_ehs_risks(risk_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_plans_no ON qa_ehs_inspection_plans(plan_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_no ON qa_ehs_accidents(accident_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_records_no ON qa_ehs_inspection_records(record_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_plans_no ON qa_ehs_inspection_plans(plan_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_no ON qa_ehs_hazards(hazard_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_status ON qa_ehs_hazards(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_status ON qa_ehs_accidents(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_records_no ON qa_ehs_inspection_records(record_no)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_no ON qa_ehs_hazards(hazard_no)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_status ON qa_ehs_hazards(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_status ON qa_ehs_accidents(status)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_sync_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1211,24 +1241,32 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_no ON qa_ehs_sync_records(sync_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_type ON qa_ehs_sync_records(sync_type)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_no ON qa_ehs_sync_records(sync_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_status ON qa_ehs_sync_records(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_type ON qa_ehs_sync_records(sync_type)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_status ON qa_ehs_sync_records(status)"
+    ))
+    .execute(pool)
+    .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_emergency_plans (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1252,22 +1290,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plans_no ON qa_ehs_emergency_plans(plan_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plans_no ON qa_ehs_emergency_plans(plan_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plans_category ON qa_ehs_emergency_plans(category)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plans_category ON qa_ehs_emergency_plans(category)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plans_status ON qa_ehs_emergency_plans(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plans_status ON qa_ehs_emergency_plans(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_emergency_plan_supplies (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1281,12 +1320,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             remarks TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_emergency_plan_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1298,12 +1338,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             content TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_emergency_plan_approvals (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1316,12 +1357,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             order_num INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_drill_plans (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1340,23 +1382,26 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_no ON qa_ehs_drill_plans(plan_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_no ON qa_ehs_drill_plans(plan_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_status ON qa_ehs_drill_plans(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_status ON qa_ehs_drill_plans(status)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_drill_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1379,21 +1424,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_no ON qa_ehs_drill_records(record_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_no ON qa_ehs_drill_records(record_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_status ON qa_ehs_drill_records(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_status ON qa_ehs_drill_records(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_drill_evaluations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1409,12 +1456,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             evaluated_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_drill_problems (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1432,12 +1480,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_health_exam_plans (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1455,19 +1504,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_plans_no ON qa_ehs_health_exam_plans(plan_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_plans_no ON qa_ehs_health_exam_plans(plan_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_plans_status ON qa_ehs_health_exam_plans(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_plans_status ON qa_ehs_health_exam_plans(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_health_exam_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1500,19 +1550,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_records_no ON qa_ehs_health_exam_records(record_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_records_no ON qa_ehs_health_exam_records(record_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_records_employee ON qa_ehs_health_exam_records(employee_id)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_records_employee ON qa_ehs_health_exam_records(employee_id)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_contraindications (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1532,16 +1583,17 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_contraindications_employee ON qa_ehs_contraindications(employee_id)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_contraindications_employee ON qa_ehs_contraindications(employee_id)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_health_abnormalities (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1560,12 +1612,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_hazard_factors (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1585,19 +1638,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_factors_no ON qa_ehs_hazard_factors(factor_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_factors_no ON qa_ehs_hazard_factors(factor_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_factors_type ON qa_ehs_hazard_factors(factor_type)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_factors_type ON qa_ehs_hazard_factors(factor_type)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_detection_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1620,16 +1674,17 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_detection_records_no ON qa_ehs_detection_records(record_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_detection_records_no ON qa_ehs_detection_records(record_no)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_disease_cases (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1654,21 +1709,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_disease_cases_no ON qa_ehs_disease_cases(case_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_disease_cases_no ON qa_ehs_disease_cases(case_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_disease_cases_status ON qa_ehs_disease_cases(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_disease_cases_status ON qa_ehs_disease_cases(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_protection_measures (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1687,12 +1744,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_health_trainings (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1711,12 +1769,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_hazardous_materials (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1744,22 +1803,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazardous_materials_no ON qa_ehs_hazardous_materials(material_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazardous_materials_no ON qa_ehs_hazardous_materials(material_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazardous_materials_category ON qa_ehs_hazardous_materials(category)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazardous_materials_category ON qa_ehs_hazardous_materials(category)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazardous_materials_status ON qa_ehs_hazardous_materials(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazardous_materials_status ON qa_ehs_hazardous_materials(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_material_stocks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1777,12 +1837,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_stock_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1802,21 +1863,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             remarks TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_no ON qa_ehs_stock_records(record_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_no ON qa_ehs_stock_records(record_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_type ON qa_ehs_stock_records(record_type)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_type ON qa_ehs_stock_records(record_type)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_msds (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1840,12 +1903,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             other_info TEXT,
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_environmental_regulations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1866,22 +1930,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_regulations_no ON qa_ehs_environmental_regulations(reg_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_regulations_no ON qa_ehs_environmental_regulations(reg_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_regulations_category ON qa_ehs_environmental_regulations(category)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_regulations_category ON qa_ehs_environmental_regulations(category)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_regulations_status ON qa_ehs_environmental_regulations(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_regulations_status ON qa_ehs_environmental_regulations(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_compliance_evaluations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1902,19 +1967,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_evals_no ON qa_ehs_compliance_evaluations(eval_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_evals_no ON qa_ehs_compliance_evaluations(eval_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_evals_status ON qa_ehs_compliance_evaluations(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_evals_status ON qa_ehs_compliance_evaluations(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_compliance_items (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1931,12 +1997,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_env_monitor_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1960,19 +2027,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_monitor_no ON qa_ehs_env_monitor_records(record_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_monitor_no ON qa_ehs_env_monitor_records(record_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_monitor_type ON qa_ehs_env_monitor_records(monitor_type)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_monitor_type ON qa_ehs_env_monitor_records(monitor_type)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_discharge_permits (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1994,19 +2062,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_discharge_permits_no ON qa_ehs_discharge_permits(permit_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_discharge_permits_no ON qa_ehs_discharge_permits(permit_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_discharge_permits_status ON qa_ehs_discharge_permits(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_discharge_permits_status ON qa_ehs_discharge_permits(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_environment_incidents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2032,19 +2101,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_incidents_no ON qa_ehs_environment_incidents(incident_no)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_incidents_no ON qa_ehs_environment_incidents(incident_no)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_incidents_status ON qa_ehs_environment_incidents(status)")
+    sqlx::query(only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_qa_ehs_env_incidents_status ON qa_ehs_environment_incidents(status)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS qa_ehs_employees (
             id UUID PRIMARY KEY,
@@ -2059,17 +2129,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_employees_name ON qa_ehs_employees(name)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_employees_dept ON qa_ehs_employees(department_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_employees_name ON qa_ehs_employees(name)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_employees_dept ON qa_ehs_employees(department_id)"
+    ))
     .execute(pool)
     .await?;
 

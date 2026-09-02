@@ -15,6 +15,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::response::{api_error, ApiResponse, ListResponse};
 use topems_shared_auth::middleware::tenant::get_tenant_id;
+use topems_shared_boundary::only_own_schema_query;
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct CustomerPaginationParams {
@@ -92,21 +93,22 @@ pub async fn list_customers(
         .map(|s| s.trim()[..s.len().min(100)].to_string());
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let mut count_qb = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND deleted_at IS NULL",
-    );
+    let mut count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "crm",
+        "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND deleted_at IS NULL"
+    ));
     let mut list_qb = sqlx::query_as::<_, Customer>(
-        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, deleted_at FROM crm.customers WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+        only_own_schema_query!("crm", "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, deleted_at FROM crm.customers WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3")
     );
     count_qb = count_qb.bind(tenant_id);
     list_qb = list_qb.bind(tenant_id).bind(page_size).bind(offset);
 
     if let Some(s) = search.clone() {
         let like = format!("%{}%", s.replace('%', "\\%").replace('_', "\\_"));
-        count_qb = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND name ILIKE $2 AND deleted_at IS NULL")
+        count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!("crm", "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND name ILIKE $2 AND deleted_at IS NULL"))
             .bind(tenant_id).bind(like.clone());
         list_qb = sqlx::query_as::<_, Customer>(
-            "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, deleted_at FROM crm.customers WHERE tenant_id = $1 AND name ILIKE $2 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            only_own_schema_query!("crm", "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, deleted_at FROM crm.customers WHERE tenant_id = $1 AND name ILIKE $2 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $3 OFFSET $4")
         ).bind(tenant_id).bind(like).bind(page_size).bind(offset);
     }
 
@@ -148,25 +150,31 @@ async fn create_customer(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
+    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let result = sqlx::query_as::<_, Customer>(
-        r#"
-        INSERT INTO crm.customers (tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+
+        only_own_schema_query!("crm", r#"
+        INSERT INTO crm.customers (tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, org_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, deleted_at
         "#
+        )
     )
     .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.customer_type)
     .bind(req.industry.as_deref())
-    .bind(req.rating.as_deref())
+    // rating 未传时绑定默认 'C'（列定义 DEFAULT 'C'，模型为非空 String）
+    .bind(req.rating.as_deref().unwrap_or("C"))
     .bind(req.region.as_deref())
     .bind(req.owner_id)
-    .bind(req.tags.as_deref())
+    // tags 未传时绑定空数组（列定义 TEXT[] NOT NULL DEFAULT '{}'，避免 NULL 违反约束）
+    .bind(req.tags.as_deref().unwrap_or(&[]))
     .bind("none")
     .bind(now)
     .bind(now)
+    .bind(org_id)
     .fetch_one(&state.db)
     .await;
 

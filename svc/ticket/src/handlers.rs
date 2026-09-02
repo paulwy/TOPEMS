@@ -13,10 +13,12 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 use crate::models::{
-    AddCommentRequest, CreateSlaPolicyRequest, CreateTicketRequest, SeverityCount,
-    SlaEscalationEvent, SourceCount, Ticket, TicketActivity, TicketComment, TicketListResponse,
-    TicketQuery, TicketSlaInfo, TicketSlaPolicy, TicketSlaStats, TicketStats, TicketStatus,
-    TicketType, TypeCount, UpdateSlaPolicyRequest, UpdateTicketRequest,
+    AddCommentRequest, AutomationRule, CreateAutomationRuleRequest, CreateKnowledgeArticleRequest,
+    CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, KnowledgeArticleRef,
+    SeverityCount, SlaEscalationEvent, SourceCount, Ticket, TicketActivity, TicketComment,
+    TicketListResponse, TicketQuery, TicketSlaInfo, TicketSlaPolicy, TicketSlaStats, TicketStats,
+    TicketStatus, TicketType, TypeCount, UpdateAutomationRuleRequest, UpdateKnowledgeArticleRequest,
+    UpdateSlaPolicyRequest, UpdateTicketRequest,
 };
 use crate::sla_service::TicketSlaService;
 
@@ -88,6 +90,57 @@ impl TicketService {
         .bind(&req.metadata)
         .execute(&self.pool)
         .await?;
+
+        // 自动化规则应用：按租户启用规则评估并应用变更（assignee/severity/tags）
+        let rules = sqlx::query_as::<_, AutomationRule>(
+            "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+             FROM ticket_automation_rules WHERE tenant_id = $1 AND enabled = true",
+        )
+        .bind(tenant_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        if !rules.is_empty() {
+            let rule_tuples: Vec<(String, String, String, String, i32, bool)> = rules
+                .iter()
+                .map(|r| {
+                    (
+                        r.condition_field.clone(),
+                        r.condition_value.clone(),
+                        r.action_type.clone(),
+                        r.action_value.clone(),
+                        r.priority,
+                        r.enabled,
+                    )
+                })
+                .collect();
+            let title = req.title.clone();
+            let effects = crate::models::evaluate_automation_rules(
+                &rule_tuples,
+                &severity,
+                &ticket_type,
+                &title,
+            );
+            if !effects.is_empty() {
+                sqlx::query(
+                    r#"UPDATE core_tickets SET
+                       assignee_id = COALESCE($2, assignee_id),
+                       severity = COALESCE($3, severity),
+                       tags = CASE WHEN $4::text[] IS NOT NULL
+                                   THEN array_cat(COALESCE(tags, '{}'), $4::text[])
+                                   ELSE tags END,
+                       updated_at = $5
+                       WHERE id = $1"#,
+                )
+                .bind(ticket_id)
+                .bind(effects.assignee_id)
+                .bind(&effects.severity)
+                .bind(&effects.add_tags)
+                .bind(now)
+                .execute(&self.pool)
+                .await?;
+            }
+        }
 
         sqlx::query(
             r#"
@@ -1150,6 +1203,300 @@ pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+
+// ==================== Automation Rules ====================
+
+pub async fn create_automation_rule_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateAutomationRuleRequest>,
+) -> Json<ApiResponse<AutomationRule>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let priority = req.priority.unwrap_or(100);
+    let enabled = req.enabled.unwrap_or(true);
+    let result = sqlx::query_as::<_, AutomationRule>(
+        r#"INSERT INTO ticket_automation_rules
+        (id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11)
+        RETURNING id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&req.name)
+    .bind(&req.description)
+    .bind(&req.condition_field)
+    .bind(&req.condition_value)
+    .bind(&req.action_type)
+    .bind(&req.action_value)
+    .bind(priority)
+    .bind(enabled)
+    .bind(now)
+    .fetch_one(&pool)
+    .await;
+    match result {
+        Ok(rule) => Json(ApiResponse::success(rule, "自动化规则创建成功")),
+        Err(e) => Json(ApiResponse::error(500, &format!("创建自动化规则失败: {}", e))),
+    }
+}
+
+pub async fn list_automation_rules_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<AutomationRule>>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match sqlx::query_as::<_, AutomationRule>(
+        "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+         FROM ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
+    )
+    .bind(tenant_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(rules) => Json(ApiResponse::success(rules, "自动化规则列表获取成功")),
+        Err(e) => Json(ApiResponse::error(500, &format!("获取自动化规则列表失败: {}", e))),
+    }
+}
+
+pub async fn get_automation_rule_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<AutomationRule>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match sqlx::query_as::<_, AutomationRule>(
+        "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+         FROM ticket_automation_rules WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则获取成功")),
+        Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("获取自动化规则失败: {}", e))),
+    }
+}
+
+pub async fn update_automation_rule_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateAutomationRuleRequest>,
+) -> Json<ApiResponse<AutomationRule>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, AutomationRule>(
+        r#"UPDATE ticket_automation_rules SET
+        name = COALESCE($3, name),
+        description = COALESCE($4, description),
+        condition_field = COALESCE($5, condition_field),
+        condition_value = COALESCE($6, condition_value),
+        action_type = COALESCE($7, action_type),
+        action_value = COALESCE($8, action_value),
+        priority = COALESCE($9, priority),
+        enabled = COALESCE($10, enabled),
+        updated_at = $11
+        WHERE id = $1 AND tenant_id = $2
+        RETURNING id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&req.name)
+    .bind(&req.description)
+    .bind(&req.condition_field)
+    .bind(&req.condition_value)
+    .bind(&req.action_type)
+    .bind(&req.action_value)
+    .bind(req.priority)
+    .bind(req.enabled)
+    .bind(now)
+    .fetch_optional(&pool)
+    .await;
+    match result {
+        Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("更新自动化规则失败: {}", e))),
+    }
+}
+
+pub async fn delete_automation_rule_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match sqlx::query("DELETE FROM ticket_automation_rules WHERE id = $1 AND tenant_id = $2")
+        .bind(id)
+        .bind(tenant_id)
+        .execute(&pool)
+        .await
+    {
+        Ok(res) if res.rows_affected() > 0 => {
+            Json(ApiResponse::success(json!({"deleted": true}), "自动化规则已删除"))
+        }
+        Ok(_) => Json(ApiResponse::error(404, "自动化规则不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("删除自动化规则失败: {}", e))),
+    }
+}
+
+
+// ==================== Knowledge Base ====================
+
+pub async fn create_knowledge_article_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateKnowledgeArticleRequest>,
+) -> Json<ApiResponse<KnowledgeArticle>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let keywords = req.keywords.unwrap_or_default();
+    let result = sqlx::query_as::<_, KnowledgeArticle>(
+        r#"INSERT INTO ticket_knowledge_articles
+        (id, tenant_id, title, content, category, keywords, created_at, updated_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$7)
+        RETURNING id, tenant_id, title, content, category, keywords, created_at, updated_at"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&req.title)
+    .bind(&req.content)
+    .bind(&req.category)
+    .bind(&keywords)
+    .bind(now)
+    .fetch_one(&pool)
+    .await;
+    match result {
+        Ok(article) => Json(ApiResponse::success(article, "知识文章创建成功")),
+        Err(e) => Json(ApiResponse::error(500, &format!("创建知识文章失败: {}", e))),
+    }
+}
+
+pub async fn list_knowledge_articles_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<Vec<KnowledgeArticle>>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let q = params.get("q").cloned().unwrap_or_default();
+    let articles = match sqlx::query_as::<_, KnowledgeArticle>(
+        "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
+         FROM ticket_knowledge_articles WHERE tenant_id = $1 ORDER BY updated_at DESC",
+    )
+    .bind(tenant_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(a) => a,
+        Err(e) => return Json(ApiResponse::error(500, &format!("获取知识文章列表失败: {}", e))),
+    };
+    if q.trim().is_empty() {
+        return Json(ApiResponse::success(articles, "知识文章列表获取成功"));
+    }
+    let refs: Vec<KnowledgeArticleRef> = articles
+        .iter()
+        .map(|a| KnowledgeArticleRef {
+            title: a.title.clone(),
+            content: a.content.clone(),
+            keywords: a.keywords.clone(),
+        })
+        .collect();
+    let ranked = crate::models::rank_articles_against_query(&q, &refs);
+    let sorted: Vec<KnowledgeArticle> = ranked
+        .into_iter()
+        .map(|(idx, _)| articles[idx].clone())
+        .collect();
+    Json(ApiResponse::success(sorted, "知识文章推荐结果"))
+}
+
+pub async fn get_knowledge_article_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<KnowledgeArticle>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match sqlx::query_as::<_, KnowledgeArticle>(
+        "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
+         FROM ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章获取成功")),
+        Ok(None) => Json(ApiResponse::error(404, "知识文章不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("获取知识文章失败: {}", e))),
+    }
+}
+
+pub async fn update_knowledge_article_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateKnowledgeArticleRequest>,
+) -> Json<ApiResponse<KnowledgeArticle>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, KnowledgeArticle>(
+        r#"UPDATE ticket_knowledge_articles SET
+        title = COALESCE($3, title),
+        content = COALESCE($4, content),
+        category = COALESCE($5, category),
+        keywords = COALESCE($6, keywords),
+        updated_at = $7
+        WHERE id = $1 AND tenant_id = $2
+        RETURNING id, tenant_id, title, content, category, keywords, created_at, updated_at"#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&req.title)
+    .bind(&req.content)
+    .bind(&req.category)
+    .bind(&req.keywords)
+    .bind(now)
+    .fetch_optional(&pool)
+    .await;
+    match result {
+        Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "知识文章不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("更新知识文章失败: {}", e))),
+    }
+}
+
+pub async fn delete_knowledge_article_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match sqlx::query("DELETE FROM ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2")
+        .bind(id)
+        .bind(tenant_id)
+        .execute(&pool)
+        .await
+    {
+        Ok(res) if res.rows_affected() > 0 => {
+            Json(ApiResponse::success(json!({"deleted": true}), "知识文章已删除"))
+        }
+        Ok(_) => Json(ApiResponse::error(404, "知识文章不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("删除知识文章失败: {}", e))),
+    }
+}
+
 // ==================== Routes ====================
 
 pub fn ticket_routes() -> Router<PgPool> {
@@ -1184,5 +1531,25 @@ pub fn ticket_routes() -> Router<PgPool> {
             get(get_sla_policy_handler)
                 .put(update_sla_policy_handler)
                 .delete(delete_sla_policy_handler),
+        )
+        .route(
+            "/automation-rules",
+            get(list_automation_rules_handler).post(create_automation_rule_handler),
+        )
+        .route(
+            "/automation-rules/{id}",
+            get(get_automation_rule_handler)
+                .put(update_automation_rule_handler)
+                .delete(delete_automation_rule_handler),
+        )
+        .route(
+            "/knowledge-articles",
+            get(list_knowledge_articles_handler).post(create_knowledge_article_handler),
+        )
+        .route(
+            "/knowledge-articles/{id}",
+            get(get_knowledge_article_handler)
+                .put(update_knowledge_article_handler)
+                .delete(delete_knowledge_article_handler),
         )
 }

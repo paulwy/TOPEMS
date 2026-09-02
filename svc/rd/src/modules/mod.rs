@@ -9,6 +9,7 @@ use topems_shared_event::event::EventPublisher;
 
 pub mod ai_integration;
 pub mod audit;
+pub mod change_management;
 pub mod doc_integration;
 pub mod experiment;
 pub mod formula;
@@ -62,4 +63,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(project_member::create_routes())
         .merge(project_report::create_routes())
         .merge(statistics::create_routes())
+        .merge(change_management::create_routes())
 }

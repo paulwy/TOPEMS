@@ -11,6 +11,174 @@ use uuid::Uuid;
 
 // ==================== Pure Functions ====================
 
+// ==================== Knowledge Base ====================
+
+/// 知识文章标题/内容与查询的相关度评分（纯逻辑）
+///
+/// 评分规则：
+/// - 标题命中关键字：+3 / 个
+/// - 内容命中关键字：+1 / 个
+/// - 查询词在标题子串匹配：额外 +2
+pub fn score_article_against_query(
+    query: &str,
+    title: &str,
+    content: &str,
+    keywords: &[String],
+) -> i32 {
+    let q = query.to_lowercase();
+    let title_l = title.to_lowercase();
+    let content_l = content.to_lowercase();
+    let mut score = 0;
+
+    if q.is_empty() {
+        return 0;
+    }
+
+    // 关键字命中
+    for kw in keywords {
+        let k = kw.to_lowercase();
+        if title_l.contains(&k) {
+            score += 3;
+        } else if content_l.contains(&k) {
+            score += 1;
+        }
+    }
+
+    // 查询词作为整体在标题子串匹配
+    if !q.is_empty() && title_l.contains(&q) {
+        score += 2;
+    }
+
+    // 查询词拆分为词条，标题/内容直接包含词条
+    for word in q.split_whitespace() {
+        if title_l.contains(word) {
+            score += 3;
+        } else if content_l.contains(word) {
+            score += 1;
+        }
+    }
+
+    score
+}
+
+/// 返回推荐文章索引（按评分降序），0 分以下文章不推荐
+pub fn rank_articles_against_query(
+    query: &str,
+    articles: &[KnowledgeArticleRef],
+) -> Vec<(usize, i32)> {
+    let mut scored: Vec<(usize, i32)> = articles
+        .iter()
+        .enumerate()
+        .map(|(i, a)| {
+            let s = score_article_against_query(query, &a.title, &a.content, &a.keywords);
+            (i, s)
+        })
+        .filter(|(_, s)| *s > 0)
+        .collect();
+    scored.sort_by(|a, b| b.1.cmp(&a.1));
+    scored
+}
+
+/// 轻量文章引用（用于推荐排序，不携带 id/tenant）
+pub struct KnowledgeArticleRef {
+    pub title: String,
+    pub content: String,
+    pub keywords: Vec<String>,
+}
+
+
+
+/// 自动化规则引擎：根据条件字段匹配并计算动作效果（可纯逻辑测试）
+/// 自动化规则条件匹配：判断工单是否命中规则条件
+///
+/// 支持条件字段：
+/// - `severity`：严重程度精确匹配（如 "high"）
+/// - `ticket_type`：工单类型精确匹配（如 "customer_feedback"）
+/// - `title`：标题子串匹配（不区分大小写）
+/// - `always`：无条件命中（用于兜底规则）
+pub fn automation_condition_matches(
+    field: &str,
+    value: &str,
+    severity: &str,
+    ticket_type: &str,
+    title: &str,
+) -> bool {
+    match field {
+        "severity" => severity == value,
+        "ticket_type" => ticket_type == value,
+        "title" => title.to_lowercase().contains(&value.to_lowercase()),
+        "always" => true,
+        _ => false,
+    }
+}
+
+/// 自动化规则执行后的变更效果
+#[derive(Debug, Default, Clone, PartialEq)]
+pub struct AutomationEffects {
+    /// Some(assignee_id) 表示需要设置处理人
+    pub assignee_id: Option<Uuid>,
+    /// Some(severity) 表示需要设置严重程度
+    pub severity: Option<String>,
+    /// 需要追加的标签（去重、非空）
+    pub add_tags: Vec<String>,
+}
+
+impl AutomationEffects {
+    pub fn is_empty(&self) -> bool {
+        self.assignee_id.is_none() && self.severity.is_none() && self.add_tags.is_empty()
+    }
+}
+
+/// 评估一组自动化规则，按 priority 升序执行，返回聚合变更效果
+///
+/// rules 元素为 (condition_field, condition_value, action_type, action_value, priority, enabled)
+/// 支持动作：
+/// - `set_assignee`：设置处理人（action_value 为 UUID 字符串，解析失败则忽略）
+/// - `set_severity`：设置严重程度
+/// - `add_tag`：追加标签
+pub fn evaluate_automation_rules(
+    rules: &[(String, String, String, String, i32, bool)],
+    severity: &str,
+    ticket_type: &str,
+    title: &str,
+) -> AutomationEffects {
+    let mut sorted: Vec<&(String, String, String, String, i32, bool)> = rules.iter().collect();
+    sorted.sort_by_key(|r| r.4);
+
+    let mut effects = AutomationEffects::default();
+    for rule in sorted {
+        if !rule.5 {
+            continue;
+        }
+        if !automation_condition_matches(&rule.0, &rule.1, severity, ticket_type, title) {
+            continue;
+        }
+        match rule.2.as_str() {
+            "set_assignee" => {
+                if let Ok(id) = Uuid::parse_str(&rule.3) {
+                    effects.assignee_id = Some(id);
+                }
+            }
+            "set_severity" => {
+                let v = rule.3.trim().to_string();
+                if !v.is_empty() {
+                    effects.severity = Some(v);
+                }
+            }
+            "add_tag" => {
+                let tag = rule.3.trim().to_string();
+                if !tag.is_empty() && !effects.add_tags.contains(&tag) {
+                    effects.add_tags.push(tag);
+                }
+            }
+            _ => {}
+        }
+    }
+    effects
+}
+
+
+
 /// 根据 impact 和 urgency 推导工单优先级
 pub fn derive_priority(impact: u8, urgency: u8) -> &'static str {
     let score = impact as u16 + urgency as u16;
@@ -520,6 +688,74 @@ pub struct UpdateSlaPolicyRequest {
     pub weekend_excluded: Option<bool>,
     pub is_default: Option<bool>,
     pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, FromRow)]
+pub struct KnowledgeArticle {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub title: String,
+    pub content: String,
+    pub category: Option<String>,
+    pub keywords: Vec<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateKnowledgeArticleRequest {
+    pub title: String,
+    pub content: String,
+    pub category: Option<String>,
+    pub keywords: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateKnowledgeArticleRequest {
+    pub title: Option<String>,
+    pub content: Option<String>,
+    pub category: Option<String>,
+    pub keywords: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, FromRow)]
+pub struct AutomationRule {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub condition_field: String,
+    pub condition_value: String,
+    pub action_type: String,
+    pub action_value: String,
+    pub priority: i32,
+    pub enabled: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateAutomationRuleRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub condition_field: String,
+    pub condition_value: String,
+    pub action_type: String,
+    pub action_value: String,
+    pub priority: Option<i32>,
+    pub enabled: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateAutomationRuleRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub condition_field: Option<String>,
+    pub condition_value: Option<String>,
+    pub action_type: Option<String>,
+    pub action_value: Option<String>,
+    pub priority: Option<i32>,
+    pub enabled: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -1219,4 +1455,164 @@ mod tests {
         assert_eq!(max, 2);
         assert_eq!(count, 2);
     }
+
+#[test]
+fn automation_condition_severity_exact_match() {
+    assert!(automation_condition_matches("severity", "high", "high", "ticket", "anything"));
+    assert!(!automation_condition_matches("severity", "high", "low", "ticket", "anything"));
+}
+
+#[test]
+fn automation_condition_ticket_type_exact_match() {
+    assert!(automation_condition_matches("ticket_type", "customer_feedback", "medium", "customer_feedback", "x"));
+    assert!(!automation_condition_matches("ticket_type", "bug", "medium", "customer_feedback", "x"));
+}
+
+#[test]
+fn automation_condition_title_case_insensitive_substring() {
+    assert!(automation_condition_matches("title", "login", "medium", "ticket", "Cannot LOGIN to system"));
+    assert!(!automation_condition_matches("title", "payment", "medium", "ticket", "Cannot login"));
+    assert!(automation_condition_matches("title", "", "medium", "ticket", "anything"), "empty needle matches");
+}
+
+#[test]
+fn automation_condition_always_matches() {
+    assert!(automation_condition_matches("always", "x", "low", "ticket", ""));
+}
+
+#[test]
+fn automation_condition_unknown_field_never_matches() {
+    assert!(!automation_condition_matches("bogus", "x", "low", "ticket", ""));
+}
+
+#[test]
+fn automation_eval_assignee_rule_applies() {
+    let uid = Uuid::new_v4().to_string();
+    let rules = vec![
+        ("severity".to_string(), "high".to_string(), "set_assignee".to_string(), uid.clone(), 10, true),
+    ];
+    let eff = evaluate_automation_rules(&rules, "high", "ticket", "x");
+    assert_eq!(eff.assignee_id.map(|u| u.to_string()), Some(uid));
+    assert!(eff.severity.is_none());
+    assert!(eff.add_tags.is_empty());
+    assert!(!eff.is_empty());
+}
+
+#[test]
+fn automation_eval_assignee_ignored_when_not_matching() {
+    let uid = Uuid::new_v4().to_string();
+    let rules = vec![
+        ("severity".to_string(), "high".to_string(), "set_assignee".to_string(), uid, 10, true),
+    ];
+    let eff = evaluate_automation_rules(&rules, "low", "ticket", "x");
+    assert!(eff.is_empty(), "non-matching rule should produce no effects");
+}
+
+#[test]
+fn automation_eval_severity_and_tags_combined() {
+    let rules = vec![
+        ("title".to_string(), "crash".to_string(), "set_severity".to_string(), "critical".to_string(), 20, true),
+        ("title".to_string(), "crash".to_string(), "add_tag".to_string(), "bug".to_string(), 10, true),
+        ("title".to_string(), "crash".to_string(), "add_tag".to_string(), "bug".to_string(), 30, true),
+        ("always".to_string(), "".to_string(), "add_tag".to_string(), "auto".to_string(), 40, true),
+    ];
+    let eff = evaluate_automation_rules(&rules, "medium", "ticket", "App crash on startup");
+    assert_eq!(eff.severity.as_deref(), Some("critical"));
+    assert_eq!(eff.add_tags, vec!["bug".to_string(), "auto".to_string()], "tags deduped, priority order");
+}
+
+#[test]
+fn automation_eval_disabled_rules_skipped() {
+    let uid = Uuid::new_v4().to_string();
+    let rules = vec![
+        ("always".to_string(), "".to_string(), "set_assignee".to_string(), uid, 10, false),
+    ];
+    let eff = evaluate_automation_rules(&rules, "medium", "ticket", "x");
+    assert!(eff.is_empty(), "disabled rule should be skipped");
+}
+
+#[test]
+fn automation_eval_invalid_assignee_uuid_ignored() {
+    let rules = vec![
+        ("always".to_string(), "".to_string(), "set_assignee".to_string(), "not-a-uuid".to_string(), 10, true),
+    ];
+    let eff = evaluate_automation_rules(&rules, "medium", "ticket", "x");
+    assert!(eff.is_empty(), "invalid uuid should not set assignee");
+}
+
+#[test]
+fn automation_eval_higher_priority_overrides_severity() {
+    let rules = vec![
+        ("always".to_string(), "".to_string(), "set_severity".to_string(), "low".to_string(), 100, true),
+        ("always".to_string(), "".to_string(), "set_severity".to_string(), "critical".to_string(), 10, true),
+    ];
+    let eff = evaluate_automation_rules(&rules, "medium", "ticket", "x");
+    // priority 升序执行 → 后执行的 low(100) 覆盖 critical(10)
+    assert_eq!(eff.severity.as_deref(), Some("low"));
+}
+
+
+#[test]
+fn kb_score_title_keyword_hits() {
+    let kws = vec!["reset".to_string(), "password".to_string()];
+    let s = score_article_against_query("how to reset password", "Reset Password Guide", "step by step", &kws);
+    assert!(s >= 6, "two title keyword hits (3 each) => {s}");
+}
+
+#[test]
+fn kb_score_content_keyword_only() {
+    let kws = vec!["login".to_string()];
+    let s = score_article_against_query("login issue", "Troubleshooting", "fix login timeout", &kws);
+    assert!(s >= 1, "content keyword hit +1, query word in content +1 => {s}");
+}
+
+#[test]
+fn kb_score_query_word_in_title() {
+    let kws: Vec<String> = vec![];
+    let s = score_article_against_query("billing", "Billing FAQ", "common questions", &kws);
+    assert_eq!(s, 5, "query in title: +2 substring + 3 word hit => {s}");
+}
+
+#[test]
+fn kb_score_empty_query_zero() {
+    let kws = vec!["x".to_string()];
+    let s = score_article_against_query("", "anything", "content", &kws);
+    assert_eq!(s, 0);
+}
+
+#[test]
+fn kb_score_unrelated_article_zero() {
+    let kws = vec!["inventory".to_string()];
+    let s = score_article_against_query("payroll", "HR onboarding", "welcome", &kws);
+    assert_eq!(s, 0);
+}
+
+#[test]
+fn kb_rank_sorts_descending() {
+    let articles = vec![
+        KnowledgeArticleRef { title: "Password Reset".into(), content: "steps".into(), keywords: vec!["password".into()] },
+        KnowledgeArticleRef { title: "Login Troubleshooting".into(), content: "login".into(), keywords: vec!["login".into()] },
+        KnowledgeArticleRef { title: "Unrelated".into(), content: "none".into(), keywords: vec![] },
+    ];
+    let ranked = rank_articles_against_query("password login", &articles);
+    assert_eq!(ranked.len(), 2, "unrelated filtered out");
+    assert!(ranked[0].1 >= ranked[1].1, "sorted descending");
+    assert!(ranked[0].1 > 0);
+}
+
+#[test]
+fn kb_rank_empty_articles() {
+    let ranked = rank_articles_against_query("x", &[]);
+    assert!(ranked.is_empty());
+}
+
+#[test]
+fn kb_rank_filters_zero_scores() {
+    let articles = vec![
+        KnowledgeArticleRef { title: "Alpha".into(), content: "beta".into(), keywords: vec![] },
+    ];
+    let ranked = rank_articles_against_query("zzz", &articles);
+    assert!(ranked.is_empty(), "no keyword match => score 0 => filtered");
+}
+
 }

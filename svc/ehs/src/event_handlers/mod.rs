@@ -1,6 +1,7 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, HrmEmployeeCreatedPayload,
     HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
@@ -74,10 +75,10 @@ impl EhsEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
+            only_own_schema_query!("public", "INSERT INTO qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
              VALUES ($1, $2, 'environment', 'high', $3, 'reported', 'lims_abnormal', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
              ON CONFLICT (hazard_no) DO NOTHING
-             RETURNING id",
+             RETURNING id"),
         )
         .bind(&hazard_no)
         .bind(format!("环境检测异常 - {}", payload.test_item))
@@ -130,10 +131,10 @@ impl EhsEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
+            only_own_schema_query!("public", "INSERT INTO qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
              VALUES ($1, $2, 'quality_corrective', 'medium', $3, 'reported', 'qms_corrective', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
              ON CONFLICT (hazard_no) DO NOTHING
-             RETURNING id",
+             RETURNING id"),
         )
         .bind(&hazard_no)
         .bind(&payload.title)
@@ -222,14 +223,14 @@ impl EhsEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO qa_ehs_employees (id, name, email, department_id, status, created_at, updated_at)
+            only_own_schema_query!("public", "INSERT INTO qa_ehs_employees (id, name, email, department_id, status, created_at, updated_at)
              VALUES ($1, $2, $3, $4, 'active', $5, $5)
              ON CONFLICT (id) DO UPDATE SET
                 name = COALESCE(EXCLUDED.name, qa_ehs_employees.name),
                 email = COALESCE(EXCLUDED.email, qa_ehs_employees.email),
                 department_id = COALESCE(EXCLUDED.department_id, qa_ehs_employees.department_id),
                 updated_at = $5
-             RETURNING id",
+             RETURNING id"),
         )
         .bind(employee_id)
         .bind(name)

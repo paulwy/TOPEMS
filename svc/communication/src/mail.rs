@@ -18,6 +18,7 @@ use lettre::{
 };
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{
@@ -196,7 +197,8 @@ pub async fn list_emails(
         }
     };
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         SELECT id, from_email, to_email, subject, sent_at, is_read
         FROM core_emails
@@ -204,8 +206,8 @@ pub async fn list_emails(
            OR from_email IN (SELECT email FROM core_users WHERE id = $1)
         ORDER BY sent_at DESC
         LIMIT 50
-        "#,
-    )
+        "#
+    ))
     .bind(user_id)
     .fetch_all(&pool)
     .await;
@@ -283,10 +285,13 @@ pub async fn send_email(
         }));
     }
 
-    let sender_email = match sqlx::query_scalar("SELECT email FROM core_users WHERE id = $1")
-        .bind(Uuid::parse_str(&claims.sub).unwrap_or_default())
-        .fetch_optional(&pool)
-        .await
+    let sender_email = match sqlx::query_scalar(only_own_schema_query!(
+        "public",
+        "SELECT email FROM core_users WHERE id = $1"
+    ))
+    .bind(Uuid::parse_str(&claims.sub).unwrap_or_default())
+    .fetch_optional(&pool)
+    .await
     {
         Ok(Some(email)) => email,
         Ok(None) => "system@topems.io".to_string(),
@@ -310,10 +315,10 @@ pub async fn send_email(
         Ok(_) => {
             let email_id = Uuid::new_v4();
             let _ = sqlx::query(
-                r#"
+                only_own_schema_query!("public", r#"
                 INSERT INTO core_emails (id, from_email, to_email, subject, body, html_body, sent_at)
                 VALUES ($1, $2, $3, $4, $5, $6, NOW())
-                "#,
+                "#),
             )
             .bind(email_id)
             .bind(&sender_email)
@@ -384,7 +389,8 @@ pub async fn get_email(
         }
     };
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         SELECT e.id, e.from_email, e.to_email, e.subject, e.body, e.html_body, e.sent_at, e.is_read,
                u_from.email as from_user_email, u_to.email as to_user_email
@@ -393,8 +399,8 @@ pub async fn get_email(
         LEFT JOIN core_users u_to ON e.to_email = u_to.email
         WHERE e.id = $1
           AND (u_from.id = $2 OR u_to.id = $2)
-        "#,
-    )
+        "#
+    ))
     .bind(email_id)
     .bind(user_id)
     .fetch_optional(&pool)
@@ -471,7 +477,8 @@ pub async fn delete_email(
     };
 
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
-        let belongs_to_user = sqlx::query_scalar::<_, bool>(
+        let belongs_to_user = sqlx::query_scalar::<_, bool>(only_own_schema_query!(
+            "public",
             r#"
             SELECT EXISTS(
                 SELECT 1 FROM core_emails e
@@ -479,8 +486,8 @@ pub async fn delete_email(
                 LEFT JOIN core_users u_to ON e.to_email = u_to.email
                 WHERE e.id = $1 AND (u_from.id = $2 OR u_to.id = $2)
             )
-            "#,
-        )
+            "#
+        ))
         .bind(email_id)
         .bind(user_id)
         .fetch_one(&pool)
@@ -497,9 +504,10 @@ pub async fn delete_email(
         }
     }
 
-    match sqlx::query(
-        "UPDATE core_emails SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
-    )
+    match sqlx::query(only_own_schema_query!(
+        "public",
+        "UPDATE core_emails SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+    ))
     .bind(email_id)
     .execute(&pool)
     .await
@@ -565,15 +573,16 @@ pub async fn mark_as_read(
         }
     };
 
-    let belongs_to_user = sqlx::query_scalar::<_, bool>(
+    let belongs_to_user = sqlx::query_scalar::<_, bool>(only_own_schema_query!(
+        "public",
         r#"
         SELECT EXISTS(
             SELECT 1 FROM core_emails e
             JOIN core_users u_to ON e.to_email = u_to.email
             WHERE e.id = $1 AND u_to.id = $2
         )
-        "#,
-    )
+        "#
+    ))
     .bind(email_id)
     .bind(user_id)
     .fetch_one(&pool)
@@ -589,10 +598,13 @@ pub async fn mark_as_read(
         }));
     }
 
-    match sqlx::query("UPDATE core_emails SET is_read = TRUE, read_at = NOW() WHERE id = $1")
-        .bind(email_id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "public",
+        "UPDATE core_emails SET is_read = TRUE, read_at = NOW() WHERE id = $1"
+    ))
+    .bind(email_id)
+    .execute(&pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,
@@ -636,14 +648,15 @@ pub async fn list_templates(
         }));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         SELECT id, name, subject_template, body_template, description, created_at, updated_at
         FROM core_email_templates
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&pool)
     .await;
 
@@ -717,11 +730,11 @@ pub async fn create_template(
 
     let id = Uuid::new_v4();
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("public", r#"
         INSERT INTO core_email_templates (id, name, subject_template, body_template, description, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
         RETURNING id, name, subject_template, body_template, description, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&payload.name)
@@ -791,13 +804,14 @@ pub async fn get_template(
         }
     };
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         SELECT id, name, subject_template, body_template, description, created_at, updated_at
         FROM core_email_templates
         WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(template_id)
     .fetch_optional(&pool)
     .await;
@@ -869,7 +883,8 @@ pub async fn update_template(
         }
     };
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         UPDATE core_email_templates
         SET name = COALESCE($1, name),
@@ -879,8 +894,8 @@ pub async fn update_template(
             updated_at = NOW()
         WHERE id = $5 AND deleted_at IS NULL
         RETURNING id, name, subject_template, body_template, description, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(&payload.name)
     .bind(&payload.subject_template)
     .bind(&payload.body_template)
@@ -955,9 +970,10 @@ pub async fn delete_template(
         }
     };
 
-    match sqlx::query(
-        "UPDATE core_email_templates SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
-    )
+    match sqlx::query(only_own_schema_query!(
+        "public",
+        "UPDATE core_email_templates SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+    ))
     .bind(template_id)
     .execute(&pool)
     .await
@@ -1021,13 +1037,14 @@ pub async fn send_with_template(
         }
     };
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         SELECT subject_template, body_template
         FROM core_email_templates
         WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(template_id)
     .fetch_optional(&pool)
     .await;

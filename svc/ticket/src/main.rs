@@ -1,4 +1,4 @@
-﻿//! TOPEMS Ticket Service
+//! TOPEMS Ticket Service
 //!
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
 
@@ -16,7 +16,7 @@ pub mod sla_service;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ticket, public");
+    std::env::set_var("SEARCH_PATH", "public");
 
     let config = ServiceConfig {
         name: "topems-ticket",
@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/ticket",
         legacy_prefixes: &["/api/v1/ticket"],
-        ..Default::default()
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

@@ -23,6 +23,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/search",
         legacy_prefixes: &["/api/v1/search"],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

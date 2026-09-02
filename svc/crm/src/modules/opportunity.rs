@@ -302,6 +302,7 @@ async fn create_opportunity(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
+    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let opp_no = if req.opp_no.is_empty() {
         format!("OPP-{}", now.timestamp())
@@ -315,8 +316,8 @@ async fn create_opportunity(
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         INSERT INTO crm.opportunities (
-            id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, org_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         "#,
     )
@@ -336,6 +337,7 @@ async fn create_opportunity(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
+    .bind(org_id)
     .fetch_one(&state.db)
     .await;
 

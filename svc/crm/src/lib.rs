@@ -188,6 +188,7 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
+pub mod event_handlers;
 pub mod models;
 pub mod modules;
 pub mod schema_defense;

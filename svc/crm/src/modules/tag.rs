@@ -132,11 +132,13 @@ async fn create_tag(
     let now = Utc::now();
     let color = req.color.clone().unwrap_or_else(|| "#1890ff".to_string());
     let tenant_id = get_tenant_id(&claims, &headers);
+    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let result = sqlx::query_as::<_, Tag>(
+
         r#"
-        INSERT INTO crm.tags (id, tenant_id, name, color, description, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO crm.tags (id, tenant_id, name, color, description, created_at, updated_at, org_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, tenant_id, name, color, description, created_at, updated_at
         "#,
     )
@@ -147,6 +149,7 @@ async fn create_tag(
     .bind(&req.description)
     .bind(now)
     .bind(now)
+    .bind(org_id)
     .fetch_one(&state.db)
     .await;
 
@@ -444,8 +447,10 @@ async fn add_tag_to_customer(
     let customer_id = id;
     let tag_id = req.tag_id;
     let tenant_id = get_tenant_id(&claims, &headers);
+    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let exists = sqlx::query_scalar::<_, bool>(
+
         "SELECT EXISTS(SELECT 1 FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2 AND tenant_id = $3)",
     )
     .bind(customer_id)
@@ -460,11 +465,12 @@ async fn add_tag_to_customer(
     }
 
     let result = sqlx::query(
-        "INSERT INTO crm.customer_tags (customer_id, tag_id, tenant_id) VALUES ($1, $2, $3)",
+        "INSERT INTO crm.customer_tags (customer_id, tag_id, tenant_id, org_id) VALUES ($1, $2, $3, $4)",
     )
     .bind(customer_id)
     .bind(tag_id)
     .bind(tenant_id)
+    .bind(org_id)
     .execute(&state.db)
     .await;
 

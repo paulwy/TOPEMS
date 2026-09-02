@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -165,7 +166,7 @@ pub async fn get_sync_record(
     };
 
     let row = sqlx::query(
-        "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_ehs_sync_records WHERE id = $1"
+        only_own_schema_query!("public", "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_ehs_sync_records WHERE id = $1")
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -216,7 +217,7 @@ pub async fn sync_hazard_to_qms(
 
     // Fetch hazard data
     let hazard = sqlx::query(
-        "SELECT id, hazard_no, title, description, category, level, source, location, reported_by, reported_at::TEXT, status, inspection_id FROM qa_ehs_hazards WHERE id = $1"
+        only_own_schema_query!("public", "SELECT id, hazard_no, title, description, category, level, source, location, reported_by, reported_at::TEXT, status, inspection_id FROM qa_ehs_hazards WHERE id = $1")
     )
     .bind(hazard_id)
     .fetch_one(&state.pool)
@@ -263,7 +264,7 @@ pub async fn sync_hazard_to_qms(
     });
 
     let row = sqlx::query(
-        "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'hazard_to_qms', $2, 'qms', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'hazard_to_qms', $2, 'qms', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(&sync_no)
     .bind(req.hazard_id)
@@ -318,7 +319,7 @@ pub async fn sync_accident_to_lims(
 
     // Fetch accident data
     let accident = sqlx::query(
-        "SELECT id, accident_no, title, description, accident_type, severity, location, occurred_at::TEXT, casualties, economic_loss, status, reported_by FROM qa_ehs_accidents WHERE id = $1"
+        only_own_schema_query!("public", "SELECT id, accident_no, title, description, accident_type, severity, location, occurred_at::TEXT, casualties, economic_loss, status, reported_by FROM qa_ehs_accidents WHERE id = $1")
     )
     .bind(accident_id)
     .fetch_one(&state.pool)
@@ -370,7 +371,7 @@ pub async fn sync_accident_to_lims(
     });
 
     let row = sqlx::query(
-        "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'accident_to_lims', $2, 'lims', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'accident_to_lims', $2, 'lims', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(&sync_no)
     .bind(req.accident_id)
@@ -427,7 +428,7 @@ pub async fn retry_sync(
     };
 
     let row = sqlx::query(
-        "UPDATE qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        only_own_schema_query!("public", "UPDATE qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -478,10 +479,13 @@ pub async fn delete_sync_record(
         Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
     };
 
-    let result = sqlx::query("DELETE FROM qa_ehs_sync_records WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        "DELETE FROM qa_ehs_sync_records WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "同步记录删除成功")),

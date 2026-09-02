@@ -28,7 +28,7 @@ pub mod rfm;
 // pub mod sales_funnel;
 pub mod sales_funnel_logic;
 pub mod scoring_logic;
-// pub mod tag;
+pub mod tag;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -96,12 +96,11 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(analytics::create_routes())
         .merge(rfm::create_routes())
         .merge(forecast::create_routes())
+        .merge(tag::create_routes())
     // .merge(customer_scoring::create_routes())
     // .merge(sales_forecast::create_routes())
     // .merge(sales_funnel::create_routes())
-    // .merge(tag::create_routes())
 }
-
 /// 系统级路由（无需认证，挂载在 app root）
 pub fn create_system_routes() -> Router<ApiState> {
     Router::new().merge(crm_plugin::create_routes())
