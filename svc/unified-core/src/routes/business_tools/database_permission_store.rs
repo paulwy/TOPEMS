@@ -13,8 +13,8 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 
-use super::{TenantPermission, TenantRole, ToolPermission};
 use super::permission_store::{PermissionStore, PermissionStoreError};
+use super::{TenantPermission, TenantRole, ToolPermission};
 
 // ===== Cache Types =====
 
@@ -43,6 +43,8 @@ struct CachedPermission {
 ///
 /// ```rust
 /// use topems_unified_core::routes::business_tools::database_permission_store::DatabasePermissionStore;
+/// use topems_unified_core::routes::business_tools::permission_store::PermissionStore;
+/// use topems_unified_core::routes::business_tools::TenantPermission;
 ///
 /// # async fn example(pool: sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
 /// let store = DatabasePermissionStore::new(pool);
@@ -93,7 +95,10 @@ impl DatabasePermissionStore {
 
     /// Invalidate the cache for a specific tenant/user pair.
     pub async fn invalidate_cache(&self, tenant_id: &str, user_id: &str) {
-        self.cache.write().await.remove(&(tenant_id.to_string(), user_id.to_string()));
+        self.cache
+            .write()
+            .await
+            .remove(&(tenant_id.to_string(), user_id.to_string()));
     }
 
     /// Clear the entire cache.
@@ -337,11 +342,7 @@ impl DatabasePermissionStore {
     // ===== Cache Methods =====
 
     /// Get a permission from the cache if it exists and is not expired.
-    async fn get_from_cache(
-        &self,
-        tenant_id: &str,
-        user_id: &str,
-    ) -> Option<TenantPermission> {
+    async fn get_from_cache(&self, tenant_id: &str, user_id: &str) -> Option<TenantPermission> {
         let cache = self.cache.read().await;
         let key = (tenant_id.to_string(), user_id.to_string());
         cache.get(&key).and_then(|cached| {
@@ -605,7 +606,11 @@ impl PermissionStore for DatabasePermissionStore {
         }
 
         // Check allowed operations
-        if tool_perm.allowed_operations.iter().any(|op| op == operation) {
+        if tool_perm
+            .allowed_operations
+            .iter()
+            .any(|op| op == operation)
+        {
             return Ok(true);
         }
 

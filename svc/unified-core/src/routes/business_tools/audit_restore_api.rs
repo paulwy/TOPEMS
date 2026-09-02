@@ -9,9 +9,9 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::AppState;
-use super::audit_restorer::{RestoreConfig, RestoreQuery, RestoreResult, AuditLogRestorer};
+use super::audit_restorer::{AuditLogRestorer, RestoreConfig, RestoreQuery, RestoreResult};
 use super::permission_api::ErrorResponse;
+use crate::shared::AppState;
 
 // ===== Request Types =====
 
@@ -92,7 +92,10 @@ pub async fn restore_archives(
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse {
-                    error: format!("Invalid start_date format: {}. Expected YYYY-MM-DD", start_date),
+                    error: format!(
+                        "Invalid start_date format: {}. Expected YYYY-MM-DD",
+                        start_date
+                    ),
                     code: Some("INVALID_DATE_FORMAT".to_string()),
                 }),
             ));
@@ -118,15 +121,18 @@ pub async fn restore_archives(
         filename: request.filename,
     };
 
-    let result = restorer.restore(&*state.audit_logger, &query).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: format!("Failed to restore archives: {}", e),
-                code: Some("RESTORE_ERROR".to_string()),
-            }),
-        )
-    })?;
+    let result = restorer
+        .restore(&*state.audit_logger, &query)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: format!("Failed to restore archives: {}", e),
+                    code: Some("RESTORE_ERROR".to_string()),
+                }),
+            )
+        })?;
 
     Ok(Json(result))
 }
@@ -135,16 +141,16 @@ pub async fn restore_archives(
 
 /// Get a restorer instance with default configuration.
 fn get_restorer() -> AuditLogRestorer {
-    let archive_dir = std::env::var("AUDIT_ARCHIVE_DIR")
-        .unwrap_or_else(|_| "audit_archives".to_string());
+    let archive_dir =
+        std::env::var("AUDIT_ARCHIVE_DIR").unwrap_or_else(|_| "audit_archives".to_string());
     let config = RestoreConfig::new(archive_dir);
     AuditLogRestorer::new(config)
 }
 
 /// Get a restorer instance with custom skip_existing setting.
 fn get_restorer_with_config(skip_existing: bool) -> AuditLogRestorer {
-    let archive_dir = std::env::var("AUDIT_ARCHIVE_DIR")
-        .unwrap_or_else(|_| "audit_archives".to_string());
+    let archive_dir =
+        std::env::var("AUDIT_ARCHIVE_DIR").unwrap_or_else(|_| "audit_archives".to_string());
     let config = RestoreConfig::new(archive_dir).with_skip_existing(skip_existing);
     AuditLogRestorer::new(config)
 }
@@ -155,10 +161,11 @@ fn is_valid_date_format(date: &str) -> bool {
         return false;
     }
     let chars: Vec<char> = date.chars().collect();
-    chars[4] == '-' && chars[7] == '-' &&
-    chars[0..4].iter().all(|c| c.is_ascii_digit()) &&
-    chars[5..7].iter().all(|c| c.is_ascii_digit()) &&
-    chars[8..10].iter().all(|c| c.is_ascii_digit())
+    chars[4] == '-'
+        && chars[7] == '-'
+        && chars[0..4].iter().all(|c| c.is_ascii_digit())
+        && chars[5..7].iter().all(|c| c.is_ascii_digit())
+        && chars[8..10].iter().all(|c| c.is_ascii_digit())
 }
 
 // ===== Route Registration =====

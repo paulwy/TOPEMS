@@ -11,10 +11,10 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::AppState;
-use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
 use super::permission_api::ErrorResponse;
 use super::permission_store::PermissionStoreError;
+use super::{MaxPermission, TenantPermission, TenantRole, ToolPermission};
+use crate::shared::AppState;
 
 // ===== Export Types =====
 
@@ -206,8 +206,13 @@ impl TryFrom<&PermissionExportItem> for TenantPermission {
             .tool_permissions
             .iter()
             .map(|tp| {
-                let max_permission = MaxPermission::from_str(&tp.max_permission)
-                    .ok_or_else(|| format!("Invalid max_permission for tool {}: {}", tp.tool, tp.max_permission))?;
+                let max_permission =
+                    MaxPermission::from_str(&tp.max_permission).ok_or_else(|| {
+                        format!(
+                            "Invalid max_permission for tool {}: {}",
+                            tp.tool, tp.max_permission
+                        )
+                    })?;
                 Ok(ToolPermission {
                     tool: tp.tool.clone(),
                     allowed_operations: tp.allowed_operations.clone(),
@@ -251,7 +256,7 @@ pub async fn export_permissions(
             .permission_store
             .list_tenant_permissions(tenant_id)
             .await
-            .map_err(|e| map_store_error(e))?
+            .map_err(map_store_error)?
     } else {
         // List all permissions (if store supports it)
         // For now, we need to list by tenant. If no tenant specified, return empty.
@@ -260,10 +265,8 @@ pub async fn export_permissions(
     };
 
     // Convert to export format
-    let export_items: Vec<PermissionExportItem> = permissions
-        .iter()
-        .map(PermissionExportItem::from)
-        .collect();
+    let export_items: Vec<PermissionExportItem> =
+        permissions.iter().map(PermissionExportItem::from).collect();
 
     let export_data = PermissionExportData {
         version: "1.0".to_string(),
@@ -274,7 +277,8 @@ pub async fn export_permissions(
 
     // Generate filename
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let tenant_suffix = query.tenant_id
+    let tenant_suffix = query
+        .tenant_id
         .as_ref()
         .map(|t| format!("_{}", t))
         .unwrap_or_default();
@@ -282,25 +286,28 @@ pub async fn export_permissions(
 
     match format {
         ExportFormat::Json => {
-            let json = serde_json::to_string_pretty(&export_data)
-                .map_err(|e| {
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse {
-                            error: format!("Failed to serialize permissions: {}", e),
-                            code: Some("SERIALIZE_ERROR".to_string()),
-                        }),
-                    )
-                })?;
+            let json = serde_json::to_string_pretty(&export_data).map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        error: format!("Failed to serialize permissions: {}", e),
+                        code: Some("SERIALIZE_ERROR".to_string()),
+                    }),
+                )
+            })?;
 
             Ok((
                 StatusCode::OK,
                 [
                     (header::CONTENT_TYPE, "application/json".to_string()),
-                    (header::CONTENT_DISPOSITION, format!("attachment; filename=\"{}\"", filename)),
+                    (
+                        header::CONTENT_DISPOSITION,
+                        format!("attachment; filename=\"{}\"", filename),
+                    ),
                 ],
                 json,
-            ).into_response())
+            )
+                .into_response())
         }
     }
 }
@@ -457,7 +464,10 @@ fn map_store_error(err: PermissionStoreError) -> (StatusCode, Json<ErrorResponse
         PermissionStoreError::AlreadyExists(tenant, user) => (
             StatusCode::CONFLICT,
             Json(ErrorResponse {
-                error: format!("Permission already exists for tenant={}, user={}", tenant, user),
+                error: format!(
+                    "Permission already exists for tenant={}, user={}",
+                    tenant, user
+                ),
                 code: Some("ALREADY_EXISTS".to_string()),
             }),
         ),

@@ -15,9 +15,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::shared::service_client::{
-    ServiceClientError, ServiceRegistry, ServiceResponse,
-};
+use crate::shared::service_client::{ServiceClientError, ServiceRegistry, ServiceResponse};
 
 // ===== Business Tool Errors =====
 
@@ -420,9 +418,7 @@ impl Default for BusinessToolRegistry {
 // ===== Default Business Tools =====
 
 /// Create default business tools for all services.
-pub fn create_default_tools(
-    service_registry: Arc<ServiceRegistry>,
-) -> Vec<Arc<dyn BusinessTool>> {
+pub fn create_default_tools(service_registry: Arc<ServiceRegistry>) -> Vec<Arc<dyn BusinessTool>> {
     vec![
         // CRM - Customer Relationship Management
         Arc::new(CrmTool::new(service_registry.clone())),
@@ -550,7 +546,9 @@ macro_rules! define_business_tool {
                                 tool_name,
                                 operation,
                                 request_id,
-                                service_response.error.unwrap_or_else(|| "Unknown error".to_string()),
+                                service_response
+                                    .error
+                                    .unwrap_or_else(|| "Unknown error".to_string()),
                                 Some(format!("SERVICE_{}", service_response.status)),
                                 duration_ms,
                             ))
@@ -568,10 +566,7 @@ macro_rules! define_business_tool {
             }
 
             async fn health_check(&self) -> Result<bool, BusinessToolError> {
-                let result = self
-                    .base
-                    .get::<serde_json::Value>("/health", None)
-                    .await;
+                let result = self.base.get::<serde_json::Value>("/health", None).await;
                 Ok(result.is_ok())
             }
         }
@@ -584,7 +579,19 @@ define_business_tool!(
     "crm",
     "crm",
     "Customer Relationship Management - 客户关系管理",
-    ["create_customer", "get_customer", "list_customers", "update_customer", "delete_customer", "create_lead", "get_lead", "list_leads", "create_opportunity", "get_opportunity", "list_opportunities"]
+    [
+        "create_customer",
+        "get_customer",
+        "list_customers",
+        "update_customer",
+        "delete_customer",
+        "create_lead",
+        "get_lead",
+        "list_leads",
+        "create_opportunity",
+        "get_opportunity",
+        "list_opportunities"
+    ]
 );
 
 define_business_tool!(
@@ -592,7 +599,21 @@ define_business_tool!(
     "erp",
     "erp",
     "Enterprise Resource Planning - 企业资源计划",
-    ["create_order", "get_order", "list_orders", "update_order", "delete_order", "create_product", "get_product", "list_products", "update_product", "delete_product", "create_inventory", "get_inventory", "list_inventory"]
+    [
+        "create_order",
+        "get_order",
+        "list_orders",
+        "update_order",
+        "delete_order",
+        "create_product",
+        "get_product",
+        "list_products",
+        "update_product",
+        "delete_product",
+        "create_inventory",
+        "get_inventory",
+        "list_inventory"
+    ]
 );
 
 define_business_tool!(
@@ -600,7 +621,20 @@ define_business_tool!(
     "finance",
     "finance",
     "Financial Management - 财务管理",
-    ["create_invoice", "get_invoice", "list_invoices", "update_invoice", "delete_invoice", "create_payment", "get_payment", "list_payments", "create_expense", "get_expense", "list_expenses", "get_financial_report"]
+    [
+        "create_invoice",
+        "get_invoice",
+        "list_invoices",
+        "update_invoice",
+        "delete_invoice",
+        "create_payment",
+        "get_payment",
+        "list_payments",
+        "create_expense",
+        "get_expense",
+        "list_expenses",
+        "get_financial_report"
+    ]
 );
 
 define_business_tool!(
@@ -608,7 +642,22 @@ define_business_tool!(
     "hr",
     "hr",
     "Human Resources - 人力资源",
-    ["create_employee", "get_employee", "list_employees", "update_employee", "delete_employee", "create_department", "get_department", "list_departments", "create_attendance", "get_attendance", "list_attendance", "create_leave", "get_leave", "list_leaves"]
+    [
+        "create_employee",
+        "get_employee",
+        "list_employees",
+        "update_employee",
+        "delete_employee",
+        "create_department",
+        "get_department",
+        "list_departments",
+        "create_attendance",
+        "get_attendance",
+        "list_attendance",
+        "create_leave",
+        "get_leave",
+        "list_leaves"
+    ]
 );
 
 define_business_tool!(
@@ -616,7 +665,20 @@ define_business_tool!(
     "mes",
     "mes",
     "Manufacturing Execution System - 制造执行系统",
-    ["create_work_order", "get_work_order", "list_work_orders", "update_work_order", "delete_work_order", "create_production", "get_production", "list_productions", "create_quality_check", "get_quality_check", "list_quality_checks", "get_oee_report"]
+    [
+        "create_work_order",
+        "get_work_order",
+        "list_work_orders",
+        "update_work_order",
+        "delete_work_order",
+        "create_production",
+        "get_production",
+        "list_productions",
+        "create_quality_check",
+        "get_quality_check",
+        "list_quality_checks",
+        "get_oee_report"
+    ]
 );
 
 define_business_tool!(
@@ -624,7 +686,20 @@ define_business_tool!(
     "ehs",
     "ehs",
     "Environment, Health & Safety - 环境健康安全",
-    ["create_incident", "get_incident", "list_incidents", "update_incident", "delete_incident", "create_audit", "get_audit", "list_audits", "create_training", "get_training", "list_trainings", "get_compliance_report"]
+    [
+        "create_incident",
+        "get_incident",
+        "list_incidents",
+        "update_incident",
+        "delete_incident",
+        "create_audit",
+        "get_audit",
+        "list_audits",
+        "create_training",
+        "get_training",
+        "list_trainings",
+        "get_compliance_report"
+    ]
 );
 
 define_business_tool!(
@@ -632,7 +707,21 @@ define_business_tool!(
     "wms",
     "wms",
     "Warehouse Management System - 仓库管理系统",
-    ["create_warehouse", "get_warehouse", "list_warehouses", "update_warehouse", "delete_warehouse", "create_inbound", "get_inbound", "list_inbounds", "create_outbound", "get_outbound", "list_outbounds", "get_stock", "list_stocks"]
+    [
+        "create_warehouse",
+        "get_warehouse",
+        "list_warehouses",
+        "update_warehouse",
+        "delete_warehouse",
+        "create_inbound",
+        "get_inbound",
+        "list_inbounds",
+        "create_outbound",
+        "get_outbound",
+        "list_outbounds",
+        "get_stock",
+        "list_stocks"
+    ]
 );
 
 define_business_tool!(
@@ -640,7 +729,20 @@ define_business_tool!(
     "qms",
     "qms",
     "Quality Management System - 质量管理系统",
-    ["create_inspection", "get_inspection", "list_inspections", "update_inspection", "delete_inspection", "create_nonconformance", "get_nonconformance", "list_nonconformances", "create_capa", "get_capa", "list_capas", "get_quality_report"]
+    [
+        "create_inspection",
+        "get_inspection",
+        "list_inspections",
+        "update_inspection",
+        "delete_inspection",
+        "create_nonconformance",
+        "get_nonconformance",
+        "list_nonconformances",
+        "create_capa",
+        "get_capa",
+        "list_capas",
+        "get_quality_report"
+    ]
 );
 
 define_business_tool!(
@@ -648,7 +750,22 @@ define_business_tool!(
     "pm",
     "pm",
     "Project Management - 项目管理",
-    ["create_project", "get_project", "list_projects", "update_project", "delete_project", "create_task", "get_task", "list_tasks", "update_task", "delete_task", "create_milestone", "get_milestone", "list_milestones", "get_project_report"]
+    [
+        "create_project",
+        "get_project",
+        "list_projects",
+        "update_project",
+        "delete_project",
+        "create_task",
+        "get_task",
+        "list_tasks",
+        "update_task",
+        "delete_task",
+        "create_milestone",
+        "get_milestone",
+        "list_milestones",
+        "get_project_report"
+    ]
 );
 
 define_business_tool!(
@@ -656,7 +773,20 @@ define_business_tool!(
     "lims",
     "lims",
     "Laboratory Information Management System - 实验室信息管理",
-    ["create_sample", "get_sample", "list_samples", "update_sample", "delete_sample", "create_test", "get_test", "list_tests", "create_result", "get_result", "list_results", "get_lab_report"]
+    [
+        "create_sample",
+        "get_sample",
+        "list_samples",
+        "update_sample",
+        "delete_sample",
+        "create_test",
+        "get_test",
+        "list_tests",
+        "create_result",
+        "get_result",
+        "list_results",
+        "get_lab_report"
+    ]
 );
 
 define_business_tool!(
@@ -664,7 +794,19 @@ define_business_tool!(
     "bi",
     "bi",
     "Business Intelligence - 商业智能",
-    ["get_dashboard", "list_dashboards", "create_report", "get_report", "list_reports", "update_report", "delete_report", "get_kpi", "list_kpis", "get_analytics", "export_report"]
+    [
+        "get_dashboard",
+        "list_dashboards",
+        "create_report",
+        "get_report",
+        "list_reports",
+        "update_report",
+        "delete_report",
+        "get_kpi",
+        "list_kpis",
+        "get_analytics",
+        "export_report"
+    ]
 );
 
 define_business_tool!(
@@ -672,7 +814,20 @@ define_business_tool!(
     "aps",
     "aps",
     "Advanced Planning & Scheduling - 高级计划与排程",
-    ["create_plan", "get_plan", "list_plans", "update_plan", "delete_plan", "create_schedule", "get_schedule", "list_schedules", "update_schedule", "delete_schedule", "get_capacity", "get_gantt_chart"]
+    [
+        "create_plan",
+        "get_plan",
+        "list_plans",
+        "update_plan",
+        "delete_plan",
+        "create_schedule",
+        "get_schedule",
+        "list_schedules",
+        "update_schedule",
+        "delete_schedule",
+        "get_capacity",
+        "get_gantt_chart"
+    ]
 );
 
 define_business_tool!(
@@ -680,7 +835,19 @@ define_business_tool!(
     "cs",
     "cs",
     "Customer Service - 客户服务",
-    ["create_ticket", "get_ticket", "list_tickets", "update_ticket", "delete_ticket", "create_response", "get_response", "list_responses", "get_knowledge_base", "search_knowledge_base", "get_sla_report"]
+    [
+        "create_ticket",
+        "get_ticket",
+        "list_tickets",
+        "update_ticket",
+        "delete_ticket",
+        "create_response",
+        "get_response",
+        "list_responses",
+        "get_knowledge_base",
+        "search_knowledge_base",
+        "get_sla_report"
+    ]
 );
 
 define_business_tool!(
@@ -688,7 +855,20 @@ define_business_tool!(
     "scm",
     "scm",
     "Supply Chain Management - 供应链管理",
-    ["create_supplier", "get_supplier", "list_suppliers", "update_supplier", "delete_supplier", "create_purchase_order", "get_purchase_order", "list_purchase_orders", "create_shipment", "get_shipment", "list_shipments", "get_supply_chain_report"]
+    [
+        "create_supplier",
+        "get_supplier",
+        "list_suppliers",
+        "update_supplier",
+        "delete_supplier",
+        "create_purchase_order",
+        "get_purchase_order",
+        "list_purchase_orders",
+        "create_shipment",
+        "get_shipment",
+        "list_shipments",
+        "get_supply_chain_report"
+    ]
 );
 
 define_business_tool!(
@@ -696,7 +876,20 @@ define_business_tool!(
     "iot",
     "iot",
     "Internet of Things - 物联网",
-    ["create_device", "get_device", "list_devices", "update_device", "delete_device", "get_device_data", "list_device_data", "create_alert", "get_alert", "list_alerts", "get_sensor_reading", "list_sensor_readings"]
+    [
+        "create_device",
+        "get_device",
+        "list_devices",
+        "update_device",
+        "delete_device",
+        "get_device_data",
+        "list_device_data",
+        "create_alert",
+        "get_alert",
+        "list_alerts",
+        "get_sensor_reading",
+        "list_sensor_readings"
+    ]
 );
 
 define_business_tool!(
@@ -704,7 +897,22 @@ define_business_tool!(
     "oa",
     "oa",
     "Office Automation - 办公自动化",
-    ["create_document", "get_document", "list_documents", "update_document", "delete_document", "create_approval", "get_approval", "list_approvals", "create_meeting", "get_meeting", "list_meetings", "create_notice", "get_notice", "list_notices"]
+    [
+        "create_document",
+        "get_document",
+        "list_documents",
+        "update_document",
+        "delete_document",
+        "create_approval",
+        "get_approval",
+        "list_approvals",
+        "create_meeting",
+        "get_meeting",
+        "list_meetings",
+        "create_notice",
+        "get_notice",
+        "list_notices"
+    ]
 );
 
 #[cfg(test)]
@@ -721,8 +929,8 @@ mod tests {
 
     #[test]
     fn test_business_request_with_param() {
-        let request = BusinessRequest::new("crm", "get_customer")
-            .with_param("id", serde_json::json!("123"));
+        let request =
+            BusinessRequest::new("crm", "get_customer").with_param("id", serde_json::json!("123"));
         assert_eq!(request.params.get("id").unwrap(), "123");
     }
 

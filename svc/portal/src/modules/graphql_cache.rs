@@ -51,6 +51,10 @@ impl<K: std::cmp::Eq + std::hash::Hash + Clone, V> LruCache<K, V> {
     pub fn len(&self) -> usize {
         self.map.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
 }
 
 // ==================== V39.0: 查询复杂度分级缓存 ====================
@@ -141,7 +145,6 @@ pub fn determine_cache_tier_for_query(query: &str) -> CacheTier {
     let depth = estimate_query_depth(query);
     determine_cache_tier(complexity, depth)
 }
-
 
 // ==================== V41.0 Track B: GraphQL 智能缓存体系 ====================
 
@@ -889,4 +892,3 @@ pub fn cache_invalidate_pattern(pattern: &str) -> usize {
 pub fn cache_clear_all() {
     multi_level_cache().clear();
 }
-

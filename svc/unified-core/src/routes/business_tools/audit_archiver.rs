@@ -8,8 +8,8 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
-use serde::{Serialize, Deserialize};
-use tracing::{info, warn, error};
+use serde::{Deserialize, Serialize};
+use tracing::{error, info, warn};
 
 use crate::routes::business_tools::permission_audit_log::AuditLogEntry;
 
@@ -124,7 +124,8 @@ impl AuditLogArchiver {
         self.ensure_archive_dir()?;
 
         // Group entries by date
-        let mut by_date: std::collections::HashMap<String, Vec<&AuditLogEntry>> = std::collections::HashMap::new();
+        let mut by_date: std::collections::HashMap<String, Vec<&AuditLogEntry>> =
+            std::collections::HashMap::new();
         for entry in entries {
             let date = extract_date(&entry.changed_at);
             by_date.entry(date).or_default().push(entry);
@@ -165,7 +166,11 @@ impl AuditLogArchiver {
     }
 
     /// Write entries to an archive file.
-    fn write_archive_file(&self, date: &str, entries: &[ArchivedEntry]) -> Result<usize, ArchiveError> {
+    fn write_archive_file(
+        &self,
+        date: &str,
+        entries: &[ArchivedEntry],
+    ) -> Result<usize, ArchiveError> {
         let filename = if self.config.compress {
             format!("{}_{}.json.gz", self.config.file_prefix, date)
         } else {
@@ -242,16 +247,18 @@ impl AuditLogArchiver {
 
         let mut archives = Vec::new();
 
-        for entry in fs::read_dir(&self.config.archive_dir)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?
+        for entry in
+            fs::read_dir(&self.config.archive_dir).map_err(|e| ArchiveError::Io(e.to_string()))?
         {
             let entry = entry.map_err(|e| ArchiveError::Io(e.to_string()))?;
             let path = entry.path();
 
             if path.is_file() {
-                let metadata = entry.metadata()
+                let metadata = entry
+                    .metadata()
                     .map_err(|e| ArchiveError::Io(e.to_string()))?;
-                let created = metadata.created()
+                let created = metadata
+                    .created()
                     .ok()
                     .map(|t| {
                         let dt: DateTime<Utc> = t.into();
@@ -259,7 +266,8 @@ impl AuditLogArchiver {
                     })
                     .unwrap_or_else(|| Utc::now().to_rfc3339());
 
-                let compressed = path.extension()
+                let compressed = path
+                    .extension()
                     .and_then(|e| e.to_str())
                     .map(|e| e == "gz")
                     .unwrap_or(false);
@@ -332,22 +340,21 @@ pub enum ArchiveError {
 
 /// Extract date (YYYY-MM-DD) from an RFC3339 timestamp string.
 fn extract_date(timestamp: &str) -> String {
-    timestamp
-        .get(..10)
-        .unwrap_or("unknown")
-        .to_string()
+    timestamp.get(..10).unwrap_or("unknown").to_string()
 }
 
 /// V472: Gzip compression using the flate2 library.
-pub(crate) fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
+fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
     use flate2::write::GzEncoder;
     use flate2::Compression;
     use std::io::Write;
 
     let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-    encoder.write_all(data)
-        .map_err(|e| ArchiveError::Compression(format!("Failed to write to gzip encoder: {}", e)))?;
-    let compressed = encoder.finish()
+    encoder.write_all(data).map_err(|e| {
+        ArchiveError::Compression(format!("Failed to write to gzip encoder: {}", e))
+    })?;
+    let compressed = encoder
+        .finish()
         .map_err(|e| ArchiveError::Compression(format!("Failed to finish gzip encoding: {}", e)))?;
     Ok(compressed)
 }
@@ -357,8 +364,8 @@ pub(crate) fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use crate::routes::business_tools::mock_audit_store::make_test_entry;
+    use tempfile::TempDir;
 
     #[test]
     fn test_archive_config_default() {

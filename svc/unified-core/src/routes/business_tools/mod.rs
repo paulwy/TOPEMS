@@ -31,12 +31,6 @@ pub mod audit_integration;
 // V461: Audit log export API
 pub mod audit_export_api;
 
-// V474: Audit log export task (background periodic export)
-pub mod audit_export_task;
-
-// V474: Audit log export task control API (start/stop/trigger/config)
-pub mod audit_export_task_api;
-
 // V462: Permission batch operations API
 pub mod permission_batch_api;
 
@@ -72,9 +66,7 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 
-use crate::modules::business_tools::{
-    BusinessRequest, BusinessResponse,
-};
+use crate::modules::business_tools::{BusinessRequest, BusinessResponse};
 use crate::AppState;
 
 // ===== V440: Permission Control Types =====
@@ -167,7 +159,7 @@ impl UserRole {
 }
 
 /// Determine the required permission level for an operation.
-/// 
+///
 /// Rules:
 /// - Operations starting with "get_", "list_", "query_", "search_", "count_", "health" → Read
 /// - Operations starting with "create_", "update_", "delete_", "add_", "remove_", "modify_" → Write
@@ -177,19 +169,33 @@ pub fn required_permission_for_operation(operation: &str) -> PermissionLevel {
     let op = operation.to_lowercase();
 
     // Admin operations
-    if op.contains("bulk_") || op.contains("batch_") || op.contains("configure_")
-        || op.contains("manage_") || op.contains("admin_") || op.contains("import_")
+    if op.contains("bulk_")
+        || op.contains("batch_")
+        || op.contains("configure_")
+        || op.contains("manage_")
+        || op.contains("admin_")
+        || op.contains("import_")
         || op.contains("export_")
     {
         return PermissionLevel::Admin;
     }
 
     // Write operations
-    if op.starts_with("create_") || op.starts_with("update_") || op.starts_with("delete_")
-        || op.starts_with("add_") || op.starts_with("remove_") || op.starts_with("modify_")
-        || op.starts_with("submit_") || op.starts_with("approve_") || op.starts_with("reject_")
-        || op.starts_with("cancel_") || op.starts_with("complete_") || op.starts_with("start_")
-        || op.starts_with("stop_") || op.starts_with("pause_") || op.starts_with("resume_")
+    if op.starts_with("create_")
+        || op.starts_with("update_")
+        || op.starts_with("delete_")
+        || op.starts_with("add_")
+        || op.starts_with("remove_")
+        || op.starts_with("modify_")
+        || op.starts_with("submit_")
+        || op.starts_with("approve_")
+        || op.starts_with("reject_")
+        || op.starts_with("cancel_")
+        || op.starts_with("complete_")
+        || op.starts_with("start_")
+        || op.starts_with("stop_")
+        || op.starts_with("pause_")
+        || op.starts_with("resume_")
     {
         return PermissionLevel::Write;
     }
@@ -222,10 +228,7 @@ pub struct PermissionCheckResult {
 }
 
 /// Perform a permission check and return detailed result.
-pub fn perform_permission_check(
-    role: &UserRole,
-    operation: &str,
-) -> PermissionCheckResult {
+pub fn perform_permission_check(role: &UserRole, operation: &str) -> PermissionCheckResult {
     let required = required_permission_for_operation(operation);
     let user_level = role.permission_level();
     let granted = user_level.includes(&required);
@@ -592,9 +595,7 @@ pub struct ToolHealthResponse {
 // ===== Route Handlers =====
 
 /// `GET /api/business-tools` — List all business tools.
-pub async fn list_tools(
-    State(state): State<AppState>,
-) -> Json<ToolListResponse> {
+pub async fn list_tools(State(state): State<AppState>) -> Json<ToolListResponse> {
     let registry = &state.business_tool_registry;
     let tool_names = registry.list();
 
@@ -697,17 +698,20 @@ pub async fn execute_tool(
     // V442: Tenant permission check
     let tenant_role = TenantRole::from_str(&request.tenant_role).unwrap_or(TenantRole::Owner);
     let tenant_permission = TenantPermission {
-        tenant_id: request.tenant_id.clone().unwrap_or_else(|| "default".to_string()),
-        user_id: request.user_id.clone().unwrap_or_else(|| "anonymous".to_string()),
+        tenant_id: request
+            .tenant_id
+            .clone()
+            .unwrap_or_else(|| "default".to_string()),
+        user_id: request
+            .user_id
+            .clone()
+            .unwrap_or_else(|| "anonymous".to_string()),
         role: tenant_role,
         tool_permissions: Vec::new(),
         active: true,
     };
-    let tenant_permission_result = perform_tenant_permission_check(
-        &tenant_permission,
-        &tool_name,
-        &request.operation,
-    );
+    let tenant_permission_result =
+        perform_tenant_permission_check(&tenant_permission, &tool_name, &request.operation);
     if !tenant_permission_result.granted {
         return Err((
             axum::http::StatusCode::FORBIDDEN,
@@ -780,9 +784,7 @@ pub async fn tool_health(
 }
 
 /// `GET /api/business-tools/health/all` — Check health of all tools.
-pub async fn all_tools_health(
-    State(state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn all_tools_health(State(state): State<AppState>) -> Json<serde_json::Value> {
     let registry = &state.business_tool_registry;
     let health_results = registry.health_check_all().await;
 
@@ -818,7 +820,10 @@ pub async fn all_tools_health(
 pub fn business_tools_routes() -> Router<AppState> {
     Router::new()
         .route("/business-tools", axum::routing::get(list_tools))
-        .route("/business-tools/health/all", axum::routing::get(all_tools_health))
+        .route(
+            "/business-tools/health/all",
+            axum::routing::get(all_tools_health),
+        )
         .route("/business-tools/{tool}", axum::routing::get(get_tool))
         .route(
             "/business-tools/{tool}/execute",
@@ -838,8 +843,6 @@ pub fn business_tools_routes() -> Router<AppState> {
         .merge(audit_api::audit_log_routes())
         // V461: Audit log export routes
         .merge(audit_export_api::audit_export_routes())
-        // V474: Audit log export task control routes
-        .merge(audit_export_task_api::audit_export_task_routes())
         // V465: Audit log retention policy routes
         .merge(audit_retention_api::audit_retention_routes())
         // V468: Audit log archive routes
@@ -858,7 +861,10 @@ trait BusinessRequestExt {
 }
 
 impl BusinessRequestExt for BusinessRequest {
-    fn with_params_map(mut self, params: std::collections::HashMap<String, serde_json::Value>) -> Self {
+    fn with_params_map(
+        mut self,
+        params: std::collections::HashMap<String, serde_json::Value>,
+    ) -> Self {
         self.params = params;
         self
     }

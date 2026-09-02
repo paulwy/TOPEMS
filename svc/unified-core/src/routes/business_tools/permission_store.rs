@@ -112,21 +112,16 @@ impl InMemoryPermissionStore {
 
         // Add a default owner permission for the default tenant
         let default_permission = TenantPermission::owner("default", "admin");
-        store
-            .permissions
-            .lock()
-            .unwrap()
-            .insert(("default".to_string(), "admin".to_string()), default_permission);
+        store.permissions.lock().unwrap().insert(
+            ("default".to_string(), "admin".to_string()),
+            default_permission,
+        );
 
         store
     }
 
     /// Get a permission by key (synchronous, for internal use).
-    fn get_internal(
-        &self,
-        tenant_id: &str,
-        user_id: &str,
-    ) -> Option<TenantPermission> {
+    fn get_internal(&self, tenant_id: &str, user_id: &str) -> Option<TenantPermission> {
         self.permissions
             .lock()
             .unwrap()
@@ -322,8 +317,8 @@ impl InMemoryPermissionStore {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::TenantRole;
+    use super::*;
 
     #[tokio::test]
     async fn test_create_and_get_permission() {

@@ -11,9 +11,9 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::AppState;
 use super::audit_archiver::{ArchiveConfig, ArchiveFileInfo, AuditLogArchiver};
 use super::permission_api::ErrorResponse;
+use crate::shared::AppState;
 
 // ===== Query Parameters =====
 
@@ -205,15 +205,17 @@ pub async fn cleanup_archives(
 ) -> Result<Json<CleanupArchivesResponse>, (StatusCode, Json<ErrorResponse>)> {
     let archiver = get_archiver(&state);
 
-    let deleted_count = archiver.cleanup_old_archives(query.max_age_days).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: format!("Failed to cleanup archives: {}", e),
-                code: Some("CLEANUP_ARCHIVES_ERROR".to_string()),
-            }),
-        )
-    })?;
+    let deleted_count = archiver
+        .cleanup_old_archives(query.max_age_days)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: format!("Failed to cleanup archives: {}", e),
+                    code: Some("CLEANUP_ARCHIVES_ERROR".to_string()),
+                }),
+            )
+        })?;
 
     Ok(Json(CleanupArchivesResponse { deleted_count }))
 }
@@ -273,8 +275,8 @@ pub struct ArchiveStatsResponse {
 /// In a full implementation, the archiver config would be stored in AppState.
 /// For now, we use the default config with the archive path from environment.
 fn get_archiver(_state: &AppState) -> AuditLogArchiver {
-    let archive_dir = std::env::var("AUDIT_ARCHIVE_DIR")
-        .unwrap_or_else(|_| "audit_archives".to_string());
+    let archive_dir =
+        std::env::var("AUDIT_ARCHIVE_DIR").unwrap_or_else(|_| "audit_archives".to_string());
     let compress = std::env::var("AUDIT_ARCHIVE_COMPRESS")
         .ok()
         .map(|v| v == "true" || v == "1")

@@ -1,4 +1,4 @@
-﻿//! TOPEMS Unified Core Platform
+//! TOPEMS Unified Core Platform
 //!
 //! Unified service for: IAM + Flow + File + Communication + Tenant + Billing + Plugin + Sync
 //!
@@ -316,7 +316,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: false,
         api_prefix: "/api/core",
         legacy_prefixes: &[],
-        ..Default::default()
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;
@@ -358,7 +358,6 @@ async fn main() -> anyhow::Result<()> {
     // V68.1 A2.4.2: help 模块已迁移至 svc/portal/src/modules/help/（Portal BFF，8063 端口启动）
     // V68.1 A2.4.1: login_log init 已合并到 audit::init_database（统一建表）
     try_init("audit", || modules::audit::init_database(&ctx.db)).await;
-    try_init("audit_middleware", || middleware::audit_log::init_audit_logs_table(&ctx.db)).await;
     try_init("doc", || modules::doc::services::init_database(&ctx.db)).await;
 
     // V69.3 Schema 防御：增量迁移 + 一致性自检（29 表）
@@ -495,30 +494,6 @@ async fn main() -> anyhow::Result<()> {
         std::sync::Arc::new(tokio::sync::Mutex::new(policy))
     };
 
-    let audit_archiver = std::sync::Arc::new(
-        crate::routes::business_tools::audit_archiver::AuditLogArchiver::new(
-            crate::routes::business_tools::audit_archiver::ArchiveConfig::default(),
-        ),
-    );
-    let audit_cleanup_controller = std::sync::Arc::new(
-        crate::routes::business_tools::audit_retention_task::AuditCleanupController::new(
-            audit_retention_policy.clone(),
-            audit_logger.clone(),
-        ),
-    );
-
-    // V474: Audit log export task (periodic incremental export to archive).
-    let audit_export_config = std::sync::Arc::new(tokio::sync::Mutex::new(
-        crate::routes::business_tools::audit_export_task::ExportTaskConfig::default(),
-    ));
-    let audit_export_controller = std::sync::Arc::new(
-        crate::routes::business_tools::audit_export_task::AuditExportController::new(
-            audit_export_config.clone(),
-            audit_logger.clone(),
-            audit_archiver.clone(),
-        ),
-    );
-
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
@@ -540,10 +515,6 @@ async fn main() -> anyhow::Result<()> {
         permission_store,
         audit_logger,
         audit_retention_policy,
-        audit_archiver,
-        audit_cleanup_controller,
-        audit_export_config,
-        audit_export_controller,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections
@@ -654,27 +625,12 @@ async fn main() -> anyhow::Result<()> {
     let cors = create_cors_layer();
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    // 合并 default_registry（shared-auth service_calls / custom gauge 等业务指标）
-    // 与 axum-prometheus 自带请求指标，保证服务间调用等业务指标在 /metrics 可观测。
-    let app = routes::create_routes(
-        &state,
-        move || {
-            let encoder = prometheus::TextEncoder::new();
-            let mut body = String::new();
-            if let Ok(encoded) =
-                encoder.encode_to_string(&prometheus::default_registry().gather())
-            {
-                body.push_str(&encoded);
-            }
-            body.push_str(&metric_handle.render());
-            body
-        },
-    )
-    .layer(axum::middleware::from_fn(request_context_middleware))
-    .with_telemetry()
-    .layer(cors)
-    .layer(prometheus_layer)
-    .with_state(state);
+    let app = routes::create_routes(&state, move || metric_handle.render())
+        .layer(axum::middleware::from_fn(request_context_middleware))
+        .with_telemetry()
+        .layer(cors)
+        .layer(prometheus_layer)
+        .with_state(state);
 
     let app = Application {
         router: app,

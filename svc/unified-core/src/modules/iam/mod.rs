@@ -524,81 +524,17 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
-    // 岗位/资源权限表（position.rs / user_position.rs / permission_verify.rs 依赖，
-    // 历史未建导致 relation does not exist；此处幂等补建）
+    // 同步 core_users → iam.users（幂等）
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS iam.positions (
-            id UUID PRIMARY KEY,
-            code VARCHAR(100),
-            name VARCHAR(255) NOT NULL,
-            department_id UUID,
-            description TEXT,
-            tenant_id UUID,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW(),
-            deleted_at TIMESTAMPTZ
-        )
+        INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser, created_at)
+        SELECT id, username, email, password_hash, full_name, (status = 'active'), is_superuser, created_at
+        FROM core_users
+        ON CONFLICT (username) DO NOTHING
         "#,
     )
     .execute(pool)
     .await?;
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS iam.user_positions (
-            id BIGSERIAL PRIMARY KEY,
-            user_id UUID NOT NULL,
-            position_id UUID NOT NULL,
-            tenant_id UUID,
-            created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS iam.position_permissions (
-            id BIGSERIAL PRIMARY KEY,
-            position_id UUID NOT NULL,
-            permission VARCHAR(255),
-            tenant_id UUID,
-            created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS iam.position_roles (
-            id BIGSERIAL PRIMARY KEY,
-            position_id UUID NOT NULL,
-            role_id UUID NOT NULL,
-            tenant_id UUID,
-            created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS iam.resource_permissions (
-            id BIGSERIAL PRIMARY KEY,
-            user_id UUID NOT NULL,
-            resource_type VARCHAR(100),
-            resource_id UUID,
-            permission VARCHAR(100),
-            tenant_id UUID,
-            created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    // core_users 为唯一权威源（auth/权限/租户全走此表）；iam.users 仅保留旧数据兼容
-    // （2026-09-01 双轨认证统一后不再同步——auth.rs 登录/刷新/找回/改密已全部改查 core_users）
 
     // ---- 默认租户 + admin 关联（tenant 中间件依赖 JWT claims.tenant_id） ----
     sqlx::query(

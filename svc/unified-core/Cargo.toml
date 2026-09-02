@@ -54,6 +54,7 @@ ipnetwork = "0.20"
 [dev-dependencies]
 serde_urlencoded = "0.7"
 tempfile = "3"
+bytes.workspace = true
 
 [[bin]]
 name = "topems-unified-core"

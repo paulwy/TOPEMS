@@ -9,10 +9,9 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::AppState;
-use super::audit_retention::{RetentionPolicy, CleanupResult, RetentionStats};
-use super::audit_retention_task::CleanupTaskStats;
+use super::audit_retention::{CleanupResult, RetentionPolicy, RetentionStats};
 use super::permission_api::ErrorResponse;
+use crate::shared::AppState;
 
 // ===== Request Types =====
 
@@ -205,81 +204,6 @@ pub async fn get_retention_stats(
     Ok(Json(stats))
 }
 
-// ===== V473: Cleanup Task Control API (start / stop / status) =====
-
-/// Response returned by `GET .../retention/task/status`.
-#[derive(Debug, Clone, Serialize)]
-pub struct CleanupTaskStatusResponse {
-    /// Snapshotted cleanup-task statistics.
-    #[serde(flatten)]
-    pub stats: CleanupTaskStats,
-    /// Set to `true` when the task controller is present in AppState and
-    /// responding to API calls.  Currently always `true` — reserved for
-    /// a future "detached" mode.
-    pub controller_ready: bool,
-}
-
-/// `GET /api/business-tools/audit-logs/retention/task/status` —
-/// Retrieve running flag and policy values from the cleanup controller.
-pub async fn get_cleanup_task_status(
-    State(state): State<AppState>,
-) -> Result<Json<CleanupTaskStatusResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let stats = state.audit_cleanup_controller.status().await;
-    Ok(Json(CleanupTaskStatusResponse {
-        stats,
-        controller_ready: true,
-    }))
-}
-
-/// Response returned by `POST .../retention/task/start` and `.../stop`.
-#[derive(Debug, Clone, Serialize)]
-pub struct CleanupTaskControlResponse {
-    /// Whether the API call executed successfully (always `true` on
-    /// HTTP 200 — if the request was invalid, we return 4xx instead).
-    pub success: bool,
-    /// Effective running flag *after* applying the command.
-    pub running: bool,
-    /// Human-readable explanation of the applied action.  Informational
-    /// only; never parsed by clients.
-    pub message: String,
-}
-
-/// `POST /api/business-tools/audit-logs/retention/task/start` —
-/// Start the periodic audit-log cleanup background task.
-pub async fn start_cleanup_task(
-    State(state): State<AppState>,
-) -> Result<Json<CleanupTaskControlResponse>, (StatusCode, Json<ErrorResponse>)> {
-    state.audit_cleanup_controller.start().await;
-    let running = state.audit_cleanup_controller.is_running();
-    Ok(Json(CleanupTaskControlResponse {
-        success: true,
-        running,
-        message: if running {
-            "Retention cleanup task started".to_string()
-        } else {
-            "Retention cleanup task was already running".to_string()
-        },
-    }))
-}
-
-/// `POST /api/business-tools/audit-logs/retention/task/stop` —
-/// Stop the periodic audit-log cleanup background task.
-pub async fn stop_cleanup_task(
-    State(state): State<AppState>,
-) -> Result<Json<CleanupTaskControlResponse>, (StatusCode, Json<ErrorResponse>)> {
-    state.audit_cleanup_controller.stop().await;
-    let running = state.audit_cleanup_controller.is_running();
-    Ok(Json(CleanupTaskControlResponse {
-        success: true,
-        running,
-        message: if running {
-            "Retention cleanup task is still running (failed to stop)".to_string()
-        } else {
-            "Retention cleanup task stopped".to_string()
-        },
-    }))
-}
-
 // ===== Route Registration =====
 
 /// Create audit log retention policy routes.
@@ -287,8 +211,7 @@ pub fn audit_retention_routes() -> Router<AppState> {
     Router::new()
         .route(
             "/business-tools/audit-logs/retention/policy",
-            axum::routing::get(get_retention_policy)
-                .put(update_retention_policy),
+            axum::routing::get(get_retention_policy).put(update_retention_policy),
         )
         .route(
             "/business-tools/audit-logs/retention/cleanup",
@@ -297,18 +220,6 @@ pub fn audit_retention_routes() -> Router<AppState> {
         .route(
             "/business-tools/audit-logs/retention/stats",
             axum::routing::get(get_retention_stats),
-        )
-        .route(
-            "/business-tools/audit-logs/retention/task/status",
-            axum::routing::get(get_cleanup_task_status),
-        )
-        .route(
-            "/business-tools/audit-logs/retention/task/start",
-            axum::routing::post(start_cleanup_task),
-        )
-        .route(
-            "/business-tools/audit-logs/retention/task/stop",
-            axum::routing::post(stop_cleanup_task),
         )
 }
 
@@ -417,46 +328,5 @@ mod tests {
         let routes = audit_retention_routes();
         // Just verify it compiles and creates a router
         let _ = routes;
-    }
-
-    // ===== V473: Cleanup task controller API type tests =====
-
-    #[test]
-    fn test_cleanup_task_status_response_serialization() {
-        let resp = CleanupTaskStatusResponse {
-            stats: CleanupTaskStats {
-                running: true,
-                cleanup_interval_hours: 6,
-                retention_days: 45,
-            },
-            controller_ready: true,
-        };
-        let json = serde_json::to_string(&resp).unwrap();
-        assert!(json.contains("\"running\":true"));
-        assert!(json.contains("\"cleanup_interval_hours\":6"));
-        assert!(json.contains("\"retention_days\":45"));
-        assert!(json.contains("\"controller_ready\":true"));
-    }
-
-    #[test]
-    fn test_cleanup_task_control_response_roundtrip() {
-        let started = CleanupTaskControlResponse {
-            success: true,
-            running: true,
-            message: "Retention cleanup task started".to_string(),
-        };
-        let json = serde_json::to_value(&started).unwrap();
-        assert_eq!(json["success"], true);
-        assert_eq!(json["running"], true);
-        assert_eq!(json["message"], "Retention cleanup task started");
-
-        let stopped = CleanupTaskControlResponse {
-            success: true,
-            running: false,
-            message: "Retention cleanup task stopped".to_string(),
-        };
-        let json2 = serde_json::to_value(&stopped).unwrap();
-        assert_eq!(json2["running"], false);
-        assert_eq!(json2["message"], "Retention cleanup task stopped");
     }
 }

@@ -77,7 +77,7 @@ pub async fn sse_connect_handler(
                 let error_event = Event::default()
                     .event("error")
                     .json_data(error_data)
-                    .map_err(|e| axum::Error::new(e));
+                    .map_err(axum::Error::new);
                 yield error_event;
                 return;
             }
@@ -98,7 +98,7 @@ pub async fn sse_connect_handler(
         let endpoint_event = Event::default()
             .event("endpoint")
             .json_data(endpoint_data)
-            .map_err(|e| axum::Error::new(e));
+            .map_err(axum::Error::new);
         yield endpoint_event;
 
         // Forward all events from the receiver.

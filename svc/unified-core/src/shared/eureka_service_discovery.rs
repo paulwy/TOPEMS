@@ -171,6 +171,7 @@ struct EurekaApplications {
 ///
 /// ```rust
 /// use topems_unified_core::shared::eureka_service_discovery::{EurekaConfig, EurekaServiceDiscovery};
+/// use topems_unified_core::shared::service_client::{ServiceDiscovery, ServiceRegistration};
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let config = EurekaConfig {
@@ -220,9 +221,7 @@ impl EurekaServiceDiscovery {
             let _ = (username, password);
         }
 
-        let http_client = builder
-            .build()
-            .map_err(ServiceClientError::RequestFailed)?;
+        let http_client = builder.build().map_err(ServiceClientError::RequestFailed)?;
 
         Ok(Self {
             config,
@@ -240,7 +239,8 @@ impl EurekaServiceDiscovery {
     fn extract_host_port(base_url: &str) -> Result<(String, u16), ServiceClientError> {
         let url = url::Url::parse(base_url)
             .map_err(|e| ServiceClientError::InvalidUrl(format!("Invalid URL: {}", e)))?;
-        let host = url.host_str()
+        let host = url
+            .host_str()
             .ok_or_else(|| ServiceClientError::InvalidUrl("No host in URL".to_string()))?
             .to_string();
         let port = url.port_or_known_default().unwrap_or(80);
@@ -253,27 +253,50 @@ impl EurekaServiceDiscovery {
     }
 
     /// Convert a ServiceRegistration to Eureka instance info.
-    fn registration_to_instance(registration: &ServiceRegistration) -> Result<EurekaInstanceInfo, ServiceClientError> {
+    fn registration_to_instance(
+        registration: &ServiceRegistration,
+    ) -> Result<EurekaInstanceInfo, ServiceClientError> {
         let (host, port) = Self::extract_host_port(&registration.base_url)?;
         let instance_id = Self::generate_instance_id(&registration.name, &host, port);
 
         let mut metadata = EurekaInstanceMetadata::default();
-        metadata.data.insert("version".to_string(), registration.version.clone());
-        metadata.data.insert("description".to_string(), registration.description.clone());
-        metadata.data.insert("base_url".to_string(), registration.base_url.clone());
-        metadata.data.insert("tags".to_string(), serde_json::to_string(&registration.tags).unwrap_or_default());
-        metadata.data.insert("enabled".to_string(), registration.enabled.to_string());
+        metadata
+            .data
+            .insert("version".to_string(), registration.version.clone());
+        metadata
+            .data
+            .insert("description".to_string(), registration.description.clone());
+        metadata
+            .data
+            .insert("base_url".to_string(), registration.base_url.clone());
+        metadata.data.insert(
+            "tags".to_string(),
+            serde_json::to_string(&registration.tags).unwrap_or_default(),
+        );
+        metadata
+            .data
+            .insert("enabled".to_string(), registration.enabled.to_string());
 
         Ok(EurekaInstanceInfo {
             instance_id: instance_id.clone(),
             app: registration.name.to_uppercase(),
             host_name: host.clone(),
             ip_addr: host.clone(),
-            port: EurekaPort { value: port, enabled: true },
-            secure_port: EurekaPort { value: 443, enabled: false },
+            port: EurekaPort {
+                value: port,
+                enabled: true,
+            },
+            secure_port: EurekaPort {
+                value: 443,
+                enabled: false,
+            },
             vip_address: registration.name.to_lowercase(),
             secure_vip_address: registration.name.to_lowercase(),
-            status: if registration.enabled { "UP".to_string() } else { "DOWN".to_string() },
+            status: if registration.enabled {
+                "UP".to_string()
+            } else {
+                "DOWN".to_string()
+            },
             overridden_status: "UNKNOWN".to_string(),
             data_center_info: EurekaDataCenterInfo {
                 class: "com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo".to_string(),
@@ -292,23 +315,38 @@ impl EurekaServiceDiscovery {
 
     /// Convert an Eureka instance info to ServiceRegistration.
     fn instance_to_registration(instance: &EurekaInstanceInfo) -> ServiceRegistration {
-        let base_url = instance.metadata.data.get("base_url")
+        let base_url = instance
+            .metadata
+            .data
+            .get("base_url")
             .cloned()
             .unwrap_or_else(|| format!("http://{}:{}", instance.host_name, instance.port.value));
 
-        let version = instance.metadata.data.get("version")
+        let version = instance
+            .metadata
+            .data
+            .get("version")
             .cloned()
             .unwrap_or_else(|| "1.0.0".to_string());
 
-        let description = instance.metadata.data.get("description")
+        let description = instance
+            .metadata
+            .data
+            .get("description")
             .cloned()
             .unwrap_or_default();
 
-        let tags = instance.metadata.data.get("tags")
+        let tags = instance
+            .metadata
+            .data
+            .get("tags")
             .and_then(|t| serde_json::from_str(t).ok())
             .unwrap_or_default();
 
-        let enabled = instance.metadata.data.get("enabled")
+        let enabled = instance
+            .metadata
+            .data
+            .get("enabled")
             .and_then(|e| e.parse().ok())
             .unwrap_or(instance.status == "UP");
 
@@ -330,10 +368,16 @@ impl EurekaServiceDiscovery {
 impl ServiceDiscovery for EurekaServiceDiscovery {
     async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError> {
         let instance = Self::registration_to_instance(&registration)?;
-        let request = EurekaRegistrationRequest { instance: instance.clone() };
+        let request = EurekaRegistrationRequest {
+            instance: instance.clone(),
+        };
 
-        let url = self.build_url(&format!("/eureka/apps/{}", registration.name.to_uppercase()));
-        let response = self.http_client
+        let url = self.build_url(&format!(
+            "/eureka/apps/{}",
+            registration.name.to_uppercase()
+        ));
+        let response = self
+            .http_client
             .post(&url)
             .json(&request)
             .send()
@@ -366,9 +410,7 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
     }
 
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = {
-            self.registered_services.lock().unwrap().get(name).cloned()
-        };
+        let service_info = { self.registered_services.lock().unwrap().get(name).cloned() };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));
@@ -379,7 +421,8 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
             name.to_uppercase(),
             info.instance_id
         ));
-        let response = self.http_client
+        let response = self
+            .http_client
             .delete(&url)
             .send()
             .await
@@ -400,9 +443,13 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
         Ok(())
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         let url = self.build_url(&format!("/eureka/apps/{}", name.to_uppercase()));
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&url)
             .send()
             .await
@@ -437,12 +484,13 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
         }
 
         // If no UP instances, return the first one
-        Ok(instances.first().map(|instance| Self::instance_to_registration(instance)))
+        Ok(instances.first().map(Self::instance_to_registration))
     }
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
         let url = self.build_url("/eureka/apps");
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&url)
             .send()
             .await
@@ -476,9 +524,7 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
     }
 
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = {
-            self.registered_services.lock().unwrap().get(name).cloned()
-        };
+        let service_info = { self.registered_services.lock().unwrap().get(name).cloned() };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));
@@ -489,7 +535,8 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
             name.to_uppercase(),
             info.instance_id
         ));
-        let response = self.http_client
+        let response = self
+            .http_client
             .put(&url)
             .send()
             .await
@@ -586,7 +633,8 @@ mod tests {
 
     #[test]
     fn test_extract_host_port() {
-        let (host, port) = EurekaServiceDiscovery::extract_host_port("http://localhost:8001").unwrap();
+        let (host, port) =
+            EurekaServiceDiscovery::extract_host_port("http://localhost:8001").unwrap();
         assert_eq!(host, "localhost");
         assert_eq!(port, 8001);
     }
@@ -625,16 +673,26 @@ mod tests {
     #[test]
     fn test_instance_to_registration() {
         let mut metadata = EurekaInstanceMetadata::default();
-        metadata.data.insert("base_url".to_string(), "http://localhost:8001".to_string());
-        metadata.data.insert("version".to_string(), "2.0.0".to_string());
+        metadata
+            .data
+            .insert("base_url".to_string(), "http://localhost:8001".to_string());
+        metadata
+            .data
+            .insert("version".to_string(), "2.0.0".to_string());
 
         let instance = EurekaInstanceInfo {
             instance_id: "localhost:crm:8001".to_string(),
             app: "CRM".to_string(),
             host_name: "localhost".to_string(),
             ip_addr: "127.0.0.1".to_string(),
-            port: EurekaPort { value: 8001, enabled: true },
-            secure_port: EurekaPort { value: 443, enabled: false },
+            port: EurekaPort {
+                value: 8001,
+                enabled: true,
+            },
+            secure_port: EurekaPort {
+                value: 443,
+                enabled: false,
+            },
             vip_address: "crm".to_string(),
             secure_vip_address: "crm".to_string(),
             status: "UP".to_string(),

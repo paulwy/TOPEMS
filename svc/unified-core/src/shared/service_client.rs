@@ -237,7 +237,13 @@ pub struct ServiceResponse<T> {
 
 impl<T> ServiceResponse<T> {
     /// Create a successful response.
-    pub fn success(data: T, status: u16, request_id: String, service: String, duration_ms: u64) -> Self {
+    pub fn success(
+        data: T,
+        status: u16,
+        request_id: String,
+        service: String,
+        duration_ms: u64,
+    ) -> Self {
         Self {
             success: true,
             status,
@@ -250,7 +256,13 @@ impl<T> ServiceResponse<T> {
     }
 
     /// Create an error response.
-    pub fn error(status: u16, message: String, request_id: String, service: String, duration_ms: u64) -> Self {
+    pub fn error(
+        status: u16,
+        message: String,
+        request_id: String,
+        service: String,
+        duration_ms: u64,
+    ) -> Self {
         Self {
             success: false,
             status,
@@ -351,7 +363,8 @@ pub trait ServiceDiscovery: Send + Sync {
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError>;
 
     /// Discover a service by name.
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError>;
+    async fn discover(&self, name: &str)
+        -> Result<Option<ServiceRegistration>, ServiceClientError>;
 
     /// List all registered services.
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError>;
@@ -361,7 +374,7 @@ pub trait ServiceDiscovery: Send + Sync {
 }
 
 /// Static service discovery based on in-memory configuration.
-/// 
+///
 /// This is the default service discovery implementation. Services are
 /// registered manually and stored in memory. For dynamic service discovery
 /// (e.g., Consul, etcd, Zookeeper), implement the ServiceDiscovery trait.
@@ -393,7 +406,11 @@ impl StaticServiceDiscovery {
                 registered_at: chrono::Utc::now().to_rfc3339(),
                 last_heartbeat: chrono::Utc::now().to_rfc3339(),
             };
-            discovery.services.lock().unwrap().insert(config.name, registration);
+            discovery
+                .services
+                .lock()
+                .unwrap()
+                .insert(config.name, registration);
         }
         discovery
     }
@@ -428,7 +445,10 @@ impl Default for StaticServiceDiscovery {
 #[async_trait::async_trait]
 impl ServiceDiscovery for StaticServiceDiscovery {
     async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError> {
-        self.services.lock().unwrap().insert(registration.name.clone(), registration);
+        self.services
+            .lock()
+            .unwrap()
+            .insert(registration.name.clone(), registration);
         Ok(())
     }
 
@@ -437,7 +457,10 @@ impl ServiceDiscovery for StaticServiceDiscovery {
         Ok(())
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         Ok(self.services.lock().unwrap().get(name).cloned())
     }
 
@@ -620,7 +643,10 @@ impl Default for EnvServiceDiscovery {
 #[async_trait::async_trait]
 impl ServiceDiscovery for EnvServiceDiscovery {
     async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError> {
-        self.services.lock().unwrap().insert(registration.name.clone(), registration);
+        self.services
+            .lock()
+            .unwrap()
+            .insert(registration.name.clone(), registration);
         Ok(())
     }
 
@@ -629,7 +655,10 @@ impl ServiceDiscovery for EnvServiceDiscovery {
         Ok(())
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         Ok(self.services.lock().unwrap().get(name).cloned())
     }
 
@@ -676,8 +705,8 @@ impl RateLimiter {
         let elapsed = now.duration_since(self.last_refill).as_secs_f64();
 
         // Refill tokens
-        self.current_tokens = (self.current_tokens + elapsed * self.max_tokens as f64)
-            .min(self.max_tokens as f64);
+        self.current_tokens =
+            (self.current_tokens + elapsed * self.max_tokens as f64).min(self.max_tokens as f64);
         self.last_refill = now;
 
         if self.current_tokens >= 1.0 {
@@ -923,7 +952,8 @@ impl RequestStatistics {
     /// Update calculated fields (avg, success_rate, rps).
     fn update_calculated_fields(&mut self) {
         if self.total_requests > 0 {
-            self.avg_response_time_ms = self.total_response_time_ms as f64 / self.total_requests as f64;
+            self.avg_response_time_ms =
+                self.total_response_time_ms as f64 / self.total_requests as f64;
             self.success_rate = self.successful_requests as f64 / self.total_requests as f64;
         }
         if self.uptime_secs > 0 {
@@ -1014,7 +1044,9 @@ impl ServiceClient {
         let mut client_builder = Client::builder()
             .timeout(timeout)
             .pool_max_idle_per_host(config.connection_pool.max_idle_per_host)
-            .pool_idle_timeout(Duration::from_secs(config.connection_pool.idle_timeout_secs));
+            .pool_idle_timeout(Duration::from_secs(
+                config.connection_pool.idle_timeout_secs,
+            ));
 
         if let Some(max_lifetime) = config.connection_pool.max_lifetime_secs {
             // Note: pool_max_lifetime is not available in this reqwest version
@@ -1106,7 +1138,8 @@ impl ServiceClient {
         &self,
         path: &str,
     ) -> Result<ServiceResponse<T>, ServiceClientError> {
-        self.request::<T, ()>(Method::DELETE, path, None, None).await
+        self.request::<T, ()>(Method::DELETE, path, None, None)
+            .await
     }
 
     /// Send a generic request.
@@ -1121,7 +1154,10 @@ impl ServiceClient {
         if self.config.circuit_breaker_enabled {
             if let Err(e) = self.check_circuit_breaker() {
                 // V443: Record circuit breaker rejection
-                self.statistics.lock().unwrap().record_circuit_breaker_rejected();
+                self.statistics
+                    .lock()
+                    .unwrap()
+                    .record_circuit_breaker_rejected();
                 return Err(e);
             }
         }
@@ -1141,14 +1177,20 @@ impl ServiceClient {
         let mut last_error: Option<ServiceClientError> = None;
 
         for attempt in 0..=max_retries {
-            match self.request_once::<T, B>(method.clone(), path, query, body).await {
+            match self
+                .request_once::<T, B>(method.clone(), path, query, body)
+                .await
+            {
                 Ok(response) => {
                     // V437: Record success for circuit breaker
                     if self.config.circuit_breaker_enabled {
                         self.record_success();
                     }
                     // V443: Record successful request
-                    self.statistics.lock().unwrap().record_success(response.duration_ms);
+                    self.statistics
+                        .lock()
+                        .unwrap()
+                        .record_success(response.duration_ms);
                     return Ok(response);
                 }
                 Err(e) => {
@@ -1171,9 +1213,11 @@ impl ServiceClient {
             }
         }
 
-        Err(last_error.unwrap_or(ServiceClientError::Timeout(Duration::from_secs(
-            self.config.timeout_secs,
-        ))))
+        Err(
+            last_error.unwrap_or(ServiceClientError::Timeout(Duration::from_secs(
+                self.config.timeout_secs,
+            ))),
+        )
     }
 
     /// V437: Send a single request without retry.
@@ -1541,9 +1585,7 @@ impl ServiceRegistry {
         let client = self.get_client(service)?;
         let start = std::time::Instant::now();
 
-        let result = client
-            .get::<serde_json::Value>("/health", None)
-            .await;
+        let result = client.get::<serde_json::Value>("/health", None).await;
 
         let duration_ms = start.elapsed().as_millis() as u64;
 
@@ -1575,14 +1617,17 @@ impl ServiceRegistry {
         let mut results = HashMap::new();
 
         for service in services {
-            let health = self.health_check(&service).await.unwrap_or_else(|e| ServiceHealth {
-                service: service.clone(),
-                healthy: false,
-                status_code: 0,
-                response_time_ms: 0,
-                last_checked: chrono::Utc::now().to_rfc3339(),
-                error: Some(e.to_string()),
-            });
+            let health = self
+                .health_check(&service)
+                .await
+                .unwrap_or_else(|e| ServiceHealth {
+                    service: service.clone(),
+                    healthy: false,
+                    status_code: 0,
+                    response_time_ms: 0,
+                    last_checked: chrono::Utc::now().to_rfc3339(),
+                    error: Some(e.to_string()),
+                });
             results.insert(service, health);
         }
 
@@ -1771,7 +1816,10 @@ mod tests {
     fn test_service_registry_not_found() {
         let registry = ServiceRegistry::new();
         let result = registry.get_client("nonexistent");
-        assert!(matches!(result, Err(ServiceClientError::ServiceNotFound(_))));
+        assert!(matches!(
+            result,
+            Err(ServiceClientError::ServiceNotFound(_))
+        ));
     }
 
     #[test]

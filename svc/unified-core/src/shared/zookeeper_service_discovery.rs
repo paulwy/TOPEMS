@@ -119,6 +119,7 @@ impl ZkConnectionState {
 ///
 /// ```rust
 /// use topems_unified_core::shared::zookeeper_service_discovery::{ZkConfig, ZkServiceDiscovery};
+/// use topems_unified_core::shared::service_client::{ServiceDiscovery, ServiceRegistration};
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let config = ZkConfig {
@@ -182,7 +183,11 @@ impl ZkServiceDiscovery {
 
     /// Get the service node path for a given service name.
     fn service_path(&self, service_name: &str) -> String {
-        format!("{}/{}", self.config.base_path.trim_end_matches('/'), service_name)
+        format!(
+            "{}/{}",
+            self.config.base_path.trim_end_matches('/'),
+            service_name
+        )
     }
 
     /// Ensure the connection is active.
@@ -262,16 +267,16 @@ impl ServiceDiscovery for ZkServiceDiscovery {
         Ok(())
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         self.ensure_connected().await?;
 
         let path = self.service_path(name);
         let state = self.state.read().await;
 
-        Ok(state
-            .services
-            .get(&path)
-            .map(Self::data_to_registration))
+        Ok(state.services.get(&path).map(Self::data_to_registration))
     }
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
@@ -466,10 +471,20 @@ mod tests {
         let registration = ServiceRegistration::new("crm", "http://localhost:8001");
         discovery.register(registration).await.unwrap();
 
-        let before = discovery.discover("crm").await.unwrap().unwrap().last_heartbeat;
+        let before = discovery
+            .discover("crm")
+            .await
+            .unwrap()
+            .unwrap()
+            .last_heartbeat;
         tokio::time::sleep(Duration::from_millis(10)).await;
         discovery.heartbeat("crm").await.unwrap();
-        let after = discovery.discover("crm").await.unwrap().unwrap().last_heartbeat;
+        let after = discovery
+            .discover("crm")
+            .await
+            .unwrap()
+            .unwrap()
+            .last_heartbeat;
 
         assert_ne!(before, after);
     }

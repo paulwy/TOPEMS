@@ -9,8 +9,8 @@ use std::time::Duration;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::routes::business_tools::permission_audit_log::{AuditLogEntry, AuditLogStore};
 use crate::routes::business_tools::audit_archiver::{ArchiveConfig, AuditLogArchiver};
+use crate::routes::business_tools::permission_audit_log::{AuditLogEntry, AuditLogStore};
 
 // ===== Retention Policy Configuration =====
 
@@ -140,12 +140,24 @@ impl<S: AuditLogStore + ?Sized> RetentionManager<S> {
         } else {
             None
         };
-        Self { policy, store, archiver }
+        Self {
+            policy,
+            store,
+            archiver,
+        }
     }
 
     /// Create a new retention manager with an explicit archiver.
-    pub fn with_archiver(policy: RetentionPolicy, store: Arc<S>, archiver: AuditLogArchiver) -> Self {
-        Self { policy, store, archiver: Some(archiver) }
+    pub fn with_archiver(
+        policy: RetentionPolicy,
+        store: Arc<S>,
+        archiver: AuditLogArchiver,
+    ) -> Self {
+        Self {
+            policy,
+            store,
+            archiver: Some(archiver),
+        }
     }
 
     /// Get the current retention policy.
@@ -169,13 +181,21 @@ impl<S: AuditLogStore + ?Sized> RetentionManager<S> {
         let cutoff_str = cutoff.to_rfc3339();
 
         // Query old entries
-        let old_entries = match self.store.as_ref().query_logs(
-            None, None, None, None,
-            None,
-            Some(cutoff_str.clone()),
-            Some(self.policy.batch_size as usize),
-            None,
-        ).await {
+        let old_entries = match self
+            .store
+            .as_ref()
+            .query_logs(
+                None,
+                None,
+                None,
+                None,
+                None,
+                Some(cutoff_str.clone()),
+                Some(self.policy.batch_size as usize),
+                None,
+            )
+            .await
+        {
             Ok(entries) => entries,
             Err(e) => {
                 return CleanupResult {
@@ -257,13 +277,12 @@ impl<S: AuditLogStore + ?Sized> RetentionManager<S> {
         let cutoff = self.policy.cutoff_time();
         let cutoff_str = cutoff.to_rfc3339();
 
-        let old_count = match self.store.as_ref().query_logs(
-            None, None, None, None,
-            None,
-            Some(cutoff_str),
-            None,
-            None,
-        ).await {
+        let old_count = match self
+            .store
+            .as_ref()
+            .query_logs(None, None, None, None, None, Some(cutoff_str), None, None)
+            .await
+        {
             Ok(entries) => entries.len(),
             Err(_) => 0,
         };

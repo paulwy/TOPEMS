@@ -173,7 +173,8 @@ impl ConsulServiceDiscovery {
         if let Some(token) = &self.config.token {
             headers.insert(
                 "X-Consul-Token",
-                reqwest::header::HeaderValue::from_str(token).unwrap_or_else(|_| reqwest::header::HeaderValue::from_static("")),
+                reqwest::header::HeaderValue::from_str(token)
+                    .unwrap_or_else(|_| reqwest::header::HeaderValue::from_static("")),
             );
         }
         headers
@@ -183,7 +184,8 @@ impl ConsulServiceDiscovery {
     fn extract_host_port(base_url: &str) -> Result<(String, u16), ServiceClientError> {
         let url = url::Url::parse(base_url)
             .map_err(|e| ServiceClientError::InvalidUrl(format!("Invalid URL: {}", e)))?;
-        let host = url.host_str()
+        let host = url
+            .host_str()
             .ok_or_else(|| ServiceClientError::InvalidUrl("No host in URL".to_string()))?
             .to_string();
         let port = url.port_or_known_default().unwrap_or(80);
@@ -193,7 +195,11 @@ impl ConsulServiceDiscovery {
     /// Convert a Consul service entry to a ServiceRegistration.
     fn entry_to_registration(entry: &ConsulServiceEntry) -> ServiceRegistration {
         let base_url = if entry.port == 80 || entry.port == 443 {
-            format!("{}://{}", if entry.port == 443 { "https" } else { "http" }, entry.address)
+            format!(
+                "{}://{}",
+                if entry.port == 443 { "https" } else { "http" },
+                entry.address
+            )
         } else {
             format!("http://{}:{}", entry.address, entry.port)
         };
@@ -201,11 +207,15 @@ impl ConsulServiceDiscovery {
         ServiceRegistration {
             name: entry.service.clone(),
             base_url,
-            version: entry.meta.as_ref()
+            version: entry
+                .meta
+                .as_ref()
                 .and_then(|m| m.get("version"))
                 .cloned()
                 .unwrap_or_else(|| "1.0.0".to_string()),
-            description: entry.meta.as_ref()
+            description: entry
+                .meta
+                .as_ref()
                 .and_then(|m| m.get("description"))
                 .cloned()
                 .unwrap_or_default(),
@@ -220,7 +230,8 @@ impl ConsulServiceDiscovery {
     /// Check if a service is healthy by querying Consul's health endpoint.
     async fn is_service_healthy(&self, service_name: &str) -> Result<bool, ServiceClientError> {
         let url = self.build_url(&format!("/v1/health/checks/{}", service_name));
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&url)
             .headers(self.build_headers())
             .send()
@@ -269,7 +280,8 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
         };
 
         let url = self.build_url("/v1/agent/service/register");
-        let response = self.http_client
+        let response = self
+            .http_client
             .put(&url)
             .headers(self.build_headers())
             .json(&consul_registration)
@@ -296,7 +308,10 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
         // Find the service ID from registered services
         let service_id = {
             let mut registered = self.registered_services.lock().unwrap();
-            if let Some(pos) = registered.iter().position(|id| id.starts_with(&format!("{}-", name))) {
+            if let Some(pos) = registered
+                .iter()
+                .position(|id| id.starts_with(&format!("{}-", name)))
+            {
                 registered.remove(pos)
             } else {
                 // If not found in our tracking, try to deregister by name
@@ -305,7 +320,8 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
         };
 
         let url = self.build_url(&format!("/v1/agent/service/deregister/{}", service_id));
-        let response = self.http_client
+        let response = self
+            .http_client
             .put(&url)
             .headers(self.build_headers())
             .send()
@@ -324,9 +340,13 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
         Ok(())
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         let url = self.build_url(&format!("/v1/catalog/service/{}", name));
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&url)
             .headers(self.build_headers())
             .send()
@@ -359,7 +379,8 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
         let url = self.build_url("/v1/catalog/services");
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&url)
             .headers(self.build_headers())
             .send()
@@ -388,7 +409,8 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
         // Consul uses agent checks for heartbeat, so we just verify the service exists
         let url = self.build_url(&format!("/v1/agent/service/{}", name));
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&url)
             .headers(self.build_headers())
             .send()
@@ -501,7 +523,8 @@ mod tests {
 
     #[test]
     fn test_extract_host_port() {
-        let (host, port) = ConsulServiceDiscovery::extract_host_port("http://localhost:8001").unwrap();
+        let (host, port) =
+            ConsulServiceDiscovery::extract_host_port("http://localhost:8001").unwrap();
         assert_eq!(host, "localhost");
         assert_eq!(port, 8001);
     }
@@ -515,7 +538,8 @@ mod tests {
 
     #[test]
     fn test_extract_host_port_https() {
-        let (host, port) = ConsulServiceDiscovery::extract_host_port("https://example.com").unwrap();
+        let (host, port) =
+            ConsulServiceDiscovery::extract_host_port("https://example.com").unwrap();
         assert_eq!(host, "example.com");
         assert_eq!(port, 443);
     }

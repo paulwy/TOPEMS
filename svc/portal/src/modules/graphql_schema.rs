@@ -1,4 +1,5 @@
 #![allow(dead_code)] // Reserved: GraphQL 聚合层模块，待业务接入后启用
+#![allow(ambiguous_glob_reexports, hidden_glob_reexports)] // portal 模块级 glob re-export 设计模式
 //! V33.0 Portal BFF Phase 3: GraphQL 聚合层
 //! V34.0 Portal BFF Phase 4: GraphQL Mutation + Subscription 支持
 //! V35.0 Portal BFF Phase 5: DataLoader 批量加载 + 查询复杂度限制
@@ -34,13 +35,13 @@ use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
-use crate::modules::query_governance::*;
-use crate::modules::rate_limiting::*;
-use crate::modules::schema_versioning::*;
-use crate::modules::graphql_types::*;
-use crate::modules::graphql_helpers::*;
-use crate::modules::graphql_dataloader::*;
-use crate::modules::graphql_cache::*;
+pub use crate::modules::graphql_cache::*;
+pub use crate::modules::graphql_dataloader::*;
+pub use crate::modules::graphql_helpers::*;
+pub use crate::modules::graphql_types::*;
+pub use crate::modules::query_governance::*;
+pub use crate::modules::rate_limiting::*;
+pub use crate::modules::schema_versioning::*;
 use crate::shared::AppState;
 use topems_shared_observability::telemetry::TracedRequestExt;
 
@@ -457,7 +458,6 @@ struct QueryPlan {
     plan: serde_json::Value,
     created_at: DateTime<Utc>,
 }
-
 
 /// V40.0: 查询计划缓存
 /// 缓存查询计划（解析后的查询 AST），避免重复解析相同查询

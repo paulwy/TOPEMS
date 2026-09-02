@@ -1,15 +1,15 @@
 //! Shared module for unified-core service
 //! Contains unified types and utilities for all core modules
 
-pub mod service_client;
 pub mod consul_service_discovery;
+pub mod dns_service_discovery;
 pub mod etcd_service_discovery;
-pub mod zookeeper_service_discovery;
-pub mod nacos_service_discovery;
 pub mod eureka_service_discovery;
 pub mod k8s_service_discovery;
-pub mod dns_service_discovery;
+pub mod nacos_service_discovery;
+pub mod service_client;
 pub mod util;
+pub mod zookeeper_service_discovery;
 
 use axum::extract::FromRef;
 use reqwest::Client;
@@ -18,6 +18,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use tokio::sync::{mpsc, Mutex};
 use topems_shared::AuthState;
 use topems_shared_auth::security::{
     AuditLoggerMiddleware, BodyLimitMiddleware, FieldEncryptionService, SecurityHeadersLayer,
@@ -27,7 +28,6 @@ use topems_shared_core::{
     feature_flag::FeatureFlagService,
     health::{SimpleHealthConfig, SystemMetrics},
 };
-use tokio::sync::{mpsc, Mutex};
 use uuid::Uuid;
 
 use crate::middleware::input_validation::InputValidationConfig;
@@ -61,24 +61,8 @@ pub struct AppState {
     /// V460: Audit log store for persisting permission change audit logs.
     pub audit_logger: Arc<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore>,
     /// V465: Audit log retention policy configuration.
-    pub audit_retention_policy: Arc<Mutex<crate::routes::business_tools::audit_retention::RetentionPolicy>>,
-    /// V468: Audit log archiver used by retention cleanup runs to write
-    ///       old entries to JSON / JSON.gz files before deletion.
-    pub audit_archiver: Arc<crate::routes::business_tools::audit_archiver::AuditLogArchiver>,
-    /// V473: Object-safe controller wrapping the generic retention
-    ///       cleanup task.  Exposes `start` / `stop` / `status` entry
-    ///       points used by the retention HTTP API.  The store is
-    ///       type-erased so it can live in non-generic AppState.
-    pub audit_cleanup_controller: Arc<crate::routes::business_tools::audit_retention_task::AuditCleanupController>,
-    /// V474: Shared config for the periodic audit log export task
-    ///       (interval + batch size).  Stored separately so the export
-    ///       task control API can read/update it without going through
-    ///       the controller.
-    pub audit_export_config: Arc<Mutex<crate::routes::business_tools::audit_export_task::ExportTaskConfig>>,
-    /// V474: Object-safe controller wrapping the generic export task.
-    ///       Exposes `start` / `stop` / `status` / `trigger_once` entry
-    ///       points used by the export task control HTTP API.
-    pub audit_export_controller: Arc<crate::routes::business_tools::audit_export_task::AuditExportController>,
+    pub audit_retention_policy:
+        Arc<Mutex<crate::routes::business_tools::audit_retention::RetentionPolicy>>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -246,7 +230,11 @@ impl SseSessionManager {
         sessions.insert(session_id.clone(), session);
         drop(sessions);
 
-        tracing::info!("SSE session created: {} (total: {})", session_id, self.session_count().await);
+        tracing::info!(
+            "SSE session created: {} (total: {})",
+            session_id,
+            self.session_count().await
+        );
 
         Some((session_id, receiver))
     }

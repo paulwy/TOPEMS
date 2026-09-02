@@ -8,10 +8,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
-use crate::routes::business_tools::permission_audit_log::AuditLogStore;
 use crate::routes::business_tools::audit_archiver::ArchivedEntry;
+use crate::routes::business_tools::permission_audit_log::AuditLogStore;
 
 // ===== Restore Configuration =====
 
@@ -168,7 +168,8 @@ impl AuditLogRestorer {
                 Err(e) => {
                     result.failed_count += 1;
                     result.success = false;
-                    result.error = Some(format!("Failed to restore {}: {}", file_path.display(), e));
+                    result.error =
+                        Some(format!("Failed to restore {}: {}", file_path.display(), e));
                     error!(
                         file = %file_path.display(),
                         error = %e,
@@ -228,8 +229,13 @@ impl AuditLogRestorer {
 
     /// Read and parse an archive file.
     fn read_archive_file(&self, file_path: &Path) -> Result<Vec<ArchivedEntry>, RestoreError> {
-        let content = fs::read_to_string(file_path)
-            .map_err(|e| RestoreError::Io(format!("Failed to read file {}: {}", file_path.display(), e)))?;
+        let content = fs::read_to_string(file_path).map_err(|e| {
+            RestoreError::Io(format!(
+                "Failed to read file {}: {}",
+                file_path.display(),
+                e
+            ))
+        })?;
 
         // Try to parse as JSON array (standard format)
         match serde_json::from_str::<Vec<ArchivedEntry>>(&content) {
@@ -279,9 +285,7 @@ impl AuditLogRestorer {
                 continue;
             }
 
-            let filename = path.file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
+            let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
             // Check if file matches prefix
             if !filename.starts_with(&self.config.file_prefix) {
@@ -299,7 +303,9 @@ impl AuditLogRestorer {
             if let Some(start_date) = &query.start_date {
                 if !filename.contains(start_date) {
                     // Check if file date is after start date
-                    if let Some(file_date) = extract_date_from_filename(filename, &self.config.file_prefix) {
+                    if let Some(file_date) =
+                        extract_date_from_filename(filename, &self.config.file_prefix)
+                    {
                         if file_date.as_str() < start_date.as_str() {
                             continue;
                         }
@@ -308,7 +314,9 @@ impl AuditLogRestorer {
             }
 
             if let Some(end_date) = &query.end_date {
-                if let Some(file_date) = extract_date_from_filename(filename, &self.config.file_prefix) {
+                if let Some(file_date) =
+                    extract_date_from_filename(filename, &self.config.file_prefix)
+                {
                     if file_date.as_str() > end_date.as_str() {
                         continue;
                     }
@@ -335,9 +343,7 @@ impl AuditLogRestorer {
         {
             let entry = entry
                 .map_err(|e| RestoreError::Io(format!("Failed to read directory entry: {}", e)))?;
-            let filename = entry.file_name()
-                .to_string_lossy()
-                .to_string();
+            let filename = entry.file_name().to_string_lossy().to_string();
 
             if filename.starts_with(&self.config.file_prefix) {
                 files.push(filename);
@@ -373,7 +379,10 @@ fn extract_date_from_filename(filename: &str, prefix: &str) -> Option<String> {
     let rest = filename.strip_prefix(prefix)?;
     let rest = rest.strip_prefix('_')?;
     let date_part: String = rest.chars().take(10).collect();
-    if date_part.len() == 10 && date_part.chars().nth(4) == Some('-') && date_part.chars().nth(7) == Some('-') {
+    if date_part.len() == 10
+        && date_part.chars().nth(4) == Some('-')
+        && date_part.chars().nth(7) == Some('-')
+    {
         Some(date_part)
     } else {
         None
@@ -387,8 +396,8 @@ fn extract_date_from_filename(filename: &str, prefix: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
+    use tempfile::TempDir;
 
     fn make_archived_entry(id: &str, created_at: &str) -> ArchivedEntry {
         ArchivedEntry {
@@ -507,9 +516,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let archive_path = temp_dir.path().join("audit_log_2026-01-15.json");
 
-        let entries = vec![
-            make_archived_entry("1", "2026-01-15T10:00:00Z"),
-        ];
+        let entries = vec![make_archived_entry("1", "2026-01-15T10:00:00Z")];
         let json = serde_json::to_string_pretty(&entries).unwrap();
         fs::write(&archive_path, json).unwrap();
 
@@ -518,7 +525,10 @@ mod tests {
         let store = MockAuditLogStore::new();
 
         // Pre-populate store with entry "1"
-        store.record(make_test_entry("1", "2026-01-15T10:00:00Z")).await.unwrap();
+        store
+            .record(make_test_entry("1", "2026-01-15T10:00:00Z"))
+            .await
+            .unwrap();
 
         let query = RestoreQuery {
             start_date: None,

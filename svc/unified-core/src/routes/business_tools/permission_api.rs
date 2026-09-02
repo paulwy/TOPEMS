@@ -10,11 +10,11 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::AppState;
-use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
-use super::permission_store::PermissionStoreError;
 use super::audit_integration::ActorInfo;
 use super::permission_audit_log::AuditLogger;
+use super::permission_store::PermissionStoreError;
+use super::{MaxPermission, TenantPermission, TenantRole, ToolPermission};
+use crate::shared::AppState;
 
 // ===== Request Types =====
 
@@ -171,15 +171,20 @@ impl TryFrom<&PermissionRequest> for TenantPermission {
     type Error = String;
 
     fn try_from(req: &PermissionRequest) -> Result<Self, Self::Error> {
-        let role = TenantRole::from_str(&req.role)
-            .ok_or_else(|| format!("Invalid role: {}", req.role))?;
+        let role =
+            TenantRole::from_str(&req.role).ok_or_else(|| format!("Invalid role: {}", req.role))?;
 
         let tool_permissions = req
             .tool_permissions
             .iter()
             .map(|tp| {
-                let max_permission = MaxPermission::from_str(&tp.max_permission)
-                    .ok_or_else(|| format!("Invalid max_permission for tool {}: {}", tp.tool, tp.max_permission))?;
+                let max_permission =
+                    MaxPermission::from_str(&tp.max_permission).ok_or_else(|| {
+                        format!(
+                            "Invalid max_permission for tool {}: {}",
+                            tp.tool, tp.max_permission
+                        )
+                    })?;
                 Ok(ToolPermission {
                     tool: tp.tool.clone(),
                     allowed_operations: tp.allowed_operations.clone(),
@@ -213,7 +218,10 @@ fn map_store_error(err: PermissionStoreError) -> (StatusCode, Json<ErrorResponse
         PermissionStoreError::AlreadyExists(tenant, user) => (
             StatusCode::CONFLICT,
             Json(ErrorResponse {
-                error: format!("Permission already exists for tenant={}, user={}", tenant, user),
+                error: format!(
+                    "Permission already exists for tenant={}, user={}",
+                    tenant, user
+                ),
                 code: Some("ALREADY_EXISTS".to_string()),
             }),
         ),
@@ -242,16 +250,15 @@ pub async fn create_permission(
     headers: HeaderMap,
     Json(request): Json<PermissionRequest>,
 ) -> Result<(StatusCode, Json<PermissionResponse>), (StatusCode, Json<ErrorResponse>)> {
-    let permission = TenantPermission::try_from(&request)
-        .map_err(|msg| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(ErrorResponse {
-                    error: msg,
-                    code: Some("INVALID_REQUEST".to_string()),
-                }),
-            )
-        })?;
+    let permission = TenantPermission::try_from(&request).map_err(|msg| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: msg,
+                code: Some("INVALID_REQUEST".to_string()),
+            }),
+        )
+    })?;
 
     state
         .permission_store
@@ -262,7 +269,15 @@ pub async fn create_permission(
     // Record audit log using AppState's audit_logger
     let actor = ActorInfo::from_headers(&headers);
     let audit_logger = AuditLogger::new(state.audit_logger.clone());
-    if let Err(e) = audit_logger.log_create(&permission, &actor.changed_by, actor.ip_address.as_deref(), actor.user_agent.as_deref()).await {
+    if let Err(e) = audit_logger
+        .log_create(
+            &permission,
+            &actor.changed_by,
+            actor.ip_address.as_deref(),
+            actor.user_agent.as_deref(),
+        )
+        .await
+    {
         tracing::warn!("Failed to record create audit log: {}", e);
     }
 
@@ -288,7 +303,10 @@ pub async fn get_permission(
         None => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {
-                error: format!("Permission not found for tenant={}, user={}", tenant_id, user_id),
+                error: format!(
+                    "Permission not found for tenant={}, user={}",
+                    tenant_id, user_id
+                ),
                 code: Some("NOT_FOUND".to_string()),
             }),
         )),
@@ -313,16 +331,15 @@ pub async fn update_permission(
         ));
     }
 
-    let permission = TenantPermission::try_from(&request)
-        .map_err(|msg| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(ErrorResponse {
-                    error: msg,
-                    code: Some("INVALID_REQUEST".to_string()),
-                }),
-            )
-        })?;
+    let permission = TenantPermission::try_from(&request).map_err(|msg| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: msg,
+                code: Some("INVALID_REQUEST".to_string()),
+            }),
+        )
+    })?;
 
     // Get old permission for audit log
     let old_permission = state
@@ -342,7 +359,16 @@ pub async fn update_permission(
     let actor = ActorInfo::from_headers(&headers);
     if let Some(old_perm) = old_permission {
         let audit_logger = AuditLogger::new(state.audit_logger.clone());
-        if let Err(e) = audit_logger.log_update(&old_perm, &permission, &actor.changed_by, actor.ip_address.as_deref(), actor.user_agent.as_deref()).await {
+        if let Err(e) = audit_logger
+            .log_update(
+                &old_perm,
+                &permission,
+                &actor.changed_by,
+                actor.ip_address.as_deref(),
+                actor.user_agent.as_deref(),
+            )
+            .await
+        {
             tracing::warn!("Failed to record update audit log: {}", e);
         }
     }
@@ -374,7 +400,15 @@ pub async fn delete_permission(
     if let Some(perm) = permission {
         let actor = ActorInfo::from_headers(&headers);
         let audit_logger = AuditLogger::new(state.audit_logger.clone());
-        if let Err(e) = audit_logger.log_delete(&perm, &actor.changed_by, actor.ip_address.as_deref(), actor.user_agent.as_deref()).await {
+        if let Err(e) = audit_logger
+            .log_delete(
+                &perm,
+                &actor.changed_by,
+                actor.ip_address.as_deref(),
+                actor.user_agent.as_deref(),
+            )
+            .await
+        {
             tracing::warn!("Failed to record delete audit log: {}", e);
         }
     }
@@ -393,10 +427,8 @@ pub async fn list_tenant_permissions(
         .await
         .map_err(map_store_error)?;
 
-    let responses: Vec<PermissionResponse> = permissions
-        .iter()
-        .map(PermissionResponse::from)
-        .collect();
+    let responses: Vec<PermissionResponse> =
+        permissions.iter().map(PermissionResponse::from).collect();
 
     Ok(Json(PermissionListResponse {
         total: responses.len(),
@@ -415,10 +447,8 @@ pub async fn list_user_permissions(
         .await
         .map_err(map_store_error)?;
 
-    let responses: Vec<PermissionResponse> = permissions
-        .iter()
-        .map(PermissionResponse::from)
-        .collect();
+    let responses: Vec<PermissionResponse> =
+        permissions.iter().map(PermissionResponse::from).collect();
 
     Ok(Json(PermissionListResponse {
         total: responses.len(),
@@ -433,7 +463,12 @@ pub async fn check_permission(
 ) -> Result<Json<PermissionCheckResponse>, (StatusCode, Json<ErrorResponse>)> {
     let allowed = state
         .permission_store
-        .check_permission(&request.tenant_id, &request.user_id, &request.tool, &request.operation)
+        .check_permission(
+            &request.tenant_id,
+            &request.user_id,
+            &request.tool,
+            &request.operation,
+        )
         .await
         .map_err(map_store_error)?;
 

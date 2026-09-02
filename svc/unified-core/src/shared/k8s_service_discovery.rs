@@ -73,20 +73,21 @@ impl K8sConfig {
     /// in-cluster locations, and uses the KUBERNETES_SERVICE_HOST and
     /// KUBERNETES_SERVICE_PORT environment variables for the API server URL.
     pub fn from_in_cluster() -> Result<Self, ServiceClientError> {
-        let host = std::env::var("KUBERNETES_SERVICE_HOST")
-            .map_err(|_| ServiceClientError::OperationFailed(
-                "KUBERNETES_SERVICE_HOST not set (not running in cluster)".to_string()
-            ))?;
-        let port = std::env::var("KUBERNETES_SERVICE_PORT")
-            .unwrap_or_else(|_| "443".to_string());
+        let host = std::env::var("KUBERNETES_SERVICE_HOST").map_err(|_| {
+            ServiceClientError::OperationFailed(
+                "KUBERNETES_SERVICE_HOST not set (not running in cluster)".to_string(),
+            )
+        })?;
+        let port = std::env::var("KUBERNETES_SERVICE_PORT").unwrap_or_else(|_| "443".to_string());
 
         let token = std::fs::read_to_string("/var/run/secrets/kubernetes.io/serviceaccount/token")
             .ok()
             .map(|s| s.trim().to_string());
 
-        let namespace = std::fs::read_to_string("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
-            .map(|s| s.trim().to_string())
-            .unwrap_or_else(|_| default_namespace());
+        let namespace =
+            std::fs::read_to_string("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+                .map(|s| s.trim().to_string())
+                .unwrap_or_else(|_| default_namespace());
 
         Ok(Self {
             api_server: format!("https://{}:{}", host, port),
@@ -202,6 +203,7 @@ struct K8sServiceList {
 ///
 /// ```rust
 /// use topems_unified_core::shared::k8s_service_discovery::{K8sConfig, K8sServiceDiscovery};
+/// use topems_unified_core::shared::service_client::ServiceDiscovery;
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// // In-cluster configuration (auto-detected)
@@ -238,9 +240,7 @@ impl K8sServiceDiscovery {
             }
         }
 
-        let http_client = builder
-            .build()
-            .map_err(ServiceClientError::RequestFailed)?;
+        let http_client = builder.build().map_err(ServiceClientError::RequestFailed)?;
 
         Ok(Self {
             config,
@@ -281,9 +281,15 @@ impl K8sServiceDiscovery {
             let base_url = format!("http://{}:{}", address.ip, port.port);
 
             let mut metadata: HashMap<String, String> = HashMap::new();
-            metadata.insert("namespace".to_string(), endpoints.metadata.namespace.clone());
+            metadata.insert(
+                "namespace".to_string(),
+                endpoints.metadata.namespace.clone(),
+            );
             metadata.insert("service_name".to_string(), endpoints.metadata.name.clone());
-            metadata.insert("node_name".to_string(), address.node_name.clone().unwrap_or_default());
+            metadata.insert(
+                "node_name".to_string(),
+                address.node_name.clone().unwrap_or_default(),
+            );
             if let Some(target_ref) = &address.target_ref {
                 metadata.insert("pod_name".to_string(), target_ref.name.clone());
             }
@@ -293,17 +299,25 @@ impl K8sServiceDiscovery {
             metadata.insert("protocol".to_string(), port.protocol.clone());
 
             // Extract version from labels if present
-            let version = endpoints.metadata.labels.get("version")
+            let version = endpoints
+                .metadata
+                .labels
+                .get("version")
                 .cloned()
                 .unwrap_or_else(|| "1.0.0".to_string());
 
             // Extract description from annotations if present
-            let description = endpoints.metadata.annotations.get("description")
+            let description = endpoints
+                .metadata
+                .annotations
+                .get("description")
                 .cloned()
                 .unwrap_or_default();
 
             // Extract tags from labels
-            let tags: Vec<String> = endpoints.metadata.labels
+            let tags: Vec<String> = endpoints
+                .metadata
+                .labels
                 .iter()
                 .filter(|(k, _)| k.starts_with("tag-"))
                 .map(|(k, v)| format!("{}={}", k.trim_start_matches("tag-"), v))
@@ -347,15 +361,23 @@ impl K8sServiceDiscovery {
         }
         metadata.insert("protocol".to_string(), port.protocol.clone());
 
-        let version = service.metadata.labels.get("version")
+        let version = service
+            .metadata
+            .labels
+            .get("version")
             .cloned()
             .unwrap_or_else(|| "1.0.0".to_string());
 
-        let description = service.metadata.annotations.get("description")
+        let description = service
+            .metadata
+            .annotations
+            .get("description")
             .cloned()
             .unwrap_or_default();
 
-        let tags: Vec<String> = service.metadata.labels
+        let tags: Vec<String> = service
+            .metadata
+            .labels
             .iter()
             .filter(|(k, _)| k.starts_with("tag-"))
             .map(|(k, v)| format!("{}={}", k.trim_start_matches("tag-"), v))
@@ -395,7 +417,10 @@ impl ServiceDiscovery for K8sServiceDiscovery {
         ))
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         // First try to get Endpoints (actual pod IPs)
         let url = self.build_url(&format!(
             "/api/v1/namespaces/{}/endpoints/{}",
@@ -403,7 +428,10 @@ impl ServiceDiscovery for K8sServiceDiscovery {
         ));
 
         let request = self.add_auth(self.http_client.get(&url));
-        let response = request.send().await.map_err(ServiceClientError::RequestFailed)?;
+        let response = request
+            .send()
+            .await
+            .map_err(ServiceClientError::RequestFailed)?;
 
         if response.status() == 404 {
             // Try Service resource (ClusterIP) as fallback
@@ -438,7 +466,10 @@ impl ServiceDiscovery for K8sServiceDiscovery {
         }
 
         let request = self.add_auth(self.http_client.get(&url));
-        let response = request.send().await.map_err(ServiceClientError::RequestFailed)?;
+        let response = request
+            .send()
+            .await
+            .map_err(ServiceClientError::RequestFailed)?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -454,7 +485,8 @@ impl ServiceDiscovery for K8sServiceDiscovery {
             .await
             .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
 
-        let services: Vec<ServiceRegistration> = endpoints_list.items
+        let services: Vec<ServiceRegistration> = endpoints_list
+            .items
             .iter()
             .filter_map(Self::endpoints_to_registration)
             .collect();
@@ -471,14 +503,20 @@ impl ServiceDiscovery for K8sServiceDiscovery {
 
 impl K8sServiceDiscovery {
     /// Discover a service via the Service resource (ClusterIP) as fallback.
-    async fn discover_via_service(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover_via_service(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         let url = self.build_url(&format!(
             "/api/v1/namespaces/{}/services/{}",
             self.config.namespace, name
         ));
 
         let request = self.add_auth(self.http_client.get(&url));
-        let response = request.send().await.map_err(ServiceClientError::RequestFailed)?;
+        let response = request
+            .send()
+            .await
+            .map_err(ServiceClientError::RequestFailed)?;
 
         if response.status() == 404 {
             return Ok(None);
@@ -603,7 +641,10 @@ mod tests {
         let config = K8sConfig::default();
         let discovery = K8sServiceDiscovery::new(config).unwrap();
         let url = discovery.build_url("/api/v1/namespaces/default/endpoints/test");
-        assert_eq!(url, "https://kubernetes.default.svc/api/v1/namespaces/default/endpoints/test");
+        assert_eq!(
+            url,
+            "https://kubernetes.default.svc/api/v1/namespaces/default/endpoints/test"
+        );
     }
 
     #[test]

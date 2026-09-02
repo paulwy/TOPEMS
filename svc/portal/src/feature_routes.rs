@@ -425,10 +425,10 @@ pub fn build_feature_routes(
 
                     // V39.0 Track E: 基于查询复杂度设置差异化 Cache-Control 头
                     let cache_tier =
-                        modules::graphql_schema::determine_cache_tier_for_query(&query_clone);
+                        modules::graphql_cache::determine_cache_tier_for_query(&query_clone);
                     let cache_control =
                         axum::http::HeaderValue::from_static(
-                            modules::graphql_schema::cache_control_header(cache_tier),
+                            modules::graphql_cache::cache_control_header(cache_tier),
                         );
 
                     (

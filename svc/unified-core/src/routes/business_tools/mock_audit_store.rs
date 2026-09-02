@@ -62,10 +62,7 @@ impl AuditLogStore for MockAuditLogStore {
         Ok(())
     }
 
-    async fn query(
-        &self,
-        query: &AuditLogQuery,
-    ) -> Result<AuditLogResponse, AuditLogError> {
+    async fn query(&self, query: &AuditLogQuery) -> Result<AuditLogResponse, AuditLogError> {
         let entries = self.entries.lock().unwrap();
         let mut filtered: Vec<AuditLogEntry> = entries
             .iter()
@@ -87,18 +84,6 @@ impl AuditLogStore for MockAuditLogStore {
                 }
                 if let Some(changed_by) = &query.changed_by {
                     if &e.changed_by != changed_by {
-                        return false;
-                    }
-                }
-                // RFC3339 timestamps sort correctly lexicographically, so
-                // string comparison is a valid time-range filter here.
-                if let Some(start_time) = &query.start_time {
-                    if e.changed_at.as_str() < start_time.as_str() {
-                        return false;
-                    }
-                }
-                if let Some(end_time) = &query.end_time {
-                    if e.changed_at.as_str() > end_time.as_str() {
                         return false;
                     }
                 }

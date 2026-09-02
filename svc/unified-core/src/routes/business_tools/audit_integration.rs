@@ -12,7 +12,7 @@ use axum::http::HeaderMap;
 use super::permission_audit_log::{
     AuditAction, AuditLogEntry, AuditLogStore, AuditLogger, InMemoryAuditLogStore,
 };
-use super::{TenantPermission};
+use super::TenantPermission;
 
 // ===== Actor Information =====
 

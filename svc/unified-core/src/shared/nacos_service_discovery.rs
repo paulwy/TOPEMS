@@ -180,6 +180,7 @@ struct NacosServiceMetadata {
 ///
 /// ```rust
 /// use topems_unified_core::shared::nacos_service_discovery::{NacosConfig, NacosServiceDiscovery};
+/// use topems_unified_core::shared::service_client::{ServiceDiscovery, ServiceRegistration};
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let config = NacosConfig {
@@ -252,7 +253,8 @@ impl NacosServiceDiscovery {
     fn extract_host_port(base_url: &str) -> Result<(String, u16), ServiceClientError> {
         let url = url::Url::parse(base_url)
             .map_err(|e| ServiceClientError::InvalidUrl(format!("Invalid URL: {}", e)))?;
-        let host = url.host_str()
+        let host = url
+            .host_str()
             .ok_or_else(|| ServiceClientError::InvalidUrl("No host in URL".to_string()))?
             .to_string();
         let port = url.port_or_known_default().unwrap_or(80);
@@ -292,9 +294,13 @@ impl NacosServiceDiscovery {
         };
 
         let (version, description, tags) = if let Some(metadata) = &instance.metadata {
-            let version = metadata.get("version").cloned().unwrap_or_else(|| "1.0.0".to_string());
+            let version = metadata
+                .get("version")
+                .cloned()
+                .unwrap_or_else(|| "1.0.0".to_string());
             let description = metadata.get("description").cloned().unwrap_or_default();
-            let tags = metadata.get("tags")
+            let tags = metadata
+                .get("tags")
                 .and_then(|t| serde_json::from_str(t).ok())
                 .unwrap_or_default();
             (version, description, tags)
@@ -332,7 +338,8 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         params.push(("metadata".to_string(), Self::encode_metadata(&registration)));
 
         let url = self.build_url("/nacos/v1/ns/instance");
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .form(&params)
             .send()
@@ -363,9 +370,7 @@ impl ServiceDiscovery for NacosServiceDiscovery {
     }
 
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = {
-            self.registered_services.lock().unwrap().get(name).cloned()
-        };
+        let service_info = { self.registered_services.lock().unwrap().get(name).cloned() };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));
@@ -378,7 +383,8 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         params.push(("ephemeral".to_string(), "true".to_string()));
 
         let url = self.build_url("/nacos/v1/ns/instance");
-        let response = self.http_client
+        let response = self
+            .http_client
             .delete(&url)
             .query(&params)
             .send()
@@ -400,13 +406,17 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         Ok(())
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         let mut params = self.common_params();
         params.push(("serviceName".to_string(), name.to_string()));
         params.push(("healthyOnly".to_string(), "true".to_string()));
 
         let url = self.build_url("/nacos/v1/ns/instance/list");
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&url)
             .query(&params)
             .send()
@@ -434,7 +444,7 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         }
 
         // If no healthy instances, return the first one
-        Ok(hosts.first().map(|instance| Self::instance_to_registration(instance)))
+        Ok(hosts.first().map(Self::instance_to_registration))
     }
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
@@ -454,9 +464,7 @@ impl ServiceDiscovery for NacosServiceDiscovery {
     }
 
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = {
-            self.registered_services.lock().unwrap().get(name).cloned()
-        };
+        let service_info = { self.registered_services.lock().unwrap().get(name).cloned() };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));
@@ -480,7 +488,8 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         params.push(("beat".to_string(), beat_json));
 
         let url = self.build_url("/nacos/v1/ns/instance/beat");
-        let response = self.http_client
+        let response = self
+            .http_client
             .put(&url)
             .form(&params)
             .send()
@@ -591,7 +600,8 @@ mod tests {
 
     #[test]
     fn test_extract_host_port() {
-        let (host, port) = NacosServiceDiscovery::extract_host_port("http://localhost:8001").unwrap();
+        let (host, port) =
+            NacosServiceDiscovery::extract_host_port("http://localhost:8001").unwrap();
         assert_eq!(host, "localhost");
         assert_eq!(port, 8001);
     }

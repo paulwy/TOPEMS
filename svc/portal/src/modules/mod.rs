@@ -23,7 +23,6 @@ pub mod notifications;
 pub mod orchestration;
 pub mod persisted_query;
 pub mod portal_plugin;
-pub mod preferences;
 pub mod query_governance;
 pub mod query_optimizer;
 pub mod quick_actions;

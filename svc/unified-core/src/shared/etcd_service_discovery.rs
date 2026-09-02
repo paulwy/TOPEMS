@@ -153,6 +153,7 @@ struct EtcdServiceData {
 ///
 /// ```rust
 /// use topems_unified_core::shared::etcd_service_discovery::{EtcdConfig, EtcdServiceDiscovery};
+/// use topems_unified_core::shared::service_client::{ServiceDiscovery, ServiceRegistration};
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let config = EtcdConfig {
@@ -213,7 +214,11 @@ impl EtcdServiceDiscovery {
 
     /// Get the etcd key for a service.
     fn service_key(&self, service_name: &str) -> String {
-        format!("{}/{}", self.config.key_prefix.trim_end_matches('/'), service_name)
+        format!(
+            "{}/{}",
+            self.config.key_prefix.trim_end_matches('/'),
+            service_name
+        )
     }
 
     /// Get the range end for listing all services (prefix + 1).
@@ -250,7 +255,8 @@ impl EtcdServiceDiscovery {
             ttl: self.config.lease_ttl_secs,
         };
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .headers(self.build_headers())
             .json(&request)
@@ -282,7 +288,8 @@ impl EtcdServiceDiscovery {
             id: lease_id.to_string(),
         };
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .headers(self.build_headers())
             .json(&request)
@@ -303,7 +310,12 @@ impl EtcdServiceDiscovery {
     }
 
     /// Put a key-value pair into etcd.
-    async fn put_key(&self, key: &str, value: &str, lease_id: Option<&str>) -> Result<(), ServiceClientError> {
+    async fn put_key(
+        &self,
+        key: &str,
+        value: &str,
+        lease_id: Option<&str>,
+    ) -> Result<(), ServiceClientError> {
         let url = self.build_url("/v3/kv/put");
         let request = EtcdPutRequest {
             key: Self::base64_encode(key),
@@ -311,7 +323,8 @@ impl EtcdServiceDiscovery {
             lease_id: lease_id.map(|s| s.to_string()),
         };
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .headers(self.build_headers())
             .json(&request)
@@ -339,7 +352,8 @@ impl EtcdServiceDiscovery {
             range_end: None,
         };
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .headers(self.build_headers())
             .json(&request)
@@ -366,7 +380,8 @@ impl EtcdServiceDiscovery {
             "key": Self::base64_encode(key),
         });
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .headers(self.build_headers())
             .json(&request)
@@ -403,7 +418,8 @@ impl EtcdServiceDiscovery {
             "range_end": Self::base64_encode(&self.range_end()),
         });
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .headers(self.build_headers())
             .json(&request)
@@ -435,7 +451,9 @@ impl EtcdServiceDiscovery {
     }
 
     /// Convert a ServiceRegistration to etcd service data JSON.
-    fn registration_to_data(registration: &ServiceRegistration) -> Result<String, ServiceClientError> {
+    fn registration_to_data(
+        registration: &ServiceRegistration,
+    ) -> Result<String, ServiceClientError> {
         let data = EtcdServiceData {
             name: registration.name.clone(),
             base_url: registration.base_url.clone(),
@@ -448,8 +466,7 @@ impl EtcdServiceDiscovery {
             last_heartbeat: registration.last_heartbeat.clone(),
         };
 
-        serde_json::to_string(&data)
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))
+        serde_json::to_string(&data).map_err(|e| ServiceClientError::ParseFailed(e.to_string()))
     }
 
     /// Convert etcd service data JSON to ServiceRegistration.
@@ -507,7 +524,10 @@ impl ServiceDiscovery for EtcdServiceDiscovery {
         Ok(())
     }
 
-    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+    async fn discover(
+        &self,
+        name: &str,
+    ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
         let key = self.service_key(name);
         let value = self.get_key(&key).await?;
 

@@ -290,10 +290,7 @@ impl AuditLogStore for InMemoryAuditLogStore {
         // Apply pagination
         let start = query.offset.min(total);
         let end = (start + query.limit).min(total);
-        let page: Vec<AuditLogEntry> = filtered[start..end]
-            .iter()
-            .map(|e| (*e).clone())
-            .collect();
+        let page: Vec<AuditLogEntry> = filtered[start..end].iter().map(|e| (*e).clone()).collect();
 
         Ok(AuditLogResponse {
             total,
@@ -369,10 +366,7 @@ impl AuditLogStore for InMemoryAuditLogStore {
         let total = filtered.len();
         let start = offset.unwrap_or(0).min(total);
         let end = limit.map(|l| (start + l).min(total)).unwrap_or(total);
-        let page: Vec<AuditLogEntry> = filtered[start..end]
-            .iter()
-            .map(|e| (*e).clone())
-            .collect();
+        let page: Vec<AuditLogEntry> = filtered[start..end].iter().map(|e| (*e).clone()).collect();
 
         Ok(page)
     }
@@ -455,8 +449,12 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
             tenant_id: new_permission.tenant_id.clone(),
             user_id: new_permission.user_id.clone(),
             action,
-            old_value: Some(serde_json::to_value(old_permission).unwrap_or(serde_json::Value::Null)),
-            new_value: Some(serde_json::to_value(new_permission).unwrap_or(serde_json::Value::Null)),
+            old_value: Some(
+                serde_json::to_value(old_permission).unwrap_or(serde_json::Value::Null),
+            ),
+            new_value: Some(
+                serde_json::to_value(new_permission).unwrap_or(serde_json::Value::Null),
+            ),
             changed_by: changed_by.to_string(),
             changed_at: chrono::Utc::now().to_rfc3339(),
             ip_address: ip_address.map(|s| s.to_string()),
@@ -503,7 +501,11 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
             id: Self::generate_id(),
             tenant_id: permission.tenant_id.clone(),
             user_id: permission.user_id.clone(),
-            action: if activated { AuditAction::Activate } else { AuditAction::Deactivate },
+            action: if activated {
+                AuditAction::Activate
+            } else {
+                AuditAction::Deactivate
+            },
             old_value: None,
             new_value: Some(serde_json::to_value(permission).unwrap_or(serde_json::Value::Null)),
             changed_by: changed_by.to_string(),
@@ -548,12 +550,30 @@ mod tests {
 
     #[test]
     fn test_audit_action_from_str() {
-        assert_eq!("create".parse::<AuditAction>().unwrap(), AuditAction::Create);
-        assert_eq!("update".parse::<AuditAction>().unwrap(), AuditAction::Update);
-        assert_eq!("delete".parse::<AuditAction>().unwrap(), AuditAction::Delete);
-        assert_eq!("activate".parse::<AuditAction>().unwrap(), AuditAction::Activate);
-        assert_eq!("deactivate".parse::<AuditAction>().unwrap(), AuditAction::Deactivate);
-        assert_eq!("role_change".parse::<AuditAction>().unwrap(), AuditAction::RoleChange);
+        assert_eq!(
+            "create".parse::<AuditAction>().unwrap(),
+            AuditAction::Create
+        );
+        assert_eq!(
+            "update".parse::<AuditAction>().unwrap(),
+            AuditAction::Update
+        );
+        assert_eq!(
+            "delete".parse::<AuditAction>().unwrap(),
+            AuditAction::Delete
+        );
+        assert_eq!(
+            "activate".parse::<AuditAction>().unwrap(),
+            AuditAction::Activate
+        );
+        assert_eq!(
+            "deactivate".parse::<AuditAction>().unwrap(),
+            AuditAction::Deactivate
+        );
+        assert_eq!(
+            "role_change".parse::<AuditAction>().unwrap(),
+            AuditAction::RoleChange
+        );
         assert!("invalid".parse::<AuditAction>().is_err());
     }
 
@@ -571,7 +591,10 @@ mod tests {
         let logger = AuditLogger::new(Arc::new(store));
 
         let permission = TenantPermission::owner("tenant-1", "user-1");
-        logger.log_create(&permission, "admin", Some("127.0.0.1"), Some("test-agent")).await.unwrap();
+        logger
+            .log_create(&permission, "admin", Some("127.0.0.1"), Some("test-agent"))
+            .await
+            .unwrap();
 
         let count = logger.count().await.unwrap();
         assert_eq!(count, 1);
@@ -592,8 +615,14 @@ mod tests {
 
         let perm1 = TenantPermission::owner("tenant-1", "user-1");
         let perm2 = TenantPermission::owner("tenant-2", "user-2");
-        logger.log_create(&perm1, "admin", None, None).await.unwrap();
-        logger.log_create(&perm2, "admin", None, None).await.unwrap();
+        logger
+            .log_create(&perm1, "admin", None, None)
+            .await
+            .unwrap();
+        logger
+            .log_create(&perm2, "admin", None, None)
+            .await
+            .unwrap();
 
         let query = AuditLogQuery {
             tenant_id: Some("tenant-1".to_string()),
@@ -639,7 +668,10 @@ mod tests {
 
         let old_perm = TenantPermission::member("tenant-1", "user-1");
         let new_perm = TenantPermission::admin("tenant-1", "user-1");
-        logger.log_update(&old_perm, &new_perm, "admin", None, None).await.unwrap();
+        logger
+            .log_update(&old_perm, &new_perm, "admin", None, None)
+            .await
+            .unwrap();
 
         let response = logger.query(&AuditLogQuery::default()).await.unwrap();
         assert_eq!(response.entries[0].action, AuditAction::RoleChange);

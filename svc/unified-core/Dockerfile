@@ -5,22 +5,27 @@
 # ============================================
 # Stage 1: Build
 # ============================================
-FROM rust:nightly-2026-07-01-alpine AS builder
+FROM rust:alpine AS builder
 
 WORKDIR /app
 
 # Install build dependencies
-RUN apk add --no-cache musl-dev openssl-dev pkgconfig
+RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig protobuf
 
 # Copy workspace files for dependency caching
 COPY Cargo.toml Cargo.lock ./
 COPY lib ./lib
-COPY svc/unified-core ./svc/unified-core
+COPY svc ./svc
+COPY tools ./tools
+COPY .sqlx ./.sqlx
+ENV SQLX_OFFLINE=true
 
 # Build only unified-core to save time
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/app/target \
-    cargo build --release -p topems-unified-core
+    cargo build --release -p topems-unified-core && \
+    mkdir -p /app/out && \
+    cp $(find /app/target -name topems-unified-core -type f | head -1) /app/out/topems-unified-core
 
 # ============================================
 # Stage 2: Runtime
@@ -36,7 +41,7 @@ RUN addgroup -S topems && adduser -S topems -G topems
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/target/release/topems-unified-core /usr/local/bin/topems-unified-core
+COPY --from=builder /app/out/topems-unified-core /usr/local/bin/topems-unified-core
 
 # Set ownership
 RUN chown -R topems:topems /app

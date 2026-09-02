@@ -10,25 +10,21 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use super::permission_store::{InMemoryPermissionStore, PermissionStore};
 use super::database_permission_store::DatabasePermissionStore;
+use super::permission_store::{InMemoryPermissionStore, PermissionStore};
 
 // ===== Permission Store Configuration =====
 
 /// Type of permission store to use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum PermissionStoreType {
     /// In-memory permission store (suitable for testing and single-instance deployments).
+    #[default]
     Memory,
     /// PostgreSQL-backed permission store (suitable for multi-instance deployments).
     Database,
-}
-
-impl Default for PermissionStoreType {
-    fn default() -> Self {
-        Self::Memory
-    }
 }
 
 impl std::fmt::Display for PermissionStoreType {
@@ -236,10 +232,22 @@ mod tests {
 
     #[test]
     fn test_permission_store_type_from_str() {
-        assert_eq!("memory".parse::<PermissionStoreType>().unwrap(), PermissionStoreType::Memory);
-        assert_eq!("database".parse::<PermissionStoreType>().unwrap(), PermissionStoreType::Database);
-        assert_eq!("db".parse::<PermissionStoreType>().unwrap(), PermissionStoreType::Database);
-        assert_eq!("postgres".parse::<PermissionStoreType>().unwrap(), PermissionStoreType::Database);
+        assert_eq!(
+            "memory".parse::<PermissionStoreType>().unwrap(),
+            PermissionStoreType::Memory
+        );
+        assert_eq!(
+            "database".parse::<PermissionStoreType>().unwrap(),
+            PermissionStoreType::Database
+        );
+        assert_eq!(
+            "db".parse::<PermissionStoreType>().unwrap(),
+            PermissionStoreType::Database
+        );
+        assert_eq!(
+            "postgres".parse::<PermissionStoreType>().unwrap(),
+            PermissionStoreType::Database
+        );
         assert!("invalid".parse::<PermissionStoreType>().is_err());
     }
 

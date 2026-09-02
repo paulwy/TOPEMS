@@ -10,9 +10,9 @@ use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::AppState;
+use super::permission_api::{ErrorResponse, PermissionRequest, PermissionResponse};
 use super::TenantPermission;
-use super::permission_api::{PermissionRequest, PermissionResponse, ErrorResponse};
+use crate::shared::AppState;
 
 // ===== Batch Request Types =====
 
@@ -125,7 +125,11 @@ pub async fn batch_create_permissions(
     for req in &request.permissions {
         match try_convert(req) {
             Ok(permission) => {
-                match state.permission_store.create_permission(permission.clone()).await {
+                match state
+                    .permission_store
+                    .create_permission(permission.clone())
+                    .await
+                {
                     Ok(_) => {
                         created.push(PermissionResponse::from(&permission));
                     }
@@ -174,7 +178,11 @@ pub async fn batch_update_permissions(
     for req in &request.permissions {
         match try_convert(req) {
             Ok(permission) => {
-                match state.permission_store.update_permission(permission.clone()).await {
+                match state
+                    .permission_store
+                    .update_permission(permission.clone())
+                    .await
+                {
                     Ok(_) => {
                         updated.push(PermissionResponse::from(&permission));
                     }
@@ -221,7 +229,11 @@ pub async fn batch_delete_permissions(
     let mut succeeded = 0;
 
     for item in &request.permissions {
-        match state.permission_store.delete_permission(&item.tenant_id, &item.user_id).await {
+        match state
+            .permission_store
+            .delete_permission(&item.tenant_id, &item.user_id)
+            .await
+        {
             Ok(_) => {
                 succeeded += 1;
             }
@@ -251,13 +263,12 @@ pub async fn batch_delete_permissions(
 
 /// Create permission batch operation routes.
 pub fn permission_batch_routes() -> Router<AppState> {
-    Router::new()
-        .route(
-            "/business-tools/permissions/batch",
-            axum::routing::post(batch_create_permissions)
-                .put(batch_update_permissions)
-                .delete(batch_delete_permissions),
-        )
+    Router::new().route(
+        "/business-tools/permissions/batch",
+        axum::routing::post(batch_create_permissions)
+            .put(batch_update_permissions)
+            .delete(batch_delete_permissions),
+    )
 }
 
 #[cfg(test)]
