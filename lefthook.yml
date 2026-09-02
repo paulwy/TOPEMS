@@ -13,7 +13,7 @@ pre-commit:
     frontend-typecheck:
       tags: frontend typecheck
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json)$' || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/.*\.(ts|tsx|js|jsx|cjs|mjs|json)$' || true)
         [ -z "$STAGED" ] && exit 0
         pnpm --filter topems-portal typecheck
 
@@ -21,7 +21,7 @@ pre-commit:
     i18n-quality:
       tags: frontend i18n
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json)$' || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/.*\.(ts|tsx|js|jsx|cjs|mjs|json)$' || true)
         [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/check-i18n-quality.cjs" ]; then
           node scripts/ci/check-i18n-quality.cjs --strict
@@ -31,7 +31,7 @@ pre-commit:
     glossary-verify:
       tags: frontend i18n glossary
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json|csv)$' || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/.*\.(ts|tsx|js|jsx|cjs|mjs|json|csv)$' || true)
         [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/verify-glossary.cjs" ]; then
           node scripts/ci/verify-glossary.cjs --strict
