@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -61,7 +62,8 @@ pub async fn list_rooms(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let result = sqlx::query_as::<_, MeetingRoom>(
+    let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, name, capacity, location, facilities, status, created_at, updated_at
         FROM meeting_rooms
@@ -69,8 +71,8 @@ pub async fn list_rooms(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -80,13 +82,14 @@ pub async fn list_rooms(
 
     match result {
         Ok(rooms) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"
                 SELECT COUNT(*) FROM meeting_rooms
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -129,11 +132,11 @@ pub async fn create_room(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, MeetingRoom>(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, 'available', $6, $7)
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.name)
@@ -206,12 +209,13 @@ pub async fn get_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MeetingRoom>> {
-    let result = sqlx::query_as::<_, MeetingRoom>(
+    let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, name, capacity, location, facilities, status, created_at, updated_at
         FROM meeting_rooms WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -247,7 +251,7 @@ pub async fn update_room(
     Json(req): Json<UpdateMeetingRoomRequest>,
 ) -> Json<ApiResponse<MeetingRoom>> {
     let existing = sqlx::query_as::<_, MeetingRoom>(
-        "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -268,14 +272,15 @@ pub async fn update_room(
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, MeetingRoom>(
+    let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
+        "erp",
         r#"
         UPDATE meeting_rooms SET
             name = $2, capacity = $3, location = $4, facilities = $5, status = $6, updated_at = $7
         WHERE id = $1
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&name)
     .bind(capacity)
@@ -347,10 +352,13 @@ pub async fn delete_room(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE meeting_rooms SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE meeting_rooms SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -421,14 +429,14 @@ pub async fn list_bookings(
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, MeetingBooking>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
         FROM meeting_bookings
         WHERE ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY start_time DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -440,11 +448,11 @@ pub async fn list_bookings(
     match result {
         Ok(bookings) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("erp", r#"
                 SELECT COUNT(*) FROM meeting_bookings
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -485,7 +493,7 @@ pub async fn create_booking(
     }
 
     let room_result = sqlx::query_as::<_, MeetingRoom>(
-        "SELECT id, name FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'",
+        only_own_schema_query!("erp", "SELECT id, name FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
     )
     .bind(req.room_id)
     .fetch_optional(&state.db)
@@ -497,13 +505,14 @@ pub async fn create_booking(
         Err(e) => return Json(api_error(500, &format!("查询会议室失败: {}", e))),
     };
 
-    let overlapping = sqlx::query_scalar::<_, i64>(
+    let overlapping = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT COUNT(*) FROM meeting_bookings
         WHERE deleted_at IS NULL AND room_id = $1 AND status = 'confirmed'
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
-        "#,
-    )
+        "#
+    ))
     .bind(req.room_id)
     .bind(req.end_time)
     .bind(req.start_time)
@@ -520,11 +529,11 @@ pub async fn create_booking(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, MeetingBooking>(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9)
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.room_id)
@@ -599,10 +608,10 @@ pub async fn get_booking(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MeetingBooking>> {
     let result = sqlx::query_as::<_, MeetingBooking>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
         FROM meeting_bookings WHERE id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -638,7 +647,7 @@ pub async fn update_booking(
     Json(req): Json<UpdateMeetingBookingRequest>,
 ) -> Json<ApiResponse<MeetingBooking>> {
     let existing = sqlx::query_as::<_, MeetingBooking>(
-        "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -660,12 +669,12 @@ pub async fn update_booking(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, MeetingBooking>(
-        r#"
+        only_own_schema_query!("erp", r#"
         UPDATE meeting_bookings SET
             title = $2, organizer = $3, start_time = $4, end_time = $5, status = $6, updated_at = $7
         WHERE id = $1
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&title)
@@ -737,10 +746,13 @@ pub async fn delete_booking(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE meeting_bookings SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE meeting_bookings SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -807,10 +819,10 @@ pub async fn get_room_bookings(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<MeetingBooking>>> {
     let result = sqlx::query_as::<_, MeetingBooking>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
         FROM meeting_bookings WHERE room_id = $1 ORDER BY start_time ASC
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_all(&state.db)

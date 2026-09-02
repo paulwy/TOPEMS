@@ -424,4 +424,3 @@ pub async fn cancel_retirement_plan(
     plan.status = RetirementStatus::Cancelled;
     Json(ApiResponse::success(plan.clone(), "退役计划已取消"))
 }
-

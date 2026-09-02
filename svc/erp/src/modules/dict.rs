@@ -9,6 +9,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -221,7 +222,8 @@ pub async fn list_dict_types(
         }
     }
 
-    let result = sqlx::query_as::<_, DictType>(
+    let result = sqlx::query_as::<_, DictType>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, code, name, category, description, status, created_at, updated_at
         FROM erp.dict_types
@@ -230,8 +232,8 @@ pub async fn list_dict_types(
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&category_filter)
     .bind(&status_filter)
@@ -242,14 +244,15 @@ pub async fn list_dict_types(
 
     match result {
         Ok(dict_types) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"
                 SELECT COUNT(*) FROM erp.dict_types
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR category = $2)
                   AND ($3::text IS NULL OR status = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&category_filter)
             .bind(&status_filter)
@@ -301,11 +304,11 @@ pub async fn create_dict_type(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, DictType>(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO erp.dict_types (id, code, name, category, description, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, 'active', $6, $7)
         RETURNING id, code, name, category, description, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.code)
@@ -376,12 +379,13 @@ pub async fn get_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictType>> {
-    let result = sqlx::query_as::<_, DictType>(
+    let result = sqlx::query_as::<_, DictType>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, code, name, category, description, status, created_at, updated_at
         FROM erp.dict_types WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -411,7 +415,7 @@ pub async fn update_dict_type(
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
     let existing = sqlx::query_as::<_, DictType>(
-        "SELECT id, code, name, category, description, status, created_at, updated_at FROM erp.dict_types WHERE id = $1",
+        only_own_schema_query!("erp", "SELECT id, code, name, category, description, status, created_at, updated_at FROM erp.dict_types WHERE id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -431,14 +435,15 @@ pub async fn update_dict_type(
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, DictType>(
+    let result = sqlx::query_as::<_, DictType>(only_own_schema_query!(
+        "erp",
         r#"
         UPDATE erp.dict_types SET
             name = $2, category = $3, description = $4, status = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, code, name, category, description, status, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&name)
     .bind(&category)
@@ -507,19 +512,24 @@ pub async fn delete_dict_type(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) =
-        sqlx::query("UPDATE erp.dict_items SET deleted_at = NOW() WHERE dict_type_id = $1")
-            .bind(id)
-            .execute(&state.db)
-            .await
+    if let Err(e) = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.dict_items SET deleted_at = NOW() WHERE dict_type_id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await
     {
         tracing::warn!("删除字典条目失败，继续删除字典类型: {}", e);
     }
 
-    let result = sqlx::query("UPDATE erp.dict_types SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.dict_types SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -594,14 +604,14 @@ pub async fn list_dict_items(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
 
     let result = sqlx::query_as::<_, DictItem>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
         FROM erp.dict_items
         WHERE dict_type_id = $1
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
         ORDER BY sort_order ASC, created_at ASC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(dict_type_id)
     .bind(&search_pattern)
@@ -612,13 +622,14 @@ pub async fn list_dict_items(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"
                 SELECT COUNT(*) FROM erp.dict_items
                 WHERE deleted_at IS NULL AND dict_type_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
-                "#,
-            )
+                "#
+            ))
             .bind(dict_type_id)
             .bind(&search_pattern)
             .fetch_one(&state.db)
@@ -656,11 +667,11 @@ pub async fn create_dict_item(
     let sort_order = req.sort_order.unwrap_or(0);
 
     let result = sqlx::query_as::<_, DictItem>(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
         RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.dict_type_id)
@@ -732,10 +743,10 @@ pub async fn get_dict_item(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictItem>> {
     let result = sqlx::query_as::<_, DictItem>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
         FROM erp.dict_items WHERE id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -766,7 +777,7 @@ pub async fn update_dict_item(
     Json(req): Json<UpdateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     let existing = sqlx::query_as::<_, DictItem>(
-        "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM erp.dict_items WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM erp.dict_items WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -790,12 +801,12 @@ pub async fn update_dict_item(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, DictItem>(
-        r#"
+        only_own_schema_query!("erp", r#"
         UPDATE erp.dict_items SET
             code = $2, name = $3, value = $4, sort_order = $5, parent_id = $6, extra_data = $7, status = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&code)
@@ -865,10 +876,13 @@ pub async fn delete_dict_item(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE erp.dict_items SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.dict_items SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -939,11 +953,11 @@ pub async fn batch_create_dict_items(
         let sort_order = item_req.sort_order.unwrap_or(0);
 
         let result = sqlx::query_as::<_, DictItem>(
-            r#"
+            only_own_schema_query!("erp", r#"
             INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
-            "#,
+            "#),
         )
         .bind(id)
         .bind(req.dict_type_id)
@@ -1008,12 +1022,12 @@ pub async fn export_dict_items(
     Path(dict_type_id): Path<Uuid>,
 ) -> Response<String> {
     let result = sqlx::query_as::<_, DictItem>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
         FROM erp.dict_items
         WHERE dict_type_id = $1
         ORDER BY sort_order ASC, created_at ASC
-        "#,
+        "#),
     )
     .bind(dict_type_id)
     .fetch_all(&state.db)

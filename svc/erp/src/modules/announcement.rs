@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -65,7 +66,7 @@ pub async fn list_announcements(
     let priority_filter = params.priority.clone();
 
     let result = sqlx::query_as::<_, Announcement>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM announcements
         WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
@@ -73,7 +74,7 @@ pub async fn list_announcements(
           AND ($3::text IS NULL OR priority = $3)
         ORDER BY publish_at DESC NULLS LAST, created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -86,12 +87,12 @@ pub async fn list_announcements(
     match result {
         Ok(announcements) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("erp", r#"
                 SELECT COUNT(*) FROM announcements
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR priority = $3)
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -140,11 +141,11 @@ pub async fn create_announcement(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Announcement>(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.title)
@@ -218,10 +219,10 @@ pub async fn get_announcement(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Announcement>> {
     let result = sqlx::query_as::<_, Announcement>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM announcements WHERE id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -257,7 +258,7 @@ pub async fn update_announcement(
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
     let existing = sqlx::query_as::<_, Announcement>(
-        "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -280,12 +281,12 @@ pub async fn update_announcement(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Announcement>(
-        r#"
+        only_own_schema_query!("erp", r#"
         UPDATE announcements SET
             title = $2, content = $3, author = $4, status = $5, priority = $6, expire_at = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&title)
@@ -358,10 +359,13 @@ pub async fn delete_announcement(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE announcements SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE announcements SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -431,12 +435,12 @@ pub async fn publish_announcement(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Announcement>(
-        r#"
+        only_own_schema_query!("erp", r#"
         UPDATE announcements SET
             status = 'published', publish_at = $2, updated_at = $3
         WHERE id = $1 AND status = 'draft'
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -512,12 +516,12 @@ pub async fn unpublish_announcement(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Announcement>(
-        r#"
+        only_own_schema_query!("erp", r#"
         UPDATE announcements SET
             status = 'draft', publish_at = NULL, updated_at = $2
         WHERE id = $1 AND status = 'published'
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(now)

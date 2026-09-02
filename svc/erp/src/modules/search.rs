@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::repository::ListQueryParams;
 
@@ -47,15 +48,16 @@ async fn global_search(
 
     let mut results: Vec<SearchResult> = Vec::new();
 
-    let material_results: Vec<SearchResult> = sqlx::query(
+    let material_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, name as title, material_code as description, 'material' as module, 
                '/erp/materials' as path, '物料' as type_name
         FROM core_erp_materials
         WHERE LOWER(name) LIKE $1 OR LOWER(material_code) LIKE $1 OR LOWER(specification) LIKE $1
         LIMIT $2
-        "#,
-    )
+        "#
+    ))
     .bind(search_pattern.clone())
     .bind(limit / 3)
     .map(|row: sqlx::postgres::PgRow| SearchResult {
@@ -71,15 +73,16 @@ async fn global_search(
     .unwrap_or_default();
     results.extend(material_results);
 
-    let customer_results: Vec<SearchResult> = sqlx::query(
+    let customer_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, name as title, contact_person as description, 'customer' as module, 
                '/crm/customers' as path, '客户' as type_name
         FROM core_crm_customers
         WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
         LIMIT $2
-        "#,
-    )
+        "#
+    ))
     .bind(search_pattern.clone())
     .bind(limit / 3)
     .map(|row: sqlx::postgres::PgRow| SearchResult {
@@ -95,15 +98,16 @@ async fn global_search(
     .unwrap_or_default();
     results.extend(customer_results);
 
-    let supplier_results: Vec<SearchResult> = sqlx::query(
+    let supplier_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, name as title, contact_person as description, 'supplier' as module, 
                '/srm/suppliers' as path, '供应商' as type_name
         FROM core_erp_suppliers
         WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
         LIMIT $2
-        "#,
-    )
+        "#
+    ))
     .bind(search_pattern)
     .bind(limit / 3)
     .map(|row: sqlx::postgres::PgRow| SearchResult {

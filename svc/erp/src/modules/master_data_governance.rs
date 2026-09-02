@@ -8,6 +8,7 @@ use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 
 use super::ApiState;
 
@@ -44,56 +45,67 @@ pub async fn get_governance_dashboard(
 ) -> Json<ApiResponse<GovernanceDashboardStats>> {
     let db = &state.db;
 
-    let total_domains: i64 = sqlx::query_scalar(
-        "SELECT COUNT(DISTINCT domain) FROM erp_master_data_refs WHERE status != 'destroyed'",
-    )
+    let total_domains: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(DISTINCT domain) FROM erp.erp_master_data_refs WHERE status != 'destroyed'"
+    ))
     .fetch_one(db)
     .await
     .unwrap_or(0);
 
-    let total_records: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status != 'destroyed'")
-            .fetch_one(db)
-            .await
-            .unwrap_or(0);
-
-    let active_records: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'active'")
-            .fetch_one(db)
-            .await
-            .unwrap_or(0);
-
-    let archived_records: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'archived'")
-            .fetch_one(db)
-            .await
-            .unwrap_or(0);
-
-    let pending_destruction: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'pending_destruction'",
-    )
+    let total_records: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status != 'destroyed'"
+    ))
     .fetch_one(db)
     .await
     .unwrap_or(0);
 
-    let destroyed_records: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'destroyed'")
-            .fetch_one(db)
-            .await
-            .unwrap_or(0);
+    let active_records: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'active'"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
+
+    let archived_records: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'archived'"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
+
+    let pending_destruction: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'pending_destruction'"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
+
+    let destroyed_records: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'destroyed'"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
 
     let quality_rules_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND is_active = TRUE",
+        only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND is_active = TRUE"),
     )
     .fetch_one(db)
     .await
     .unwrap_or(0);
 
-    let latest_report = sqlx::query(
+    let latest_report = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT total_checked, total_issues, errors, warnings, info
            FROM erp_master_data_quality_reports
-           ORDER BY generated_at DESC LIMIT 1"#,
-    )
+           ORDER BY generated_at DESC LIMIT 1"#
+    ))
     .fetch_optional(db)
     .await
     .ok()
@@ -116,35 +128,43 @@ pub async fn get_governance_dashboard(
         (0u64, 100.0f64)
     };
 
-    let conflict_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_conflicts")
-        .fetch_one(db)
-        .await
-        .unwrap_or(0);
+    let conflict_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp_master_data_conflicts"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
 
     let unresolved_conflicts: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_conflicts WHERE status IN ('detected', 'pending_review')",
+        only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp_master_data_conflicts WHERE status IN ('detected', 'pending_review')"),
     )
     .fetch_one(db)
     .await
     .unwrap_or(0);
 
-    let version_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_versions")
-        .fetch_one(db)
-        .await
-        .unwrap_or(0);
+    let version_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp_master_data_versions"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
 
     let seven_days_ago = chrono::Utc::now() - chrono::Duration::days(7);
-    let audit_events_last_7d: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_audit_trail WHERE created_at >= $1",
-    )
+    let audit_events_last_7d: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp_master_data_audit_trail WHERE created_at >= $1"
+    ))
     .bind(seven_days_ago)
     .fetch_one(db)
     .await
     .unwrap_or(0);
 
-    let synced_services_rows = sqlx::query_scalar::<_, String>(
-        "SELECT DISTINCT source_service FROM erp_master_data_refs WHERE status != 'destroyed'",
-    )
+    let synced_services_rows = sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "erp",
+        "SELECT DISTINCT source_service FROM erp.erp_master_data_refs WHERE status != 'destroyed'"
+    ))
     .fetch_all(db)
     .await
     .unwrap_or_default();
@@ -245,6 +265,6 @@ mod tests {
         assert_eq!(json["total_domains"], 0);
         assert_eq!(json["total_records"], 0);
         assert_eq!(json["quality_score"], 0.0);
-        assert_eq!(json["synced_services"].as_array().unwrap().is_empty(), true);
+        assert!(json["synced_services"].as_array().unwrap().is_empty());
     }
 }

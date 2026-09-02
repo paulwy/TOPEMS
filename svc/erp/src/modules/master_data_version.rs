@@ -8,6 +8,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::IntoParams;
 
@@ -62,7 +63,7 @@ pub async fn record_version(
 
     // 获取当前最大版本号，新版本 = max + 1
     let max_version: i32 = sqlx::query_scalar(
-        r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#,
+        only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#),
     )
     .bind(&master_data_id)
     .fetch_one(&state.db)
@@ -72,9 +73,9 @@ pub async fn record_version(
     let new_version = max_version + 1;
 
     let result = sqlx::query(
-        r#"INSERT INTO erp_master_data_versions
+        only_own_schema_query!("erp", r#"INSERT INTO erp_master_data_versions
            (id, master_data_id, version_number, domain, code, name, status, snapshot, changed_by, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#),
     )
     .bind(id)
     .bind(&master_data_id)
@@ -131,14 +132,15 @@ pub async fn get_versions(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT id, master_data_id, version_number, domain, code, name, status,
                   snapshot, changed_by, created_at
            FROM erp_master_data_versions
            WHERE master_data_id = $1
            ORDER BY version_number DESC
-           LIMIT $2 OFFSET $3"#,
-    )
+           LIMIT $2 OFFSET $3"#
+    ))
     .bind(&master_data_id)
     .bind(page_size)
     .bind(offset)
@@ -199,48 +201,47 @@ pub async fn get_version(
     State(state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<MasterDataVersion>> {
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT id, master_data_id, version_number, domain, code, name, status,
                   snapshot, changed_by, created_at
            FROM erp_master_data_versions
-           WHERE master_data_id = $1 AND id = $2"#,
-    )
+           WHERE master_data_id = $1 AND id = $2"#
+    ))
     .bind(&master_data_id)
     .bind(&version_id)
     .fetch_optional(&state.db)
     .await;
 
     match rows {
-        Ok(Some(row)) => {
-            Json(ApiResponse::success(
-                MasterDataVersion {
-                    id: row
-                        .try_get::<uuid::Uuid, _>("id")
-                        .unwrap_or_default()
-                        .to_string(),
-                    master_data_id: row
-                        .try_get::<String, _>("master_data_id")
-                        .unwrap_or_default(),
-                    version_number: row.try_get::<i32, _>("version_number").unwrap_or(0),
-                    domain: row.try_get::<String, _>("domain").unwrap_or_default(),
-                    code: row.try_get::<String, _>("code").unwrap_or_default(),
-                    name: row.try_get::<Option<String>, _>("name").ok().flatten(),
-                    status: row.try_get::<String, _>("status").unwrap_or_default(),
-                    snapshot: row
-                        .try_get::<serde_json::Value, _>("snapshot")
-                        .unwrap_or_default(),
-                    changed_by: row
-                        .try_get::<Option<String>, _>("changed_by")
-                        .ok()
-                        .flatten(),
-                    created_at: row
-                        .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
-                        .unwrap_or_else(|_| chrono::Utc::now())
-                        .to_rfc3339(),
-                },
-                "版本详情",
-            ))
-        }
+        Ok(Some(row)) => Json(ApiResponse::success(
+            MasterDataVersion {
+                id: row
+                    .try_get::<uuid::Uuid, _>("id")
+                    .unwrap_or_default()
+                    .to_string(),
+                master_data_id: row
+                    .try_get::<String, _>("master_data_id")
+                    .unwrap_or_default(),
+                version_number: row.try_get::<i32, _>("version_number").unwrap_or(0),
+                domain: row.try_get::<String, _>("domain").unwrap_or_default(),
+                code: row.try_get::<String, _>("code").unwrap_or_default(),
+                name: row.try_get::<Option<String>, _>("name").ok().flatten(),
+                status: row.try_get::<String, _>("status").unwrap_or_default(),
+                snapshot: row
+                    .try_get::<serde_json::Value, _>("snapshot")
+                    .unwrap_or_default(),
+                changed_by: row
+                    .try_get::<Option<String>, _>("changed_by")
+                    .ok()
+                    .flatten(),
+                created_at: row
+                    .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
+                    .unwrap_or_else(|_| chrono::Utc::now())
+                    .to_rfc3339(),
+            },
+            "版本详情",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "未找到版本")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询版本详情失败: {}", e);
@@ -264,11 +265,12 @@ pub async fn rollback_to_version(
     Path((master_data_id, version_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     // 1. 获取目标版本快照
-    let version_row = sqlx::query(
+    let version_row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT version_number, domain, code, name, status, snapshot
            FROM erp_master_data_versions
-           WHERE master_data_id = $1 AND id = $2"#,
-    )
+           WHERE master_data_id = $1 AND id = $2"#
+    ))
     .bind(&master_data_id)
     .bind(&version_id)
     .fetch_optional(&state.db)
@@ -285,11 +287,12 @@ pub async fn rollback_to_version(
             let now = chrono::Utc::now();
 
             // 2. 更新 erp_master_data_refs 表（回滚数据）
-            let update_result = sqlx::query(
-                r#"UPDATE erp_master_data_refs
+            let update_result = sqlx::query(only_own_schema_query!(
+                "erp",
+                r#"UPDATE erp.erp_master_data_refs
                    SET name = $1, status = $2, updated_at = $3, last_synced_at = $3
-                   WHERE master_data_id = $4"#,
-            )
+                   WHERE master_data_id = $4"#
+            ))
             .bind(&name)
             .bind(&status)
             .bind(now)
@@ -305,7 +308,7 @@ pub async fn rollback_to_version(
             // 3. 记录回滚版本快照（新版本 = max + 1）
             let new_id = uuid::Uuid::new_v4();
             let max_version: i32 = sqlx::query_scalar(
-                r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#,
+                only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#),
             )
             .bind(&master_data_id)
             .fetch_one(&state.db)
@@ -314,9 +317,9 @@ pub async fn rollback_to_version(
             let new_version = max_version + 1;
 
             let _ = sqlx::query(
-                r#"INSERT INTO erp_master_data_versions
+                only_own_schema_query!("erp", r#"INSERT INTO erp_master_data_versions
                    (id, master_data_id, version_number, domain, code, name, status, snapshot, changed_by, created_at)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#,
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#),
             )
             .bind(new_id)
             .bind(&master_data_id)

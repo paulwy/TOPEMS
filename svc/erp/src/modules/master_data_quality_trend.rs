@@ -8,6 +8,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
 
 use super::ApiState;
@@ -56,24 +57,26 @@ pub async fn get_quality_trend(
     };
 
     let report_rows = if let Some(ref domain) = params.domain {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "erp",
             r#"SELECT generated_at, total_checked, total_issues, errors, warnings
                FROM erp_master_data_quality_reports
                WHERE domain = $1 AND generated_at >= NOW() - INTERVAL '90 days'
                ORDER BY generated_at DESC
-               LIMIT 100"#,
-        )
+               LIMIT 100"#
+        ))
         .bind(domain)
         .fetch_all(db)
         .await
     } else {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "erp",
             r#"SELECT generated_at, total_checked, total_issues, errors, warnings
                FROM erp_master_data_quality_reports
                WHERE generated_at >= NOW() - INTERVAL '90 days'
                ORDER BY generated_at DESC
-               LIMIT 100"#,
-        )
+               LIMIT 100"#
+        ))
         .fetch_all(db)
         .await
     };

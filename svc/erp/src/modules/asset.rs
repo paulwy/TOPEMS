@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -57,15 +58,15 @@ pub async fn list_assets(
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, Asset>(
-        "
+        only_own_schema_query!("erp", "
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-        FROM assets
+        FROM erp.assets
         WHERE ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        ",
+        "),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -77,11 +78,11 @@ pub async fn list_assets(
     match result {
         Ok(assets) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                "
-                SELECT COUNT(*) FROM assets
+                only_own_schema_query!("erp", "
+                SELECT COUNT(*) FROM erp.assets
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                ",
+                "),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -136,13 +137,13 @@ pub async fn create_asset(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Asset>(
-        "
-        INSERT INTO assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        only_own_schema_query!("erp", "
+        INSERT INTO erp.assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                                  serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
         RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-        ",
+        "),
     )
     .bind(id)
     .bind(&req.asset_number)
@@ -235,11 +236,11 @@ pub async fn get_asset(
     }
 
     let result = sqlx::query_as::<_, Asset>(
-        "
+        only_own_schema_query!("erp", "
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-        FROM assets WHERE id = $1
-        ",
+        FROM erp.assets WHERE id = $1
+        "),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -282,9 +283,9 @@ pub async fn update_asset(
     }
 
     let existing = sqlx::query_as::<_, Asset>(
-        "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        only_own_schema_query!("erp", "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-           FROM assets WHERE id = $1",
+           FROM erp.assets WHERE id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -318,14 +319,14 @@ pub async fn update_asset(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Asset>(
-        "
-        UPDATE assets SET
+        only_own_schema_query!("erp", "
+        UPDATE erp.assets SET
             name = $2, category = $3, brand = $4, model = $5, purchase_date = $6, purchase_amount = $7, location = $8, responsible_id = $9, status = $10, updated_at = $11,
             serial_number = $12, manufacturer = $13, rated_power = $14, rated_voltage = $15, rated_current = $16, specifications = $17, image_url = $18, department = $19
         WHERE id = $1
         RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
-        ",
+        "),
     )
     .bind(id)
     .bind(&name)
@@ -416,10 +417,13 @@ pub async fn delete_asset(
         return e;
     }
 
-    let result = sqlx::query("UPDATE assets SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.assets SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

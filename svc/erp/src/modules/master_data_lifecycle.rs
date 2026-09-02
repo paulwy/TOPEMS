@@ -8,11 +8,12 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::IntoParams;
 
-use super::ApiState;
 use super::master_data_refs::{MasterDataRef, MasterDataRow};
+use super::ApiState;
 
 #[derive(Debug, Deserialize)]
 pub struct ArchiveRequest {
@@ -70,12 +71,13 @@ async fn record_lifecycle_audit(
         new_values["reason"] = serde_json::json!(r);
     }
 
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"INSERT INTO erp_master_data_audit_trail
            (id, master_data_id, domain, action, source_service, target_service,
             changed_by, old_values, new_values, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#,
-    )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#
+    ))
     .bind(id)
     .bind(master_data_id)
     .bind(domain)
@@ -106,9 +108,10 @@ pub async fn archive_master_data_ref(
 ) -> Json<ApiResponse<MasterDataRef>> {
     let now = chrono::Utc::now();
 
-    let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+    let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+        "erp",
+        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&master_data_id)
     .fetch_optional(&state.db)
     .await;
@@ -125,15 +128,16 @@ pub async fn archive_master_data_ref(
             let old_status = existing.status.clone();
             let domain = existing.domain.clone();
 
-            let result = sqlx::query(
-                r#"UPDATE erp_master_data_refs
+            let result = sqlx::query(only_own_schema_query!(
+                "erp",
+                r#"UPDATE erp.erp_master_data_refs
                    SET status = 'archived',
                        archived_at = $1,
                        archived_by = $2,
                        archive_reason = $3,
                        updated_at = $4
-                   WHERE master_data_id = $5"#,
-            )
+                   WHERE master_data_id = $5"#
+            ))
             .bind(now)
             .bind(&req.archived_by)
             .bind(&req.reason)
@@ -156,9 +160,10 @@ pub async fn archive_master_data_ref(
                     )
                     .await;
 
-                    let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-                    )
+                    let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+                        "erp",
+                        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+                    ))
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
                     .await;
@@ -201,9 +206,10 @@ pub async fn restore_master_data_ref(
 ) -> Json<ApiResponse<MasterDataRef>> {
     let now = chrono::Utc::now();
 
-    let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+    let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+        "erp",
+        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&master_data_id)
     .fetch_optional(&state.db)
     .await;
@@ -217,15 +223,16 @@ pub async fn restore_master_data_ref(
             let old_status = existing.status.clone();
             let domain = existing.domain.clone();
 
-            let result = sqlx::query(
-                r#"UPDATE erp_master_data_refs
+            let result = sqlx::query(only_own_schema_query!(
+                "erp",
+                r#"UPDATE erp.erp_master_data_refs
                    SET status = 'active',
                        archived_at = NULL,
                        archived_by = NULL,
                        archive_reason = NULL,
                        updated_at = $1
-                   WHERE master_data_id = $2"#,
-            )
+                   WHERE master_data_id = $2"#
+            ))
             .bind(now)
             .bind(&master_data_id)
             .execute(&state.db)
@@ -245,9 +252,10 @@ pub async fn restore_master_data_ref(
                     )
                     .await;
 
-                    let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-                    )
+                    let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+                        "erp",
+                        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+                    ))
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
                     .await;
@@ -293,9 +301,10 @@ pub async fn schedule_destruction(
         .scheduled_at
         .unwrap_or_else(|| now + chrono::Duration::days(30));
 
-    let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+    let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+        "erp",
+        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&master_data_id)
     .fetch_optional(&state.db)
     .await;
@@ -309,15 +318,16 @@ pub async fn schedule_destruction(
             let old_status = existing.status.clone();
             let domain = existing.domain.clone();
 
-            let result = sqlx::query(
-                r#"UPDATE erp_master_data_refs
+            let result = sqlx::query(only_own_schema_query!(
+                "erp",
+                r#"UPDATE erp.erp_master_data_refs
                    SET status = 'pending_destruction',
                        destroy_scheduled_at = $1,
                        destroy_reason = $2,
                        destroy_scheduled_by = $3,
                        updated_at = $4
-                   WHERE master_data_id = $5"#,
-            )
+                   WHERE master_data_id = $5"#
+            ))
             .bind(scheduled_at)
             .bind(&req.reason)
             .bind(&req.scheduled_by)
@@ -340,9 +350,10 @@ pub async fn schedule_destruction(
                     )
                     .await;
 
-                    let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-                    )
+                    let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+                        "erp",
+                        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+                    ))
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
                     .await;
@@ -384,9 +395,10 @@ pub async fn cancel_destruction(
 ) -> Json<ApiResponse<MasterDataRef>> {
     let now = chrono::Utc::now();
 
-    let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+    let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+        "erp",
+        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&master_data_id)
     .fetch_optional(&state.db)
     .await;
@@ -403,15 +415,16 @@ pub async fn cancel_destruction(
             let old_status = existing.status.clone();
             let domain = existing.domain.clone();
 
-            let result = sqlx::query(
-                r#"UPDATE erp_master_data_refs
+            let result = sqlx::query(only_own_schema_query!(
+                "erp",
+                r#"UPDATE erp.erp_master_data_refs
                    SET status = 'active',
                        destroy_scheduled_at = NULL,
                        destroy_reason = NULL,
                        destroy_scheduled_by = NULL,
                        updated_at = $1
-                   WHERE master_data_id = $2"#,
-            )
+                   WHERE master_data_id = $2"#
+            ))
             .bind(now)
             .bind(&master_data_id)
             .execute(&state.db)
@@ -431,9 +444,10 @@ pub async fn cancel_destruction(
                     )
                     .await;
 
-                    let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-                    )
+                    let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+                        "erp",
+                        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+                    ))
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
                     .await;
@@ -476,9 +490,10 @@ pub async fn destroy_master_data_ref(
 ) -> Json<ApiResponse<MasterDataRef>> {
     let now = chrono::Utc::now();
 
-    let row = sqlx::query_as::<_, MasterDataRow>(
-        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+    let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+        "erp",
+        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&master_data_id)
     .fetch_optional(&state.db)
     .await;
@@ -492,15 +507,16 @@ pub async fn destroy_master_data_ref(
             let old_status = existing.status.clone();
             let domain = existing.domain.clone();
 
-            let result = sqlx::query(
-                r#"UPDATE erp_master_data_refs
+            let result = sqlx::query(only_own_schema_query!(
+                "erp",
+                r#"UPDATE erp.erp_master_data_refs
                    SET status = 'destroyed',
                        destroyed_at = $1,
                        destroyed_by = $2,
                        destroy_reason = COALESCE($3, destroy_reason),
                        updated_at = $4
-                   WHERE master_data_id = $5"#,
-            )
+                   WHERE master_data_id = $5"#
+            ))
             .bind(now)
             .bind(&req.destroyed_by)
             .bind(&req.reason)
@@ -523,9 +539,10 @@ pub async fn destroy_master_data_ref(
                     )
                     .await;
 
-                    let updated = sqlx::query_as::<_, MasterDataRow>(
-                        r#"SELECT * FROM erp_master_data_refs WHERE master_data_id = $1"#,
-                    )
+                    let updated = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+                        "erp",
+                        r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+                    ))
                     .bind(&master_data_id)
                     .fetch_one(&state.db)
                     .await;
@@ -570,7 +587,7 @@ pub async fn list_archived(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut sql = String::from("SELECT * FROM erp_master_data_refs WHERE status = 'archived'");
+    let mut sql = String::from("SELECT * FROM erp.erp_master_data_refs WHERE status = 'archived'");
     let mut binds: Vec<String> = Vec::new();
     let mut param_idx = 1;
 
@@ -645,7 +662,7 @@ pub async fn list_pending_destruction(
     let offset = (page - 1) * page_size;
 
     let mut sql =
-        String::from("SELECT * FROM erp_master_data_refs WHERE status = 'pending_destruction'");
+        String::from("SELECT * FROM erp.erp_master_data_refs WHERE status = 'pending_destruction'");
     let mut binds: Vec<String> = Vec::new();
     let mut param_idx = 1;
 

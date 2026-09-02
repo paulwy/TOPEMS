@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -72,15 +73,16 @@ pub async fn list_tables(
     let schema = params.schema.unwrap_or_else(|| "public".to_string());
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
 
-    let result = sqlx::query_as::<_, TableInfo>(
+    let result = sqlx::query_as::<_, TableInfo>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT table_name, table_type
         FROM information_schema.tables
         WHERE table_schema = $1
           AND ($2::text IS NULL OR table_name ILIKE $2)
         ORDER BY table_name
-        "#,
-    )
+        "#
+    ))
     .bind(&schema)
     .bind(&search_pattern)
     .fetch_all(&state.db)
@@ -107,7 +109,8 @@ pub async fn get_table_detail(
     State(state): State<ApiState>,
     Path(table_name): Path<String>,
 ) -> Json<ApiResponse<TableDetail>> {
-    let columns_result = sqlx::query_as::<_, ColumnInfo>(
+    let columns_result = sqlx::query_as::<_, ColumnInfo>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT 
             column_name,
@@ -121,8 +124,8 @@ pub async fn get_table_detail(
         FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = $1
         ORDER BY ordinal_position
-        "#,
-    )
+        "#
+    ))
     .bind(&table_name)
     .fetch_all(&state.db)
     .await;
@@ -140,7 +143,7 @@ pub async fn get_table_detail(
     }
 
     let row_count = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1"#,
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1"#),
     )
     .bind(&table_name)
     .fetch_one(&state.db)
@@ -304,10 +307,10 @@ pub async fn execute_add_column(
     };
 
     let _ = sqlx::query(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO sys_db_changes (id, change_type, table_name, column_name, new_definition, sql_statement, executed_by, executed_at)
         VALUES ($1, 'add_column', $2, $3, $4, $5, $6, $7)
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.table_name)
@@ -415,10 +418,10 @@ pub async fn execute_modify_column(
     };
 
     let _ = sqlx::query(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO sys_db_changes (id, change_type, table_name, column_name, new_definition, sql_statement, executed_by, executed_at)
         VALUES ($1, 'modify_column', $2, $3, $4, $5, $6, $7)
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&table_name)
@@ -493,10 +496,10 @@ pub async fn execute_drop_column(
     };
 
     let _ = sqlx::query(
-        r#"
+        only_own_schema_query!("erp", r#"
         INSERT INTO sys_db_changes (id, change_type, table_name, column_name, sql_statement, executed_by, executed_at)
         VALUES ($1, 'drop_column', $2, $3, $4, $5, $6)
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&table_name)
@@ -546,13 +549,13 @@ pub async fn list_db_changes(
     let table_filter = params.table_name.clone();
 
     let result = sqlx::query_as::<_, DbChange>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, change_type, table_name, column_name, old_definition, new_definition, sql_statement, executed_by, executed_at, backup_data
         FROM sys_db_changes
         WHERE ($1::text IS NULL OR table_name = $1)
         ORDER BY executed_at DESC
         LIMIT $2 OFFSET $3
-        "#,
+        "#),
     )
     .bind(&table_filter)
     .bind(page_size)
@@ -562,12 +565,13 @@ pub async fn list_db_changes(
 
     match result {
         Ok(changes) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"
                 SELECT COUNT(*) FROM sys_db_changes
                 WHERE ($1::text IS NULL OR table_name = $1)
-                "#,
-            )
+                "#
+            ))
             .bind(&table_filter)
             .fetch_one(&state.db)
             .await;

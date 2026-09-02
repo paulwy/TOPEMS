@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -65,11 +66,11 @@ pub async fn list_purchase_orders(
         let status = status_filter.clone();
 
         sqlx::query_as::<_, PurchaseOrder>(
-            r#"SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at 
-               FROM purchase_orders 
+            only_own_schema_query!("erp", r#"SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at 
+               FROM erp.purchase_orders 
                WHERE (order_no ILIKE $1 OR supplier_name ILIKE $1)
                  AND ($2 = '' OR status = $2)
-               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
         )
         .bind(search)
         .bind(status.unwrap_or_default())
@@ -79,7 +80,7 @@ pub async fn list_purchase_orders(
         .await
     } else {
         sqlx::query_as::<_, PurchaseOrder>(
-            "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM purchase_orders ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -96,7 +97,7 @@ pub async fn list_purchase_orders(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM purchase_orders WHERE deleted_at IS NULL AND (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.purchase_orders WHERE deleted_at IS NULL AND (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -139,7 +140,7 @@ pub async fn get_purchase_order(
     }
 
     let purchase_order = match sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM purchase_orders WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_one(&state.db)
@@ -174,15 +175,17 @@ pub async fn create_purchase_order(
         return e;
     }
 
-    let supplier_name =
-        match sqlx::query_scalar::<_, Option<String>>("SELECT name FROM suppliers WHERE id = $1")
-            .bind(req.supplier_id)
-            .fetch_one(&state.db)
-            .await
-        {
-            Ok(name) => name.unwrap_or_default(),
-            Err(_) => "".to_string(),
-        };
+    let supplier_name = match sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
+        "erp",
+        "SELECT name FROM erp.suppliers WHERE id = $1"
+    ))
+    .bind(req.supplier_id)
+    .fetch_one(&state.db)
+    .await
+    {
+        Ok(name) => name.unwrap_or_default(),
+        Err(_) => "".to_string(),
+    };
 
     let order_no = format!(
         "PO-{}-{}",
@@ -197,11 +200,11 @@ pub async fn create_purchase_order(
     let payable_amount = amounts.payable_amount;
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"INSERT INTO purchase_orders (order_no, supplier_id, supplier_name, order_date, delivery_date, 
+        only_own_schema_query!("erp", r#"INSERT INTO erp.purchase_orders (order_no, supplier_id, supplier_name, order_date, delivery_date, 
             total_amount, tax_amount, discount_amount, payable_amount, status, remark)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
-                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#
+                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
     .bind(order_no)
     .bind(req.supplier_id)
@@ -276,13 +279,13 @@ pub async fn update_purchase_order(
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"UPDATE purchase_orders SET supplier_name = COALESCE($1, supplier_name),
+        only_own_schema_query!("erp", r#"UPDATE erp.purchase_orders SET supplier_name = COALESCE($1, supplier_name),
             delivery_date = COALESCE($2, delivery_date),
             remark = COALESCE($3, remark),
             updated_at = $4
             WHERE id = $5
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
-                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#
+                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
     .bind(req.supplier_name)
     .bind(req.delivery_date)
@@ -325,10 +328,13 @@ pub async fn delete_purchase_order(
         return e;
     }
 
-    let result = sqlx::query("UPDATE purchase_orders SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.purchase_orders SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success("".to_string(), "删除采购订单成功")),
@@ -362,10 +368,10 @@ pub async fn approve_purchase_order(
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"UPDATE purchase_orders SET status = 'approved', updated_at = $1
+        only_own_schema_query!("erp", r#"UPDATE erp.purchase_orders SET status = 'approved', updated_at = $1
             WHERE id = $2 AND status = 'pending'
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
-                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#
+                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
     .bind(Utc::now())
     .bind(id)
@@ -428,10 +434,10 @@ pub async fn cancel_purchase_order(
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"UPDATE purchase_orders SET status = 'cancelled', updated_at = $1
+        only_own_schema_query!("erp", r#"UPDATE erp.purchase_orders SET status = 'cancelled', updated_at = $1
             WHERE id = $2 AND status IN ('pending', 'approved')
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
-                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#
+                      total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
     .bind(Utc::now())
     .bind(id)

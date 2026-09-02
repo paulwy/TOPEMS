@@ -25,12 +25,12 @@ thiserror.workspace = true
 reqwest = { workspace = true, features = ["blocking"] }
 topems-shared = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
-topems-shared-boundary = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 utoipa.workspace = true
 lazy_static.workspace = true
 regex.workspace = true

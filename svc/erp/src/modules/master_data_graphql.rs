@@ -750,7 +750,7 @@ async fn handle_merge_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse>
                     message: "Source or target entity not found".to_string(),
                     path: Some(vec!["mergeMasterData".to_string()]),
                 }]),
-            })
+            });
         }
     };
     target.updated_at = chrono::Utc::now().to_rfc3339();
@@ -922,7 +922,7 @@ mod tests {
             errors: None,
         };
         let json = serde_json::to_value(&response).unwrap();
-        assert_eq!(json["data"]["entities"].as_array().unwrap().is_empty(), true);
+        assert!(json["data"]["entities"].as_array().unwrap().is_empty());
         assert!(json["errors"].is_null());
     }
 

@@ -8,6 +8,7 @@ use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 
 use super::ApiState;
 
@@ -49,13 +50,14 @@ pub async fn get_data_lineage(
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<DataLineageResponse>> {
     // 查询主数据引用本身
-    let ref_row = sqlx::query(
+    let ref_row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT master_data_id, tenant_id, domain, code, name, status,
                   source_service, local_entity_type, local_entity_id,
                   last_synced_at, created_at, updated_at
-           FROM erp_master_data_refs
-           WHERE master_data_id = $1"#,
-    )
+           FROM erp.erp_master_data_refs
+           WHERE master_data_id = $1"#
+    ))
     .bind(&master_data_id)
     .fetch_optional(&state.db)
     .await;

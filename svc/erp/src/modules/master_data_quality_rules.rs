@@ -8,10 +8,11 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 
-use super::ApiState;
 use super::master_data_refs::{MasterDataRef, MasterDataRow};
+use super::ApiState;
 
 /// 规则类型枚举
 #[derive(Debug, Clone, serde::Serialize, Deserialize)]
@@ -263,9 +264,9 @@ pub async fn create_quality_rule(
     let is_active = req.is_active.unwrap_or(true);
 
     let result = sqlx::query(
-        r#"INSERT INTO erp_master_data_quality_rules
+        only_own_schema_query!("erp", r#"INSERT INTO erp_master_data_quality_rules
            (id, name, description, domain, field_name, rule_type, severity, config, is_active, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#),
     )
     .bind(id)
     .bind(&req.name)
@@ -487,12 +488,13 @@ pub async fn update_quality_rule(
     let config = req.config.unwrap_or(existing.config);
     let is_active = req.is_active.unwrap_or(existing.is_active);
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"UPDATE erp_master_data_quality_rules
            SET name = $1, description = $2, domain = $3, field_name = $4,
                rule_type = $5, severity = $6, config = $7, is_active = $8, updated_at = $9
-           WHERE id = $10"#,
-    )
+           WHERE id = $10"#
+    ))
     .bind(&name)
     .bind(&description)
     .bind(&domain)
@@ -548,11 +550,13 @@ pub async fn delete_quality_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
     };
 
-    let result =
-        sqlx::query("UPDATE erp_master_data_quality_rules SET deleted_at = NOW() WHERE id = $1")
-            .bind(rid)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp_master_data_quality_rules SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(rid)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(res) => {
@@ -638,11 +642,12 @@ pub async fn run_quality_check(
     let issues_json = serde_json::to_value(&report.issues).unwrap_or(serde_json::json!([]));
     let total_checked = records.len() as u64;
     let total_issues = report.total_issues;
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"INSERT INTO erp_master_data_quality_reports
            (id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#,
-    )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#
+    ))
     .bind(report.id)
     .bind(&report.domain)
     .bind(report.total_checked as i64)
@@ -684,10 +689,10 @@ pub async fn get_quality_report(
 
     let rows = if let Some(ref domain) = params.domain {
         sqlx::query(
-            r#"SELECT id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at
+            only_own_schema_query!("erp", r#"SELECT id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at
                FROM erp_master_data_quality_reports
                WHERE domain = $1
-               ORDER BY generated_at DESC LIMIT $2 OFFSET $3"#,
+               ORDER BY generated_at DESC LIMIT $2 OFFSET $3"#),
         )
         .bind(domain)
         .bind(page_size)
@@ -696,9 +701,9 @@ pub async fn get_quality_report(
         .await
     } else {
         sqlx::query(
-            r#"SELECT id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at
+            only_own_schema_query!("erp", r#"SELECT id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at
                FROM erp_master_data_quality_reports
-               ORDER BY generated_at DESC LIMIT $1 OFFSET $2"#,
+               ORDER BY generated_at DESC LIMIT $1 OFFSET $2"#),
         )
         .bind(page_size)
         .bind(offset)
@@ -781,16 +786,18 @@ async fn load_quality_rules(
 /// 加载主数据记录用于质量检查（排除已销毁）
 async fn load_records_for_quality(pool: &sqlx::PgPool, domain: Option<&str>) -> Vec<MasterDataRef> {
     let rows = if let Some(d) = domain {
-        sqlx::query_as::<_, MasterDataRow>(
-            r#"SELECT * FROM erp_master_data_refs WHERE status != 'destroyed' AND domain = $1"#,
-        )
+        sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+            "erp",
+            r#"SELECT * FROM erp.erp_master_data_refs WHERE status != 'destroyed' AND domain = $1"#
+        ))
         .bind(d)
         .fetch_all(pool)
         .await
     } else {
-        sqlx::query_as::<_, MasterDataRow>(
-            r#"SELECT * FROM erp_master_data_refs WHERE status != 'destroyed'"#,
-        )
+        sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+            "erp",
+            r#"SELECT * FROM erp.erp_master_data_refs WHERE status != 'destroyed'"#
+        ))
         .fetch_all(pool)
         .await
     };
@@ -1082,8 +1089,8 @@ async fn check_custom_sql(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use uuid::Uuid;
     use chrono::Utc;
+    use uuid::Uuid;
 
     #[test]
     fn test_quality_rule_type_serialization() {

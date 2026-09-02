@@ -10,6 +10,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::models::finance::AccountingSubject;
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
@@ -170,17 +171,14 @@ pub async fn create_opening_balance(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let subject_name = match state
-        .finance_client
-        .get_accounting_subject_by_code(&req.subject_code)
-        .await
+    let subject_name = match sqlx::query_as::<_, AccountingSubject>(
+        only_own_schema_query!("erp", "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "plugin_finance"),
+    )
+    .bind(&req.subject_code)
+    .fetch_optional(&state.db)
+    .await
     {
-        Ok(v) => v
-            .get("data")
-            .and_then(|d| d.get("name"))
-            .and_then(|n| n.as_str())
-            .unwrap_or("未知科目")
-            .to_string(),
+        Ok(Some(s)) => s.name,
         _ => "未知科目".to_string(),
     };
 
@@ -457,17 +455,14 @@ pub async fn import_opening_balances(
     let request_data = serde_json::to_value(&req).ok();
 
     for item in req {
-        let subject_name = match state
-            .finance_client
-            .get_accounting_subject_by_code(&item.subject_code)
-            .await
+        let subject_name = match sqlx::query_as::<_, AccountingSubject>(
+            only_own_schema_query!("erp", "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "plugin_finance"),
+        )
+        .bind(&item.subject_code)
+        .fetch_optional(&state.db)
+        .await
         {
-            Ok(v) => v
-                .get("data")
-                .and_then(|d| d.get("name"))
-                .and_then(|n| n.as_str())
-                .unwrap_or("未知科目")
-                .to_string(),
+            Ok(Some(s)) => s.name,
             _ => "未知科目".to_string(),
         };
 

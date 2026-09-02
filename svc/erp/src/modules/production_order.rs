@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
@@ -73,7 +74,7 @@ pub async fn list_production_orders(
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, ProductionOrder>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, order_no, product_id, product_name, product_code,
                quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                source_order_id, source_order_number,
@@ -81,13 +82,13 @@ pub async fn list_production_orders(
                actual_start_date, actual_end_date,
                workshop_id, workshop_name, priority, notes,
                created_at, updated_at
-        FROM erp_production_orders
+        FROM erp.erp_production_orders
         WHERE ($1::text IS NULL OR product_name ILIKE $1 OR order_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -98,14 +99,15 @@ pub async fn list_production_orders(
 
     match result {
         Ok(orders) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"
-                SELECT COUNT(*) FROM erp_production_orders
+                SELECT COUNT(*) FROM erp.erp_production_orders
                 WHERE ($1::text IS NULL OR product_name ILIKE $1 OR order_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -150,8 +152,8 @@ pub async fn create_production_order(
     let source = req.source.unwrap_or_else(|| "manual".to_string());
 
     let result = sqlx::query_as::<_, ProductionOrder>(
-        r#"
-        INSERT INTO erp_production_orders (
+        only_own_schema_query!("erp", r#"
+        INSERT INTO erp.erp_production_orders (
             order_no, product_id, product_name, product_code,
             quantity, completed_quantity, status, source,
             source_order_id, source_order_number,
@@ -170,7 +172,7 @@ pub async fn create_production_order(
                   actual_start_date, actual_end_date,
                   workshop_id, workshop_name, priority, notes,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(&order_no)
     .bind(req.product_id)
@@ -218,7 +220,7 @@ pub async fn get_production_order(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let result = sqlx::query_as::<_, ProductionOrder>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, order_no, product_id, product_name, product_code,
                quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                source_order_id, source_order_number,
@@ -226,9 +228,9 @@ pub async fn get_production_order(
                actual_start_date, actual_end_date,
                workshop_id, workshop_name, priority, notes,
                created_at, updated_at
-        FROM erp_production_orders
+        FROM erp.erp_production_orders
         WHERE id = $1 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -261,8 +263,8 @@ pub async fn update_production_order(
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let result = sqlx::query_as::<_, ProductionOrder>(
-        r#"
-        UPDATE erp_production_orders SET
+        only_own_schema_query!("erp", r#"
+        UPDATE erp.erp_production_orders SET
             product_name = COALESCE($2, product_name),
             product_code = COALESCE($3, product_code),
             quantity = COALESCE($4, quantity),
@@ -281,7 +283,7 @@ pub async fn update_production_order(
                   actual_start_date, actual_end_date,
                   workshop_id, workshop_name, priority, notes,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.product_name)
@@ -322,12 +324,13 @@ pub async fn delete_production_order(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"
-        UPDATE erp_production_orders SET deleted_at = NOW()
+        UPDATE erp.erp_production_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -364,8 +367,8 @@ pub async fn update_production_progress(
     Json(req): Json<UpdateProductionProgressRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let result = sqlx::query_as::<_, ProductionOrder>(
-        r#"
-        UPDATE erp_production_orders SET
+        only_own_schema_query!("erp", r#"
+        UPDATE erp.erp_production_orders SET
             completed_quantity = COALESCE($2, completed_quantity),
             status = COALESCE($3, status),
             actual_start_date = COALESCE($4, actual_start_date),
@@ -379,7 +382,7 @@ pub async fn update_production_progress(
                   actual_start_date, actual_end_date,
                   workshop_id, workshop_name, priority, notes,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.completed_quantity)
@@ -424,8 +427,8 @@ pub async fn update_production_status(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionOrder>(
-        r#"
-        UPDATE erp_production_orders SET
+        only_own_schema_query!("erp", r#"
+        UPDATE erp.erp_production_orders SET
             status = $2,
             updated_at = $3
         WHERE id = $1
@@ -436,7 +439,7 @@ pub async fn update_production_status(
                   actual_start_date, actual_end_date,
                   workshop_id, workshop_name, priority, notes,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.status)
@@ -483,7 +486,7 @@ pub async fn receive_mes_progress(
         Some(id) => id,
         None => {
             let result = sqlx::query_scalar::<_, Option<Uuid>>(
-                "SELECT id FROM erp_production_orders WHERE source_order_id = $1 AND deleted_at IS NULL LIMIT 1",
+                only_own_schema_query!("erp", "SELECT id FROM erp.erp_production_orders WHERE source_order_id = $1 AND deleted_at IS NULL LIMIT 1"),
             )
             .bind(req.mes_order_id.to_string())
             .fetch_optional(&state.db)
@@ -505,8 +508,8 @@ pub async fn receive_mes_progress(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionOrder>(
-        r#"
-        UPDATE erp_production_orders SET
+        only_own_schema_query!("erp", r#"
+        UPDATE erp.erp_production_orders SET
             completed_quantity = COALESCE($2, completed_quantity),
             status = COALESCE($3, status),
             actual_start_date = COALESCE($4, actual_start_date),
@@ -520,7 +523,7 @@ pub async fn receive_mes_progress(
                   actual_start_date, actual_end_date,
                   workshop_id, workshop_name, priority, notes,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(order_id)
     .bind(req.completed_quantity)

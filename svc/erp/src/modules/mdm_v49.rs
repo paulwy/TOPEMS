@@ -14,11 +14,16 @@
 
 use super::ApiState;
 
-#[path = "mdm_v49_types.rs"] mod mdm_v49_types;
-#[path = "mdm_v49_lifecycle.rs"] mod mdm_v49_lifecycle;
-#[path = "mdm_v49_retirement.rs"] mod mdm_v49_retirement;
-#[path = "mdm_v49_archive.rs"] mod mdm_v49_archive;
-#[path = "mdm_v49_stats.rs"] mod mdm_v49_stats;
+#[path = "mdm_v49_archive.rs"]
+mod mdm_v49_archive;
+#[path = "mdm_v49_lifecycle.rs"]
+mod mdm_v49_lifecycle;
+#[path = "mdm_v49_retirement.rs"]
+mod mdm_v49_retirement;
+#[path = "mdm_v49_stats.rs"]
+mod mdm_v49_stats;
+#[path = "mdm_v49_types.rs"]
+mod mdm_v49_types;
 
 use mdm_v49_archive::*;
 use mdm_v49_lifecycle::*;
@@ -117,7 +122,10 @@ pub fn create_routes() -> axum::Router<ApiState> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+
+    // types 模块定义了 LifecycleStage/TaskStatus 等类型，
+    // 父模块未导入，需在测试模块内显式引入（否则 `use super::*` 无法访问）
+    use super::mdm_v49_types::*;
 
     // --- LifecycleStage::as_str ---
     #[test]

@@ -23,6 +23,7 @@ use chrono::{Datelike, NaiveDate, Weekday};
 use lazy_static::lazy_static;
 use sqlx::PgPool;
 use std::collections::HashSet;
+use topems_shared_boundary::only_own_schema_query;
 use tracing::warn;
 
 lazy_static! {
@@ -98,10 +99,12 @@ async fn query_holiday_from_db(
     let year = date.year();
     let result = match tenant_id {
         Some(tid) => {
-            sqlx::query_scalar::<_, i64>(
+            sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"SELECT COUNT(*) FROM plugin_erp.holidays
                    WHERE tenant_id = $1 AND year = $2 AND date = $3 AND kind = $4"#,
-            )
+                "plugin_erp"
+            ))
             .bind(tid)
             .bind(year)
             .bind(date)
@@ -111,10 +114,12 @@ async fn query_holiday_from_db(
         }
         None => {
             // 未传入 tenant_id 时，仅做全局查询（跨租户共享数据场景）
-            sqlx::query_scalar::<_, i64>(
+            sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"SELECT COUNT(*) FROM plugin_erp.holidays
                    WHERE year = $1 AND date = $2 AND kind = $3 LIMIT 1"#,
-            )
+                "plugin_erp"
+            ))
             .bind(year)
             .bind(date)
             .bind(kind)

@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -225,10 +226,10 @@ pub struct SalesOrder {
     pub customer_name: String,
     pub order_date: DateTime<Utc>,
     pub delivery_date: Option<DateTime<Utc>>,
-    pub total_amount: f64,
-    pub tax_amount: f64,
-    pub discount_amount: f64,
-    pub payable_amount: f64,
+    pub total_amount: Decimal,
+    pub tax_amount: Decimal,
+    pub discount_amount: Decimal,
+    pub payable_amount: Decimal,
     pub status: String,
     pub remark: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -310,6 +311,7 @@ pub struct UpdatePurchaseOrderRequest {
 mod tests {
     use super::*;
     use chrono::Utc;
+    use std::str::FromStr;
 
     fn sample_uuid() -> Uuid {
         Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -828,10 +830,10 @@ mod tests {
             customer_name: "客户A".into(),
             order_date: Utc::now(),
             delivery_date: Some(Utc::now()),
-            total_amount: 113000.0,
-            tax_amount: 13000.0,
-            discount_amount: 0.0,
-            payable_amount: 113000.0,
+            total_amount: Decimal::from_str("113000.0").unwrap(),
+            tax_amount: Decimal::from_str("13000.0").unwrap(),
+            discount_amount: Decimal::from_str("0.0").unwrap(),
+            payable_amount: Decimal::from_str("113000.0").unwrap(),
             status: "confirmed".into(),
             remark: Some("加急订单".into()),
             created_at: Utc::now(),
@@ -854,10 +856,10 @@ mod tests {
             customer_name: "折价客户".into(),
             order_date: Utc::now(),
             delivery_date: None,
-            total_amount: 1000.0,
-            tax_amount: 130.0,
-            discount_amount: 2000.0,
-            payable_amount: -870.0,
+            total_amount: Decimal::from_str("1000.0").unwrap(),
+            tax_amount: Decimal::from_str("130.0").unwrap(),
+            discount_amount: Decimal::from_str("2000.0").unwrap(),
+            payable_amount: Decimal::from_str("-870.0").unwrap(),
             status: "draft".into(),
             remark: None,
             created_at: Utc::now(),
@@ -865,8 +867,8 @@ mod tests {
         };
         let s = serde_json::to_string(&so).unwrap();
         let so2: SalesOrder = serde_json::from_str(&s).unwrap();
-        assert_eq!(so2.discount_amount, 2000.0);
-        assert_eq!(so2.payable_amount, -870.0);
+        assert_eq!(so2.discount_amount, Decimal::from_str("2000.0").unwrap());
+        assert_eq!(so2.payable_amount, Decimal::from_str("-870.0").unwrap());
     }
 
     #[test]
@@ -1046,10 +1048,10 @@ mod tests {
             customer_name: "大客户".into(),
             order_date: Utc::now(),
             delivery_date: None,
-            total_amount: f64::MAX,
-            tax_amount: f64::MAX / 10.0,
-            discount_amount: 0.0,
-            payable_amount: f64::MAX,
+            total_amount: Decimal::from_str("99999999999999999999.99").unwrap(),
+            tax_amount: Decimal::from_str("9999999999999999999.999").unwrap(),
+            discount_amount: Decimal::from_str("0.0").unwrap(),
+            payable_amount: Decimal::from_str("99999999999999999999.99").unwrap(),
             status: "draft".into(),
             remark: None,
             created_at: Utc::now(),
@@ -1057,6 +1059,9 @@ mod tests {
         };
         let s = serde_json::to_string(&so).unwrap();
         let so2: SalesOrder = serde_json::from_str(&s).unwrap();
-        assert_eq!(so2.total_amount, f64::MAX);
+        assert_eq!(
+            so2.total_amount,
+            Decimal::from_str("99999999999999999999.99").unwrap()
+        );
     }
 }

@@ -318,4 +318,3 @@ pub async fn get_lifecycle_events(
         .collect();
     Json(ApiResponse::success(items, "生命周期事件列表"))
 }
-

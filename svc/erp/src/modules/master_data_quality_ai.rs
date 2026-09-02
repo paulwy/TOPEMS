@@ -1,6 +1,6 @@
 // ==================== 主数据质量 AI 类型 ====================
 
-use axum::extract::{Path, Query, State, Json};
+use axum::extract::{Json, Path, Query, State};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;

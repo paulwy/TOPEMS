@@ -3,6 +3,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -59,11 +60,11 @@ pub async fn list_inventory(
         let status = status_filter.clone();
 
         sqlx::query_as::<_, Inventory>(
-            r#"SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at 
-               FROM inventory 
+            only_own_schema_query!("erp", r#"SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at 
+               FROM erp.inventory 
                WHERE (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1)
                  AND ($2 = '' OR status = $2)
-               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
         )
         .bind(search)
         .bind(status.unwrap_or_default())
@@ -73,7 +74,7 @@ pub async fn list_inventory(
         .await
     } else {
         sqlx::query_as::<_, Inventory>(
-            "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM inventory ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            only_own_schema_query!("erp", "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM erp.inventory ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -90,7 +91,7 @@ pub async fn list_inventory(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM inventory WHERE deleted_at IS NULL AND (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1) AND ($2 = '' OR status = $2)"#
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.inventory WHERE deleted_at IS NULL AND (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1) AND ($2 = '' OR status = $2)"#)
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -133,7 +134,7 @@ pub async fn get_inventory(
     }
 
     let result = sqlx::query_as::<_, Inventory>(
-        "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM inventory WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM erp.inventory WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -168,9 +169,10 @@ pub async fn create_inventory(
         return e;
     }
 
-    let material_result = sqlx::query_as::<_, (String, String, String)>(
-        "SELECT code, name, unit FROM materials WHERE id = $1",
-    )
+    let material_result = sqlx::query_as::<_, (String, String, String)>(only_own_schema_query!(
+        "erp",
+        "SELECT code, name, unit FROM erp.materials WHERE id = $1"
+    ))
     .bind(body.material_id)
     .fetch_optional(&state.db)
     .await;
@@ -182,7 +184,7 @@ pub async fn create_inventory(
     let total_amount = calculate_total_amount(body.unit_price, body.quantity);
 
     let result = sqlx::query_as::<_, Inventory>(
-        "INSERT INTO inventory (material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at",
+        only_own_schema_query!("erp", "INSERT INTO erp.inventory (material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at"),
     )
     .bind(body.material_id)
     .bind(material_code)
@@ -237,7 +239,7 @@ pub async fn update_inventory(
     }
 
     let result = sqlx::query_as::<_, Inventory>(
-        "UPDATE inventory SET warehouse_id = COALESCE($1, warehouse_id), location_code = COALESCE($2, location_code), quantity = COALESCE($3, quantity), available_quantity = COALESCE($3, available_quantity), unit_price = COALESCE($4, unit_price), total_amount = COALESCE($4, unit_price) * COALESCE($3, quantity), batch_no = COALESCE($5, batch_no), expire_date = COALESCE($6, expire_date), status = COALESCE($7, status), updated_at = NOW() WHERE id = $8 RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at",
+        only_own_schema_query!("erp", "UPDATE erp.inventory SET warehouse_id = COALESCE($1, warehouse_id), location_code = COALESCE($2, location_code), quantity = COALESCE($3, quantity), available_quantity = COALESCE($3, available_quantity), unit_price = COALESCE($4, unit_price), total_amount = COALESCE($4, unit_price) * COALESCE($3, quantity), batch_no = COALESCE($5, batch_no), expire_date = COALESCE($6, expire_date), status = COALESCE($7, status), updated_at = NOW() WHERE id = $8 RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at"),
     )
     .bind(body.warehouse_id)
     .bind(body.location_code)
@@ -282,10 +284,13 @@ pub async fn delete_inventory(
         return e;
     }
 
-    let result = sqlx::query("UPDATE inventory SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.inventory SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -315,7 +320,7 @@ pub async fn get_low_stock(
     }
 
     let low_stock = match sqlx::query_as::<_, Inventory>(
-        "SELECT i.id, i.material_id, i.material_code, i.material_name, i.warehouse_id, i.warehouse_name, i.location_code, i.quantity, i.available_quantity, i.reserved_quantity, i.unit, i.unit_price, i.total_amount, i.batch_no, i.expire_date, i.status, i.created_at, i.updated_at FROM inventory i JOIN materials m ON i.material_id = m.id WHERE i.quantity < m.safety_stock AND i.status = 'active' ORDER BY i.quantity ASC",
+        only_own_schema_query!("erp", "SELECT i.id, i.material_id, i.material_code, i.material_name, i.warehouse_id, i.warehouse_name, i.location_code, i.quantity, i.available_quantity, i.reserved_quantity, i.unit, i.unit_price, i.total_amount, i.batch_no, i.expire_date, i.status, i.created_at, i.updated_at FROM erp.inventory i JOIN erp.materials m ON i.material_id = m.id WHERE i.quantity < m.safety_stock AND i.status = 'active' ORDER BY i.quantity ASC"),
     )
     .fetch_all(&state.db)
     .await

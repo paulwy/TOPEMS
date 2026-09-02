@@ -703,4 +703,3 @@ pub struct ArchiveStats {
     pub restored_last_30d: i64,
     pub pending_retention_expiry: i64,
 }
-

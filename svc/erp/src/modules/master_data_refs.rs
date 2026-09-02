@@ -22,35 +22,110 @@
 //! - 销毁管理：销毁计划、取消销毁、软删除销毁
 //! - 生命周期查询：已归档列表、待销毁列表（分页+搜索）
 
-use super::ApiState;
 use super::master_data_assets::{get_data_asset_detail, list_data_assets};
 use super::master_data_audit::{get_audit_trail, record_audit_event};
-use super::master_data_conflict::{auto_merge_conflict, detect_conflicts, get_conflict, list_conflicts, resolve_conflict};
-pub use super::master_data_crud::{LifecycleStatus, MasterDataRef, MasterDataRefQuery, MasterDataRow, get_master_data_ref, get_master_data_ref_by_code, list_master_data_refs};
+use super::master_data_catalog::{
+    create_catalog_entry_handler, delete_catalog_entry_handler, get_catalog_entry_handler,
+    get_catalog_stats_handler, get_popular_entries_handler, search_catalog_handler,
+    update_catalog_entry_handler,
+};
+use super::master_data_classification::{
+    classification_batch_classify, classification_classify_entity, classification_get_stats,
+    classification_learn_rule, classification_list_categories, classification_suggest_tags,
+};
+use super::master_data_compliance_audit::{
+    create_compliance_rule_handler, generate_audit_report_handler, get_audit_findings_handler,
+    get_audit_scorecard_handler, get_compliance_audit_stats_handler, list_compliance_rules_handler,
+    resolve_finding_handler, run_compliance_check_handler,
+};
+use super::master_data_conflict::{
+    auto_merge_conflict, detect_conflicts, get_conflict, list_conflicts, resolve_conflict,
+};
+pub use super::master_data_crud::{
+    get_master_data_ref, get_master_data_ref_by_code, list_master_data_refs, LifecycleStatus,
+    MasterDataRef, MasterDataRefQuery, MasterDataRow,
+};
+use super::master_data_dashboard::{
+    create_dashboard_handler, delete_dashboard_handler, get_dashboard_data_handler,
+    get_dashboard_handler, get_dashboard_stats_handler, get_kpi_summary_handler,
+    refresh_dashboard_handler, update_dashboard_handler,
+};
+use super::master_data_gateway::{
+    mdm_gateway_aggregate, mdm_gateway_batch, mdm_gateway_route, mdm_gateway_stats,
+};
 use super::master_data_governance::get_governance_dashboard;
-use super::master_data_graph::{get_association_recommendations, get_completion_suggestions, get_concept, get_graph_node, get_graph_stats, get_master_data_graph, get_node_neighbors, get_shortest_path, get_similar_entities, list_concepts, list_inference_rules, list_triples, multi_hop_traversal, run_inference};
+use super::master_data_graph::{
+    get_association_recommendations, get_completion_suggestions, get_concept, get_graph_node,
+    get_graph_stats, get_master_data_graph, get_node_neighbors, get_shortest_path,
+    get_similar_entities, list_concepts, list_inference_rules, list_triples, multi_hop_traversal,
+    run_inference,
+};
 use super::master_data_graphql::graphql_endpoint;
-use super::master_data_gateway::{mdm_gateway_aggregate, mdm_gateway_batch, mdm_gateway_route, mdm_gateway_stats};
-use super::master_data_lifecycle::{archive_master_data_ref, cancel_destruction, destroy_master_data_ref, list_archived, list_pending_destruction, restore_master_data_ref, schedule_destruction};
+use super::master_data_lifecycle::{
+    archive_master_data_ref, cancel_destruction, destroy_master_data_ref, list_archived,
+    list_pending_destruction, restore_master_data_ref, schedule_destruction,
+};
 use super::master_data_lineage::get_data_lineage;
-use super::master_data_lineage_graph::{get_lineage_downstream, get_lineage_graph, get_lineage_upstream};
-use super::master_data_matching::{matching_find_duplicates, matching_find_matches, matching_get_duplicate_groups, matching_suggest_merge};
-use super::master_data_quality_ai::{quality_ai_batch_score, quality_ai_get_anomalies, quality_ai_get_stats, quality_ai_predict_quality, quality_ai_score_entity};
-use super::master_data_classification::{classification_batch_classify, classification_classify_entity, classification_get_stats, classification_learn_rule, classification_list_categories, classification_suggest_tags};
-use super::master_data_lineage_impact::{analyze_impact_handler, detect_circular_deps_handler, find_data_origin_handler, get_critical_paths_handler, get_graph_stats_handler, get_impact_report_handler, get_lineage_graph_handler, trace_downstream_handler, trace_lineage_handler, trace_upstream_handler};
-use super::master_data_maturity::{assess_maturity_handler, compare_assessments_handler, get_improvement_plan_handler, get_maturity_history_handler};
-use super::master_data_catalog::{create_catalog_entry_handler, delete_catalog_entry_handler, get_catalog_entry_handler, get_catalog_stats_handler, get_popular_entries_handler, search_catalog_handler, update_catalog_entry_handler};
-use super::master_data_metadata::{create_relation_handler, create_schema_handler, get_metadata_stats_handler, get_record_handler, get_relations_handler, get_schema_handler, list_schemas_handler, query_records_handler, update_schema_handler, upsert_record_handler, validate_record_handler};
-use super::master_data_dashboard::{create_dashboard_handler, delete_dashboard_handler, get_dashboard_data_handler, get_dashboard_handler, get_dashboard_stats_handler, get_kpi_summary_handler, refresh_dashboard_handler, update_dashboard_handler};
-use super::master_data_report_automation::{create_report_template_handler, generate_report_handler, get_generated_report_handler, get_report_automation_stats_handler, get_report_schedule_handler, get_report_template_handler, list_generated_reports_handler, list_report_templates_handler, schedule_report_handler};
-use super::master_data_compliance_audit::{create_compliance_rule_handler, generate_audit_report_handler, get_audit_findings_handler, get_audit_scorecard_handler, get_compliance_audit_stats_handler, list_compliance_rules_handler, resolve_finding_handler, run_compliance_check_handler};
-use super::master_data_quality_loop::{approve_repair_workflow, assign_quality_ticket, close_quality_ticket, create_data_domain, create_quality_ticket, create_repair_workflow, escalate_ticket, execute_repair_step, execute_repair_workflow, get_data_domain, get_entity_owner, get_ownership_matrix, get_quality_loop_stats, get_quality_ticket, get_quality_ticket_history, get_repair_workflow, list_data_domains, list_quality_tickets, list_repair_workflows, reject_quality_ticket, set_ownership_matrix, start_quality_ticket, submit_quality_ticket, update_data_domain, verify_quality_ticket, verify_repair};
-use super::master_data_quality_rules::{create_quality_rule, delete_quality_rule, get_quality_report, get_quality_rule, list_quality_rules, run_quality_check, update_quality_rule};
-use super::master_data_sync::{batch_replay_dead_letters, cancel_sync_job, create_sync_job, delete_dead_letter, get_sync_job, get_sync_stats, list_dead_letters, list_sync_jobs, replay_dead_letter, retry_sync_job, trigger_compensation};
-use super::master_data_sync_v2::{batch_retry_dead_letters, create_sync_job_v2, get_sync_job_v2, list_sync_jobs_v2, retry_dead_letter_v2, sync_engine_stats_v2};
+use super::master_data_lineage_graph::{
+    get_lineage_downstream, get_lineage_graph, get_lineage_upstream,
+};
+use super::master_data_lineage_impact::{
+    analyze_impact_handler, detect_circular_deps_handler, find_data_origin_handler,
+    get_critical_paths_handler, get_graph_stats_handler, get_impact_report_handler,
+    get_lineage_graph_handler, trace_downstream_handler, trace_lineage_handler,
+    trace_upstream_handler,
+};
+use super::master_data_matching::{
+    matching_find_duplicates, matching_find_matches, matching_get_duplicate_groups,
+    matching_suggest_merge,
+};
+use super::master_data_maturity::{
+    assess_maturity_handler, compare_assessments_handler, get_improvement_plan_handler,
+    get_maturity_history_handler,
+};
+use super::master_data_metadata::{
+    create_relation_handler, create_schema_handler, get_metadata_stats_handler, get_record_handler,
+    get_relations_handler, get_schema_handler, list_schemas_handler, query_records_handler,
+    update_schema_handler, upsert_record_handler, validate_record_handler,
+};
+use super::master_data_quality_ai::{
+    quality_ai_batch_score, quality_ai_get_anomalies, quality_ai_get_stats,
+    quality_ai_predict_quality, quality_ai_score_entity,
+};
+use super::master_data_quality_loop::{
+    approve_repair_workflow, assign_quality_ticket, close_quality_ticket, create_data_domain,
+    create_quality_ticket, create_repair_workflow, escalate_ticket, execute_repair_step,
+    execute_repair_workflow, get_data_domain, get_entity_owner, get_ownership_matrix,
+    get_quality_loop_stats, get_quality_ticket, get_quality_ticket_history, get_repair_workflow,
+    list_data_domains, list_quality_tickets, list_repair_workflows, reject_quality_ticket,
+    set_ownership_matrix, start_quality_ticket, submit_quality_ticket, update_data_domain,
+    verify_quality_ticket, verify_repair,
+};
+use super::master_data_quality_rules::{
+    create_quality_rule, delete_quality_rule, get_quality_report, get_quality_rule,
+    list_quality_rules, run_quality_check, update_quality_rule,
+};
 use super::master_data_quality_trend::get_quality_trend;
-use super::master_data_service_registry::{mdm_service_deregister, mdm_service_health, mdm_service_heartbeat, mdm_service_list, mdm_service_register};
+use super::master_data_report_automation::{
+    create_report_template_handler, generate_report_handler, get_generated_report_handler,
+    get_report_automation_stats_handler, get_report_schedule_handler, get_report_template_handler,
+    list_generated_reports_handler, list_report_templates_handler, schedule_report_handler,
+};
+use super::master_data_service_registry::{
+    mdm_service_deregister, mdm_service_health, mdm_service_heartbeat, mdm_service_list,
+    mdm_service_register,
+};
+use super::master_data_sync::{
+    batch_replay_dead_letters, cancel_sync_job, create_sync_job, delete_dead_letter, get_sync_job,
+    get_sync_stats, list_dead_letters, list_sync_jobs, replay_dead_letter, retry_sync_job,
+    trigger_compensation,
+};
+use super::master_data_sync_v2::{
+    batch_retry_dead_letters, create_sync_job_v2, get_sync_job_v2, list_sync_jobs_v2,
+    retry_dead_letter_v2, sync_engine_stats_v2,
+};
 use super::master_data_version::{get_version, get_versions, record_version, rollback_to_version};
+use super::ApiState;
 
 // ==================== 路由 ====================
 

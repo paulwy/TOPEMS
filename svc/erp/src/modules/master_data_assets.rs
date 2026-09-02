@@ -8,6 +8,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
 
 use super::ApiState;
@@ -181,33 +182,35 @@ pub async fn list_data_assets(
     let db = &state.db;
 
     let rows = if let Some(ref domain) = params.domain {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "erp",
             r#"SELECT domain,
                       COUNT(*) as total_count,
                       COUNT(*) FILTER (WHERE status = 'active') as active_count,
                       MAX(updated_at) as last_updated,
-                      (SELECT source_service FROM erp_master_data_refs r2
+                      (SELECT source_service FROM erp.erp_master_data_refs r2
                        WHERE r2.domain = r1.domain LIMIT 1) as owner_service
-               FROM erp_master_data_refs r1
+               FROM erp.erp_master_data_refs r1
                WHERE domain = $1 AND status != 'destroyed'
-               GROUP BY domain"#,
-        )
+               GROUP BY domain"#
+        ))
         .bind(domain)
         .fetch_all(db)
         .await
     } else {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "erp",
             r#"SELECT domain,
                       COUNT(*) as total_count,
                       COUNT(*) FILTER (WHERE status = 'active') as active_count,
                       MAX(updated_at) as last_updated,
-                      (SELECT source_service FROM erp_master_data_refs r2
+                      (SELECT source_service FROM erp.erp_master_data_refs r2
                        WHERE r2.domain = r1.domain LIMIT 1) as owner_service
-               FROM erp_master_data_refs r1
+               FROM erp.erp_master_data_refs r1
                WHERE status != 'destroyed'
                GROUP BY domain
-               ORDER BY domain"#,
-        )
+               ORDER BY domain"#
+        ))
         .fetch_all(db)
         .await
     };
@@ -246,12 +249,13 @@ pub async fn list_data_assets(
 }
 
 async fn calculate_domain_quality_score(db: &sqlx::PgPool, domain: &str) -> f64 {
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT total_checked, total_issues, errors, warnings
            FROM erp_master_data_quality_reports
            WHERE domain = $1
-           ORDER BY generated_at DESC LIMIT 1"#,
-    )
+           ORDER BY generated_at DESC LIMIT 1"#
+    ))
     .bind(domain)
     .fetch_optional(db)
     .await;
@@ -288,15 +292,16 @@ pub async fn get_data_asset_detail(
 ) -> Json<ApiResponse<DataAssetSummary>> {
     let db = &state.db;
 
-    let row = sqlx::query(
+    let row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT COUNT(*) as total_count,
                   COUNT(*) FILTER (WHERE status = 'active') as active_count,
                   MAX(updated_at) as last_updated,
-                  (SELECT source_service FROM erp_master_data_refs r2
+                  (SELECT source_service FROM erp.erp_master_data_refs r2
                    WHERE r2.domain = $1 LIMIT 1) as owner_service
-           FROM erp_master_data_refs
-           WHERE domain = $1 AND status != 'destroyed'"#,
-    )
+           FROM erp.erp_master_data_refs
+           WHERE domain = $1 AND status != 'destroyed'"#
+    ))
     .bind(&domain)
     .fetch_one(db)
     .await;

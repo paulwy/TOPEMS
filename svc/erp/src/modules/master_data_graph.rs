@@ -1,10 +1,10 @@
 // ==================== V43.0 AC-15: 主数据图谱 + 知识图谱 + 智能推荐 ====================
 
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::sync::LazyLock;
 use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::LazyLock;
 use tokio::sync::RwLock;
 
 use topems_shared::ApiResponse;
@@ -238,7 +238,8 @@ impl Default for KnowledgeGraphStore {
     }
 }
 
-static KNOWLEDGE_GRAPH_STORE: LazyLock<KnowledgeGraphStore> = LazyLock::new(KnowledgeGraphStore::default);
+static KNOWLEDGE_GRAPH_STORE: LazyLock<KnowledgeGraphStore> =
+    LazyLock::new(KnowledgeGraphStore::default);
 
 pub fn get_knowledge_graph_store() -> &'static KnowledgeGraphStore {
     &KNOWLEDGE_GRAPH_STORE
@@ -1381,9 +1382,7 @@ pub async fn multi_hop_traversal(
     tag = "Master Data",
     responses((status = 200, description = "获取图谱统计成功", body = ApiResponse<serde_json::Value>))
 )]
-pub async fn get_graph_stats(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<GraphStats>> {
+pub async fn get_graph_stats(State(state): State<ApiState>) -> Json<ApiResponse<GraphStats>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1469,7 +1468,11 @@ pub async fn list_concepts(
     let page_size = params.page_size.unwrap_or(20);
     let offset = ((page - 1) * page_size) as usize;
 
-    let items: Vec<Concept> = filtered.into_iter().skip(offset).take(page_size as usize).collect();
+    let items: Vec<Concept> = filtered
+        .into_iter()
+        .skip(offset)
+        .take(page_size as usize)
+        .collect();
 
     Json(ApiResponse::success(
         PaginatedResponse::new(items, total as i64, page, page_size),

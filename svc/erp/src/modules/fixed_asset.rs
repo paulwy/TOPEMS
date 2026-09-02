@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -115,21 +116,22 @@ pub async fn list_fixed_assets(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
 
-    let result = sqlx::query_as::<_, FixedAsset>(
+    let result = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                original_value, accumulated_depreciation, net_value, depreciation_method, 
                useful_life_months, depreciation_period, department_id, department_name, 
                location, status, created_at, updated_at
-        FROM fixed_assets
+        FROM erp.fixed_assets
         WHERE ($1::text IS NULL OR asset_code ILIKE $1 OR asset_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR asset_type = $3)
           AND ($4::uuid IS NULL OR department_id = $4)
         ORDER BY asset_code ASC
         LIMIT $5 OFFSET $6
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&params.status)
     .bind(&params.asset_type)
@@ -147,13 +149,13 @@ pub async fn list_fixed_assets(
     match result {
         Ok(assets) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
-                SELECT COUNT(*) FROM fixed_assets
+                only_own_schema_query!("erp", r#"
+                SELECT COUNT(*) FROM erp.fixed_assets
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR asset_code ILIKE $1 OR asset_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR asset_type = $3)
                   AND ($4::uuid IS NULL OR department_id = $4)
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&params.status)
@@ -217,9 +219,10 @@ pub async fn create_fixed_asset(
     let depreciation_period = "".to_string();
     let status = "active".to_string();
 
-    let result = sqlx::query_as::<_, FixedAsset>(
+    let result = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
+        "erp",
         r#"
-        INSERT INTO fixed_assets (id, asset_code, asset_name, asset_type, asset_category, 
+        INSERT INTO erp.fixed_assets (id, asset_code, asset_name, asset_type, asset_category, 
                purchase_date, original_value, accumulated_depreciation, net_value, 
                depreciation_method, useful_life_months, depreciation_period, 
                department_id, department_name, location, status, created_at, updated_at)
@@ -228,8 +231,8 @@ pub async fn create_fixed_asset(
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
                   useful_life_months, depreciation_period, department_id, department_name, 
                   location, status, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.asset_code)
     .bind(&req.asset_name)
@@ -312,15 +315,16 @@ pub async fn get_fixed_asset(
         return e;
     }
 
-    let result = sqlx::query_as::<_, FixedAsset>(
+    let result = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                original_value, accumulated_depreciation, net_value, depreciation_method, 
                useful_life_months, depreciation_period, department_id, department_name, 
                location, status, created_at, updated_at
-        FROM fixed_assets WHERE id = $1
-        "#,
-    )
+        FROM erp.fixed_assets WHERE id = $1
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -354,12 +358,13 @@ pub async fn update_fixed_asset(
         return e;
     }
 
-    let existing = sqlx::query_as::<_, FixedAsset>(
+    let existing = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
+        "erp",
         "SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                 original_value, accumulated_depreciation, net_value, depreciation_method, 
                 useful_life_months, depreciation_period, department_id, department_name, 
-                location, status, created_at, updated_at FROM fixed_assets WHERE id = $1",
-    )
+                location, status, created_at, updated_at FROM erp.fixed_assets WHERE id = $1"
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -393,9 +398,10 @@ pub async fn update_fixed_asset(
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, FixedAsset>(
+    let result = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
+        "erp",
         r#"
-        UPDATE fixed_assets SET
+        UPDATE erp.fixed_assets SET
             asset_name = $2, asset_type = $3, asset_category = $4, purchase_date = $5,
             original_value = $6, accumulated_depreciation = $7, net_value = $8,
             depreciation_method = $9, useful_life_months = $10,
@@ -406,8 +412,8 @@ pub async fn update_fixed_asset(
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
                   useful_life_months, depreciation_period, department_id, department_name, 
                   location, status, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&asset_name)
     .bind(&asset_type)
@@ -487,10 +493,13 @@ pub async fn delete_fixed_asset(
         return e;
     }
 
-    let result = sqlx::query("UPDATE fixed_assets SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.fixed_assets SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -634,7 +643,7 @@ pub async fn depreciate_assets(
         Some(ref ids) => {
             let placeholders = ids.iter().map(|_| "$1").collect::<Vec<_>>().join(",");
             sqlx::query_as::<_, FixedAsset>(&format!(
-                "SELECT * FROM fixed_assets WHERE deleted_at IS NULL AND id IN ({}) AND status = 'active'",
+                "SELECT * FROM erp.fixed_assets WHERE deleted_at IS NULL AND id IN ({}) AND status = 'active'",
                 placeholders
             ))
             .bind(ids)
@@ -642,9 +651,10 @@ pub async fn depreciate_assets(
             .await
         }
         None => {
-            sqlx::query_as::<_, FixedAsset>(
-                "SELECT * FROM fixed_assets WHERE deleted_at IS NULL AND status = 'active'",
-            )
+            sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
+                "erp",
+                "SELECT * FROM erp.fixed_assets WHERE deleted_at IS NULL AND status = 'active'"
+            ))
             .fetch_all(&state.db)
             .await
         }
@@ -668,7 +678,7 @@ pub async fn depreciate_assets(
                 let query_result = if calc.is_fully_depreciated {
                     // 足额折旧：累计=原值、净值=0，状态切换为 'depreciated'
                     sqlx::query(
-                        "UPDATE fixed_assets SET accumulated_depreciation = $2, net_value = $3, status = 'depreciated', depreciation_period = $4, updated_at = $5 WHERE id = $1",
+                        only_own_schema_query!("erp", "UPDATE erp.fixed_assets SET accumulated_depreciation = $2, net_value = $3, status = 'depreciated', depreciation_period = $4, updated_at = $5 WHERE id = $1"),
                     )
                     .bind(asset.id)
                     .bind(calc.new_accumulated_depreciation)
@@ -680,7 +690,7 @@ pub async fn depreciate_assets(
                 } else {
                     // 正常计提：更新累计、净值、期间
                     sqlx::query(
-                        "UPDATE fixed_assets SET accumulated_depreciation = $2, net_value = $3, depreciation_period = $4, updated_at = $5 WHERE id = $1",
+                        only_own_schema_query!("erp", "UPDATE erp.fixed_assets SET accumulated_depreciation = $2, net_value = $3, depreciation_period = $4, updated_at = $5 WHERE id = $1"),
                     )
                     .bind(asset.id)
                     .bind(calc.new_accumulated_depreciation)

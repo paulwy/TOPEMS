@@ -1,14 +1,14 @@
 // ==================== 自动分类类型 ====================
 
-use axum::extract::{Path, Query, State, Json};
+use axum::extract::{Json, Path, Query, State};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use topems_shared::ApiResponse;
 
+use super::master_data_matching::{build_entity_profiles, EntityProfile};
 use super::ApiState;
-use super::master_data_matching::{EntityProfile, build_entity_profiles};
 
 /// 分类结果
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

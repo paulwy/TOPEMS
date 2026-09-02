@@ -294,7 +294,7 @@ mod tests {
         };
         let json = serde_json::to_value(&registry).unwrap();
         assert_eq!(json["health_check_interval"], 30);
-        assert_eq!(json["services"].as_array().unwrap().is_empty(), true);
+        assert!(json["services"].as_array().unwrap().is_empty());
     }
 
     #[test]

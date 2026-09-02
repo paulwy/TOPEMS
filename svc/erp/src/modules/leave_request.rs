@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -131,7 +132,8 @@ pub struct LeaveRequestQueryParams {
 /// 确保 leave_requests 表存在（幂等操作）
 /// 表结构在 handler 中用 CREATE TABLE IF NOT EXISTS 创建，不依赖迁移文件
 async fn ensure_table(state: &ApiState) {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "erp",
         r#"
         CREATE TABLE IF NOT EXISTS leave_requests (
             id              UUID PRIMARY KEY,
@@ -153,8 +155,8 @@ async fn ensure_table(state: &ApiState) {
             updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(&state.db)
     .await
     .map(|_| ())
@@ -219,12 +221,13 @@ pub async fn list_leave_requests(
     let employee_filter = params.employee_id;
     let tenant = tenant_id_from_claims(&claims);
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, employee_id, employee_name, leave_type, start_date, end_date,
                start_half_day, end_half_day, days, reason, status,
                approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        FROM leave_requests
+        FROM erp.leave_requests
         WHERE ($1::text IS NULL OR employee_name ILIKE $1 OR reason ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR leave_type = $3)
@@ -232,8 +235,8 @@ pub async fn list_leave_requests(
           AND tenant_id = $5
         ORDER BY created_at DESC
         LIMIT $6 OFFSET $7
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&type_filter)
@@ -247,14 +250,14 @@ pub async fn list_leave_requests(
     match result {
         Ok(requests) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
-                SELECT COUNT(*) FROM leave_requests
+                only_own_schema_query!("erp", r#"
+                SELECT COUNT(*) FROM erp.leave_requests
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR employee_name ILIKE $1 OR reason ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR leave_type = $3)
                   AND ($4::uuid IS NULL OR employee_id = $4)
                   AND tenant_id = $5
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -316,9 +319,10 @@ pub async fn create_leave_request(
     let now = Utc::now();
     let tenant = tenant_id_from_claims(&claims).to_string();
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
-        INSERT INTO leave_requests
+        INSERT INTO erp.leave_requests
             (id, employee_id, employee_name, leave_type, start_date, end_date,
              start_half_day, end_half_day, days, reason, status, tenant_id, created_at, updated_at)
         VALUES
@@ -326,8 +330,8 @@ pub async fn create_leave_request(
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.employee_id)
     .bind(&req.employee_name)
@@ -405,15 +409,16 @@ pub async fn get_leave_request(
 
     let tenant = tenant_id_from_claims(&claims);
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, employee_id, employee_name, leave_type, start_date, end_date,
                start_half_day, end_half_day, days, reason, status,
                approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        FROM leave_requests
+        FROM erp.leave_requests
         WHERE id = $1 AND tenant_id = $2
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant)
     .fetch_optional(&state.db)
@@ -448,15 +453,16 @@ pub async fn update_leave_request(
 
     let tenant = tenant_id_from_claims(&claims);
 
-    let existing = sqlx::query_as::<_, LeaveRequest>(
+    let existing = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
         SELECT id, employee_id, employee_name, leave_type, start_date, end_date,
                start_half_day, end_half_day, days, reason, status,
                approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        FROM leave_requests
+        FROM erp.leave_requests
         WHERE id = $1 AND tenant_id = $2
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant)
     .fetch_optional(&state.db)
@@ -490,9 +496,10 @@ pub async fn update_leave_request(
     let days = calculate_leave_days(start_date, end_date, start_half_day, end_half_day);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
-        UPDATE leave_requests SET
+        UPDATE erp.leave_requests SET
             leave_type = $2, start_date = $3, end_date = $4,
             start_half_day = $5, end_half_day = $6, days = $7, reason = $8,
             updated_at = $9
@@ -500,8 +507,8 @@ pub async fn update_leave_request(
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&leave_type)
     .bind(start_date)
@@ -575,9 +582,10 @@ pub async fn delete_leave_request(
 
     let tenant = tenant_id_from_claims(&claims);
 
-    let result = sqlx::query(
-        "UPDATE leave_requests SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.leave_requests SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+    ))
     .bind(id)
     .bind(tenant)
     .execute(&state.db)
@@ -651,15 +659,16 @@ pub async fn submit_leave_request(
     let tenant = tenant_id_from_claims(&claims);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
-        UPDATE leave_requests SET status = 'pending', updated_at = $2
+        UPDATE erp.leave_requests SET status = 'pending', updated_at = $2
         WHERE id = $1 AND tenant_id = $3 AND status = 'draft'
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .bind(tenant)
@@ -739,17 +748,18 @@ pub async fn approve_leave_request(
     let tenant = tenant_id_from_claims(&claims);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
-        UPDATE leave_requests SET
+        UPDATE erp.leave_requests SET
             status = 'approved', approved_by = $2, approved_at = $3,
             rejected_reason = NULL, updated_at = $4
         WHERE id = $1 AND tenant_id = $5 AND status = 'pending'
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.approved_by)
     .bind(now)
@@ -834,17 +844,18 @@ pub async fn reject_leave_request(
     let tenant = tenant_id_from_claims(&claims);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
-        UPDATE leave_requests SET
+        UPDATE erp.leave_requests SET
             status = 'rejected', approved_by = $2, approved_at = $3,
             rejected_reason = $4, updated_at = $5
         WHERE id = $1 AND tenant_id = $6 AND status = 'pending'
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.approved_by)
     .bind(now)
@@ -922,15 +933,16 @@ pub async fn cancel_leave_request(
     let tenant = tenant_id_from_claims(&claims);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, LeaveRequest>(
+    let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
+        "erp",
         r#"
-        UPDATE leave_requests SET status = 'cancelled', updated_at = $2
+        UPDATE erp.leave_requests SET status = 'cancelled', updated_at = $2
         WHERE id = $1 AND tenant_id = $3 AND status IN ('draft', 'pending')
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .bind(tenant)

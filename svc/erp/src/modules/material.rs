@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
@@ -76,12 +77,12 @@ pub async fn list_materials(
         let category = category_filter.clone();
 
         sqlx::query_as::<_, Material>(
-            r#"SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at 
-               FROM materials 
+            only_own_schema_query!("erp", r#"SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at 
+               FROM erp.materials 
                WHERE (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1)
                  AND ($2 = '' OR status = $2)
                  AND ($3 = '' OR category = $3)
-               ORDER BY created_at DESC LIMIT $4 OFFSET $5"#
+               ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)
         )
         .bind(search)
         .bind(status.unwrap_or_default())
@@ -92,7 +93,7 @@ pub async fn list_materials(
         .await
     } else {
         sqlx::query_as::<_, Material>(
-            "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM materials ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            only_own_schema_query!("erp", "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -109,7 +110,7 @@ pub async fn list_materials(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM materials WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category = $3)"#
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.materials WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category = $3)"#)
     )
     .bind(params.base.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -148,7 +149,7 @@ pub async fn get_material(
     }
 
     let result = sqlx::query_as::<_, Material>(
-        "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM materials WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -186,7 +187,7 @@ pub async fn create_material(
     }
 
     let result = sqlx::query_as::<_, Material>(
-        "INSERT INTO materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at",
+        only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -234,7 +235,7 @@ pub async fn update_material(
     }
 
     let result = sqlx::query_as::<_, Material>(
-        "UPDATE materials SET name = COALESCE($1, name), specification = COALESCE($2, specification), unit = COALESCE($3, unit), category = COALESCE($4, category), brand = COALESCE($5, brand), model = COALESCE($6, model), barcode = COALESCE($7, barcode), safety_stock = COALESCE($8, safety_stock), unit_price = COALESCE($9, unit_price), tax_rate = COALESCE($10, tax_rate), description = COALESCE($11, description), status = COALESCE($12, status), updated_at = NOW() WHERE id = $13 RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at",
+        only_own_schema_query!("erp", "UPDATE erp.materials SET name = COALESCE($1, name), specification = COALESCE($2, specification), unit = COALESCE($3, unit), category = COALESCE($4, category), brand = COALESCE($5, brand), model = COALESCE($6, model), barcode = COALESCE($7, barcode), safety_stock = COALESCE($8, safety_stock), unit_price = COALESCE($9, unit_price), tax_rate = COALESCE($10, tax_rate), description = COALESCE($11, description), status = COALESCE($12, status), updated_at = NOW() WHERE id = $13 RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.specification)
@@ -279,10 +280,13 @@ pub async fn delete_material(
         return e;
     }
 
-    let result = sqlx::query("UPDATE materials SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.materials SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

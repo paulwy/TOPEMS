@@ -8,6 +8,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::IntoParams;
 
@@ -62,12 +63,13 @@ pub async fn record_audit_event(
     let now = chrono::Utc::now();
     let target_service = req.target_service.unwrap_or_else(|| "erp".to_string());
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"INSERT INTO erp_master_data_audit_trail
            (id, master_data_id, domain, action, source_service, target_service,
             changed_by, old_values, new_values, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#,
-    )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#
+    ))
     .bind(id)
     .bind(&req.master_data_id)
     .bind(&req.domain)
@@ -123,14 +125,15 @@ pub async fn get_audit_trail(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT id, master_data_id, domain, action, source_service, target_service,
                   changed_by, old_values, new_values, created_at
            FROM erp_master_data_audit_trail
            WHERE master_data_id = $1
            ORDER BY created_at DESC
-           LIMIT $2 OFFSET $3"#,
-    )
+           LIMIT $2 OFFSET $3"#
+    ))
     .bind(&master_data_id)
     .bind(page_size)
     .bind(offset)

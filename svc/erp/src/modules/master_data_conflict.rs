@@ -8,6 +8,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::IntoParams;
 
@@ -113,25 +114,24 @@ pub async fn detect_conflicts(
     };
 
     // 1. 查询本地主数据引用
-    let local_row = sqlx::query(
+    let local_row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT master_data_id, domain, code, name, status, source_service, updated_at
-           FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+           FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&req.master_data_id)
     .fetch_optional(&state.db)
     .await;
 
     let (domain, local_name, local_status, local_code, _updated_at) = match local_row {
-        Ok(Some(row)) => {
-            (
-                row.try_get::<String, _>("domain").unwrap_or_default(),
-                row.try_get::<Option<String>, _>("name").ok().flatten(),
-                row.try_get::<String, _>("status").unwrap_or_default(),
-                row.try_get::<String, _>("code").unwrap_or_default(),
-                row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
-                    .unwrap_or_else(|_| chrono::Utc::now()),
-            )
-        }
+        Ok(Some(row)) => (
+            row.try_get::<String, _>("domain").unwrap_or_default(),
+            row.try_get::<Option<String>, _>("name").ok().flatten(),
+            row.try_get::<String, _>("status").unwrap_or_default(),
+            row.try_get::<String, _>("code").unwrap_or_default(),
+            row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
+                .unwrap_or_else(|_| chrono::Utc::now()),
+        ),
         _ => {
             return Json(ApiResponse::error(
                 404,
@@ -239,13 +239,14 @@ pub async fn detect_conflicts(
             auto_resolved += 1;
 
             // 持久化冲突记录到数据库
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "erp",
                 r#"INSERT INTO erp_master_data_conflicts
                    (id, master_data_id, domain, conflict_type, field_name,
                     local_value, remote_value, remote_service, status,
                     merge_strategy, resolved_value, detected_at, resolved_at, resolved_by)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"#,
-            )
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"#
+            ))
             .bind(uuid::Uuid::parse_str(&conflict.id).unwrap_or_else(|_| uuid::Uuid::new_v4()))
             .bind(&conflict.master_data_id)
             .bind(&conflict.domain)
@@ -276,13 +277,14 @@ pub async fn detect_conflicts(
             manual_review_required += 1;
 
             // 持久化待审查冲突
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "erp",
                 r#"INSERT INTO erp_master_data_conflicts
                    (id, master_data_id, domain, conflict_type, field_name,
                     local_value, remote_value, remote_service, status,
                     merge_strategy, resolved_value, detected_at, resolved_at, resolved_by)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULL, $11, NULL, NULL)"#,
-            )
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULL, $11, NULL, NULL)"#
+            ))
             .bind(uuid::Uuid::parse_str(&conflict.id).unwrap_or_else(|_| uuid::Uuid::new_v4()))
             .bind(&conflict.master_data_id)
             .bind(&conflict.domain)
@@ -301,10 +303,11 @@ pub async fn detect_conflicts(
 
     // 4. 如果有自动解决的冲突，更新本地数据的 last_synced_at
     if auto_resolved > 0 {
-        let _ = sqlx::query(
-            r#"UPDATE erp_master_data_refs SET last_synced_at = $1, updated_at = $1
-               WHERE master_data_id = $2"#,
-        )
+        let _ = sqlx::query(only_own_schema_query!(
+            "erp",
+            r#"UPDATE erp.erp_master_data_refs SET last_synced_at = $1, updated_at = $1
+               WHERE master_data_id = $2"#
+        ))
         .bind(now)
         .bind(&req.master_data_id)
         .execute(&state.db)
@@ -347,14 +350,15 @@ pub async fn list_conflicts(
 
     let rows = if let Some(ref mid) = params.master_data_id {
         if let Some(ref status) = params.status {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "erp",
                 r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                           local_value, remote_value, remote_service, status,
                           merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
                    FROM erp_master_data_conflicts
                    WHERE master_data_id = $1 AND status = $2
-                   ORDER BY detected_at DESC LIMIT $3 OFFSET $4"#,
-            )
+                   ORDER BY detected_at DESC LIMIT $3 OFFSET $4"#
+            ))
             .bind(mid)
             .bind(status)
             .bind(page_size)
@@ -362,14 +366,15 @@ pub async fn list_conflicts(
             .fetch_all(&state.db)
             .await
         } else {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "erp",
                 r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                           local_value, remote_value, remote_service, status,
                           merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
                    FROM erp_master_data_conflicts
                    WHERE master_data_id = $1
-                   ORDER BY detected_at DESC LIMIT $2 OFFSET $3"#,
-            )
+                   ORDER BY detected_at DESC LIMIT $2 OFFSET $3"#
+            ))
             .bind(mid)
             .bind(page_size)
             .bind(offset)
@@ -377,27 +382,29 @@ pub async fn list_conflicts(
             .await
         }
     } else if let Some(ref status) = params.status {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "erp",
             r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                       local_value, remote_value, remote_service, status,
                       merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
                FROM erp_master_data_conflicts
                WHERE status = $1
-               ORDER BY detected_at DESC LIMIT $2 OFFSET $3"#,
-        )
+               ORDER BY detected_at DESC LIMIT $2 OFFSET $3"#
+        ))
         .bind(status)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.db)
         .await
     } else {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "erp",
             r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                       local_value, remote_value, remote_service, status,
                       merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
                FROM erp_master_data_conflicts
-               ORDER BY detected_at DESC LIMIT $1 OFFSET $2"#,
-        )
+               ORDER BY detected_at DESC LIMIT $1 OFFSET $2"#
+        ))
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.db)
@@ -476,55 +483,54 @@ pub async fn get_conflict(
         Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
     };
 
-    let row = sqlx::query(
+    let row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                   local_value, remote_value, remote_service, status,
                   merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
-           FROM erp_master_data_conflicts WHERE id = $1"#,
-    )
+           FROM erp_master_data_conflicts WHERE id = $1"#
+    ))
     .bind(cid)
     .fetch_optional(&state.db)
     .await;
 
     match row {
-        Ok(Some(r)) => {
-            Json(ApiResponse::success(
-                MasterDataConflict {
-                    id: r
-                        .try_get::<uuid::Uuid, _>("id")
-                        .unwrap_or_default()
-                        .to_string(),
-                    master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
-                    domain: r.try_get::<String, _>("domain").unwrap_or_default(),
-                    conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),
-                    field_name: r.try_get::<String, _>("field_name").unwrap_or_default(),
-                    local_value: r
-                        .try_get::<serde_json::Value, _>("local_value")
-                        .unwrap_or_default(),
-                    remote_value: r
-                        .try_get::<serde_json::Value, _>("remote_value")
-                        .unwrap_or_default(),
-                    remote_service: r.try_get::<String, _>("remote_service").unwrap_or_default(),
-                    status: r.try_get::<String, _>("status").unwrap_or_default(),
-                    merge_strategy: r.try_get::<String, _>("merge_strategy").unwrap_or_default(),
-                    resolved_value: r
-                        .try_get::<Option<serde_json::Value>, _>("resolved_value")
-                        .ok()
-                        .flatten(),
-                    detected_at: r
-                        .try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
-                        .unwrap_or_else(|_| chrono::Utc::now())
-                        .to_rfc3339(),
-                    resolved_at: r
-                        .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
-                        .ok()
-                        .flatten()
-                        .map(|t| t.to_rfc3339()),
-                    resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
-                },
-                "冲突详情",
-            ))
-        }
+        Ok(Some(r)) => Json(ApiResponse::success(
+            MasterDataConflict {
+                id: r
+                    .try_get::<uuid::Uuid, _>("id")
+                    .unwrap_or_default()
+                    .to_string(),
+                master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
+                domain: r.try_get::<String, _>("domain").unwrap_or_default(),
+                conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),
+                field_name: r.try_get::<String, _>("field_name").unwrap_or_default(),
+                local_value: r
+                    .try_get::<serde_json::Value, _>("local_value")
+                    .unwrap_or_default(),
+                remote_value: r
+                    .try_get::<serde_json::Value, _>("remote_value")
+                    .unwrap_or_default(),
+                remote_service: r.try_get::<String, _>("remote_service").unwrap_or_default(),
+                status: r.try_get::<String, _>("status").unwrap_or_default(),
+                merge_strategy: r.try_get::<String, _>("merge_strategy").unwrap_or_default(),
+                resolved_value: r
+                    .try_get::<Option<serde_json::Value>, _>("resolved_value")
+                    .ok()
+                    .flatten(),
+                detected_at: r
+                    .try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
+                    .unwrap_or_else(|_| chrono::Utc::now())
+                    .to_rfc3339(),
+                resolved_at: r
+                    .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
+                    .ok()
+                    .flatten()
+                    .map(|t| t.to_rfc3339()),
+                resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
+            },
+            "冲突详情",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "未找到冲突记录")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询冲突详情失败: {}", e);
@@ -556,29 +562,29 @@ pub async fn resolve_conflict(
     let now = chrono::Utc::now();
 
     // 1. 查询冲突记录获取 master_data_id 和 field_name
-    let row = sqlx::query(
-        r#"SELECT master_data_id, field_name FROM erp_master_data_conflicts WHERE id = $1"#,
-    )
+    let row = sqlx::query(only_own_schema_query!(
+        "erp",
+        r#"SELECT master_data_id, field_name FROM erp_master_data_conflicts WHERE id = $1"#
+    ))
     .bind(cid)
     .fetch_optional(&state.db)
     .await;
 
     let (master_data_id, field_name) = match row {
-        Ok(Some(r)) => {
-            (
-                r.try_get::<String, _>("master_data_id").unwrap_or_default(),
-                r.try_get::<String, _>("field_name").unwrap_or_default(),
-            )
-        }
+        Ok(Some(r)) => (
+            r.try_get::<String, _>("master_data_id").unwrap_or_default(),
+            r.try_get::<String, _>("field_name").unwrap_or_default(),
+        ),
         _ => return Json(ApiResponse::error(404, "未找到冲突记录")),
     };
 
     // 2. 更新冲突记录状态
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"UPDATE erp_master_data_conflicts
            SET status = 'resolved', resolved_value = $1, resolved_at = $2, resolved_by = $3
-           WHERE id = $4"#,
-    )
+           WHERE id = $4"#
+    ))
     .bind(&req.resolved_value)
     .bind(now)
     .bind(&req.resolved_by)
@@ -633,25 +639,23 @@ pub async fn auto_merge_conflict(
 
     // 1. 查询冲突记录
     let row = sqlx::query(
-        r#"SELECT master_data_id, field_name, local_value, remote_value, remote_service
-           FROM erp_master_data_conflicts WHERE id = $1 AND status IN ('pending_review', 'detected')"#,
+        only_own_schema_query!("erp", r#"SELECT master_data_id, field_name, local_value, remote_value, remote_service
+           FROM erp_master_data_conflicts WHERE id = $1 AND status IN ('pending_review', 'detected')"#),
     )
     .bind(cid)
     .fetch_optional(&state.db)
     .await;
 
     let (master_data_id, field_name, local_value, remote_value, remote_service) = match row {
-        Ok(Some(r)) => {
-            (
-                r.try_get::<String, _>("master_data_id").unwrap_or_default(),
-                r.try_get::<String, _>("field_name").unwrap_or_default(),
-                r.try_get::<serde_json::Value, _>("local_value")
-                    .unwrap_or_default(),
-                r.try_get::<serde_json::Value, _>("remote_value")
-                    .unwrap_or_default(),
-                r.try_get::<String, _>("remote_service").unwrap_or_default(),
-            )
-        }
+        Ok(Some(r)) => (
+            r.try_get::<String, _>("master_data_id").unwrap_or_default(),
+            r.try_get::<String, _>("field_name").unwrap_or_default(),
+            r.try_get::<serde_json::Value, _>("local_value")
+                .unwrap_or_default(),
+            r.try_get::<serde_json::Value, _>("remote_value")
+                .unwrap_or_default(),
+            r.try_get::<String, _>("remote_service").unwrap_or_default(),
+        ),
         _ => return Json(ApiResponse::error(404, "未找到待合并的冲突记录")),
     };
 
@@ -677,12 +681,13 @@ pub async fn auto_merge_conflict(
     };
 
     // 3. 更新冲突记录
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"UPDATE erp_master_data_conflicts
            SET status = 'auto_resolved', resolved_value = $1, resolved_at = $2,
                resolved_by = $3, merge_strategy = $4
-           WHERE id = $5"#,
-    )
+           WHERE id = $5"#
+    ))
     .bind(&resolved_value)
     .bind(now)
     .bind(format!("auto:{}", strategy_label))
@@ -724,7 +729,7 @@ async fn apply_resolved_value(
         "name" => {
             if let Some(s) = value.as_str() {
                 sqlx::query(
-                    r#"UPDATE erp_master_data_refs SET name = $1, updated_at = $2 WHERE master_data_id = $3"#,
+                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET name = $1, updated_at = $2 WHERE master_data_id = $3"#),
                 )
                 .bind(s)
                 .bind(now)
@@ -736,7 +741,7 @@ async fn apply_resolved_value(
         "status" => {
             if let Some(s) = value.as_str() {
                 sqlx::query(
-                    r#"UPDATE erp_master_data_refs SET status = $1, updated_at = $2 WHERE master_data_id = $3"#,
+                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET status = $1, updated_at = $2 WHERE master_data_id = $3"#),
                 )
                 .bind(s)
                 .bind(now)
@@ -748,7 +753,7 @@ async fn apply_resolved_value(
         "code" => {
             if let Some(s) = value.as_str() {
                 sqlx::query(
-                    r#"UPDATE erp_master_data_refs SET code = $1, updated_at = $2 WHERE master_data_id = $3"#,
+                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET code = $1, updated_at = $2 WHERE master_data_id = $3"#),
                 )
                 .bind(s)
                 .bind(now)
@@ -848,7 +853,10 @@ mod tests {
         assert_eq!(request.master_data_id, "md1");
         assert_eq!(request.remote_service, "crm");
         assert_eq!(request.remote_data["name"], "测试");
-        assert!(matches!(request.merge_strategy, Some(MergeStrategy::LastWriteWins)));
+        assert!(matches!(
+            request.merge_strategy,
+            Some(MergeStrategy::LastWriteWins)
+        ));
     }
 
     #[test]
@@ -916,8 +924,17 @@ mod tests {
             "service_priorities": {"crm": 10, "erp": 5}
         }"#;
         let request: AutoMergeRequest = serde_json::from_str(json).unwrap();
-        assert!(matches!(request.strategy, Some(MergeStrategy::SourcePriority)));
-        assert_eq!(request.service_priorities.as_ref().unwrap().get("crm"), Some(&10));
-        assert_eq!(request.service_priorities.as_ref().unwrap().get("erp"), Some(&5));
+        assert!(matches!(
+            request.strategy,
+            Some(MergeStrategy::SourcePriority)
+        ));
+        assert_eq!(
+            request.service_priorities.as_ref().unwrap().get("crm"),
+            Some(&10)
+        );
+        assert_eq!(
+            request.service_priorities.as_ref().unwrap().get("erp"),
+            Some(&5)
+        );
     }
 }

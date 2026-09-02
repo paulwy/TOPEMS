@@ -8,10 +8,11 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
 
-use super::ApiState;
 use super::master_data_assets::domain_display_name;
+use super::ApiState;
 
 #[derive(Debug, Serialize)]
 pub struct LineageGraph {
@@ -95,10 +96,11 @@ async fn build_lineage_for_master_data(
     node_ids: &mut std::collections::HashSet<String>,
     add_node: fn(&mut Vec<LineageNode>, &mut std::collections::HashSet<String>, LineageNode),
 ) {
-    let row = sqlx::query(
+    let row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT master_data_id, domain, code, name, source_service, status
-           FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+           FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(master_data_id)
     .fetch_optional(db)
     .await;
@@ -173,10 +175,11 @@ async fn build_lineage_for_domain(
     node_ids: &mut std::collections::HashSet<String>,
     add_node: fn(&mut Vec<LineageNode>, &mut std::collections::HashSet<String>, LineageNode),
 ) {
-    let rows = sqlx::query(
-        r#"SELECT DISTINCT source_service FROM erp_master_data_refs
-           WHERE domain = $1 AND status != 'destroyed' LIMIT 10"#,
-    )
+    let rows = sqlx::query(only_own_schema_query!(
+        "erp",
+        r#"SELECT DISTINCT source_service FROM erp.erp_master_data_refs
+           WHERE domain = $1 AND status != 'destroyed' LIMIT 10"#
+    ))
     .bind(domain)
     .fetch_all(db)
     .await;
@@ -245,14 +248,15 @@ async fn build_full_lineage_graph(
     node_ids: &mut std::collections::HashSet<String>,
     add_node: fn(&mut Vec<LineageNode>, &mut std::collections::HashSet<String>, LineageNode),
 ) {
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT domain, COUNT(DISTINCT source_service) as service_count
-           FROM erp_master_data_refs
+           FROM erp.erp_master_data_refs
            WHERE status != 'destroyed'
            GROUP BY domain
            ORDER BY domain
-           LIMIT 20"#,
-    )
+           LIMIT 20"#
+    ))
     .fetch_all(db)
     .await;
 
@@ -320,10 +324,11 @@ pub async fn get_lineage_upstream(
         }
     };
 
-    let row = sqlx::query(
+    let row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT master_data_id, domain, code, name, source_service, status
-           FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+           FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&id)
     .fetch_optional(db)
     .await;
@@ -401,11 +406,12 @@ pub async fn get_lineage_downstream(
         }
     };
 
-    let row = sqlx::query(
+    let row = sqlx::query(only_own_schema_query!(
+        "erp",
         r#"SELECT master_data_id, domain, code, name, source_service, status,
                   local_entity_type, local_entity_id
-           FROM erp_master_data_refs WHERE master_data_id = $1"#,
-    )
+           FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
+    ))
     .bind(&id)
     .fetch_optional(db)
     .await;
@@ -561,8 +567,8 @@ mod tests {
             edges: vec![],
         };
         let json = serde_json::to_value(&graph).unwrap();
-        assert_eq!(json["nodes"].as_array().unwrap().is_empty(), true);
-        assert_eq!(json["edges"].as_array().unwrap().is_empty(), true);
+        assert!(json["nodes"].as_array().unwrap().is_empty());
+        assert!(json["edges"].as_array().unwrap().is_empty());
     }
 
     #[test]

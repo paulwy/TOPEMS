@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -31,6 +32,17 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sales-orders/{id}/ship", put(ship_sales_order))
         .route("/sales-orders/{id}/complete", put(complete_sales_order))
         .route("/sales-orders/{id}/cancel", put(cancel_sales_order))
+}
+
+use rust_decimal::prelude::ToPrimitive;
+
+fn dec_owned(v: f64) -> rust_decimal::Decimal {
+    use std::str::FromStr;
+    rust_decimal::Decimal::from_str(&format!("{:.2}", v)).unwrap_or_default()
+}
+
+fn dec(v: Option<f64>) -> Option<rust_decimal::Decimal> {
+    Some(dec_owned(v?))
 }
 
 #[utoipa::path(
@@ -63,11 +75,11 @@ pub async fn list_sales_orders(
         let status = status_filter.clone();
 
         sqlx::query_as::<_, SalesOrder>(
-            r#"SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at 
-               FROM sales_orders 
+            only_own_schema_query!("erp", r#"SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at 
+               FROM erp.sales_orders 
                WHERE (order_no ILIKE $1 OR customer_name ILIKE $1)
                  AND ($2 = '' OR status = $2)
-               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
         )
         .bind(search)
         .bind(status.unwrap_or_default())
@@ -77,7 +89,7 @@ pub async fn list_sales_orders(
         .await
     } else {
         sqlx::query_as::<_, SalesOrder>(
-            "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM sales_orders ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.sales_orders ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -94,7 +106,7 @@ pub async fn list_sales_orders(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM sales_orders WHERE deleted_at IS NULL AND (order_no ILIKE $1 OR customer_name ILIKE $1) AND ($2 = '' OR status = $2)"#
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.sales_orders WHERE deleted_at IS NULL AND ($1 = '' OR order_no ILIKE $1 OR customer_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -137,7 +149,7 @@ pub async fn get_sales_order(
     }
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM sales_orders WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.sales_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -172,11 +184,13 @@ pub async fn create_sales_order(
         return e;
     }
 
-    let customer_result =
-        sqlx::query_scalar::<_, String>("SELECT name FROM customers WHERE id = $1")
-            .bind(body.customer_id)
-            .fetch_optional(&state.db)
-            .await;
+    let customer_result = sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "erp",
+        "SELECT name FROM erp.customers WHERE id = $1"
+    ))
+    .bind(body.customer_id)
+    .fetch_optional(&state.db)
+    .await;
 
     let customer_name = match customer_result {
         Ok(Some(name)) => name,
@@ -196,17 +210,17 @@ pub async fn create_sales_order(
     let payable_amount = amounts.payable_amount;
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        "INSERT INTO sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at",
+        only_own_schema_query!("erp", "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
     .bind(body.order_no)
     .bind(body.customer_id)
     .bind(customer_name)
     .bind(order_date)
     .bind(body.delivery_date)
-    .bind(total_amount)
-    .bind(tax_amount)
-    .bind(discount_amount)
-    .bind(payable_amount)
+    .bind(dec_owned(total_amount))
+    .bind(dec_owned(tax_amount))
+    .bind(dec_owned(discount_amount))
+    .bind(dec_owned(payable_amount))
     .bind(default_sales_order_status(body.status))
     .bind(body.remark)
     .fetch_optional(&state.db)
@@ -220,8 +234,8 @@ pub async fn create_sales_order(
                     order_no: sales_order.order_no.clone(),
                     customer_id: Some(sales_order.customer_id),
                     customer_name: Some(sales_order.customer_name.clone()),
-                    total_amount: Some(sales_order.total_amount),
-                    payable_amount: Some(sales_order.payable_amount),
+                    total_amount: sales_order.total_amount.to_f64(),
+                    payable_amount: sales_order.payable_amount.to_f64(),
                     created_by: Some(claims.sub.clone()),
                 };
                 match publisher.publish_sales_order_created(payload).await {
@@ -271,14 +285,14 @@ pub async fn update_sales_order(
     }
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        "UPDATE sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at",
+        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
     .bind(body.customer_id)
     .bind(body.delivery_date)
-    .bind(body.total_amount)
-    .bind(body.tax_amount)
-    .bind(body.discount_amount)
-    .bind(body.payable_amount)
+    .bind(dec(body.total_amount))
+    .bind(dec(body.tax_amount))
+    .bind(dec(body.discount_amount))
+    .bind(dec(body.payable_amount))
     .bind(body.status)
     .bind(body.remark)
     .bind(id)
@@ -317,10 +331,13 @@ pub async fn delete_sales_order(
         return e;
     }
 
-    let result = sqlx::query("UPDATE sales_orders SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.sales_orders SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
@@ -348,7 +365,7 @@ async fn update_sales_order_status(
     }
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        "UPDATE sales_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at",
+        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
     .bind(status)
     .bind(id)
@@ -364,8 +381,8 @@ async fn update_sales_order_status(
                         order_no: sales_order.order_no.clone(),
                         customer_id: Some(sales_order.customer_id),
                         customer_name: Some(sales_order.customer_name.clone()),
-                        total_amount: Some(sales_order.total_amount),
-                        payable_amount: Some(sales_order.payable_amount),
+                        total_amount: sales_order.total_amount.to_f64(),
+                        payable_amount: sales_order.payable_amount.to_f64(),
                         approved_by: Some(claims.sub.clone()),
                         approved_at: Some(Utc::now()),
                     };

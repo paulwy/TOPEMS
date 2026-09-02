@@ -11,6 +11,7 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
@@ -75,12 +76,12 @@ pub async fn list_suppliers(
         let supplier_type = supplier_type_filter.clone();
 
         sqlx::query_as::<_, Supplier>(
-            r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at 
-               FROM suppliers 
+            only_own_schema_query!("erp", r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at 
+               FROM erp.suppliers 
                WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
                  AND ($2 = '' OR status = $2)
                  AND ($3 = '' OR supplier_type = $3)
-               ORDER BY created_at DESC LIMIT $4 OFFSET $5"#
+               ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)
         )
         .bind(search)
         .bind(status.unwrap_or_default())
@@ -91,7 +92,7 @@ pub async fn list_suppliers(
         .await
     } else {
         sqlx::query_as::<_, Supplier>(
-            "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -108,7 +109,7 @@ pub async fn list_suppliers(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM suppliers WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR supplier_type = $3)"#
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.suppliers WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR supplier_type = $3)"#)
     )
     .bind(params.base.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -152,7 +153,7 @@ pub async fn get_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM suppliers WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -188,7 +189,7 @@ pub async fn create_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        "INSERT INTO suppliers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at",
+        only_own_schema_query!("erp", "INSERT INTO erp.suppliers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -242,7 +243,7 @@ pub async fn update_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        "UPDATE suppliers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), supplier_type = COALESCE($10, supplier_type), industry = COALESCE($11, industry), qualification_level = COALESCE($12, qualification_level), status = COALESCE($13, status), updated_at = NOW() WHERE id = $14 RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at",
+        only_own_schema_query!("erp", "UPDATE erp.suppliers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), supplier_type = COALESCE($10, supplier_type), industry = COALESCE($11, industry), qualification_level = COALESCE($12, qualification_level), status = COALESCE($13, status), updated_at = NOW() WHERE id = $14 RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.short_name)
@@ -293,10 +294,13 @@ pub async fn delete_supplier(
         return e;
     }
 
-    let result = sqlx::query("UPDATE suppliers SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.suppliers SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(

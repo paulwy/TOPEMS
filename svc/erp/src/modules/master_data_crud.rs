@@ -1,8 +1,9 @@
 // ==================== 核心 CRUD 类型定义 ====================
 
-use axum::extract::{Path, Query, State, Json};
+use axum::extract::{Json, Path, Query, State};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
@@ -177,29 +178,31 @@ pub async fn list_master_data_refs(
     let offset = (page - 1) * page_size;
 
     let rows = if let Some(ref domain) = params.domain {
-        sqlx::query_as::<_, MasterDataRow>(
+        sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+            "erp",
             r#"SELECT master_data_id, tenant_id, domain, code, name, status,
                       source_service, local_entity_type, local_entity_id,
                       last_synced_at, created_at, updated_at
-               FROM erp_master_data_refs
+               FROM erp.erp_master_data_refs
                WHERE domain = $1
                ORDER BY updated_at DESC
-               LIMIT $2 OFFSET $3"#,
-        )
+               LIMIT $2 OFFSET $3"#
+        ))
         .bind(domain)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.db)
         .await
     } else {
-        sqlx::query_as::<_, MasterDataRow>(
+        sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+            "erp",
             r#"SELECT master_data_id, tenant_id, domain, code, name, status,
                       source_service, local_entity_type, local_entity_id,
                       last_synced_at, created_at, updated_at
-               FROM erp_master_data_refs
+               FROM erp.erp_master_data_refs
                ORDER BY updated_at DESC
-               LIMIT $1 OFFSET $2"#,
-        )
+               LIMIT $1 OFFSET $2"#
+        ))
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.db)
@@ -238,13 +241,14 @@ pub async fn get_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<MasterDataRef>> {
-    match sqlx::query_as::<_, MasterDataRow>(
+    match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+        "erp",
         r#"SELECT master_data_id, tenant_id, domain, code, name, status,
                   source_service, local_entity_type, local_entity_id,
                   last_synced_at, created_at, updated_at
-           FROM erp_master_data_refs
-           WHERE master_data_id = $1"#,
-    )
+           FROM erp.erp_master_data_refs
+           WHERE master_data_id = $1"#
+    ))
     .bind(&master_data_id)
     .fetch_optional(&state.db)
     .await
@@ -271,13 +275,14 @@ pub async fn get_master_data_ref_by_code(
     State(state): State<ApiState>,
     Path((domain, code)): Path<(String, String)>,
 ) -> Json<ApiResponse<MasterDataRef>> {
-    match sqlx::query_as::<_, MasterDataRow>(
+    match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
+        "erp",
         r#"SELECT master_data_id, tenant_id, domain, code, name, status,
                   source_service, local_entity_type, local_entity_id,
                   last_synced_at, created_at, updated_at
-           FROM erp_master_data_refs
-           WHERE domain = $1 AND code = $2"#,
-    )
+           FROM erp.erp_master_data_refs
+           WHERE domain = $1 AND code = $2"#
+    ))
     .bind(&domain)
     .bind(&code)
     .fetch_optional(&state.db)
