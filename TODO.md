@@ -17,7 +17,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-02 全量 Docker 运行环境启动完成（32 容器 / 31 healthy），新增 #13 已闭环。
 > 09-02 提交后遗留处理已闭环（svc/aps+billing 归档删除、analytics 权限模块 + finance R5、旧 stash 清理 + 删除意图落地），#14 已闭环。
 
-**当前待办总数：14 项**（✅ 已完成 11 / ⏳ 进行中 1 / 🔲 可选后续 2）
+**当前待办总数：14 项**（✅ 已完成 12 / ⏳ 进行中 1 / 🔲 可选后续 1）
 
 ---
 
