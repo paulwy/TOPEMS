@@ -19,15 +19,15 @@
 |------|-----|
 | 状态 | {{ if eq .Status "firing" }}🔴 触发中{{ else }}🟢 已恢复{{ end }} |
 | 级别 | {{ .CommonLabels.severity }} |
-| 服务 | {{ .CommonLabels.job | default "未知" }} |
-| 实例 | {{ .CommonLabels.instance | default "未知" }} |
-| 类别 | {{ .CommonLabels.category | default "未知" }} |
+| 服务 | {{ if .CommonLabels.job }}{{ .CommonLabels.job }}{{ else }}未知{{ end }} |
+| 实例 | {{ if .CommonLabels.instance }}{{ .CommonLabels.instance }}{{ else }}未知{{ end }} |
+| 类别 | {{ if .CommonLabels.category }}{{ .CommonLabels.category }}{{ else }}未知{{ end }} |
 
 **告警描述**:
-{{ .CommonAnnotations.description | default "无描述" }}
+{{ if .CommonAnnotations.description }}{{ .CommonAnnotations.description }}{{ else }}无描述{{ end }}
 
 **触发条件**:
-{{ .CommonAnnotations.summary | default "无" }}
+{{ if .CommonAnnotations.summary }}{{ .CommonAnnotations.summary }}{{ else }}无{{ end }}
 
 {{ if .CommonLabels.runbook_url }}
 **故障排查手册**:
@@ -62,15 +62,15 @@
 | 状态 | {{ if eq .Status "firing" }}🔴 触发中{{ else }}🟢 已恢复{{ end }} |
 | 级别 | {{ .CommonLabels.severity }} |
 | 告警名称 | {{ .CommonLabels.alertname }} |
-| 服务 | {{ .CommonLabels.job | default "topems-ai" }} |
-| 实例 | {{ .CommonLabels.instance | default "未知" }} |
-| 告警组 | {{ .CommonLabels.alert_group | default "未知" }} |
+| 服务 | {{ if .CommonLabels.job }}{{ .CommonLabels.job }}{{ else }}topems-ai{{ end }} |
+| 实例 | {{ if .CommonLabels.instance }}{{ .CommonLabels.instance }}{{ else }}未知{{ end }} |
+| 告警组 | {{ if .CommonLabels.alert_group }}{{ .CommonLabels.alert_group }}{{ else }}未知{{ end }} |
 
 **告警描述**:
-{{ .CommonAnnotations.description | default "无描述" }}
+{{ if .CommonAnnotations.description }}{{ .CommonAnnotations.description }}{{ else }}无描述{{ end }}
 
 **触发条件**:
-{{ .CommonAnnotations.summary | default "无" }}
+{{ if .CommonAnnotations.summary }}{{ .CommonAnnotations.summary }}{{ else }}无{{ end }}
 
 **故障排查手册**:
 https://github.com/TOPEMS/TOPEMS/blob/main/docs/runbooks/ai-alerts-runbook.md
@@ -152,12 +152,12 @@ curl http://localhost:8013/metrics | grep ai_
 | 字段 | 值 |
 |------|-----|
 | 告警名称 | {{ .CommonLabels.alertname }} |
-| 服务 | {{ .CommonLabels.job | default "未知" }} |
-| 实例 | {{ .CommonLabels.instance | default "未知" }} |
+| 服务 | {{ if .CommonLabels.job }}{{ .CommonLabels.job }}{{ else }}未知{{ end }} |
+| 实例 | {{ if .CommonLabels.instance }}{{ .CommonLabels.instance }}{{ else }}未知{{ end }} |
 | 级别 | {{ .CommonLabels.severity }} |
 
 **告警描述**:
-{{ .CommonAnnotations.description | default "无描述" }}
+{{ if .CommonAnnotations.description }}{{ .CommonAnnotations.description }}{{ else }}无描述{{ end }}
 
 **恢复时间**:
 {{ range .Alerts }}
@@ -192,7 +192,7 @@ curl http://localhost:8013/metrics | grep ai_
 {{ end }}
 
 {{ define "email.subject" }}
-[{{ .CommonLabels.severity }}][{{ .CommonLabels.job | default "TOPEMS" }}] {{ .CommonLabels.alertname }} - {{ if eq .Status "firing" }}触发中{{ else }}已恢复{{ end }}
+[{{ .CommonLabels.severity }}][{{ if .CommonLabels.job }}{{ .CommonLabels.job }}{{ else }}TOPEMS{{ end }}] {{ .CommonLabels.alertname }} - {{ if eq .Status "firing" }}触发中{{ else }}已恢复{{ end }}
 {{ end }}
 
 {{ define "email.body" }}
@@ -213,19 +213,19 @@ curl http://localhost:8013/metrics | grep ai_
   </tr>
   <tr>
     <th>服务</th>
-    <td>{{ .CommonLabels.job | default "未知" }}</td>
+    <td>{{ if .CommonLabels.job }}{{ .CommonLabels.job }}{{ else }}未知{{ end }}</td>
   </tr>
   <tr>
     <th>实例</th>
-    <td>{{ .CommonLabels.instance | default "未知" }}</td>
+    <td>{{ if .CommonLabels.instance }}{{ .CommonLabels.instance }}{{ else }}未知{{ end }}</td>
   </tr>
 </table>
 
 <h3>告警描述</h3>
-<p>{{ .CommonAnnotations.description | default "无描述" }}</p>
+<p>{{ if .CommonAnnotations.description }}{{ .CommonAnnotations.description }}{{ else }}无描述{{ end }}</p>
 
 <h3>触发条件</h3>
-<p>{{ .CommonAnnotations.summary | default "无" }}</p>
+<p>{{ if .CommonAnnotations.summary }}{{ .CommonAnnotations.summary }}{{ else }}无{{ end }}</p>
 
 {{ if .CommonLabels.runbook_url }}
 <h3>故障排查手册</h3>
