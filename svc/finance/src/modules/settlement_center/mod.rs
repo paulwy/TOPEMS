@@ -23,11 +23,13 @@ pub mod service;
 pub use routes::create_routes;
 
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 
 /// 初始化结算对账中心数据库表（幂等）
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // 1. 对账单与结算单关联表
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS core.reconciliation_settlement_links (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
@@ -40,34 +42,36 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_by UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_rsl_tenant_id ON core.reconciliation_settlement_links(tenant_id)",
+        only_own_schema_query!("finance", "CREATE INDEX IF NOT EXISTS idx_rsl_tenant_id ON core.reconciliation_settlement_links(tenant_id)"),
     )
     .execute(pool)
     .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_rsl_reconciliation_id ON core.reconciliation_settlement_links(reconciliation_id)",
+        only_own_schema_query!("finance", "CREATE INDEX IF NOT EXISTS idx_rsl_reconciliation_id ON core.reconciliation_settlement_links(reconciliation_id)"),
     )
     .execute(pool)
     .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_rsl_settlement_id ON core.reconciliation_settlement_links(settlement_id)",
+        only_own_schema_query!("finance", "CREATE INDEX IF NOT EXISTS idx_rsl_settlement_id ON core.reconciliation_settlement_links(settlement_id)"),
     )
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_rsl_status ON core.reconciliation_settlement_links(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_rsl_status ON core.reconciliation_settlement_links(status)"
+    ))
     .execute(pool)
     .await?;
 
     // 2. 结算对账中心仪表盘配置表
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS core.settlement_center_dashboards (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
@@ -77,24 +81,26 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_by UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_scd_tenant_id ON core.settlement_center_dashboards(tenant_id)",
+        only_own_schema_query!("finance", "CREATE INDEX IF NOT EXISTS idx_scd_tenant_id ON core.settlement_center_dashboards(tenant_id)"),
     )
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_scd_active ON core.settlement_center_dashboards(is_active)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_scd_active ON core.settlement_center_dashboards(is_active)"
+    ))
     .execute(pool)
     .await?;
 
     // 3. 差异调整表
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS core.difference_adjustments (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
@@ -112,26 +118,30 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_by UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_da_tenant_id ON core.difference_adjustments(tenant_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_da_tenant_id ON core.difference_adjustments(tenant_id)"
+    ))
     .execute(pool)
     .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_da_source ON core.difference_adjustments(source_type, source_id)",
+        only_own_schema_query!("finance", "CREATE INDEX IF NOT EXISTS idx_da_source ON core.difference_adjustments(source_type, source_id)"),
     )
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_da_status ON core.difference_adjustments(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_da_status ON core.difference_adjustments(status)"
+    ))
+    .execute(pool)
+    .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_da_difference_type ON core.difference_adjustments(difference_type)",
+        only_own_schema_query!("finance", "CREATE INDEX IF NOT EXISTS idx_da_difference_type ON core.difference_adjustments(difference_type)"),
     )
     .execute(pool)
     .await?;

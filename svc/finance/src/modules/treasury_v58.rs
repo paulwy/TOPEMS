@@ -29,6 +29,7 @@ use axum::{
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -436,12 +437,13 @@ impl CashPoolManager {
         let entities = req.entities.unwrap_or_default();
         let entities_array: Vec<String> = entities;
 
-        sqlx::query_as::<_, CashPool>(
-            r#"INSERT INTO finance_v58_cash_pools
+        sqlx::query_as::<_, CashPool>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v58_cash_pools
                 (id, tenant_id, name, pool_type, currency, balance, entities)
             VALUES ($1, $2, $3, $4, $5, 0, $6)
-            RETURNING id, name, pool_type, currency, balance, entities, created_at"#,
-        )
+            RETURNING id, name, pool_type, currency, balance, entities, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -458,7 +460,7 @@ impl CashPoolManager {
         pool_id: Uuid,
     ) -> Result<CashPool, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance_v58_cash_pools WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(pool_id)
         .bind(tenant_id)
@@ -468,7 +470,7 @@ impl CashPoolManager {
 
     pub async fn list_pools(pool: &PgPool, tenant_id: Uuid) -> Result<Vec<CashPool>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance_v58_cash_pools WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500",
+            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -489,12 +491,13 @@ impl CashPoolManager {
                 .percentage
                 .unwrap_or(if item.amount > 0.0 { 0.0 } else { 0.0 });
 
-            let allocation = sqlx::query_as::<_, PoolAllocation>(
-                r#"INSERT INTO finance_v58_pool_allocations
+            let allocation = sqlx::query_as::<_, PoolAllocation>(only_own_schema_query!(
+                "finance",
+                r#"INSERT INTO finance.finance_v58_pool_allocations
                     (id, tenant_id, pool_id, entity_id, amount, percentage, allocated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id, pool_id, entity_id, amount, percentage, allocated_at"#,
-            )
+                RETURNING id, pool_id, entity_id, amount, percentage, allocated_at"#
+            ))
             .bind(allocation_id)
             .bind(tenant_id)
             .bind(req.pool_id)
@@ -525,12 +528,13 @@ impl CashPoolManager {
             return Err(sqlx::Error::PoolClosed);
         }
 
-        let transfer = sqlx::query_as::<_, PoolTransfer>(
-            r#"INSERT INTO finance_v58_pool_transfers
+        let transfer = sqlx::query_as::<_, PoolTransfer>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v58_pool_transfers
                 (id, tenant_id, from_pool, to_pool, amount, currency, reference, status, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8)
-            RETURNING id, from_pool, to_pool, amount, currency, reference, status, created_at"#,
-        )
+            RETURNING id, from_pool, to_pool, amount, currency, reference, status, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(req.from_pool)
@@ -559,7 +563,7 @@ impl CashPoolManager {
         pool_id: Uuid,
     ) -> Result<Vec<PoolTransfer>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, from_pool, to_pool, amount, currency, reference, status, created_at FROM finance_v58_pool_transfers WHERE tenant_id = $1 AND (from_pool = $2 OR to_pool = $2) ORDER BY created_at DESC LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, from_pool, to_pool, amount, currency, reference, status, created_at FROM finance.finance_v58_pool_transfers WHERE tenant_id = $1 AND (from_pool = $2 OR to_pool = $2) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .bind(pool_id)
@@ -581,7 +585,7 @@ impl CashPoolManager {
 
         for entity_id in &entities {
             let allocations: Vec<PoolAllocation> = sqlx::query_as(
-                "SELECT id, pool_id, entity_id, amount, percentage, allocated_at FROM finance_v58_pool_allocations WHERE pool_id = $1 AND entity_id = $2 AND tenant_id = $3",
+                only_own_schema_query!("finance", "SELECT id, pool_id, entity_id, amount, percentage, allocated_at FROM finance.finance_v58_pool_allocations WHERE pool_id = $1 AND entity_id = $2 AND tenant_id = $3"),
             )
             .bind(req.pool_id)
             .bind(entity_id)
@@ -653,12 +657,13 @@ impl CashFlowPredictor {
             .unwrap_or(ForecastType::MediumTerm);
         let horizon = req.horizon_days.unwrap_or(90);
 
-        sqlx::query_as::<_, ForecastScenario>(
-            r#"INSERT INTO finance_v58_forecast_scenarios
+        sqlx::query_as::<_, ForecastScenario>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v58_forecast_scenarios
                 (id, tenant_id, name, scenario_type, horizon_days, assumptions, confidence)
             VALUES ($1, $2, $3, $4, $5, $6, 0.5)
-            RETURNING id, name, scenario_type, horizon_days, assumptions, confidence"#,
-        )
+            RETURNING id, name, scenario_type, horizon_days, assumptions, confidence"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -675,7 +680,7 @@ impl CashFlowPredictor {
         req: RunForecastRequest,
     ) -> Result<Vec<ForecastResult>, sqlx::Error> {
         let scenario = sqlx::query_as::<_, ForecastScenario>(
-            "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(req.scenario_id)
         .bind(tenant_id)
@@ -718,10 +723,10 @@ impl CashFlowPredictor {
 
             let result_id = Uuid::new_v4();
             let result = sqlx::query_as::<_, ForecastResult>(
-                r#"INSERT INTO finance_v58_forecast_results
+                only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v58_forecast_results
                     (id, tenant_id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                RETURNING id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval"#,
+                RETURNING id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval"#),
             )
             .bind(result_id)
             .bind(tenant_id)
@@ -787,7 +792,7 @@ impl CashFlowPredictor {
         scenario_id: Uuid,
     ) -> Result<Vec<ForecastResult>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval FROM finance_v58_forecast_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY date ASC",
+            only_own_schema_query!("finance", "SELECT id, scenario_id, date, inflow, outflow, net, closing_balance, confidence_interval FROM finance.finance_v58_forecast_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY date ASC"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -800,7 +805,7 @@ impl CashFlowPredictor {
         tenant_id: Uuid,
     ) -> Result<Vec<ForecastScenario>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance_v58_forecast_scenarios WHERE tenant_id = $1 ORDER BY horizon_days DESC LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE tenant_id = $1 ORDER BY horizon_days DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -816,7 +821,7 @@ impl CashFlowPredictor {
 
         for sid in &scenario_ids {
             let scenario = sqlx::query_as::<_, ForecastScenario>(
-                "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2",
+                only_own_schema_query!("finance", "SELECT id, name, scenario_type, horizon_days, assumptions, confidence FROM finance.finance_v58_forecast_scenarios WHERE id = $1 AND tenant_id = $2"),
             )
             .bind(sid)
             .bind(tenant_id)
@@ -904,12 +909,13 @@ impl CashFlowPredictor {
         scenario_id: Uuid,
         req: UpdateAssumptionsRequest,
     ) -> Result<ForecastScenario, sqlx::Error> {
-        let updated = sqlx::query_as::<_, ForecastScenario>(
-            r#"UPDATE finance_v58_forecast_scenarios
+        let updated = sqlx::query_as::<_, ForecastScenario>(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v58_forecast_scenarios
             SET assumptions = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, name, scenario_type, horizon_days, assumptions, confidence"#,
-        )
+            RETURNING id, name, scenario_type, horizon_days, assumptions, confidence"#
+        ))
         .bind(&req.assumptions)
         .bind(scenario_id)
         .bind(tenant_id)
@@ -956,7 +962,7 @@ impl LiquidityOptimizer {
         tenant_id: Uuid,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let targets: Vec<LiquidityTarget> = sqlx::query_as(
-            "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance_v58_liquidity_targets WHERE tenant_id = $1",
+            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE tenant_id = $1"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1017,7 +1023,7 @@ impl LiquidityOptimizer {
             let mut results = Vec::new();
             for eid in entity_ids {
                 let target = sqlx::query_as::<_, LiquidityTarget>(
-                    "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance_v58_liquidity_targets WHERE entity_id = $1 AND tenant_id = $2",
+                    only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE entity_id = $1 AND tenant_id = $2"),
                 )
                 .bind(eid)
                 .bind(tenant_id)
@@ -1031,7 +1037,7 @@ impl LiquidityOptimizer {
             results
         } else {
             sqlx::query_as(
-                "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance_v58_liquidity_targets WHERE tenant_id = $1",
+                only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE tenant_id = $1"),
             )
             .bind(tenant_id)
             .fetch_all(pool)
@@ -1049,12 +1055,13 @@ impl LiquidityOptimizer {
             let result_id = Uuid::new_v4();
             let actions_json = serde_json::to_value(&actions).unwrap_or_default();
 
-            let result = sqlx::query_as::<_, OptimizationResult>(
-                r#"INSERT INTO finance_v58_optimization_results
+            let result = sqlx::query_as::<_, OptimizationResult>(only_own_schema_query!(
+                "finance",
+                r#"INSERT INTO finance.finance_v58_optimization_results
                     (id, tenant_id, entity_id, recommended_actions, projected_savings, risk_level)
                 VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING id, entity_id, recommended_actions, projected_savings, risk_level"#,
-            )
+                RETURNING id, entity_id, recommended_actions, projected_savings, risk_level"#
+            ))
             .bind(result_id)
             .bind(tenant_id)
             .bind(&target.entity_id)
@@ -1158,7 +1165,7 @@ impl LiquidityOptimizer {
         tenant_id: Uuid,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance_v58_optimization_results WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1190,7 +1197,7 @@ impl LiquidityOptimizer {
         tenant_id: Uuid,
     ) -> Result<Vec<LiquidityTarget>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance_v58_liquidity_targets WHERE tenant_id = $1",
+            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE tenant_id = $1"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1205,8 +1212,9 @@ impl LiquidityOptimizer {
     ) -> Result<LiquidityTarget, sqlx::Error> {
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
 
-        let updated = sqlx::query_as::<_, LiquidityTarget>(
-            r#"INSERT INTO finance_v58_liquidity_targets
+        let updated = sqlx::query_as::<_, LiquidityTarget>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v58_liquidity_targets
                 (id, tenant_id, entity_id, min_balance, max_balance, target_balance, currency)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (id) DO UPDATE
@@ -1215,8 +1223,8 @@ impl LiquidityOptimizer {
                 max_balance = EXCLUDED.max_balance,
                 target_balance = EXCLUDED.target_balance,
                 currency = EXCLUDED.currency
-            RETURNING id, entity_id, min_balance, max_balance, target_balance, currency"#,
-        )
+            RETURNING id, entity_id, min_balance, max_balance, target_balance, currency"#
+        ))
         .bind(target_id)
         .bind(tenant_id)
         .bind(&req.entity_id)
@@ -1238,7 +1246,7 @@ impl LiquidityOptimizer {
         tenant_id: Uuid,
     ) -> Result<Vec<OptimizationResult>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance_v58_optimization_results WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500",
+            only_own_schema_query!("finance", "SELECT id, entity_id, recommended_actions, projected_savings, risk_level FROM finance.finance_v58_optimization_results WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
         .fetch_all(pool)

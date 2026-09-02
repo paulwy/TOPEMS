@@ -1,5 +1,6 @@
 // 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
 #![allow(dead_code)]
+pub mod accounting_subjects;
 pub mod audit_v52;
 pub mod compliance_v51;
 pub mod cqrs_routes;
@@ -22,7 +23,6 @@ pub mod tax_v56;
 pub mod treasury_v58;
 pub mod voucher_template;
 pub mod voucher_template_entries;
-pub mod accounting_subjects;
 
 use axum::{
     extract::{Json, Multipart, Path, Query, State},
@@ -34,6 +34,7 @@ use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use tokio;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -2083,7 +2084,7 @@ async fn toggle_template_handler(
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
-        "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4",
+        only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
@@ -2132,7 +2133,7 @@ async fn match_template_handler(
         None => return Json(ApiResponse::error(400, "source_type 为必填")),
     };
     let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
-        "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1",
+        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
     )
     .bind(tenant_id)
     .bind(&source_type)
@@ -2193,22 +2194,25 @@ async fn get_template_usage_stats_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2",
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2"),
     )
     .bind(tenant_id)
     .bind(template_id.to_string())
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let generated_voucher_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_finance_vouchers WHERE template_id = $1")
-            .bind(template_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
-    let last_used_at: Option<DateTime<Utc>> = sqlx::query_scalar(
-        "SELECT MAX(created_at) FROM core_finance_vouchers WHERE template_id = $1",
-    )
+    let generated_voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE template_id = $1"
+    ))
+    .bind(template_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let last_used_at: Option<DateTime<Utc>> = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT MAX(created_at) FROM finance.core_finance_vouchers WHERE template_id = $1"
+    ))
     .bind(template_id)
     .fetch_one(&state.pool)
     .await
@@ -2242,9 +2246,10 @@ async fn add_template_entry_handler(
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
-    )
+    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
+    ))
     .bind(tenant_id)
     .bind(template_id)
     .fetch_one(&state.pool)
@@ -2257,7 +2262,7 @@ async fn add_template_entry_handler(
         Some(s) => s,
         None => {
             let max_order: i32 = sqlx::query_scalar(
-                "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1",
+                only_own_schema_query!("finance", "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1"),
             )
             .bind(template_id)
             .fetch_one(&state.pool)
@@ -2272,10 +2277,10 @@ async fn add_template_entry_handler(
         crate::services::finance::voucher_template::VoucherTemplateLine,
         sqlx::Error,
     > = sqlx::query_as(
-        r#"INSERT INTO finance_voucher_template_lines
+        only_own_schema_query!("finance", r#"INSERT INTO finance_voucher_template_lines
             (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           RETURNING *"#,
+           RETURNING *"#),
     )
     .bind(line_id)
     .bind(template_id)
@@ -2313,7 +2318,7 @@ async fn update_template_entry_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let owns: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3",
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
@@ -2325,10 +2330,13 @@ async fn update_template_entry_handler(
         return Json(ApiResponse::error(404, "模板分录不存在"));
     }
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
-        match sqlx::query_as("SELECT * FROM finance_voucher_template_lines WHERE id = $1")
-            .bind(entry_id)
-            .fetch_one(&state.pool)
-            .await
+        match sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT * FROM finance_voucher_template_lines WHERE id = $1"
+        ))
+        .bind(entry_id)
+        .fetch_one(&state.pool)
+        .await
         {
             Ok(l) => l,
             Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
@@ -2339,13 +2347,14 @@ async fn update_template_entry_handler(
     let amount_formula = req.amount_formula.or(existing.amount_formula);
     let sort_order = req.sort_order.unwrap_or(existing.sort_order);
     let line: Result<crate::services::finance::voucher_template::VoucherTemplateLine, sqlx::Error> =
-        sqlx::query_as(
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"UPDATE finance_voucher_template_lines
               SET description = $1, account_code = $2, direction = $3,
                   amount_formula = $4, sort_order = $5
             WHERE id = $6
-           RETURNING *"#,
-        )
+           RETURNING *"#
+        ))
         .bind(description)
         .bind(account_code)
         .bind(direction)
@@ -2370,7 +2379,7 @@ async fn delete_template_entry_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query(
-        "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)",
+        only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
     )
     .bind(entry_id)
     .bind(template_id)
@@ -2403,9 +2412,10 @@ async fn reorder_template_entries_handler(
     Json(req): Json<ReorderEntriesRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
-    )
+    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
+    ))
     .bind(tenant_id)
     .bind(template_id)
     .fetch_one(&state.pool)
@@ -2417,7 +2427,7 @@ async fn reorder_template_entries_handler(
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;
         if let Err(e) = sqlx::query(
-            "UPDATE finance_voucher_template_lines SET sort_order = $1 WHERE id = $2 AND template_id = $3",
+            only_own_schema_query!("finance", "UPDATE finance_voucher_template_lines SET sort_order = $1 WHERE id = $2 AND template_id = $3"),
         )
         .bind(sort_order)
         .bind(entry_id)
@@ -2432,7 +2442,7 @@ async fn reorder_template_entries_handler(
         Vec<crate::services::finance::voucher_template::VoucherTemplateLine>,
         sqlx::Error,
     > = sqlx::query_as(
-        "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
+        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
     )
     .bind(template_id)
     .fetch_all(&state.pool)
@@ -2725,7 +2735,7 @@ pub async fn toggle_generation_rule_handler(
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
-        "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4",
+        only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
@@ -2741,9 +2751,10 @@ pub async fn toggle_generation_rule_handler(
             let rule: Result<
                 crate::services::finance::voucher_generation::VoucherGenerationRule,
                 sqlx::Error,
-            > = sqlx::query_as(
-                "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
-            )
+            > = sqlx::query_as(only_own_schema_query!(
+                "finance",
+                "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2"
+            ))
             .bind(tenant_id)
             .bind(rule_id)
             .fetch_one(&state.pool)
@@ -4024,7 +4035,7 @@ pub async fn get_voucher_entries(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
-        "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY created_at",
+        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY created_at"),
     )
     .bind(voucher_id)
     .bind(tenant_id)
@@ -4072,7 +4083,7 @@ pub async fn get_voucher_items(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
-        "SELECT id, voucher_id, account_code, account_name, description, debit, credit, sort_order FROM core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY sort_order, created_at",
+        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, sort_order FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY sort_order, created_at"),
     )
     .bind(voucher_id)
     .bind(tenant_id)
@@ -4155,12 +4166,14 @@ pub async fn batch_delete_vouchers(
     let mut deleted = 0i64;
     for id_str in &req.ids {
         if let Ok(id) = Uuid::parse_str(id_str) {
-            let res =
-                sqlx::query("DELETE FROM core_finance_vouchers WHERE id = $1 AND tenant_id = $2")
-                    .bind(id)
-                    .bind(tenant_id)
-                    .execute(&state.pool)
-                    .await;
+            let res = sqlx::query(only_own_schema_query!(
+                "finance",
+                "DELETE FROM finance.core_finance_vouchers WHERE id = $1 AND tenant_id = $2"
+            ))
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.pool)
+            .await;
             if let Ok(r) = res {
                 deleted += r.rows_affected() as i64;
             }
@@ -4188,7 +4201,7 @@ pub async fn unapprove_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let res = sqlx::query("UPDATE core_finance_vouchers SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')")
+    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')"))
         .bind(voucher_id)
         .bind(tenant_id)
         .execute(&state.pool)
@@ -4229,7 +4242,7 @@ pub async fn reverse_voucher(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reversal_id = Uuid::new_v4();
-    let res = sqlx::query("INSERT INTO core_finance_vouchers (id, tenant_id, voucher_no, voucher_date, period, voucher_type, description, status, is_reversed, original_voucher_id, created_by, created_at, updated_at) SELECT $1, $2, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', true, $3, created_by, NOW(), NOW() FROM core_finance_vouchers WHERE id = $3 AND tenant_id = $2")
+    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, voucher_no, voucher_date, period, voucher_type, description, status, is_reversed, original_voucher_id, created_by, created_at, updated_at) SELECT $1, $2, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', true, $3, created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
         .bind(reversal_id)
         .bind(tenant_id)
         .bind(voucher_id)
@@ -4270,12 +4283,14 @@ pub async fn get_next_voucher_no(
         "{}-",
         params.voucher_type.unwrap_or_else(|| "GEN".to_string())
     );
-    let count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_finance_vouchers WHERE tenant_id = $1")
-            .bind(tenant_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE tenant_id = $1"
+    ))
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
     let voucher_no = format!("{}{:06}", prefix, count + 1);
     Json(ApiResponse::success(
         serde_json::json!({"voucher_no": voucher_no}),
@@ -4470,7 +4485,7 @@ pub async fn open_period_v2(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let res = sqlx::query("INSERT INTO finance_periods (tenant_id, period, status, created_at, updated_at) VALUES ($1, $2, 'open', NOW(), NOW()) ON CONFLICT (tenant_id, period) DO UPDATE SET status = 'open', updated_at = NOW()")
+    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_periods (tenant_id, period, status, created_at, updated_at) VALUES ($1, $2, 'open', NOW(), NOW()) ON CONFLICT (tenant_id, period) DO UPDATE SET status = 'open', updated_at = NOW()"))
         .bind(tenant_id)
         .bind(&period)
         .execute(&state.pool)
@@ -4501,7 +4516,7 @@ pub async fn close_period_v2(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let res = sqlx::query("UPDATE finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND period = $2")
+    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND period = $2"))
         .bind(tenant_id)
         .bind(&period)
         .execute(&state.pool)
@@ -4692,7 +4707,7 @@ pub async fn get_account_tree(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
     let rows = sqlx::query(
-        "SELECT id, code, name, parent_id, category, level, is_leaf, status FROM core_finance_accounts WHERE tenant_id = $1 AND ($2::text IS NULL OR category = $2) ORDER BY code",
+        only_own_schema_query!("finance", "SELECT id, code, name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE tenant_id = $1 AND ($2::text IS NULL OR category = $2) ORDER BY code"),
     )
     .bind(tenant_id)
     .bind(category)

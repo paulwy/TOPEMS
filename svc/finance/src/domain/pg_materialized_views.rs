@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 
 use super::events::FinanceDomainEvent;
 use super::materialized_view::MaterializedView;
@@ -39,22 +40,28 @@ impl PgVoucherSummaryView {
         let offset = ((page - 1) * page_size).max(0);
 
         let count_row = if let Some(s) = &status {
-            sqlx::query("SELECT COUNT(*) as count FROM mv_voucher_summary WHERE status = $1")
-                .bind(s)
-                .fetch_one(&self.pool)
-                .await
-                .map_err(|e| e.to_string())?
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "SELECT COUNT(*) as count FROM mv_voucher_summary WHERE status = $1"
+            ))
+            .bind(s)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?
         } else {
-            sqlx::query("SELECT COUNT(*) as count FROM mv_voucher_summary")
-                .fetch_one(&self.pool)
-                .await
-                .map_err(|e| e.to_string())?
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "SELECT COUNT(*) as count FROM mv_voucher_summary"
+            ))
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?
         };
         let total: i64 = count_row.try_get("count").map_err(|e| e.to_string())?;
 
         let rows = if let Some(s) = &status {
             sqlx::query(
-                "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
             )
             .bind(s)
             .bind(page_size)
@@ -64,7 +71,7 @@ impl PgVoucherSummaryView {
             .map_err(|e| e.to_string())?
         } else {
             sqlx::query(
-                "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
             )
             .bind(page_size)
             .bind(offset)
@@ -81,7 +88,7 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgVoucherSummary>, String> {
-        let result = sqlx::query("SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE id = $1")
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE id = $1"))
             .bind(id)
             .fetch_optional(&self.pool)
             .await
@@ -94,7 +101,7 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_no(&self, no: &str) -> Result<Option<PgVoucherSummary>, String> {
-        let result = sqlx::query("SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1")
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1"))
             .bind(no)
             .fetch_optional(&self.pool)
             .await
@@ -135,7 +142,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 let total = rust_decimal::Decimal::from_f64(e.total_amount)
                     .unwrap_or(rust_decimal::Decimal::ZERO);
                 sqlx::query(
-                    "INSERT INTO mv_voucher_summary 
+                    only_own_schema_query!("finance", "INSERT INTO mv_voucher_summary 
                      (id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, created_by, created_at, version)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1)
                      ON CONFLICT (id) DO UPDATE SET
@@ -146,7 +153,7 @@ impl MaterializedView for PgVoucherSummaryView {
                          total_amount = EXCLUDED.total_amount,
                          created_by = EXCLUDED.created_by,
                          created_at = EXCLUDED.created_at,
-                         version = mv_voucher_summary.version + 1",
+                         version = mv_voucher_summary.version + 1"),
                 )
                 .bind(&e.voucher_id)
                 .bind(&e.voucher_no)
@@ -162,11 +169,12 @@ impl MaterializedView for PgVoucherSummaryView {
                 .map_err(|e| e.to_string())?;
             }
             FinanceDomainEvent::VoucherPosted(e) => {
-                sqlx::query(
+                sqlx::query(only_own_schema_query!(
+                    "finance",
                     "UPDATE mv_voucher_summary 
                      SET status = $1, posted_at = $2, version = version + 1
-                     WHERE id = $3",
-                )
+                     WHERE id = $3"
+                ))
                 .bind("Posted")
                 .bind(e.occurred_at)
                 .bind(&e.voucher_id)
@@ -175,11 +183,12 @@ impl MaterializedView for PgVoucherSummaryView {
                 .map_err(|e| e.to_string())?;
             }
             FinanceDomainEvent::VoucherReversed(e) => {
-                sqlx::query(
+                sqlx::query(only_own_schema_query!(
+                    "finance",
                     "UPDATE mv_voucher_summary 
                      SET status = $1, version = version + 1
-                     WHERE id = $2",
-                )
+                     WHERE id = $2"
+                ))
                 .bind("Reversed")
                 .bind(&e.voucher_id)
                 .execute(&self.pool)
@@ -192,10 +201,13 @@ impl MaterializedView for PgVoucherSummaryView {
     }
 
     async fn rebuild(&self) -> Result<(), String> {
-        sqlx::query("DELETE FROM mv_voucher_summary")
-            .execute(&self.pool)
-            .await
-            .map_err(|e| e.to_string())?;
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            "DELETE FROM mv_voucher_summary"
+        ))
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
         Ok(())
     }
 }
@@ -235,22 +247,28 @@ impl PgReceivableAgingView {
         let offset = ((page - 1) * page_size).max(0);
 
         let count_row = if let Some(s) = &status {
-            sqlx::query("SELECT COUNT(*) as count FROM mv_receivable_aging WHERE status = $1")
-                .bind(s)
-                .fetch_one(&self.pool)
-                .await
-                .map_err(|e| e.to_string())?
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "SELECT COUNT(*) as count FROM mv_receivable_aging WHERE status = $1"
+            ))
+            .bind(s)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?
         } else {
-            sqlx::query("SELECT COUNT(*) as count FROM mv_receivable_aging")
-                .fetch_one(&self.pool)
-                .await
-                .map_err(|e| e.to_string())?
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "SELECT COUNT(*) as count FROM mv_receivable_aging"
+            ))
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?
         };
         let total: i64 = count_row.try_get("count").map_err(|e| e.to_string())?;
 
         let rows = if let Some(s) = &status {
             sqlx::query(
-                "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging WHERE status = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3",
+                only_own_schema_query!("finance", "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging WHERE status = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3"),
             )
             .bind(s)
             .bind(page_size)
@@ -260,7 +278,7 @@ impl PgReceivableAgingView {
             .map_err(|e| e.to_string())?
         } else {
             sqlx::query(
-                "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging ORDER BY updated_at DESC LIMIT $1 OFFSET $2",
+                only_own_schema_query!("finance", "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging ORDER BY updated_at DESC LIMIT $1 OFFSET $2"),
             )
             .bind(page_size)
             .bind(offset)
@@ -277,7 +295,7 @@ impl PgReceivableAgingView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgReceivableAging>, String> {
-        let result = sqlx::query("SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging WHERE id = $1")
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging WHERE id = $1"))
             .bind(id)
             .fetch_optional(&self.pool)
             .await
@@ -310,15 +328,16 @@ impl PgReceivableAgingView {
     }
 
     pub async fn total_by_bucket(&self) -> Result<Vec<super::value_objects::AgingBucket>, String> {
-        let row = sqlx::query(
+        let row = sqlx::query(only_own_schema_query!(
+            "finance",
             "SELECT SUM(current_amount) as current, 
                     SUM(bucket_30_amount) as b30,
                     SUM(bucket_60_amount) as b60,
                     SUM(bucket_90_amount) as b90,
                     SUM(bucket_180_amount) as b180,
                     SUM(over_180_amount) as over180
-             FROM mv_receivable_aging",
-        )
+             FROM mv_receivable_aging"
+        ))
         .fetch_one(&self.pool)
         .await
         .map_err(|e| e.to_string())?;
@@ -392,7 +411,7 @@ impl MaterializedView for PgReceivableAgingView {
                 let amount = rust_decimal::Decimal::from_f64(e.amount)
                     .unwrap_or(rust_decimal::Decimal::ZERO);
                 sqlx::query(
-                    "INSERT INTO mv_receivable_aging 
+                    only_own_schema_query!("finance", "INSERT INTO mv_receivable_aging 
                      (id, customer_id, customer_name, total_amount, current_amount, 
                       bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, 
                       status, version, updated_at)
@@ -403,7 +422,7 @@ impl MaterializedView for PgReceivableAgingView {
                          current_amount = EXCLUDED.current_amount,
                          status = EXCLUDED.status,
                          version = mv_receivable_aging.version + 1,
-                         updated_at = NOW()",
+                         updated_at = NOW()"),
                 )
                 .bind(&e.receivable_id)
                 .bind(&e.customer_id)
@@ -423,11 +442,12 @@ impl MaterializedView for PgReceivableAgingView {
                 } else {
                     "PartiallySettled"
                 };
-                sqlx::query(
+                sqlx::query(only_own_schema_query!(
+                    "finance",
                     "UPDATE mv_receivable_aging 
                      SET total_amount = $1, status = $2, version = version + 1, updated_at = NOW()
-                     WHERE id = $3",
-                )
+                     WHERE id = $3"
+                ))
                 .bind(remaining)
                 .bind(status)
                 .bind(&e.receivable_id)
@@ -465,10 +485,13 @@ impl MaterializedView for PgReceivableAgingView {
     }
 
     async fn rebuild(&self) -> Result<(), String> {
-        sqlx::query("DELETE FROM mv_receivable_aging")
-            .execute(&self.pool)
-            .await
-            .map_err(|e| e.to_string())?;
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            "DELETE FROM mv_receivable_aging"
+        ))
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
         Ok(())
     }
 }

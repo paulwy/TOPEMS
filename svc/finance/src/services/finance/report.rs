@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -13,7 +14,7 @@ impl FinanceService {
         tenant_id: Uuid,
         params: LedgerQueryParams,
     ) -> Result<Vec<LedgerEntry>, TopemsError> {
-        let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM core_finance_ledger WHERE tenant_id = $1".to_string();
+        let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM finance.core_finance_ledger WHERE tenant_id = $1".to_string();
 
         let account_id_provided = params.account_id.is_some();
         let account_code_provided = params.account_code.is_some();
@@ -59,18 +60,18 @@ impl FinanceService {
         period: &str,
     ) -> Result<Vec<TrialBalance>, TopemsError> {
         let balances = sqlx::query_as(
-            "SELECT 
+            only_own_schema_query!("finance", "SELECT 
                 a.id as account_id,
                 a.code as account_code,
                 a.name as account_name,
                 a.account_type,
                 COALESCE(SUM(CASE WHEN l.debit > l.credit THEN l.debit - l.credit ELSE 0 END), 0) as debit_balance,
                 COALESCE(SUM(CASE WHEN l.credit > l.debit THEN l.credit - l.debit ELSE 0 END), 0) as credit_balance
-             FROM core_finance_accounts a
-             LEFT JOIN core_finance_ledger l ON a.id = l.account_id AND l.period = $2
+             FROM finance.core_finance_accounts a
+             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $2
              WHERE a.tenant_id = $1
              GROUP BY a.id, a.code, a.name, a.account_type
-             ORDER BY a.code",
+             ORDER BY a.code"),
         )
         .bind(tenant_id)
         .bind(period)
@@ -129,8 +130,8 @@ impl FinanceService {
                 a.code as account_code,
                 a.name as account_name,
                 {} as amount
-             FROM core_finance_accounts a
-             LEFT JOIN core_finance_ledger l ON a.id = l.account_id AND l.period = $3
+             FROM finance.core_finance_accounts a
+             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $3
              WHERE a.tenant_id = $1 AND a.account_type::text = $2
              GROUP BY a.code, a.name
              ORDER BY a.code",
@@ -197,17 +198,18 @@ impl FinanceService {
         account_type: AccountType,
     ) -> Result<Vec<IncomeItem>, TopemsError> {
         let type_str = account_type.to_string();
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "finance",
             "SELECT 
                 a.code as account_code,
                 a.name as account_name,
                 COALESCE(SUM(l.debit - l.credit), 0) as amount
-             FROM core_finance_accounts a
-             LEFT JOIN core_finance_ledger l ON a.id = l.account_id AND l.period = $3
+             FROM finance.core_finance_accounts a
+             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $3
              WHERE a.tenant_id = $1 AND a.account_type::text = $2
              GROUP BY a.code, a.name
-             ORDER BY a.code",
-        )
+             ORDER BY a.code"
+        ))
         .bind(tenant_id)
         .bind(type_str)
         .bind(period)
@@ -231,22 +233,23 @@ impl FinanceService {
         tenant_id: Uuid,
         period: &str,
     ) -> Result<CashFlowStatement, TopemsError> {
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
             SELECT
                 a.code as account_code,
                 a.name as account_name,
                 COALESCE(SUM(l.debit), 0) as total_debit,
                 COALESCE(SUM(l.credit), 0) as total_credit
-            FROM core_finance_accounts a
-            LEFT JOIN core_finance_ledger l ON a.id = l.account_id AND l.period = $2
+            FROM finance.core_finance_accounts a
+            LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $2
             WHERE a.tenant_id = $1
               AND a.account_type::text = 'asset'
               AND a.code LIKE '1___'
             GROUP BY a.code, a.name
             ORDER BY a.code
-            "#,
-        )
+            "#
+        ))
         .bind(tenant_id)
         .bind(period)
         .fetch_all(&self.db_pool)

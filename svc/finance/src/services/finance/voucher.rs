@@ -1,6 +1,7 @@
 use chrono::{DateTime, Datelike, Utc};
 use rust_decimal::Decimal;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -54,9 +55,9 @@ impl FinanceService {
             .await?;
 
         let voucher: Voucher = sqlx::query_as(
-            "INSERT INTO core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, template_id)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, template_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10)
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_no)
@@ -78,9 +79,9 @@ impl FinanceService {
                 .await?;
 
             let voucher_line = sqlx::query_as(
-                "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                 RETURNING *",
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                 RETURNING *"),
             )
             .bind(voucher.id)
             .bind(i as i32 + 1)
@@ -92,6 +93,7 @@ impl FinanceService {
             .bind(line.credit)
             .bind(line.project_id)
             .bind(line.department_id)
+                .bind(tenant_id)
             .fetch_one(&self.db_pool)
             .await?;
 
@@ -129,10 +131,11 @@ impl FinanceService {
         let month = today.month();
 
         let period_prefix = format!("{:04}{:02}", year, month);
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM core_finance_vouchers 
-             WHERE deleted_at IS NULL AND tenant_id = $1 AND voucher_type = $2 AND period LIKE $3",
-        )
+        let count: (i64,) = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT COUNT(*) FROM finance.core_finance_vouchers 
+             WHERE deleted_at IS NULL AND tenant_id = $1 AND voucher_type = $2 AND period LIKE $3"
+        ))
         .bind(tenant_id)
         .bind(voucher_type)
         .bind(format!("{}%", period_prefix))
@@ -148,7 +151,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
         let before: Voucher = sqlx::query_as(
-            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'draft'",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'draft'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -161,9 +164,9 @@ impl FinanceService {
         })?;
 
         let voucher = sqlx::query_as(
-            "UPDATE core_finance_vouchers SET status = 'submitted', updated_at = CURRENT_TIMESTAMP
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2 AND status = 'draft'
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -180,7 +183,7 @@ impl FinanceService {
         approved_by: &str,
     ) -> Result<Voucher, TopemsError> {
         let before: Voucher = sqlx::query_as(
-            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -193,9 +196,9 @@ impl FinanceService {
         })?;
 
         let voucher = sqlx::query_as(
-            "UPDATE core_finance_vouchers SET status = 'approved', approved_by = $3, updated_at = CURRENT_TIMESTAMP
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'approved', approved_by = $3, updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2 AND status = 'submitted'
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -213,7 +216,7 @@ impl FinanceService {
         _rejected_by: &str,
     ) -> Result<Voucher, TopemsError> {
         let before: Voucher = sqlx::query_as(
-            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -226,9 +229,9 @@ impl FinanceService {
         })?;
 
         let voucher = sqlx::query_as(
-            "UPDATE core_finance_vouchers SET status = 'rejected', updated_at = CURRENT_TIMESTAMP
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'rejected', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2 AND status = 'submitted'
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -245,7 +248,7 @@ impl FinanceService {
         posted_by: &str,
     ) -> Result<Voucher, TopemsError> {
         let voucher: Voucher = sqlx::query_as(
-            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'approved'",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'approved'"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -267,7 +270,7 @@ impl FinanceService {
             }
         };
         let period_status: Option<String> = sqlx::query_scalar(
-            "SELECT status FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"
+            only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3")
         )
         .bind(tenant_id)
         .bind(p_year)
@@ -287,7 +290,7 @@ impl FinanceService {
         }
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
-            "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
         )
         .bind(voucher.id)
         .fetch_all(&self.db_pool)
@@ -304,8 +307,8 @@ impl FinanceService {
             };
 
             sqlx::query(
-                "INSERT INTO core_finance_ledger (tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_ledger (tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"),
             )
             .bind(tenant_id)
             .bind(line.account_id)
@@ -324,9 +327,9 @@ impl FinanceService {
         }
 
         let updated_voucher = sqlx::query_as(
-            "UPDATE core_finance_vouchers SET status = 'posted', posted_by = $3, updated_at = CURRENT_TIMESTAMP
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'posted', posted_by = $3, updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -342,10 +345,11 @@ impl FinanceService {
         tenant_id: Uuid,
         account_id: Uuid,
     ) -> Result<Decimal, TopemsError> {
-        let result: (Option<Decimal>,) = sqlx::query_as(
-            "SELECT COALESCE(SUM(debit - credit), 0) as balance FROM core_finance_ledger
-             WHERE deleted_at IS NULL AND tenant_id = $1 AND account_id = $2",
-        )
+        let result: (Option<Decimal>,) = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT COALESCE(SUM(debit - credit), 0) as balance FROM finance.core_finance_ledger
+             WHERE deleted_at IS NULL AND tenant_id = $1 AND account_id = $2"
+        ))
         .bind(tenant_id)
         .bind(account_id)
         .fetch_one(&self.db_pool)
@@ -360,14 +364,14 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<VoucherResponse, TopemsError> {
         let voucher: Voucher =
-            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_one(&self.db_pool)
                 .await?;
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
-            "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
         )
         .bind(voucher.id)
         .fetch_all(&self.db_pool)
@@ -394,7 +398,7 @@ impl FinanceService {
         period: Option<String>,
     ) -> Result<Vec<Voucher>, TopemsError> {
         let mut query =
-            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1"
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1"
                 .to_string();
         let status_provided = status.is_some();
         let period_provided = period.is_some();
@@ -549,7 +553,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: ExportVoucherRequest,
     ) -> Result<ExportVoucherResponse, TopemsError> {
-        let mut query = "SELECT v.*, vl.* FROM core_finance_vouchers v JOIN core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE v.tenant_id = $1".to_string();
+        let mut query = "SELECT v.*, vl.* FROM finance.core_finance_vouchers v JOIN finance.core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE v.tenant_id = $1".to_string();
 
         if let Some(status) = req.status {
             query.push_str(&format!(" AND v.status = '{}'", status));
@@ -636,7 +640,7 @@ impl FinanceService {
         _updated_by: &str,
     ) -> Result<VoucherResponse, TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_one(&self.db_pool)
@@ -663,7 +667,7 @@ impl FinanceService {
             }
 
             sqlx::query(
-                "UPDATE core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, total_debit = $5, total_credit = $6, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $7 AND id = $8",
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, total_debit = $5, total_credit = $6, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $7 AND id = $8"),
             )
             .bind(voucher_date)
             .bind(&period)
@@ -676,10 +680,13 @@ impl FinanceService {
             .execute(&self.db_pool)
             .await?;
 
-            sqlx::query("DELETE FROM core_finance_voucher_lines WHERE voucher_id = $1")
-                .bind(voucher_id)
-                .execute(&self.db_pool)
-                .await?;
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1"
+            ))
+            .bind(voucher_id)
+            .execute(&self.db_pool)
+            .await?;
 
             let mut new_lines = Vec::new();
             for (i, line) in lines.iter().enumerate() {
@@ -688,9 +695,9 @@ impl FinanceService {
                     .await?;
 
                 let voucher_line = sqlx::query_as(
-                    "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                     RETURNING *",
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                     RETURNING *"),
                 )
                 .bind(voucher_id)
                 .bind(i as i32 + 1)
@@ -702,6 +709,7 @@ impl FinanceService {
                 .bind(line.credit)
                 .bind(line.project_id)
                 .bind(line.department_id)
+                .bind(tenant_id)
                 .fetch_one(&self.db_pool)
                 .await?;
 
@@ -709,7 +717,7 @@ impl FinanceService {
             }
 
             let updated: Voucher = sqlx::query_as(
-                "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
             )
             .bind(tenant_id)
             .bind(voucher_id)
@@ -730,7 +738,7 @@ impl FinanceService {
             })
         } else {
             let updated: Voucher = sqlx::query_as(
-                "UPDATE core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $5 AND id = $6 RETURNING *",
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $5 AND id = $6 RETURNING *"),
             )
             .bind(voucher_date)
             .bind(&period)
@@ -742,7 +750,7 @@ impl FinanceService {
             .await?;
 
             let existing_lines: Vec<VoucherLine> = sqlx::query_as(
-                "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
             )
             .bind(voucher_id)
             .fetch_all(&self.db_pool)
@@ -770,7 +778,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_optional(&self.db_pool)
@@ -783,13 +791,16 @@ impl FinanceService {
             ));
         }
 
-        sqlx::query("DELETE FROM core_finance_voucher_lines WHERE voucher_id = $1")
-            .bind(voucher_id)
-            .execute(&self.db_pool)
-            .await?;
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1"
+        ))
+        .bind(voucher_id)
+        .execute(&self.db_pool)
+        .await?;
 
         sqlx::query(
-            "UPDATE core_finance_vouchers SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -806,7 +817,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
         let existing: Voucher =
-            sqlx::query_as("SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_optional(&self.db_pool)
@@ -818,14 +829,14 @@ impl FinanceService {
             TopemsError::ValidationFailed(msg)
         })?;
 
-        sqlx::query("UPDATE core_finance_ledger SET deleted_at = NOW() WHERE tenant_id = $1 AND voucher_id = $2")
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_ledger SET deleted_at = NOW() WHERE tenant_id = $1 AND voucher_id = $2"))
             .bind(tenant_id)
             .bind(voucher_id)
             .execute(&self.db_pool)
             .await?;
 
         let voucher = sqlx::query_as(
-            "UPDATE core_finance_vouchers SET status = 'approved', posted_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $1 AND id = $2 RETURNING *",
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'approved', posted_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $1 AND id = $2 RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
@@ -856,9 +867,9 @@ impl FinanceService {
             .await?;
 
         let voucher: Voucher = sqlx::query_as(
-            "INSERT INTO core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_no)
@@ -875,7 +886,7 @@ impl FinanceService {
         let mut lines = Vec::new();
         for (i, line) in req.lines.iter().enumerate() {
             let account: Account = sqlx::query_as(
-                "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
             )
             .bind(tenant_id)
             .bind(&line.account_code)
@@ -883,9 +894,9 @@ impl FinanceService {
             .await?;
 
             let voucher_line: VoucherLine = sqlx::query_as(
-                "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                 RETURNING *",
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                 RETURNING *"),
             )
             .bind(voucher.id)
             .bind(i as i32 + 1)
@@ -897,6 +908,7 @@ impl FinanceService {
             .bind(line.credit)
             .bind(line.project_id)
             .bind(line.department_id)
+                .bind(tenant_id)
             .fetch_one(&mut *tx)
             .await?;
 
@@ -936,7 +948,7 @@ impl FinanceService {
         let period_prefix = format!("{}{:02}", year, month);
 
         let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND voucher_no LIKE $2",
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND voucher_no LIKE $2"),
         )
         .bind(tenant_id)
         .bind(format!("{}{}%", prefix, period_prefix))
@@ -958,7 +970,7 @@ impl FinanceService {
         let total_credit: Decimal = lines.iter().map(|l| l.credit).sum();
 
         sqlx::query(
-            "UPDATE core_finance_vouchers SET total_debit = $1, total_credit = $2, updated_at = NOW() WHERE id = $3",
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET total_debit = $1, total_credit = $2, updated_at = NOW() WHERE id = $3"),
         )
         .bind(total_debit)
         .bind(total_credit)
@@ -968,7 +980,7 @@ impl FinanceService {
 
         for (i, line) in lines.iter().enumerate() {
             let account: Account = sqlx::query_as(
-                "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
             )
             .bind(tenant_id)
             .bind(&line.account_code)
@@ -976,8 +988,8 @@ impl FinanceService {
             .await?;
 
             sqlx::query(
-                "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"),
             )
             .bind(voucher_id)
             .bind(i as i32 + 1)

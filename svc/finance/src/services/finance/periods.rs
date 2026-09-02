@@ -2,6 +2,7 @@ use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use sqlx::Row;
 use std::fmt;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -89,7 +90,7 @@ impl FinanceService {
         period: String,
     ) -> Result<(), TopemsError> {
         let period_status: Option<(PeriodStatus,)> = sqlx::query_as(
-            "SELECT status FROM core_finance_periods WHERE tenant_id = $1 AND period_name = $2",
+            only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND period_name = $2"),
         )
         .bind(tenant_id)
         .bind(&period)
@@ -114,7 +115,7 @@ impl FinanceService {
         let period_name = format!("{:04}{:02}", year, month);
 
         let existing: Option<Period> = sqlx::query_as(
-            "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
         )
         .bind(tenant_id)
         .bind(year)
@@ -129,10 +130,10 @@ impl FinanceService {
                     .validate_reopen()
                     .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?;
                 let updated: Period = sqlx::query_as(
-                    "UPDATE core_finance_periods 
+                    only_own_schema_query!("finance", "UPDATE finance.core_finance_periods 
                      SET status = 'open', closed_at = NULL, closed_by = NULL, updated_at = CURRENT_TIMESTAMP
                      WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status = 'closed'
-                     RETURNING *",
+                     RETURNING *"),
                 )
                 .bind(tenant_id)
                 .bind(year)
@@ -166,9 +167,9 @@ impl FinanceService {
         .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
 
         let period: Period = sqlx::query_as(
-            "INSERT INTO core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date)
              VALUES ($1, $2, $3, $4, 'open', $5, $6)
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(year)
@@ -213,7 +214,7 @@ impl FinanceService {
         .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
 
         let existing: Option<Period> = sqlx::query_as(
-            "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
         )
         .bind(tenant_id)
         .bind(year)
@@ -232,7 +233,7 @@ impl FinanceService {
             })?;
 
             let child_statuses: Vec<PeriodStatus> = sqlx::query_scalar::<_, String>(
-                "SELECT status FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month < $3 ORDER BY month ASC"
+                only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month < $3 ORDER BY month ASC")
             )
             .bind(tenant_id)
             .bind(year)
@@ -252,10 +253,10 @@ impl FinanceService {
                 .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?;
 
             let updated: Period = sqlx::query_as(
-                "UPDATE core_finance_periods
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_periods
                  SET status = 'closed', closed_at = CURRENT_TIMESTAMP, closed_by = $4, updated_at = CURRENT_TIMESTAMP
                  WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status IN ('open', 'closing')
-                 RETURNING *",
+                 RETURNING *"),
             )
             .bind(tenant_id)
             .bind(year)
@@ -267,9 +268,9 @@ impl FinanceService {
         }
 
         let period: Period = sqlx::query_as(
-            "INSERT INTO core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by)
              VALUES ($1, $2, $3, $4, 'closed', $5, $6, CURRENT_TIMESTAMP, $7)
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(year)
@@ -293,28 +294,30 @@ impl FinanceService {
     ) -> Result<YearEndCloseResult, TopemsError> {
         let period_pattern = format!("{:04}%", year);
 
-        let income_rows = sqlx::query(
+        let income_rows = sqlx::query(only_own_schema_query!(
+            "finance",
             "SELECT a.id, a.code, a.name, COALESCE(SUM(l.credit - l.debit), 0) as balance
-             FROM core_finance_accounts a
-             LEFT JOIN core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
+             FROM finance.core_finance_accounts a
+             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
              WHERE a.tenant_id = $1 AND a.account_type = 'income'
              GROUP BY a.id, a.code, a.name
-             HAVING COALESCE(SUM(l.credit - l.debit), 0) > 0",
-        )
+             HAVING COALESCE(SUM(l.credit - l.debit), 0) > 0"
+        ))
         .bind(tenant_id)
         .bind(AccountType::Income)
         .bind(&period_pattern)
         .fetch_all(&self.db_pool)
         .await?;
 
-        let expense_rows = sqlx::query(
+        let expense_rows = sqlx::query(only_own_schema_query!(
+            "finance",
             "SELECT a.id, a.code, a.name, COALESCE(SUM(l.debit - l.credit), 0) as balance
-             FROM core_finance_accounts a
-             LEFT JOIN core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
+             FROM finance.core_finance_accounts a
+             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
              WHERE a.tenant_id = $1 AND a.account_type = 'expense'
              GROUP BY a.id, a.code, a.name
-             HAVING COALESCE(SUM(l.debit - l.credit), 0) > 0",
-        )
+             HAVING COALESCE(SUM(l.debit - l.credit), 0) > 0"
+        ))
         .bind(tenant_id)
         .bind(AccountType::Expense)
         .bind(&period_pattern)
@@ -366,9 +369,9 @@ impl FinanceService {
         let period = format!("{:04}12", year);
 
         let voucher = sqlx::query_as::<_, Voucher>(
-            "INSERT INTO core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(&voucher_no)
@@ -393,8 +396,8 @@ impl FinanceService {
                 let account_name: String = row.get("name");
 
                 sqlx::query(
-                    "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0)",
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0)"),
                 )
                 .bind(voucher.id)
                 .bind(line_no)
@@ -417,8 +420,8 @@ impl FinanceService {
                 let account_name: String = row.get("name");
 
                 sqlx::query(
-                    "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0)",
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0)"),
                 )
                 .bind(voucher.id)
                 .bind(line_no)
@@ -432,8 +435,8 @@ impl FinanceService {
 
                 line_no += 1;
                 sqlx::query(
-                    "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
-                     VALUES ($1, $2, $3, $4, $5, $6, 0, $7)",
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
+                     VALUES ($1, $2, $3, $4, $5, $6, 0, $7)"),
                 )
                 .bind(voucher.id)
                 .bind(line_no)

@@ -482,7 +482,7 @@ impl FinanceEventHandlers {
         let now = Utc::now();
         let result = sqlx::query(only_own_schema_query!(
             "finance",
-            r#"INSERT INTO source_amount_snapshots
+            r#"INSERT INTO public.source_amount_snapshots
                (source_type, source_id, payable_amount, updated_at)
                VALUES ($1, $2, $3, $4)
                ON CONFLICT (source_type, source_id) DO UPDATE
@@ -665,7 +665,7 @@ impl FinanceEventHandlers {
         let now = Utc::now();
         sqlx::query(only_own_schema_query!(
             "finance",
-            r#"INSERT INTO reconciliation_snapshots
+            r#"INSERT INTO public.reconciliation_snapshots
                (id, tenant_id, recon_code, recon_name, recon_type, status, period,
                 entity_id, entity_type, description, created_by, synced_at, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $12)
@@ -705,7 +705,7 @@ impl FinanceEventHandlers {
     ) -> Result<(), String> {
         sqlx::query(only_own_schema_query!(
             "finance",
-            r#"UPDATE reconciliation_snapshots
+            r#"UPDATE public.reconciliation_snapshots
                SET status = $1,
                    total_debit = $2,
                    total_credit = $3,
@@ -735,7 +735,7 @@ impl FinanceEventHandlers {
     ) -> Result<(), String> {
         sqlx::query(only_own_schema_query!(
             "finance",
-            r#"UPDATE reconciliation_snapshots
+            r#"UPDATE public.reconciliation_snapshots
                SET status = 'approved',
                    approved_by = $1,
                    approved_at = $2,
@@ -759,7 +759,7 @@ impl FinanceEventHandlers {
         let now = Utc::now();
         sqlx::query(only_own_schema_query!(
             "finance",
-            r#"INSERT INTO settlement_snapshots
+            r#"INSERT INTO public.settlement_snapshots
                (id, tenant_id, project_id, settlement_no, settlement_type, status,
                 amount, settlement_date, remarks, created_by, synced_at, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $11)
@@ -797,7 +797,7 @@ impl FinanceEventHandlers {
     ) -> Result<(), String> {
         sqlx::query(only_own_schema_query!(
             "finance",
-            r#"UPDATE settlement_snapshots
+            r#"UPDATE public.settlement_snapshots
                SET status = 'approved',
                    approved_by = $1,
                    approved_at = $2,
@@ -820,7 +820,7 @@ impl FinanceEventHandlers {
     ) -> Result<(), String> {
         sqlx::query(only_own_schema_query!(
             "finance",
-            r#"UPDATE settlement_snapshots
+            r#"UPDATE public.settlement_snapshots
                SET status = 'rejected',
                    updated_at = NOW(),
                    synced_at = NOW()

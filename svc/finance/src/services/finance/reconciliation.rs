@@ -1,6 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::*;
@@ -29,12 +30,12 @@ impl ReconciliationService {
             .map_err(|e| TopemsError::Validation(format!("Invalid period_end: {}", e)))?;
 
         let session = sqlx::query_as::<_, ReconciliationSession>(
-            r#"
-            INSERT INTO core_finance_reconciliation_sessions
+            only_own_schema_query!("finance", r#"
+            INSERT INTO finance.core_finance_reconciliation_sessions
                 (tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
-            "#,
+            "#),
         )
         .bind(tenant_id)
         .bind(&session_no)
@@ -53,7 +54,7 @@ impl ReconciliationService {
 
     async fn generate_session_no(&self, tenant_id: Uuid) -> Result<String, TopemsError> {
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_finance_reconciliation_sessions WHERE tenant_id = $1",
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE tenant_id = $1"),
         )
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
@@ -70,7 +71,7 @@ impl ReconciliationService {
         session_id: Uuid,
     ) -> Result<ReconciliationSession, TopemsError> {
         let session = sqlx::query_as::<_, ReconciliationSession>(
-            "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM core_finance_reconciliation_sessions WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -90,9 +91,9 @@ impl ReconciliationService {
         page_size: i64,
     ) -> Result<(Vec<ReconciliationSession>, i64), TopemsError> {
         let mut query =
-            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM core_finance_reconciliation_sessions WHERE tenant_id = $1");
+            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE tenant_id = $1");
         let mut count_query = String::from(
-            "SELECT COUNT(*) FROM core_finance_reconciliation_sessions WHERE tenant_id = $1",
+            "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE tenant_id = $1",
         );
         let _params: Vec<String> = vec![];
 
@@ -144,14 +145,15 @@ impl ReconciliationService {
             let transaction_date = NaiveDate::parse_from_str(&item.transaction_date, "%Y-%m-%d")
                 .map_err(|e| TopemsError::Validation(format!("Invalid transaction_date: {}", e)))?;
 
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "finance",
                 r#"
-                INSERT INTO core_finance_reconciliation_items
+                INSERT INTO finance.core_finance_reconciliation_items
                     (session_id, tenant_id, source_type, transaction_date, amount, direction,
                      counterparty_name, counterparty_account, reference_no, description)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                "#,
-            )
+                "#
+            ))
             .bind(req.session_id)
             .bind(tenant_id)
             .bind(&req.source_type)
@@ -399,14 +401,15 @@ impl ReconciliationService {
         diff_reason: DiffReason,
         notes: Option<String>,
     ) -> Result<ReconciliationItem, TopemsError> {
-        let item = sqlx::query_as::<_, ReconciliationItem>(
+        let item = sqlx::query_as::<_, ReconciliationItem>(only_own_schema_query!(
+            "finance",
             r#"
-            UPDATE core_finance_reconciliation_items
+            UPDATE finance.core_finance_reconciliation_items
             SET diff_reason = $1, notes = $2, match_status = 'diff', updated_at = NOW()
             WHERE id = $3 AND tenant_id = $4
             RETURNING *
-            "#,
-        )
+            "#
+        ))
         .bind(diff_reason)
         .bind(notes)
         .bind(item_id)
@@ -430,7 +433,7 @@ impl ReconciliationService {
         match_status: Option<MatchStatus>,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let mut query = String::from(
-            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2",
+            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2",
         );
 
         if let Some(st) = &source_type {
@@ -481,14 +484,15 @@ impl ReconciliationService {
         tenant_id: Uuid,
         session_id: Uuid,
     ) -> Result<ReconciliationSession, TopemsError> {
-        let session = sqlx::query_as::<_, ReconciliationSession>(
+        let session = sqlx::query_as::<_, ReconciliationSession>(only_own_schema_query!(
+            "finance",
             r#"
-            UPDATE core_finance_reconciliation_sessions
+            UPDATE finance.core_finance_reconciliation_sessions
             SET status = 'completed', completed_at = NOW(), updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2
             RETURNING *
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
@@ -505,11 +509,11 @@ impl ReconciliationService {
         source_type: ItemSource,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let items = sqlx::query_as::<_, ReconciliationItem>(
-            r#"
-            SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM core_finance_reconciliation_items
+            only_own_schema_query!("finance", r#"
+            SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND source_type = $3 AND match_status = 'unmatched'
             ORDER BY amount, transaction_date
-            "#,
+            "#),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -522,26 +526,28 @@ impl ReconciliationService {
     }
 
     async fn mark_matched(&self, bank_item_id: Uuid, erp_item_id: Uuid) -> Result<(), TopemsError> {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
-            UPDATE core_finance_reconciliation_items
+            UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
             WHERE id = $2
-            "#,
-        )
+            "#
+        ))
         .bind(erp_item_id)
         .bind(bank_item_id)
         .execute(&self.db_pool)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
-            UPDATE core_finance_reconciliation_items
+            UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
             WHERE id = $2
-            "#,
-        )
+            "#
+        ))
         .bind(bank_item_id)
         .bind(erp_item_id)
         .execute(&self.db_pool)
@@ -557,7 +563,7 @@ impl ReconciliationService {
         session_id: Uuid,
     ) -> Result<(), TopemsError> {
         let total: i32 = sqlx::query_scalar(
-            "SELECT COUNT(*)::INT FROM core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -566,7 +572,7 @@ impl ReconciliationService {
         .unwrap_or(0);
 
         let matched: i32 = sqlx::query_scalar(
-            "SELECT COUNT(*)::INT FROM core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'matched'",
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'matched'"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -575,7 +581,7 @@ impl ReconciliationService {
         .unwrap_or(0);
 
         let diff: i32 = sqlx::query_scalar(
-            "SELECT COUNT(*)::INT FROM core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'diff'",
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'diff'"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -586,11 +592,11 @@ impl ReconciliationService {
         let unmatched = total - matched - diff;
 
         sqlx::query(
-            r#"
-            UPDATE core_finance_reconciliation_sessions
+            only_own_schema_query!("finance", r#"
+            UPDATE finance.core_finance_reconciliation_sessions
             SET total_items = $1, matched_items = $2, unmatched_items = $3, diff_items = $4, updated_at = NOW()
             WHERE id = $5 AND tenant_id = $6
-            "#,
+            "#),
         )
         .bind(total)
         .bind(matched)
@@ -612,7 +618,7 @@ impl ReconciliationService {
         status: ReconciliationStatus,
     ) -> Result<(), TopemsError> {
         sqlx::query(
-            "UPDATE core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3",
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3"),
         )
         .bind(status)
         .bind(session_id)
@@ -625,9 +631,10 @@ impl ReconciliationService {
     }
 
     async fn get_session_id_by_item(&self, item_id: Uuid) -> Result<Option<Uuid>, TopemsError> {
-        let session_id: Option<Uuid> = sqlx::query_scalar(
-            "SELECT session_id FROM core_finance_reconciliation_items WHERE id = $1",
-        )
+        let session_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            "SELECT session_id FROM finance.core_finance_reconciliation_items WHERE id = $1"
+        ))
         .bind(item_id)
         .fetch_optional(&self.db_pool)
         .await
@@ -647,13 +654,14 @@ impl ReconciliationService {
         let session = self.get_session(tenant_id, session_id).await?;
 
         // 银行端总金额（所有银行流水）
-        let bank_total: Decimal = sqlx::query_scalar(
+        let bank_total: Decimal = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"
             SELECT COALESCE(SUM(amount), 0)
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND source_type = 'bank'
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
@@ -661,52 +669,56 @@ impl ReconciliationService {
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
         // ERP 端总金额
-        let erp_total: Decimal = sqlx::query_scalar(
+        let erp_total: Decimal = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"
             SELECT COALESCE(SUM(amount), 0)
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND source_type = 'erp'
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
-        let total_matched: Decimal = sqlx::query_scalar(
+        let total_matched: Decimal = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"
             SELECT COALESCE(SUM(amount), 0)
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'matched'
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
-        let total_unmatched: Decimal = sqlx::query_scalar(
+        let total_unmatched: Decimal = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"
             SELECT COALESCE(SUM(amount), 0)
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'unmatched'
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
-        let total_diff: Decimal = sqlx::query_scalar(
+        let total_diff: Decimal = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'diff'
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
@@ -767,18 +779,19 @@ impl ReconciliationService {
             let (amount, count): (Decimal, i64) = match direction {
                 "receivable" => {
                     // 应收：银行入账方向（in）但未匹配，或正向未平
-                    let q: (Option<Decimal>, Option<i64>) = sqlx::query_as(
+                    let q: (Option<Decimal>, Option<i64>) = sqlx::query_as(only_own_schema_query!(
+                        "finance",
                         r#"
                         SELECT SUM(amount), COUNT(*)
-                        FROM core_finance_reconciliation_items
+                        FROM finance.core_finance_reconciliation_items
                         WHERE tenant_id = $1
                           AND source_type = 'erp'
                           AND direction = 'in'
                           AND match_status IN ('unmatched', 'diff')
                           AND (CURRENT_DATE - transaction_date) >= $2
                           AND (CURRENT_DATE - transaction_date) <= $3
-                        "#,
-                    )
+                        "#
+                    ))
                     .bind(tenant_id)
                     .bind(from_days)
                     .bind(to_days)
@@ -789,18 +802,19 @@ impl ReconciliationService {
                 }
                 _ => {
                     // 应付：银行出账方向（out）但未匹配
-                    let q: (Option<Decimal>, Option<i64>) = sqlx::query_as(
+                    let q: (Option<Decimal>, Option<i64>) = sqlx::query_as(only_own_schema_query!(
+                        "finance",
                         r#"
                         SELECT SUM(amount), COUNT(*)
-                        FROM core_finance_reconciliation_items
+                        FROM finance.core_finance_reconciliation_items
                         WHERE tenant_id = $1
                           AND source_type = 'erp'
                           AND direction = 'out'
                           AND match_status IN ('unmatched', 'diff')
                           AND (CURRENT_DATE - transaction_date) >= $2
                           AND (CURRENT_DATE - transaction_date) <= $3
-                        "#,
-                    )
+                        "#
+                    ))
                     .bind(tenant_id)
                     .bind(from_days)
                     .bind(to_days)
@@ -851,13 +865,14 @@ impl ReconciliationService {
         let mut touched_sessions = std::collections::HashSet::new();
 
         for item in req.items {
-            let result = sqlx::query(
+            let result = sqlx::query(only_own_schema_query!(
+                "finance",
                 r#"
-                UPDATE core_finance_reconciliation_items
+                UPDATE finance.core_finance_reconciliation_items
                 SET diff_reason = $1, notes = $2, match_status = 'diff', updated_at = NOW()
                 WHERE id = $3 AND tenant_id = $4
-                "#,
-            )
+                "#
+            ))
             .bind(item.diff_reason.clone())
             .bind(item.notes.clone())
             .bind(item.item_id)
@@ -898,25 +913,27 @@ impl ReconciliationService {
         session_id: Uuid,
     ) -> Result<DiffStatistics, TopemsError> {
         // 总差异项
-        let total_diff_items: i32 = sqlx::query_scalar(
+        let total_diff_items: i32 = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"
-            SELECT COUNT(*)::INT FROM core_finance_reconciliation_items
+            SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'diff'
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
         .await
         .unwrap_or(0);
 
-        let total_diff_amount: Decimal = sqlx::query_scalar(
+        let total_diff_amount: Decimal = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'diff'
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
@@ -924,19 +941,21 @@ impl ReconciliationService {
         .map_err(|e| TopemsError::Database(e.to_string()))?;
 
         // 按原因分组
-        let by_reason_rows: Vec<(Option<String>, i32, Option<Decimal>)> = sqlx::query_as(
-            r#"
+        let by_reason_rows: Vec<(Option<String>, i32, Option<Decimal>)> =
+            sqlx::query_as(only_own_schema_query!(
+                "finance",
+                r#"
             SELECT diff_reason::text, COUNT(*)::INT, SUM(COALESCE(diff_amount, amount))
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2 AND match_status = 'diff'
             GROUP BY diff_reason
-            "#,
-        )
-        .bind(session_id)
-        .bind(tenant_id)
-        .fetch_all(&self.db_pool)
-        .await
-        .map_err(|e| TopemsError::Database(e.to_string()))?;
+            "#
+            ))
+            .bind(session_id)
+            .bind(tenant_id)
+            .fetch_all(&self.db_pool)
+            .await
+            .map_err(|e| TopemsError::Database(e.to_string()))?;
 
         let by_reason: Vec<DiffReasonCount> = by_reason_rows
             .into_iter()
@@ -948,14 +967,15 @@ impl ReconciliationService {
             .collect();
 
         // 按状态分组
-        let by_status_rows: Vec<(String, i32)> = sqlx::query_as(
+        let by_status_rows: Vec<(String, i32)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"
             SELECT match_status::text, COUNT(*)::INT
-            FROM core_finance_reconciliation_items
+            FROM finance.core_finance_reconciliation_items
             WHERE session_id = $1 AND tenant_id = $2
             GROUP BY match_status
-            "#,
-        )
+            "#
+        ))
         .bind(session_id)
         .bind(tenant_id)
         .fetch_all(&self.db_pool)

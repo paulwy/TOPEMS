@@ -1,4 +1,5 @@
 use serde_json::{json, Value};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::FinanceService;
@@ -102,7 +103,7 @@ impl FinanceService {
         collection_id: Uuid,
     ) -> Result<Value, TopemsError> {
         let row =
-            sqlx::query("SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2")
+            sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(collection_id)
                 .fetch_optional(&self.db_pool)
@@ -141,9 +142,9 @@ impl FinanceService {
             .unwrap_or("");
 
         let row = sqlx::query(
-            "INSERT INTO erp_collection_records (tenant_id, collection_no, customer_name, amount, status, created_by)
+            only_own_schema_query!("finance", "INSERT INTO erp_collection_records (tenant_id, collection_no, customer_name, amount, status, created_by)
              VALUES ($1, $2, $3, $4, 'pending', $5)
-             RETURNING id, collection_no, customer_name, amount, status, created_at",
+             RETURNING id, collection_no, customer_name, amount, status, created_at"),
         )
         .bind(tenant_id)
         .bind(collection_no)
@@ -178,15 +179,16 @@ impl FinanceService {
         let amount = req.get("amount").and_then(|v| v.as_f64());
         let status = req.get("status").and_then(|v| v.as_str());
 
-        let row = sqlx::query(
+        let row = sqlx::query(only_own_schema_query!(
+            "finance",
             "UPDATE erp_collection_records
              SET customer_name = COALESCE($1, customer_name),
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
                  updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $4 AND id = $5
-             RETURNING id, collection_no, customer_name, amount, status, updated_at",
-        )
+             RETURNING id, collection_no, customer_name, amount, status, updated_at"
+        ))
         .bind(customer_name)
         .bind(amount)
         .bind(status)
@@ -215,9 +217,10 @@ impl FinanceService {
         tenant_id: Uuid,
         collection_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let result = sqlx::query(
-            "UPDATE erp_collection_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
-        )
+        let result = sqlx::query(only_own_schema_query!(
+            "finance",
+            "UPDATE erp_collection_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+        ))
         .bind(tenant_id)
         .bind(collection_id)
         .execute(&self.db_pool)
@@ -237,12 +240,13 @@ impl FinanceService {
         receivable_id: Uuid,
         write_off_amount: f64,
     ) -> Result<Value, TopemsError> {
-        let row = sqlx::query(
+        let row = sqlx::query(only_own_schema_query!(
+            "finance",
             "UPDATE erp_collection_records
              SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2
-             RETURNING id, collection_no, status",
-        )
+             RETURNING id, collection_no, status"
+        ))
         .bind(tenant_id)
         .bind(collection_id)
         .fetch_one(&self.db_pool)

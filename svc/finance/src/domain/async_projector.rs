@@ -2,6 +2,7 @@ use sqlx::{PgPool, Row};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::time::{self, Duration};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::event_store::EventRecord;
@@ -67,7 +68,7 @@ impl AsyncProjector {
     }
 
     async fn get_last_progress(&self, view_name: &str) -> Result<ProjectionProgress, String> {
-        let result = sqlx::query("SELECT view_name, last_event_id, last_event_time, processed_count, error_count, last_error, updated_at FROM cqrs_projection_progress WHERE view_name = $1")
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT view_name, last_event_id, last_event_time, processed_count, error_count, last_error, updated_at FROM cqrs_projection_progress WHERE view_name = $1"))
             .bind(view_name)
             .fetch_optional(&self.pool)
             .await
@@ -99,7 +100,7 @@ impl AsyncProjector {
             }
             None => {
                 sqlx::query(
-                    "INSERT INTO cqrs_projection_progress (view_name, processed_count, error_count) VALUES ($1, 0, 0)",
+                    only_own_schema_query!("finance", "INSERT INTO cqrs_projection_progress (view_name, processed_count, error_count) VALUES ($1, 0, 0)"),
                 )
                 .bind(view_name)
                 .execute(&self.pool)
@@ -133,12 +134,13 @@ impl AsyncProjector {
         };
 
         if let Some(err) = error {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "finance",
                 "UPDATE cqrs_projection_progress 
                  SET last_event_id = $1, last_event_time = $2, 
                      error_count = error_count + 1, last_error = $3, updated_at = NOW()
-                 WHERE view_name = $4",
-            )
+                 WHERE view_name = $4"
+            ))
             .bind(last_event_uuid)
             .bind(last_event_time)
             .bind(err)
@@ -147,12 +149,13 @@ impl AsyncProjector {
             .await
             .map_err(|e| e.to_string())?;
         } else {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "finance",
                 "UPDATE cqrs_projection_progress 
                  SET last_event_id = $1, last_event_time = $2, 
                      processed_count = processed_count + $3, last_error = NULL, updated_at = NOW()
-                 WHERE view_name = $4",
-            )
+                 WHERE view_name = $4"
+            ))
             .bind(last_event_uuid)
             .bind(last_event_time)
             .bind(processed_increment as i64)
@@ -303,12 +306,13 @@ impl AsyncProjector {
 
         view.rebuild().await.map_err(|e| e.to_string())?;
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "finance",
             "UPDATE cqrs_projection_progress 
              SET last_event_id = NULL, last_event_time = NULL, 
                  processed_count = 0, error_count = 0, last_error = NULL, updated_at = NOW()
-             WHERE view_name = $1",
-        )
+             WHERE view_name = $1"
+        ))
         .bind(view_name)
         .execute(&self.pool)
         .await

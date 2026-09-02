@@ -913,7 +913,7 @@ pub struct Payment {
     pub executed_at: Option<DateTime<Utc>>,
     pub remark: Option<String>,
     pub attachment_url: Option<String>,
-    pub created_by: String,
+    pub created_by: Option<Uuid>,
     pub approved_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

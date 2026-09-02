@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -14,20 +15,22 @@ impl FinanceService {
         req: CreateAuxiliaryAccountRequest,
     ) -> Result<AuxiliaryAccount, TopemsError> {
         let level = if let Some(parent_id) = req.parent_id {
-            let parent: (i32,) =
-                sqlx::query_as("SELECT level FROM core_finance_aux_accounts WHERE id = $1")
-                    .bind(parent_id)
-                    .fetch_one(&self.db_pool)
-                    .await?;
+            let parent: (i32,) = sqlx::query_as(only_own_schema_query!(
+                "finance",
+                "SELECT level FROM finance.core_finance_aux_accounts WHERE id = $1"
+            ))
+            .bind(parent_id)
+            .fetch_one(&self.db_pool)
+            .await?;
             parent.0 + 1
         } else {
             1
         };
 
         let aux_account = sqlx::query_as(
-            "INSERT INTO core_finance_aux_accounts (tenant_id, aux_type, code, name, parent_id, level, description)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_aux_accounts (tenant_id, aux_type, code, name, parent_id, level, description)
              VALUES ($1, $2::aux_type, $3, $4, $5, $6, $7)
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(req.aux_type.to_string())
@@ -50,7 +53,7 @@ impl FinanceService {
         let accounts = if let Some(t) = aux_type {
             let type_str = t.to_string();
             sqlx::query_as(
-                "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM core_finance_aux_accounts WHERE tenant_id = $1 AND aux_type::text = $2 ORDER BY code",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE tenant_id = $1 AND aux_type::text = $2 ORDER BY code"),
             )
             .bind(tenant_id)
             .bind(type_str)
@@ -58,7 +61,7 @@ impl FinanceService {
             .await?
         } else {
             sqlx::query_as(
-                "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM core_finance_aux_accounts WHERE tenant_id = $1 ORDER BY aux_type, code",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE tenant_id = $1 ORDER BY aux_type, code"),
             )
             .bind(tenant_id)
             .fetch_all(&self.db_pool)
@@ -74,7 +77,7 @@ impl FinanceService {
         aux_id: Uuid,
     ) -> Result<AuxiliaryAccount, TopemsError> {
         let account = sqlx::query_as(
-            "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM core_finance_aux_accounts WHERE tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(aux_id)
@@ -96,7 +99,8 @@ impl FinanceService {
         let start_date = query.start_date;
         let end_date = query.end_date;
 
-        let entries = sqlx::query_as(
+        let entries = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"
             SELECT
                 l.id,
@@ -112,8 +116,8 @@ impl FinanceService {
                 l.debit,
                 l.credit,
                 l.balance
-            FROM core_finance_ledger l
-            JOIN core_finance_aux_accounts la ON la.id = l.aux_id
+            FROM finance.core_finance_ledger l
+            JOIN finance.core_finance_aux_accounts la ON la.id = l.aux_id
             WHERE l.tenant_id = $1
               AND la.aux_type::text = $2
               AND ($3::uuid IS NULL OR l.aux_id = $3)
@@ -122,8 +126,8 @@ impl FinanceService {
               AND ($6::timestamptz IS NULL OR l.voucher_date >= $6)
               AND ($7::timestamptz IS NULL OR l.voucher_date <= $7)
             ORDER BY l.voucher_date, l.voucher_no
-            "#,
-        )
+            "#
+        ))
         .bind(tenant_id)
         .bind(type_str)
         .bind(aux_id)
@@ -147,7 +151,8 @@ impl FinanceService {
         let account_id = query.account_id;
         let period = query.period;
 
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
             SELECT
                 la.id as aux_id,
@@ -158,9 +163,9 @@ impl FinanceService {
                 a.name as account_name,
                 COALESCE(SUM(l.debit), 0) as total_debit,
                 COALESCE(SUM(l.credit), 0) as total_credit
-            FROM core_finance_aux_accounts la
-            CROSS JOIN core_finance_accounts a
-            LEFT JOIN core_finance_ledger l ON l.account_id = a.id AND l.aux_id = la.id
+            FROM finance.core_finance_aux_accounts la
+            CROSS JOIN finance.core_finance_accounts a
+            LEFT JOIN finance.core_finance_ledger l ON l.account_id = a.id AND l.aux_id = la.id
                 AND ($4::text IS NULL OR l.period = $4)
             WHERE la.tenant_id = $1
               AND a.tenant_id = $1
@@ -169,8 +174,8 @@ impl FinanceService {
               AND ($5::uuid IS NULL OR a.id = $5)
             GROUP BY la.id, la.name, la.code, a.id, a.code, a.name
             ORDER BY la.code, a.code
-            "#,
-        )
+            "#
+        ))
         .bind(tenant_id)
         .bind(type_str)
         .bind(aux_id)

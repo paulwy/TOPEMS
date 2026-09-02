@@ -37,6 +37,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::fmt;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -893,12 +894,13 @@ impl AutoReconciler {
         let tolerance = req.tolerance.unwrap_or(0.0);
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, ReconciliationRule>(
-            r#"INSERT INTO finance_v55_reconciliation_rules
+        sqlx::query_as::<_, ReconciliationRule>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v55_reconciliation_rules
                 (id, tenant_id, name, match_type, tolerance, enabled)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, name, match_type, tolerance, enabled"#,
-        )
+            RETURNING id, name, match_type, tolerance, enabled"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -914,7 +916,7 @@ impl AutoReconciler {
         tenant_id: Uuid,
     ) -> Result<Vec<ReconciliationRule>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, match_type, tolerance, enabled FROM finance_v55_reconciliation_rules WHERE tenant_id = $1 ORDER BY name",
+            only_own_schema_query!("finance", "SELECT id, name, match_type, tolerance, enabled FROM finance.finance_v55_reconciliation_rules WHERE tenant_id = $1 ORDER BY name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -938,9 +940,9 @@ impl AutoReconciler {
 
                 let id = Uuid::new_v4();
                 sqlx::query(
-                    r#"INSERT INTO finance_v55_reconciliation_results
+                    only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_reconciliation_results
                         (id, tenant_id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#),
                 )
                 .bind(id)
                 .bind(tenant_id)
@@ -981,9 +983,9 @@ impl AutoReconciler {
 
         let id = Uuid::new_v4();
         sqlx::query(
-            r#"INSERT INTO finance_v55_reconciliation_results
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_reconciliation_results
                 (id, tenant_id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -1191,7 +1193,7 @@ impl AutoReconciler {
         status: Option<String>,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance_v55_reconciliation_results WHERE tenant_id = $1",
+            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance.finance_v55_reconciliation_results WHERE tenant_id = $1",
         );
         if status.is_some() {
             query.push_str(" AND match_status = $2");
@@ -1212,10 +1214,10 @@ impl AutoReconciler {
         result_id: Uuid,
     ) -> Result<ReconciliationResult, sqlx::Error> {
         sqlx::query_as(
-            r#"UPDATE finance_v55_reconciliation_results
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v55_reconciliation_results
             SET approved = true
             WHERE id = $1 AND tenant_id = $2
-            RETURNING id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes"#,
+            RETURNING id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes"#),
         )
         .bind(result_id)
         .bind(tenant_id)
@@ -1229,10 +1231,10 @@ impl AutoReconciler {
         result_id: Uuid,
     ) -> Result<ReconciliationResult, sqlx::Error> {
         sqlx::query_as(
-            r#"UPDATE finance_v55_reconciliation_results
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v55_reconciliation_results
             SET disputed = true, match_status = 'discrepancy'
             WHERE id = $1 AND tenant_id = $2
-            RETURNING id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes"#,
+            RETURNING id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes"#),
         )
         .bind(result_id)
         .bind(tenant_id)
@@ -1323,9 +1325,9 @@ impl InvoiceRecognizer {
         };
 
         sqlx::query(
-            r#"INSERT INTO finance_v55_invoices
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_invoices
                 (id, tenant_id, number, vendor, invoice_date, total_amount, tax_amount, status, recognized_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'recognized', $8)"#,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'recognized', $8)"#),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1339,11 +1341,12 @@ impl InvoiceRecognizer {
         .await?;
 
         for item in &items {
-            sqlx::query(
-                r#"INSERT INTO finance_v55_invoice_items
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                r#"INSERT INTO finance.finance_v55_invoice_items
                     (id, tenant_id, invoice_id, description, quantity, unit_price, amount, tax_rate)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
-            )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#
+            ))
             .bind(item.id)
             .bind(tenant_id)
             .bind(item.invoice_id)
@@ -1475,7 +1478,7 @@ impl InvoiceRecognizer {
         invoice_id: Uuid,
     ) -> Result<Invoice, sqlx::Error> {
         let invoice: Invoice = sqlx::query_as(
-            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance_v55_invoices WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1483,7 +1486,7 @@ impl InvoiceRecognizer {
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
-            "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance.finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1499,12 +1502,13 @@ impl InvoiceRecognizer {
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
 
         let now = Utc::now();
-        sqlx::query_as(
-            r#"UPDATE finance_v55_invoices
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v55_invoices
             SET status = 'verified', validated_at = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#,
-        )
+            RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#
+        ))
         .bind(now)
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1518,7 +1522,7 @@ impl InvoiceRecognizer {
         invoice_id: Uuid,
     ) -> Result<InvoiceWithItems, sqlx::Error> {
         let invoice: Invoice = sqlx::query_as(
-            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance_v55_invoices WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1526,7 +1530,7 @@ impl InvoiceRecognizer {
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
-            "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2 ORDER BY id",
+            only_own_schema_query!("finance", "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance.finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2 ORDER BY id"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1542,7 +1546,7 @@ impl InvoiceRecognizer {
         status: Option<String>,
     ) -> Result<Vec<Invoice>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance_v55_invoices WHERE tenant_id = $1",
+            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE tenant_id = $1",
         );
         if status.is_some() {
             query.push_str(" AND status = $2");
@@ -1563,7 +1567,7 @@ impl InvoiceRecognizer {
         invoice_id: Uuid,
     ) -> Result<Invoice, sqlx::Error> {
         let invoice: Invoice = sqlx::query_as(
-            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance_v55_invoices WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1571,7 +1575,7 @@ impl InvoiceRecognizer {
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
-            "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance.finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1586,12 +1590,13 @@ impl InvoiceRecognizer {
         with_items
             .prevalidate_post(now, false)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        sqlx::query_as(
-            r#"UPDATE finance_v55_invoices
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v55_invoices
             SET status = 'posted', posted_at = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#,
-        )
+            RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#
+        ))
         .bind(now)
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1605,12 +1610,13 @@ impl InvoiceRecognizer {
         invoice_id: Uuid,
         purchase_order_id: String,
     ) -> Result<Invoice, sqlx::Error> {
-        sqlx::query_as(
-            r#"UPDATE finance_v55_invoices
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v55_invoices
             SET purchase_order_id = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#,
-        )
+            RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#
+        ))
         .bind(&purchase_order_id)
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1719,11 +1725,12 @@ impl ElectronicPaymentProcessor {
         let request_id = Uuid::new_v4();
         let result_id = Uuid::new_v4();
 
-        sqlx::query(
-            r#"INSERT INTO finance_v55_payment_requests
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v55_payment_requests
                 (id, tenant_id, amount, currency, from_account, to_account, method, reference)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
-        )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#
+        ))
         .bind(request_id)
         .bind(tenant_id)
         .bind(req.amount)
@@ -1736,11 +1743,12 @@ impl ElectronicPaymentProcessor {
         .await?;
 
         let transaction_ref = format!("TXN-{}", result_id);
-        sqlx::query(
-            r#"INSERT INTO finance_v55_payment_results
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v55_payment_results
                 (id, tenant_id, request_id, status, transaction_ref, fee, processed_at)
-            VALUES ($1, $2, $3, 'completed', $4, $5, $6)"#,
-        )
+            VALUES ($1, $2, $3, 'completed', $4, $5, $6)"#
+        ))
         .bind(result_id)
         .bind(tenant_id)
         .bind(request_id)
@@ -1778,7 +1786,7 @@ impl ElectronicPaymentProcessor {
         payment_id: Uuid,
     ) -> Result<PaymentResult, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance_v55_payment_results WHERE request_id = $1 AND tenant_id = $2 ORDER BY processed_at DESC LIMIT 1",
+            only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND tenant_id = $2 ORDER BY processed_at DESC LIMIT 1"),
         )
         .bind(payment_id)
         .bind(tenant_id)
@@ -1793,7 +1801,7 @@ impl ElectronicPaymentProcessor {
     ) -> Result<PaymentResult, sqlx::Error> {
         let now = Utc::now();
         let original: PaymentResult = sqlx::query_as(
-            "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance_v55_payment_results WHERE request_id = $1 AND tenant_id = $2 ORDER BY processed_at DESC LIMIT 1",
+            only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND tenant_id = $2 ORDER BY processed_at DESC LIMIT 1"),
         )
         .bind(payment_id)
         .bind(tenant_id)
@@ -1809,12 +1817,13 @@ impl ElectronicPaymentProcessor {
             "REV-{}",
             original.transaction_ref.as_deref().unwrap_or("unknown")
         );
-        sqlx::query_as(
-            r#"INSERT INTO finance_v55_payment_results
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v55_payment_results
                 (id, tenant_id, request_id, status, transaction_ref, fee, processed_at)
             VALUES ($1, $2, $3, 'reversed', $4, $5, $6)
-            RETURNING id, request_id, status, transaction_ref, fee, processed_at"#,
-        )
+            RETURNING id, request_id, status, transaction_ref, fee, processed_at"#
+        ))
         .bind(result_id)
         .bind(tenant_id)
         .bind(payment_id)
@@ -1831,11 +1840,11 @@ impl ElectronicPaymentProcessor {
         status: Option<String>,
     ) -> Result<Vec<PaymentRequest>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance_v55_payment_requests WHERE tenant_id = $1",
+            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance.finance_v55_payment_requests WHERE tenant_id = $1",
         );
         if status.is_some() {
             query.push_str(
-                " AND id IN (SELECT request_id FROM finance_v55_payment_results WHERE status = $2)",
+                " AND id IN (SELECT request_id FROM finance.finance_v55_payment_results WHERE status = $2)",
             );
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
@@ -1864,10 +1873,10 @@ impl ElectronicPaymentProcessor {
         let request_id = Uuid::new_v4();
 
         sqlx::query_as(
-            r#"INSERT INTO finance_v55_payment_requests
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_payment_requests
                 (id, tenant_id, amount, currency, from_account, to_account, method, reference, scheduled_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, amount, currency, from_account, to_account, method, reference, scheduled_at"#,
+            RETURNING id, amount, currency, from_account, to_account, method, reference, scheduled_at"#),
         )
         .bind(request_id)
         .bind(tenant_id)

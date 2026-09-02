@@ -1,6 +1,7 @@
 use axum::extract::{Extension, Json, Path, State};
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -67,7 +68,7 @@ pub async fn list_entries(
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(_) => {
             let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
-                "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 AND tenant_id = $2  ORDER BY sort_order, created_at",
+                only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 AND tenant_id = $2  ORDER BY sort_order, created_at"),
             )
             .bind(template_id)
             .bind(claims.tenant_id.as_deref().unwrap_or("00000000-0000-0000-0000-000000000000"))
@@ -97,7 +98,7 @@ pub async fn get_entry(
 ) -> Json<ApiResponse<VoucherTemplateLine>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let line: Option<VoucherTemplateLine> = sqlx::query_as(
-        "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3",
+        only_own_schema_query!("finance", "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
@@ -128,9 +129,10 @@ pub async fn create_entry(
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> Json<ApiResponse<VoucherTemplateLine>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
-    )
+    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
+    ))
     .bind(tenant_id)
     .bind(template_id)
     .fetch_one(&state.pool)
@@ -143,7 +145,7 @@ pub async fn create_entry(
         Some(s) => s,
         None => {
             let max_order: i32 = sqlx::query_scalar(
-                "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1",
+                only_own_schema_query!("finance", "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1"),
             )
             .bind(template_id)
             .fetch_one(&state.pool)
@@ -155,10 +157,10 @@ pub async fn create_entry(
     let line_id = Uuid::new_v4();
     let now = Utc::now();
     let line: Result<VoucherTemplateLine, sqlx::Error> = sqlx::query_as(
-        r#"INSERT INTO finance_voucher_template_lines
+        only_own_schema_query!("finance", r#"INSERT INTO finance_voucher_template_lines
             (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           RETURNING id, template_id, description, account_code, direction, amount_formula, sort_order, created_at"#,
+           RETURNING id, template_id, description, account_code, direction, amount_formula, sort_order, created_at"#),
     )
     .bind(line_id)
     .bind(template_id)
@@ -197,7 +199,7 @@ pub async fn update_entry(
 ) -> Json<ApiResponse<VoucherTemplateLine>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let owns: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3",
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
@@ -209,7 +211,7 @@ pub async fn update_entry(
         return Json(ApiResponse::error(404, "模板分录不存在"));
     }
     let existing: VoucherTemplateLine =
-        match sqlx::query_as("SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE id = $1")
+        match sqlx::query_as(only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE id = $1"))
             .bind(entry_id)
             .fetch_one(&state.pool)
             .await
@@ -223,11 +225,11 @@ pub async fn update_entry(
     let amount_formula = req.amount_formula.or(existing.amount_formula);
     let sort_order = req.sort_order.unwrap_or(existing.sort_order);
     let line: Result<VoucherTemplateLine, sqlx::Error> = sqlx::query_as(
-        r#"UPDATE finance_voucher_template_lines
+        only_own_schema_query!("finance", r#"UPDATE finance_voucher_template_lines
               SET description = $1, account_code = $2, direction = $3,
                   amount_formula = $4, sort_order = $5
             WHERE id = $6
-           RETURNING id, template_id, description, account_code, direction, amount_formula, sort_order, created_at"#,
+           RETURNING id, template_id, description, account_code, direction, amount_formula, sort_order, created_at"#),
     )
     .bind(description)
     .bind(account_code)
@@ -260,7 +262,7 @@ pub async fn delete_entry(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query(
-        "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)",
+        only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
     )
     .bind(entry_id)
     .bind(template_id)
@@ -301,9 +303,10 @@ pub async fn reorder_entries(
     Json(req): Json<ReorderEntriesRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
-    )
+    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
+    ))
     .bind(tenant_id)
     .bind(template_id)
     .fetch_one(&state.pool)
@@ -315,7 +318,7 @@ pub async fn reorder_entries(
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;
         if let Err(e) = sqlx::query(
-            "UPDATE finance_voucher_template_lines SET sort_order = $1 WHERE id = $2 AND template_id = $3",
+            only_own_schema_query!("finance", "UPDATE finance_voucher_template_lines SET sort_order = $1 WHERE id = $2 AND template_id = $3"),
         )
         .bind(sort_order)
         .bind(entry_id)
@@ -327,7 +330,7 @@ pub async fn reorder_entries(
         }
     }
     let lines: Result<Vec<VoucherTemplateLine>, sqlx::Error> = sqlx::query_as(
-        "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
+        only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
     )
     .bind(template_id)
     .fetch_all(&state.pool)

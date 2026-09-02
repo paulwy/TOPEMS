@@ -2,6 +2,7 @@
 
 use chrono::{DateTime, Datelike, Utc};
 use serde_json::Value;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::FinanceService;
@@ -79,7 +80,8 @@ impl FinanceService {
         let source_system = req.source_system.unwrap_or_else(|| "U8".to_string());
         let total_count = req.vouchers.len() as i32;
 
-        let _record: U8ImportRecord = sqlx::query_as(
+        let _record: U8ImportRecord = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"
             INSERT INTO finance_u8_import_records 
                 (id, tenant_id, import_batch_no, source_system, import_time, 
@@ -87,8 +89,8 @@ impl FinanceService {
                  created_by, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, 0, 0, 'processing', $7, $8, $8)
             RETURNING *
-            "#,
-        )
+            "#
+        ))
         .bind(import_id)
         .bind(tenant_id)
         .bind(&batch_no)
@@ -130,14 +132,15 @@ impl FinanceService {
             Some(errors.join("\n"))
         };
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
             UPDATE finance_u8_import_records SET
                 success_count = $2, failed_count = $3, status = $4, 
                 error_log = $5, updated_at = $6
             WHERE tenant_id = $1 AND id = $7
-            "#,
-        )
+            "#
+        ))
         .bind(tenant_id)
         .bind(success_count)
         .bind(failed_count)
@@ -174,7 +177,7 @@ impl FinanceService {
         import_id: Uuid,
     ) -> Result<ImportStatusResponse, TopemsError> {
         let record: U8ImportRecord = sqlx::query_as(
-            "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)
@@ -229,7 +232,7 @@ impl FinanceService {
         import_id: Uuid,
     ) -> Result<U8ImportRecord, TopemsError> {
         let record: U8ImportRecord = sqlx::query_as(
-            "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)
@@ -250,13 +253,14 @@ impl FinanceService {
             return Err(TopemsError::ValidationFailed("该导入已回滚".to_string()));
         }
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "finance",
             r#"
             UPDATE finance_u8_import_records SET
                 status = 'rolled_back', updated_at = NOW()
             WHERE tenant_id = $1 AND id = $2
-            "#,
-        )
+            "#
+        ))
         .bind(tenant_id)
         .bind(import_id)
         .execute(&self.db_pool)

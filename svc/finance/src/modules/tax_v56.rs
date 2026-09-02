@@ -37,6 +37,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -478,10 +479,10 @@ impl AutoTaxFiler {
         let jurisdiction = req.jurisdiction.unwrap_or_else(|| "CN".to_string());
 
         sqlx::query(
-            r#"INSERT INTO finance_v56_tax_forms
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_forms
                 (id, tenant_id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount)
             VALUES ($1, $2, $3, $4, $5, $6, 'draft', 0)
-            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#,
+            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -526,9 +527,9 @@ impl AutoTaxFiler {
 
             let line_id = Uuid::new_v4();
             sqlx::query(
-                r#"INSERT INTO finance_v56_tax_lines
+                only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_lines
                     (id, tenant_id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#),
             )
             .bind(line_id)
             .bind(tenant_id)
@@ -553,10 +554,10 @@ impl AutoTaxFiler {
         }
 
         let updated_form: TaxForm = sqlx::query_as(
-            r#"UPDATE finance_v56_tax_forms
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_forms
             SET status = 'calculated', total_tax_amount = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#,
+            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(total_tax)
         .bind(form_id)
@@ -577,10 +578,10 @@ impl AutoTaxFiler {
     ) -> Result<TaxFormWithLines, sqlx::Error> {
         let now = Utc::now();
         let updated_form: TaxForm = sqlx::query_as(
-            r#"UPDATE finance_v56_tax_forms
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_forms
             SET status = 'submitted', filed_at = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#,
+            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(now)
         .bind(form_id)
@@ -603,7 +604,7 @@ impl AutoTaxFiler {
         status: Option<String>,
     ) -> Result<Vec<TaxForm>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance_v56_tax_forms WHERE tenant_id = $1",
+            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE tenant_id = $1",
         );
         if form_type.is_some() {
             query.push_str(" AND form_type = $2");
@@ -634,7 +635,7 @@ impl AutoTaxFiler {
         form_id: Uuid,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
         let form: TaxForm = sqlx::query_as(
-            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance_v56_tax_forms WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(form_id)
         .bind(tenant_id)
@@ -652,7 +653,7 @@ impl AutoTaxFiler {
         form_id: Uuid,
         req: AmendTaxFormRequest,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
-        sqlx::query("UPDATE finance_v56_tax_lines SET deleted_at = NOW() WHERE form_id = $1 AND tenant_id = $2")
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_v56_tax_lines SET deleted_at = NOW() WHERE form_id = $1 AND tenant_id = $2"))
             .bind(form_id)
             .bind(tenant_id)
             .execute(pool)
@@ -668,9 +669,9 @@ impl AutoTaxFiler {
 
             let line_id = Uuid::new_v4();
             sqlx::query(
-                r#"INSERT INTO finance_v56_tax_lines
+                only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_lines
                     (id, tenant_id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#),
             )
             .bind(line_id)
             .bind(tenant_id)
@@ -695,10 +696,10 @@ impl AutoTaxFiler {
         }
 
         let updated_form: TaxForm = sqlx::query_as(
-            r#"UPDATE finance_v56_tax_forms
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_forms
             SET status = 'draft', total_tax_amount = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#,
+            RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(total_tax)
         .bind(form_id)
@@ -717,10 +718,10 @@ impl AutoTaxFiler {
         tenant_id: Uuid,
     ) -> Result<Vec<serde_json::Value>, sqlx::Error> {
         let upcoming_forms: Vec<TaxForm> = sqlx::query_as(
-            r#"SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at
-               FROM finance_v56_tax_forms
+            only_own_schema_query!("finance", r#"SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at
+               FROM finance.finance_v56_tax_forms
                WHERE tenant_id = $1 AND status IN ('draft', 'calculated')
-               ORDER BY period_end ASC LIMIT 50"#,
+               ORDER BY period_end ASC LIMIT 50"#),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -751,7 +752,7 @@ impl AutoTaxFiler {
         year: Option<i32>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut sql = String::from(
-            "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance_v56_tax_forms WHERE tenant_id = $1",
+            "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance.finance_v56_tax_forms WHERE tenant_id = $1",
         );
         if let Some(y) = year {
             sql.push_str(&format!(" AND EXTRACT(YEAR FROM period_end) = {}", y));
@@ -796,7 +797,7 @@ impl AutoTaxFiler {
         form_id: Uuid,
     ) -> Result<Vec<TaxLine>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 AND tenant_id = $2 ORDER BY line_no",
+            only_own_schema_query!("finance", "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance.finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 AND tenant_id = $2 ORDER BY line_no"),
         )
         .bind(form_id)
         .bind(tenant_id)
@@ -943,7 +944,7 @@ impl TaxRateCalculator {
         jurisdiction: Option<String>,
     ) -> Result<Vec<TaxRate>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, jurisdiction, rate_type, rate, effective_from, effective_to, description FROM finance_v56_tax_rates WHERE tenant_id = $1",
+            "SELECT id, jurisdiction, rate_type, rate, effective_from, effective_to, description FROM finance.finance_v56_tax_rates WHERE tenant_id = $1",
         );
         if tax_type.is_some() {
             query.push_str(" AND rate_type = $2");
@@ -1038,12 +1039,13 @@ impl TaxRateCalculator {
     ) -> Result<f64, sqlx::Error> {
         let effective_date = date.unwrap_or_else(Utc::now);
 
-        let rate: Option<f64> = sqlx::query_scalar(
-            r#"SELECT rate FROM finance_v56_tax_rates
+        let rate: Option<f64> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            r#"SELECT rate FROM finance.finance_v56_tax_rates
                WHERE tenant_id = $1 AND rate_type = $2 AND jurisdiction = $3
                AND effective_from <= $4 AND (effective_to IS NULL OR effective_to >= $4)
-               ORDER BY effective_from DESC LIMIT 1"#,
-        )
+               ORDER BY effective_from DESC LIMIT 1"#
+        ))
         .bind(tenant_id)
         .bind(tax_type)
         .bind(jurisdiction)
@@ -1067,13 +1069,14 @@ impl TaxRateCalculator {
         tax_type: &str,
         jurisdiction: &str,
     ) -> Result<Vec<TaxBracket>, sqlx::Error> {
-        let brackets: Vec<TaxBracket> = sqlx::query_as(
+        let brackets: Vec<TaxBracket> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT b.id, b.rate_id, b.bracket_order, b.threshold_from, b.threshold_to, b.rate
-               FROM finance_v56_tax_brackets b
-               JOIN finance_v56_tax_rates r ON b.rate_id = r.id
+               FROM finance.finance_v56_tax_brackets b
+               JOIN finance.finance_v56_tax_rates r ON b.rate_id = r.id
                WHERE r.tenant_id = $1 AND r.rate_type = $2 AND r.jurisdiction = $3
-               ORDER BY b.bracket_order"#,
-        )
+               ORDER BY b.bracket_order"#
+        ))
         .bind(tenant_id)
         .bind(tax_type)
         .bind(jurisdiction)
@@ -1266,10 +1269,10 @@ impl TaxPlanner {
             .unwrap_or_else(|| TaxPlanStrategy::LegalOptimization.as_str().to_string());
 
         sqlx::query_as(
-            r#"INSERT INTO finance_v56_tax_plans
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_plans
                 (id, tenant_id, entity, period, strategy, projected_savings, risk_level, status)
             VALUES ($1, $2, $3, $4, $5, 0, 'low', 'draft')
-            RETURNING id, entity, period, strategy, projected_savings, risk_level, status, approved_at"#,
+            RETURNING id, entity, period, strategy, projected_savings, risk_level, status, approved_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -1313,7 +1316,7 @@ impl TaxPlanner {
         plan_id: Uuid,
     ) -> Result<Vec<TaxSuggestion>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, plan_id, category, description, estimated_savings, confidence, action_items FROM finance_v56_tax_suggestions WHERE plan_id = $1 AND tenant_id = $2 ORDER BY estimated_savings DESC",
+            only_own_schema_query!("finance", "SELECT id, plan_id, category, description, estimated_savings, confidence, action_items FROM finance.finance_v56_tax_suggestions WHERE plan_id = $1 AND tenant_id = $2 ORDER BY estimated_savings DESC"),
         )
         .bind(plan_id)
         .bind(tenant_id)
@@ -1340,7 +1343,7 @@ impl TaxPlanner {
         plan_id: Uuid,
     ) -> Result<TaxPlan, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance_v56_tax_plans WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(plan_id)
         .bind(tenant_id)
@@ -1354,7 +1357,7 @@ impl TaxPlanner {
         status: Option<String>,
     ) -> Result<Vec<TaxPlan>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance_v56_tax_plans WHERE tenant_id = $1",
+            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans WHERE tenant_id = $1",
         );
         if status.is_some() {
             query.push_str(" AND status = $2");
@@ -1376,10 +1379,10 @@ impl TaxPlanner {
     ) -> Result<TaxPlan, sqlx::Error> {
         let now = Utc::now();
         sqlx::query_as(
-            r#"UPDATE finance_v56_tax_plans
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_plans
             SET status = 'approved', approved_at = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, entity, period, strategy, projected_savings, risk_level, status, approved_at"#,
+            RETURNING id, entity, period, strategy, projected_savings, risk_level, status, approved_at"#),
         )
         .bind(now)
         .bind(plan_id)
@@ -1398,7 +1401,7 @@ impl TaxPlanner {
         let mut suggestions: Vec<String> = Vec::new();
 
         let mut query = String::from(
-            "SELECT id, form_type, status FROM finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'draft'",
+            "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'draft'",
         );
         if entity.is_some() {
             query.push_str(" AND jurisdiction = $2");
@@ -1418,7 +1421,7 @@ impl TaxPlanner {
         }
 
         let submitted_forms: Vec<(Uuid, String, String)> = sqlx::query_as(
-            "SELECT id, form_type, status FROM finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'submitted' AND filed_at < NOW() - INTERVAL '30 days'",
+            only_own_schema_query!("finance", "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'submitted' AND filed_at < NOW() - INTERVAL '30 days'"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1432,7 +1435,7 @@ impl TaxPlanner {
         }
 
         let accepted_count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'accepted'",
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'accepted'"),
         )
         .bind(tenant_id)
         .fetch_one(pool)
@@ -1444,7 +1447,7 @@ impl TaxPlanner {
         }
 
         let rejected_forms: Vec<(Uuid, String)> = sqlx::query_as(
-            "SELECT id, form_type FROM finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'rejected'",
+            only_own_schema_query!("finance", "SELECT id, form_type FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'rejected'"),
         )
         .bind(tenant_id)
         .fetch_all(pool)

@@ -330,7 +330,7 @@ impl FinanceService {
         let source_rows: Vec<(Uuid, String, f64)> = match rule.source_type.as_str() {
             "payment" => {
                 let mut query = String::from(
-                    "SELECT id, payment_no, total_amount::float8 FROM core_finance_payments \
+                    "SELECT id, payment_no, total_amount::float8 FROM public.core_finance_payments \
                      WHERE tenant_id = $1 AND status = 'approved' AND voucher_id IS NULL",
                 );
                 let mut source_ids_bound = false;
@@ -489,7 +489,7 @@ impl FinanceService {
             if lines_ok {
                 // Link source payment to voucher
                 let _ = sqlx::query(
-                    only_own_schema_query!("finance", "UPDATE core_finance_payments SET voucher_id = $1 WHERE id = $2 AND tenant_id = $3")
+                    only_own_schema_query!("finance", "UPDATE public.core_finance_payments SET voucher_id = $1 WHERE id = $2 AND tenant_id = $3")
                 )
                 .bind(voucher_id)
                 .bind(source_id)

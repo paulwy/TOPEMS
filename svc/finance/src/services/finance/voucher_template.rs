@@ -2,6 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::FinanceService;
@@ -147,7 +148,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let template: VoucherTemplate = sqlx::query_as(
-            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -176,7 +177,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<Vec<VoucherTemplateLine>, TopemsError> {
         let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
-            "SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
+            only_own_schema_query!("finance", "SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
         )
         .bind(template_id)
         .fetch_all(&self.db_pool)
@@ -194,7 +195,8 @@ impl FinanceService {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        let template: VoucherTemplate = sqlx::query_as(
+        let template: VoucherTemplate = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"
             INSERT INTO finance_voucher_templates 
                 (id, tenant_id, name, description, voucher_type, 
@@ -202,8 +204,8 @@ impl FinanceService {
                  status, created_at, updated_at, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, false, 'active', $8, $8, $9)
             RETURNING *
-            "#,
-        )
+            "#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -222,12 +224,12 @@ impl FinanceService {
             let sort_order = line_req.sort_order.unwrap_or(i as i32 + 1);
 
             let line: VoucherTemplateLine = sqlx::query_as(
-                r#"
+                only_own_schema_query!("finance", r#"
                 INSERT INTO finance_voucher_template_lines 
                     (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING *
-                "#,
+                "#),
             )
             .bind(line_id)
             .bind(template.id)
@@ -265,7 +267,7 @@ impl FinanceService {
         req: UpdateVoucherTemplateRequest,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let existing: VoucherTemplate = sqlx::query_as(
-            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -283,7 +285,8 @@ impl FinanceService {
         let status = req.status.unwrap_or(existing.status);
         let now = Utc::now();
 
-        let template: VoucherTemplate = sqlx::query_as(
+        let template: VoucherTemplate = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"
             UPDATE finance_voucher_templates SET
                 name = $2, description = $3, voucher_type = $4,
@@ -291,8 +294,8 @@ impl FinanceService {
                 is_default = $7, status = $8, updated_at = $9
             WHERE tenant_id = $1 AND id = $10
             RETURNING *
-            "#,
-        )
+            "#
+        ))
         .bind(tenant_id)
         .bind(&name)
         .bind(&description)
@@ -307,21 +310,24 @@ impl FinanceService {
         .await?;
 
         if let Some(lines_req) = req.lines {
-            sqlx::query("DELETE FROM finance_voucher_template_lines WHERE template_id = $1")
-                .bind(template_id)
-                .execute(&self.db_pool)
-                .await?;
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "DELETE FROM finance_voucher_template_lines WHERE template_id = $1"
+            ))
+            .bind(template_id)
+            .execute(&self.db_pool)
+            .await?;
 
             for (i, line_req) in lines_req.iter().enumerate() {
                 let line_id = Uuid::new_v4();
                 let sort_order = line_req.sort_order.unwrap_or(i as i32 + 1);
 
                 sqlx::query(
-                    r#"
+                    only_own_schema_query!("finance", r#"
                     INSERT INTO finance_voucher_template_lines 
                         (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                    "#,
+                    "#),
                 )
                 .bind(line_id)
                 .bind(template_id)
@@ -359,7 +365,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherTemplate>(
-            "id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -370,12 +376,15 @@ impl FinanceService {
             return Err(TopemsError::NotFound("凭证模板不存在".to_string()));
         }
 
-        sqlx::query("DELETE FROM finance_voucher_template_lines WHERE template_id = $1")
-            .bind(template_id)
-            .execute(&self.db_pool)
-            .await?;
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            "DELETE FROM finance_voucher_template_lines WHERE template_id = $1"
+        ))
+        .bind(template_id)
+        .execute(&self.db_pool)
+        .await?;
 
-        sqlx::query("UPDATE finance_voucher_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2")
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"))
             .bind(tenant_id)
             .bind(template_id)
             .execute(&self.db_pool)
@@ -390,7 +399,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<VoucherTemplateResponse, TopemsError> {
         let template: VoucherTemplate = sqlx::query_as(
-            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -398,7 +407,7 @@ impl FinanceService {
         .await?;
 
         sqlx::query(
-            "UPDATE finance_voucher_templates SET is_default = false WHERE tenant_id = $1 AND voucher_type = $2",
+            only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET is_default = false WHERE tenant_id = $1 AND voucher_type = $2"),
         )
         .bind(tenant_id)
         .bind(&template.voucher_type)
@@ -406,7 +415,7 @@ impl FinanceService {
         .await?;
 
         sqlx::query(
-            "UPDATE finance_voucher_templates SET is_default = true, updated_at = NOW() WHERE tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET is_default = true, updated_at = NOW() WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)

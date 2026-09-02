@@ -4,6 +4,7 @@
 //! 使用 serde_json::Value 避免重复定义模型，直接查询现有表。
 
 use std::str::FromStr;
+use topems_shared_boundary::only_own_schema_query;
 
 use axum::{
     extract::{Extension, Json, Path, Query, State},
@@ -48,15 +49,16 @@ pub async fn list_expenses(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, created_at, updated_at
            FROM expenses
            WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
-           ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-    )
+           ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -68,9 +70,9 @@ pub async fn list_expenses(
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_expense_json).collect();
             let total: i64 = sqlx::query_scalar(
-                r#"SELECT COUNT(*) FROM expenses
+                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM expenses
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)"#,
+                     AND ($2::text IS NULL OR status = $2)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -114,15 +116,16 @@ pub async fn create_expense(
         return Json(ApiResponse::error(400, "报销编号不能为空"));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"INSERT INTO expenses (id, expense_number, applicant_name, department_id, expense_type,
                                   amount, description, expense_date, receipt_count, status,
                                   created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11)
            RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
                      description, expense_date, receipt_count, status, approver_id, approved_at,
-                     reimbursed_at, created_at, updated_at"#,
-    )
+                     reimbursed_at, created_at, updated_at"#
+    ))
     .bind(id)
     .bind(expense_number)
     .bind(req.get("applicant_name").and_then(|v| v.as_str()))
@@ -183,12 +186,13 @@ pub async fn get_expense(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, created_at, updated_at
-           FROM expenses WHERE id = $1"#,
-    )
+           FROM expenses WHERE id = $1"#
+    ))
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
@@ -223,7 +227,8 @@ pub async fn update_expense(
     Json(req): Json<Value>,
 ) -> Json<ApiResponse<Value>> {
     let now = Utc::now();
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"UPDATE expenses SET
               applicant_name = $2, department_id = $3, expense_type = $4, amount = $5,
               description = $6, expense_date = $7, receipt_count = $8, status = $9,
@@ -231,8 +236,8 @@ pub async fn update_expense(
            WHERE id = $1
            RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
                      description, expense_date, receipt_count, status, approver_id, approved_at,
-                     reimbursed_at, created_at, updated_at"#,
-    )
+                     reimbursed_at, created_at, updated_at"#
+    ))
     .bind(id)
     .bind(req.get("applicant_name").and_then(|v| v.as_str()))
     .bind(
@@ -318,10 +323,13 @@ pub async fn delete_expense(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE expenses SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE expenses SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.pool)
+    .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "费用报销删除成功"))
@@ -361,13 +369,14 @@ pub async fn list_budgets(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
            FROM budgets WHERE deleted_at IS NULL
-           ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
-    )
+           ORDER BY created_at DESC LIMIT $1 OFFSET $2"#
+    ))
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -376,11 +385,13 @@ pub async fn list_budgets(
     match rows {
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_budget_json).collect();
-            let total: i64 =
-                sqlx::query_scalar("SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL")
-                    .fetch_one(&state.pool)
-                    .await
-                    .unwrap_or(0);
+            let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+                "finance",
+                "SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL"
+            ))
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
             Json(ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取预算列表成功",
@@ -427,15 +438,16 @@ pub async fn create_budget(
         (used_amount / total_budget) * rust_decimal::Decimal::from(100)
     };
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"INSERT INTO budgets (id, tenant_id, department_id, budget_type, fiscal_year,
                                 total_budget, used_amount, remaining_amount, usage_rate, status,
                                 created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
            RETURNING id, tenant_id, department_id, budget_type, fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
-                     created_at, updated_at, deleted_at"#,
-    )
+                     created_at, updated_at, deleted_at"#
+    ))
     .bind(id)
     .bind(
         req.get("tenant_id")
@@ -487,12 +499,13 @@ pub async fn get_budget(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
-           FROM budgets WHERE id = $1 AND deleted_at IS NULL"#,
-    )
+           FROM budgets WHERE id = $1 AND deleted_at IS NULL"#
+    ))
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
@@ -544,7 +557,8 @@ pub async fn update_budget(
         (used_amount / total_budget) * rust_decimal::Decimal::from(100)
     };
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"UPDATE budgets SET
               department_id = $2, budget_type = $3, fiscal_year = $4,
               total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8,
@@ -552,8 +566,8 @@ pub async fn update_budget(
            WHERE id = $1 AND deleted_at IS NULL
            RETURNING id, tenant_id, department_id, budget_type, fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
-                     created_at, updated_at, deleted_at"#,
-    )
+                     created_at, updated_at, deleted_at"#
+    ))
     .bind(id)
     .bind(
         req.get("department_id")
@@ -608,9 +622,10 @@ pub async fn delete_budget(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let now = Utc::now();
-    let result = sqlx::query(
-        "UPDATE budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL"
+    ))
     .bind(id)
     .bind(now)
     .execute(&state.pool)
@@ -656,15 +671,16 @@ pub async fn list_receivables(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
                   amount, invoice_date, due_date, status, received_amount, payment_schedule,
                   created_at, updated_at
            FROM receivables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
-           ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-    )
+           ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -676,9 +692,9 @@ pub async fn list_receivables(
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_receivable_json).collect();
             let total: i64 = sqlx::query_scalar(
-                r#"SELECT COUNT(*) FROM receivables
+                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM receivables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)"#,
+                     AND ($2::text IS NULL OR status = $2)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -722,15 +738,16 @@ pub async fn create_receivable(
         return Json(ApiResponse::error(400, "发票编号不能为空"));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"INSERT INTO receivables (id, invoice_number, customer_name, project_id, contract_id,
                                     project_name, amount, invoice_date, due_date, status,
                                     received_amount, payment_schedule, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11)
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
                      amount, invoice_date, due_date, status, received_amount, payment_schedule,
-                     created_at, updated_at"#,
-    )
+                     created_at, updated_at"#
+    ))
     .bind(id)
     .bind(invoice_number)
     .bind(req.get("customer_name").and_then(|v| v.as_str()))
@@ -794,12 +811,13 @@ pub async fn get_receivable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
                   amount, invoice_date, due_date, status, received_amount, payment_schedule,
                   created_at, updated_at
-           FROM receivables WHERE id = $1"#,
-    )
+           FROM receivables WHERE id = $1"#
+    ))
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
@@ -834,7 +852,8 @@ pub async fn update_receivable(
     Json(req): Json<Value>,
 ) -> Json<ApiResponse<Value>> {
     let now = Utc::now();
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"UPDATE receivables SET
               customer_name = $2, project_name = $3, amount = $4, invoice_date = $5,
               due_date = $6, status = $7, received_amount = $8, payment_schedule = $9,
@@ -842,8 +861,8 @@ pub async fn update_receivable(
            WHERE id = $1
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
                      amount, invoice_date, due_date, status, received_amount, payment_schedule,
-                     created_at, updated_at"#,
-    )
+                     created_at, updated_at"#
+    ))
     .bind(id)
     .bind(req.get("customer_name").and_then(|v| v.as_str()))
     .bind(req.get("project_name").and_then(|v| v.as_str()))
@@ -906,10 +925,13 @@ pub async fn delete_receivable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE receivables SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE receivables SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.pool)
+    .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "应收删除成功"))
@@ -951,15 +973,16 @@ pub async fn list_payables(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
                   amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                   created_at, updated_at
            FROM payables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
-           ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-    )
+           ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -971,9 +994,9 @@ pub async fn list_payables(
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_payable_json).collect();
             let total: i64 = sqlx::query_scalar(
-                r#"SELECT COUNT(*) FROM payables
+                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM payables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)"#,
+                     AND ($2::text IS NULL OR status = $2)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -1017,15 +1040,16 @@ pub async fn create_payable(
         return Json(ApiResponse::error(400, "发票编号不能为空"));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"INSERT INTO payables (id, invoice_number, supplier_name, project_id, contract_id,
                                  category, amount, invoice_date, due_date, status,
                                  paid_amount, payment_schedule, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11)
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
                      amount, invoice_date, due_date, status, paid_amount, payment_schedule,
-                     created_at, updated_at"#,
-    )
+                     created_at, updated_at"#
+    ))
     .bind(id)
     .bind(invoice_number)
     .bind(req.get("supplier_name").and_then(|v| v.as_str()))
@@ -1089,12 +1113,13 @@ pub async fn get_payable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
                   amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                   created_at, updated_at
-           FROM payables WHERE id = $1"#,
-    )
+           FROM payables WHERE id = $1"#
+    ))
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
@@ -1129,7 +1154,8 @@ pub async fn update_payable(
     Json(req): Json<Value>,
 ) -> Json<ApiResponse<Value>> {
     let now = Utc::now();
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         r#"UPDATE payables SET
               supplier_name = $2, category = $3, amount = $4, invoice_date = $5,
               due_date = $6, status = $7, paid_amount = $8, payment_schedule = $9,
@@ -1137,8 +1163,8 @@ pub async fn update_payable(
            WHERE id = $1
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
                      amount, invoice_date, due_date, status, paid_amount, payment_schedule,
-                     created_at, updated_at"#,
-    )
+                     created_at, updated_at"#
+    ))
     .bind(id)
     .bind(req.get("supplier_name").and_then(|v| v.as_str()))
     .bind(req.get("category").and_then(|v| v.as_str()))
@@ -1201,10 +1227,13 @@ pub async fn delete_payable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE payables SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE payables SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.pool)
+    .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "应付删除成功"))

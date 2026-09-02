@@ -147,6 +147,53 @@ pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
         sqlx::query(sql).execute(pool).await?;
     }
 
+    // ============================================================
+    // 账户表缺失列补齐（幂等迁移）
+    // 背景：Account 模型新增了 name_en/status 等字段，但建表 SQL
+    // 未同步更新。此处用 ADD COLUMN IF NOT EXISTS 补齐，兼容已有
+    // 数据库（独立部署与模块化单体接入均受益）。
+    // ============================================================
+    let account_col_migrations = vec![
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS name_en VARCHAR(255)",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS full_name VARCHAR(500)",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS balance_direction VARCHAR(20)",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS \"type\" VARCHAR(20)",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS parent_code VARCHAR(50)",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS haschildren BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS is_cash_flow BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS enable_quantity BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS unit VARCHAR(50)",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS enable_foreign_currency BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS default_currency VARCHAR(10)",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS is_detail BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active'",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS created_by UUID",
+        "ALTER TABLE core_finance_accounts ADD COLUMN IF NOT EXISTS updated_by UUID",
+    ];
+    for sql in account_col_migrations {
+        sqlx::query(sql).execute(pool).await?;
+    }
+
+    // Account 模型使用 DateTime<Utc>（需 TIMESTAMPTZ），但历史建表用 TIMESTAMP。
+    // 幂等转换：仅当列仍是 TIMESTAMP 时转为 TIMESTAMPTZ（空数据/开发库安全）。
+    let account_ts_migration = r#"
+        DO $$ BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = 'core_finance_accounts'
+                  AND column_name = 'created_at'
+                  AND data_type = 'timestamp without time zone'
+            ) THEN
+                ALTER TABLE core_finance_accounts
+                    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC';
+                ALTER TABLE core_finance_accounts
+                    ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
+            END IF;
+        END $$;
+    "#;
+    sqlx::raw_sql(account_ts_migration).execute(pool).await?;
+
     init_reconciliation_tables(pool).await?;
 
     crate::modules::risk_v54::init_risk_v54_tables(pool).await?;

@@ -26,6 +26,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -260,10 +261,10 @@ impl CashFlowPredictor {
         let model_version = format!("v53.0-{}", model_type.as_str());
 
         sqlx::query(
-            r#"INSERT INTO finance_cash_flow_predictions_v53
+            only_own_schema_query!("finance", r#"INSERT INTO finance_cash_flow_predictions_v53
                 (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            ON CONFLICT DO NOTHING"#,
+            ON CONFLICT DO NOTHING"#),
         )
         .bind(prediction_id)
         .bind(&req.entity_id)
@@ -311,7 +312,7 @@ impl CashFlowPredictor {
         let entity_uuid = Uuid::parse_str(entity_id).unwrap_or_else(|_| Uuid::new_v4());
 
         let rows: Vec<(f64, f64)> = sqlx::query_as(
-            r#"SELECT
+            only_own_schema_query!("finance", r#"SELECT
                 COALESCE(SUM(CASE WHEN vl.account_code LIKE '6%' THEN vl.amount ELSE 0 END), 0) as inflow,
                 COALESCE(SUM(CASE WHEN vl.account_code LIKE '4%' OR vl.account_code LIKE '5%' THEN vl.amount ELSE 0 END), 0) as outflow
             FROM vouchers v
@@ -321,7 +322,7 @@ impl CashFlowPredictor {
             AND v.created_at > NOW() - INTERVAL '12 months'
             GROUP BY DATE_TRUNC('month', v.created_at)
             ORDER BY DATE_TRUNC('month', v.created_at) DESC
-            LIMIT 24"#,
+            LIMIT 24"#),
         )
         .bind(entity_uuid)
         .fetch_all(pool)
@@ -605,14 +606,14 @@ impl CashFlowPredictor {
         let accuracy = Self::compute_retrain_accuracy(pool, tenant_id, &model_type).await;
 
         let record = sqlx::query_as::<_, PredictionModelRecord>(
-            r#"INSERT INTO finance_prediction_models_v53
+            only_own_schema_query!("finance", r#"INSERT INTO finance_prediction_models_v53
                 (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (model_type) DO UPDATE
             SET accuracy = EXCLUDED.accuracy,
                 trained_at = EXCLUDED.trained_at,
                 updated_at = EXCLUDED.updated_at
-            RETURNING id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at"#,
+            RETURNING id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at"#),
         )
         .bind(Uuid::new_v4())
         .bind(model_str)
@@ -661,14 +662,14 @@ impl CashFlowPredictor {
     ) -> Result<Vec<PredictionAccuracy>, sqlx::Error> {
         let records: Vec<PredictionModelRecord> = if let Some(ref mt) = model_type {
             sqlx::query_as(
-                "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE model_type = $1 ORDER BY trained_at DESC",
+                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE model_type = $1 ORDER BY trained_at DESC"),
             )
             .bind(mt)
             .fetch_all(pool)
             .await?
         } else {
             sqlx::query_as(
-                "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 ORDER BY trained_at DESC",
+                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 ORDER BY trained_at DESC"),
             )
             .fetch_all(pool)
             .await?
@@ -829,10 +830,10 @@ impl BudgetAnalyzer {
 
         for v in &variances {
             sqlx::query(
-                r#"INSERT INTO finance_budget_variances_v53
+                only_own_schema_query!("finance", r#"INSERT INTO finance_budget_variances_v53
                     (id, budget_item_id, period, budget_amount, actual_amount, variance_amount, variance_percentage, classification, trend, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                ON CONFLICT DO NOTHING"#,
+                ON CONFLICT DO NOTHING"#),
             )
             .bind(v.id)
             .bind(&v.budget_item_id)

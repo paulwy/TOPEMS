@@ -32,6 +32,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -521,7 +522,7 @@ impl RealTimeRiskMonitor {
         let now = Utc::now();
 
         let mut query = String::from(
-            "SELECT id, category, level, current_value, threshold, unit, updated_at FROM finance_v54_risk_indicators WHERE tenant_id = $1",
+            "SELECT id, category, level, current_value, threshold, unit, updated_at FROM finance.finance_v54_risk_indicators WHERE tenant_id = $1",
         );
         let mut conditions = vec!["$1".to_string()];
 
@@ -574,7 +575,7 @@ impl RealTimeRiskMonitor {
         };
 
         let open_alerts: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_v54_risk_alerts WHERE tenant_id = $1 AND acknowledged = false AND resolved = false",
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_risk_alerts WHERE tenant_id = $1 AND acknowledged = false AND resolved = false"),
         )
         .bind(tenant_id)
         .fetch_one(pool)
@@ -605,10 +606,10 @@ impl RealTimeRiskMonitor {
         );
 
         sqlx::query(
-            r#"INSERT INTO finance_v54_risk_alerts
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_risk_alerts
                 (id, tenant_id, indicator_id, level, message, entity, created_at, acknowledged, resolved)
             VALUES ($1, $2, $3, $4, $5, $6, $7, false, false)
-            ON CONFLICT DO NOTHING"#,
+            ON CONFLICT DO NOTHING"#),
         )
         .bind(Uuid::new_v4())
         .bind(tenant_id)
@@ -650,10 +651,10 @@ impl RealTimeRiskMonitor {
         let id = Uuid::new_v4();
 
         sqlx::query_as::<_, RiskAlert>(
-            r#"INSERT INTO finance_v54_risk_alerts
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_risk_alerts
                 (id, tenant_id, indicator_id, level, message, entity, created_at, acknowledged, resolved)
             VALUES ($1, $2, $3, $4, $5, $6, $7, false, false)
-            RETURNING id, indicator_id, level, message, entity, created_at, acknowledged, resolved"#,
+            RETURNING id, indicator_id, level, message, entity, created_at, acknowledged, resolved"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -671,12 +672,13 @@ impl RealTimeRiskMonitor {
         tenant_id: Uuid,
         alert_id: Uuid,
     ) -> Result<RiskAlert, sqlx::Error> {
-        sqlx::query_as(
-            r#"UPDATE finance_v54_risk_alerts
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v54_risk_alerts
             SET acknowledged = true
             WHERE id = $1 AND tenant_id = $2
-            RETURNING id, indicator_id, level, message, entity, created_at, acknowledged, resolved"#,
-        )
+            RETURNING id, indicator_id, level, message, entity, created_at, acknowledged, resolved"#
+        ))
         .bind(alert_id)
         .bind(tenant_id)
         .fetch_one(pool)
@@ -688,12 +690,13 @@ impl RealTimeRiskMonitor {
         tenant_id: Uuid,
         alert_id: Uuid,
     ) -> Result<RiskAlert, sqlx::Error> {
-        sqlx::query_as(
-            r#"UPDATE finance_v54_risk_alerts
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v54_risk_alerts
             SET resolved = true, acknowledged = true
             WHERE id = $1 AND tenant_id = $2
-            RETURNING id, indicator_id, level, message, entity, created_at, acknowledged, resolved"#,
-        )
+            RETURNING id, indicator_id, level, message, entity, created_at, acknowledged, resolved"#
+        ))
         .bind(alert_id)
         .bind(tenant_id)
         .fetch_one(pool)
@@ -705,13 +708,14 @@ impl RealTimeRiskMonitor {
         tenant_id: Uuid,
         category: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
-            FROM finance_v54_risk_alerts
+            FROM finance.finance_v54_risk_alerts
             WHERE tenant_id = $1 AND entity = $2
             ORDER BY created_at DESC
-            LIMIT 100"#,
-        )
+            LIMIT 100"#
+        ))
         .bind(tenant_id)
         .bind(&category)
         .fetch_all(pool)
@@ -723,13 +727,14 @@ impl RealTimeRiskMonitor {
         tenant_id: Uuid,
         entity: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
-        sqlx::query_as(
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
-            FROM finance_v54_risk_alerts
+            FROM finance.finance_v54_risk_alerts
             WHERE tenant_id = $1 AND entity = $2
             ORDER BY created_at DESC
-            LIMIT 100"#,
-        )
+            LIMIT 100"#
+        ))
         .bind(tenant_id)
         .bind(&entity)
         .fetch_all(pool)
@@ -827,10 +832,10 @@ impl AntiFraudEngine {
         );
 
         sqlx::query_as::<_, FraudScore>(
-            r#"INSERT INTO finance_v54_fraud_scores
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_fraud_scores
                 (id, tenant_id, transaction_id, score, triggered_rules, risk_level, recommendation, scored_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id, transaction_id, score, triggered_rules, risk_level, recommendation, scored_at"#,
+            RETURNING id, transaction_id, score, triggered_rules, risk_level, recommendation, scored_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -852,7 +857,7 @@ impl AntiFraudEngine {
     ) -> f64 {
         let _account_uuid = Uuid::parse_str(account_id).unwrap_or_else(|_| Uuid::new_v4());
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id IN (SELECT id FROM finance_v54_fraud_scores WHERE transaction_id LIKE $2 || '%') AND scored_at > NOW() - INTERVAL '1 hour'",
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id IN (SELECT id FROM finance.finance_v54_fraud_scores WHERE transaction_id LIKE $2 || '%') AND scored_at > NOW() - INTERVAL '1 hour'"),
         )
         .bind(tenant_id)
         .bind(account_id)
@@ -921,7 +926,7 @@ impl AntiFraudEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<FraudRule>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, rule_type, condition, threshold, enabled FROM finance_v54_fraud_rules WHERE tenant_id = $1 ORDER BY rule_type, name",
+            only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules WHERE tenant_id = $1 ORDER BY rule_type, name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -938,7 +943,7 @@ impl AntiFraudEngine {
         enabled: Option<bool>,
     ) -> Result<FraudRule, sqlx::Error> {
         let current: FraudRule = sqlx::query_as(
-            "SELECT id, name, rule_type, condition, threshold, enabled FROM finance_v54_fraud_rules WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(rule_id)
         .bind(tenant_id)
@@ -950,12 +955,13 @@ impl AntiFraudEngine {
         let threshold = threshold.unwrap_or(current.threshold);
         let enabled = enabled.unwrap_or(current.enabled);
 
-        sqlx::query_as(
-            r#"UPDATE finance_v54_fraud_rules
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v54_fraud_rules
             SET name = $1, condition = $2, threshold = $3, enabled = $4
             WHERE id = $5 AND tenant_id = $6
-            RETURNING id, name, rule_type, condition, threshold, enabled"#,
-        )
+            RETURNING id, name, rule_type, condition, threshold, enabled"#
+        ))
         .bind(name)
         .bind(condition)
         .bind(threshold)
@@ -972,7 +978,7 @@ impl AntiFraudEngine {
         transaction_id: String,
     ) -> Result<FraudScore, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, transaction_id, score, triggered_rules, risk_level, recommendation, scored_at FROM finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id = $2 ORDER BY scored_at DESC LIMIT 1",
+            only_own_schema_query!("finance", "SELECT id, transaction_id, score, triggered_rules, risk_level, recommendation, scored_at FROM finance.finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id = $2 ORDER BY scored_at DESC LIMIT 1"),
         )
         .bind(tenant_id)
         .bind(&transaction_id)
@@ -1007,7 +1013,7 @@ impl AutoComplianceReviewer {
         reviewer: String,
     ) -> Result<Vec<ReviewResult>, sqlx::Error> {
         let rules: Vec<ReviewRule> = sqlx::query_as(
-            "SELECT id, regulation, category, severity, action FROM finance_v54_review_rules WHERE tenant_id = $1 ORDER BY severity DESC",
+            only_own_schema_query!("finance", "SELECT id, regulation, category, severity, action FROM finance.finance_v54_review_rules WHERE tenant_id = $1 ORDER BY severity DESC"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1036,9 +1042,9 @@ impl AutoComplianceReviewer {
             };
 
             sqlx::query(
-                r#"INSERT INTO finance_v54_review_results
+                only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_review_results
                     (id, tenant_id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#,
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#),
             )
             .bind(result.id)
             .bind(tenant_id)
@@ -1070,7 +1076,7 @@ impl AutoComplianceReviewer {
         entity_id: Option<String>,
     ) -> Result<Vec<ReviewResult>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer FROM finance_v54_review_results WHERE tenant_id = $1",
+            "SELECT id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer FROM finance.finance_v54_review_results WHERE tenant_id = $1",
         );
 
         if entity_type.is_some() {
@@ -1110,10 +1116,10 @@ impl AutoComplianceReviewer {
         );
 
         sqlx::query_as(
-            r#"INSERT INTO finance_v54_review_workflows
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_review_workflows
                 (id, tenant_id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at)
             VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
-            RETURNING id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at"#,
+            RETURNING id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -1133,7 +1139,7 @@ impl AutoComplianceReviewer {
         workflow_id: Uuid,
     ) -> Result<ReviewWorkflow, sqlx::Error> {
         let workflow: ReviewWorkflow = sqlx::query_as(
-            "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance_v54_review_workflows WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(workflow_id)
         .bind(tenant_id)
@@ -1158,10 +1164,10 @@ impl AutoComplianceReviewer {
 
         let now = Utc::now();
         sqlx::query_as(
-            r#"UPDATE finance_v54_review_workflows
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v54_review_workflows
             SET status = $1, steps = $2, updated_at = $3
             WHERE id = $4 AND tenant_id = $5
-            RETURNING id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at"#,
+            RETURNING id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at"#),
         )
         .bind(new_status)
         .bind(serde_json::Value::Array(steps))
@@ -1179,7 +1185,7 @@ impl AutoComplianceReviewer {
         entity_id: String,
     ) -> Result<Vec<ReviewWorkflow>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance_v54_review_workflows WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3 ORDER BY created_at DESC",
+            only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3 ORDER BY created_at DESC"),
         )
         .bind(tenant_id)
         .bind(&entity_type)
@@ -1215,7 +1221,7 @@ impl AutoComplianceReviewer {
         for result in &results {
             if !result.passed {
                 let rule: ReviewRule = match sqlx::query_as(
-                    "SELECT id, regulation, category, severity, action FROM finance_v54_review_rules WHERE id = $1",
+                    only_own_schema_query!("finance", "SELECT id, regulation, category, severity, action FROM finance.finance_v54_review_rules WHERE id = $1"),
                 )
                 .bind(result.rule_id)
                 .fetch_one(pool)

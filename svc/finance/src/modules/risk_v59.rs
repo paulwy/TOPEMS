@@ -29,6 +29,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -497,7 +498,7 @@ impl AntiFraudEngine {
         }
 
         let recent_count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM finance_v59_fraud_decisions WHERE tenant_id = $1 AND transaction_id LIKE $2 || '%' AND decided_at > NOW() - INTERVAL '10 minutes'",
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v59_fraud_decisions WHERE tenant_id = $1 AND transaction_id LIKE $2 || '%' AND decided_at > NOW() - INTERVAL '10 minutes'"),
         )
         .bind(tenant_id)
         .bind(&req.transaction_id)
@@ -562,12 +563,13 @@ impl AntiFraudEngine {
         );
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, FraudDecision>(
-            r#"INSERT INTO finance_v59_fraud_decisions
+        sqlx::query_as::<_, FraudDecision>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v59_fraud_decisions
                 (id, tenant_id, transaction_id, risk_level, action, reason, signals, decided_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id, transaction_id, risk_level, action, reason, signals, decided_at"#,
-        )
+            RETURNING id, transaction_id, risk_level, action, reason, signals, decided_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.transaction_id)
@@ -590,12 +592,13 @@ impl AntiFraudEngine {
         detected_at: DateTime<Utc>,
     ) -> Result<FraudSignal, sqlx::Error> {
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, FraudSignal>(
-            r#"INSERT INTO finance_v59_fraud_signals
+        sqlx::query_as::<_, FraudSignal>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v59_fraud_signals
                 (id, tenant_id, signal_type, score, confidence, metadata, detected_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id, signal_type, score, confidence, metadata, detected_at"#,
-        )
+            RETURNING id, signal_type, score, confidence, metadata, detected_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(signal_type.as_str())
@@ -613,7 +616,7 @@ impl AntiFraudEngine {
         decision_id: Uuid,
     ) -> Result<FraudDecision, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, transaction_id, risk_level, action, reason, signals, decided_at FROM finance_v59_fraud_decisions WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, transaction_id, risk_level, action, reason, signals, decided_at FROM finance.finance_v59_fraud_decisions WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(decision_id)
         .bind(tenant_id)
@@ -627,7 +630,7 @@ impl AntiFraudEngine {
         signal_type: Option<String>,
     ) -> Result<Vec<FraudSignal>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, signal_type, score, confidence, metadata, detected_at FROM finance_v59_fraud_signals WHERE tenant_id = $1",
+            "SELECT id, signal_type, score, confidence, metadata, detected_at FROM finance.finance_v59_fraud_signals WHERE tenant_id = $1",
         );
 
         if signal_type.is_some() {
@@ -654,8 +657,9 @@ impl AntiFraudEngine {
         let id = Uuid::new_v4();
         let trust_score = req.trust_score.unwrap_or(1.0);
 
-        sqlx::query_as::<_, DeviceProfile>(
-            r#"INSERT INTO finance_v59_device_profiles
+        sqlx::query_as::<_, DeviceProfile>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v59_device_profiles
                 (id, tenant_id, device_id, fingerprint, trust_score, last_seen, ip_history)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (tenant_id, device_id) DO UPDATE
@@ -663,8 +667,8 @@ impl AntiFraudEngine {
                 trust_score = EXCLUDED.trust_score,
                 last_seen = EXCLUDED.last_seen,
                 ip_history = EXCLUDED.ip_history
-            RETURNING id, device_id, fingerprint, trust_score, last_seen, ip_history"#,
-        )
+            RETURNING id, device_id, fingerprint, trust_score, last_seen, ip_history"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.device_id)
@@ -682,7 +686,7 @@ impl AntiFraudEngine {
         device_id: &str,
     ) -> Result<f64, sqlx::Error> {
         let result: Option<(f64,)> = sqlx::query_as(
-            "SELECT trust_score FROM finance_v59_device_profiles WHERE tenant_id = $1 AND device_id = $2",
+            only_own_schema_query!("finance", "SELECT trust_score FROM finance.finance_v59_device_profiles WHERE tenant_id = $1 AND device_id = $2"),
         )
         .bind(tenant_id)
         .bind(device_id)
@@ -697,7 +701,7 @@ impl AntiFraudEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<DeviceProfile>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance_v59_device_profiles WHERE tenant_id = $1 AND trust_score < 0.5 ORDER BY trust_score ASC",
+            only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE tenant_id = $1 AND trust_score < 0.5 ORDER BY trust_score ASC"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -713,12 +717,13 @@ impl AntiFraudEngine {
         let threshold = req.threshold.unwrap_or(0.5);
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, FraudRule>(
-            r#"INSERT INTO finance_v59_fraud_rules
+        sqlx::query_as::<_, FraudRule>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v59_fraud_rules
                 (id, tenant_id, name, signal_type, threshold, enabled)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, name, signal_type, threshold, enabled"#,
-        )
+            RETURNING id, name, signal_type, threshold, enabled"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -731,7 +736,7 @@ impl AntiFraudEngine {
 
     pub async fn get_rules(pool: &PgPool, tenant_id: Uuid) -> Result<Vec<FraudRule>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, signal_type, threshold, enabled FROM finance_v59_fraud_rules WHERE tenant_id = $1 ORDER BY signal_type, name",
+            only_own_schema_query!("finance", "SELECT id, name, signal_type, threshold, enabled FROM finance.finance_v59_fraud_rules WHERE tenant_id = $1 ORDER BY signal_type, name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -825,8 +830,9 @@ impl CreditScoringEngine {
         ]);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, CreditProfile>(
-            r#"INSERT INTO finance_v59_credit_profiles
+        sqlx::query_as::<_, CreditProfile>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v59_credit_profiles
                 (id, tenant_id, entity_id, score, grade, factors, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (tenant_id, entity_id) DO UPDATE
@@ -834,8 +840,8 @@ impl CreditScoringEngine {
                 grade = EXCLUDED.grade,
                 factors = EXCLUDED.factors,
                 updated_at = EXCLUDED.updated_at
-            RETURNING id, entity_id, score, grade, factors, updated_at"#,
-        )
+            RETURNING id, entity_id, score, grade, factors, updated_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.entity_id)
@@ -853,7 +859,7 @@ impl CreditScoringEngine {
         entity_id: String,
     ) -> Result<CreditProfile, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, entity_id, score, grade, factors, updated_at FROM finance_v59_credit_profiles WHERE tenant_id = $1 AND entity_id = $2",
+            only_own_schema_query!("finance", "SELECT id, entity_id, score, grade, factors, updated_at FROM finance.finance_v59_credit_profiles WHERE tenant_id = $1 AND entity_id = $2"),
         )
         .bind(tenant_id)
         .bind(&entity_id)
@@ -866,7 +872,7 @@ impl CreditScoringEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<ScoringModel>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, version, features, weights, accuracy, status FROM finance_v59_scoring_models WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 100",
+            only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 100"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -882,12 +888,13 @@ impl CreditScoringEngine {
         let version = req.version.unwrap_or_else(|| "1.0".to_string());
         let accuracy = req.accuracy.unwrap_or(0.5);
 
-        sqlx::query_as::<_, ScoringModel>(
-            r#"INSERT INTO finance_v59_scoring_models
+        sqlx::query_as::<_, ScoringModel>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v59_scoring_models
                 (id, tenant_id, name, version, features, weights, accuracy, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
-            RETURNING id, name, version, features, weights, accuracy, status"#,
-        )
+            RETURNING id, name, version, features, weights, accuracy, status"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -906,7 +913,7 @@ impl CreditScoringEngine {
         req: UpdateModelRequest,
     ) -> Result<ScoringModel, sqlx::Error> {
         let current: ScoringModel = sqlx::query_as(
-            "SELECT id, name, version, features, weights, accuracy, status FROM finance_v59_scoring_models WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(model_id)
         .bind(tenant_id)
@@ -919,12 +926,13 @@ impl CreditScoringEngine {
         let accuracy = req.accuracy.unwrap_or(current.accuracy);
         let status = req.status.unwrap_or(current.status);
 
-        sqlx::query_as(
-            r#"UPDATE finance_v59_scoring_models
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v59_scoring_models
             SET name = $1, features = $2, weights = $3, accuracy = $4, status = $5
             WHERE id = $6 AND tenant_id = $7
-            RETURNING id, name, version, features, weights, accuracy, status"#,
-        )
+            RETURNING id, name, version, features, weights, accuracy, status"#
+        ))
         .bind(name)
         .bind(features)
         .bind(weights)
@@ -986,7 +994,7 @@ impl CreditScoringEngine {
 
         for mid in &model_ids {
             let model = sqlx::query_as::<_, ScoringModel>(
-                "SELECT id, name, version, features, weights, accuracy, status FROM finance_v59_scoring_models WHERE id = $1 AND tenant_id = $2",
+                only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE id = $1 AND tenant_id = $2"),
             )
             .bind(mid)
             .bind(tenant_id)
@@ -1077,12 +1085,13 @@ impl StressTestEngine {
         let severity = req.severity.unwrap_or_else(|| "medium".to_string());
         let now = Utc::now();
 
-        sqlx::query_as::<_, StressScenario>(
-            r#"INSERT INTO finance_v59_stress_scenarios
+        sqlx::query_as::<_, StressScenario>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v59_stress_scenarios
                 (id, tenant_id, name, scenario_type, severity, assumptions, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id, name, scenario_type, severity, assumptions, created_at"#,
-        )
+            RETURNING id, name, scenario_type, severity, assumptions, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -1100,7 +1109,7 @@ impl StressTestEngine {
         req: RunStressTestRequest,
     ) -> Result<StressResult, sqlx::Error> {
         let scenario = sqlx::query_as::<_, StressScenario>(
-            "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(req.scenario_id)
         .bind(tenant_id)
@@ -1141,10 +1150,10 @@ impl StressTestEngine {
 
         let id = Uuid::new_v4();
         sqlx::query_as::<_, StressResult>(
-            r#"INSERT INTO finance_v59_stress_results
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v59_stress_results
                 (id, tenant_id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details"#,
+            RETURNING id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -1165,7 +1174,7 @@ impl StressTestEngine {
         result_id: Uuid,
     ) -> Result<StressResult, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance_v59_stress_results WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(result_id)
         .bind(tenant_id)
@@ -1178,7 +1187,7 @@ impl StressTestEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<StressScenario>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance_v59_stress_scenarios WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1194,7 +1203,7 @@ impl StressTestEngine {
 
         for sid in &scenario_ids {
             let scenario = sqlx::query_as::<_, StressScenario>(
-                "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2",
+                only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2"),
             )
             .bind(sid)
             .bind(tenant_id)
@@ -1203,7 +1212,7 @@ impl StressTestEngine {
 
             if let Ok(Some(s)) = scenario {
                 let results: Vec<StressResult> = sqlx::query_as(
-                    "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance_v59_stress_results WHERE scenario_id = $1 AND tenant_id = $2",
+                    only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE scenario_id = $1 AND tenant_id = $2"),
                 )
                 .bind(sid)
                 .bind(tenant_id)
@@ -1247,7 +1256,7 @@ impl StressTestEngine {
     ) -> Result<Vec<ScenarioParameter>, sqlx::Error> {
         if let Some(sid) = scenario_id {
             let scenario = sqlx::query_as::<_, StressScenario>(
-                "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2",
+                only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2"),
             )
             .bind(sid)
             .bind(tenant_id)
@@ -1336,7 +1345,7 @@ impl StressTestEngine {
 
         for scenario in &scenarios {
             let results: Vec<StressResult> = sqlx::query_as(
-                "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance_v59_stress_results WHERE scenario_id = $1 AND tenant_id = $2",
+                only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE scenario_id = $1 AND tenant_id = $2"),
             )
             .bind(scenario.id)
             .bind(tenant_id)
@@ -1502,7 +1511,7 @@ async fn get_device_handler(
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     let result: Result<DeviceProfile, sqlx::Error> = sqlx::query_as(
-        "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance_v59_device_profiles WHERE id = $1 AND tenant_id = $2",
+        only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)

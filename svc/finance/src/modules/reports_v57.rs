@@ -21,6 +21,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -444,12 +445,13 @@ impl AutomatedReportEngine {
             .layout
             .unwrap_or_else(|| ReportLayout::JSON.as_str().to_string());
 
-        sqlx::query_as::<_, ReportTemplate>(
-            r#"INSERT INTO finance_v57_report_templates
+        sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_report_templates
                 (id, tenant_id, name, report_type, layout, parameters, schedule)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id, name, report_type, layout, parameters, schedule, created_at, updated_at"#,
-        )
+            RETURNING id, name, report_type, layout, parameters, schedule, created_at, updated_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -466,7 +468,7 @@ impl AutomatedReportEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<ReportTemplate>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance_v57_report_templates WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance.finance_v57_report_templates WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -487,10 +489,10 @@ impl AutomatedReportEngine {
         let data = Self::build_report_data(&req.report_type, req.period_start, req.period_end);
 
         sqlx::query_as::<_, GeneratedReport>(
-            r#"INSERT INTO finance_v57_generated_reports
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v57_generated_reports
                 (id, tenant_id, template_id, period_start, period_end, data, generated_at, status, format)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8)
-            RETURNING id, template_id, period_start, period_end, data, generated_at, status, format"#,
+            RETURNING id, template_id, period_start, period_end, data, generated_at, status, format"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -510,7 +512,7 @@ impl AutomatedReportEngine {
         status: Option<String>,
     ) -> Result<Vec<GeneratedReport>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance_v57_generated_reports WHERE deleted_at IS NULL AND tenant_id = $1",
+            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND tenant_id = $1",
         );
         if status.is_some() {
             query.push_str(" AND status = $2");
@@ -531,7 +533,7 @@ impl AutomatedReportEngine {
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
         )
         .bind(report_id)
         .bind(tenant_id)
@@ -552,7 +554,7 @@ impl AutomatedReportEngine {
         tenant_id: Uuid,
         report_id: Uuid,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE finance_v57_generated_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_v57_generated_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(report_id)
             .bind(tenant_id)
             .execute(pool)
@@ -565,12 +567,13 @@ impl AutomatedReportEngine {
         tenant_id: Uuid,
         req: ScheduleReportRequest,
     ) -> Result<ReportTemplate, sqlx::Error> {
-        sqlx::query_as(
-            r#"UPDATE finance_v57_report_templates
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_v57_report_templates
             SET schedule = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, name, report_type, layout, parameters, schedule, created_at, updated_at"#,
-        )
+            RETURNING id, name, report_type, layout, parameters, schedule, created_at, updated_at"#
+        ))
         .bind(&req.schedule)
         .bind(req.template_id)
         .bind(tenant_id)
@@ -651,12 +654,13 @@ impl MultiDimensionalAnalyzer {
         let data = Self::build_pivot_data(&req.dimensions, &req.measures);
         let aggregations = Self::compute_aggregations(&data, &req.measures);
 
-        sqlx::query_as::<_, AnalysisResult>(
-            r#"INSERT INTO finance_v57_analysis_results
+        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, dimensions, measures, data, aggregations, created_at"#,
-        )
+            RETURNING id, dimensions, measures, data, aggregations, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.dimensions)
@@ -679,12 +683,13 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&data, &[req.measure.clone()]);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(
-            r#"INSERT INTO finance_v57_analysis_results
+        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, dimensions, measures, data, aggregations, created_at"#,
-        )
+            RETURNING id, dimensions, measures, data, aggregations, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&[req.row_dimension, req.col_dimension])
@@ -709,12 +714,13 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(
-            r#"INSERT INTO finance_v57_analysis_results
+        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, dimensions, measures, data, aggregations, created_at"#,
-        )
+            RETURNING id, dimensions, measures, data, aggregations, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&parent.dimensions)
@@ -738,12 +744,13 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(
-            r#"INSERT INTO finance_v57_analysis_results
+        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, dimensions, measures, data, aggregations, created_at"#,
-        )
+            RETURNING id, dimensions, measures, data, aggregations, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&parent.dimensions)
@@ -768,12 +775,13 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(
-            r#"INSERT INTO finance_v57_analysis_results
+        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, dimensions, measures, data, aggregations, created_at"#,
-        )
+            RETURNING id, dimensions, measures, data, aggregations, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&parent.dimensions)
@@ -797,12 +805,13 @@ impl MultiDimensionalAnalyzer {
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
-        sqlx::query_as::<_, AnalysisResult>(
-            r#"INSERT INTO finance_v57_analysis_results
+        sqlx::query_as::<_, AnalysisResult>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, dimensions, measures, data, aggregations, created_at"#,
-        )
+            RETURNING id, dimensions, measures, data, aggregations, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&parent.dimensions)
@@ -818,7 +827,7 @@ impl MultiDimensionalAnalyzer {
         tenant_id: Uuid,
     ) -> Result<Vec<AnalysisResult>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance_v57_analysis_results WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -830,12 +839,13 @@ impl MultiDimensionalAnalyzer {
         tenant_id: Uuid,
         result: &AnalysisResult,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            r#"INSERT INTO finance_v57_analysis_results
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_analysis_results
                 (id, tenant_id, dimensions, measures, data, aggregations)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (id) DO NOTHING"#,
-        )
+            ON CONFLICT (id) DO NOTHING"#
+        ))
         .bind(result.id)
         .bind(tenant_id)
         .bind(&result.dimensions)
@@ -853,7 +863,7 @@ impl MultiDimensionalAnalyzer {
         result_id: Uuid,
     ) -> Result<AnalysisResult, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance_v57_analysis_results WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(result_id)
         .bind(tenant_id)
@@ -1039,12 +1049,13 @@ impl PredictiveInsightEngine {
 
         let forecast_data = Self::compute_forecast(&req.target_metric, periods);
 
-        sqlx::query_as::<_, Insight>(
-            r#"INSERT INTO finance_v57_insights
+        sqlx::query_as::<_, Insight>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_insights
                 (id, tenant_id, insight_type, description, confidence, data)
             VALUES ($1, $2, 'forecast', $3, $4, $5)
-            RETURNING id, insight_type, description, confidence, data, created_at"#,
-        )
+            RETURNING id, insight_type, description, confidence, data, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(format!("{} 未来 {} 期预测", req.target_metric, periods))
@@ -1065,12 +1076,13 @@ impl PredictiveInsightEngine {
 
         let anomaly_data = Self::detect_outliers(&req.metric, threshold);
 
-        sqlx::query_as::<_, Insight>(
-            r#"INSERT INTO finance_v57_insights
+        sqlx::query_as::<_, Insight>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_insights
                 (id, tenant_id, insight_type, description, confidence, data)
             VALUES ($1, $2, 'anomaly', $3, $4, $5)
-            RETURNING id, insight_type, description, confidence, data, created_at"#,
-        )
+            RETURNING id, insight_type, description, confidence, data, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(format!("{} 异常检测 (阈值: {})", req.metric, threshold))
@@ -1086,7 +1098,7 @@ impl PredictiveInsightEngine {
         insight_type: Option<String>,
     ) -> Result<Vec<Insight>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, insight_type, description, confidence, data, created_at FROM finance_v57_insights WHERE tenant_id = $1",
+            "SELECT id, insight_type, description, confidence, data, created_at FROM finance.finance_v57_insights WHERE tenant_id = $1",
         );
         if insight_type.is_some() {
             query.push_str(" AND insight_type = $2");
@@ -1113,12 +1125,13 @@ impl PredictiveInsightEngine {
             .unwrap_or_else(|| ForecastModelType::LinearRegression.as_str().to_string());
         let accuracy = Self::estimate_accuracy(&model_type);
 
-        sqlx::query_as::<_, ForecastModel>(
-            r#"INSERT INTO finance_v57_forecast_models
+        sqlx::query_as::<_, ForecastModel>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_forecast_models
                 (id, tenant_id, model_type, target_metric, features, accuracy, trained_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id, model_type, target_metric, features, accuracy, trained_at"#,
-        )
+            RETURNING id, model_type, target_metric, features, accuracy, trained_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&model_type)
@@ -1135,7 +1148,7 @@ impl PredictiveInsightEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<ForecastModel>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance_v57_forecast_models WHERE tenant_id = $1 ORDER BY trained_at DESC NULLS LAST LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE tenant_id = $1 ORDER BY trained_at DESC NULLS LAST LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1148,7 +1161,7 @@ impl PredictiveInsightEngine {
         model_id: Uuid,
     ) -> Result<ForecastModel, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance_v57_forecast_models WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(model_id)
         .bind(tenant_id)
@@ -1167,12 +1180,13 @@ impl PredictiveInsightEngine {
 
         let trend_data = Self::analyze_trend(&target);
 
-        sqlx::query_as::<_, Insight>(
-            r#"INSERT INTO finance_v57_insights
+        sqlx::query_as::<_, Insight>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v57_insights
                 (id, tenant_id, insight_type, description, confidence, data)
             VALUES ($1, $2, 'trend', $3, $4, $5)
-            RETURNING id, insight_type, description, confidence, data, created_at"#,
-        )
+            RETURNING id, insight_type, description, confidence, data, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(format!("{} 趋势分析", target))

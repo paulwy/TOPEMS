@@ -1,3 +1,4 @@
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -12,20 +13,22 @@ impl FinanceService {
         req: CreateAccountRequest,
     ) -> Result<Account, TopemsError> {
         let level = if let Some(parent_id) = req.parent_id {
-            let parent: (i32,) =
-                sqlx::query_as("SELECT level FROM core_finance_accounts WHERE id = $1")
-                    .bind(parent_id)
-                    .fetch_one(&self.db_pool)
-                    .await?;
+            let parent: (i32,) = sqlx::query_as(only_own_schema_query!(
+                "finance",
+                "SELECT level FROM finance.core_finance_accounts WHERE id = $1"
+            ))
+            .bind(parent_id)
+            .fetch_one(&self.db_pool)
+            .await?;
             parent.0 + 1
         } else {
             1
         };
 
         let account = sqlx::query_as(
-            "INSERT INTO core_finance_accounts (tenant_id, code, name, parent_id, account_type, level, currency, description)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_accounts (tenant_id, code, name, parent_id, account_type, level, currency, description)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             RETURNING *",
+             RETURNING *"),
         )
         .bind(tenant_id)
         .bind(req.code)
@@ -47,7 +50,7 @@ impl FinanceService {
         account_id: Uuid,
     ) -> Result<Account, TopemsError> {
         let account =
-            sqlx::query_as("SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND id = $2")
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(account_id)
                 .fetch_one(&self.db_pool)
@@ -62,7 +65,7 @@ impl FinanceService {
         code: &str,
     ) -> Result<Account, TopemsError> {
         let account = sqlx::query_as(
-            "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
         )
         .bind(tenant_id)
         .bind(code)
@@ -74,7 +77,7 @@ impl FinanceService {
 
     pub async fn list_accounts(&self, tenant_id: Uuid) -> Result<Vec<Account>, TopemsError> {
         let accounts = sqlx::query_as(
-            "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM core_finance_accounts WHERE tenant_id = $1 ORDER BY code",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 ORDER BY code"),
         )
         .bind(tenant_id)
         .fetch_all(&self.db_pool)

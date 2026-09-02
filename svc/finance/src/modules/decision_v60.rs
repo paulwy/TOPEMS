@@ -29,6 +29,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -484,10 +485,10 @@ impl DecisionEngine {
         let now = Utc::now();
 
         sqlx::query_as::<_, DecisionScenario>(
-            r#"INSERT INTO finance_v60_decision_scenarios
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_decision_scenarios
                 (id, tenant_id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
-            RETURNING id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at"#,
+            RETURNING id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -509,7 +510,7 @@ impl DecisionEngine {
         _req: Option<EvaluateScenarioRequest>,
     ) -> Result<DecisionResult, sqlx::Error> {
         let scenario = sqlx::query_as::<_, DecisionScenario>(
-            "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -567,10 +568,10 @@ impl DecisionEngine {
         let result_id = Uuid::new_v4();
 
         let result = sqlx::query_as::<_, DecisionResult>(
-            r#"INSERT INTO finance_v60_decision_results
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_decision_results
                 (id, tenant_id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at"#,
+            RETURNING id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at"#),
         )
         .bind(result_id)
         .bind(tenant_id)
@@ -585,7 +586,7 @@ impl DecisionEngine {
         .await?;
 
         sqlx::query(
-            "UPDATE finance_v60_decision_scenarios SET status = 'evaluated', updated_at = $1 WHERE id = $2 AND tenant_id = $3",
+            only_own_schema_query!("finance", "UPDATE finance.finance_v60_decision_scenarios SET status = 'evaluated', updated_at = $1 WHERE id = $2 AND tenant_id = $3"),
         )
         .bind(now)
         .bind(scenario_id)
@@ -665,7 +666,7 @@ impl DecisionEngine {
         scenario_id: Uuid,
     ) -> Result<DecisionResult, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1",
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -678,7 +679,7 @@ impl DecisionEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<DecisionScenario>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance_v60_decision_scenarios WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200",
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -691,7 +692,7 @@ impl DecisionEngine {
         scenario_id: Uuid,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let result = sqlx::query_as::<_, DecisionResult>(
-            "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1",
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -714,7 +715,7 @@ impl DecisionEngine {
 
         for sid in &scenario_ids {
             let scenario = sqlx::query_as::<_, DecisionScenario>(
-                "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2",
+                only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2"),
             )
             .bind(sid)
             .bind(tenant_id)
@@ -723,7 +724,7 @@ impl DecisionEngine {
 
             if let Ok(Some(s)) = scenario {
                 let result: Option<DecisionResult> = sqlx::query_as(
-                    "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1",
+                    only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1"),
                 )
                 .bind(sid)
                 .bind(tenant_id)
@@ -754,7 +755,7 @@ impl DecisionEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<DecisionResult>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance_v60_decision_results WHERE tenant_id = $1 ORDER BY decided_at DESC LIMIT 500",
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE tenant_id = $1 ORDER BY decided_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -768,7 +769,7 @@ impl DecisionEngine {
         req: SensitivityAnalysisRequest,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let scenario = sqlx::query_as::<_, DecisionScenario>(
-            "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -776,7 +777,7 @@ impl DecisionEngine {
         .await?;
 
         let base_result = sqlx::query_as::<_, DecisionResult>(
-            "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1",
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -906,12 +907,13 @@ impl AlertEngine {
         let severity = req.severity.unwrap_or_else(|| "medium".to_string());
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, AlertRule>(
-            r#"INSERT INTO finance_v60_alert_rules
+        sqlx::query_as::<_, AlertRule>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v60_alert_rules
                 (id, tenant_id, name, metric_name, condition, threshold, severity, enabled)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id, name, metric_name, condition, threshold, severity, enabled"#,
-        )
+            RETURNING id, name, metric_name, condition, threshold, severity, enabled"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -929,7 +931,7 @@ impl AlertEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<AlertRule>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance_v60_alert_rules WHERE tenant_id = $1 ORDER BY metric_name, name",
+            only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules WHERE tenant_id = $1 ORDER BY metric_name, name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -945,7 +947,7 @@ impl AlertEngine {
         let mut triggered = Vec::new();
 
         let rules: Vec<AlertRule> = sqlx::query_as(
-            "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance_v60_alert_rules WHERE tenant_id = $1 AND enabled = true",
+            only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules WHERE tenant_id = $1 AND enabled = true"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -960,10 +962,10 @@ impl AlertEngine {
                     if should_trigger {
                         let alert_id = Uuid::new_v4();
                         let alert = sqlx::query_as::<_, AlertV60>(
-                            r#"INSERT INTO finance_v60_alerts
+                            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_alerts
                                 (id, tenant_id, rule_id, metric_name, current_value, threshold, severity, status, created_at)
                             VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8)
-                            RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#,
+                            RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#),
                         )
                         .bind(alert_id)
                         .bind(tenant_id)
@@ -1000,7 +1002,7 @@ impl AlertEngine {
         params: AlertQueryParams,
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance_v60_alerts WHERE tenant_id = $1 AND status = 'active'",
+            "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE tenant_id = $1 AND status = 'active'",
         );
 
         if let Some(ref severity) = params.severity {
@@ -1036,10 +1038,10 @@ impl AlertEngine {
     ) -> Result<AlertV60, sqlx::Error> {
         let now = Utc::now();
         sqlx::query_as(
-            r#"UPDATE finance_v60_alerts
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_alerts
             SET status = 'acknowledged', acknowledged_at = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#,
+            RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#),
         )
         .bind(now)
         .bind(alert_id)
@@ -1055,10 +1057,10 @@ impl AlertEngine {
     ) -> Result<AlertV60, sqlx::Error> {
         let now = Utc::now();
         sqlx::query_as(
-            r#"UPDATE finance_v60_alerts
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_alerts
             SET status = 'resolved', resolved_at = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#,
+            RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#),
         )
         .bind(now)
         .bind(alert_id)
@@ -1072,7 +1074,7 @@ impl AlertEngine {
         tenant_id: Uuid,
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance_v60_alerts WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500",
+            only_own_schema_query!("finance", "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1092,12 +1094,13 @@ impl AlertEngine {
             .unwrap_or(AlertChannelType::Email);
         let enabled = req.enabled.unwrap_or(true);
 
-        sqlx::query_as::<_, AlertChannel>(
-            r#"INSERT INTO finance_v60_alert_channels
+        sqlx::query_as::<_, AlertChannel>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_v60_alert_channels
                 (id, tenant_id, name, channel_type, config, enabled)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, name, channel_type, config, enabled"#,
-        )
+            RETURNING id, name, channel_type, config, enabled"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -1190,10 +1193,10 @@ impl IntelligentScheduler {
         let now = Utc::now();
 
         sqlx::query_as::<_, ScheduleTask>(
-            r#"INSERT INTO finance_v60_schedule_tasks
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_schedule_tasks
                 (id, tenant_id, name, task_type, cron_expression, action, priority, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
-            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#,
+            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -1214,7 +1217,7 @@ impl IntelligentScheduler {
         params: TaskQueryParams,
     ) -> Result<Vec<ScheduleTask>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance_v60_schedule_tasks WHERE tenant_id = $1",
+            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE tenant_id = $1",
         );
 
         if let Some(ref task_type) = params.task_type {
@@ -1250,10 +1253,10 @@ impl IntelligentScheduler {
     ) -> Result<ScheduleTask, sqlx::Error> {
         let now = Utc::now();
         sqlx::query_as(
-            r#"UPDATE finance_v60_schedule_tasks
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET status = 'pending', updated_at = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#,
+            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(now)
         .bind(task_id)
@@ -1268,7 +1271,7 @@ impl IntelligentScheduler {
         task_id: Uuid,
     ) -> Result<ScheduleExecution, sqlx::Error> {
         let task = sqlx::query_as::<_, ScheduleTask>(
-            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(task_id)
         .bind(tenant_id)
@@ -1290,10 +1293,10 @@ impl IntelligentScheduler {
         let completed_at = now + chrono::Duration::milliseconds(duration_ms as i64);
 
         let execution = sqlx::query_as::<_, ScheduleExecution>(
-            r#"INSERT INTO finance_v60_schedule_executions
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_schedule_executions
                 (id, tenant_id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8)
-            RETURNING id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output"#,
+            RETURNING id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output"#),
         )
         .bind(exec_id)
         .bind(tenant_id)
@@ -1307,7 +1310,7 @@ impl IntelligentScheduler {
         .await?;
 
         sqlx::query(
-            "UPDATE finance_v60_schedule_tasks SET status = 'completed', updated_at = $1 WHERE id = $2 AND tenant_id = $3",
+            only_own_schema_query!("finance", "UPDATE finance.finance_v60_schedule_tasks SET status = 'completed', updated_at = $1 WHERE id = $2 AND tenant_id = $3"),
         )
         .bind(completed_at)
         .bind(task_id)
@@ -1324,7 +1327,7 @@ impl IntelligentScheduler {
         execution_id: Uuid,
     ) -> Result<ScheduleExecution, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance_v60_schedule_executions WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(execution_id)
         .bind(tenant_id)
@@ -1338,7 +1341,7 @@ impl IntelligentScheduler {
         task_id: Option<Uuid>,
     ) -> Result<Vec<ScheduleExecution>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance_v60_schedule_executions WHERE tenant_id = $1",
+            "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE tenant_id = $1",
         );
 
         if task_id.is_some() {
@@ -1363,7 +1366,7 @@ impl IntelligentScheduler {
         req: UpdateTaskRequest,
     ) -> Result<ScheduleTask, sqlx::Error> {
         let current: ScheduleTask = sqlx::query_as(
-            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(task_id)
         .bind(tenant_id)
@@ -1378,10 +1381,10 @@ impl IntelligentScheduler {
         let now = Utc::now();
 
         sqlx::query_as(
-            r#"UPDATE finance_v60_schedule_tasks
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET name = $1, cron_expression = $2, action = $3, priority = $4, status = $5, updated_at = $6
             WHERE id = $7 AND tenant_id = $8
-            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#,
+            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(name)
         .bind(cron_expression)
@@ -1402,10 +1405,10 @@ impl IntelligentScheduler {
     ) -> Result<ScheduleTask, sqlx::Error> {
         let now = Utc::now();
         sqlx::query_as(
-            r#"UPDATE finance_v60_schedule_tasks
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET status = 'paused', updated_at = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#,
+            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(now)
         .bind(task_id)
@@ -1421,10 +1424,10 @@ impl IntelligentScheduler {
     ) -> Result<ScheduleTask, sqlx::Error> {
         let now = Utc::now();
         sqlx::query_as(
-            r#"UPDATE finance_v60_schedule_tasks
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
             SET status = 'pending', updated_at = $1
             WHERE id = $2 AND tenant_id = $3
-            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#,
+            RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(now)
         .bind(task_id)

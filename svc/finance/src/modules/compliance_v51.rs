@@ -31,6 +31,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -296,7 +297,8 @@ pub struct ExportedComplianceReport {
 
 /// 初始化合规内控数据库表
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS finance_control_points (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
@@ -312,22 +314,32 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMP
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fcp_tenant ON finance_control_points(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fcp_code ON finance_control_points(code)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fcp_active ON finance_control_points(is_active)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fcp_tenant ON finance_control_points(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fcp_code ON finance_control_points(code)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fcp_active ON finance_control_points(is_active)"
+    ))
+    .execute(pool)
+    .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS finance_control_matrices (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
@@ -339,19 +351,26 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             compliance_rate DOUBLE PRECISION NOT NULL DEFAULT 0.0,
             created_by VARCHAR(100) NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fcm_tenant ON finance_control_matrices(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fcm_period ON finance_control_matrices(period)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fcm_tenant ON finance_control_matrices(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fcm_period ON finance_control_matrices(period)"
+    ))
+    .execute(pool)
+    .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS finance_risk_assessments (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
@@ -365,26 +384,31 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             assessed_by VARCHAR(100) NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fra_tenant ON finance_risk_assessments(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fra_control_point ON finance_risk_assessments(control_point_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fra_tenant ON finance_risk_assessments(tenant_id)"
+    ))
     .execute(pool)
     .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fra_risk_level ON finance_risk_assessments(risk_level)",
+        only_own_schema_query!("finance", "CREATE INDEX IF NOT EXISTS idx_fra_control_point ON finance_risk_assessments(control_point_id)"),
     )
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fra_risk_level ON finance_risk_assessments(risk_level)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS finance_compliance_reports (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
@@ -398,23 +422,26 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             executive_summary TEXT NOT NULL,
             recommendations JSONB NOT NULL DEFAULT '[]'::jsonb,
             created_by VARCHAR(100) NOT NULL
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fcr_tenant ON finance_compliance_reports(tenant_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fcr_tenant ON finance_compliance_reports(tenant_id)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fcr_type ON finance_compliance_reports(report_type)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fcr_type ON finance_compliance_reports(report_type)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "finance",
         r#"CREATE TABLE IF NOT EXISTS finance_compliance_issues (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             report_id UUID NOT NULL REFERENCES finance_compliance_reports(id),
@@ -424,19 +451,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             description TEXT NOT NULL,
             evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
             impact_assessment TEXT NOT NULL
-        )"#,
-    )
+        )"#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fci_report ON finance_compliance_issues(report_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fci_report ON finance_compliance_issues(report_id)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fci_severity ON finance_compliance_issues(severity)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        "CREATE INDEX IF NOT EXISTS idx_fci_severity ON finance_compliance_issues(severity)"
+    ))
     .execute(pool)
     .await?;
 
@@ -455,14 +484,15 @@ impl ControlPoint {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        sqlx::query_as::<_, Self>(
-            r#"INSERT INTO finance_control_points
+        sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_control_points
                 (id, tenant_id, code, name, description, category, risk_level,
                  control_type, frequency, is_active, created_by, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING id, tenant_id, code, name, description, category, risk_level,
-                      control_type, frequency, is_active, created_by, created_at, updated_at"#,
-        )
+                      control_type, frequency, is_active, created_by, created_at, updated_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.code)
@@ -490,7 +520,7 @@ impl ControlPoint {
         let mut query = String::from(
             "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1",
+             FROM finance.finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1",
         );
 
         if category.is_some() {
@@ -529,9 +559,9 @@ impl ControlPoint {
 
     pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(
-            "SELECT id, tenant_id, code, name, description, category, risk_level, \
+            only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+             FROM finance.finance_control_points WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"),
         )
         .bind(id)
         .bind(tenant_id)
@@ -547,8 +577,9 @@ impl ControlPoint {
     ) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
 
-        sqlx::query_as::<_, Self>(
-            r#"UPDATE finance_control_points
+        sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.finance_control_points
             SET name = COALESCE($1, name),
                 description = COALESCE($2, description),
                 category = COALESCE($3, category),
@@ -559,8 +590,8 @@ impl ControlPoint {
                 updated_at = $8
             WHERE id = $9 AND tenant_id = $10
             RETURNING id, tenant_id, code, name, description, category, risk_level,
-                      control_type, frequency, is_active, created_by, created_at, updated_at"#,
-        )
+                      control_type, frequency, is_active, created_by, created_at, updated_at"#
+        ))
         .bind(req.name)
         .bind(req.description)
         .bind(req.category)
@@ -577,7 +608,7 @@ impl ControlPoint {
 
     pub async fn delete(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
         sqlx::query(
-            "UPDATE finance_control_points SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "UPDATE finance.finance_control_points SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"),
         )
         .bind(id)
         .bind(tenant_id)
@@ -595,9 +626,9 @@ impl ControlMatrix {
         created_by: &str,
     ) -> Result<Self, sqlx::Error> {
         let active_controls = sqlx::query_as::<_, ControlPoint>(
-            "SELECT id, tenant_id, code, name, description, category, risk_level, \
+            only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE",
+             FROM finance.finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -631,14 +662,15 @@ impl ControlMatrix {
 
         let id = Uuid::new_v4();
 
-        sqlx::query_as::<_, Self>(
-            r#"INSERT INTO finance_control_matrices
+        sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_control_matrices
                 (id, tenant_id, name, period, controls, total_controls,
                  effective_controls, compliance_rate, created_by, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, tenant_id, name, period, controls, total_controls,
-                      effective_controls, compliance_rate, created_by, created_at"#,
-        )
+                      effective_controls, compliance_rate, created_by, created_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
@@ -654,11 +686,12 @@ impl ControlMatrix {
     }
 
     pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<Self, sqlx::Error> {
-        sqlx::query_as::<_, Self>(
+        sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
             "SELECT id, tenant_id, name, period, controls, total_controls, \
              effective_controls, compliance_rate, created_by, created_at \
-             FROM finance_control_matrices WHERE id = $1 AND tenant_id = $2",
-        )
+             FROM finance.finance_control_matrices WHERE id = $1 AND tenant_id = $2"
+        ))
         .bind(id)
         .bind(tenant_id)
         .fetch_one(pool)
@@ -671,23 +704,25 @@ impl ControlMatrix {
         period: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         if let Some(ref p) = period {
-            sqlx::query_as::<_, Self>(
+            sqlx::query_as::<_, Self>(only_own_schema_query!(
+                "finance",
                 "SELECT id, tenant_id, name, period, controls, total_controls, \
                  effective_controls, compliance_rate, created_by, created_at \
-                 FROM finance_control_matrices WHERE tenant_id = $1 AND period = $2 \
-                 ORDER BY created_at DESC",
-            )
+                 FROM finance.finance_control_matrices WHERE tenant_id = $1 AND period = $2 \
+                 ORDER BY created_at DESC"
+            ))
             .bind(tenant_id)
             .bind(p)
             .fetch_all(pool)
             .await
         } else {
-            sqlx::query_as::<_, Self>(
+            sqlx::query_as::<_, Self>(only_own_schema_query!(
+                "finance",
                 "SELECT id, tenant_id, name, period, controls, total_controls, \
                  effective_controls, compliance_rate, created_by, created_at \
-                 FROM finance_control_matrices WHERE tenant_id = $1 \
-                 ORDER BY created_at DESC",
-            )
+                 FROM finance.finance_control_matrices WHERE tenant_id = $1 \
+                 ORDER BY created_at DESC"
+            ))
             .bind(tenant_id)
             .fetch_all(pool)
             .await
@@ -737,16 +772,17 @@ impl RiskAssessment {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        sqlx::query_as::<_, Self>(
-            r#"INSERT INTO finance_risk_assessments
+        sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_risk_assessments
                 (id, tenant_id, control_point_id, likelihood, impact, risk_score,
                  risk_level, mitigation_strategy, residual_risk, assessed_by,
                  created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING id, tenant_id, control_point_id, likelihood, impact, risk_score,
                       risk_level, mitigation_strategy, residual_risk, assessed_by,
-                      created_at, updated_at"#,
-        )
+                      created_at, updated_at"#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(req.control_point_id)
@@ -764,12 +800,13 @@ impl RiskAssessment {
     }
 
     pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<Self, sqlx::Error> {
-        sqlx::query_as::<_, Self>(
+        sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
              created_at, updated_at \
-             FROM finance_risk_assessments WHERE id = $1 AND tenant_id = $2",
-        )
+             FROM finance.finance_risk_assessments WHERE id = $1 AND tenant_id = $2"
+        ))
         .bind(id)
         .bind(tenant_id)
         .fetch_one(pool)
@@ -786,7 +823,7 @@ impl RiskAssessment {
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
              created_at, updated_at \
-             FROM finance_risk_assessments WHERE tenant_id = $1",
+             FROM finance.finance_risk_assessments WHERE tenant_id = $1",
         );
 
         if control_point_id.is_some() {
@@ -810,12 +847,13 @@ impl RiskAssessment {
     }
 
     pub async fn get_summary(pool: &PgPool, tenant_id: Uuid) -> Result<RiskSummary, sqlx::Error> {
-        let assessments = sqlx::query_as::<_, Self>(
+        let assessments = sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
              created_at, updated_at \
-             FROM finance_risk_assessments WHERE tenant_id = $1",
-        )
+             FROM finance.finance_risk_assessments WHERE tenant_id = $1"
+        ))
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
@@ -859,21 +897,22 @@ impl ComplianceReportV51 {
         created_by: &str,
     ) -> Result<(Self, Vec<ComplianceIssueV51>), sqlx::Error> {
         let controls = sqlx::query_as::<_, ControlPoint>(
-            "SELECT id, tenant_id, code, name, description, category, risk_level, \
+            only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE",
+             FROM finance.finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
 
-        let risk_assessments = sqlx::query_as::<_, RiskAssessment>(
+        let risk_assessments = sqlx::query_as::<_, RiskAssessment>(only_own_schema_query!(
+            "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
              created_at, updated_at \
-             FROM finance_risk_assessments WHERE tenant_id = $1 \
-             ORDER BY created_at DESC",
-        )
+             FROM finance.finance_risk_assessments WHERE tenant_id = $1 \
+             ORDER BY created_at DESC"
+        ))
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
@@ -963,16 +1002,17 @@ impl ComplianceReportV51 {
         let report_id = Uuid::new_v4();
         let now = Utc::now();
 
-        let report = sqlx::query_as::<_, Self>(
-            r#"INSERT INTO finance_compliance_reports
+        let report = sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO finance.finance_compliance_reports
                 (id, tenant_id, report_type, period_start, period_end, generated_at,
                  controls_checked, issues_found, risk_assessments, executive_summary,
                  recommendations, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING id, tenant_id, report_type, period_start, period_end, generated_at,
                       controls_checked, issues_found, risk_assessments, executive_summary,
-                      recommendations, created_by"#,
-        )
+                      recommendations, created_by"#
+        ))
         .bind(report_id)
         .bind(tenant_id)
         .bind(&req.report_type)
@@ -990,14 +1030,15 @@ impl ComplianceReportV51 {
 
         let mut saved_issues = Vec::new();
         for issue in &issues {
-            let saved = sqlx::query_as::<_, ComplianceIssueV51>(
-                r#"INSERT INTO finance_compliance_issues
+            let saved = sqlx::query_as::<_, ComplianceIssueV51>(only_own_schema_query!(
+                "finance",
+                r#"INSERT INTO finance.finance_compliance_issues
                     (id, report_id, severity, category, control_point_code,
                      description, evidence, impact_assessment)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING id, report_id, severity, category, control_point_code,
-                          description, evidence, impact_assessment"#,
-            )
+                          description, evidence, impact_assessment"#
+            ))
             .bind(issue.id)
             .bind(report_id)
             .bind(&issue.severity)
@@ -1015,12 +1056,13 @@ impl ComplianceReportV51 {
     }
 
     pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<Self, sqlx::Error> {
-        sqlx::query_as::<_, Self>(
+        sqlx::query_as::<_, Self>(only_own_schema_query!(
+            "finance",
             "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
              controls_checked, issues_found, risk_assessments, executive_summary, \
              recommendations, created_by \
-             FROM finance_compliance_reports WHERE id = $1 AND tenant_id = $2",
-        )
+             FROM finance.finance_compliance_reports WHERE id = $1 AND tenant_id = $2"
+        ))
         .bind(id)
         .bind(tenant_id)
         .fetch_one(pool)
@@ -1033,25 +1075,27 @@ impl ComplianceReportV51 {
         report_type: Option<String>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         if let Some(ref rt) = report_type {
-            sqlx::query_as::<_, Self>(
+            sqlx::query_as::<_, Self>(only_own_schema_query!(
+                "finance",
                 "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
                  controls_checked, issues_found, risk_assessments, executive_summary, \
                  recommendations, created_by \
-                 FROM finance_compliance_reports WHERE tenant_id = $1 AND report_type = $2 \
-                 ORDER BY generated_at DESC",
-            )
+                 FROM finance.finance_compliance_reports WHERE tenant_id = $1 AND report_type = $2 \
+                 ORDER BY generated_at DESC"
+            ))
             .bind(tenant_id)
             .bind(rt)
             .fetch_all(pool)
             .await
         } else {
-            sqlx::query_as::<_, Self>(
+            sqlx::query_as::<_, Self>(only_own_schema_query!(
+                "finance",
                 "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
                  controls_checked, issues_found, risk_assessments, executive_summary, \
                  recommendations, created_by \
-                 FROM finance_compliance_reports WHERE tenant_id = $1 \
-                 ORDER BY generated_at DESC",
-            )
+                 FROM finance.finance_compliance_reports WHERE tenant_id = $1 \
+                 ORDER BY generated_at DESC"
+            ))
             .bind(tenant_id)
             .fetch_all(pool)
             .await
@@ -1064,12 +1108,13 @@ impl ComplianceReportV51 {
         tenant_id: Uuid,
     ) -> Result<ExportedComplianceReport, sqlx::Error> {
         let report = Self::get(pool, id, tenant_id).await?;
-        let issues = sqlx::query_as::<_, ComplianceIssueV51>(
+        let issues = sqlx::query_as::<_, ComplianceIssueV51>(only_own_schema_query!(
+            "finance",
             "SELECT id, report_id, severity, category, control_point_code, \
              description, evidence, impact_assessment \
-             FROM finance_compliance_issues WHERE report_id = $1 \
-             ORDER BY severity, control_point_code",
-        )
+             FROM finance.finance_compliance_issues WHERE report_id = $1 \
+             ORDER BY severity, control_point_code"
+        ))
         .bind(id)
         .fetch_all(pool)
         .await?;

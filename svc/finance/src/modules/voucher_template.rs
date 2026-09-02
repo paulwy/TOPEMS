@@ -505,7 +505,7 @@ async fn resolve_source_amounts(
 
     // 事件驱动：从 Finance 本地快照表读取，替代跨 Schema 直查 plugin_erp
     let snapshot_rows: Vec<(Uuid, Option<f64>)> = sqlx::query_as::<_, (Uuid, Option<f64>)>(
-        only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM source_amount_snapshots
+        only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM public.source_amount_snapshots
            WHERE source_type = $1 AND source_id = ANY($2)"#),
     )
     .bind(snapshot_type)
@@ -525,11 +525,11 @@ async fn resolve_source_amounts(
     })
     .unwrap_or_default();
 
-    // payment/pay 类型特殊处理：查 core_finance_payments（归位后的支付单表）
+    // payment/pay 类型特殊处理：查 payment_records 表（同 Schema，安全）
     let amount_f64s: Vec<(Uuid, Option<f64>)> = if snapshot_type == "payment" {
         let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(only_own_schema_query!(
             "finance",
-            r#"SELECT id, total_amount AS amount FROM core_finance_payments
+            r#"SELECT id, amount FROM public.payment_records
                WHERE tenant_id = $1 AND id = ANY($2)"#
         ))
         .bind(tenant_id)
@@ -537,15 +537,24 @@ async fn resolve_source_amounts(
         .fetch_all(pool)
         .await;
         match r1 {
-            Ok(rows) => rows,
-            Err(e) => {
+            Ok(rows) if !rows.is_empty() => rows,
+            _ => sqlx::query_as::<_, (Uuid, Option<f64>)>(only_own_schema_query!(
+                "finance",
+                r#"SELECT id, amount FROM public.payments
+                   WHERE tenant_id = $1 AND id = ANY($2)"#
+            ))
+            .bind(tenant_id)
+            .bind(&valid_uuids)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
                 static LOGGED: std::sync::atomic::AtomicBool =
                     std::sync::atomic::AtomicBool::new(false);
                 if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                    warn!(error = %e, "查询 core_finance_payments 失败，使用默认金额 1000.00 兜底");
+                    warn!(error = %e, "查询 public.payments 失败，使用默认金额 1000.00 兜底");
                 }
-                Vec::new()
-            }
+            })
+            .unwrap_or_default(),
         }
     } else {
         snapshot_rows

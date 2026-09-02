@@ -1,3 +1,4 @@
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -11,7 +12,7 @@ impl FinanceService {
         tenant_id: Uuid,
     ) -> Result<Vec<ApprovalConfigResponse>, TopemsError> {
         let configs: Vec<PaymentApprovalConfig> = sqlx::query_as(
-            "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY priority DESC, amount_threshold ASC",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY priority DESC, amount_threshold ASC"),
         )
         .bind(tenant_id)
         .fetch_all(&self.db_pool)
@@ -45,7 +46,7 @@ impl FinanceService {
         config_id: Uuid,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
         let config: PaymentApprovalConfig = sqlx::query_as(
-            "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(config_id)
@@ -79,8 +80,8 @@ impl FinanceService {
         let mut tx = self.db_pool.begin().await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
-            "INSERT INTO core_finance_payment_approval_config (tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, priority, is_active, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+            only_own_schema_query!("finance", "INSERT INTO core_finance_payment_approval_config (tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, priority, is_active, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"),
         )
         .bind(tenant_id)
         .bind(req.name)
@@ -98,8 +99,8 @@ impl FinanceService {
         if let Some(nodes) = req.nodes {
             for node in nodes {
                 sqlx::query(
-                    "INSERT INTO core_finance_approval_nodes (tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+                    only_own_schema_query!("finance", "INSERT INTO core_finance_approval_nodes (tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"),
                 )
                 .bind(tenant_id)
                 .bind(config.id)
@@ -148,8 +149,8 @@ impl FinanceService {
         let mut tx = self.db_pool.begin().await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
-            "UPDATE core_finance_payment_approval_config SET name = $1, description = $2, amount_threshold = $3, max_amount = $4, workflow_id = $5, approval_levels = $6, priority = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $9 AND id = $10 RETURNING *",
+            only_own_schema_query!("finance", "UPDATE core_finance_payment_approval_config SET name = $1, description = $2, amount_threshold = $3, max_amount = $4, workflow_id = $5, approval_levels = $6, priority = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
+             WHERE tenant_id = $9 AND id = $10 RETURNING *"),
         )
         .bind(req.name)
         .bind(req.description)
@@ -165,9 +166,10 @@ impl FinanceService {
         .await?;
 
         if let Some(nodes) = req.nodes {
-            sqlx::query(
-                "DELETE FROM core_finance_approval_nodes WHERE tenant_id = $1 AND config_id = $2",
-            )
+            sqlx::query(only_own_schema_query!(
+                "finance",
+                "DELETE FROM core_finance_approval_nodes WHERE tenant_id = $1 AND config_id = $2"
+            ))
             .bind(tenant_id)
             .bind(config_id)
             .execute(&mut *tx)
@@ -175,8 +177,8 @@ impl FinanceService {
 
             for node in nodes {
                 sqlx::query(
-                    "INSERT INTO core_finance_approval_nodes (tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+                    only_own_schema_query!("finance", "INSERT INTO core_finance_approval_nodes (tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"),
                 )
                 .bind(tenant_id)
                 .bind(config.id)
@@ -222,16 +224,17 @@ impl FinanceService {
     ) -> Result<(), TopemsError> {
         let mut tx = self.db_pool.begin().await?;
 
-        sqlx::query(
-            "DELETE FROM core_finance_approval_nodes WHERE tenant_id = $1 AND config_id = $2",
-        )
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            "DELETE FROM core_finance_approval_nodes WHERE tenant_id = $1 AND config_id = $2"
+        ))
         .bind(tenant_id)
         .bind(config_id)
         .execute(&mut *tx)
         .await?;
 
         sqlx::query(
-            "UPDATE core_finance_payment_approval_config SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "UPDATE core_finance_payment_approval_config SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(config_id)
@@ -248,7 +251,7 @@ impl FinanceService {
         config_id: Uuid,
     ) -> Result<Vec<ApprovalNode>, TopemsError> {
         let nodes: Vec<ApprovalNode> = sqlx::query_as(
-            "SELECT id, tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active, created_at, updated_at FROM core_finance_approval_nodes WHERE config_id = $1 ORDER BY node_level ASC",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active, created_at, updated_at FROM core_finance_approval_nodes WHERE config_id = $1 ORDER BY node_level ASC"),
         )
         .bind(config_id)
         .fetch_all(&self.db_pool)

@@ -1,4 +1,5 @@
 use serde_json::{json, Value};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::FinanceService;
@@ -100,7 +101,7 @@ impl FinanceService {
         payable_id: Uuid,
     ) -> Result<Value, TopemsError> {
         let row = sqlx::query(
-            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(payable_id)
@@ -133,11 +134,12 @@ impl FinanceService {
             .unwrap_or("");
         let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
 
-        let row = sqlx::query(
+        let row = sqlx::query(only_own_schema_query!(
+            "finance",
             "INSERT INTO erp_payables (tenant_id, supplier_name, amount, status, created_by)
              VALUES ($1, $2, $3, 'unpaid', $4)
-             RETURNING id, supplier_name, amount, status, created_at",
-        )
+             RETURNING id, supplier_name, amount, status, created_at"
+        ))
         .bind(tenant_id)
         .bind(supplier_name)
         .bind(amount)
@@ -168,15 +170,16 @@ impl FinanceService {
         let amount = req.get("amount").and_then(|v| v.as_f64());
         let status = req.get("status").and_then(|v| v.as_str());
 
-        let row = sqlx::query(
+        let row = sqlx::query(only_own_schema_query!(
+            "finance",
             "UPDATE erp_payables
              SET supplier_name = COALESCE($1, supplier_name),
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
                  updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $4 AND id = $5
-             RETURNING id, supplier_name, amount, status, updated_at",
-        )
+             RETURNING id, supplier_name, amount, status, updated_at"
+        ))
         .bind(supplier_name)
         .bind(amount)
         .bind(status)
@@ -203,9 +206,10 @@ impl FinanceService {
         tenant_id: Uuid,
         payable_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let result = sqlx::query(
-            "UPDATE erp_payables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
-        )
+        let result = sqlx::query(only_own_schema_query!(
+            "finance",
+            "UPDATE erp_payables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+        ))
         .bind(tenant_id)
         .bind(payable_id)
         .execute(&self.db_pool)
@@ -220,7 +224,7 @@ impl FinanceService {
 
     pub async fn get_payable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
         let rows = sqlx::query(
-            "SELECT
+            only_own_schema_query!("finance", "SELECT
                 '0-30天' as bucket,
                 COALESCE(SUM(CASE WHEN due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as amount,
                 COUNT(*) FILTER (WHERE due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid') as cnt
@@ -239,7 +243,7 @@ impl FinanceService {
              SELECT '90天以上',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid')
-             FROM erp_payables WHERE tenant_id = $1",
+             FROM erp_payables WHERE tenant_id = $1"),
         )
         .bind(tenant_id)
         .fetch_all(&self.db_pool)

@@ -110,12 +110,11 @@ impl<T: Serialize> ApiResponse<T> {
 // CRUD Handlers
 // ============================================================================
 
-const TABLE: &str = "accounting_subjects";
+const TABLE: &str = "public.accounting_subjects";
 
 /// 列表查询（支持分页、搜索、筛选）
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
     path = "/api/finance/accounting-subjects",
     params(AccountingSubjectQuery),
     responses(
@@ -196,7 +195,6 @@ pub async fn list_accounting_subjects(
 /// 根据 ID 获取单个会计科目
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
     path = "/api/finance/accounting-subjects/{id}",
     params(("id" = Uuid, Path, description = "会计科目 ID")),
     responses(
@@ -228,44 +226,9 @@ pub async fn get_accounting_subject(
     }
 }
 
-/// 按编码查询会计科目（供 erp 等跨服务只读消费，替代跨 schema 直读）
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/api/finance/accounting-subjects/by-code/{code}",
-    responses(
-        (status = 200, description = "查询成功", body = AccountingSubject),
-        (status = 400, description = "查询失败"),
-    ),
-    tag = "Accounting"
-)]
-pub async fn get_accounting_subject_by_code(
-    State(state): State<AppState>,
-    Path(code): Path<String>,
-) -> Json<ApiResponse<AccountingSubject>> {
-    let sql = format!(
-        "SELECT * FROM {} WHERE code = $1 AND deleted_at IS NULL",
-        TABLE
-    );
-
-    match sqlx::query_as::<_, AccountingSubject>(&sql)
-        .bind(code)
-        .fetch_optional(&state.pool)
-        .await
-    {
-        Ok(Some(subject)) => Json(ApiResponse::success(subject)),
-        Ok(None) => Json(ApiResponse::error("会计科目不存在")),
-        Err(e) => {
-            tracing::error!("按编码查询会计科目失败: {}", e);
-            Json(ApiResponse::error("查询失败"))
-        }
-    }
-}
-
 /// 创建会计科目
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
     path = "/api/finance/accounting-subjects",
     request_body = CreateAccountingSubjectRequest,
     responses(
@@ -314,7 +277,6 @@ pub async fn create_accounting_subject(
 /// 更新会计科目
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["finance:write"])),
     path = "/api/finance/accounting-subjects/{id}",
     params(("id" = Uuid, Path, description = "会计科目 ID")),
     request_body = UpdateAccountingSubjectRequest,
@@ -388,7 +350,6 @@ pub async fn update_accounting_subject(
 /// 删除会计科目（软删除）
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["finance:delete"])),
     path = "/api/finance/accounting-subjects/{id}",
     params(("id" = Uuid, Path, description = "会计科目 ID")),
     responses(
@@ -429,10 +390,6 @@ pub async fn delete_accounting_subject(
 pub fn create_routes() -> axum::Router<AppState> {
     use axum::routing::get;
     axum::Router::new()
-        .route(
-            "/accounting-subjects/by-code/{code}",
-            get(get_accounting_subject_by_code),
-        )
         .route(
             "/accounting-subjects",
             get(list_accounting_subjects).post(create_accounting_subject),

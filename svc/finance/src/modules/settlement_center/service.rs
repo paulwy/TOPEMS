@@ -1,9 +1,9 @@
 //! Settlement Center - 业务逻辑层
 //!
 //! V256 事件驱动重构：
-//! - 对账数据：从 finance.reconciliation_snapshots 本地快照读取
-//! - 结算数据：从 finance.settlement_snapshots 本地快照读取
-//! - 关联查询：读写 finance.reconciliation_settlement_links
+//! - 对账数据：从 plugin_finance.reconciliation_snapshots 本地快照读取
+//! - 结算数据：从 plugin_finance.settlement_snapshots 本地快照读取
+//! - 关联查询：读写 plugin_finance.reconciliation_settlement_links
 //! - 写入路径：写本地快照 + 发布事件（ERP/PM 通过事件订阅接收数据）
 //! - Finance 不再跨 schema 访问 erp.* 或 pm.* 表
 //! - ERP 订阅 ReconciliationCreated/Approved/Updated 事件
@@ -35,7 +35,7 @@ pub async fn list_reconciliations(
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM reconciliation_snapshots
+           FROM public.reconciliation_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR recon_type = $3)
@@ -69,7 +69,7 @@ pub async fn get_reconciliation_detail(
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM reconciliation_snapshots
+           FROM public.reconciliation_snapshots
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(recon_id)
@@ -89,7 +89,7 @@ pub async fn get_reconciliation_detail(
                   s.settlement_type, s.status AS settlement_status,
                   s.amount AS settlement_amount
            FROM finance.reconciliation_settlement_links l
-           JOIN settlement_snapshots s ON s.id = l.settlement_id
+           JOIN public.settlement_snapshots s ON s.id = l.settlement_id
            WHERE l.reconciliation_id = $1
              AND l.tenant_id = $2
              AND l.status != 'cancelled'"#
@@ -118,7 +118,7 @@ pub async fn create_reconciliation(
 
     sqlx::query(only_own_schema_query!(
         "finance",
-        r#"INSERT INTO reconciliation_snapshots
+        r#"INSERT INTO public.reconciliation_snapshots
              (id, tenant_id, recon_code, recon_name, recon_type, status, period,
               entity_id, entity_type, description, created_by, synced_at, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $11, $11)
@@ -144,7 +144,7 @@ pub async fn create_reconciliation(
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM reconciliation_snapshots
+           FROM public.reconciliation_snapshots
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(id)
@@ -226,7 +226,7 @@ pub async fn manual_reconcile(
 
     sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE reconciliation_snapshots
+        r#"UPDATE public.reconciliation_snapshots
            SET matched_count = $1, unmatched_count = $2,
                total_debit = $3, total_credit = $4, difference = $5,
                updated_at = NOW(), synced_at = NOW()
@@ -284,7 +284,7 @@ pub async fn auto_reconcile(
         "finance",
         r#"UPDATE finance.reconciliation_item_snapshots ri
            SET match_status = 'matched', updated_at = NOW()
-           FROM reconciliation_snapshots r
+           FROM public.reconciliation_snapshots r
            WHERE ri.recon_id = r.id
              AND r.period = $1
              AND ($2::uuid IS NULL OR r.tenant_id = $2)
@@ -311,7 +311,7 @@ pub async fn auto_reconcile(
     // 重新汇总对账单统计
     sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE reconciliation_snapshots r
+        r#"UPDATE public.reconciliation_snapshots r
            SET matched_count = s.matched_count,
                unmatched_count = s.unmatched_count,
                total_debit = s.total_debit,
@@ -327,7 +327,7 @@ pub async fn auto_reconcile(
                       SUM(debit_amount) - SUM(credit_amount) AS difference
                FROM finance.reconciliation_item_snapshots
                WHERE recon_id IN (
-                   SELECT id FROM reconciliation_snapshots
+                   SELECT id FROM public.reconciliation_snapshots
                    WHERE period = $1
                      AND ($2::uuid IS NULL OR tenant_id = $2)
                      AND ($3::text IS NULL OR recon_type = $3)
@@ -375,7 +375,7 @@ pub async fn list_settlements(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM settlement_snapshots
+           FROM public.settlement_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR settlement_type = $3)
@@ -419,7 +419,7 @@ pub async fn get_settlement_detail(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM settlement_snapshots
+           FROM public.settlement_snapshots
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(settlement_id)
@@ -436,7 +436,7 @@ pub async fn get_settlement_detail(
                   r.id AS reconciliation_id, r.recon_code,
                   r.recon_name, r.recon_type, r.status AS recon_status, r.difference AS recon_difference
            FROM finance.reconciliation_settlement_links l
-           JOIN reconciliation_snapshots r ON r.id = l.reconciliation_id
+           JOIN public.reconciliation_snapshots r ON r.id = l.reconciliation_id
            WHERE l.settlement_id = $1
              AND l.tenant_id = $2
              AND l.status != 'cancelled'"#),
@@ -474,7 +474,7 @@ pub async fn create_settlement(
 
     sqlx::query(only_own_schema_query!(
         "finance",
-        r#"INSERT INTO settlement_snapshots
+        r#"INSERT INTO public.settlement_snapshots
              (id, tenant_id, project_id, settlement_no, settlement_type, status,
               amount, settlement_date, remarks, created_by, synced_at, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, 'draft', NULL, $6, $7, $8, $9, $9, $9)
@@ -508,7 +508,7 @@ pub async fn create_settlement(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM settlement_snapshots
+           FROM public.settlement_snapshots
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(id)
@@ -553,7 +553,7 @@ pub async fn approve_reconciliation(
 
     sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE reconciliation_snapshots
+        r#"UPDATE public.reconciliation_snapshots
            SET status = 'approved', approved_by = $1, approved_at = $2,
                updated_at = NOW(), synced_at = NOW()
            WHERE id = $3 AND tenant_id = $4 AND status IN ('draft', 'pending')"#
@@ -571,7 +571,7 @@ pub async fn approve_reconciliation(
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM reconciliation_snapshots
+           FROM public.reconciliation_snapshots
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(recon_id)
@@ -635,7 +635,7 @@ pub async fn approve_settlement(
 
     sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE settlement_snapshots
+        r#"UPDATE public.settlement_snapshots
            SET status = 'approved', approved_by = $1, approved_at = $2,
                updated_at = NOW(), synced_at = NOW()
            WHERE id = $3 AND tenant_id = $4 AND status = 'pending'"#
@@ -663,7 +663,7 @@ pub async fn approve_settlement(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM settlement_snapshots
+           FROM public.settlement_snapshots
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(settlement_id)
@@ -957,7 +957,7 @@ async fn get_reconciliation_statistics(
              COALESCE(SUM(difference), 0)::numeric AS total_difference,
              COALESCE(SUM(matched_count), 0)::bigint AS matched_count,
              COALESCE(SUM(unmatched_count), 0)::bigint AS unmatched_count
-           FROM reconciliation_snapshots
+           FROM public.reconciliation_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
         ))
         .bind(tenant_id_opt(tenant_id))
@@ -991,7 +991,7 @@ async fn get_settlement_statistics(
              0::numeric AS total_budget,
              COALESCE(SUM(amount), 0)::numeric AS total_actual,
              0::numeric AS total_variance
-           FROM settlement_snapshots
+           FROM public.settlement_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
         ))
         .bind(tenant_id_opt(tenant_id))
@@ -1078,7 +1078,7 @@ pub async fn get_dashboard_summary(
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM reconciliation_snapshots
+           FROM public.reconciliation_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
            ORDER BY created_at DESC
            LIMIT 5"#
@@ -1103,7 +1103,7 @@ pub async fn get_dashboard_summary(
                   NULL::varchar AS approved_by,
                   NULL::timestamptz AS approved_at,
                   created_at, updated_at
-           FROM settlement_snapshots
+           FROM public.settlement_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
            ORDER BY created_at DESC
            LIMIT 5"#

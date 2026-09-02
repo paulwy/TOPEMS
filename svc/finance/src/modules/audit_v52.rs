@@ -28,6 +28,7 @@ use chrono::{DateTime, Duration, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -305,10 +306,10 @@ impl AutoAuditEngine {
         let is_active = req.is_active.unwrap_or(true);
 
         sqlx::query_as::<_, AuditRule>(
-            r#"INSERT INTO finance_audit_rules_v52
+            only_own_schema_query!("finance", r#"INSERT INTO finance_audit_rules_v52
                 (id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at"#,
+            RETURNING id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -445,7 +446,7 @@ impl AutoAuditEngine {
     }
 
     pub async fn delete_rule(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE finance_audit_rules_v52 SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance_audit_rules_v52 SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(id)
             .bind(tenant_id)
             .execute(pool)
@@ -459,7 +460,7 @@ impl AutoAuditEngine {
         tenant_id: Uuid,
     ) -> Result<AuditRule, sqlx::Error> {
         sqlx::query_as::<_, AuditRule>(
-            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
         )
         .bind(id)
         .bind(tenant_id)
@@ -474,7 +475,7 @@ impl AutoAuditEngine {
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
         let rules = if let Some(ids) = rule_ids {
             sqlx::query_as::<_, AuditRule>(
-                "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND id = ANY($2) AND is_active = TRUE",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND id = ANY($2) AND is_active = TRUE"),
             )
             .bind(tenant_id)
             .bind(ids)
@@ -482,7 +483,7 @@ impl AutoAuditEngine {
             .await?
         } else {
             sqlx::query_as::<_, AuditRule>(
-                "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
             )
             .bind(tenant_id)
             .fetch_all(pool)
@@ -548,13 +549,14 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_i64())
             .unwrap_or(2);
 
-        let rows: Vec<(Uuid, String, String, i64)> = sqlx::query_as(
+        let rows: Vec<(Uuid, String, String, i64)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, voucher_no, status, COUNT(*) as cnt FROM vouchers
                WHERE tenant_id = $1
                GROUP BY voucher_no, status
                HAVING COUNT(*) > $2
-               LIMIT 100"#,
-        )
+               LIMIT 100"#
+        ))
         .bind(tenant_id)
         .bind(threshold)
         .fetch_all(pool)
@@ -594,7 +596,8 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_f64())
             .unwrap_or(0.01);
 
-        let rows: Vec<(Uuid, String, f64, f64)> = sqlx::query_as(
+        let rows: Vec<(Uuid, String, f64, f64)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT v.id, v.voucher_no, v.total_amount,
                       COALESCE(SUM(vl.amount), 0) as line_total
                FROM vouchers v
@@ -602,8 +605,8 @@ impl AutoAuditEngine {
                WHERE v.tenant_id = $1 AND v.status NOT IN ('draft', 'cancelled')
                GROUP BY v.id, v.voucher_no, v.total_amount
                HAVING ABS(v.total_amount - COALESCE(SUM(vl.amount), 0)) > $2
-               LIMIT 100"#,
-        )
+               LIMIT 100"#
+        ))
         .bind(tenant_id)
         .bind(tolerance)
         .fetch_all(pool)
@@ -644,18 +647,20 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_i64())
             .unwrap_or(7) as i32;
 
-        let rows: Vec<(Uuid, String, String, DateTime<Utc>)> = sqlx::query_as(
-            r#"SELECT id, entity_type, action, created_at
+        let rows: Vec<(Uuid, String, String, DateTime<Utc>)> =
+            sqlx::query_as(only_own_schema_query!(
+                "finance",
+                r#"SELECT id, entity_type, action, created_at
                FROM finance_audit_log
                WHERE tenant_id = $1 AND action = 'delete'
                AND created_at > NOW() - INTERVAL '1 day' * $2
                ORDER BY created_at DESC
-               LIMIT 100"#,
-        )
-        .bind(tenant_id)
-        .bind(days)
-        .fetch_all(pool)
-        .await?;
+               LIMIT 100"#
+            ))
+            .bind(tenant_id)
+            .bind(days)
+            .fetch_all(pool)
+            .await?;
 
         let mut findings = Vec::new();
         for (log_id, entity_type, action, created_at) in &rows {
@@ -697,13 +702,14 @@ impl AutoAuditEngine {
         let cutoff = Utc::now() - Duration::days(30);
 
         let mut findings = Vec::new();
-        let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(
+        let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, voucher_no, created_at
                FROM vouchers
                WHERE tenant_id = $1 AND created_at > $2
                ORDER BY created_at DESC
-               LIMIT 500"#,
-        )
+               LIMIT 500"#
+        ))
         .bind(tenant_id)
         .bind(cutoff)
         .fetch_all(pool)
@@ -747,14 +753,15 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_f64())
             .unwrap_or(10000.0);
 
-        let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(
+        let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, voucher_no, total_amount
                FROM vouchers
                WHERE tenant_id = $1 AND total_amount >= $2
                AND ROUND(total_amount, 0) = total_amount
                AND status NOT IN ('draft', 'cancelled')
-               LIMIT 100"#,
-        )
+               LIMIT 100"#
+        ))
         .bind(tenant_id)
         .bind(min_amount)
         .fetch_all(pool)
@@ -914,11 +921,11 @@ impl AutoAuditEngine {
         let now = Utc::now();
 
         sqlx::query_as::<_, AuditFinding>(
-            r#"UPDATE finance_audit_findings_v52
+            only_own_schema_query!("finance", r#"UPDATE finance_audit_findings_v52
                SET status = 'resolved', resolved_at = $1, resolved_by = $2,
                    evidence = jsonb_set(COALESCE(evidence, '{}'), '{resolution}', to_jsonb($3::text))
                WHERE id = $4 AND tenant_id = $5
-               RETURNING id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by"#,
+               RETURNING id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by"#),
         )
         .bind(now)
         .bind(resolved_by)
@@ -985,10 +992,10 @@ impl AnomalyDetector {
 
         for alert in &alerts {
             sqlx::query_as::<_, AnomalyAlert>(
-                r#"INSERT INTO finance_anomaly_alerts_v52
+                only_own_schema_query!("finance", r#"INSERT INTO finance_anomaly_alerts_v52
                     (id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                RETURNING id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at"#,
+                RETURNING id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at"#),
             )
             .bind(alert.id)
             .bind(alert.tenant_id)
@@ -1013,7 +1020,8 @@ impl AnomalyDetector {
         pool: &PgPool,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
-        let rows: Vec<(Uuid, String, f64, f64, f64)> = sqlx::query_as(
+        let rows: Vec<(Uuid, String, f64, f64, f64)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, voucher_no, total_amount,
                       AVG(total_amount) OVER () as mean_amt,
                       STDDEV(total_amount) OVER () as std_amt
@@ -1021,8 +1029,8 @@ impl AnomalyDetector {
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND created_at > NOW() - INTERVAL '30 days'
                ORDER BY created_at DESC
-               LIMIT 500"#,
-        )
+               LIMIT 500"#
+        ))
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
@@ -1073,14 +1081,15 @@ impl AnomalyDetector {
         pool: &PgPool,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
-        let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(
+        let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, voucher_no, ABS(total_amount) as amount
                FROM vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND total_amount > 0
                ORDER BY created_at DESC
-               LIMIT 1000"#,
-        )
+               LIMIT 1000"#
+        ))
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
@@ -1133,14 +1142,15 @@ impl AnomalyDetector {
         pool: &PgPool,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
-        let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(
+        let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT id, voucher_no, created_at
                FROM vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND created_at > NOW() - INTERVAL '30 days'
                ORDER BY created_at DESC
-               LIMIT 500"#,
-        )
+               LIMIT 500"#
+        ))
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
@@ -1182,15 +1192,16 @@ impl AnomalyDetector {
         pool: &PgPool,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
-        let rows: Vec<(String, i64)> = sqlx::query_as(
+        let rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT created_by, COUNT(*) as cnt
                FROM vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND created_at > NOW() - INTERVAL '7 days'
                GROUP BY created_by
                ORDER BY cnt DESC
-               LIMIT 20"#,
-        )
+               LIMIT 20"#
+        ))
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
@@ -1228,7 +1239,8 @@ impl AnomalyDetector {
         pool: &PgPool,
         tenant_id: Uuid,
     ) -> Result<Vec<AnomalyAlert>, sqlx::Error> {
-        let rows: Vec<(String, f64)> = sqlx::query_as(
+        let rows: Vec<(String, f64)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
             r#"SELECT DATE_TRUNC('day', created_at) as day,
                       SUM(total_amount) as daily_total
                FROM vouchers
@@ -1236,8 +1248,8 @@ impl AnomalyDetector {
                AND created_at > NOW() - INTERVAL '30 days'
                GROUP BY day
                ORDER BY day DESC
-               LIMIT 30"#,
-        )
+               LIMIT 30"#
+        ))
         .bind(tenant_id)
         .fetch_all(pool)
         .await?;
@@ -1379,15 +1391,16 @@ impl AnomalyDetector {
         enabled: bool,
         parameters: serde_json::Value,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "finance",
             r#"INSERT INTO finance_detection_configs_v52
                 (tenant_id, detection_type, is_enabled, parameters, updated_at)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (tenant_id, detection_type) DO UPDATE
             SET is_enabled = EXCLUDED.is_enabled,
                 parameters = EXCLUDED.parameters,
-                updated_at = EXCLUDED.updated_at"#,
-        )
+                updated_at = EXCLUDED.updated_at"#
+        ))
         .bind(tenant_id)
         .bind(detection_type)
         .bind(enabled)
@@ -1403,7 +1416,7 @@ impl AnomalyDetector {
         tenant_id: Uuid,
     ) -> Result<DetectionSummary, sqlx::Error> {
         let alerts: Vec<AnomalyAlert> = sqlx::query_as(
-            "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1449,10 +1462,10 @@ impl AlertManager {
         let is_active = req.is_active.unwrap_or(true);
 
         sqlx::query_as::<_, AlertConfig>(
-            r#"INSERT INTO finance_alert_configs_v52
+            only_own_schema_query!("finance", r#"INSERT INTO finance_alert_configs_v52
                 (id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at"#,
+            RETURNING id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at"#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -1472,7 +1485,7 @@ impl AlertManager {
         tenant_id: Uuid,
     ) -> Result<Vec<AlertConfig>, sqlx::Error> {
         sqlx::query_as(
-            "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE tenant_id = $1 ORDER BY created_at DESC",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE tenant_id = $1 ORDER BY created_at DESC"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1489,7 +1502,7 @@ impl AlertManager {
         message: &str,
     ) -> Result<AlertHistory, sqlx::Error> {
         let configs = sqlx::query_as::<_, AlertConfig>(
-            "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE tenant_id = $1 AND channel = $2 AND is_active = TRUE",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE tenant_id = $1 AND channel = $2 AND is_active = TRUE"),
         )
         .bind(tenant_id)
         .bind(channel)
@@ -1505,10 +1518,10 @@ impl AlertManager {
         let now = Utc::now();
 
         sqlx::query_as::<_, AlertHistory>(
-            r#"INSERT INTO finance_alert_history_v52
+            only_own_schema_query!("finance", r#"INSERT INTO finance_alert_history_v52
                 (id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at"#,
+            RETURNING id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at"#),
         )
         .bind(history_id)
         .bind(tenant_id)
@@ -1599,10 +1612,10 @@ impl AlertManager {
         acknowledged_by: &str,
     ) -> Result<AlertHistory, sqlx::Error> {
         sqlx::query_as::<_, AlertHistory>(
-            r#"UPDATE finance_alert_history_v52
+            only_own_schema_query!("finance", r#"UPDATE finance_alert_history_v52
                SET is_acknowledged = TRUE, acknowledged_by = $1
                WHERE id = $2 AND tenant_id = $3
-               RETURNING id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at"#,
+               RETURNING id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at"#),
         )
         .bind(acknowledged_by)
         .bind(id)
@@ -1621,7 +1634,7 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
         interval.tick().await;
 
         let tenants = sqlx::query_scalar::<_, Uuid>(
-            "SELECT DISTINCT tenant_id FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND is_active = TRUE",
+            only_own_schema_query!("finance", "SELECT DISTINCT tenant_id FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND is_active = TRUE"),
         )
         .fetch_all(&pool)
         .await
