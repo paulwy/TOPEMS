@@ -1020,8 +1020,6 @@ services:
     networks:
       - topems-network
     depends_on:
-      nginx:
-        condition: service_healthy
       unified-core:
         condition: service_healthy
       erp:
@@ -1065,7 +1063,7 @@ services:
       integration:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:80/"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -1081,11 +1079,13 @@ services:
     ports:
       - "8081:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ../apps/web/dist:/usr/share/nginx/html:ro
     networks:
       - topems-network
     depends_on:
+      traefik:
+        condition: service_started
       consul:
         condition: service_healthy
       unified-core:
@@ -1131,7 +1131,7 @@ services:
       integration:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-s", "-o", "/dev/null", "http://localhost/"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -1161,7 +1161,7 @@ services:
     networks:
       - topems-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:14268/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:16686/"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -1177,7 +1177,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     networks:
       - topems-network
@@ -1187,7 +1187,7 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9090/-/healthy"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -1233,9 +1233,8 @@ services:
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--web.external-url=http://localhost:9093'
-      - '--config.expand-env=true'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9093/-/healthy"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9093/-/healthy"]
       interval: 10s
       timeout: 5s
       retries: 3

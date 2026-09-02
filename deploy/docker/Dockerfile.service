@@ -13,8 +13,8 @@
 # 或通过构建脚本:
 #   bash deploy/docker/build-service.sh erp
 
-ARG RUST_IMAGE=rust:alpine
-ARG ALPINE_IMAGE=alpine:3.19
+ARG RUST_IMAGE=docker.1panel.live/library/rust:alpine
+ARG ALPINE_IMAGE=docker.1panel.live/library/alpine:3.19
 
 # ============================================
 # Stage 1: Build
