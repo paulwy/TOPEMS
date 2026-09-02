@@ -166,9 +166,10 @@ services:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_change_me}
-      - CONSUL_ENABLED=${CONSUL_ENABLED:-false}
       - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
       - PLUGIN_HEARTBEAT_TIMEOUT=${PLUGIN_HEARTBEAT_TIMEOUT:-90}
       - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
@@ -230,6 +231,7 @@ services:
   # ================================================
   # 经营管理服务
   # ================================================
+
   erp:
     build:
       context: ../..
@@ -575,7 +577,7 @@ services:
     environment:
       <<: *common-env
       QMS_PORT: "8050"
-      CONSUL_ENABLED: ${CONSUL_ENABLED:-false}
+      CONSUL_ENABLED: "true"
       PLUGIN_REGISTRATION_TOKEN: ${PLUGIN_REGISTRATION_TOKEN:-}
       ERP_URL: http://erp:8010
       MES_URL: http://mes:8030
@@ -687,6 +689,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
       - PM_URL=http://pm:8023
       - MES_URL=http://mes:8030
     ports:
@@ -734,6 +738,9 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_REGISTER_ADDRESS=topems-bi
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
       - RUST_LOG=info,service_discovery=info
     ports:
       - "${BI_PORT:-8060}:8060"
@@ -774,6 +781,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
     ports:
       - "${PORTAL_PORT:-8063}:8063"
     volumes:
@@ -812,6 +821,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
       - ERP_URL=http://erp:8010
     ports:
       - "${FINANCE_PORT:-8011}:8011"
@@ -863,6 +874,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
       - REDIS_URL=redis://redis:6379
       - OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
     ports:
@@ -904,6 +917,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
     ports:
       - "${MOBILE_PORT:-8070}:8070"
     volumes:
@@ -942,6 +957,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
       - MES_URL=http://mes:8030
     ports:
       - "${GIS_PORT:-8071}:8071"
@@ -983,6 +1000,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
     ports:
       - "${INTEGRATION_PORT:-8072}:8072"
     volumes:

@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker.1panel.live/docker/dockerfile:1
 # TOPEMS 统一服务 Dockerfile 模板
 # P1-1: 替换 28+ 个冗余 Dockerfile，消除 ~1300 行重复代码
 #
