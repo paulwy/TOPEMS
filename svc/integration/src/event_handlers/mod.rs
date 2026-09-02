@@ -3,8 +3,6 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{Event, EventResult, EventSubscriber, EventType};
 
-use crate::qms_lims_ehs;
-
 type HandlerResult = std::result::Result<(), String>;
 
 #[derive(Clone)]
@@ -23,7 +21,6 @@ impl IntegrationEventHandlers {
         let h1 = self.clone();
         let h2 = self.clone();
         let h3 = self.clone();
-        let h4 = self.clone();
 
         Ok(subscriber
             .subscribe_handler(vec![EventType::QmsToLimsSyncTriggered], move |event| {
@@ -37,25 +34,7 @@ impl IntegrationEventHandlers {
             .subscribe_handler(vec![EventType::LimsToEhsTriggered], move |event| {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_lims_to_ehs_trigger(event).await })
-            })
-            // 步骤C：跨域联动真实化——订阅领域事件，接入 qms_lims_ehs::process_event 统一调度
-            // 已发布端：QmsQualityIssueCreated(qms)、EhsHazardReported(ehs)；
-            // 其余发布端待源服务补发（见 integration-cross-domain-api.md 步骤C）
-            .subscribe_handler(
-                vec![
-                    EventType::QmsInspectionCompleted,
-                    EventType::QmsQualityIssueCreated,
-                    EventType::EhsHazardReported,
-                    EventType::EhsAccidentReported,
-                    EventType::LimsInspectionAbnormalDetected,
-                    EventType::LimsRecordCompleted,
-                    EventType::LimsReagentAlert,
-                ],
-                move |event| {
-                    let h = h4.clone();
-                    Box::pin(async move { h.handle_cross_domain_event(event).await })
-                },
-            ))
+            }))
     }
 
     async fn record_sync_log(
@@ -190,36 +169,6 @@ impl IntegrationEventHandlers {
             .await;
 
         Ok(())
-    }
-
-    /// 步骤C：跨域领域事件统一接入 process_event 调度。
-    /// 步骤B 后 handler 全改 HTTP（不再依赖 tenant_id），此处从 payload 尽量取，缺失传 nil 占位。
-    async fn handle_cross_domain_event(&self, event: Event) -> HandlerResult {
-        tracing::info!(
-            "[integration] 跨域联动事件 - event_type={:?}, trace_id={:?}",
-            event.event_type,
-            event.trace_id
-        );
-
-        let tenant_id = event
-            .payload
-            .get("tenant_id")
-            .and_then(|v| v.as_str())
-            .and_then(|s| uuid::Uuid::parse_str(s).ok())
-            .unwrap_or_else(uuid::Uuid::nil);
-
-        match qms_lims_ehs::process_event(&self.db, tenant_id, event.event_type, &event.payload).await
-        {
-            Ok(()) => Ok(()),
-            Err(e) => {
-                tracing::error!(
-                    "[integration] 跨域联动处理失败 event_type={:?}: {}",
-                    event.event_type,
-                    e
-                );
-                Err(format!("跨域联动处理失败: {}", e))
-            }
-        }
     }
 }
 

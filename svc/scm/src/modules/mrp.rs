@@ -7,6 +7,7 @@ use axum::{
 use chrono::{Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -239,7 +240,8 @@ pub async fn list_suggestions(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
                current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
@@ -250,8 +252,8 @@ pub async fn list_suggestions(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -262,11 +264,11 @@ pub async fn list_suggestions(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("scm", r#"
                 SELECT COUNT(*) FROM scm.mrp_suggestions
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -303,15 +305,16 @@ pub async fn get_suggestion(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
                current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
                lead_time_days, suggested_order_date, suggested_delivery_date, status,
                source_type, source_order_id, remarks, created_at, updated_at
         FROM scm.mrp_suggestions WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -353,10 +356,12 @@ pub async fn compute_mrp(
         }
     };
 
-    let clear_result =
-        sqlx::query("UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft'")
-            .execute(&mut *tx)
-            .await;
+    let clear_result = sqlx::query(only_own_schema_query!(
+        "scm",
+        "UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft'"
+    ))
+    .execute(&mut *tx)
+    .await;
 
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);
@@ -370,7 +375,7 @@ pub async fn compute_mrp(
     let suggestion_number = format!("MRP{}", now.format("%Y%m%d%H%M%S"));
 
     let insert_result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         INSERT INTO scm.mrp_suggestions 
         (id, suggestion_number, material_code, material_name, specification, unit,
          current_stock, required_quantity, suggested_quantity, 
@@ -437,7 +442,7 @@ pub async fn compute_mrp(
                   current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
                   source_type, source_order_id, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(&suggestion_number)
     .bind(safety_factor)
@@ -533,15 +538,16 @@ pub async fn confirm_suggestion(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query(
+    let existing = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
                current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
                lead_time_days, suggested_order_date, suggested_delivery_date, status,
                source_type, source_order_id, remarks, created_at, updated_at
         FROM scm.mrp_suggestions WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -564,7 +570,8 @@ pub async fn confirm_suggestion(
         .confirmed_quantity
         .unwrap_or_else(|| existing.try_get("suggested_quantity").unwrap_or(0.0));
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.mrp_suggestions SET
             status = 'confirmed',
@@ -580,8 +587,8 @@ pub async fn confirm_suggestion(
                   current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
                   source_type, source_order_id, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(confirmed_qty)
     .bind(req.supplier_id)
@@ -645,7 +652,8 @@ pub async fn material_requirement_summary(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             material_code,
@@ -662,8 +670,8 @@ pub async fn material_requirement_summary(
         GROUP BY material_code, material_name
         ORDER BY shortage DESC
         LIMIT $2 OFFSET $3
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
@@ -672,13 +680,14 @@ pub async fn material_requirement_summary(
 
     match result {
         Ok(rows) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(DISTINCT material_code) 
                 FROM scm.mrp_suggestions
                 WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .fetch_one(&state.db)
             .await;

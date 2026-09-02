@@ -3,6 +3,7 @@ use axum::Json;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -33,11 +34,12 @@ pub struct SyncMesToErpRequest {
 pub async fn list_mes_erp_sync(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<MesErpSync>>> {
-    match sqlx::query_as::<_, MesErpSync>(
+    match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity,
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
-           FROM mes_erp_sync ORDER BY updated_at DESC LIMIT 100",
-    )
+           FROM integration.mes_erp_sync ORDER BY updated_at DESC LIMIT 100"
+    ))
     .fetch_all(&state.pool)
     .await
     {
@@ -82,14 +84,15 @@ pub async fn create_mes_erp_sync(
         }
     };
 
-    match sqlx::query_as::<_, MesErpSync>(
-        "INSERT INTO mes_erp_sync (
+    match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
+        "integration",
+        "INSERT INTO integration.mes_erp_sync (
             id, mes_order_id, order_number, product_name, quantity,
             synced, sync_status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, mes_order_id, erp_order_id, order_number, product_name, quantity,
-                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at",
-    )
+                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
+    ))
     .bind(id)
     .bind(mes_uuid)
     .bind(req.order_number)
@@ -133,11 +136,12 @@ pub async fn get_mes_erp_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MesErpSync>> {
-    match sqlx::query_as::<_, MesErpSync>(
+    match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity,
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
-           FROM mes_erp_sync WHERE id = $1",
-    )
+           FROM integration.mes_erp_sync WHERE id = $1"
+    ))
     .bind(id)
     .fetch_one(&state.pool)
     .await
@@ -174,14 +178,15 @@ pub async fn sync_mes_erp(
     let now = Utc::now();
     let erp_order_id = Uuid::new_v4();
 
-    let updated_sync = match sqlx::query_as::<_, MesErpSync>(
-        "UPDATE mes_erp_sync SET
+    let updated_sync = match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.mes_erp_sync SET
             erp_order_id = $2, synced = $3, sync_status = $4,
             sync_error = NULL, last_synced_at = $5, updated_at = $6
          WHERE id = $1
          RETURNING id, mes_order_id, erp_order_id, order_number, product_name, quantity,
-                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at",
-    )
+                  synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
+    ))
     .bind(id)
     .bind(Some(erp_order_id))
     .bind(true)

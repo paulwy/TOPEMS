@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, PgPool};
 use std::time::Duration;
+use topems_shared_boundary::only_own_schema_query;
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 
@@ -534,11 +535,12 @@ impl MesErpSyncService {
         tenant_id: Uuid,
         mes_order_id: Uuid,
     ) -> Result<Option<Uuid>, String> {
-        let result = sqlx::query_scalar::<_, Option<Uuid>>(
-            "SELECT erp_order_id FROM mes_erp_sync 
+        let result = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
+            "integration",
+            "SELECT erp_order_id FROM integration.mes_erp_sync 
              WHERE tenant_id = $1 AND mes_order_id = $2 AND erp_order_id IS NOT NULL
-             ORDER BY created_at DESC LIMIT 1",
-        )
+             ORDER BY created_at DESC LIMIT 1"
+        ))
         .bind(tenant_id)
         .bind(mes_order_id)
         .fetch_optional(&self.pool)
@@ -563,15 +565,16 @@ impl MesErpSyncService {
     ) -> Result<(), String> {
         let now = Utc::now();
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "integration",
             r#"
-            INSERT INTO mes_erp_sync (
+            INSERT INTO integration.mes_erp_sync (
                 id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
                 sync_type, payload, sync_status, retry_count, max_retries,
                 created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 0, 5, $9, $9)
-            "#,
-        )
+            "#
+        ))
         .bind(id)
         .bind(tenant_id)
         .bind(direction)
@@ -596,17 +599,18 @@ impl MesErpSyncService {
         let now = Utc::now();
 
         if let Some(mes_id) = mes_order_id {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "integration",
                 r#"
-                UPDATE mes_erp_sync SET
+                UPDATE integration.mes_erp_sync SET
                     mes_order_id = COALESCE($2, mes_order_id),
                     sync_status = 'success',
                     error_message = NULL,
                     last_synced_at = $3,
                     updated_at = $3
                 WHERE id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(sync_id)
             .bind(mes_id)
             .bind(now.naive_utc())
@@ -614,16 +618,17 @@ impl MesErpSyncService {
             .await
             .map_err(|e| format!("更新同步记录失败: {}", e))?;
         } else {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "integration",
                 r#"
-                UPDATE mes_erp_sync SET
+                UPDATE integration.mes_erp_sync SET
                     sync_status = 'success',
                     error_message = NULL,
                     last_synced_at = $2,
                     updated_at = $2
                 WHERE id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(sync_id)
             .bind(now.naive_utc())
             .execute(&self.pool)
@@ -642,16 +647,17 @@ impl MesErpSyncService {
     ) -> Result<(), String> {
         let now = Utc::now();
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "integration",
             r#"
-            UPDATE mes_erp_sync SET
+            UPDATE integration.mes_erp_sync SET
                 sync_status = 'failed',
                 error_message = $2,
                 retry_count = $3,
                 updated_at = $4
             WHERE id = $1
-            "#,
-        )
+            "#
+        ))
         .bind(sync_id)
         .bind(error)
         .bind(retry_count)
@@ -675,14 +681,15 @@ impl MesErpSyncService {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "integration",
             r#"
-            INSERT INTO mes_erp_sync_logs (
+            INSERT INTO integration.mes_erp_sync_logs (
                 id, sync_record_id, sync_direction, sync_type,
                 status, error_message, attempt, created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            "#,
-        )
+            "#
+        ))
         .bind(id)
         .bind(sync_record_id)
         .bind(direction)
@@ -701,15 +708,16 @@ impl MesErpSyncService {
     // ==================== 重试失败同步 ====================
 
     pub async fn retry_failed_sync(&self, sync_id: Uuid) -> Result<SyncResult, String> {
-        let sync_record = sqlx::query_as::<_, MesErpSyncRecord>(
+        let sync_record = sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
+            "integration",
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
                    error_message, last_synced_at, created_at, updated_at
-            FROM mes_erp_sync
+            FROM integration.mes_erp_sync
             WHERE id = $1
-            "#,
-        )
+            "#
+        ))
         .bind(sync_id)
         .fetch_optional(&self.pool)
         .await
@@ -754,18 +762,19 @@ impl MesErpSyncService {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<MesErpSyncRecord>, String> {
-        sqlx::query_as::<_, MesErpSyncRecord>(
+        sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
+            "integration",
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
                    error_message, last_synced_at, created_at, updated_at
-            FROM mes_erp_sync
+            FROM integration.mes_erp_sync
             WHERE ($1::VARCHAR IS NULL OR sync_direction = $1)
               AND ($2::VARCHAR IS NULL OR sync_status = $2)
             ORDER BY created_at DESC
             LIMIT $3 OFFSET $4
-            "#,
-        )
+            "#
+        ))
         .bind(direction)
         .bind(status)
         .bind(limit)
@@ -776,15 +785,16 @@ impl MesErpSyncService {
     }
 
     pub async fn get_sync_record(&self, sync_id: Uuid) -> Result<Option<MesErpSyncRecord>, String> {
-        sqlx::query_as::<_, MesErpSyncRecord>(
+        sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
+            "integration",
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
                    error_message, last_synced_at, created_at, updated_at
-            FROM mes_erp_sync
+            FROM integration.mes_erp_sync
             WHERE id = $1
-            "#,
-        )
+            "#
+        ))
         .bind(sync_id)
         .fetch_optional(&self.pool)
         .await
@@ -792,15 +802,16 @@ impl MesErpSyncService {
     }
 
     pub async fn get_sync_logs(&self, sync_id: Uuid) -> Result<Vec<SyncLog>, String> {
-        sqlx::query_as::<_, SyncLog>(
+        sqlx::query_as::<_, SyncLog>(only_own_schema_query!(
+            "integration",
             r#"
             SELECT id, sync_record_id, sync_direction, sync_type,
                    status, error_message, attempt, created_at
-            FROM mes_erp_sync_logs
+            FROM integration.mes_erp_sync_logs
             WHERE sync_record_id = $1
             ORDER BY created_at DESC
-            "#,
-        )
+            "#
+        ))
         .bind(sync_id)
         .fetch_all(&self.pool)
         .await

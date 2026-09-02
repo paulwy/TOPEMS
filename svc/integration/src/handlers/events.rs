@@ -1,6 +1,7 @@
 use axum::extract::State;
 use axum::Json;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -17,12 +18,13 @@ use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, S
     ),
 )]
 pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncStats>> {
-    let lims_qms_result = sqlx::query(
+    let lims_qms_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total,
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM lims_qms_sync",
-    )
+           FROM integration.lims_qms_sync"
+    ))
     .fetch_one(&state.pool)
     .await;
 
@@ -35,12 +37,13 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
         Err(_) => (0, 0, 0),
     };
 
-    let mes_erp_result = sqlx::query(
+    let mes_erp_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total,
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM mes_erp_sync",
-    )
+           FROM integration.mes_erp_sync"
+    ))
     .fetch_one(&state.pool)
     .await;
 
@@ -53,12 +56,13 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
         Err(_) => (0, 0, 0),
     };
 
-    let wms_scm_result = sqlx::query(
+    let wms_scm_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total,
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM wms_scm_sync",
-    )
+           FROM integration.wms_scm_sync"
+    ))
     .fetch_one(&state.pool)
     .await;
 
@@ -71,15 +75,16 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
         Err(_) => (0, 0, 0),
     };
 
-    let last_sync_result = sqlx::query(
+    let last_sync_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT MAX(last_synced_at) as last_sync FROM (
-            SELECT MAX(last_synced_at) as last_synced_at FROM lims_qms_sync
+            SELECT MAX(last_synced_at) as last_synced_at FROM integration.lims_qms_sync
             UNION ALL
-            SELECT MAX(last_synced_at) as last_synced_at FROM mes_erp_sync
+            SELECT MAX(last_synced_at) as last_synced_at FROM integration.mes_erp_sync
             UNION ALL
-            SELECT MAX(last_synced_at) as last_synced_at FROM wms_scm_sync
-        ) t",
-    )
+            SELECT MAX(last_synced_at) as last_synced_at FROM integration.wms_scm_sync
+        ) t"
+    ))
     .fetch_one(&state.pool)
     .await;
 
@@ -118,11 +123,12 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
 pub async fn list_events(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<IntegrationEvent>>> {
-    match sqlx::query_as::<_, IntegrationEvent>(
+    match sqlx::query_as::<_, IntegrationEvent>(only_own_schema_query!(
+        "integration",
         "SELECT id, source_system, target_system, event_type, source_record_id,
                 target_record_id, payload, status, error_message, synced_at, created_at
-           FROM integration_events ORDER BY created_at DESC LIMIT 100",
-    )
+           FROM integration.integration_events ORDER BY created_at DESC LIMIT 100"
+    ))
     .fetch_all(&state.pool)
     .await
     {
@@ -157,13 +163,14 @@ pub async fn create_event(
     let id = Uuid::new_v4();
     let source_uuid = req.source_record_id.and_then(|s| Uuid::parse_str(&s).ok());
 
-    match sqlx::query_as::<_, IntegrationEvent>(
-        "INSERT INTO integration_events (
+    match sqlx::query_as::<_, IntegrationEvent>(only_own_schema_query!(
+        "integration",
+        "INSERT INTO integration.integration_events (
             id, source_system, target_system, event_type, source_record_id, payload
         ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, source_system, target_system, event_type, source_record_id,
-                  target_record_id, payload, status, error_message, synced_at, created_at",
-    )
+                  target_record_id, payload, status, error_message, synced_at, created_at"
+    ))
     .bind(id)
     .bind(req.source_system)
     .bind(req.target_system)

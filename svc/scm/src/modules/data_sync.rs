@@ -6,6 +6,7 @@ use axum::{
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -128,11 +129,11 @@ async fn create_inbound_from_purchase_internal(
     _remarks: Option<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
         WHERE id = $1 AND status = 'approved'
-        "#,
+        "#),
     )
     .bind(purchase_order_id)
     .fetch_optional(&state.db)
@@ -190,12 +191,13 @@ async fn create_inbound_from_purchase_internal(
         }
     };
 
-    let existing_inbound = sqlx::query_scalar::<_, i64>(
+    let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots
         WHERE order_number = $1
-        "#,
-    )
+        "#
+    ))
     .bind(&purchase_order.order_number)
     .fetch_one(&state.db)
     .await;
@@ -233,15 +235,16 @@ async fn create_inbound_from_purchase_internal(
     let now = Utc::now();
     let inbound_order_number = format!("INB-{}", purchase_order.order_number);
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         INSERT INTO scm.wms_inbound_order_snapshots
             (id, order_number, warehouse_id, supplier_id,
              order_type, status, purchase_order_id, purchase_order_number,
              received_at, tenant_id, synced_at, created_at, updated_at)
         VALUES ($1, $2, $3, $4, 'purchase', 'pending', $5, $6, NULL, NULL, $7, $7, $7)
-        "#,
-    )
+        "#
+    ))
     .bind(inbound_id)
     .bind(&inbound_order_number)
     .bind(warehouse_id)
@@ -272,7 +275,8 @@ async fn create_inbound_from_purchase_internal(
                 }
             }
 
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "scm",
                 r#"
                 UPDATE scm.purchase_orders 
                 SET status = 'in_transit', inbound_order_id = $2, 
@@ -280,8 +284,8 @@ async fn create_inbound_from_purchase_internal(
                     sync_retry_count = 0, sync_error = NULL, last_sync_at = $4,
                     updated_at = $4
                 WHERE id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(purchase_order_id)
             .bind(inbound_id)
             .bind(&inbound_order_number)
@@ -336,13 +340,14 @@ async fn create_inbound_from_purchase_internal(
                 None
             };
 
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "scm",
                 r#"
                 UPDATE scm.purchase_orders 
                 SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
                 WHERE id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(purchase_order_id)
             .bind(e.to_string())
             .bind(new_retry_count)
@@ -388,11 +393,13 @@ async fn create_inbound_from_purchase_internal(
 }
 
 async fn get_retry_count(state: &ApiState, purchase_order_id: Uuid) -> Result<i32, sqlx::Error> {
-    let count: Option<i32> =
-        sqlx::query_scalar("SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1")
-            .bind(purchase_order_id)
-            .fetch_optional(&state.db)
-            .await?;
+    let count: Option<i32> = sqlx::query_scalar(only_own_schema_query!(
+        "scm",
+        "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1"
+    ))
+    .bind(purchase_order_id)
+    .fetch_optional(&state.db)
+    .await?;
 
     Ok(count.unwrap_or(0))
 }
@@ -431,11 +438,11 @@ async fn sync_supplier_from_srm(
             String,
         ),
     >(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, supplier_name, legal_name, contact_name, contact_phone, contact_email, address, tax_id, website, status
         FROM scm.srm_supplier_snapshots
         WHERE id = $1 AND status != 'deleted' AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(supplier_id)
     .fetch_optional(&state.db)
@@ -461,12 +468,14 @@ async fn sync_supplier_from_srm(
             }
         };
 
-    let existing_count =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scm.suppliers WHERE id = $1")
-            .bind(id)
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let existing_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let now = Utc::now();
     let action = if existing_count > 0 {
@@ -476,7 +485,8 @@ async fn sync_supplier_from_srm(
     };
 
     if existing_count > 0 {
-        let result = sqlx::query(
+        let result = sqlx::query(only_own_schema_query!(
+            "scm",
             r#"
             UPDATE scm.suppliers SET name = $2, legal_name = $3, contact_person = $4, 
                                  contact_phone = $5, email = $6, address = $7, 
@@ -484,8 +494,8 @@ async fn sync_supplier_from_srm(
                                  srm_supplier_id = $10, sync_retry_count = 0, 
                                  sync_error = NULL, last_sync_at = $11, updated_at = $11
             WHERE id = $1
-            "#,
-        )
+            "#
+        ))
         .bind(id)
         .bind(&name)
         .bind(legal_name)
@@ -551,15 +561,16 @@ async fn sync_supplier_from_srm(
             }
         }
     } else {
-        let result = sqlx::query(
+        let result = sqlx::query(only_own_schema_query!(
+            "scm",
             r#"
             INSERT INTO scm.suppliers (id, name, legal_name, contact_person, contact_phone, 
                                    email, address, tax_id, status, sync_from_srm,
                                    srm_supplier_id, sync_retry_count, last_sync_at,
                                    created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, $10, 0, $11, $12, $13)
-            "#,
-        )
+            "#
+        ))
         .bind(id)
         .bind(&name)
         .bind(legal_name)
@@ -646,11 +657,11 @@ async fn sync_all_suppliers_from_srm(
             String,
         ),
     >(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, supplier_name, legal_name, contact_name, contact_phone, contact_email, address, tax_id, website, status
         FROM scm.srm_supplier_snapshots
         WHERE status != 'deleted' AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .fetch_all(&state.db)
     .await;
@@ -682,14 +693,17 @@ async fn sync_all_suppliers_from_srm(
         status,
     ) in srm_suppliers
     {
-        let existing =
-            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scm.suppliers WHERE id = $1")
-                .bind(id)
-                .fetch_one(&state.db)
-                .await;
+        let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "scm",
+            "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1"
+        ))
+        .bind(id)
+        .fetch_one(&state.db)
+        .await;
 
         if existing.unwrap_or(0) > 0 {
-            let result = sqlx::query(
+            let result = sqlx::query(only_own_schema_query!(
+                "scm",
                 r#"
                 UPDATE scm.suppliers SET name = $2, legal_name = $3, contact_person = $4, 
                                      contact_phone = $5, email = $6, address = $7, 
@@ -697,8 +711,8 @@ async fn sync_all_suppliers_from_srm(
                                      srm_supplier_id = $10, sync_retry_count = 0, 
                                      sync_error = NULL, last_sync_at = $11, updated_at = $11
                 WHERE id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .bind(&name)
             .bind(legal_name)
@@ -720,15 +734,16 @@ async fn sync_all_suppliers_from_srm(
                 failed_count += 1;
             }
         } else {
-            let result = sqlx::query(
+            let result = sqlx::query(only_own_schema_query!(
+                "scm",
                 r#"
                 INSERT INTO scm.suppliers (id, name, legal_name, contact_person, contact_phone, 
                                        email, address, tax_id, status, sync_from_srm,
                                        srm_supplier_id, sync_retry_count, last_sync_at,
                                        created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, $10, 0, $11, $12, $13)
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .bind(&name)
             .bind(legal_name)
@@ -781,7 +796,8 @@ async fn get_sync_logs(
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, sync_type, source_module, target_module, source_entity,
                source_id, source_code, target_id, target_code, operation, status,
@@ -792,8 +808,8 @@ async fn get_sync_logs(
           AND ($3::text IS NULL OR source_module = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
-    )
+        "#
+    ))
     .bind(&req.sync_type)
     .bind(&req.status)
     .bind(&req.source_module)
@@ -848,7 +864,8 @@ async fn retry_failed_syncs(
     let max_retries = req.max_retries.unwrap_or(3);
     let now = Utc::now();
 
-    let failed_syncs = sqlx::query(
+    let failed_syncs = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, sync_type, source_module, target_module, source_entity,
                source_id, source_code, operation, retry_count
@@ -857,8 +874,8 @@ async fn retry_failed_syncs(
           AND ($1::text IS NULL OR sync_type = $1)
           AND retry_count < $2
         ORDER BY created_at DESC
-        "#,
-    )
+        "#
+    ))
     .bind(sync_type_filter)
     .bind(max_retries as i64)
     .fetch_all(&state.db)
@@ -877,14 +894,15 @@ async fn retry_failed_syncs(
                 let sync_retry_count: i32 = row.get("retry_count");
                 let new_retry_count = sync_retry_count + 1;
 
-                let update_result = sqlx::query(
+                let update_result = sqlx::query(only_own_schema_query!(
+                    "scm",
                     r#"
                     UPDATE scm.sync_logs 
                     SET status = 'pending', retry_count = $2, 
                         next_retry_at = $3, updated_at = $4
                     WHERE id = $1
-                    "#,
-                )
+                    "#
+                ))
                 .bind(sync_id)
                 .bind(new_retry_count)
                 .bind(now + Duration::seconds((new_retry_count * 60).into()))
@@ -897,13 +915,14 @@ async fn retry_failed_syncs(
 
                     if sync_entity == "purchase_order" {
                         if let Some(source_id) = sync_source_id {
-                            let _ = sqlx::query(
+                            let _ = sqlx::query(only_own_schema_query!(
+                                "scm",
                                 r#"
                                 UPDATE scm.purchase_orders 
                                 SET sync_retry_count = $2, sync_error = NULL, last_sync_at = $3
                                 WHERE id = $1
-                                "#,
-                            )
+                                "#
+                            ))
                             .bind(source_id)
                             .bind(new_retry_count)
                             .bind(now)
@@ -934,41 +953,53 @@ async fn retry_failed_syncs(
 }
 
 async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<SyncStatistics>> {
-    let total_syncs: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let total_syncs: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.sync_logs"
+    ))
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
-    let success_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'success'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let success_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'success'"
+    ))
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
-    let failed_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'failed'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let failed_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'failed'"
+    ))
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
-    let pending_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'pending'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let pending_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'pending'"
+    ))
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
-    let in_progress_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'in_progress'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let in_progress_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'in_progress'"
+    ))
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
-    let retry_needed_count: i64 = sqlx::query_scalar(
+    let retry_needed_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*) FROM scm.sync_logs 
         WHERE status = 'pending' AND next_retry_at IS NOT NULL AND next_retry_at <= NOW()
-        "#,
-    )
+        "#
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
@@ -989,12 +1020,12 @@ async fn batch_sync_purchase_to_wms(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<BatchSyncResult>> {
     let approved_po = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
         WHERE status = 'approved' AND is_synced_to_wms = FALSE
         ORDER BY created_at ASC
-        "#,
+        "#),
     )
     .fetch_all(&state.db)
     .await;
@@ -1009,9 +1040,10 @@ async fn batch_sync_purchase_to_wms(
             let now = Utc::now();
 
             for po in purchase_orders {
-                let existing_inbound = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE order_number = $1",
-                )
+                let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "scm",
+                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE order_number = $1"
+                ))
                 .bind(&po.order_number)
                 .fetch_one(&state.db)
                 .await
@@ -1019,7 +1051,7 @@ async fn batch_sync_purchase_to_wms(
 
                 if existing_inbound > 0 {
                     let _ = sqlx::query(
-                        "UPDATE scm.purchase_orders SET is_synced_to_wms = TRUE, updated_at = $2 WHERE id = $1"
+                        only_own_schema_query!("scm", "UPDATE scm.purchase_orders SET is_synced_to_wms = TRUE, updated_at = $2 WHERE id = $1")
                     )
                     .bind(po.id)
                     .bind(now)
@@ -1032,7 +1064,8 @@ async fn batch_sync_purchase_to_wms(
                 let inbound_id = Uuid::new_v4();
                 let inbound_order_number = format!("INB-{}", po.order_number);
 
-                let result = sqlx::query(
+                let result = sqlx::query(only_own_schema_query!(
+                    "scm",
                     r#"
                     INSERT INTO scm.wms_inbound_order_snapshots
                         (id, order_number, warehouse_id, supplier_id,
@@ -1040,8 +1073,8 @@ async fn batch_sync_purchase_to_wms(
                          received_at, tenant_id, synced_at, created_at, updated_at)
                     VALUES ($1, $2, NULL, $3, 'purchase', 'pending', $4, $5,
                             NULL, NULL, $6, $6, $6)
-                    "#,
-                )
+                    "#
+                ))
                 .bind(inbound_id)
                 .bind(&inbound_order_number)
                 .bind(po.supplier_id)
@@ -1074,7 +1107,8 @@ async fn batch_sync_purchase_to_wms(
                             }
                         }
 
-                        let _ = sqlx::query(
+                        let _ = sqlx::query(only_own_schema_query!(
+                            "scm",
                             r#"
                             UPDATE scm.purchase_orders 
                             SET status = 'in_transit', inbound_order_id = $2, 
@@ -1082,8 +1116,8 @@ async fn batch_sync_purchase_to_wms(
                                 sync_retry_count = 0, sync_error = NULL, last_sync_at = $4,
                                 updated_at = $4
                             WHERE id = $1
-                            "#,
-                        )
+                            "#
+                        ))
                         .bind(po.id)
                         .bind(inbound_id)
                         .bind(&inbound_order_number)
@@ -1111,9 +1145,10 @@ async fn batch_sync_purchase_to_wms(
                         success_count += 1;
                     }
                     Err(e) => {
-                        let po_retry_count = sqlx::query_scalar::<_, i32>(
-                            "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1",
-                        )
+                        let po_retry_count = sqlx::query_scalar::<_, i32>(only_own_schema_query!(
+                            "scm",
+                            "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1"
+                        ))
                         .bind(po.id)
                         .fetch_one(&state.db)
                         .await
@@ -1148,11 +1183,11 @@ async fn batch_sync_purchase_to_wms(
                         } else {
                             retry_count += 1;
                             let _ = sqlx::query(
-                                r#"
+                                only_own_schema_query!("scm", r#"
                                 UPDATE scm.purchase_orders 
                                 SET sync_error = $2, sync_retry_count = $3, last_sync_at = $4, updated_at = $4
                                 WHERE id = $1
-                                "#,
+                                "#),
                             )
                             .bind(po.id)
                             .bind(e.to_string())
@@ -1234,7 +1269,8 @@ async fn check_consistency(
 }
 
 async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyCheckResult {
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT po.id as po_id, po.order_number as po_number, 
                po.inbound_order_id as inbound_id, po.inbound_order_number as inbound_number,
@@ -1244,8 +1280,8 @@ async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyChec
         LEFT JOIN scm.wms_inbound_order_snapshots io ON po.inbound_order_id = io.id
         WHERE po.status IN ('in_transit', 'delivered')
         ORDER BY po.created_at DESC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 
@@ -1298,7 +1334,8 @@ async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyChec
 }
 
 async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckResult {
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT s.id as scm_id, s.name as scm_name, s.sync_from_srm as scm_sync_from_srm,
                ssn.id as srm_id, ssn.supplier_name as srm_name
@@ -1307,8 +1344,8 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
         WHERE (s.id IS NOT NULL OR ssn.id IS NOT NULL)
           AND s.status != 'deleted' AND (ssn.status IS NULL OR ssn.status != 'deleted')
         ORDER BY COALESCE(s.created_at, ssn.synced_at) DESC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 
@@ -1396,15 +1433,16 @@ async fn record_sync_log(
         None
     };
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         INSERT INTO scm.sync_logs 
             (sync_type, source_module, target_module, source_entity,
              source_id, source_code, target_id, target_code, operation, status,
              error_message, retry_count, max_retries, next_retry_at, executed_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        "#,
-    )
+        "#
+    ))
     .bind(sync_type)
     .bind(source_module)
     .bind(target_module)

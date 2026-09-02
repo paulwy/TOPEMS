@@ -29,7 +29,7 @@ tower-http.workspace = true
 reqwest.workspace = true
 futures.workspace = true
 topems-shared-bootstrap = { workspace = true }
-topems-shared-boundary = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 topems-shared-observability = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true

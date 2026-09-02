@@ -1,6 +1,7 @@
 use axum::extract::{Path, State};
 use axum::Json;
 use chrono::Utc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -19,12 +20,13 @@ use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
 pub async fn list_lims_qms_sync(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<LimsQmsSync>>> {
-    match sqlx::query_as::<_, LimsQmsSync>(
+    match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                 inspection_notes, synced, sync_status, sync_error, last_synced_at,
                 created_at, updated_at
-           FROM lims_qms_sync ORDER BY updated_at DESC LIMIT 100",
-    )
+           FROM integration.lims_qms_sync ORDER BY updated_at DESC LIMIT 100"
+    ))
     .fetch_all(&state.pool)
     .await
     {
@@ -69,15 +71,16 @@ pub async fn create_lims_qms_sync(
         }
     };
 
-    match sqlx::query_as::<_, LimsQmsSync>(
-        "INSERT INTO lims_qms_sync (
+    match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
+        "integration",
+        "INSERT INTO integration.lims_qms_sync (
             id, lims_sample_id, sample_name, inspection_result, inspection_notes,
             synced, sync_status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                   inspection_notes, synced, sync_status, sync_error, last_synced_at,
-                  created_at, updated_at",
-    )
+                  created_at, updated_at"
+    ))
     .bind(id)
     .bind(lims_uuid)
     .bind(req.sample_name)
@@ -121,12 +124,13 @@ pub async fn get_lims_qms_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<LimsQmsSync>> {
-    match sqlx::query_as::<_, LimsQmsSync>(
+    match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                 inspection_notes, synced, sync_status, sync_error, last_synced_at,
                 created_at, updated_at
-           FROM lims_qms_sync WHERE id = $1",
-    )
+           FROM integration.lims_qms_sync WHERE id = $1"
+    ))
     .bind(id)
     .fetch_one(&state.pool)
     .await
@@ -163,12 +167,13 @@ pub async fn sync_lims_qms(
     let now = Utc::now();
 
     // Check if sync exists
-    let _exists = match sqlx::query_as::<_, LimsQmsSync>(
+    let _exists = match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                 inspection_notes, synced, sync_status, sync_error, last_synced_at,
                 created_at, updated_at
-           FROM lims_qms_sync WHERE id = $1",
-    )
+           FROM integration.lims_qms_sync WHERE id = $1"
+    ))
     .bind(id)
     .fetch_one(&state.pool)
     .await
@@ -185,15 +190,16 @@ pub async fn sync_lims_qms(
     };
 
     let qms_inspection_id = Uuid::new_v4();
-    let updated_sync = match sqlx::query_as::<_, LimsQmsSync>(
-        "UPDATE lims_qms_sync SET
+    let updated_sync = match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.lims_qms_sync SET
             qms_inspection_id = $2, synced = $3, sync_status = $4,
             sync_error = NULL, last_synced_at = $5, updated_at = $6
          WHERE id = $1
          RETURNING id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                   inspection_notes, synced, sync_status, sync_error, last_synced_at,
-                  created_at, updated_at",
-    )
+                  created_at, updated_at"
+    ))
     .bind(id)
     .bind(Some(qms_inspection_id))
     .bind(true)

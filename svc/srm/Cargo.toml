@@ -21,11 +21,11 @@ anyhow = "1"
 thiserror = "2"
 topems-shared = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
-topems-shared-boundary = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 
 topems-shared-service-client = { workspace = true }
 bigdecimal = { version = "0.4", features = ["serde"] }

@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 
 mod conversion_rules;
 mod event_bus;
@@ -38,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/integration",
         legacy_prefixes: &["/api/v1/integration"],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;
@@ -132,7 +134,8 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 /// 初始化通用跨服务同步任务表（从 unified-core 迁移而来）
 async fn init_sync_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "integration",
         r#"
         CREATE TABLE IF NOT EXISTS core_inter_module_sync (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -152,23 +155,24 @@ async fn init_sync_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_status ON core_inter_module_sync(status)"
+    ))
+    .execute(pool)
+    .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_status ON core_inter_module_sync(status)",
+        only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_tenant ON core_inter_module_sync(tenant_id)"),
     )
     .execute(pool)
     .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_tenant ON core_inter_module_sync(tenant_id)",
-    )
-    .execute(pool)
-    .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_source ON core_inter_module_sync(source_module)",
+        only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_source ON core_inter_module_sync(source_module)"),
     )
     .execute(pool)
     .await?;

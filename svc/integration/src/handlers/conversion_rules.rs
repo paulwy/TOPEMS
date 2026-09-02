@@ -2,6 +2,7 @@ use axum::extract::{Path, State};
 use axum::Json;
 use chrono::Utc;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -58,7 +59,7 @@ pub async fn get_conversion_rule_api(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ConversionRule>> {
     match sqlx::query_as::<_, ConversionRule>(
-        "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("integration", "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -155,7 +156,7 @@ pub async fn update_conversion_rule_api(
     let now = Utc::now();
 
     let row = sqlx::query(
-        "UPDATE conversion_rules SET name = COALESCE($1, name), description = COALESCE($2, description), trigger_type = COALESCE($3, trigger_type), trigger_condition = COALESCE($4, trigger_condition), field_mappings = COALESCE($5, field_mappings), transform_script = COALESCE($6, transform_script), status = COALESCE($7, status), priority = COALESCE($8, priority), is_enabled = COALESCE($9, is_enabled), max_retries = COALESCE($10, max_retries), retry_interval_secs = COALESCE($11, retry_interval_secs), stop_on_failure = COALESCE($12, stop_on_failure), updated_at = $13 WHERE id = $14 RETURNING id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at::TEXT, updated_at::TEXT"
+        only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET name = COALESCE($1, name), description = COALESCE($2, description), trigger_type = COALESCE($3, trigger_type), trigger_condition = COALESCE($4, trigger_condition), field_mappings = COALESCE($5, field_mappings), transform_script = COALESCE($6, transform_script), status = COALESCE($7, status), priority = COALESCE($8, priority), is_enabled = COALESCE($9, is_enabled), max_retries = COALESCE($10, max_retries), retry_interval_secs = COALESCE($11, retry_interval_secs), stop_on_failure = COALESCE($12, stop_on_failure), updated_at = $13 WHERE id = $14 RETURNING id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at::TEXT, updated_at::TEXT")
     )
     .bind(&req.name)
     .bind(&req.description)
@@ -229,10 +230,13 @@ pub async fn delete_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("UPDATE conversion_rules SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.conversion_rules SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
@@ -306,7 +310,7 @@ pub async fn execute_conversion_rule_api(
     Json(req): Json<ExecuteConversionRequest>,
 ) -> Json<ApiResponse<ExecuteConversionResponse>> {
     let rule = match sqlx::query_as::<_, ConversionRule>(
-        "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM conversion_rules WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("integration", "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -333,8 +337,8 @@ pub async fn execute_conversion_rule_api(
     let now = Utc::now();
 
     let _ = sqlx::query(
-        "INSERT INTO conversion_executions (id, rule_id, rule_code, source_record_id, source_data, status, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        only_own_schema_query!("integration", "INSERT INTO integration.conversion_executions (id, rule_id, rule_code, source_record_id, source_data, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)"),
     )
     .bind(execution_id)
     .bind(rule.id)
@@ -356,8 +360,8 @@ pub async fn execute_conversion_rule_api(
     };
 
     let _ = sqlx::query(
-        "UPDATE conversion_executions SET status = $1, completed_at = $2, target_record_id = $3, target_data = $4
-         WHERE id = $5",
+        only_own_schema_query!("integration", "UPDATE integration.conversion_executions SET status = $1, completed_at = $2, target_record_id = $3, target_data = $4
+         WHERE id = $5"),
     )
     .bind("completed")
     .bind(now)
@@ -391,7 +395,7 @@ pub async fn enable_conversion_rule_api(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ConversionRule>> {
     match sqlx::query_as::<_, ConversionRule>(
-        "UPDATE conversion_rules SET is_enabled = true, status = 'active', updated_at = $2 WHERE id = $1 RETURNING *",
+        only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET is_enabled = true, status = 'active', updated_at = $2 WHERE id = $1 RETURNING *"),
     )
     .bind(id)
     .bind(Utc::now())
@@ -425,7 +429,7 @@ pub async fn disable_conversion_rule_api(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ConversionRule>> {
     match sqlx::query_as::<_, ConversionRule>(
-        "UPDATE conversion_rules SET is_enabled = false, status = 'inactive', updated_at = $2 WHERE id = $1 RETURNING *",
+        only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET is_enabled = false, status = 'inactive', updated_at = $2 WHERE id = $1 RETURNING *"),
     )
     .bind(id)
     .bind(Utc::now())

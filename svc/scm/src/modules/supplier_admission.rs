@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -51,16 +52,17 @@ pub async fn list_admissions(
     let offset = (page - 1) * page_size;
 
     let admissions = sqlx::query_as::<_, SupplierAdmission>(
-        "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        only_own_schema_query!("scm", "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
     .await;
 
-    let total = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL",
-    )
+    let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL"
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
@@ -93,7 +95,7 @@ pub async fn create_admission(
     }
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        r#"
+        only_own_schema_query!("scm", r#"
         INSERT INTO scm.supplier_admissions (
             admission_no, supplier_name, short_name, contact_person,
             contact_phone, contact_email, address, business_license,
@@ -102,7 +104,7 @@ pub async fn create_admission(
             supplier_category, applicant, remarks, status
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'draft')
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&data.admission_no)
     .bind(&data.supplier_name)
@@ -149,7 +151,7 @@ pub async fn get_admission(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL",
+        only_own_schema_query!("scm", "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(admission_id)
     .fetch_one(&state.db)
@@ -181,7 +183,8 @@ pub async fn update_admission(
         Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
     };
 
-    let admission = sqlx::query_as::<_, SupplierAdmission>(
+    let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.supplier_admissions SET
             supplier_name = COALESCE($1, supplier_name),
@@ -203,8 +206,8 @@ pub async fn update_admission(
             remarks = COALESCE($17, remarks)
         WHERE id = $18 AND deleted_at IS NULL
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&data.supplier_name)
     .bind(&data.short_name)
     .bind(&data.contact_person)
@@ -252,7 +255,7 @@ pub async fn delete_admission(
     };
 
     let result = sqlx::query(
-        "UPDATE scm.supplier_admissions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(admission_id)
     .execute(&state.db)
@@ -292,7 +295,7 @@ async fn submit_admission(
         .map(|s| s.to_string());
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        "UPDATE scm.supplier_admissions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *"),
     )
     .bind(remarks)
     .bind(admission_id)
@@ -330,15 +333,16 @@ async fn approve_admission(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let admission = sqlx::query_as::<_, SupplierAdmission>(
+    let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.supplier_admissions SET 
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(admission_id)
@@ -376,15 +380,16 @@ async fn reject_admission(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let admission = sqlx::query_as::<_, SupplierAdmission>(
+    let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.supplier_admissions SET 
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(admission_id)
@@ -418,13 +423,14 @@ async fn audit_admission(
     };
 
     for item in &data.audit_items {
-        let _ = sqlx::query(
+        let _ = sqlx::query(only_own_schema_query!(
+            "scm",
             r#"
             INSERT INTO scm.supplier_admission_audit_items (
                 admission_id, audit_item, audit_result, auditor, remarks
             ) VALUES ($1, $2, $3, $4, $5)
-            "#,
-        )
+            "#
+        ))
         .bind(admission_id)
         .bind(&item.audit_item)
         .bind(&item.audit_result)
@@ -438,15 +444,16 @@ async fn audit_admission(
     let status = if all_passed { "approved" } else { "rejected" };
     let approval_status = status;
 
-    let admission = sqlx::query_as::<_, SupplierAdmission>(
+    let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.supplier_admissions SET 
             status = $1, approval_status = $2, 
             approver = $3, approved_at = NOW()
         WHERE id = $4 AND deleted_at IS NULL 
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(status)
     .bind(approval_status)
     .bind(&claims.sub)
@@ -480,7 +487,7 @@ async fn activate_supplier(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
     )
     .bind(admission_id)
     .fetch_one(&state.db)

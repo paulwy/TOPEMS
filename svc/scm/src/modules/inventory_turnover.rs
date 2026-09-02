@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -266,7 +267,7 @@ pub async fn calculate_turnover(
     let search_pattern = pagination.search.clone().map(|s| format!("%{}%", s));
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         WITH current_inventory AS (
             SELECT 
                 i.item_code as material_code,
@@ -327,7 +328,7 @@ pub async fn calculate_turnover(
         WHERE ($3::text IS NULL OR ci.material_name ILIKE $3 OR ci.material_code ILIKE $3)
         ORDER BY turnover_rate DESC
         LIMIT $4 OFFSET $7
-        "#,
+        "#),
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -341,15 +342,16 @@ pub async fn calculate_turnover(
 
     match result {
         Ok(rows) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(*) 
                 FROM scm.wms_inventory_snapshots i
                 WHERE ($1::uuid IS NULL OR i.warehouse_id = $1)
                   AND ($2::text IS NULL OR i.category = $2)
                   AND ($3::text IS NULL OR i.item_name ILIKE $3 OR i.item_code ILIKE $3)
-                "#,
-            )
+                "#
+            ))
             .bind(params.warehouse_id)
             .bind(&params.category)
             .bind(&search_pattern)
@@ -414,7 +416,8 @@ pub async fn turnover_days(
         .end_date
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         WITH overall_stats AS (
             SELECT 
@@ -450,8 +453,8 @@ pub async fn turnover_days(
             END as overall_turnover_rate
         FROM outbound_stats os
         CROSS JOIN overall_stats os2
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
@@ -519,7 +522,7 @@ pub async fn abc_analysis(
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         WITH ranked_inventory AS (
             SELECT 
                 i.item_code as material_code,
@@ -573,7 +576,7 @@ pub async fn abc_analysis(
         FROM abc_classified
         GROUP BY abc_category
         ORDER BY abc_category
-        "#,
+        "#),
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -631,7 +634,7 @@ pub async fn turnover_trend(
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         WITH monthly_data AS (
             SELECT 
                 DATE_TRUNC('month', movement_date) as month,
@@ -672,7 +675,7 @@ pub async fn turnover_trend(
         FROM monthly_data md
         LEFT JOIN monthly_inventory mi ON md.month = mi.month
         ORDER BY md.month
-        "#,
+        "#),
     )
     .bind(&start_date)
     .bind(&end_date)

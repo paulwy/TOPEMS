@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -48,7 +49,8 @@ pub async fn overview(
         .end_date
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
-    let purchase_stats = sqlx::query(
+    let purchase_stats = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             COUNT(*) as total_orders,
@@ -61,23 +63,24 @@ pub async fn overview(
         FROM scm.purchase_orders
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .fetch_one(&state.db)
     .await;
 
-    let supplier_stats = sqlx::query_scalar::<_, i64>(
+    let supplier_stats = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*) FROM scm.suppliers WHERE status = 'active'
-        "#,
-    )
+        "#
+    ))
     .fetch_one(&state.db)
     .await;
 
     let inventory_stats = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT 
             COUNT(*) as total_skus,
             COALESCE(SUM(quantity), 0) as total_quantity,
@@ -85,13 +88,14 @@ pub async fn overview(
             COUNT(*) FILTER (WHERE available_quantity < COALESCE(min_quantity, 0)) as low_stock_count
         FROM scm.wms_inventory_snapshots
         WHERE ($1::uuid IS NULL OR warehouse_id = $1)
-        "#,
+        "#),
     )
     .bind(params.warehouse_id)
     .fetch_one(&state.db)
     .await;
 
-    let inbound_stats = sqlx::query(
+    let inbound_stats = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             COUNT(*) as total_inbound,
@@ -103,15 +107,16 @@ pub async fn overview(
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
     .fetch_one(&state.db)
     .await;
 
-    let outbound_stats = sqlx::query(
+    let outbound_stats = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             COUNT(*) as total_outbound,
@@ -123,8 +128,8 @@ pub async fn overview(
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
@@ -205,7 +210,8 @@ pub async fn purchase_inbound_outbound_stats(
         .end_date
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
-    let purchase_trend = sqlx::query(
+    let purchase_trend = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             DATE_TRUNC('day', created_at) as date,
@@ -216,14 +222,15 @@ pub async fn purchase_inbound_outbound_stats(
           AND created_at <= $2::timestamptz
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .fetch_all(&state.db)
     .await;
 
-    let inbound_trend = sqlx::query(
+    let inbound_trend = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             DATE_TRUNC('day', created_at) as date,
@@ -236,15 +243,16 @@ pub async fn purchase_inbound_outbound_stats(
           AND deleted_at IS NULL
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
     .fetch_all(&state.db)
     .await;
 
-    let outbound_trend = sqlx::query(
+    let outbound_trend = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             DATE_TRUNC('day', created_at) as date,
@@ -257,8 +265,8 @@ pub async fn purchase_inbound_outbound_stats(
           AND deleted_at IS NULL
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
@@ -346,7 +354,8 @@ pub async fn supplier_performance(
         .end_date
         .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT 
             s.id,
@@ -398,8 +407,8 @@ pub async fn supplier_performance(
         GROUP BY s.id, s.name, s.code, s.category, se.total_score, s.level
         ORDER BY overall_score DESC
         LIMIT 10
-        "#,
-    )
+        "#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .fetch_all(&state.db)
@@ -424,7 +433,8 @@ pub async fn supplier_performance(
                 })
                 .collect();
 
-            let category_distribution = sqlx::query(
+            let category_distribution = sqlx::query(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT 
                     category,
@@ -445,8 +455,8 @@ pub async fn supplier_performance(
                 ) sub
                 GROUP BY category
                 ORDER BY supplier_count DESC
-                "#,
-            )
+                "#
+            ))
             .bind(&start_date)
             .bind(&end_date)
             .fetch_all(&state.db)
@@ -498,70 +508,77 @@ async fn real_time_status(
         Err(e) => return e,
     }
 
-    let pending_purchase = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM scm.purchase_orders WHERE status = 'pending'",
-    )
+    let pending_purchase = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.purchase_orders WHERE status = 'pending'"
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let pending_inbound = sqlx::query_scalar::<_, i64>(
+    let pending_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots 
         WHERE status = 'pending'
           AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(params.warehouse_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let pending_outbound = sqlx::query_scalar::<_, i64>(
+    let pending_outbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*) FROM scm.wms_outbound_order_snapshots 
         WHERE status = 'pending'
           AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(params.warehouse_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let low_stock_count = sqlx::query_scalar::<_, i64>(
+    let low_stock_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*) FROM scm.wms_inventory_snapshots
         WHERE available_quantity < COALESCE(min_quantity, 0)
           AND ($1::uuid IS NULL OR warehouse_id = $1)
-        "#,
-    )
+        "#
+    ))
     .bind(params.warehouse_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let pending_inspection = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM scm.incoming_inspections WHERE status = 'pending'",
-    )
+    let pending_inspection = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.incoming_inspections WHERE status = 'pending'"
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let replenishment_suggestions = sqlx::query_scalar::<_, i64>(
+    let replenishment_suggestions = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*) FROM scm.wms_replenishment_suggestion_snapshots WHERE status = 'draft'
-        "#,
-    )
+        "#
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let mrp_suggestions = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM scm.mrp_suggestions WHERE status = 'draft'",
-    )
+    let mrp_suggestions = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.mrp_suggestions WHERE status = 'draft'"
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);

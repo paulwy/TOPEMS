@@ -6,6 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -101,7 +102,8 @@ pub const STATUS_FAILED: &str = "failed";
 pub const STATUS_RETRYING: &str = "retrying";
 
 pub async fn init_crm_scm_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "integration",
         r#"
         CREATE TABLE IF NOT EXISTS crm_scm_sync (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -129,32 +131,47 @@ pub async fn init_crm_scm_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_type ON crm_scm_sync(sync_type)")
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_type ON crm_scm_sync(sync_type)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_direction ON crm_scm_sync(direction)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_tenant ON crm_scm_sync(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_opportunity ON crm_scm_sync(crm_opportunity_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_direction ON crm_scm_sync(direction)")
+    sqlx::query(only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_purchase ON crm_scm_sync(scm_purchase_order_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_tenant ON crm_scm_sync(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_opportunity ON crm_scm_sync(crm_opportunity_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_purchase ON crm_scm_sync(scm_purchase_order_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_status ON crm_scm_sync(sync_status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_created ON crm_scm_sync(created_at)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_status ON crm_scm_sync(sync_status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_scm_sync_created ON crm_scm_sync(created_at)"
+    ))
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
@@ -173,7 +190,7 @@ pub async fn list_crm_scm_sync(
                 product_code, product_name, supplier_code, supplier_name,
                 synced, sync_status, sync_error, retry_count, max_retries,
                 payload, result_payload, last_synced_at, created_at, updated_at
-           FROM crm_scm_sync WHERE tenant_id = $1",
+           FROM integration.crm_scm_sync WHERE tenant_id = $1",
     );
 
     let mut params: Vec<String> = Vec::new();
@@ -207,14 +224,15 @@ pub async fn list_crm_scm_sync(
 }
 
 pub async fn get_crm_scm_sync(pool: &PgPool, id: Uuid) -> Result<Option<CrmScmSync>, sqlx::Error> {
-    sqlx::query_as::<_, CrmScmSync>(
+    sqlx::query_as::<_, CrmScmSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, tenant_id, sync_type, direction, crm_opportunity_id, crm_product_id,
                 scm_purchase_order_id, scm_supplier_id, opportunity_no, purchase_order_no,
                 product_code, product_name, supplier_code, supplier_name,
                 synced, sync_status, sync_error, retry_count, max_retries,
                 payload, result_payload, last_synced_at, created_at, updated_at
-           FROM crm_scm_sync WHERE id = $1",
-    )
+           FROM integration.crm_scm_sync WHERE id = $1"
+    ))
     .bind(id)
     .fetch_optional(pool)
     .await
@@ -245,7 +263,7 @@ pub async fn create_sync_record(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, CrmScmSync>(
-        "INSERT INTO crm_scm_sync (
+        only_own_schema_query!("integration", "INSERT INTO integration.crm_scm_sync (
             id, tenant_id, sync_type, direction, crm_opportunity_id, crm_product_id,
             scm_purchase_order_id, scm_supplier_id, opportunity_no, purchase_order_no,
             product_code, product_name, supplier_code, supplier_name,
@@ -256,7 +274,7 @@ pub async fn create_sync_record(
                   scm_purchase_order_id, scm_supplier_id, opportunity_no, purchase_order_no,
                   product_code, product_name, supplier_code, supplier_name,
                   synced, sync_status, sync_error, retry_count, max_retries,
-                  payload, result_payload, last_synced_at, created_at, updated_at"
+                  payload, result_payload, last_synced_at, created_at, updated_at")
     )
     .bind(id)
     .bind(req.tenant_id)
@@ -298,8 +316,9 @@ pub async fn update_sync_status(
     let now = Utc::now();
     let last_synced = if synced { Some(now) } else { None };
 
-    sqlx::query_as::<_, CrmScmSync>(
-        "UPDATE crm_scm_sync SET 
+    sqlx::query_as::<_, CrmScmSync>(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.crm_scm_sync SET 
             sync_status = $2, synced = $3, sync_error = $4,
             result_payload = COALESCE($5, result_payload),
             last_synced_at = COALESCE($6, last_synced_at),
@@ -309,8 +328,8 @@ pub async fn update_sync_status(
                   scm_purchase_order_id, scm_supplier_id, opportunity_no, purchase_order_no,
                   product_code, product_name, supplier_code, supplier_name,
                   synced, sync_status, sync_error, retry_count, max_retries,
-                  payload, result_payload, last_synced_at, created_at, updated_at",
-    )
+                  payload, result_payload, last_synced_at, created_at, updated_at"
+    ))
     .bind(id)
     .bind(status)
     .bind(synced)
@@ -327,12 +346,13 @@ pub async fn increment_retry_count(
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        "UPDATE crm_scm_sync SET 
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.crm_scm_sync SET 
             retry_count = retry_count + 1, sync_status = 'retrying',
             sync_error = $2, updated_at = NOW()
-         WHERE id = $1",
-    )
+         WHERE id = $1"
+    ))
     .bind(id)
     .bind(error)
     .execute(pool)
@@ -872,13 +892,14 @@ async fn create_crm_product(
 }
 
 pub async fn get_crm_scm_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
-    let purchase_result = sqlx::query(
+    let purchase_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM crm_scm_sync 
-          WHERE sync_type = 'opportunity_to_purchase'",
-    )
+           FROM integration.crm_scm_sync 
+          WHERE sync_type = 'opportunity_to_purchase'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -891,12 +912,13 @@ pub async fn get_crm_scm_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0, 0),
     };
 
-    let supplier_result = sqlx::query(
+    let supplier_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
-           FROM crm_scm_sync 
-          WHERE sync_type = 'supplier'",
-    )
+           FROM integration.crm_scm_sync 
+          WHERE sync_type = 'supplier'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -908,12 +930,13 @@ pub async fn get_crm_scm_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0),
     };
 
-    let product_result = sqlx::query(
+    let product_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
-           FROM crm_scm_sync 
-          WHERE sync_type = 'product'",
-    )
+           FROM integration.crm_scm_sync 
+          WHERE sync_type = 'product'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -925,9 +948,12 @@ pub async fn get_crm_scm_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0),
     };
 
-    let last_sync_result = sqlx::query("SELECT MAX(last_synced_at) as last_sync FROM crm_scm_sync")
-        .fetch_one(pool)
-        .await;
+    let last_sync_result = sqlx::query(only_own_schema_query!(
+        "integration",
+        "SELECT MAX(last_synced_at) as last_sync FROM integration.crm_scm_sync"
+    ))
+    .fetch_one(pool)
+    .await;
 
     let last_sync = last_sync_result
         .ok()

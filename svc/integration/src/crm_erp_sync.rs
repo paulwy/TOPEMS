@@ -6,6 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -101,7 +102,8 @@ pub const STATUS_FAILED: &str = "failed";
 pub const STATUS_RETRYING: &str = "retrying";
 
 pub async fn init_crm_erp_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "integration",
         r#"
         CREATE TABLE IF NOT EXISTS crm_erp_sync (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -127,36 +129,53 @@ pub async fn init_crm_erp_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_type ON crm_erp_sync(sync_type)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_direction ON crm_erp_sync(direction)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_tenant ON crm_erp_sync(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_crm_customer ON crm_erp_sync(crm_customer_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_type ON crm_erp_sync(sync_type)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_erp_customer ON crm_erp_sync(erp_customer_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_direction ON crm_erp_sync(direction)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_status ON crm_erp_sync(sync_status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_created ON crm_erp_sync(created_at)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_tenant ON crm_erp_sync(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_crm_customer ON crm_erp_sync(crm_customer_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_erp_customer ON crm_erp_sync(erp_customer_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_status ON crm_erp_sync(sync_status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_crm_erp_sync_created ON crm_erp_sync(created_at)"
+    ))
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
@@ -175,7 +194,7 @@ pub async fn list_crm_erp_sync(
                 customer_code, customer_name, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM crm_erp_sync WHERE tenant_id = $1",
+           FROM integration.crm_erp_sync WHERE tenant_id = $1",
     );
 
     let mut params: Vec<String> = Vec::new();
@@ -209,14 +228,15 @@ pub async fn list_crm_erp_sync(
 }
 
 pub async fn get_crm_erp_sync(pool: &PgPool, id: Uuid) -> Result<Option<CrmErpSync>, sqlx::Error> {
-    sqlx::query_as::<_, CrmErpSync>(
+    sqlx::query_as::<_, CrmErpSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, tenant_id, sync_type, direction, crm_customer_id, crm_contact_id,
                 crm_opportunity_id, erp_customer_id, erp_contact_id, erp_order_id,
                 customer_code, customer_name, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM crm_erp_sync WHERE id = $1",
-    )
+           FROM integration.crm_erp_sync WHERE id = $1"
+    ))
     .bind(id)
     .fetch_optional(pool)
     .await
@@ -255,7 +275,7 @@ pub async fn create_sync_record(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, CrmErpSync>(
-        "INSERT INTO crm_erp_sync (
+        only_own_schema_query!("integration", "INSERT INTO integration.crm_erp_sync (
             id, tenant_id, sync_type, direction, crm_customer_id, crm_contact_id,
             crm_opportunity_id, erp_customer_id, erp_contact_id, erp_order_id,
             customer_code, customer_name, synced, sync_status,
@@ -266,7 +286,7 @@ pub async fn create_sync_record(
                   crm_opportunity_id, erp_customer_id, erp_contact_id, erp_order_id,
                   customer_code, customer_name, synced, sync_status, sync_error,
                   retry_count, max_retries, payload, result_payload, last_synced_at,
-                  created_at, updated_at"
+                  created_at, updated_at")
     )
     .bind(id)
     .bind(req.tenant_id)
@@ -306,8 +326,9 @@ pub async fn update_sync_status(
     let now = Utc::now();
     let last_synced = if synced { Some(now) } else { None };
 
-    sqlx::query_as::<_, CrmErpSync>(
-        "UPDATE crm_erp_sync SET 
+    sqlx::query_as::<_, CrmErpSync>(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.crm_erp_sync SET 
             sync_status = $2, synced = $3, sync_error = $4,
             result_payload = COALESCE($5, result_payload),
             last_synced_at = COALESCE($6, last_synced_at),
@@ -317,8 +338,8 @@ pub async fn update_sync_status(
                   crm_opportunity_id, erp_customer_id, erp_contact_id, erp_order_id,
                   customer_code, customer_name, synced, sync_status, sync_error,
                   retry_count, max_retries, payload, result_payload, last_synced_at,
-                  created_at, updated_at",
-    )
+                  created_at, updated_at"
+    ))
     .bind(id)
     .bind(status)
     .bind(synced)
@@ -335,12 +356,13 @@ pub async fn increment_retry_count(
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        "UPDATE crm_erp_sync SET 
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.crm_erp_sync SET 
             retry_count = retry_count + 1, sync_status = 'retrying',
             sync_error = $2, updated_at = NOW()
-         WHERE id = $1",
-    )
+         WHERE id = $1"
+    ))
     .bind(id)
     .bind(error)
     .execute(pool)
@@ -864,13 +886,14 @@ async fn create_erp_order_from_opportunity(
 }
 
 pub async fn get_crm_erp_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
-    let crm_to_erp_result = sqlx::query(
+    let crm_to_erp_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM crm_erp_sync 
-          WHERE direction = 'crm_to_erp' AND sync_type = 'customer'",
-    )
+           FROM integration.crm_erp_sync 
+          WHERE direction = 'crm_to_erp' AND sync_type = 'customer'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -883,13 +906,14 @@ pub async fn get_crm_erp_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0, 0),
     };
 
-    let erp_to_crm_result = sqlx::query(
+    let erp_to_crm_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM crm_erp_sync 
-          WHERE direction = 'erp_to_crm' AND sync_type = 'customer'",
-    )
+           FROM integration.crm_erp_sync 
+          WHERE direction = 'erp_to_crm' AND sync_type = 'customer'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -902,12 +926,13 @@ pub async fn get_crm_erp_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0, 0),
     };
 
-    let contact_result = sqlx::query(
+    let contact_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
-           FROM crm_erp_sync 
-          WHERE sync_type = 'contact'",
-    )
+           FROM integration.crm_erp_sync 
+          WHERE sync_type = 'contact'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -919,12 +944,13 @@ pub async fn get_crm_erp_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0),
     };
 
-    let opportunity_result = sqlx::query(
+    let opportunity_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as completed
-           FROM crm_erp_sync 
-          WHERE sync_type = 'opportunity_to_order'",
-    )
+           FROM integration.crm_erp_sync 
+          WHERE sync_type = 'opportunity_to_order'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -936,9 +962,12 @@ pub async fn get_crm_erp_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0),
     };
 
-    let last_sync_result = sqlx::query("SELECT MAX(last_synced_at) as last_sync FROM crm_erp_sync")
-        .fetch_one(pool)
-        .await;
+    let last_sync_result = sqlx::query(only_own_schema_query!(
+        "integration",
+        "SELECT MAX(last_synced_at) as last_sync FROM integration.crm_erp_sync"
+    ))
+    .fetch_one(pool)
+    .await;
 
     let last_sync = last_sync_result
         .ok()

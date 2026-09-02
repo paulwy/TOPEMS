@@ -31,6 +31,7 @@ reqwest.workspace = true
 
 rust_decimal.workspace = true
 topems-shared-db = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 
 [[bin]]
 name = "topems-scm"

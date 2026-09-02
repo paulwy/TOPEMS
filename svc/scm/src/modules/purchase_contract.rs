@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -52,16 +53,17 @@ pub async fn list_contracts(
     let offset = (page - 1) * page_size;
 
     let contracts = sqlx::query_as::<_, PurchaseContract>(
-        "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
     .await;
 
-    let total = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM scm.purchase_contracts WHERE deleted_at IS NULL",
-    )
+    let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.purchase_contracts WHERE deleted_at IS NULL"
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
@@ -93,7 +95,8 @@ pub async fn create_contract(
         Err(e) => return e,
     }
 
-    let contract = sqlx::query_as::<_, PurchaseContract>(
+    let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
+        "scm",
         r#"
         INSERT INTO scm.purchase_contracts (
             contract_no, title, contract_type, supplier_id,
@@ -101,8 +104,8 @@ pub async fn create_contract(
             currency, payment_terms, delivery_terms, signed_by, remarks, status
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'draft')
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&data.contract_no)
     .bind(&data.title)
     .bind(&data.contract_type)
@@ -123,14 +126,15 @@ pub async fn create_contract(
         Ok(item) => {
             if let Some(items) = &data.items {
                 for (idx, item_data) in items.iter().enumerate() {
-                    let _ = sqlx::query(
+                    let _ = sqlx::query(only_own_schema_query!(
+                        "scm",
                         r#"
                         INSERT INTO scm.purchase_contract_items (
                             contract_id, line_number, product_code, product_name,
                             specification, unit, quantity, unit_price, delivery_date, remarks
                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                        "#,
-                    )
+                        "#
+                    ))
                     .bind(item.id)
                     .bind((idx + 1) as i32)
                     .bind(&item_data.product_code)
@@ -170,7 +174,7 @@ pub async fn get_contract(
     };
 
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL",
+        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(contract_id)
     .fetch_one(&state.db)
@@ -179,7 +183,7 @@ pub async fn get_contract(
     match contract {
         Ok(contract) => {
             let items = sqlx::query_as::<_, PurchaseContractItem>(
-                "SELECT id, tenant_id, contract_id, item_code, item_name, specification, quantity, unit, unit_price, total_amount, tax_rate, delivery_date, status, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 ORDER BY line_number",
+                only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, item_code, item_name, specification, quantity, unit, unit_price, total_amount, tax_rate, delivery_date, status, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 ORDER BY line_number"),
             )
             .bind(contract_id)
             .fetch_all(&state.db)
@@ -218,7 +222,8 @@ pub async fn update_contract(
         Err(_) => return Json(api_error(400, "无效的采购合同ID")),
     };
 
-    let contract = sqlx::query_as::<_, PurchaseContract>(
+    let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_contracts SET
             title = COALESCE($1, title),
@@ -235,8 +240,8 @@ pub async fn update_contract(
             remarks = COALESCE($12, remarks)
         WHERE id = $13 AND deleted_at IS NULL
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&data.title)
     .bind(&data.contract_type)
     .bind(&data.supplier_id)
@@ -256,21 +261,24 @@ pub async fn update_contract(
     match contract {
         Ok(item) => {
             if let Some(items) = &data.items {
-                let _ =
-                    sqlx::query("DELETE FROM scm.purchase_contract_items WHERE contract_id = $1")
-                        .bind(contract_id)
-                        .execute(&state.db)
-                        .await;
+                let _ = sqlx::query(only_own_schema_query!(
+                    "scm",
+                    "DELETE FROM scm.purchase_contract_items WHERE contract_id = $1"
+                ))
+                .bind(contract_id)
+                .execute(&state.db)
+                .await;
 
                 for (idx, item_data) in items.iter().enumerate() {
-                    let _ = sqlx::query(
+                    let _ = sqlx::query(only_own_schema_query!(
+                        "scm",
                         r#"
                         INSERT INTO scm.purchase_contract_items (
                             contract_id, line_number, product_code, product_name,
                             specification, unit, quantity, unit_price, delivery_date, remarks
                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                        "#,
-                    )
+                        "#
+                    ))
                     .bind(contract_id)
                     .bind((idx + 1) as i32)
                     .bind(&item_data.product_code)
@@ -310,9 +318,10 @@ pub async fn delete_contract(
         Err(_) => return Json(api_error(400, "无效的采购合同ID")),
     };
 
-    let result = sqlx::query(
-        "UPDATE scm.purchase_contracts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        "UPDATE scm.purchase_contracts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+    ))
     .bind(contract_id)
     .execute(&state.db)
     .await;
@@ -351,7 +360,7 @@ async fn submit_contract(
         .map(|s| s.to_string());
 
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        "UPDATE scm.purchase_contracts SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *"),
     )
     .bind(remarks)
     .bind(contract_id)
@@ -389,15 +398,16 @@ async fn approve_contract(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let contract = sqlx::query_as::<_, PurchaseContract>(
+    let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_contracts SET 
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(contract_id)
@@ -435,15 +445,16 @@ async fn reject_contract(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let contract = sqlx::query_as::<_, PurchaseContract>(
+    let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_contracts SET 
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(contract_id)
@@ -482,7 +493,7 @@ async fn cancel_contract(
         .map(|s| s.to_string());
 
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        "UPDATE scm.purchase_contracts SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'approved') RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'approved') RETURNING *"),
     )
     .bind(remarks)
     .bind(contract_id)
@@ -521,7 +532,7 @@ async fn terminate_contract(
         .map(|s| s.to_string());
 
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        "UPDATE scm.purchase_contracts SET status = 'terminated', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'terminated', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
     )
     .bind(remarks)
     .bind(contract_id)
@@ -554,7 +565,7 @@ async fn renew_contract(
     };
 
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        "UPDATE scm.purchase_contracts SET status = 'draft' WHERE id = $1 AND deleted_at IS NULL AND status IN ('expired', 'terminated') RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'draft' WHERE id = $1 AND deleted_at IS NULL AND status IN ('expired', 'terminated') RETURNING *"),
     )
     .bind(contract_id)
     .fetch_one(&state.db)

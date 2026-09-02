@@ -136,7 +136,8 @@ async fn sync_supplier_from_scm(
 
     let existing_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2"
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        "plugin_srm"
     ))
     .bind(id)
     .bind(tenant_id)
@@ -155,12 +156,13 @@ async fn sync_supplier_from_scm(
         let result = sqlx::query(only_own_schema_query!(
             "srm",
             r#"
-            UPDATE suppliers SET name = $2, legal_name = $3, contact_person = $4, 
+            UPDATE plugin_srm.suppliers SET name = $2, legal_name = $3, contact_person = $4, 
                                            phone = $5, email = $6, address = $7, 
                                            tax_id = $8, status = $9, sync_from_scm = TRUE,
                                            scm_supplier_id = $10, updated_at = $11
             WHERE id = $1 AND tenant_id = $12
-            "#
+            "#,
+            "plugin_srm"
         ))
         .bind(id)
         .bind(&name)
@@ -213,12 +215,12 @@ async fn sync_supplier_from_scm(
     } else {
         let result = sqlx::query(
             only_own_schema_query!("srm", r#"
-            INSERT INTO suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
+            INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
                                                phone, email, address, tax_id, status, 
                                                risk_level, sync_from_scm, scm_supplier_id,
                                                created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)
-            "#),
+            "#, "plugin_srm"),
         )
         .bind(id)
         .bind(tenant_id)
@@ -328,7 +330,8 @@ async fn sync_all_suppliers_from_scm(
     {
         let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "srm",
-            "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2"
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+            "plugin_srm"
         ))
         .bind(id)
         .bind(tenant_id)
@@ -339,12 +342,13 @@ async fn sync_all_suppliers_from_scm(
             let result = sqlx::query(only_own_schema_query!(
                 "srm",
                 r#"
-                UPDATE suppliers SET name = $2, legal_name = $3, contact_person = $4, 
+                UPDATE plugin_srm.suppliers SET name = $2, legal_name = $3, contact_person = $4, 
                                                phone = $5, email = $6, address = $7, 
                                                tax_id = $8, status = $9, sync_from_scm = TRUE,
                                                scm_supplier_id = $10, updated_at = $11
                 WHERE id = $1 AND tenant_id = $12
-                "#
+                "#,
+                "plugin_srm"
             ))
             .bind(id)
             .bind(&name)
@@ -369,12 +373,12 @@ async fn sync_all_suppliers_from_scm(
         } else {
             let result = sqlx::query(
                 only_own_schema_query!("srm", r#"
-                INSERT INTO suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
+                INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
                                                    phone, email, address, tax_id, status, 
                                                    risk_level, sync_from_scm, scm_supplier_id,
                                                    created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)
-                "#),
+                "#, "plugin_srm"),
             )
             .bind(id)
             .bind(tenant_id)
@@ -457,9 +461,10 @@ async fn sync_supplier_to_scm(
         "srm",
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
-        FROM suppliers
+        FROM plugin_srm.suppliers
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#
+        "#,
+        "plugin_srm"
     ))
     .bind(supplier_id)
     .bind(tenant_id)
@@ -611,9 +616,10 @@ async fn sync_all_suppliers_to_scm(
         "srm",
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
-        FROM suppliers
+        FROM plugin_srm.suppliers
         WHERE tenant_id = $1 AND status != 'deleted'
-        "#
+        "#,
+        "plugin_srm"
     ))
     .bind(tenant_id)
     .fetch_all(&state.db)

@@ -6,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -368,7 +369,7 @@ async fn list_inquiries(
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, PurchaseInquiry>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, inquiry_no, title, description, inquiry_date, deadline, status, created_by, created_at, updated_at
         FROM scm.purchase_inquiries
         WHERE ($1::text IS NULL OR title ILIKE $1 OR inquiry_no ILIKE $1)
@@ -376,7 +377,7 @@ async fn list_inquiries(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -387,14 +388,15 @@ async fn list_inquiries(
 
     match result {
         Ok(inquiries) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(*) FROM scm.purchase_inquiries
                 WHERE ($1::text IS NULL OR title ILIKE $1 OR inquiry_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -430,11 +432,11 @@ async fn create_inquiry(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseInquiry>(
-        r#"
+        only_own_schema_query!("scm", r#"
         INSERT INTO scm.purchase_inquiries (id, inquiry_no, title, description, inquiry_date, deadline, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8)
         RETURNING id, inquiry_no, title, description, inquiry_date, deadline, status, created_by, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&inquiry_no)
@@ -451,10 +453,10 @@ async fn create_inquiry(
         Ok(inquiry) => {
             for item in req.items {
                 if let Err(e) = sqlx::query(
-                    r#"
+                    only_own_schema_query!("scm", r#"
                     INSERT INTO scm.purchase_inquiry_items (id, inquiry_id, item_name, specification, unit, quantity, target_price, remarks)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                    "#,
+                    "#),
                 )
                 .bind(Uuid::new_v4())
                 .bind(id)
@@ -490,11 +492,11 @@ async fn get_inquiry(
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, PurchaseInquiry>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, inquiry_no, title, description, inquiry_date, deadline, status, created_by, created_at, updated_at
         FROM scm.purchase_inquiries
         WHERE id = $1 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -502,20 +504,21 @@ async fn get_inquiry(
 
     match result {
         Ok(Some(inquiry)) => {
-            let items = sqlx::query_as::<_, InquiryItem>(
+            let items = sqlx::query_as::<_, InquiryItem>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT id, item_name, specification, unit, quantity, target_price, remarks
                 FROM scm.purchase_inquiry_items
                 WHERE inquiry_id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .fetch_all(&state.db)
             .await
             .unwrap_or_default();
 
             let quotes_count = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM scm.supplier_quotes WHERE inquiry_id = $1 AND deleted_at IS NULL",
+                only_own_schema_query!("scm", "SELECT COUNT(*) FROM scm.supplier_quotes WHERE inquiry_id = $1 AND deleted_at IS NULL"),
             )
             .bind(id)
             .fetch_one(&state.db)
@@ -545,13 +548,14 @@ async fn delete_inquiry(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_inquiries
         SET deleted_at = $1, status = 'cancelled'
         WHERE id = $2 AND status = 'draft'
-        "#,
-    )
+        "#
+    ))
     .bind(Utc::now())
     .bind(id)
     .execute(&state.db)
@@ -576,13 +580,14 @@ async fn publish_inquiry(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_inquiries
         SET status = 'published', updated_at = $1
         WHERE id = $2 AND status = 'draft'
-        "#,
-    )
+        "#
+    ))
     .bind(Utc::now())
     .bind(id)
     .execute(&state.db)
@@ -614,7 +619,8 @@ async fn list_quotes(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let result = sqlx::query_as::<_, QuoteListRecord>(
+    let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount, 
                q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks, 
@@ -627,8 +633,8 @@ async fn list_quotes(
           AND q.deleted_at IS NULL
         ORDER BY q.created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -638,15 +644,16 @@ async fn list_quotes(
 
     match result {
         Ok(quotes) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(*) FROM scm.supplier_quotes q
                 LEFT JOIN scm.suppliers s ON q.supplier_id = s.id
                 WHERE ($1::text IS NULL OR q.quote_no ILIKE $1 OR s.name ILIKE $1)
                   AND ($2::text IS NULL OR q.status = $2)
                   AND q.deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -682,10 +689,10 @@ async fn create_quote(
     let now = Utc::now();
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         INSERT INTO scm.supplier_quotes (id, supplier_id, quote_no, quote_date, currency, delivery_days, valid_until, payment_terms, status, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.supplier_id)
@@ -719,7 +726,8 @@ async fn get_quote(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query_as::<_, QuoteListRecord>(
+    let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount,
                q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks,
@@ -728,23 +736,24 @@ async fn get_quote(
         FROM scm.supplier_quotes q
         LEFT JOIN scm.suppliers s ON q.supplier_id = s.id
         WHERE q.id = $1 AND q.deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
 
     match result {
         Ok(Some(quote)) => {
-            let items = sqlx::query_as::<_, QuoteItem>(
+            let items = sqlx::query_as::<_, QuoteItem>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT qi.id, qi.item_name, qi.specification, qi.unit, qi.quantity, qi.target_price,
                        sqi.unit_price, sqi.total_price, sqi.lead_time_days
                 FROM scm.supplier_quote_items sqi
                 JOIN scm.purchase_inquiry_items qi ON sqi.inquiry_item_id = qi.id
                 WHERE sqi.quote_id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .fetch_all(&state.db)
             .await
@@ -773,13 +782,14 @@ async fn update_quote(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.supplier_quotes
         SET delivery_days = $1, valid_until = $2, payment_terms = $3, remarks = $4, updated_at = $5
         WHERE id = $6 AND status = 'draft'
-        "#,
-    )
+        "#
+    ))
     .bind(req.delivery_days)
     .bind(req.valid_until)
     .bind(&req.payment_terms)
@@ -808,13 +818,14 @@ async fn submit_quote(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.supplier_quotes
         SET status = 'submitted', updated_at = $1
         WHERE id = $2 AND status = 'draft'
-        "#,
-    )
+        "#
+    ))
     .bind(Utc::now())
     .bind(id)
     .execute(&state.db)
@@ -846,7 +857,7 @@ pub async fn list_comparisons(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
 
     let result = sqlx::query_as::<_, ComparisonListRecord>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT c.id, c.inquiry_id, c.comparison_no, c.compared_at, c.recommended_supplier_id,
                c.recommended_quote_id, c.total_score, c.quality_score, c.price_score,
                c.delivery_score, c.service_score, c.remarks, c.created_by, c.created_at, c.updated_at,
@@ -858,7 +869,7 @@ pub async fn list_comparisons(
         WHERE $1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1
         ORDER BY c.created_at DESC
         LIMIT $2 OFFSET $3
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(page_size)
@@ -868,13 +879,14 @@ pub async fn list_comparisons(
 
     match result {
         Ok(comparisons) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(*) FROM scm.price_comparisons c
                 LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
                 WHERE $1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .fetch_one(&state.db)
             .await;
@@ -914,12 +926,12 @@ pub async fn create_comparison(
         + req.service_score.unwrap_or(0.0) * 0.1;
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         INSERT INTO scm.price_comparisons (id, comparison_no, compared_at, recommended_supplier_id, 
                                        recommended_quote_id, total_score, quality_score, price_score, 
                                        delivery_score, service_score, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&comparison_no)
@@ -947,11 +959,11 @@ pub async fn create_comparison(
                     + item.service_score * 0.1;
 
                 let _ = sqlx::query(
-                    r#"
+                    only_own_schema_query!("scm", r#"
                     INSERT INTO scm.price_comparison_items (id, comparison_id, supplier_id, quote_id, quality_score, 
                                                         price_score, delivery_score, service_score, total_score, rank, remarks)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                    "#,
+                    "#),
                 )
                 .bind(Uuid::new_v4())
                 .bind(id)
@@ -989,7 +1001,7 @@ pub async fn get_comparison(
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, ComparisonListRecord>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT c.id, c.inquiry_id, c.comparison_no, c.compared_at, c.recommended_supplier_id,
                c.recommended_quote_id, c.total_score, c.quality_score, c.price_score,
                c.delivery_score, c.service_score, c.remarks, c.created_by, c.created_at, c.updated_at,
@@ -999,7 +1011,7 @@ pub async fn get_comparison(
         LEFT JOIN scm.suppliers s ON c.recommended_supplier_id = s.id
         LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
         WHERE c.id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -1007,7 +1019,8 @@ pub async fn get_comparison(
 
     match result {
         Ok(Some(comparison)) => {
-            let items = sqlx::query_as::<_, ComparisonItemRecord>(
+            let items = sqlx::query_as::<_, ComparisonItemRecord>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT ci.id, ci.supplier_id, ci.quote_id, ci.quality_score, ci.price_score,
                        ci.delivery_score, ci.service_score, ci.total_score, ci.rank, ci.remarks,
@@ -1016,8 +1029,8 @@ pub async fn get_comparison(
                 LEFT JOIN scm.suppliers s ON ci.supplier_id = s.id
                 WHERE ci.comparison_id = $1
                 ORDER BY ci.rank
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .fetch_all(&state.db)
             .await
@@ -1048,13 +1061,14 @@ pub async fn approve_comparison(
     let now_str = Utc::now().to_rfc3339();
     let now = Utc::now();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.price_comparisons
         SET remarks = CONCAT(COALESCE(remarks, ''), ' | 已审批: ', $1), updated_at = $2
         WHERE id = $3
-        "#,
-    )
+        "#
+    ))
     .bind(now_str)
     .bind(now)
     .bind(id)

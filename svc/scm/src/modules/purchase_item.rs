@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -50,14 +51,14 @@ async fn list_items(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
 
     let result = sqlx::query_as::<_, PurchaseItem>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
         FROM scm.purchase_items
         WHERE ($1::text IS NULL OR product_name ILIKE $1 OR product_code ILIKE $1)
           AND ($2::uuid IS NULL OR order_id = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(params.order_id)
@@ -68,13 +69,14 @@ async fn list_items(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(*) FROM scm.purchase_items
                 WHERE ($1::text IS NULL OR product_name ILIKE $1 OR product_code ILIKE $1)
                   AND ($2::uuid IS NULL OR order_id = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(params.order_id)
             .fetch_one(&state.db)
@@ -114,11 +116,11 @@ async fn create_item(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseItem>(
-        r#"
+        only_own_schema_query!("scm", r#"
         INSERT INTO scm.purchase_items (id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.order_id)
@@ -185,10 +187,10 @@ async fn get_item(
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, PurchaseItem>(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
         FROM scm.purchase_items WHERE id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -218,7 +220,7 @@ async fn update_item(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseItem>(
-        "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM scm.purchase_items WHERE id = $1",
+        only_own_schema_query!("scm", "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM scm.purchase_items WHERE id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -240,12 +242,12 @@ async fn update_item(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseItem>(
-        r#"
+        only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_items SET
             product_code = $2, product_name = $3, specification = $4, unit = $5, quantity = $6, unit_price = $7, amount = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&product_code)
@@ -310,10 +312,13 @@ async fn delete_item(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM scm.purchase_items WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        "DELETE FROM scm.purchase_items WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

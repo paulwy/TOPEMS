@@ -5,6 +5,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 // ==================== Conversion Rule Types ====================
@@ -397,7 +398,8 @@ pub fn get_predefined_rules(tenant_id: Uuid) -> Vec<ConversionRule> {
 
 /// 初始化转换规则表
 pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "integration",
         r#"
         CREATE TABLE IF NOT EXISTS conversion_rules (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -424,12 +426,13 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
             CONSTRAINT uq_conversion_rules_tenant_code UNIQUE (tenant_id, code),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "integration",
         r#"
         CREATE TABLE IF NOT EXISTS conversion_executions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -447,30 +450,34 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
             completed_at TIMESTAMP,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // 创建索引
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_rules_code ON conversion_rules(code)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_conversion_rules_tenant ON conversion_rules(tenant_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_conversion_rules_code ON conversion_rules(code)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_rules_source ON conversion_rules(source_system, source_entity)")
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_conversion_rules_tenant ON conversion_rules(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_conversion_rules_source ON conversion_rules(source_system, source_entity)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_executions_rule ON conversion_executions(rule_id)")
+    sqlx::query(only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_conversion_executions_rule ON conversion_executions(rule_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_executions_tenant ON conversion_executions(tenant_id)")
+    sqlx::query(only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_conversion_executions_tenant ON conversion_executions(tenant_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_executions_status ON conversion_executions(status)")
+    sqlx::query(only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_conversion_executions_status ON conversion_executions(status)"))
         .execute(pool)
         .await?;
 
@@ -480,7 +487,7 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
 /// 获取所有转换规则
 pub async fn list_conversion_rules(pool: &PgPool) -> Result<Vec<ConversionRule>, sqlx::Error> {
     sqlx::query_as::<_, ConversionRule>(
-        "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM conversion_rules ORDER BY priority ASC, created_at DESC",
+        only_own_schema_query!("integration", "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM integration.conversion_rules ORDER BY priority ASC, created_at DESC"),
     )
     .fetch_all(pool)
     .await
@@ -493,7 +500,7 @@ pub async fn get_rule_executions(
     limit: i64,
 ) -> Result<Vec<ConversionExecution>, sqlx::Error> {
     sqlx::query_as::<_, ConversionExecution>(
-        "SELECT id, rule_id, source_value, target_value, status, error_message, executed_at FROM conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2",
+        only_own_schema_query!("integration", "SELECT id, rule_id, source_value, target_value, status, error_message, executed_at FROM integration.conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2"),
     )
     .bind(rule_id)
     .bind(limit)
@@ -507,14 +514,14 @@ pub async fn insert_conversion_rule(
     rule: &ConversionRule,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        r#"
-        INSERT INTO conversion_rules (
+        only_own_schema_query!("integration", r#"
+        INSERT INTO integration.conversion_rules (
             id, tenant_id, code, name, description, source_system, source_entity,
             target_system, target_entity, trigger_type, trigger_condition,
             field_mappings, transform_script, status, priority, is_enabled,
             max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
-        "#,
+        "#),
     )
     .bind(rule.id)
     .bind(rule.tenant_id)

@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -248,7 +249,8 @@ async fn list_notices(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, notice_number, purchase_order_id, purchase_order_number,
                supplier_id, supplier_name, warehouse_id, warehouse_name,
@@ -259,8 +261,8 @@ async fn list_notices(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -270,13 +272,14 @@ async fn list_notices(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(*) FROM scm.incoming_notices
                 WHERE ($1::text IS NULL OR notice_number ILIKE $1 OR supplier_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -332,7 +335,8 @@ async fn create_notice(
     let notice_number = format!("ASN{}", now.format("%Y%m%d%H%M%S"));
     let inspection_required = req.inspection_required.unwrap_or(true);
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         INSERT INTO scm.incoming_notices 
         (id, notice_number, purchase_order_id, purchase_order_number,
@@ -344,8 +348,8 @@ async fn create_notice(
                   supplier_id, supplier_name, warehouse_id, warehouse_name,
                   expected_arrival_date, actual_arrival_date, status,
                   total_quantity, inspection_required, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&notice_number)
     .bind(req.purchase_order_id)
@@ -412,15 +416,16 @@ async fn get_notice(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, notice_number, purchase_order_id, purchase_order_number,
                supplier_id, supplier_name, warehouse_id, warehouse_name,
                expected_arrival_date, actual_arrival_date, status,
                total_quantity, inspection_required, remarks, created_at, updated_at
         FROM scm.incoming_notices WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -459,12 +464,13 @@ async fn update_notice(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query(
+    let existing = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, notice_number, status, actual_arrival_date, remarks
         FROM scm.incoming_notices WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -477,7 +483,8 @@ async fn update_notice(
         return Json(api_error(404, "到货通知单不存在"));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.incoming_notices SET
             status = COALESCE($2, status),
@@ -492,8 +499,8 @@ async fn update_notice(
                   supplier_id, supplier_name, warehouse_id, warehouse_name,
                   expected_arrival_date, actual_arrival_date, status,
                   total_quantity, inspection_required, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.status)
     .bind(req.actual_arrival_date)
@@ -559,7 +566,7 @@ pub async fn list_inspections(
     let status_filter = params.status.clone();
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         SELECT id, inspection_number, notice_id, notice_number,
                material_code, material_name, specification, unit,
                batch_number, inspected_quantity, passed_quantity, failed_quantity,
@@ -571,7 +578,7 @@ pub async fn list_inspections(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -583,11 +590,11 @@ pub async fn list_inspections(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("scm", r#"
                 SELECT COUNT(*) FROM scm.incoming_inspections
                 WHERE ($1::text IS NULL OR inspection_number ILIKE $1 OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -644,10 +651,13 @@ pub async fn create_inspection(
     let now = Utc::now();
     let inspection_number = format!("IQC{}", now.format("%Y%m%d%H%M%S"));
 
-    let notice_info = sqlx::query("SELECT notice_number FROM scm.incoming_notices WHERE id = $1")
-        .bind(req.notice_id)
-        .fetch_optional(&state.db)
-        .await;
+    let notice_info = sqlx::query(only_own_schema_query!(
+        "scm",
+        "SELECT notice_number FROM scm.incoming_notices WHERE id = $1"
+    ))
+    .bind(req.notice_id)
+    .fetch_optional(&state.db)
+    .await;
 
     let notice_number: Option<String> = notice_info
         .ok()
@@ -655,7 +665,7 @@ pub async fn create_inspection(
         .and_then(|row| row.try_get("notice_number").ok());
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("scm", r#"
         INSERT INTO scm.incoming_inspections 
         (id, inspection_number, notice_id, notice_number,
          material_code, material_name, specification, unit,
@@ -669,7 +679,7 @@ pub async fn create_inspection(
                   sampling_quantity, inspection_result, inspection_date,
                   inspector_id, inspector_name, inbound_order_id, inbound_order_number,
                   status, inspection_items, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&inspection_number)
@@ -738,7 +748,8 @@ pub async fn get_inspection(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         SELECT id, inspection_number, notice_id, notice_number,
                material_code, material_name, specification, unit,
@@ -747,8 +758,8 @@ pub async fn get_inspection(
                inspector_id, inspector_name, inbound_order_id, inbound_order_number,
                status, inspection_items, remarks, created_at, updated_at
         FROM scm.incoming_inspections WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -788,10 +799,13 @@ pub async fn update_inspection(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query("SELECT id, status FROM scm.incoming_inspections WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&state.db)
-        .await;
+    let existing = sqlx::query(only_own_schema_query!(
+        "scm",
+        "SELECT id, status FROM scm.incoming_inspections WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
 
     let existing = match existing {
         Ok(e) => e,
@@ -801,7 +815,8 @@ pub async fn update_inspection(
         return Json(api_error(404, "检验记录不存在"));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.incoming_inspections SET
             passed_quantity = COALESCE($2, passed_quantity),
@@ -819,8 +834,8 @@ pub async fn update_inspection(
                   sampling_quantity, inspection_result, inspection_date,
                   inspector_id, inspector_name, inbound_order_id, inbound_order_number,
                   status, inspection_items, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.passed_quantity)
     .bind(req.failed_quantity)
@@ -892,9 +907,10 @@ pub async fn inspection_pass(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query(
-        "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1",
-    )
+    let existing = sqlx::query(only_own_schema_query!(
+        "scm",
+        "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1"
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -915,7 +931,8 @@ pub async fn inspection_pass(
         (inspected - req.passed_quantity).max(0.0)
     });
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.incoming_inspections SET
             status = 'passed',
@@ -936,8 +953,8 @@ pub async fn inspection_pass(
                   sampling_quantity, inspection_result, inspection_date,
                   inspector_id, inspector_name, inbound_order_id, inbound_order_number,
                   status, inspection_items, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.passed_quantity)
     .bind(failed_qty)
@@ -1001,9 +1018,10 @@ pub async fn inspection_fail(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query(
-        "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1",
-    )
+    let existing = sqlx::query(only_own_schema_query!(
+        "scm",
+        "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1"
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -1025,7 +1043,8 @@ pub async fn inspection_fail(
         (inspected - passed_qty).max(0.0)
     });
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.incoming_inspections SET
             status = 'failed',
@@ -1046,8 +1065,8 @@ pub async fn inspection_fail(
                   sampling_quantity, inspection_result, inspection_date,
                   inspector_id, inspector_name, inbound_order_id, inbound_order_number,
                   status, inspection_items, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(passed_qty)
     .bind(failed_qty)

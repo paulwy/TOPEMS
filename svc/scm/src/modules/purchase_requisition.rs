@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::DateTime;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -64,16 +65,17 @@ pub async fn list_requisitions(
     let offset = (page - 1) * page_size;
 
     let requisitions = sqlx::query_as::<_, PurchaseRequisition>(
-        "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
     .await;
 
-    let total = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL",
-    )
+    let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL"
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
@@ -128,15 +130,16 @@ pub async fn create_requisition(
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
 
-    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
+        "scm",
         r#"
         INSERT INTO scm.purchase_requisitions (
             requisition_no, title, applicant_id, department_id,
             request_date, required_date, priority, supplier_id, remarks, status
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&data.requisition_no)
     .bind(&data.title)
     .bind(applicant_id)
@@ -174,7 +177,7 @@ pub async fn get_requisition(
     };
 
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL",
+        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(requisition_id)
     .fetch_one(&state.db)
@@ -217,7 +220,8 @@ pub async fn update_requisition(
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
 
-    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_requisitions SET
             title = COALESCE($1, title),
@@ -228,8 +232,8 @@ pub async fn update_requisition(
             remarks = COALESCE($6, remarks)
         WHERE id = $7 AND deleted_at IS NULL
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&data.title)
     .bind(required_date)
     .bind(&data.priority)
@@ -266,7 +270,7 @@ pub async fn delete_requisition(
     };
 
     let result = sqlx::query(
-        "UPDATE scm.purchase_requisitions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(requisition_id)
     .execute(&state.db)
@@ -306,7 +310,7 @@ async fn submit_requisition(
         .map(|s| s.to_string());
 
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        "UPDATE scm.purchase_requisitions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *"),
     )
     .bind(remarks)
     .bind(requisition_id)
@@ -344,15 +348,16 @@ async fn approve_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(requisition_id)
@@ -390,15 +395,16 @@ async fn reject_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
+        "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(requisition_id)
@@ -437,7 +443,7 @@ async fn cancel_requisition(
         .map(|s| s.to_string());
 
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        "UPDATE scm.purchase_requisitions SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'pending') RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'pending') RETURNING *"),
     )
     .bind(remarks)
     .bind(requisition_id)
@@ -470,7 +476,7 @@ async fn convert_to_order(
     };
 
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *",
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
     )
     .bind(requisition_id)
     .fetch_one(&state.db)

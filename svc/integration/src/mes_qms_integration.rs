@@ -6,6 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -123,7 +124,8 @@ pub const STATUS_RETRYING: &str = "retrying";
 // ==================== Database Initialization ====================
 
 pub async fn init_mes_qms_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "integration",
         r#"
         CREATE TABLE IF NOT EXISTS mes_qms_sync (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -151,37 +153,56 @@ pub async fn init_mes_qms_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_type ON mes_qms_sync(sync_type)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_direction ON mes_qms_sync(direction)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_tenant ON mes_qms_sync(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_mes_record ON mes_qms_sync(mes_record_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_type ON mes_qms_sync(sync_type)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_qms_inspection ON mes_qms_sync(qms_inspection_id)")
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_direction ON mes_qms_sync(direction)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_tenant ON mes_qms_sync(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_mes_record ON mes_qms_sync(mes_record_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_qms_inspection ON mes_qms_sync(qms_inspection_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_status ON mes_qms_sync(sync_status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_order ON mes_qms_sync(order_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_created ON mes_qms_sync(created_at)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_status ON mes_qms_sync(sync_status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_order ON mes_qms_sync(order_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_created ON mes_qms_sync(created_at)"
+    ))
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
@@ -202,7 +223,7 @@ pub async fn list_mes_qms_sync(
                 product_code, batch_no, quantity, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM mes_qms_sync WHERE tenant_id = $1",
+           FROM integration.mes_qms_sync WHERE tenant_id = $1",
     );
 
     let mut params: Vec<String> = Vec::new();
@@ -236,14 +257,15 @@ pub async fn list_mes_qms_sync(
 }
 
 pub async fn get_mes_qms_sync(pool: &PgPool, id: Uuid) -> Result<Option<MesQmsSync>, sqlx::Error> {
-    sqlx::query_as::<_, MesQmsSync>(
+    sqlx::query_as::<_, MesQmsSync>(only_own_schema_query!(
+        "integration",
         "SELECT id, tenant_id, sync_type, direction, mes_record_id, mes_record_type, 
                 qms_inspection_id, order_id, order_no, product_id, product_name,
                 product_code, batch_no, quantity, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM mes_qms_sync WHERE id = $1",
-    )
+           FROM integration.mes_qms_sync WHERE id = $1"
+    ))
     .bind(id)
     .fetch_optional(pool)
     .await
@@ -271,7 +293,7 @@ pub async fn create_sync_record(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, MesQmsSync>(
-        "INSERT INTO mes_qms_sync (
+        only_own_schema_query!("integration", "INSERT INTO integration.mes_qms_sync (
             id, tenant_id, sync_type, direction, mes_record_id, mes_record_type,
             qms_inspection_id, order_id, order_no, product_id, product_name,
             product_code, batch_no, quantity, synced, sync_status,
@@ -282,7 +304,7 @@ pub async fn create_sync_record(
                   qms_inspection_id, order_id, order_no, product_id, product_name,
                   product_code, batch_no, quantity, synced, sync_status, sync_error,
                   retry_count, max_retries, payload, result_payload, last_synced_at,
-                  created_at, updated_at"
+                  created_at, updated_at")
     )
     .bind(id)
     .bind(req.tenant_id)
@@ -324,8 +346,9 @@ pub async fn update_sync_status(
     let now = Utc::now();
     let last_synced = if synced { Some(now) } else { None };
 
-    sqlx::query_as::<_, MesQmsSync>(
-        "UPDATE mes_qms_sync SET 
+    sqlx::query_as::<_, MesQmsSync>(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.mes_qms_sync SET 
             sync_status = $2, synced = $3, sync_error = $4,
             result_payload = COALESCE($5, result_payload),
             last_synced_at = COALESCE($6, last_synced_at),
@@ -335,8 +358,8 @@ pub async fn update_sync_status(
                   qms_inspection_id, order_id, order_no, product_id, product_name,
                   product_code, batch_no, quantity, synced, sync_status, sync_error,
                   retry_count, max_retries, payload, result_payload, last_synced_at,
-                  created_at, updated_at",
-    )
+                  created_at, updated_at"
+    ))
     .bind(id)
     .bind(status)
     .bind(synced)
@@ -353,12 +376,13 @@ pub async fn increment_retry_count(
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        "UPDATE mes_qms_sync SET 
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "UPDATE integration.mes_qms_sync SET 
             retry_count = retry_count + 1, sync_status = 'retrying',
             sync_error = $2, updated_at = NOW()
-         WHERE id = $1",
-    )
+         WHERE id = $1"
+    ))
     .bind(id)
     .bind(error)
     .execute(pool)
@@ -979,13 +1003,14 @@ async fn trigger_mes_scrap_process(
 // ==================== Sync Stats ====================
 
 pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
-    let mes_to_qms_result = sqlx::query(
+    let mes_to_qms_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM mes_qms_sync 
-          WHERE direction = 'mes_to_qms' AND sync_type = 'production_inspection'",
-    )
+           FROM integration.mes_qms_sync 
+          WHERE direction = 'mes_to_qms' AND sync_type = 'production_inspection'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -998,13 +1023,14 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0, 0),
     };
 
-    let qms_to_mes_result = sqlx::query(
+    let qms_to_mes_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM mes_qms_sync 
-          WHERE direction = 'qms_to_mes' AND sync_type = 'quality_result'",
-    )
+           FROM integration.mes_qms_sync 
+          WHERE direction = 'qms_to_mes' AND sync_type = 'quality_result'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -1017,12 +1043,13 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0, 0),
     };
 
-    let trace_result = sqlx::query(
+    let trace_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
-           FROM mes_qms_sync 
-          WHERE sync_type = 'trace_chain'",
-    )
+           FROM integration.mes_qms_sync 
+          WHERE sync_type = 'trace_chain'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -1034,12 +1061,13 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0),
     };
 
-    let defect_result = sqlx::query(
+    let defect_result = sqlx::query(only_own_schema_query!(
+        "integration",
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as completed
-           FROM mes_qms_sync 
-          WHERE sync_type = 'defect_handling'",
-    )
+           FROM integration.mes_qms_sync 
+          WHERE sync_type = 'defect_handling'"
+    ))
     .fetch_one(pool)
     .await;
 
@@ -1051,9 +1079,12 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0),
     };
 
-    let last_sync_result = sqlx::query("SELECT MAX(last_synced_at) as last_sync FROM mes_qms_sync")
-        .fetch_one(pool)
-        .await;
+    let last_sync_result = sqlx::query(only_own_schema_query!(
+        "integration",
+        "SELECT MAX(last_synced_at) as last_sync FROM integration.mes_qms_sync"
+    ))
+    .fetch_one(pool)
+    .await;
 
     let last_sync = last_sync_result
         .ok()

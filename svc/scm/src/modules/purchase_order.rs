@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -55,14 +56,14 @@ pub async fn list_orders(
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
-        SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
+        only_own_schema_query!("scm", r#"
+        SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
-        WHERE ($1::text IS NULL OR order_number ILIKE $1)
+        WHERE ($1::text IS NULL OR po_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -73,13 +74,14 @@ pub async fn list_orders(
 
     match result {
         Ok(orders) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "scm",
                 r#"
                 SELECT COUNT(*) FROM scm.purchase_orders
-                WHERE deleted_at IS NULL AND ($1::text IS NULL OR order_number ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR po_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -129,11 +131,11 @@ pub async fn create_order(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
-        INSERT INTO scm.purchase_orders (id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at)
+        only_own_schema_query!("scm", r#"
+        INSERT INTO scm.purchase_orders (id, po_no, supplier_id, order_date, expected_date, total_amount, status, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
-        RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
-        "#,
+        RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
+        "#),
     )
     .bind(id)
     .bind(&req.order_number)
@@ -211,10 +213,10 @@ pub async fn get_order(
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
-        SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
+        only_own_schema_query!("scm", r#"
+        SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders WHERE id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -258,7 +260,7 @@ pub async fn update_order(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -278,12 +280,12 @@ pub async fn update_order(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
-            supplier_id = $2, delivery_date = $3, total_amount = $4, status = $5, remarks = $6, updated_at = $7
+            supplier_id = $2, expected_date = $3, total_amount = $4, status = $5, remarks = $6, updated_at = $7
         WHERE id = $1
-        RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
-        "#,
+        RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
+        "#),
     )
     .bind(id)
     .bind(supplier_id)
@@ -359,10 +361,13 @@ pub async fn delete_order(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        "UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -444,7 +449,7 @@ pub async fn approve_order(
     }
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -487,12 +492,12 @@ pub async fn approve_order(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'approved', remarks = $2, updated_at = $3
         WHERE id = $1
-        RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
-        "#,
+        RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
+        "#),
     )
     .bind(id)
     .bind(&new_remarks)
@@ -607,7 +612,7 @@ pub async fn reject_order(
     }
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -645,12 +650,12 @@ pub async fn reject_order(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'rejected', remarks = $2, updated_at = $3
         WHERE id = $1
-        RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
-        "#,
+        RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
+        "#),
     )
     .bind(id)
     .bind(&new_remarks)

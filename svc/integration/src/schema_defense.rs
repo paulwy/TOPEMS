@@ -13,6 +13,7 @@
 //!          （这些由 CREATE TABLE / CREATE INDEX IF NOT EXISTS 负责）
 
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 
 pub const SERVICE_SCHEMA: &str = "integration";
 pub const SERVICE_TAG: &str = "integration";
@@ -200,9 +201,12 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
     // 确保 schema 存在
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS integration")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE SCHEMA IF NOT EXISTS integration"
+    ))
+    .execute(pool)
+    .await?;
     for (tbl, _cols_arr) in TABLE_DEFS {
         let ddl = format!(
             "CREATE TABLE IF NOT EXISTS \"{}\".\"{}\" (id UUID PRIMARY KEY DEFAULT gen_random_uuid())",

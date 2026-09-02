@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Timelike, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -711,9 +712,10 @@ pub async fn delete_appointment(
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
-        "UPDATE scm.supplier_delivery_appointments SET deleted_at = NOW() WHERE id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        "UPDATE scm.supplier_delivery_appointments SET deleted_at = NOW() WHERE id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -1326,41 +1328,45 @@ async fn appointment_stats(
     }
     let _ = params; // 当前未使用
 
-    let by_status = sqlx::query_as::<_, (String, i64)>(
+    let by_status = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT status, COUNT(*)::bigint AS count
         FROM scm.supplier_delivery_appointments
         GROUP BY status
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 
-    let total = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments",
-    )
+    let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
+        "SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments"
+    ))
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let today = chrono::Local::now().date_naive();
-    let upcoming = sqlx::query_scalar::<_, i64>(
+    let upcoming = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments
         WHERE deleted_at IS NULL AND delivery_date >= $1 AND status IN ('pending', 'approved')
-        "#,
-    )
+        "#
+    ))
     .bind(today)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let overdue = sqlx::query_scalar::<_, i64>(
+    let overdue = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "scm",
         r#"
         SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments
         WHERE deleted_at IS NULL AND delivery_date < $1 AND status IN ('pending', 'approved')
-        "#,
-    )
+        "#
+    ))
     .bind(today)
     .fetch_one(&state.db)
     .await
