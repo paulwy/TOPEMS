@@ -105,9 +105,7 @@ impl DshToolError {
 
     /// 创建未找到错误
     pub fn not_found(name: impl Into<String>) -> Self {
-        Self::NotFound {
-            name: name.into(),
-        }
+        Self::NotFound { name: name.into() }
     }
 
     /// 创建定义错误
@@ -272,7 +270,9 @@ impl From<&DshToolError> for SerializableError {
                     Some(format!("请检查字段 '{}'：{}", field, message))
                 }
                 DshToolError::NotFound { name } => Some(format!("请确认 '{}' 是否存在", name)),
-                DshToolError::PermissionError { .. } => Some("请联系管理员获取相应权限".to_string()),
+                DshToolError::PermissionError { .. } => {
+                    Some("请联系管理员获取相应权限".to_string())
+                }
                 DshToolError::AuthError { .. } => Some("请重新登录或检查认证信息".to_string()),
                 _ => None,
             },

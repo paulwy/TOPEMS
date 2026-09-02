@@ -9,21 +9,16 @@ use std::fmt;
 use crate::jsonrpc::{JsonRpcRequest, JsonRpcResponse};
 
 /// 传输类型
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum TransportType {
     /// 标准输入输出（本地 AI Agent，如 Cursor Local）
     Stdio,
     /// Server-Sent Events（远程 AI Agent，如 Cursor Remote）
+    #[default]
     Sse,
     /// HTTP POST（自研 AI Agent 集成）
     Http,
-}
-
-impl Default for TransportType {
-    fn default() -> Self {
-        Self::Sse
-    }
 }
 
 impl fmt::Display for TransportType {

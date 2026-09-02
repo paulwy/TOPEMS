@@ -94,7 +94,10 @@ impl ResourceDefinition {
         if path.is_empty() {
             return Err("资源 URI 的路径部分不能为空".to_string());
         }
-        if !scheme.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit()) {
+        if !scheme
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+        {
             return Err("资源 URI 的协议部分只能包含小写字母和数字".to_string());
         }
         Ok(())
@@ -156,7 +159,11 @@ pub struct ResourceContent {
 
 impl ResourceContent {
     /// 创建文本资源
-    pub fn text(uri: impl Into<String>, mime_type: impl Into<String>, content: impl Into<String>) -> Self {
+    pub fn text(
+        uri: impl Into<String>,
+        mime_type: impl Into<String>,
+        content: impl Into<String>,
+    ) -> Self {
         Self {
             uri: uri.into(),
             mime_type: mime_type.into(),
@@ -174,7 +181,11 @@ impl ResourceContent {
     }
 
     /// 创建二进制资源
-    pub fn blob(uri: impl Into<String>, mime_type: impl Into<String>, base64_content: impl Into<String>) -> Self {
+    pub fn blob(
+        uri: impl Into<String>,
+        mime_type: impl Into<String>,
+        base64_content: impl Into<String>,
+    ) -> Self {
         Self {
             uri: uri.into(),
             mime_type: mime_type.into(),
@@ -234,7 +245,7 @@ impl ResourceRegistry {
     pub fn register(&mut self, resource: ResourceDefinition) -> Result<(), DshToolError> {
         resource
             .validate_uri()
-            .map_err(|e| DshToolError::definition_error(e))?;
+            .map_err(DshToolError::definition_error)?;
         if self.resources.contains_key(&resource.uri) {
             return Err(DshToolError::definition_error(format!(
                 "资源 '{}' 已存在",
@@ -295,7 +306,8 @@ mod tests {
         let empty = ResourceDefinition::new("", "空", "空", mime_types::TEXT);
         assert!(empty.validate_uri().is_err());
 
-        let no_separator = ResourceDefinition::new("erp-sales-order", "无分隔符", "无", mime_types::TEXT);
+        let no_separator =
+            ResourceDefinition::new("erp-sales-order", "无分隔符", "无", mime_types::TEXT);
         assert!(no_separator.validate_uri().is_err());
 
         let empty_scheme = ResourceDefinition::new("://path", "空协议", "空", mime_types::TEXT);

@@ -162,7 +162,10 @@ impl PromptTemplate {
     }
 
     /// 渲染 Prompt
-    pub fn render(&self, variables: &HashMap<String, String>) -> Result<RenderedPrompt, DshToolError> {
+    pub fn render(
+        &self,
+        variables: &HashMap<String, String>,
+    ) -> Result<RenderedPrompt, DshToolError> {
         // 验证必填变量
         for var in &self.variables {
             if var.required && !variables.contains_key(&var.name) {
@@ -184,20 +187,16 @@ impl PromptTemplate {
         }
 
         // 检查是否有未替换的变量
-        let remaining_system: Vec<&str> = system
-            .matches(|c: char| c == '{' || c == '}')
-            .collect();
+        let remaining_system: Vec<&str> = system.matches(['{', '}']).collect();
         if !remaining_system.is_empty() {
             // 简单检查是否有未替换的 {variable}
             for var in &self.variables {
                 let placeholder = format!("{{{}}}", var.name);
-                if system.contains(&placeholder) || user.contains(&placeholder) {
-                    if var.required {
-                        return Err(DshToolError::validation_error(
-                            &var.name,
-                            format!("变量 '{}' 未被替换", var.name),
-                        ));
-                    }
+                if (system.contains(&placeholder) || user.contains(&placeholder)) && var.required {
+                    return Err(DshToolError::validation_error(
+                        &var.name,
+                        format!("变量 '{}' 未被替换", var.name),
+                    ));
                 }
             }
         }
@@ -244,7 +243,11 @@ impl PromptVariable {
     }
 
     /// 创建整数变量
-    pub fn integer(name: impl Into<String>, description: impl Into<String>, required: bool) -> Self {
+    pub fn integer(
+        name: impl Into<String>,
+        description: impl Into<String>,
+        required: bool,
+    ) -> Self {
         Self {
             name: name.into(),
             description: description.into(),
@@ -284,7 +287,7 @@ impl PromptRegistry {
     pub fn register(&mut self, template: PromptTemplate) -> Result<(), DshToolError> {
         template
             .validate_name()
-            .map_err(|e| DshToolError::definition_error(e))?;
+            .map_err(DshToolError::definition_error)?;
         if self.templates.contains_key(&template.name) {
             return Err(DshToolError::definition_error(format!(
                 "模板 '{}' 已存在",
@@ -358,13 +361,9 @@ mod tests {
 
     #[test]
     fn test_prompt_template_missing_required_variable() {
-        let template = PromptTemplate::new(
-            "test_required_var",
-            "测试必填变量",
-            "系统",
-            "你好 {name}",
-        )
-        .with_variable(PromptVariable::string("name", "名称", true));
+        let template =
+            PromptTemplate::new("test_required_var", "测试必填变量", "系统", "你好 {name}")
+                .with_variable(PromptVariable::string("name", "名称", true));
 
         let variables = HashMap::new();
         let result = template.render(&variables);
@@ -375,13 +374,8 @@ mod tests {
     fn test_prompt_registry() {
         let mut registry = PromptRegistry::new();
 
-        let template = PromptTemplate::new(
-            "test_say_hello",
-            "说你好",
-            "系统提示",
-            "你好 {name}",
-        )
-        .with_variable(PromptVariable::string("name", "名称", true));
+        let template = PromptTemplate::new("test_say_hello", "说你好", "系统提示", "你好 {name}")
+            .with_variable(PromptVariable::string("name", "名称", true));
 
         registry.register(template).unwrap();
         assert_eq!(registry.count(), 1);

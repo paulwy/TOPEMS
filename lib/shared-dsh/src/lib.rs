@@ -3,17 +3,17 @@
 //! 提供通用的 Tool、Resource、Prompt 类型定义，
 //! 可被多个服务引用，减少类型重复定义。
 
-pub mod types;
-pub mod tool;
+pub mod error;
 pub mod prompt;
 pub mod resource;
-pub mod error;
+pub mod tool;
+pub mod types;
 
-pub use types::*;
-pub use tool::*;
+pub use error::*;
 pub use prompt::*;
 pub use resource::*;
-pub use error::*;
+pub use tool::*;
+pub use types::*;
 
 /// 库版本号
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

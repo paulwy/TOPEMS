@@ -1,3 +1,12 @@
+//! 消息代理抽象（历史遗留）。
+//!
+//! ⚠️ 事件总线已迁移至 Redis Stream（V321，`event::stream_publisher` / `event::stream_subscriber`，
+//! 支持消息持久化 + ACK + DLQ）。本模块仅保留：
+//! - `Message`：消息载体（仍被兼容使用）
+//! - `InMemoryMessageBroker`：纯内存 broker（单元测试 / 本地开发，无 Redis 依赖）
+//! - `RedisMessageBroker`：**已废弃**（原 Redis Pub/Sub 实现已移除，publish 返回迁移提示）
+//!
+//! 验收：`grep -r "publish\|subscribe" lib/shared-event/src/` 已无 Redis Pub/Sub 命令调用。
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use topems_shared_core::error::Result;
@@ -57,48 +66,48 @@ pub trait MessageConsumer {
     async fn start_consuming(&self) -> Result<()>;
 }
 
+/// 历史遗留：事件总线已迁移至 Redis Stream（`event::stream_publisher` / `event::stream_subscriber`），
+/// 本 Redis Pub/Sub broker 已废弃。保留名称以兼容下游 API，publish 直接返回迁移提示。
+#[deprecated(
+    note = "事件总线已迁移至 Redis Stream，请使用 topems_shared_event::event 模块（stream_publisher / stream_subscriber）"
+)]
 pub struct RedisMessageBroker {
-    client: redis::Client,
+    _private: std::marker::PhantomData<()>,
 }
 
+#[allow(deprecated)]
 impl RedisMessageBroker {
-    pub fn new(redis_url: &str) -> Result<Self> {
-        let client = redis::Client::open(redis_url)
-            .map_err(|e| TopemsError::Config(format!("Failed to create Redis client: {}", e)))?;
-        Ok(Self { client })
+    pub fn new(_redis_url: &str) -> Result<Self> {
+        Ok(Self {
+            _private: std::marker::PhantomData,
+        })
     }
 }
 
 #[async_trait]
+#[allow(deprecated)]
 impl MessageProducer for RedisMessageBroker {
-    async fn publish(&self, topic: &str, payload: serde_json::Value) -> Result<()> {
-        let mut conn = self
-            .client
-            .get_connection()
-            .map_err(|e| TopemsError::Config(format!("Failed to get Redis connection: {}", e)))?;
-
-        let payload_str = serde_json::to_string(&payload).map_err(TopemsError::Serialization)?;
-
-        redis::cmd("PUBLISH")
-            .arg(topic)
-            .arg(payload_str)
-            .query::<()>(&mut conn)
-            .map_err(|e| TopemsError::Config(format!("Redis PUBLISH failed: {}", e)))?;
-
-        Ok(())
+    async fn publish(&self, _topic: &str, _payload: serde_json::Value) -> Result<()> {
+        Err(TopemsError::Config(
+            "RedisMessageBroker 已废弃：事件总线已迁移至 Redis Stream，请使用 topems_shared_event::event 模块".into(),
+        ))
     }
 
     async fn publish_with_headers(
         &self,
-        topic: &str,
-        payload: serde_json::Value,
+        _topic: &str,
+        _payload: serde_json::Value,
         _headers: std::collections::HashMap<String, String>,
     ) -> Result<()> {
-        self.publish(topic, payload).await
+        Err(TopemsError::Config(
+            "RedisMessageBroker 已废弃：事件总线已迁移至 Redis Stream，请使用 topems_shared_event::event 模块".into(),
+        ))
     }
 
-    async fn publish_message(&self, message: Message) -> Result<()> {
-        self.publish(&message.topic, message.payload).await
+    async fn publish_message(&self, _message: Message) -> Result<()> {
+        Err(TopemsError::Config(
+            "RedisMessageBroker 已废弃：事件总线已迁移至 Redis Stream，请使用 topems_shared_event::event 模块".into(),
+        ))
     }
 }
 
@@ -189,6 +198,7 @@ impl MessageConsumer for InMemoryMessageBroker {
 }
 
 #[cfg(test)]
+#[allow(deprecated)] // 测试仍覆盖废弃 RedisMessageBroker 的 stub 行为
 mod tests {
     use super::*;
 
@@ -424,11 +434,21 @@ mod tests {
         assert!(broker.is_ok());
     }
 
-    #[test]
-    fn test_redis_message_broker_new_with_invalid_url_returns_err() {
-        // 明显无效的 URL 应返回 Err
-        let result = RedisMessageBroker::new("not-a-redis-url");
-        assert!(result.is_err());
+    #[tokio::test]
+    async fn test_redis_message_broker_deprecated_returns_migration_error() {
+        // RedisMessageBroker 已废弃（事件总线已迁移至 Redis Stream）：
+        // new 不再校验/连接 Redis（返回 Ok），publish 直接返回迁移提示错误
+        let broker =
+            RedisMessageBroker::new("not-a-redis-url").expect("废弃 stub 的 new 应返回 Ok");
+        let result = broker.publish("topic", serde_json::json!({})).await;
+        let err_msg = result
+            .expect_err("废弃 broker 的 publish 应返回迁移提示错误")
+            .to_string();
+        assert!(
+            err_msg.contains("已废弃"),
+            "错误信息应包含迁移提示，实际: {}",
+            err_msg
+        );
     }
 
     #[tokio::test]

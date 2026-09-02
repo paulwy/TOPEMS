@@ -6,7 +6,6 @@
 //! 与 `service_client/` 下已有的具体 Client（如 `iam_client.rs`）相比，
 //! 这里的模式用 trait + 泛型替代了手写 struct，消除了样板代码。
 
-pub mod billing_api;
 pub mod crm_api;
 pub mod erp_api;
 pub mod feedback_api;

@@ -46,11 +46,23 @@ impl EventPublisher {
 
         let redis_client = Client::open(redis_url)?;
 
-        let bus_mode = env::var("EVENT_BUS_MODE").unwrap_or_else(|_| "pubsub".to_string());
-        let use_stream = bus_mode.eq_ignore_ascii_case("stream");
+        // V321: 默认模式改为 stream（Redis Stream，支持持久化 + ACK + DLQ）
+        // 可通过 EVENT_BUS_MODE=pubsub 显式切换回 Pub/Sub 模式
+        let bus_mode = env::var("EVENT_BUS_MODE").unwrap_or_else(|_| "stream".to_string());
+        let use_stream = !bus_mode.eq_ignore_ascii_case("pubsub");
 
+        // Stream 模式初始化失败时自动降级到 Pub/Sub，确保向后兼容
         let stream_publisher = if use_stream {
-            Some(StreamEventPublisher::new(service_name)?)
+            match StreamEventPublisher::new(service_name) {
+                Ok(p) => Some(p),
+                Err(e) => {
+                    tracing::warn!(
+                        "StreamEventPublisher 初始化失败，自动降级到 Pub/Sub 模式: {}",
+                        e
+                    );
+                    None
+                }
+            }
         } else {
             None
         };
@@ -76,14 +88,14 @@ impl EventPublisher {
         // Stream 模式：使用 Redis Stream（XADD）
         if self.use_stream {
             if let Some(stream_publisher) = &self.stream_publisher {
-                stream_publisher
-                    .publish_event(event_type, payload)
-                    .await?;
+                stream_publisher.publish_event(event_type, payload).await?;
                 return Ok(());
             }
         }
 
-        // Pub/Sub 模式（默认）
+        // Pub/Sub 模式（显式降级路径，非默认）：
+        // 仅当 EVENT_BUS_MODE=pubsub 显式设置，或 StreamEventPublisher 初始化失败兜底时进入。
+        // 事件总线默认模式为 stream（V321），发布器/订阅器/DLQ 重试均走 Redis Stream。
         let payload_json = serde_json::to_value(&payload)?;
         let trace_id: Option<String> = None;
         let event =

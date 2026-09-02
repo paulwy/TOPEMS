@@ -249,9 +249,7 @@ pub use event::{
     ReconciliationApprovedPayload, ReconciliationCreatedPayload, ReconciliationUpdatedPayload,
     SettlementApprovedPayload, SettlementCreatedPayload, SettlementRejectedPayload,
 };
-pub use messaging::{
-    InMemoryMessageBroker, Message, MessageConsumer, MessageProducer, RedisMessageBroker,
-};
+pub use messaging::{InMemoryMessageBroker, Message, MessageConsumer, MessageProducer};
 pub use redis::{
     BloomFilter, CacheKeyGenerator as RedisCacheKeyGenerator, CacheProtectionConfig, CacheService,
     CacheStatisticsCollector, RedisCacheService, RedisPool, UnifiedCacheManager,

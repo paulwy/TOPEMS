@@ -169,13 +169,7 @@ impl DeadLetterQueue {
                 if let Some(event_json) = result {
                     if let Ok(dead_letter) = serde_json::from_str::<DeadLetter>(&event_json) {
                         if dead_letter.retry_count < 3 {
-                            let channel_name =
-                                format!("topems:events:{}", dead_letter.event.event_type);
-                            let event_json = serde_json::to_string(&dead_letter.event)?;
-                            let _: () = redis::cmd("PUBLISH")
-                                .arg(&channel_name)
-                                .arg(&event_json)
-                                .query_async(&mut con)
+                            self.republish_event_to_stream(&mut con, &dead_letter.event)
                                 .await?;
                             info!(
                                 "死信队列重试事件 - 事件ID: {}, 类型: {:?}, 重试次数: {}",
@@ -298,6 +292,39 @@ impl DeadLetterQueue {
     /// V23.0: 重试单个死信
     ///
     /// 找到指定事件并重新发布到订阅频道，重试后从死信队列移除。
+    /// 事件总线已迁移至 Redis Stream（V321）：死信重试事件重新写入 Stream（XADD），
+    /// 使 Stream 订阅者（XREADGROUP）能消费到重试事件。
+    /// 原 Pub/Sub 频道（topems:events:*）已无订阅者，PUBLISH 会导致重试事件丢失。
+    async fn republish_event_to_stream(
+        &self,
+        con: &mut redis::aio::MultiplexedConnection,
+        event: &Event,
+    ) -> EventResult<()> {
+        let stream_key = format!("topems:stream:events:{}", event.event_type);
+        let event_json = serde_json::to_string(event)?;
+        let mut cmd = redis::cmd("XADD");
+        cmd.arg(&stream_key)
+            .arg("*")
+            .arg("event_id")
+            .arg(event.event_id.to_string())
+            .arg("event_type")
+            .arg(format!("{:?}", event.event_type))
+            .arg("payload")
+            .arg(&event_json)
+            .arg("occurred_at")
+            .arg(event.occurred_at.to_rfc3339())
+            .arg("source")
+            .arg(&event.source);
+        let _: String = cmd.query_async(con).await.map_err(|e| {
+            EventError::PublishError(format!("死信重试事件写入 Stream 失败: {}", e))
+        })?;
+        info!(
+            "死信重试事件重新入 Stream - 事件ID: {}, 类型: {:?}, Stream: {}",
+            event.event_id, event.event_type, stream_key
+        );
+        Ok(())
+    }
+
     pub async fn retry_dead_letter(&self, event_id: Uuid) -> EventResult<()> {
         let target = self.find_dlq_entry(event_id).await?;
         let Some((key, json, dead_letter)) = target else {
@@ -309,12 +336,7 @@ impl DeadLetterQueue {
         };
 
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
-        let channel_name = format!("topems:events:{}", dead_letter.event.event_type);
-        let event_json = serde_json::to_string(&dead_letter.event)?;
-        let _: () = redis::cmd("PUBLISH")
-            .arg(&channel_name)
-            .arg(&event_json)
-            .query_async(&mut con)
+        self.republish_event_to_stream(&mut con, &dead_letter.event)
             .await?;
 
         // 重试成功后从队列移除
@@ -356,12 +378,8 @@ impl DeadLetterQueue {
                     continue;
                 };
 
-                let channel_name = format!("topems:events:{}", dead_letter.event.event_type);
-                let event_json = serde_json::to_string(&dead_letter.event)?;
-                let pub_result: Result<(), _> = redis::cmd("PUBLISH")
-                    .arg(&channel_name)
-                    .arg(&event_json)
-                    .query_async(&mut con)
+                let pub_result: EventResult<()> = self
+                    .republish_event_to_stream(&mut con, &dead_letter.event)
                     .await;
                 if pub_result.is_ok() {
                     count += 1;

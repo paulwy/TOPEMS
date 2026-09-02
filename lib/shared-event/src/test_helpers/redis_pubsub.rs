@@ -50,7 +50,14 @@ pub async fn maybe_connect_redis() -> Option<Client> {
 /// ```
 pub async fn skip_without_redis() -> Option<Client> {
     match maybe_connect_redis().await {
-        Some(c) => Some(c),
+        Some(c) => {
+            // V321: 确保使用本助手的测试显式使用 Pub/Sub 模式
+            // （EventPublisher 默认已改为 stream 模式，需显式切回 pubsub 以匹配本助手的 SUBSCRIBE）
+            if std::env::var("EVENT_BUS_MODE").is_err() {
+                std::env::set_var("EVENT_BUS_MODE", "pubsub");
+            }
+            Some(c)
+        }
         None => {
             eprintln!(
                 "[skip] {}: Redis 不可达（未启动/未设置 REDIS_URL/连接超时）",

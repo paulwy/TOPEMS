@@ -161,7 +161,10 @@ impl StreamEventPublisher {
             .query_async(&mut con)
             .await?;
 
-        info!("Stream 已删除 - 类型: {:?}, Stream: {}", event_type, stream_key);
+        info!(
+            "Stream 已删除 - 类型: {:?}, Stream: {}",
+            event_type, stream_key
+        );
 
         Ok(())
     }

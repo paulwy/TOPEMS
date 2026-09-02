@@ -19,9 +19,8 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 /// 事件处理器回调类型（返回 Result，失败时会触发重试/DLQ）
-pub type StreamEventHandler = Arc<
-    dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync,
->;
+pub type StreamEventHandler =
+    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync>;
 
 /// 消费者配置
 #[derive(Debug, Clone)]
@@ -75,8 +74,8 @@ impl StreamEventSubscriber {
 
         let redis_client = Client::open(redis_url)?;
 
-        let group_name = env::var("EVENT_CONSUMER_GROUP")
-            .unwrap_or_else(|_| format!("{}-group", service_name));
+        let group_name =
+            env::var("EVENT_CONSUMER_GROUP").unwrap_or_else(|_| format!("{}-group", service_name));
 
         let consumer_name = env::var("EVENT_CONSUMER_NAME")
             .unwrap_or_else(|_| format!("{}-consumer-{}", service_name, uuid::Uuid::new_v4()));
@@ -104,9 +103,9 @@ impl StreamEventSubscriber {
     }
 
     /// 启用死信队列
-    pub fn with_dlq(mut self) -> EventResult<Self> {
+    pub fn with_dlq(&mut self) -> EventResult<()> {
         self.dlq = Some(DeadLetterQueue::new()?);
-        Ok(self)
+        Ok(())
     }
 
     /// 获取事件类型对应的 Stream 键
@@ -120,8 +119,7 @@ impl StreamEventSubscriber {
         F: Fn(Event) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = Result<(), String>> + Send + 'static,
     {
-        let handler_arc: StreamEventHandler =
-            Arc::new(move |event| Box::pin(handler(event)));
+        let handler_arc: StreamEventHandler = Arc::new(move |event| Box::pin(handler(event)));
 
         self.handlers
             .entry(event_type)
@@ -147,13 +145,19 @@ impl StreamEventSubscriber {
 
         match result {
             Ok(_) => {
-                info!("消费者组创建成功 - Stream: {}, Group: {}", stream_key, self.config.group_name);
+                info!(
+                    "消费者组创建成功 - Stream: {}, Group: {}",
+                    stream_key, self.config.group_name
+                );
             }
             Err(e) => {
                 // BUSYGROUP 表示组已存在，这是正常的
                 let err_msg = e.to_string();
                 if err_msg.contains("BUSYGROUP") {
-                    debug!("消费者组已存在 - Stream: {}, Group: {}", stream_key, self.config.group_name);
+                    debug!(
+                        "消费者组已存在 - Stream: {}, Group: {}",
+                        stream_key, self.config.group_name
+                    );
                 } else {
                     warn!("创建消费者组警告: {}", e);
                 }
@@ -194,14 +198,23 @@ impl StreamEventSubscriber {
 
             match result {
                 Ok(Ok(())) => {
-                    debug!("事件处理成功 - 类型: {:?}, 消息ID: {}", event_type, message_id);
+                    debug!(
+                        "事件处理成功 - 类型: {:?}, 消息ID: {}",
+                        event_type, message_id
+                    );
                 }
                 Ok(Err(e)) => {
-                    error!("事件处理失败 - 类型: {:?}, 消息ID: {}, 错误: {}", event_type, message_id, e);
+                    error!(
+                        "事件处理失败 - 类型: {:?}, 消息ID: {}, 错误: {}",
+                        event_type, message_id, e
+                    );
                     all_succeeded = false;
                 }
                 Err(_) => {
-                    error!("事件处理超时 - 类型: {:?}, 消息ID: {}", event_type, message_id);
+                    error!(
+                        "事件处理超时 - 类型: {:?}, 消息ID: {}",
+                        event_type, message_id
+                    );
                     all_succeeded = false;
                 }
             }
@@ -216,7 +229,10 @@ impl StreamEventSubscriber {
 
             if retry_count >= self.config.max_retries {
                 // 超过最大重试次数，进入死信队列
-                error!("事件超过最大重试次数，进入死信队列 - 类型: {:?}, 消息ID: {}, 重试次数: {}", event_type, message_id, retry_count);
+                error!(
+                    "事件超过最大重试次数，进入死信队列 - 类型: {:?}, 消息ID: {}, 重试次数: {}",
+                    event_type, message_id, retry_count
+                );
 
                 if let Some(dlq) = &self.dlq {
                     if let Err(e) = dlq.push(event, "max retries exceeded").await {
@@ -229,7 +245,12 @@ impl StreamEventSubscriber {
             } else {
                 // 增加重试计数，不 ACK，消息会被重新投递
                 self.increment_retry_count(stream_key, message_id).await?;
-                warn!("事件将被重试 - 类型: {:?}, 消息ID: {}, 当前重试次数: {}", event_type, message_id, retry_count + 1);
+                warn!(
+                    "事件将被重试 - 类型: {:?}, 消息ID: {}, 当前重试次数: {}",
+                    event_type,
+                    message_id,
+                    retry_count + 1
+                );
             }
         }
 
@@ -247,7 +268,10 @@ impl StreamEventSubscriber {
             .query_async(&mut con)
             .await?;
 
-        debug!("消息已 ACK - Stream: {}, 消息ID: {}", stream_key, message_id);
+        debug!(
+            "消息已 ACK - Stream: {}, 消息ID: {}",
+            stream_key, message_id
+        );
 
         Ok(())
     }
@@ -314,11 +338,8 @@ impl StreamEventSubscriber {
                 .arg("STREAMS");
 
             // 添加所有要监听的 Stream
-            let stream_keys: Vec<String> = self
-                .handlers
-                .keys()
-                .map(|et| self.stream_key(et))
-                .collect();
+            let stream_keys: Vec<String> =
+                self.handlers.keys().map(|et| self.stream_key(et)).collect();
 
             for key in &stream_keys {
                 cmd.arg(key);
@@ -444,9 +465,15 @@ mod tests {
             .unwrap()
             .subscribe(EventType::SalesOrderCreated, |_event| async { Ok(()) });
 
-        assert!(subscriber.handlers.contains_key(&EventType::SalesOrderCreated));
+        assert!(subscriber
+            .handlers
+            .contains_key(&EventType::SalesOrderCreated));
         assert_eq!(
-            subscriber.handlers.get(&EventType::SalesOrderCreated).unwrap().len(),
+            subscriber
+                .handlers
+                .get(&EventType::SalesOrderCreated)
+                .unwrap()
+                .len(),
             1
         );
     }
@@ -459,7 +486,11 @@ mod tests {
             .subscribe(EventType::SalesOrderCreated, |_event| async { Ok(()) });
 
         assert_eq!(
-            subscriber.handlers.get(&EventType::SalesOrderCreated).unwrap().len(),
+            subscriber
+                .handlers
+                .get(&EventType::SalesOrderCreated)
+                .unwrap()
+                .len(),
             2
         );
     }
@@ -527,15 +558,21 @@ mod tests {
             .subscribe(event_type, move |event| {
                 let received_clone = received_clone.clone();
                 async move {
-                    received_clone.lock().unwrap().push(event.event_id.to_string());
+                    received_clone
+                        .lock()
+                        .unwrap()
+                        .push(event.event_id.to_string());
                     Ok(())
                 }
             });
 
         // 单独调用一次读取循环（不进入无限循环），验证消息可被消费
         // 先发布事件
-        let publisher = super::super::stream_publisher::StreamEventPublisher::new("test-pub").unwrap();
-        let msg_id = publisher.publish_event(event_type, serde_json::json!({"pid": "p-1"})).await;
+        let publisher =
+            super::super::stream_publisher::StreamEventPublisher::new("test-pub").unwrap();
+        let msg_id = publisher
+            .publish_event(event_type, serde_json::json!({"pid": "p-1"}))
+            .await;
         assert!(msg_id.is_ok(), "发布失败: {:?}", msg_id);
 
         // 读取并处理一条消息
@@ -564,7 +601,9 @@ mod tests {
                         .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
                         .unwrap_or_default();
                     if let Ok(event) = serde_json::from_str::<Event>(&payload_json) {
-                        let _ = subscriber.process_message(event, &message.id, &stream.key).await;
+                        let _ = subscriber
+                            .process_message(event, &message.id, &stream.key)
+                            .await;
                     }
                 }
             }

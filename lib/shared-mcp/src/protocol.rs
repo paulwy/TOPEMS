@@ -6,20 +6,15 @@
 use serde::{Deserialize, Serialize};
 
 /// MCP 协议版本
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum McpProtocolVersion {
     /// 2024-11-05 版本
     #[serde(rename = "2024-11-05")]
     V20241105,
     /// 2025-03-26 版本
     #[serde(rename = "2025-03-26")]
+    #[default]
     V20250326,
-}
-
-impl Default for McpProtocolVersion {
-    fn default() -> Self {
-        Self::V20250326
-    }
 }
 
 impl std::fmt::Display for McpProtocolVersion {

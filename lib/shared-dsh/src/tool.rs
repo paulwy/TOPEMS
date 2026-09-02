@@ -112,7 +112,11 @@ impl ToolDefinition {
         if self.name.len() > 50 {
             return Err("工具名称不能超过 50 个字符".to_string());
         }
-        if !self.name.chars().all(|c| c.is_ascii_lowercase() || c == '_' || c.is_ascii_digit()) {
+        if !self
+            .name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c == '_' || c.is_ascii_digit())
+        {
             return Err("工具名称只能包含小写字母、数字和下划线".to_string());
         }
         let parts: Vec<&str> = self.name.split('_').collect();
@@ -225,17 +229,21 @@ pub trait Tool: Send + Sync {
     }
 }
 
+/// 简单工具处理器（闭包 + Future）
+type SimpleToolHandler = Box<
+    dyn Fn(
+            serde_json::Value,
+            ToolContext,
+        ) -> Pin<
+            Box<dyn Future<Output = Result<DshResponse<serde_json::Value>, DshToolError>> + Send>,
+        > + Send
+        + Sync,
+>;
+
 /// 简单工具 - 使用闭包实现
 pub struct SimpleTool {
     definition: ToolDefinition,
-    handler: Box<
-        dyn Fn(
-                serde_json::Value,
-                ToolContext,
-            ) -> Pin<Box<dyn Future<Output = Result<DshResponse<serde_json::Value>, DshToolError>> + Send>>
-            + Send
-            + Sync,
-    >,
+    handler: SimpleToolHandler,
 }
 
 impl SimpleTool {
@@ -284,7 +292,7 @@ impl ToolRegistry {
     pub fn register(&mut self, tool: Box<dyn Tool>) -> Result<(), DshToolError> {
         let def = tool.definition();
         def.validate_name()
-            .map_err(|e| DshToolError::definition_error(e))?;
+            .map_err(DshToolError::definition_error)?;
         if self.tools.contains_key(&def.name) {
             return Err(DshToolError::definition_error(format!(
                 "工具 '{}' 已存在",
@@ -345,7 +353,7 @@ mod tests {
         let empty = ToolDefinition::new("", "空名称");
         assert!(empty.validate_name().is_err());
 
-        let too_long = ToolDefinition::new(&"a".repeat(51), "太长");
+        let too_long = ToolDefinition::new("a".repeat(51), "太长");
         assert!(too_long.validate_name().is_err());
 
         let invalid_chars = ToolDefinition::new("ERP-Create-Order", "无效字符");
@@ -372,28 +380,28 @@ mod tests {
 
     #[tokio::test]
     async fn test_simple_tool() {
-        let def = ToolDefinition::new(
-            "test_hello_world",
-            "测试工具",
-        )
-        .with_input_schema(serde_json::json!({
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"}
-            },
-            "required": ["name"]
-        }));
+        let def = ToolDefinition::new("test_hello_world", "测试工具").with_input_schema(
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"}
+                },
+                "required": ["name"]
+            }),
+        );
 
         let tool = SimpleTool::new(def, |input, _context| async move {
-            let name = input.get("name").and_then(|n| n.as_str()).unwrap_or("world");
-            Ok(DshResponse::success(serde_json::json!({"message": format!("Hello, {}!", name)})))
+            let name = input
+                .get("name")
+                .and_then(|n| n.as_str())
+                .unwrap_or("world");
+            Ok(DshResponse::success(
+                serde_json::json!({"message": format!("Hello, {}!", name)}),
+            ))
         });
 
         let result = tool
-            .execute(
-                serde_json::json!({"name": "TOPEMS"}),
-                ToolContext::new(),
-            )
+            .execute(serde_json::json!({"name": "TOPEMS"}), ToolContext::new())
             .await
             .unwrap();
 
@@ -409,7 +417,7 @@ mod tests {
         let mut registry = ToolRegistry::new();
 
         let def = ToolDefinition::new("test_greet_user", "问候用户");
-        let tool = SimpleTool::new(def, |input, _context| async move {
+        let tool = SimpleTool::new(def, |_input, _context| async move {
             Ok(DshResponse::success(serde_json::json!({"status": "ok"})))
         });
 

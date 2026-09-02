@@ -32,7 +32,7 @@
 //! ## 三种复杂度模式（覆盖全部服务）
 //!
 //! - **A. 标准模式（10 个服务）**：纯 PgPool + AuthState state，直接用 `build_application`
-//!   （feedback / search / ticket / lowcode / communication / billing / master-data / hrm / finance / wms）
+//!   （feedback / search / ticket / lowcode / communication / master-data / hrm / finance / wms）
 //! - **B. stateful + build_application（11 个服务）**：自定义 AppState（cache/tenant_middleware/6+服务客户端），
 //!   先把自定义 state 注入 `protected_routes.with_state(app_state)`，再调用 `build_application`
 //!   （qms / ehs / pdm / lims / erp / crm / srm / scm / mes / pm / rd）
@@ -732,6 +732,10 @@ pub struct ServiceConfig {
     pub enable_rls: bool,
     /// 是否启用 request_context 中间件
     pub enable_request_context: bool,
+    /// 是否初始化全局 telemetry（tracing subscriber）。
+    /// 模块化单体嵌入场景（多个服务合并到单进程）应设为 false，
+    /// 由宿主进程统一初始化全局 subscriber，避免重复设置 panic。
+    pub init_telemetry: bool,
     /// API 前缀，如 "/api/erp"
     pub api_prefix: &'static str,
     /// 旧版 API 前缀列表，如 &["/api/v1/erp"]
@@ -748,6 +752,7 @@ impl Default for ServiceConfig {
             enable_events: false,
             enable_rls: true,
             enable_request_context: true,
+            init_telemetry: true,
             api_prefix: "",
             legacy_prefixes: &[],
         }
@@ -782,7 +787,12 @@ pub struct Application {
 pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext> {
     dotenv::dotenv().ok();
 
-    let _telemetry_guard = init_telemetry(config.name);
+    // 模块化单体嵌入场景可跳过全局 telemetry 初始化（由宿主进程统一设置）
+    let _telemetry_guard = if config.init_telemetry {
+        Some(init_telemetry(config.name))
+    } else {
+        None
+    };
 
     tracing::info!("🚀 {} 服务启动中...", config.name);
 
@@ -896,11 +906,10 @@ pub fn build_application(
         }
     });
 
-    // layer 顺序（axum 后挂先执行，即外层先执行）：
-    // auth → rls → rate_limit。
-    // auth 最先执行：注入 Claims + ServiceIdentity（服务身份），
-    // 供 rls 与 rate_limit 读取（服务调用独立限流桶）。
-    let mut protected = protected_routes.layer(rate_limit_layer);
+    let mut protected = protected_routes.layer(axum::middleware::from_fn_with_state(
+        ctx.auth_state.clone(),
+        auth_middleware,
+    ));
 
     if config.enable_rls {
         protected = protected.layer(axum::middleware::from_fn_with_state(
@@ -909,10 +918,7 @@ pub fn build_application(
         ));
     }
 
-    protected = protected.layer(axum::middleware::from_fn_with_state(
-        ctx.auth_state.clone(),
-        auth_middleware,
-    ));
+    protected = protected.layer(rate_limit_layer);
 
     let mut app = register_routes_with_legacy_alias(
         Router::new().merge(public_routes),
@@ -1666,6 +1672,7 @@ mod tests {
             enable_events: true,
             enable_rls: false,
             enable_request_context: false,
+            init_telemetry: false,
             api_prefix: "/api/core/qms/v1",
             legacy_prefixes: &["/api/v1/qms", "/api/qms"],
         };
@@ -1690,6 +1697,7 @@ mod tests {
             enable_events: true,
             enable_rls: true,
             enable_request_context: true,
+            init_telemetry: false,
             api_prefix: "/api/crm",
             legacy_prefixes: &["/api/v1/crm"],
         };
@@ -2178,6 +2186,7 @@ mod tests {
             enable_events: true,
             enable_rls: false,
             enable_request_context: false,
+            init_telemetry: false,
             api_prefix: "/api/mut",
             legacy_prefixes: &["/legacy"],
         };

@@ -129,8 +129,12 @@ pub struct PaginationRequest {
     pub sort_order: Option<SortOrder>,
 }
 
-fn default_page() -> u32 { 1 }
-fn default_page_size() -> u32 { 20 }
+fn default_page() -> u32 {
+    1
+}
+fn default_page_size() -> u32 {
+    20
+}
 
 impl Default for PaginationRequest {
     fn default() -> Self {
