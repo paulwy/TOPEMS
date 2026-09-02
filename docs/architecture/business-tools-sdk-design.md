@@ -559,3 +559,246 @@ Phase 5（I4+I6）          → browser 适配 + sub-path imports
 **文档状态**：Draft → Reviewed（可进入 V0.2 实现）
 **阻塞项**：3 项（B1 端点路径 / B2 类型定义 / B3 分页协议），均在 V0.2 Phase 1 解决
 **工时预估**：V0.2 TS 骨架 + 单测 ≈ 2-3 个版本交付周期（四轨并行节奏）
+
+---
+
+## 附录 C：V478 端点核实 + types.ts 设计（2026-09-02）
+
+> 解决阻塞项 B1（端点路径）+ B2（类型定义）+ B3（分页协议）
+
+### C.1 后端实际路由清单（B1 解决）
+
+> 数据来源：`grep -r '.route(' svc/unified-core/src/routes/business_tools/` 全量提取
+
+**发现**：SDK 草稿 §3 假设的端点路径**部分正确**，但遗漏了双前缀模式——audit logs 查询在 `/permissions/audit-logs/*` 下，但 retention/archive/restore 在 `/audit-logs/*` 下（无 `permissions/` 前缀）。
+
+#### C.1.1 Permissions 子客户端
+
+| 方法 | HTTP | 路径 |
+|------|------|------|
+| list(tenantId) | GET | `/business-tools/permissions/tenant/{tenant_id}` |
+| list(userId) | GET | `/business-tools/permissions/user/{user_id}` |
+| get(tenantId, userId) | GET | `/business-tools/permissions/{tenant_id}/{user_id}` |
+| create | POST | `/business-tools/permissions` |
+| update | PUT | `/business-tools/permissions/{tenant_id}/{user_id}` |
+| delete | DELETE | `/business-tools/permissions/{tenant_id}/{user_id}` |
+| check | POST | `/business-tools/permissions/check` |
+| count | GET | `/business-tools/permissions/count` |
+| batchCreate | POST | `/business-tools/permissions/batch` |
+| batchUpdate | PUT | `/business-tools/permissions/batch` |
+| batchDelete | DELETE | `/business-tools/permissions/batch` |
+| export | GET | `/business-tools/permissions/export` |
+| import | POST | `/business-tools/permissions/import` |
+
+#### C.1.2 AuditLogs 子客户端
+
+| 方法 | HTTP | 路径 |
+|------|------|------|
+| list | GET | `/business-tools/permissions/audit-logs` |
+| count | GET | `/business-tools/permissions/audit-logs/count` |
+| get(id) | GET | `/business-tools/permissions/audit-logs/{id}` |
+| export(gzip) | GET | `/business-tools/permissions/audit-logs/export?format=gzip` |
+| export(ndjson) | GET | `/business-tools/permissions/audit-logs/export?format=ndjson` |
+
+#### C.1.3 ExportTask 子客户端
+
+| 方法 | HTTP | 路径 |
+|------|------|------|
+| getStatus | GET | `/business-tools/permissions/audit-logs/export/task/status` |
+| start | POST | `/business-tools/permissions/audit-logs/export/task/start` |
+| stop | POST | `/business-tools/permissions/audit-logs/export/task/stop` |
+| trigger | POST | `/business-tools/permissions/audit-logs/export/task/trigger` |
+| getConfig | GET | `/business-tools/permissions/audit-logs/export/task/config` |
+| updateConfig | PUT | `/business-tools/permissions/audit-logs/export/task/config` |
+
+#### C.1.4 Retention 子客户端
+
+| 方法 | HTTP | 路径 |
+|------|------|------|
+| getPolicy | GET | `/business-tools/audit-logs/retention/policy` |
+| updatePolicy | PUT | `/business-tools/audit-logs/retention/policy` |
+| triggerCleanup | POST | `/business-tools/audit-logs/retention/cleanup` |
+| getStats | GET | `/business-tools/audit-logs/retention/stats` |
+
+#### C.1.5 Archive 子客户端（草稿未覆盖，新增）
+
+| 方法 | HTTP | 路径 |
+|------|------|------|
+| list | GET | `/business-tools/audit-logs/archives` |
+| getStats | GET | `/business-tools/audit-logs/archives/stats` |
+| cleanup | POST | `/business-tools/audit-logs/archives/cleanup` |
+| download(filename) | GET | `/business-tools/audit-logs/archives/{filename}` |
+| delete(filename) | DELETE | `/business-tools/audit-logs/archives/{filename}` |
+| listRestorable | GET | `/business-tools/audit-logs/archives/restorable` |
+| restore | POST | `/business-tools/audit-logs/archives/restore` |
+
+### C.2 TypeScript 类型定义（B2 解决）
+
+```typescript
+// ============================================================
+// types.ts — TOPEMS Business Tools SDK 核心类型
+// 对齐后端 serde Serialize 输出
+// ============================================================
+
+// ---- 通用 ----
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+}
+
+// ---- Permission ----
+export interface Permission {
+  tenant_id: string;
+  user_id: string;
+  resource_code: string;
+  actions: string[];
+  effect: 'allow' | 'deny';
+  conditions?: Record<string, unknown>;
+  expires_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PermissionCheckRequest {
+  tenant_id: string;
+  user_id: string;
+  resource_code: string;
+  action: string;
+}
+
+export interface PermissionCheckResult {
+  allowed: boolean;
+  reason?: string;
+}
+
+export interface BatchPermissionRequest {
+  permissions: Omit<Permission, 'created_at' | 'updated_at'>[];
+}
+
+export interface BatchPermissionResult {
+  success_count: number;
+  failed_count: number;
+  failed_items: FailedItem[];
+}
+
+export interface FailedItem {
+  index: number;
+  error: string;
+}
+
+// ---- AuditLog ----
+export interface AuditLogEntry {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface AuditLogQueryParams {
+  tenant_id?: string;
+  user_id?: string;
+  action?: string;
+  resource_type?: string;
+  start_time?: string;
+  end_time?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// ---- Retention ----
+export interface RetentionPolicy {
+  max_age_days: number;
+  max_count: number;
+  archive_enabled: boolean;
+  cleanup_cron: string;
+}
+
+export interface RetentionStats {
+  total_logs: number;
+  archived_logs: number;
+  oldest_log_date: string | null;
+  last_cleanup: string | null;
+}
+
+// ---- ExportTask ----
+export interface ExportTaskConfig {
+  interval_seconds: number;
+  batch_size: number;
+  output_format: 'gzip' | 'ndjson';
+  output_dir: string;
+  retention_days: number;
+}
+
+export interface ExportTaskStatus {
+  is_running: boolean;
+  last_run_at: string | null;
+  last_run_status: 'success' | 'failed' | 'partial' | null;
+  last_error: string | null;
+  total_exported: number;
+  total_files: number;
+}
+
+// ---- Archive ----
+export interface ArchiveFileInfo {
+  filename: string;
+  size_bytes: number;
+  created_at: string;
+  log_count: number;
+  compressed: boolean;
+}
+
+export interface ArchiveStats {
+  total_archives: number;
+  total_size_bytes: number;
+  oldest_archive: string | null;
+  newest_archive: string | null;
+}
+
+export interface RestorableFile {
+  filename: string;
+  size_bytes: number;
+  created_at: string;
+  log_count: number;
+}
+
+export interface RestoreRequest {
+  filenames: string[];
+  dry_run: boolean;
+}
+
+export interface RestoreResult {
+  restored_count: number;
+  failed_count: number;
+  failed_files: string[];
+}
+```
+
+### C.3 分页协议确认（B3 解决）
+
+**结论**：后端使用 **offset-based 分页**（`page` + `page_size`），返回 `{ items, total, page, page_size }`。
+
+SDK 草稿 §3 的 `{ items, total, page, pageSize }` 需修正为 snake_case：`page_size`（与 Rust serde 默认 snake_case 输出对齐）。
+
+### C.4 SDK 草稿 §3 修正清单
+
+| # | 原文 | 修正 |
+|---|------|------|
+| 1 | `auditLogs → /business-tools/permissions/audit-logs/*` | ✅ 查询/导出正确；但 retention/archive/restore 在 `/business-tools/audit-logs/*`（无 `permissions/` 前缀） |
+| 2 | 5 子客户端 | 修正为 **6 子客户端**：新增 Archive 子客户端（list/download/delete/restore） |
+| 3 | `pageSize` | 修正为 `page_size`（snake_case） |
+| 4 | `retention → /business-tools/audit-logs/retention/*` | ✅ 正确 |
+| 5 | `exportTask → /business-tools/audit-export-task/*` | 修正为 `/business-tools/permissions/audit-logs/export/task/*` |

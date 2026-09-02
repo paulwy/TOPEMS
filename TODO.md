@@ -706,15 +706,15 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
 
 | 架构层级 | 完成度 | 说明 |
 |---------|--------|------|
-| Layer 0: MCP 适配层 | 90% | 骨架/安全/传输/Schema/权限/Resource 全部完成；业务工具真实落地待验证 |
+| Layer 0: MCP 适配层 | 95% | 骨架/安全/传输/Schema/权限/Resource 全部完成；业务工具 45/63 已接真实 API（71%），18 个纯 mock 待落地（bi/oa/iot/cs + finance 2）—审计报告 `docs/reports/2026-09-02-mcp-tool-audit.md` |
 | Layer 1: 运行时基座 | 100% | LLM Provider/计量/流式/Prompt模板/熔断/配置管理/标准化全部完成 |
 | Layer 2: 智能中枢 | 100% | Agent/Tool/RAG/Multi-Agent/知识图谱/记忆/工作流/事件/Plan-Execute全部完成 |
-| Layer 3: 业务赋能 | 70% | 框架全部完成；真实 API 联调/外部 Agent 对接/性能基准待完成 |
+| Layer 3: 业务赋能 | 75% | 框架全部完成；真实 API 联调 71% 覆盖（45/63 工具）/外部 Agent 对接/性能基准待完成 |
 | AI 治理 | 100% | 安全护栏/成本/审计/配额/MCP安全防护/治理仪表盘全部完成 |
 | 前端集成 | 70% | 组件/页面/API层全部完成；真实前后端联调待完成 |
 | 工程化 | 100% | API文档/共享类型库/开发脚本/OpenAPI规范/部署验证全部完成 |
-| 边界治理 | 80% | 跨Schema清零/stub删除/类型迁移完成；编译时检查仅覆盖 6/32 服务 |
-| 架构优化 | 0% | 事件总线升级/模块化单体骨架/accounting_subjects迁移均未启动 |
+| 边界治理 | 90% | 跨Schema清零/stub删除/类型迁移完成；编译时边界检查覆盖 28/32 服务（`only_own_schema_query!` 宏） |
+| 架构优化 | 100% | 事件总线升级(Redis Stream+ACK+DLQ)✅ / 模块化单体骨架(16真实服务接入server)✅ / accounting_subjects迁移(ERP→Finance)✅ / 编译时边界检查(28/32服务)✅ |
 
 ---
 
