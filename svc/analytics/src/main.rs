@@ -33,7 +33,7 @@ pub use shared::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "analytics, public");
+    std::env::set_var("SEARCH_PATH", "bi, public");
 
     let config = ServiceConfig {
         name: "topems-analytics",
