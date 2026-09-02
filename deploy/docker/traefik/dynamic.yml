@@ -8,6 +8,20 @@ http:
   # 路由规则（按路径前缀路由到各业务服务）
   # ================================================
   routers:
+    # ===== 认证豁免路由（无需 JWT：登录/注册/刷新/登出/忘记密码/重置密码/verify）=====
+    # priority 200 > router-core 100；verify 豁免防止 jwt-auth forwardAuth 递归调用自身
+    router-core-auth:
+      rule: "PathPrefix(`/api/core/iam/auth`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-core
+      middlewares:
+        - cors-headers
+        - rate-limit
+        - retry
+      priority: 200
+
     # ===== 核心平台 =====
     router-core:
       rule: "PathPrefix(`/api/core`)"

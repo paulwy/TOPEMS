@@ -9,31 +9,35 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 ---
 
-## 📊 待办任务统计（2026-09-02）
+## 📊 待办任务统计（2026-09-03）
 
-> 基于 2026-09-02 核对 TODO.md 全量推进记录 + 代码现状生成。
+> 基于 2026-09-03 核对 TODO.md 全量推进记录 + 代码/运行环境现状生成。
 > 09-01 架构主线（拆分就绪核验、服务拓扑 runtime 采集、阈值监控接入、每日巡检定时任务）已闭环，不再列入待办。
 > 09-01 编译库一致性治理已闭环：`.cargo/config.toml` 固化 `SQLX_OFFLINE=true`（编译默认离线缓存，绕开 Homebrew 库缺表）；容器库已对齐（postgres 映射 `5433:5432`，`.env DATABASE_URL` 指向 `localhost:5433` 容器库）——根治项完成，详见 `docs/development/backend/database-development.md` §7.8。
 > 09-02 全量 Docker 运行环境启动完成（32 容器 / 31 healthy），新增 #13 已闭环。
 > 09-02 提交后遗留处理已闭环（svc/aps+billing 归档删除、analytics 权限模块 + finance R5、旧 stash 清理 + 删除意图落地），#14 已闭环。
+> 09-03 运行环境升级已闭环（#15）：重建 21 服务镜像 + 5433 治理迁移（2a 归位 69 张 + 2b DROP 59 张 + 2c auth FK）+ public 影子清理（163→36 对齐 5432）；网关登录豁免 + 端到端验证已闭环（#16）。
 
-**当前待办总数：14 项**（✅ 已完成 12 / ⏳ 进行中 1 / 🔲 可选后续 1）
+**当前待办总数：16 项**（✅ 已完成 14 / ⏳ 进行中 0 / 🔲 可选后续 2）
 
 ---
 
-## 🚀 运行环境状态（2026-09-02）
+## 🚀 运行环境状态（2026-09-03）
 
-> 全量 Docker 环境启动完成：**32 容器 / 32 healthy**（traefik healthcheck 遗留已修复——启用 ping 端点，探测 8089/ping，提交 `445718942`）。
-> 端到端验证：unified-core 登录 200（admin/admin123，code 0 + token）、qms 8050 200、portal 8063 200、traefik 80 302 正常。
+> **双环境治理对齐完成**：5432（Homebrew 验证库）与 5433（docker 运行库）结构已对齐——5433 public 从 262 张治理到 **36 张**（与 5432 完全一致），各服务 schema 归位完成（finance 58 / lims 31 / pdm 19 / qms 26 / ehs 43 / bi 30 / gis 21 等）。
+> 21 个业务服务**全部新镜像 running healthy**（中科大源 + 串行构建 `build-local.sh` 根治 OOM/网络卡死）；unified-core 登录 200（admin/admin123）+ 网关（8080）端到端业务流验证通过。
 
-**本次启动修复（已推送 `f8fe706dc` + `c87c3355f`）**：
-- **构建卡死根治**：docker.io 不可达致 BuildKit 拉基础镜像元数据无限重试（2h 仅 4 镜像）→ `Dockerfile.service` 基础镜像源切至 `docker.1panel.live/library/*`（已预拉）→ 19 业务镜像全部构建成功（21 个含 qms/unified-core）
-- **compose 挂载路径**：prometheus/nginx 挂载指向误建空目录 → 改 `prometheus/prometheus.yml`、`nginx/nginx.conf`
-- **网关循环依赖解除**：nginx(/api→traefik:80) ↔ traefik(静态→nginx) 死锁 → traefik 移除对 nginx 健康依赖、nginx 增对 traefik 启动依赖（`service_started`）
-- **healthcheck 修复**：prometheus/alertmanager curl→wget、nginx 探测根路径（403 接受）、jaeger 探测 16686（原 14268 404）
-- **运维组件**：alertmanager 移除 `--config.expand-env`（版本不支持）+ feishu.tmpl 18 处 `default` 函数改 if/else；pgbouncer 移除无效 `default_client_connection_limit`；grafana datasource `isDefault` 去重；nginx 注释已移除服务（search/communication/ticket/master-data）upstream
+**09-03 运行环境升级 + 治理（#15，已推送）**：
+- **镜像构建根治**：Dockerfile.service 换中科大 sparse 源（retry=5/timeout=120/multiplexing=false，绕开 rsproxy HTTP/2 流重置）+ `deploy/docker/build-local.sh` 串行防 OOM（16GB 并行 Rust 编译必挂）；21 服务镜像全部重建成功。提交 `25768bdfe`/`536f441a8`/`e02f73747`/`37fc3d108`
+- **5433 治理迁移**：`20260902000001`（2a 归位 qa_ehs_*/qa_* 69 张 + 补 CREATE SCHEMA ehs/qms）、`000002`（2b DROP 59 张影子）、`000003`（2c auth FK）；`20260903000001`（归位 finance/lims/pdm/report/bi/gis 123 张 + DROP 冲突 4 张，public 163→36）。提交 `66d1eeaf4`/`c7cc7d3cd`
+- **网关登录豁免（#16）**：dynamic.yml 增 `router-core-auth`（`/api/core/iam/auth` 前缀 priority 200 免 jwt-auth，login/refresh/verify 防 forwardAuth 递归）→ 网关登录 401 修复。提交 `(dynamic.yml)`
+- **端到端验证**：网关登录 200 + token 访问 `/api/core/iam/users`、`/api/erp/inventory`、`/api/erp/inventory/low-stock`、`/api/hrm/employees` 全 200
 
-**已知遗留（不阻塞运行）**：traefik healthcheck 显示 unhealthy（BusyBox wget 不支持 --no-check-certificate，302→443 SSL 校验失败；服务可用）；nginx.conf 中 communication/ticket/master-data upstream 已注释待服务回归 compose 时恢复。
+**已知遗留（不阻塞业务，见表格 #8/#17）**：
+- **bi 服务 init_database 建表 DDL 硬编码 public**——重启会重建 analytics_*/report_* 到 public（0 行残留），需源码 schema 化 + 重建镜像（本轮已 DROP 2 次，需根治）
+- **communication/hrm check_schema_boundary FAIL**（源码 SQL 裸引用）
+- **consul 5 个 sidecar-proxy critical**（已注销的 Connect 残留，不影响业务）
+- **erp/hrm `/health` 经网关 401**（health 端点认证策略差异，业务接口 200 正常）
 
 ---
 
@@ -53,6 +57,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 | 10 | QMS 查询层 id cast 专项修复 | P2 | ✅ 已闭环（09-01） | 82 处 `SELECT id` → `id::TEXT`（11 模块）修复 id UUID→String 解码失败；顺带并入 schema 隔离改造（only_own_schema_query! + qms. 前缀）；qms 查询均为非宏 `sqlx::query/query_as`，无需更新 .sqlx 缓存；**运行时验证完成**（容器重建 + 26 张表 DDL 提取建表 + eightd uuid=jsonb 修复）：/issues /checks /audit-plans /eightd 全 200 success；#7 测试凭据对齐新库 admin123，7/7 全过 |
 | 13 | 全量 Docker 运行环境启动 | P1 | ✅ 已闭环（09-02） | 32 容器 / 32 healthy 全量运行（24 业务服务 + 基础设施 + 监控 + 网关 nginx）；修复构建卡死（docker.io 不可达 → 镜像源切 docker.1panel.live）、compose 挂载路径、healthcheck、nginx/traefik 网关循环依赖、运维组件（alertmanager/pgbouncer/grafana）；端到端验证登录 200 + qms/portal 200；提交 `f8fe706dc` + `c87c3355f`。traefik healthcheck 遗留已闭环（启用 ping 端点探测 8089/ping，提交 `445718942`）——现 32/32 全 healthy |
 | 14 | 提交后遗留处理 | P1 | ✅ 已闭环（09-02） | ① svc/aps（21）+ svc/billing（10）归档删除（已归档 `svc/_archive/`，server/shared-service-client/services.rs 仅注释引用无编译依赖；顺带修复 shared-auth 缺 service/service_monitor mod 声明、shared-service-client 缺 circuit_breaker mod 声明，cargo check 通过）；② analytics 权限模块缺失（新增根级 `permission.rs` 声明 analytics:view/admin + 统一入口，修复 perm-matrix R1；finance 6 处 utoipa 宏补 security 属性修复 R5——perm-matrix 全 0 FAIL）；③ 旧 stash 清理（12 个 stash 全量 diff 备份至 /tmp/topems_stash_backup/ 后 drop；落地 autostash 删除意图 50 文件：billing_api.rs 客户端 + 49 个过期 .sqlx 缓存）。提交 `8818b958c`、`d9076e4a7`、`82c70b556` |
+| 15 | 运行环境升级（镜像重建 + 5433 治理迁移 + public 影子清理） | P1 | ✅ 已闭环（09-03） | ① **构建根治**：Dockerfile.service 中科大 sparse 源 + build-local.sh 串行防 OOM，21 服务镜像全部重建；② **5433 迁移**：2a 归位 qa_ehs_*/qa_* 69 张（补 CREATE SCHEMA ehs/qms）、2b DROP 59 张影子、2c auth FK（refresh_tokens/sessions→core_users）；③ **public 163→36 对齐 5432**：归位 finance 58/lims 31/pdm 19/report 1/bi 13/gis 1 + DROP 冲突 4 张，全 0 行无数据损失；④ 21 服务新镜像全 healthy，finance/lims/pdm schema 防御成功（66 张校验）。提交 `25768bdfe`/`536f441a8`/`e02f73747`/`37fc3d108`/`c7cc7d3cd`/`66d1eeaf4` |
+| 16 | 网关登录豁免 + 端到端验证 | P1 | ✅ 已闭环（09-03） | 根因：traefik `default-chain`（含 jwt-auth forwardAuth）对 `/api/core` 全部路由强制认证，登录接口未豁免 → 网关 401。修复：dynamic.yml 增 `router-core-auth`（`/api/core/iam/auth` 前缀 priority 200，中间件链去掉 jwt-auth；verify 豁免防 forwardAuth 递归调用自身）→ traefik 重启后网关登录 200。端到端验证：网关登录 + token 访问 `/api/core/iam/users`（200 用户列表）、`/api/erp/inventory`（200 库存列表）、`/api/erp/inventory/low-stock`（200）、`/api/hrm/employees`（200）——admin 带权限业务流经网关全通 |
+| 17 | 运行环境遗留治理 | P2 | 🔲 待处理 | ① **bi 服务 init_database 建表 DDL 硬编码 public**——重启会在 public 重建 analytics_*/report_* 0 行残留（本轮已 DROP 2 次，需源码 schema 化 + 重建镜像根治）；② **communication/hrm check_schema_boundary FAIL**（源码 SQL 裸引用，需补 schema 前缀）；③ **consul 5 个 sidecar-proxy critical**（已注销 Connect 残留，清注册）；④ **erp/hrm `/health` 经网关 401**（health 端点认证策略差异，业务接口 200 正常，可豁免或对齐） |
 
 **已随 09-01 推进闭环的重点**（不再列入待办）：拆分就绪核验（前置条件 #1 #2 #3 ✅）、服务拓扑 runtime 采集补强、阈值监控接入拓扑一致性（--topology auto）、workflow 拆分评估 P1/P2/P3、服务间认证体系批量、转发 token 审计 + 4 无效搜索源移除、portal 待办聚合缓存 + auth 修复。
 
