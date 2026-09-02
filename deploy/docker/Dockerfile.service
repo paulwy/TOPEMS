@@ -29,6 +29,20 @@ WORKDIR /app
 # 安装构建依赖
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig protobuf
 
+# cargo 国内镜像源 + sparse 协议（容器内无本机 ~/.cargo 缓存，直连 crates.io 索引国内网络易卡）
+# 注意：不 COPY 项目 .cargo/config.toml（其 rustc-wrapper=sccache，容器内无 sccache 会失败）
+RUN mkdir -p /root/.cargo && \
+    printf '%s\n' \
+      '[net]' \
+      'retry = 2' \
+      '' \
+      '[source.crates-io]' \
+      'replace-with = "rsproxy-sparse"' \
+      '' \
+      '[source.rsproxy-sparse]' \
+      'registry = "sparse+https://rsproxy.cn/index/"' \
+      > /root/.cargo/config.toml
+
 # 复制 workspace 文件（依赖缓存层）
 COPY Cargo.toml Cargo.lock ./
 COPY lib ./lib
