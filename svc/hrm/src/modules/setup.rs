@@ -2,6 +2,7 @@ use axum::{extract::State, routing::*, Json, Router};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -117,12 +118,12 @@ async fn get_init_progress(
     let org_id = DEFAULT_ORG_ID;
 
     let steps = sqlx::query_as::<_, InitializationStatus>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
         FROM hrm.initialization_status
         WHERE organization_id = $1
         ORDER BY step_order
-        "#,
+        "#),
     )
     .bind(org_id)
     .fetch_all(&state.db)
@@ -137,9 +138,10 @@ async fn get_init_progress(
                 .map(|s| s.step_order)
                 .unwrap_or(5);
 
-            let company_result = sqlx::query_scalar::<_, Uuid>(
-                "SELECT id FROM hrm.companies WHERE tenant_id = $1 AND name != '我的公司' LIMIT 1",
-            )
+            let company_result = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+                "hrm",
+                "SELECT id FROM hrm.companies WHERE tenant_id = $1 AND name != '我的公司' LIMIT 1"
+            ))
             .bind(org_id)
             .fetch_optional(&state.db)
             .await;
@@ -187,7 +189,8 @@ async fn setup_company_info(
     }
 
     // 更新公司信息
-    let result = sqlx::query_as::<_, Company>(
+    let result = sqlx::query_as::<_, Company>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.companies SET
             name = $2,
@@ -203,8 +206,8 @@ async fn setup_company_info(
         WHERE id = $1
         RETURNING id, tenant_id, name, short_name, registration_number, tax_number, address,
                    contact_phone, email, website, description, status, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(org_id)
     .bind(&req.name)
     .bind(&req.short_name)
@@ -222,13 +225,14 @@ async fn setup_company_info(
     match result {
         Ok(company) => {
             // 更新初始化状态
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "hrm",
                 r#"
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'company_info'
-                "#,
-            )
+                "#
+            ))
             .bind(now)
             .bind(org_id)
             .execute(&state.db)
@@ -236,10 +240,10 @@ async fn setup_company_info(
 
             // 记录日志
             let _ = sqlx::query(
-                r#"
+                only_own_schema_query!("hrm", r#"
                 INSERT INTO hrm.initialization_logs (id, organization_id, step_name, action, new_data, created_at)
                 VALUES ($1, $2, 'company_info', 'update', $3, $4)
-                "#
+                "#)
             )
             .bind(Uuid::new_v4())
             .bind(org_id)
@@ -307,11 +311,11 @@ async fn setup_departments(
 
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Department>(
-            r#"
+            only_own_schema_query!("hrm", r#"
             INSERT INTO hrm.departments (id, tenant_id, organization_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
-            "#,
+            "#),
         )
         .bind(id)
         .bind(org_id)
@@ -343,13 +347,14 @@ async fn setup_departments(
     }
 
     // 更新初始化状态
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'departments'
-        "#,
-    )
+        "#
+    ))
     .bind(now)
     .bind(org_id)
     .execute(&state.db)
@@ -408,11 +413,11 @@ async fn setup_positions(
 
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Position>(
-            r#"
+            only_own_schema_query!("hrm", r#"
             INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, description, status, created_at, updated_at
-            "#,
+            "#),
         )
         .bind(id)
         .bind(org_id)
@@ -444,13 +449,14 @@ async fn setup_positions(
     }
 
     // 更新初始化状态
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'positions'
-        "#,
-    )
+        "#
+    ))
     .bind(now)
     .bind(org_id)
     .execute(&state.db)
@@ -514,7 +520,7 @@ async fn setup_admin_user(
     };
 
     let result = sqlx::query_as::<_, Employee>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.employees (
             id, tenant_id, organization_id, department_id, position_id,
             employee_number, name, gender, birth_date, hire_date,
@@ -524,7 +530,7 @@ async fn setup_admin_user(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'active', $17, $18)
         RETURNING id, tenant_id, organization_id AS org_id, department_id, position_id,
                   employee_number, name, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(employee_id)
     .bind(org_id)
@@ -553,13 +559,14 @@ async fn setup_admin_user(
             // 实际密码设置应由 IAM 服务完成
 
             // 更新初始化状态
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "hrm",
                 r#"
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'admin_user'
-                "#,
-            )
+                "#
+            ))
             .bind(now)
             .bind(org_id)
             .execute(&state.db)
@@ -610,12 +617,12 @@ async fn complete_initialization(
 
     // 检查前置步骤是否完成
     let steps = sqlx::query_as::<_, InitializationStatus>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
         FROM hrm.initialization_status
         WHERE organization_id = $1 AND step_name != 'completion'
         ORDER BY step_order
-        "#,
+        "#),
     )
     .bind(org_id)
     .fetch_all(&state.db)
@@ -637,13 +644,14 @@ async fn complete_initialization(
             }
 
             // 更新完成状态
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "hrm",
                 r#"
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'completion'
-                "#,
-            )
+                "#
+            ))
             .bind(now)
             .bind(org_id)
             .execute(&state.db)

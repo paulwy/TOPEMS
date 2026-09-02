@@ -35,6 +35,7 @@ topems-shared-observability = { workspace = true }
 # OpenAPI 文档
 utoipa.workspace = true
 topems-shared-bootstrap = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 

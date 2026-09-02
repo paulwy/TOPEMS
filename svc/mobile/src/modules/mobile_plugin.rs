@@ -5,6 +5,7 @@ use crate::shared::AppState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::health::ServiceHealth;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -129,7 +130,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 // Plugin health check endpoint
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ServiceHealth> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
+    let db_status = match sqlx::query(only_own_schema_query!("mobile", "SELECT 1"))
+        .fetch_one(&state.pool)
+        .await
+    {
         Ok(_) => true,
         Err(_) => false,
     };

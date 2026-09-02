@@ -7,6 +7,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -212,7 +213,7 @@ async fn list_job_openings(
     let employment_type_filter = params.employment_type;
 
     let result = sqlx::query_as::<_, JobOpening>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         FROM hrm.job_openings
         WHERE deleted_at IS NULL
@@ -222,7 +223,7 @@ async fn list_job_openings(
           AND ($4::text IS NULL OR employment_type = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
-        "#,
+        "#),
     )
     .bind(&search)
     .bind(dept_id)
@@ -236,14 +237,14 @@ async fn list_job_openings(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("hrm", r#"
                 SELECT COUNT(*) FROM hrm.job_openings
                 WHERE deleted_at IS NULL
                   AND ($1::text IS NULL OR $1 = '' OR title ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR employment_type = $4)
-                "#,
+                "#),
             )
             .bind(&search)
             .bind(dept_id)
@@ -287,11 +288,11 @@ async fn create_job_opening(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, JobOpening>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13)
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(&req.title)
@@ -356,7 +357,7 @@ async fn get_job_opening(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<JobOpening>> {
     let result = sqlx::query_as::<_, JobOpening>(
-        "SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at FROM hrm.job_openings WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at FROM hrm.job_openings WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -380,7 +381,7 @@ async fn update_job_opening(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, JobOpening>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.job_openings
         SET
             title = COALESCE($1, title),
@@ -396,7 +397,7 @@ async fn update_job_opening(
             updated_at = $11
         WHERE deleted_at IS NULL AND id = $12
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
-        "#
+        "#)
     )
     .bind(&req.title)
     .bind(&req.code)
@@ -429,7 +430,7 @@ async fn delete_job_opening(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
-        "UPDATE hrm.job_openings SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'",
+        only_own_schema_query!("hrm", "UPDATE hrm.job_openings SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'"),
     )
     .bind(id)
     .execute(&state.db)
@@ -488,12 +489,12 @@ async fn publish_job_opening(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, JobOpening>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.job_openings
         SET status = 'published', publish_date = $2, updated_at = $2
         WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(now)
@@ -520,12 +521,12 @@ async fn close_job_opening(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, JobOpening>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.job_openings
         SET status = 'closed', close_date = $2, updated_at = $2
         WHERE deleted_at IS NULL AND id = $1 AND status = 'published'
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(now)
@@ -558,7 +559,7 @@ async fn list_candidates(
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, Candidate>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         FROM hrm.candidates
         WHERE deleted_at IS NULL
@@ -567,7 +568,7 @@ async fn list_candidates(
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(&search)
     .bind(job_opening_id)
@@ -580,13 +581,13 @@ async fn list_candidates(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("hrm", r#"
                 SELECT COUNT(*) FROM hrm.candidates
                 WHERE deleted_at IS NULL
                   AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR job_opening_id = $2)
                   AND ($3::text IS NULL OR status = $3)
-                "#,
+                "#),
             )
             .bind(&search)
             .bind(job_opening_id)
@@ -629,11 +630,11 @@ async fn create_candidate(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Candidate>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'new', $9, $10)
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(&req.name)
@@ -695,7 +696,7 @@ async fn get_candidate(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Candidate>> {
     let result = sqlx::query_as::<_, Candidate>(
-        "SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at FROM hrm.candidates WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at FROM hrm.candidates WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -719,7 +720,7 @@ async fn update_candidate(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Candidate>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.candidates
         SET
             name = COALESCE($1, name),
@@ -733,7 +734,7 @@ async fn update_candidate(
             updated_at = $9
         WHERE deleted_at IS NULL AND id = $10
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
-        "#
+        "#)
     )
     .bind(&req.name)
     .bind(&req.email)
@@ -763,9 +764,10 @@ async fn delete_candidate(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.candidates SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.candidates SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -828,7 +830,7 @@ async fn list_interviews(
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, Interview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         FROM hrm.interviews
         WHERE deleted_at IS NULL
@@ -836,7 +838,7 @@ async fn list_interviews(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY scheduled_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(candidate_id)
     .bind(&status_filter)
@@ -847,13 +849,14 @@ async fn list_interviews(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.interviews
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR candidate_id = $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(candidate_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -891,11 +894,11 @@ async fn create_interview(
     let duration = req.duration_minutes.unwrap_or(30);
 
     let result = sqlx::query_as::<_, Interview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8)
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(req.candidate_id)
@@ -922,7 +925,7 @@ async fn get_interview(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Interview>> {
     let result = sqlx::query_as::<_, Interview>(
-        "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM hrm.interviews WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM hrm.interviews WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -946,7 +949,7 @@ async fn update_interview(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Interview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.interviews
         SET
             interviewer_id = COALESCE($1, interviewer_id),
@@ -961,7 +964,7 @@ async fn update_interview(
             updated_at = $10
         WHERE deleted_at IS NULL AND id = $11
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
-        "#
+        "#)
     )
     .bind(req.interviewer_id)
     .bind(req.round)
@@ -991,9 +994,10 @@ async fn delete_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.interviews SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.interviews SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -1015,7 +1019,7 @@ async fn complete_interview(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Interview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.interviews
         SET
             actual_at = COALESCE($1, NOW()),
@@ -1026,7 +1030,7 @@ async fn complete_interview(
             updated_at = $5
         WHERE deleted_at IS NULL AND id = $6 AND status = 'scheduled'
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
-        "#
+        "#)
     )
     .bind(req.actual_at)
     .bind(&req.result)

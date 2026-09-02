@@ -1,5 +1,6 @@
 use axum::{routing::*, Json, Router};
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -205,7 +206,8 @@ async fn get_employee_details(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT 
             e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
@@ -220,8 +222,8 @@ async fn get_employee_details(
         LEFT JOIN hrm.companies c ON e.org_id = c.id
         LEFT JOIN hrm.positions p ON e.position_id = p.id
         WHERE e.id = $1 AND e.tenant_id = $2
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -613,7 +615,8 @@ async fn export_employees(
                     &format!("导出数量不能超过 {}", MAX_EXPORT_COUNT),
                 ));
             }
-            sqlx::query_as::<_, Employee>(
+            sqlx::query_as::<_, Employee>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
                        e.employee_number, e.name, e.gender, e.hire_date,
@@ -628,8 +631,8 @@ async fn export_employees(
                 LEFT JOIN hrm.departments d ON e.department_id = d.id
                 WHERE e.tenant_id = $2 AND e.id = ANY($1)
                 LIMIT $3
-                "#,
-            )
+                "#
+            ))
             .bind(ids)
             .bind(tenant_id)
             .bind(MAX_EXPORT_COUNT)
@@ -637,7 +640,8 @@ async fn export_employees(
             .await
         }
         None => {
-            sqlx::query_as::<_, Employee>(
+            sqlx::query_as::<_, Employee>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
                        e.employee_number, e.name, e.gender, e.hire_date,
@@ -652,8 +656,8 @@ async fn export_employees(
                 LEFT JOIN hrm.departments d ON e.department_id = d.id
                 WHERE e.tenant_id = $1
                 LIMIT $2
-                "#,
-            )
+                "#
+            ))
             .bind(tenant_id)
             .bind(MAX_EXPORT_COUNT)
             .fetch_all(&state.db)

@@ -6,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -111,10 +112,10 @@ pub async fn get_all_patrol_records(
     };
 
     let records: Vec<PatrolRecord> = match sqlx::query_as::<_, PatrolRecord>(
-        "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
-         FROM patrol_records 
+        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
+         FROM mobile.patrol_records 
          WHERE deleted_at IS NULL AND checked_by = $1 
-         ORDER BY created_at DESC"
+         ORDER BY created_at DESC")
     )
     .bind(&user_id)
     .fetch_all(&pool)
@@ -165,9 +166,9 @@ pub async fn get_patrol_record(
     };
 
     let record = match sqlx::query_as::<_, PatrolRecord>(
-        "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
-         FROM patrol_records 
-         WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"
+        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
+         FROM mobile.patrol_records 
+         WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(&user_id)
@@ -222,8 +223,8 @@ pub async fn create_patrol_record(
     let status = payload.status.unwrap_or_else(|| "pending".to_string());
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO patrol_records (id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+        only_own_schema_query!("mobile", "INSERT INTO mobile.patrol_records (id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
     )
     .bind(patrol_id)
     .bind(&payload.title)
@@ -280,8 +281,8 @@ pub async fn update_patrol_record(
     };
 
     let current_record = match sqlx::query_as::<_, PatrolRecord>(
-        "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
-         FROM patrol_records WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"
+        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
+         FROM mobile.patrol_records WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(&user_id)
@@ -306,9 +307,9 @@ pub async fn update_patrol_record(
     let status = payload.status.unwrap_or(current_record.status);
 
     if let Err(e) = sqlx::query(
-        "UPDATE patrol_records 
+        only_own_schema_query!("mobile", "UPDATE mobile.patrol_records 
          SET title = $1, description = $2, location_lat = $3, location_lng = $4, address = $5, status = $6, updated_at = $7 
-         WHERE id = $8 AND checked_by = $9"
+         WHERE id = $8 AND checked_by = $9")
     )
     .bind(&title)
     .bind(&description)
@@ -349,7 +350,7 @@ pub async fn delete_patrol_record(
     };
 
     let result = sqlx::query(
-        "UPDATE patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL",
+        only_own_schema_query!("mobile", "UPDATE mobile.patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"),
     )
     .bind(id)
     .bind(&user_id)

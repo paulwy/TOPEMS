@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -100,63 +101,74 @@ async fn employee_summary(
     let _start_date = params.start_date.clone();
     let _end_date = params.end_date.clone();
 
-    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.employees"#)
-        .fetch_one(&state.db)
-        .await;
-
-    let active_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#,
-    )
+    let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.employees"#
+    ))
     .fetch_one(&state.db)
     .await;
 
-    let inactive_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'inactive'"#,
-    )
+    let active_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#
+    ))
     .fetch_one(&state.db)
     .await;
 
-    let male_result =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'male'"#)
-            .fetch_one(&state.db)
-            .await;
-
-    let female_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'female'"#,
-    )
+    let inactive_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'inactive'"#
+    ))
     .fetch_one(&state.db)
     .await;
 
-    let tenure_result = sqlx::query_scalar::<_, Option<f64>>(
+    let male_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'male'"#
+    ))
+    .fetch_one(&state.db)
+    .await;
+
+    let female_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'female'"#
+    ))
+    .fetch_one(&state.db)
+    .await;
+
+    let tenure_result = sqlx::query_scalar::<_, Option<f64>>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT AVG((CURRENT_DATE - hire_date)::DOUBLE PRECISION)
         FROM hrm.employees
         WHERE hire_date IS NOT NULL AND status = 'active'
-        "#,
-    )
+        "#
+    ))
     .fetch_one(&state.db)
     .await;
 
     let now = Utc::now();
     let current_month = now.format("%Y-%m").to_string();
 
-    let new_hires_result = sqlx::query_scalar::<_, i64>(
+    let new_hires_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT COUNT(*) FROM hrm.employees 
         WHERE TO_CHAR(hire_date, 'YYYY-MM') = $1
-        "#,
-    )
+        "#
+    ))
     .bind(&current_month)
     .fetch_one(&state.db)
     .await;
 
-    let terminations_result = sqlx::query_scalar::<_, i64>(
+    let terminations_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT COUNT(*) FROM hrm.employees 
         WHERE status = 'inactive' 
         AND TO_CHAR(updated_at, 'YYYY-MM') = $1
-        "#,
-    )
+        "#
+    ))
     .bind(&current_month)
     .fetch_one(&state.db)
     .await;
@@ -218,7 +230,8 @@ struct DepartmentSummaryRow {
 }
 
 async fn department_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query_as::<_, DepartmentSummaryRow>(
+    let result = sqlx::query_as::<_, DepartmentSummaryRow>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT 
             d.id as department_id,
@@ -229,8 +242,8 @@ async fn department_summary(State(state): State<ApiState>) -> Json<ApiResponse<s
         LEFT JOIN hrm.employees e ON d.id = e.department_id
         GROUP BY d.id, d.name
         ORDER BY d.name
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 
@@ -277,32 +290,38 @@ async fn contract_summary(State(state): State<ApiState>) -> Json<ApiResponse<ser
         .format("%Y-%m")
         .to_string();
 
-    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.contracts"#)
-        .fetch_one(&state.db)
-        .await;
-
-    let active_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date > CURRENT_DATE"#,
-    )
+    let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.contracts"#
+    ))
     .fetch_one(&state.db)
     .await;
 
-    let expired_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date <= CURRENT_DATE"#,
-    )
+    let active_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date > CURRENT_DATE"#
+    ))
+    .fetch_one(&state.db)
+    .await;
+
+    let expired_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date <= CURRENT_DATE"#
+    ))
     .fetch_one(&state.db)
     .await;
 
     let expiring_this_month_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1 AND end_date > CURRENT_DATE"#,
+        only_own_schema_query!("hrm", r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1 AND end_date > CURRENT_DATE"#),
     )
     .bind(&current_month)
     .fetch_one(&state.db)
     .await;
 
-    let expiring_next_month_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1"#,
-    )
+    let expiring_next_month_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1"#
+    ))
     .bind(&next_month)
     .fetch_one(&state.db)
     .await;
@@ -346,36 +365,45 @@ pub struct TrainingSummaryResponse {
 }
 
 async fn training_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
-    let total_plans_result =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_plans"#)
-            .fetch_one(&state.db)
-            .await;
-
-    let active_plans_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_plans WHERE status = 'active'"#,
-    )
+    let total_plans_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.training_plans"#
+    ))
     .fetch_one(&state.db)
     .await;
 
-    let total_courses_result =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_courses"#)
-            .fetch_one(&state.db)
-            .await;
-
-    let completed_courses_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_courses WHERE status = 'completed'"#,
-    )
+    let active_plans_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.training_plans WHERE status = 'active'"#
+    ))
     .fetch_one(&state.db)
     .await;
 
-    let total_records_result =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_records"#)
-            .fetch_one(&state.db)
-            .await;
+    let total_courses_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.training_courses"#
+    ))
+    .fetch_one(&state.db)
+    .await;
 
-    let completed_records_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_records WHERE status = 'completed'"#,
-    )
+    let completed_courses_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.training_courses WHERE status = 'completed'"#
+    ))
+    .fetch_one(&state.db)
+    .await;
+
+    let total_records_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.training_records"#
+    ))
+    .fetch_one(&state.db)
+    .await;
+
+    let completed_records_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.training_records WHERE status = 'completed'"#
+    ))
     .fetch_one(&state.db)
     .await;
 
@@ -438,16 +466,17 @@ async fn attendance_summary(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let (start_date, end_date) = params.get_date_range();
 
-    let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE"#,
-    )
+    let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE"#
+    ))
     .bind(&start_date)
     .bind(&end_date)
     .fetch_one(&state.db)
     .await;
 
     let on_time_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'on_time'"#,
+        only_own_schema_query!("hrm", r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'on_time'"#),
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -455,7 +484,7 @@ async fn attendance_summary(
     .await;
 
     let late_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'late'"#,
+        only_own_schema_query!("hrm", r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'late'"#),
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -463,7 +492,7 @@ async fn attendance_summary(
     .await;
 
     let absent_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'absent'"#,
+        only_own_schema_query!("hrm", r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'absent'"#),
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -471,7 +500,7 @@ async fn attendance_summary(
     .await;
 
     let leave_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.leave_records WHERE start_date <= $2::DATE AND end_date >= $1::DATE AND approval_status = 'approved'"#,
+        only_own_schema_query!("hrm", r#"SELECT COUNT(*) FROM hrm.leave_records WHERE start_date <= $2::DATE AND end_date >= $1::DATE AND approval_status = 'approved'"#),
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -531,38 +560,43 @@ async fn payroll_summary(
     let _start_date = params.start_date.clone();
     let _end_date = params.end_date.clone();
 
-    let total_payroll_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(SUM(net_amount), 0) FROM hrm.payroll_items"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+    let total_payroll_result =
+        sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(only_own_schema_query!(
+            "hrm",
+            r#"SELECT COALESCE(SUM(net_amount), 0) FROM hrm.payroll_items"#
+        ))
+        .fetch_one(&state.db)
+        .await;
 
-    let avg_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(AVG(salary), 0) FROM hrm.contracts WHERE status = 'active'"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+    let avg_salary_result =
+        sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(only_own_schema_query!(
+            "hrm",
+            r#"SELECT COALESCE(AVG(salary), 0) FROM hrm.contracts WHERE status = 'active'"#
+        ))
+        .fetch_one(&state.db)
+        .await;
 
     let min_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(MIN(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
+        only_own_schema_query!("hrm", r#"SELECT COALESCE(MIN(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#),
     )
     .fetch_one(&state.db)
     .await;
 
     let max_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(MAX(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
+        only_own_schema_query!("hrm", r#"SELECT COALESCE(MAX(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#),
     )
     .fetch_one(&state.db)
     .await;
 
-    let employee_count_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#,
-    )
+    let employee_count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#
+    ))
     .fetch_one(&state.db)
     .await;
 
     let bonus_total_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(SUM(CASE WHEN item_type = 'bonus' THEN amount ELSE 0 END), 0) FROM hrm.payroll_details"#,
+        only_own_schema_query!("hrm", r#"SELECT COALESCE(SUM(CASE WHEN item_type = 'bonus' THEN amount ELSE 0 END), 0) FROM hrm.payroll_details"#),
     )
     .fetch_one(&state.db)
     .await;

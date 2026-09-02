@@ -6,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgRow, PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -96,7 +97,7 @@ pub async fn sync_offline_data(
 
     let sync_id = Uuid::new_v4();
 
-    if let Err(e) = sqlx::query("INSERT INTO offline_sync_records (id, user_id, sync_type, sync_data, status, synced_count, failed_count) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO public.offline_sync_records (id, user_id, sync_type, sync_data, status, synced_count, failed_count) VALUES ($1, $2, $3, $4, $5, $6, $7)"))
         .bind(sync_id)
         .bind(user_id)
         .bind(&payload.sync_type)
@@ -114,7 +115,7 @@ pub async fn sync_offline_data(
     let synced_count = payload.records_count;
     let failed_count = 0;
 
-    if let Err(e) = sqlx::query("UPDATE offline_sync_records SET status = $1, synced_count = $2, failed_count = $3, completed_at = NOW() WHERE id = $4")
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE public.offline_sync_records SET status = $1, synced_count = $2, failed_count = $3, completed_at = NOW() WHERE id = $4"))
         .bind("completed")
         .bind(synced_count)
         .bind(failed_count)
@@ -166,7 +167,7 @@ pub async fn get_offline_status(
         }
     };
 
-    let last_sync = match sqlx::query("SELECT completed_at FROM offline_sync_records WHERE user_id = $1 AND status = 'completed' ORDER BY completed_at DESC LIMIT 1")
+    let last_sync = match sqlx::query(only_own_schema_query!("mobile", "SELECT completed_at FROM public.offline_sync_records WHERE user_id = $1 AND status = 'completed' ORDER BY completed_at DESC LIMIT 1"))
         .bind(user_id)
         .fetch_optional(&pool)
         .await
@@ -180,7 +181,7 @@ pub async fn get_offline_status(
     };
 
     let pending_count = match sqlx::query(
-        "SELECT COUNT(*) FROM offline_sync_records WHERE user_id = $1 AND status = 'pending'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_sync_records WHERE user_id = $1 AND status = 'pending'"),
     )
     .bind(user_id)
     .fetch_one(&pool)

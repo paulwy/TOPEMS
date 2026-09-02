@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -66,7 +67,8 @@ async fn list_salary_adjustments(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query_as::<_, SalaryAdjustment>(
+    let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT
             sa.id,
@@ -94,8 +96,8 @@ async fn list_salary_adjustments(
           AND ($2::text IS NULL OR sa.status = $2)
         ORDER BY sa.created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(params.employee_id)
     .bind(&params.status)
     .bind(page_size)
@@ -105,14 +107,15 @@ async fn list_salary_adjustments(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.salary_adjustments sa
                 WHERE sa.deleted_at IS NULL
                   AND ($1::uuid IS NULL OR sa.employee_id = $1)
                   AND ($2::text IS NULL OR sa.status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(params.employee_id)
             .bind(&params.status)
             .fetch_one(&state.db)
@@ -155,7 +158,8 @@ async fn get_salary_adjustment(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
-    let result = sqlx::query_as::<_, SalaryAdjustment>(
+    let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT
             sa.id,
@@ -179,8 +183,8 @@ async fn get_salary_adjustment(
         LEFT JOIN hrm.employees e ON sa.employee_id = e.id
         LEFT JOIN hrm.departments d ON e.department_id = d.id
         WHERE sa.id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -217,7 +221,8 @@ async fn create_salary_adjustment(
 
     let id = Uuid::new_v4();
 
-    let result = sqlx::query_as::<_, SalaryAdjustment>(
+    let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
+        "hrm",
         r#"
         INSERT INTO hrm.salary_adjustments (
             id, organization_id, tenant_id, employee_id, adjustment_type,
@@ -233,8 +238,8 @@ async fn create_salary_adjustment(
                   reason, effective_date::timestamptz AS effective_date, status,
                   NULL as approver_id, NULL as approved_at,
                   NULL as rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.employee_id)
     .bind(req.adjustment_type)
@@ -276,7 +281,8 @@ async fn update_salary_adjustment(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSalaryAdjustmentRequest>,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
-    let existing = sqlx::query_as::<_, SalaryAdjustment>(
+    let existing = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT
             sa.id,
@@ -297,8 +303,8 @@ async fn update_salary_adjustment(
             sa.created_at,
             sa.updated_at
         FROM hrm.salary_adjustments sa WHERE sa.id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -319,7 +325,8 @@ async fn update_salary_adjustment(
         _ => None,
     };
 
-    let result = sqlx::query_as::<_, SalaryAdjustment>(
+    let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.salary_adjustments
         SET
@@ -337,8 +344,8 @@ async fn update_salary_adjustment(
                   reason, effective_date::timestamptz AS effective_date, status,
                   approver_id, approval_date::timestamptz AS approved_at,
                   rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(req.adjustment_type)
     .bind(old_salary)
     .bind(new_salary)
@@ -364,7 +371,8 @@ async fn approve_salary_adjustment(
     Path(id): Path<Uuid>,
     Json(req): Json<ApproveSalaryAdjustmentRequest>,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
-    let result = sqlx::query_as::<_, SalaryAdjustment>(
+    let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.salary_adjustments
         SET
@@ -378,8 +386,8 @@ async fn approve_salary_adjustment(
                   reason, effective_date::timestamptz AS effective_date, status,
                   approver_id, approval_date::timestamptz AS approved_at,
                   rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(req.approver_id)
     .bind(id)
     .fetch_optional(&state.db)
@@ -399,7 +407,8 @@ async fn reject_salary_adjustment(
     Path(id): Path<Uuid>,
     Json(req): Json<RejectSalaryAdjustmentRequest>,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
-    let result = sqlx::query_as::<_, SalaryAdjustment>(
+    let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.salary_adjustments
         SET
@@ -413,8 +422,8 @@ async fn reject_salary_adjustment(
                   reason, effective_date::timestamptz AS effective_date, status,
                   approver_id, approval_date::timestamptz AS approved_at,
                   rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(req.approver_id)
     .bind(req.reason)
     .bind(id)

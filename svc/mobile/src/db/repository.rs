@@ -5,30 +5,43 @@
 use crate::models::*;
 use chrono::Utc;
 use sqlx::{Pool, Postgres};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 pub async fn db_get_dashboard_stats(pool: &Pool<Postgres>) -> sqlx::Result<(i64, i64, i64, i64)> {
-    let patrol_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM patrol_records")
-        .fetch_one(pool)
-        .await?;
+    let patrol_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*) FROM mobile.patrol_records"
+    ))
+    .fetch_one(pool)
+    .await?;
 
-    let scan_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM scan_records")
-        .fetch_one(pool)
-        .await?;
+    let scan_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*) FROM mobile.scan_records"
+    ))
+    .fetch_one(pool)
+    .await?;
 
-    let photo_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM photo_evidence")
-        .fetch_one(pool)
-        .await?;
+    let photo_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*) FROM photo_evidence"
+    ))
+    .fetch_one(pool)
+    .await?;
 
-    let task_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM mobile_tasks")
-        .fetch_one(pool)
-        .await?;
+    let task_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*) FROM mobile.mobile_tasks"
+    ))
+    .fetch_one(pool)
+    .await?;
 
     Ok((patrol_count, scan_count, photo_count, task_count))
 }
 
 pub async fn db_get_patrol_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PatrolRecord>> {
-    let rows = sqlx::query("SELECT id, user_id, patrol_no, location, patrol_type, status, started_at, completed_at, created_at FROM patrol_records ORDER BY created_at DESC")
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, patrol_no, location, patrol_type, status, started_at, completed_at, created_at FROM mobile.patrol_records ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -45,8 +58,8 @@ pub async fn db_create_patrol_record(
     let status = data.status.unwrap_or_else(|| "pending".to_string());
 
     sqlx::query(
-        "INSERT INTO patrol_records (id, tenant_id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+        only_own_schema_query!("mobile", "INSERT INTO mobile.patrol_records (id, tenant_id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)")
     )
     .bind(id)
     .bind(tenant_id)
@@ -80,7 +93,7 @@ pub async fn db_create_patrol_record(
 }
 
 pub async fn db_get_scan_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<ScanRecord>> {
-    let rows = sqlx::query("SELECT id, user_id, scan_type, scan_value, scan_result, status, scanned_at FROM scan_records ORDER BY created_at DESC")
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, scan_type, scan_value, scan_result, status, scanned_at FROM mobile.scan_records ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -96,8 +109,8 @@ pub async fn db_create_scan_record(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO scan_records (id, tenant_id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+        only_own_schema_query!("mobile", "INSERT INTO mobile.scan_records (id, tenant_id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
     )
     .bind(id)
     .bind(tenant_id)
@@ -127,7 +140,7 @@ pub async fn db_create_scan_record(
 }
 
 pub async fn db_get_photo_evidence(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PhotoEvidence>> {
-    let rows = sqlx::query("SELECT id, user_id, file_path, file_hash, description, latitude, longitude, created_at FROM photo_evidence ORDER BY created_at DESC")
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_hash, description, latitude, longitude, created_at FROM photo_evidence ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -145,8 +158,8 @@ pub async fn db_create_photo_evidence(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO photo_evidence (id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+        only_own_schema_query!("mobile", "INSERT INTO photo_evidence (id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)")
     )
     .bind(id)
     .bind(tenant_id)
@@ -178,7 +191,7 @@ pub async fn db_create_photo_evidence(
 }
 
 pub async fn db_get_audio_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<AudioRecording>> {
-    let rows = sqlx::query("SELECT id, user_id, file_path, duration, description, created_at FROM audio_recordings ORDER BY created_at DESC")
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, duration, description, created_at FROM mobile.audio_recordings ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -196,8 +209,8 @@ pub async fn db_create_audio_recording(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO audio_recordings (id, tenant_id, title, description, location_lat, location_lng, address, duration_seconds, file_url, recorded_by, recorded_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+        only_own_schema_query!("mobile", "INSERT INTO mobile.audio_recordings (id, tenant_id, title, description, location_lat, location_lng, address, duration_seconds, file_url, recorded_by, recorded_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)")
     )
     .bind(id)
     .bind(tenant_id)
@@ -231,7 +244,7 @@ pub async fn db_create_audio_recording(
 }
 
 pub async fn db_get_video_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<VideoRecording>> {
-    let rows = sqlx::query("SELECT id, user_id, file_path, duration, resolution, description, created_at FROM video_recordings ORDER BY created_at DESC")
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, duration, resolution, description, created_at FROM mobile.video_recordings ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -249,8 +262,8 @@ pub async fn db_create_video_recording(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO video_recordings (id, tenant_id, title, description, start_location_lat, start_location_lng, location_track, duration_seconds, file_url, thumbnail_url, recorded_by, recorded_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"
+        only_own_schema_query!("mobile", "INSERT INTO mobile.video_recordings (id, tenant_id, title, description, start_location_lat, start_location_lng, location_track, duration_seconds, file_url, thumbnail_url, recorded_by, recorded_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)")
     )
     .bind(id)
     .bind(tenant_id)
@@ -286,7 +299,7 @@ pub async fn db_create_video_recording(
 }
 
 pub async fn db_get_mobile_tasks(pool: &Pool<Postgres>) -> sqlx::Result<Vec<MobileTask>> {
-    let rows = sqlx::query("SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile_tasks ORDER BY created_at DESC")
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile.mobile_tasks ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -306,8 +319,8 @@ pub async fn db_create_mobile_task(
         .and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok());
 
     sqlx::query(
-        "INSERT INTO mobile_tasks (id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"
+        only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_tasks (id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)")
     )
     .bind(id)
     .bind(tenant_id)
@@ -356,7 +369,7 @@ pub async fn db_update_task_status(
     };
 
     let result = sqlx::query(
-        "UPDATE mobile_tasks SET status = $1, completed_at = $2, updated_at = $3 WHERE id = $4",
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $1, completed_at = $2, updated_at = $3 WHERE id = $4"),
     )
     .bind(status)
     .bind(completed_at)
@@ -369,7 +382,7 @@ pub async fn db_update_task_status(
         return Ok(None);
     }
 
-    let row = sqlx::query("SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile_tasks WHERE id = $1")
+    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile.mobile_tasks WHERE id = $1"))
         .bind(task_id)
         .fetch_one(pool)
         .await?;
@@ -384,12 +397,12 @@ pub async fn db_get_offline_operations(
 ) -> sqlx::Result<Vec<OfflineOperation>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC",
+            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM public.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC"),
         )
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query("SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 ORDER BY created_at ASC")
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM public.offline_operations WHERE user_id = $1 ORDER BY created_at ASC"))
             .bind(user_id)
     };
 
@@ -409,8 +422,8 @@ pub async fn db_create_offline_operation(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO offline_operations (id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        only_own_schema_query!("mobile", "INSERT INTO public.offline_operations (id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -449,16 +462,19 @@ pub async fn db_update_offline_operation_status(
 ) -> sqlx::Result<()> {
     let now = Utc::now();
     let attempts = if status == "failed" {
-        sqlx::query_scalar("SELECT sync_attempts + 1 FROM offline_operations WHERE id = $1")
-            .bind(operation_id)
-            .fetch_one(pool)
-            .await?
+        sqlx::query_scalar(only_own_schema_query!(
+            "mobile",
+            "SELECT sync_attempts + 1 FROM public.offline_operations WHERE id = $1"
+        ))
+        .bind(operation_id)
+        .fetch_one(pool)
+        .await?
     } else {
         0
     };
 
     sqlx::query(
-        "UPDATE offline_operations SET sync_status = $1, sync_attempts = $2, last_sync_error = $3, synced_at = $4 WHERE id = $5",
+        only_own_schema_query!("mobile", "UPDATE public.offline_operations SET sync_status = $1, sync_attempts = $2, last_sync_error = $3, synced_at = $4 WHERE id = $5"),
     )
     .bind(status)
     .bind(attempts)
@@ -475,7 +491,7 @@ pub async fn db_get_sync_policy(
     pool: &Pool<Postgres>,
     user_id: Uuid,
 ) -> sqlx::Result<Option<SyncPolicy>> {
-    let row = sqlx::query("SELECT id, user_id, policy_type, sync_interval, last_sync_at, is_active FROM sync_policies WHERE user_id = $1")
+    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, policy_type, sync_interval, last_sync_at, is_active FROM public.sync_policies WHERE user_id = $1"))
         .bind(user_id)
         .fetch_optional(pool)
         .await?;
@@ -509,7 +525,7 @@ pub async fn db_create_or_update_sync_policy(
         policy.updated_at = now;
 
         sqlx::query(
-            "UPDATE sync_policies SET auto_sync_enabled = $1, sync_interval_minutes = $2, sync_on_network_change = $3, conflict_strategy = $4, updated_at = $5 WHERE user_id = $6",
+            only_own_schema_query!("mobile", "UPDATE public.sync_policies SET auto_sync_enabled = $1, sync_interval_minutes = $2, sync_on_network_change = $3, conflict_strategy = $4, updated_at = $5 WHERE user_id = $6"),
         )
         .bind(policy.auto_sync_enabled)
         .bind(policy.sync_interval_minutes)
@@ -538,8 +554,8 @@ pub async fn db_create_or_update_sync_policy(
         };
 
         sqlx::query(
-            "INSERT INTO sync_policies (id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+            only_own_schema_query!("mobile", "INSERT INTO public.sync_policies (id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"),
         )
         .bind(policy.id)
         .bind(policy.tenant_id)
@@ -567,9 +583,9 @@ pub async fn db_register_push_device(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO push_devices (id, tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at)
+        only_own_schema_query!("mobile", "INSERT INTO public.push_devices (id, tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-         ON CONFLICT (device_token) DO UPDATE SET tenant_id = $2, user_id = $3, is_active = $9, updated_at = $11",
+         ON CONFLICT (device_token) DO UPDATE SET tenant_id = $2, user_id = $3, is_active = $9, updated_at = $11"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -605,9 +621,9 @@ pub async fn db_get_push_devices(
     user_id: Option<Uuid>,
 ) -> sqlx::Result<Vec<PushDevice>> {
     let query = if let Some(uid) = user_id {
-        sqlx::query("SELECT id, user_id, device_token, device_type, app_version, is_active, created_at FROM push_devices WHERE user_id = $1 AND is_active = true").bind(uid)
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_token, device_type, app_version, is_active, created_at FROM public.push_devices WHERE user_id = $1 AND is_active = true")).bind(uid)
     } else {
-        sqlx::query("SELECT id, user_id, device_token, device_type, app_version, is_active, created_at FROM push_devices WHERE is_active = true")
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_token, device_type, app_version, is_active, created_at FROM public.push_devices WHERE is_active = true"))
     };
 
     let rows = query.fetch_all(pool).await?;
@@ -623,8 +639,8 @@ pub async fn db_create_push_notification(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO push_notifications (id, tenant_id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+        only_own_schema_query!("mobile", "INSERT INTO public.push_notifications (id, tenant_id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -670,7 +686,7 @@ pub async fn db_update_push_notification_stats(
     let now = Utc::now();
 
     sqlx::query(
-        "UPDATE push_notifications SET status = $1, sent_count = $2, delivered_count = $3, clicked_count = $4, sent_at = $5 WHERE id = $6",
+        only_own_schema_query!("mobile", "UPDATE public.push_notifications SET status = $1, sent_count = $2, delivered_count = $3, clicked_count = $4, sent_at = $5 WHERE id = $6"),
     )
     .bind("sent")
     .bind(sent_count)
@@ -685,7 +701,7 @@ pub async fn db_update_push_notification_stats(
 }
 
 pub async fn db_get_push_templates(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PushTemplate>> {
-    let rows = sqlx::query("SELECT id, name, template_type, title_template, body_template, is_active, created_at FROM push_templates WHERE is_active = true ORDER BY name")
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, name, template_type, title_template, body_template, is_active, created_at FROM public.push_templates WHERE is_active = true ORDER BY name"))
         .fetch_all(pool)
         .await?;
 
@@ -705,8 +721,8 @@ pub async fn db_create_push_template(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO push_templates (id, tenant_id, name, title_template, body_template, notification_type, description, is_active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        only_own_schema_query!("mobile", "INSERT INTO public.push_templates (id, tenant_id, name, title_template, body_template, notification_type, description, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -742,12 +758,12 @@ pub async fn db_get_barcode_scans(
 ) -> sqlx::Result<Vec<BarcodeScan>> {
     let query = if let Some(bt) = barcode_type {
         sqlx::query(
-            "SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC",
+            only_own_schema_query!("mobile", "SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM public.barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC"),
         )
         .bind(user_id)
         .bind(bt)
     } else {
-        sqlx::query("SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC")
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM public.barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC"))
             .bind(user_id)
     };
 
@@ -765,8 +781,8 @@ pub async fn db_create_barcode_scan(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO barcode_scans (id, tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, scanned_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        only_own_schema_query!("mobile", "INSERT INTO public.barcode_scans (id, tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, scanned_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -804,12 +820,12 @@ pub async fn db_get_photo_uploads(
 ) -> sqlx::Result<Vec<PhotoUpload>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC",
+            only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM public.photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC"),
         )
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query("SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM photo_uploads WHERE user_id = $1 ORDER BY created_at DESC")
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM public.photo_uploads WHERE user_id = $1 ORDER BY created_at DESC"))
             .bind(user_id)
     };
 
@@ -828,8 +844,8 @@ pub async fn db_create_photo_upload(
     let file_path = format!("/photos/{}", id);
 
     sqlx::query(
-        "INSERT INTO photo_uploads (id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, location_lat, location_lng, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+        only_own_schema_query!("mobile", "INSERT INTO public.photo_uploads (id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, location_lat, location_lng, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -884,7 +900,7 @@ pub async fn db_update_photo_upload_status(
     let now = Utc::now();
 
     sqlx::query(
-        "UPDATE photo_uploads SET upload_status = $1, upload_progress = $2, thumbnail_url = $3, uploaded_at = $4 WHERE id = $5",
+        only_own_schema_query!("mobile", "UPDATE public.photo_uploads SET upload_status = $1, upload_progress = $2, thumbnail_url = $3, uploaded_at = $4 WHERE id = $5"),
     )
     .bind(status)
     .bind(progress)

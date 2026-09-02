@@ -10,6 +10,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -149,10 +150,10 @@ pub async fn get_all_tasks(
     };
 
     let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
-        "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-         FROM mobile_tasks 
+        only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+         FROM mobile.mobile_tasks 
          WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) 
-         ORDER BY due_date NULLS LAST, created_at DESC"
+         ORDER BY due_date NULLS LAST, created_at DESC")
     )
     .bind(&user_id)
     .fetch_all(&pool)
@@ -203,9 +204,9 @@ pub async fn get_task(
     };
 
     let task = match sqlx::query_as::<_, MobileTask>(
-        "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-         FROM mobile_tasks 
-         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"
+        only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+         FROM mobile.mobile_tasks 
+         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(&user_id)
@@ -262,8 +263,8 @@ pub async fn create_task(
     let assignee = payload.assignee.clone().unwrap_or(user_id.clone());
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO mobile_tasks (id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+        only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_tasks (id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)")
     )
     .bind(task_id)
     .bind(&payload.title)
@@ -340,8 +341,8 @@ pub async fn update_task(
     };
 
     let current_task = match sqlx::query_as::<_, MobileTask>(
-        "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-         FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"
+        only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+         FROM mobile.mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL")
     )
     .bind(id)
     .bind(&user_id)
@@ -374,10 +375,10 @@ pub async fn update_task(
     };
 
     if let Err(e) = sqlx::query(
-        "UPDATE mobile_tasks 
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks 
          SET title = $1, description = $2, task_type = $3, priority = $4, status = $5, assignee = $6, 
              location_lat = $7, location_lng = $8, due_date = $9, completed_at = $10, updated_at = $11 
-         WHERE id = $12 AND (assignee = $13 OR assignee IS NULL)"
+         WHERE id = $12 AND (assignee = $13 OR assignee IS NULL)")
     )
     .bind(&title)
     .bind(&description)
@@ -428,11 +429,12 @@ pub async fn update_task_status(
         None
     };
 
-    let result = sqlx::query(
-        "UPDATE mobile_tasks 
+    let result = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "UPDATE mobile.mobile_tasks 
          SET status = $1, completed_at = $2, updated_at = $3 
-         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL)",
-    )
+         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL)"
+    ))
     .bind(&payload.status)
     .bind(&completed_at)
     .bind(Utc::now())
@@ -444,8 +446,8 @@ pub async fn update_task_status(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             let task = sqlx::query_as::<_, MobileTask>(
-                "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-                 FROM mobile_tasks WHERE id = $1 AND deleted_at IS NULL"
+                only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+                 FROM mobile.mobile_tasks WHERE id = $1 AND deleted_at IS NULL")
             )
             .bind(id)
             .fetch_one(&pool)
@@ -511,7 +513,7 @@ pub async fn delete_task(
     };
 
     let result = sqlx::query(
-        "UPDATE mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL",
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
     )
     .bind(id)
     .bind(&user_id)

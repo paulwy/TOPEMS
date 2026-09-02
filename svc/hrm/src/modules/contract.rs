@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -67,7 +68,7 @@ async fn list_contracts(
     let type_filter = params.contract_type.clone();
 
     let result = sqlx::query_as::<_, Contract>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
@@ -79,7 +80,7 @@ async fn list_contracts(
           AND ($3::text IS NULL OR contract_type = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(emp_filter)
     .bind(&status_filter)
@@ -91,14 +92,15 @@ async fn list_contracts(
 
     match result {
         Ok(contracts) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.contracts
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR contract_type = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(emp_filter)
             .bind(&status_filter)
             .bind(&type_filter)
@@ -139,7 +141,7 @@ async fn list_expiring_contracts(
     let end_date_threshold = Utc::now() + Duration::days(days as i64);
 
     let result = sqlx::query_as::<_, Contract>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
@@ -151,7 +153,7 @@ async fn list_expiring_contracts(
           AND status = 'active'
         ORDER BY end_date ASC
         LIMIT $2 OFFSET $3
-        "#,
+        "#),
     )
     .bind(end_date_threshold)
     .bind(page_size)
@@ -161,14 +163,15 @@ async fn list_expiring_contracts(
 
     match result {
         Ok(contracts) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.contracts
                 WHERE deleted_at IS NULL AND end_date IS NOT NULL
                   AND end_date <= $1
                   AND status = 'active'
-                "#,
-            )
+                "#
+            ))
             .bind(end_date_threshold)
             .fetch_one(&state.db)
             .await;
@@ -250,7 +253,7 @@ async fn create_contract(
     let request_data = serde_json::to_value(&req).ok();
 
     let result = sqlx::query_as::<_, Contract>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.contracts (
             id, tenant_id, organization_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
@@ -260,7 +263,7 @@ async fn create_contract(
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                   end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                   contract_file_path, reminder_days, status, notes, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(claims_tenant)
@@ -342,13 +345,13 @@ async fn get_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, Contract>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
         FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -356,7 +359,8 @@ async fn get_contract(
 
     match result {
         Ok(Some(contract)) => {
-            let renewals = sqlx::query_as::<_, ContractRenewal>(
+            let renewals = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                        new_start_date, new_end_date, new_salary, status, approver_id,
@@ -364,8 +368,8 @@ async fn get_contract(
                 FROM hrm.contract_renewals
                 WHERE contract_id = $1
                 ORDER BY created_at DESC
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .fetch_all(&state.db)
             .await
@@ -410,13 +414,13 @@ async fn update_contract(
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let contract_result = sqlx::query_as::<_, Contract>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
         FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -432,7 +436,7 @@ async fn update_contract(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Contract>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.contracts SET
             contract_no = COALESCE($2, contract_no),
             contract_type = COALESCE($3, contract_type),
@@ -454,7 +458,7 @@ async fn update_contract(
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                   end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                   contract_file_path, reminder_days, status, notes, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.contract_no)
@@ -535,10 +539,13 @@ async fn delete_contract(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE hrm.contracts SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.contracts SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -594,7 +601,8 @@ async fn create_renewal(
     let renewal_id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ContractRenewal>(
+    let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+        "hrm",
         r#"
         INSERT INTO hrm.contract_renewals (
             id, contract_id, previous_contract_id, renewal_type, renewal_reason,
@@ -603,8 +611,8 @@ async fn create_renewal(
         RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(renewal_id)
     .bind(id)
     .bind(&req.renewal_type)
@@ -640,7 +648,8 @@ async fn list_renewals(
     let contract_id = params.contract_id;
     let status_filter = params.status.clone();
 
-    let result = sqlx::query_as::<_, ContractRenewal>(
+    let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
@@ -650,8 +659,8 @@ async fn list_renewals(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(contract_id)
     .bind(&status_filter)
     .bind(page_size)
@@ -661,13 +670,14 @@ async fn list_renewals(
 
     match result {
         Ok(renewals) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.contract_renewals
                 WHERE ($1::uuid IS NULL OR contract_id = $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(contract_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -708,14 +718,15 @@ async fn get_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractRenewal>> {
-    let result = sqlx::query_as::<_, ContractRenewal>(
+    let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
         FROM hrm.contract_renewals WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -740,7 +751,8 @@ async fn update_renewal(
 ) -> Json<ApiResponse<ContractRenewal>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ContractRenewal>(
+    let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.contract_renewals SET
             renewal_type = COALESCE($2, renewal_type),
@@ -753,8 +765,8 @@ async fn update_renewal(
         RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.renewal_type)
     .bind(&req.renewal_reason)
@@ -785,9 +797,10 @@ async fn delete_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -813,7 +826,8 @@ async fn approve_renewal(
 ) -> Json<ApiResponse<ContractRenewal>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ContractRenewal>(
+    let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.contract_renewals SET
             status = 'approved',
@@ -823,8 +837,8 @@ async fn approve_renewal(
         RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .fetch_optional(&state.db)
@@ -853,7 +867,8 @@ async fn reject_renewal(
 ) -> Json<ApiResponse<ContractRenewal>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ContractRenewal>(
+    let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.contract_renewals SET
             status = 'rejected',
@@ -863,8 +878,8 @@ async fn reject_renewal(
         RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.reason)
     .bind(now)
@@ -896,14 +911,15 @@ async fn execute_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let renewal = sqlx::query_as::<_, ContractRenewal>(
+    let renewal = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
         FROM hrm.contract_renewals WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -933,7 +949,8 @@ async fn execute_renewal(
 
     let now = Utc::now();
 
-    let update_result = sqlx::query(
+    let update_result = sqlx::query(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.contracts SET
             start_date = $2,
@@ -942,8 +959,8 @@ async fn execute_renewal(
             status = 'active',
             updated_at = $5
         WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(renewal.contract_id)
     .bind(renewal.new_start_date)
     .bind(renewal.new_end_date)
@@ -955,7 +972,7 @@ async fn execute_renewal(
     match update_result {
         Ok(_) => {
             let _ = sqlx::query(
-                "UPDATE hrm.contract_renewals SET status = 'executed', updated_at = $2 WHERE id = $1"
+                only_own_schema_query!("hrm", "UPDATE hrm.contract_renewals SET status = 'executed', updated_at = $2 WHERE id = $1")
             )
             .bind(id)
             .bind(now)

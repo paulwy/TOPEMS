@@ -7,6 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared::{ApiResponse, AuthState};
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
     api::qms_api::QmsApi, TypedServiceClient, WorkflowApi,
@@ -178,7 +179,7 @@ async fn get_today_quality_pass_rate(
 
 async fn get_shortcuts(pool: &PgPool, user_id: &str) -> Vec<Shortcut> {
     let rows = sqlx::query(
-        "SELECT id, name, icon, path, color FROM plugin_mobile.shortcuts WHERE user_id = $1 OR user_id IS NULL ORDER BY sort_order",
+        only_own_schema_query!("mobile", "SELECT id, name, icon, path, color FROM public.shortcuts WHERE user_id = $1 OR user_id IS NULL ORDER BY sort_order"),
     )
     .bind(user_id)
     .fetch_all(pool)

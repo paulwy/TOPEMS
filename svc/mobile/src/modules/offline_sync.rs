@@ -6,6 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -246,7 +247,7 @@ pub async fn get_offline_status(
     };
 
     let pending_count = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM offline_operations WHERE user_id = $1 AND sync_status = 'pending'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'pending'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -257,7 +258,7 @@ pub async fn get_offline_status(
     };
 
     let syncing_count = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM offline_operations WHERE user_id = $1 AND sync_status = 'syncing'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'syncing'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -268,7 +269,7 @@ pub async fn get_offline_status(
     };
 
     let synced_count = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM offline_operations WHERE user_id = $1 AND sync_status = 'synced'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'synced'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -279,7 +280,7 @@ pub async fn get_offline_status(
     };
 
     let failed_count = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM offline_operations WHERE user_id = $1 AND sync_status = 'failed'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'failed'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -290,7 +291,7 @@ pub async fn get_offline_status(
     };
 
     let last_sync = match sqlx::query(
-        "SELECT synced_at FROM offline_operations WHERE user_id = $1 AND sync_status = 'synced' ORDER BY synced_at DESC LIMIT 1",
+        only_own_schema_query!("mobile", "SELECT synced_at FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'synced' ORDER BY synced_at DESC LIMIT 1"),
     )
     .bind(user_id)
     .fetch_optional(&pool)
@@ -352,7 +353,7 @@ pub async fn get_sync_history(
 
     let query = if let Some(status) = &params.status {
         sqlx::query(
-            "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM public.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"),
         )
         .bind(user_id)
         .bind(status)
@@ -360,7 +361,7 @@ pub async fn get_sync_history(
         .bind(offset)
     } else {
         sqlx::query(
-            "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM public.offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(user_id)
         .bind(size)
@@ -381,10 +382,13 @@ pub async fn get_sync_history(
         }
     };
 
-    let total = match sqlx::query("SELECT COUNT(*) FROM offline_operations WHERE user_id = $1")
-        .bind(user_id)
-        .fetch_one(&pool)
-        .await
+    let total = match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1"
+    ))
+    .bind(user_id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(row) => row.try_get::<i64, _>(0).unwrap_or(0),
         Err(_) => 0,

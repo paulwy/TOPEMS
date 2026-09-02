@@ -7,6 +7,7 @@
 use axum::extract::{Json, State};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
@@ -50,14 +51,15 @@ pub async fn sync_records(
         let tenant_id = Uuid::nil();
         let user_id = Uuid::nil();
 
-        match sqlx::query(
+        match sqlx::query(only_own_schema_query!(
+            "mobile",
             r#"
-            INSERT INTO core_mobile_offline_records
+            INSERT INTO mobile.core_mobile_offline_records
             (id, tenant_id, user_id, module, action, data, status)
             VALUES ($1, $2, $3, $4, $5, $6, 'pending')
             ON CONFLICT (id) DO UPDATE SET data = $6, status = 'pending', updated_at = NOW()
-            "#,
-        )
+            "#
+        ))
         .bind(Uuid::parse_str(&record.id).unwrap_or_else(|_| Uuid::new_v4()))
         .bind(tenant_id)
         .bind(user_id)
@@ -96,15 +98,16 @@ pub async fn sync_records(
 pub async fn get_pending_records(
     State(pool): State<PgPool>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    match sqlx::query(
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
         r#"
         SELECT id, tenant_id, user_id, module, action, data, status,
                retry_count, max_retries, error_message, created_at, updated_at
-        FROM core_mobile_offline_records
+        FROM mobile.core_mobile_offline_records
         WHERE status = 'pending'
         ORDER BY created_at ASC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&pool)
     .await
     {
@@ -144,13 +147,14 @@ pub async fn mark_synced(
 ) -> Json<ApiResponse<()>> {
     match Uuid::parse_str(&record_id) {
         Ok(id) => {
-            match sqlx::query(
+            match sqlx::query(only_own_schema_query!(
+                "mobile",
                 r#"
-                UPDATE core_mobile_offline_records
+                UPDATE mobile.core_mobile_offline_records
                 SET status = 'synced', updated_at = NOW()
                 WHERE id = $1
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .execute(&pool)
             .await
@@ -168,12 +172,13 @@ pub async fn mark_synced(
 
 /// 清理所有已同步的离线记录
 pub async fn clear_synced(State(pool): State<PgPool>) -> Json<ApiResponse<()>> {
-    match sqlx::query(
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
         r#"
-        DELETE FROM core_mobile_offline_records
+        DELETE FROM mobile.core_mobile_offline_records
         WHERE status = 'synced'
-        "#,
-    )
+        "#
+    ))
     .execute(&pool)
     .await
     {
@@ -187,7 +192,8 @@ pub async fn clear_synced(State(pool): State<PgPool>) -> Json<ApiResponse<()>> {
 
 /// 初始化离线记录表（从 unified-core 迁移）
 pub async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "mobile",
         r#"
         CREATE TABLE IF NOT EXISTS core_mobile_offline_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -203,18 +209,18 @@ pub async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mobile_offline_status ON core_mobile_offline_records(status)")
+    sqlx::query(only_own_schema_query!("mobile", "CREATE INDEX IF NOT EXISTS idx_mobile_offline_status ON core_mobile_offline_records(status)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mobile_offline_user ON core_mobile_offline_records(user_id)")
+    sqlx::query(only_own_schema_query!("mobile", "CREATE INDEX IF NOT EXISTS idx_mobile_offline_user ON core_mobile_offline_records(user_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mobile_offline_module ON core_mobile_offline_records(module)")
+    sqlx::query(only_own_schema_query!("mobile", "CREATE INDEX IF NOT EXISTS idx_mobile_offline_module ON core_mobile_offline_records(module)"))
         .execute(pool)
         .await?;
 

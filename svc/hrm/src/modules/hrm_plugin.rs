@@ -4,6 +4,7 @@
 
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 
 use crate::modules::ApiState;
 use topems_shared_core::response::ApiResponse;
@@ -97,7 +98,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 /// 插件健康检查
 pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
-    let db_healthy = sqlx::query("SELECT 1").fetch_one(&state.db).await.is_ok();
+    let db_healthy = sqlx::query(only_own_schema_query!("hrm", "SELECT 1"))
+        .fetch_one(&state.db)
+        .await
+        .is_ok();
 
     if db_healthy {
         Json(ApiResponse::success(

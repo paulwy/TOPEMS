@@ -7,6 +7,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -147,7 +148,7 @@ async fn list_reviews(
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, PerformanceReview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         FROM hrm.performance_reviews
         WHERE ($1::uuid IS NULL OR employee_id = $1)
@@ -155,7 +156,7 @@ async fn list_reviews(
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(emp_id)
     .bind(&review_period)
@@ -167,14 +168,15 @@ async fn list_reviews(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.performance_reviews
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR $2 = '' OR review_period ILIKE '%' || $2 || '%')
                   AND ($3::text IS NULL OR status = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(emp_id)
             .bind(&review_period)
             .bind(&status_filter)
@@ -220,11 +222,11 @@ async fn create_review(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceReview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.performance_reviews (id, employee_id, review_period, reviewer_id, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, 'draft', $5, $6)
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(req.employee_id)
@@ -282,7 +284,7 @@ async fn get_review(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceReview>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
-        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -312,7 +314,7 @@ async fn update_review(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceReview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
         SET
             reviewer_id = COALESCE($1, reviewer_id),
@@ -325,7 +327,7 @@ async fn update_review(
             updated_at = $8
         WHERE id = $9
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
-        "#
+        "#)
     )
     .bind(req.reviewer_id)
     .bind(&req.status)
@@ -360,9 +362,10 @@ async fn delete_review(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.performance_reviews SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.performance_reviews SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -420,12 +423,12 @@ async fn submit_review(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceReview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
         SET status = 'submitted', updated_at = $2
         WHERE id = $1 AND status = 'draft'
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(now)
@@ -455,12 +458,12 @@ async fn approve_review(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceReview>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
         SET status = 'approved', updated_at = $2
         WHERE id = $1 AND status = 'submitted'
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(now)
@@ -495,14 +498,14 @@ async fn list_goals(
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
         FROM hrm.performance_goals
         WHERE ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(emp_id)
     .bind(&status_filter)
@@ -513,13 +516,14 @@ async fn list_goals(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.performance_goals
                 WHERE ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(emp_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -564,11 +568,11 @@ async fn create_goal(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.performance_goals (id, employee_id, title, description, target, weight, status, due_date, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
         RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(req.employee_id)
@@ -629,7 +633,7 @@ async fn get_goal(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
     let result = sqlx::query_as::<_, PerformanceGoal>(
-        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE id = $1"
+        only_own_schema_query!("hrm", "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -656,7 +660,7 @@ async fn update_goal(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_goals
         SET
             title = COALESCE($1, title),
@@ -669,7 +673,7 @@ async fn update_goal(
             updated_at = $8
         WHERE id = $9
         RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
-        "#
+        "#)
     )
     .bind(&req.title)
     .bind(&req.description)
@@ -701,10 +705,13 @@ async fn delete_goal(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE hrm.performance_goals SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.performance_goals SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -757,7 +764,7 @@ async fn get_employee_reviews(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
-        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE deleted_at IS NULL AND employee_id = $1 ORDER BY created_at DESC"
+        only_own_schema_query!("hrm", "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE deleted_at IS NULL AND employee_id = $1 ORDER BY created_at DESC")
     )
     .bind(id)
     .fetch_all(&state.db)
@@ -786,7 +793,7 @@ async fn get_employee_goals(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PerformanceGoal>(
-        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE employee_id = $1 ORDER BY created_at DESC"
+        only_own_schema_query!("hrm", "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE employee_id = $1 ORDER BY created_at DESC")
     )
     .bind(id)
     .fetch_all(&state.db)

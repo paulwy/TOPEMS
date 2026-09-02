@@ -1,6 +1,7 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
     EventPublisher, EventResult, EventSubscriber, EventType, PmProjectCreatedPayload,
@@ -86,10 +87,10 @@ impl MobileEventHandlers {
         let notification_id = uuid::Uuid::new_v4();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO mobile_push_notifications (id, notification_type, title, content, priority, source_type, source_id, target_user, status, push_time, tenant_id)
+            only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_push_notifications (id, notification_type, title, content, priority, source_type, source_id, target_user, status, push_time, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, '00000000-0000-0000-0000-000000000000')
              ON CONFLICT (source_type, source_id) DO NOTHING
-             RETURNING id",
+             RETURNING id"),
         )
         .bind(notification_id)
         .bind(notification_type)

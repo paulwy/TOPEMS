@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -69,14 +70,14 @@ async fn list_plans(
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, TrainingPlan>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         FROM hrm.training_plans
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR status = $1)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
-        "#,
+        "#),
     )
     .bind(&status_filter)
     .bind(page_size)
@@ -86,12 +87,13 @@ async fn list_plans(
 
     match result {
         Ok(plans) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.training_plans
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1)
-                "#,
-            )
+                "#
+            ))
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;
@@ -133,11 +135,11 @@ async fn create_plan(
     });
 
     let result = sqlx::query_as::<_, TrainingPlan>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.training_plans (id, name, code, description, start_date, end_date, budget, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9)
         RETURNING id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.name)
@@ -165,10 +167,10 @@ async fn get_plan(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, TrainingPlan>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         FROM hrm.training_plans WHERE deleted_at IS NULL AND id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -176,15 +178,16 @@ async fn get_plan(
 
     match result {
         Ok(Some(plan)) => {
-            let courses = sqlx::query_as::<_, TrainingCourse>(
+            let courses = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT id, plan_id, name, code, category, level, description, duration_hours,
                        instructor_id, instructor_name, location, max_participants, status,
                        created_at, updated_at
                 FROM hrm.training_courses WHERE deleted_at IS NULL AND plan_id = $1
                 ORDER BY created_at DESC
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .fetch_all(&state.db)
             .await
@@ -220,7 +223,7 @@ async fn update_plan(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, TrainingPlan>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.training_plans SET
             name = COALESCE($2, name),
             code = COALESCE($3, code),
@@ -232,7 +235,7 @@ async fn update_plan(
             updated_at = $9
         WHERE deleted_at IS NULL AND id = $1
         RETURNING id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.name)
@@ -260,9 +263,10 @@ async fn delete_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.training_plans SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.training_plans SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -308,7 +312,8 @@ async fn list_courses(
     let plan_id = params.plan_id;
     let status_filter = params.status.clone();
 
-    let result = sqlx::query_as::<_, TrainingCourse>(
+    let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, plan_id, name, code, category, level, description, duration_hours,
                instructor_id, instructor_name, location, max_participants, status,
@@ -319,8 +324,8 @@ async fn list_courses(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(plan_id)
     .bind(&status_filter)
     .bind(page_size)
@@ -330,14 +335,15 @@ async fn list_courses(
 
     match result {
         Ok(courses) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.training_courses
                 WHERE deleted_at IS NULL
                   AND ($1::uuid IS NULL OR plan_id = $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(plan_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -380,7 +386,7 @@ async fn create_course(
     });
 
     let result = sqlx::query_as::<_, TrainingCourse>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.training_courses (
             id, plan_id, name, code, category, level, description, duration_hours,
             instructor_id, instructor_name, location, max_participants, status, created_at, updated_at
@@ -388,7 +394,7 @@ async fn create_course(
         RETURNING id, plan_id, name, code, category, level, description, duration_hours,
                   instructor_id, instructor_name, location, max_participants, status,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.plan_id)
@@ -420,14 +426,15 @@ async fn get_course(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TrainingCourse>> {
-    let result = sqlx::query_as::<_, TrainingCourse>(
+    let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, plan_id, name, code, category, level, description, duration_hours,
                instructor_id, instructor_name, location, max_participants, status,
                created_at, updated_at
         FROM hrm.training_courses WHERE deleted_at IS NULL AND id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -449,7 +456,8 @@ async fn update_course(
 ) -> Json<ApiResponse<TrainingCourse>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TrainingCourse>(
+    let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.training_courses SET
             name = COALESCE($2, name),
@@ -468,8 +476,8 @@ async fn update_course(
         RETURNING id, plan_id, name, code, category, level, description, duration_hours,
                   instructor_id, instructor_name, location, max_participants, status,
                   created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.name)
     .bind(&req.code)
@@ -500,9 +508,10 @@ async fn delete_course(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.training_courses SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.training_courses SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -548,7 +557,8 @@ async fn list_records(
     let course_id = params.course_id;
     let employee_id = params.employee_id;
 
-    let result = sqlx::query_as::<_, TrainingRecord>(
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
@@ -559,8 +569,8 @@ async fn list_records(
           AND ($2::uuid IS NULL OR employee_id = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(course_id)
     .bind(employee_id)
     .bind(page_size)
@@ -570,14 +580,15 @@ async fn list_records(
 
     match result {
         Ok(records) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.training_records
                 WHERE deleted_at IS NULL
                   AND ($1::uuid IS NULL OR course_id = $1)
                   AND ($2::uuid IS NULL OR employee_id = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(course_id)
             .bind(employee_id)
             .fetch_one(&state.db)
@@ -612,7 +623,8 @@ async fn create_record(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TrainingRecord>(
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         INSERT INTO hrm.training_records (
             id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
@@ -621,8 +633,8 @@ async fn create_record(
         RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.course_id)
     .bind(req.employee_id)
@@ -652,7 +664,8 @@ async fn enroll_course(
     let record_id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TrainingRecord>(
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         INSERT INTO hrm.training_records (
             id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
@@ -661,8 +674,8 @@ async fn enroll_course(
         RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(record_id)
     .bind(id)
     .bind(req.employee_id)
@@ -690,14 +703,15 @@ async fn get_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TrainingRecord>> {
-    let result = sqlx::query_as::<_, TrainingRecord>(
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
                created_at, updated_at
         FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -722,7 +736,8 @@ async fn update_record(
 ) -> Json<ApiResponse<TrainingRecord>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TrainingRecord>(
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.training_records SET
             attendance_status = COALESCE($2, attendance_status),
@@ -736,8 +751,8 @@ async fn update_record(
         RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.attendance_status)
     .bind(&req.completion_status)
@@ -766,9 +781,10 @@ async fn delete_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.training_records SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.training_records SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -794,7 +810,8 @@ async fn get_course_records(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query_as::<_, TrainingRecord>(
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
@@ -802,8 +819,8 @@ async fn get_course_records(
         FROM hrm.training_records WHERE deleted_at IS NULL AND course_id = $1
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(page_size)
     .bind(offset)
@@ -813,7 +830,7 @@ async fn get_course_records(
     match result {
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM hrm.training_records WHERE deleted_at IS NULL AND course_id = $1",
+                only_own_schema_query!("hrm", "SELECT COUNT(*) FROM hrm.training_records WHERE deleted_at IS NULL AND course_id = $1"),
             )
             .bind(id)
             .fetch_one(&state.db)
@@ -850,7 +867,8 @@ async fn get_employee_records(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query_as::<_, TrainingRecord>(
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
@@ -858,8 +876,8 @@ async fn get_employee_records(
         FROM hrm.training_records WHERE deleted_at IS NULL AND employee_id = $1
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(page_size)
     .bind(offset)
@@ -869,7 +887,7 @@ async fn get_employee_records(
     match result {
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM hrm.training_records WHERE deleted_at IS NULL AND employee_id = $1",
+                only_own_schema_query!("hrm", "SELECT COUNT(*) FROM hrm.training_records WHERE deleted_at IS NULL AND employee_id = $1"),
             )
             .bind(id)
             .fetch_one(&state.db)

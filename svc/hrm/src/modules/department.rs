@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -68,7 +69,7 @@ async fn list_departments(
     let org_id_filter = params.org_id;
 
     let result = sqlx::query_as::<_, Department>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -76,7 +77,7 @@ async fn list_departments(
           AND ($3::uuid IS NULL OR organization_id = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -88,14 +89,15 @@ async fn list_departments(
 
     match result {
         Ok(departments) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.departments
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR organization_id = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(org_id_filter)
@@ -150,12 +152,12 @@ async fn create_department(
     let org_id = req.org_id.unwrap_or(claims_tenant);
 
     let result = sqlx::query_as::<_, Department>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.departments (
             id, tenant_id, organization_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
         RETURNING id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -230,10 +232,10 @@ async fn get_department(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Department>> {
     let result = sqlx::query_as::<_, Department>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments WHERE id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -271,7 +273,7 @@ async fn update_department(
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
-        "SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("hrm", "SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -297,13 +299,13 @@ async fn update_department(
     let parent_id = req.parent_id.or(existing.parent_id);
 
     let result = sqlx::query_as::<_, Department>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.departments SET
             tenant_id = $2, organization_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
             description = $8, status = $9, updated_at = $10
         WHERE id = $1
         RETURNING id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(existing.tenant_id)
@@ -378,10 +380,13 @@ async fn delete_department(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

@@ -6,6 +6,7 @@ use axum::{
 };
 use serde::Serialize;
 use sqlx::{PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 
 use super::auth_utils::extract_user_id_from_token;
 use topems_shared_auth::auth::AuthState;
@@ -112,7 +113,7 @@ pub async fn get_dashboard_stats(
     };
 
     let today_patrols = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -121,7 +122,7 @@ pub async fn get_dashboard_stats(
     .unwrap_or(0);
 
     let today_scans = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -130,7 +131,7 @@ pub async fn get_dashboard_stats(
     .unwrap_or(0);
 
     let pending_tasks = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -139,7 +140,7 @@ pub async fn get_dashboard_stats(
     .unwrap_or(0);
 
     let completed_tasks = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -175,9 +176,10 @@ pub async fn get_patrol_stats(
         }
     };
 
-    let total_patrols = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.patrol_records WHERE checked_by = $1",
-    )
+    let total_patrols = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1"
+    ))
     .bind(&user_id)
     .fetch_one(&pool)
     .await
@@ -185,7 +187,7 @@ pub async fn get_patrol_stats(
     .unwrap_or(0);
 
     let completed_patrols = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.patrol_records WHERE checked_by = $1 AND status = 'completed'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'completed'"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -194,7 +196,7 @@ pub async fn get_patrol_stats(
     .unwrap_or(0);
 
     let in_progress_patrols = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.patrol_records WHERE checked_by = $1 AND status = 'in_progress'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'in_progress'"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -203,7 +205,7 @@ pub async fn get_patrol_stats(
     .unwrap_or(0);
 
     let today_count = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -212,7 +214,7 @@ pub async fn get_patrol_stats(
     .unwrap_or(0);
 
     let weekly_count = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE - INTERVAL '7 days'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE - INTERVAL '7 days'"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -249,9 +251,10 @@ pub async fn get_task_stats(
         }
     };
 
-    let total_tasks = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.mobile_tasks WHERE assignee = $1 OR assignee IS NULL",
-    )
+    let total_tasks = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE assignee = $1 OR assignee IS NULL"
+    ))
     .bind(&user_id)
     .fetch_one(&pool)
     .await
@@ -259,7 +262,7 @@ pub async fn get_task_stats(
     .unwrap_or(0);
 
     let pending_tasks = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -268,7 +271,7 @@ pub async fn get_task_stats(
     .unwrap_or(0);
 
     let completed_tasks = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'"),
     )
     .bind(&user_id)
     .fetch_one(&pool)
@@ -277,7 +280,7 @@ pub async fn get_task_stats(
     .unwrap_or(0);
 
     let overdue_tasks = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status != 'completed' AND due_date < CURRENT_DATE",
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status != 'completed' AND due_date < CURRENT_DATE"),
     )
     .bind(&user_id)
     .fetch_one(&pool)

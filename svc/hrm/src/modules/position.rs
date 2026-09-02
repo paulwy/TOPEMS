@@ -7,6 +7,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -119,7 +120,7 @@ async fn list_positions(
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, Position>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         FROM hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
@@ -128,7 +129,7 @@ async fn list_positions(
           AND ($4::text IS NULL OR status = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
-        "#,
+        "#),
     )
     .bind(&search)
     .bind(dept_id)
@@ -142,13 +143,13 @@ async fn list_positions(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("hrm", r#"
                 SELECT COUNT(*) FROM hrm.positions
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
                   AND ($3::uuid IS NULL OR organization_id = $3)
                   AND ($4::text IS NULL OR status = $4)
-                "#,
+                "#),
             )
             .bind(&search)
             .bind(dept_id)
@@ -211,11 +212,11 @@ async fn create_position(
     let org_id = req.org_id.unwrap_or(claims_tenant);
 
     let result = sqlx::query_as::<_, Position>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, salary_range_min, salary_range_max, description, requirements, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
         RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(tenant_id)
@@ -294,7 +295,7 @@ async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
-        "SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -334,7 +335,7 @@ async fn update_position(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Position>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.positions
         SET
             organization_id = COALESCE($1, organization_id),
@@ -350,7 +351,7 @@ async fn update_position(
             updated_at = $11
         WHERE id = $12
         RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
-        "#
+        "#)
     )
     .bind(req.org_id)
     .bind(req.department_id)
@@ -396,10 +397,13 @@ async fn delete_position(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE hrm.positions SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.positions SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

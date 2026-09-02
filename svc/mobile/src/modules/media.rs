@@ -7,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -51,10 +52,10 @@ pub async fn get_photos(
     };
 
     let photos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
-        "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
-         FROM media_files 
+        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
+         FROM public.media_files 
          WHERE deleted_at IS NULL AND file_type = 'photo' AND uploaded_by = $1 
-         ORDER BY created_at DESC"
+         ORDER BY created_at DESC")
     )
     .bind(&user_id)
     .fetch_all(&pool)
@@ -89,10 +90,10 @@ pub async fn get_audio(
     };
 
     let audio_files: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
-        "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
-         FROM media_files 
+        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
+         FROM public.media_files 
          WHERE deleted_at IS NULL AND file_type = 'audio' AND uploaded_by = $1 
-         ORDER BY created_at DESC"
+         ORDER BY created_at DESC")
     )
     .bind(&user_id)
     .fetch_all(&pool)
@@ -127,10 +128,10 @@ pub async fn get_video(
     };
 
     let videos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
-        "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
-         FROM media_files 
+        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
+         FROM public.media_files 
          WHERE deleted_at IS NULL AND file_type = 'video' AND uploaded_by = $1 
-         ORDER BY created_at DESC"
+         ORDER BY created_at DESC")
     )
     .bind(&user_id)
     .fetch_all(&pool)
@@ -230,8 +231,8 @@ pub async fn upload_media(
     let file_url = format!("/api/media/{}/{}", file_type, media_id);
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO media_files (id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, description, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+        only_own_schema_query!("mobile", "INSERT INTO public.media_files (id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, description, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
     )
     .bind(media_id)
     .bind(&file_name)
@@ -286,7 +287,7 @@ pub async fn delete_media(
     };
 
     let result = sqlx::query(
-        "UPDATE media_files SET deleted_at = NOW() WHERE id = $1 AND file_type = $2 AND uploaded_by = $3",
+        only_own_schema_query!("mobile", "UPDATE public.media_files SET deleted_at = NOW() WHERE id = $1 AND file_type = $2 AND uploaded_by = $3"),
     )
     .bind(id)
     .bind(&file_type)

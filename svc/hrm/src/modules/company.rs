@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -57,11 +58,13 @@ async fn list_companies(
     let status_filter = params.status.clone();
 
     // 验证连接状态
-    let conn_test = sqlx::query("SHOW search_path").fetch_one(&state.db).await;
+    let conn_test = sqlx::query(only_own_schema_query!("hrm", "SHOW search_path"))
+        .fetch_one(&state.db)
+        .await;
     tracing::debug!("Connection search_path: {:?}", conn_test);
 
     let result = sqlx::query_as::<_, Company>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
         FROM hrm.companies
@@ -70,7 +73,7 @@ async fn list_companies(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -82,12 +85,12 @@ async fn list_companies(
     match result {
         Ok(companies) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("hrm", r#"
                 SELECT COUNT(*) FROM hrm.companies
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -160,14 +163,14 @@ async fn create_company(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Company>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.companies (
             id, tenant_id, name, short_name, registration_number, tax_number, address,
             contact_phone, contact_email, website, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
         RETURNING id, tenant_id, name, short_name, registration_number, tax_number, address,
                   contact_phone, contact_email as email, website, description, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.tenant_id)
@@ -250,11 +253,11 @@ async fn get_company(
     }
 
     let result = sqlx::query_as::<_, Company>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
         FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -299,10 +302,10 @@ async fn update_company(
 
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -329,7 +332,7 @@ async fn update_company(
     let status = req.status.unwrap_or(existing.status);
 
     let result = sqlx::query_as::<_, Company>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.companies SET
             name = $2, short_name = $3, registration_number = $4, tax_number = $5,
             address = $6, contact_phone = $7, contact_email = $8, website = $9,
@@ -337,7 +340,7 @@ async fn update_company(
         WHERE id = $1
         RETURNING id, name, short_name, registration_number, tax_number, address,
                   contact_phone, contact_email as email, website, description, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&name)
@@ -421,10 +424,10 @@ async fn delete_company(
 
     // 先检查公司是否存在
     let existing = sqlx::query_as::<_, Company>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -432,10 +435,13 @@ async fn delete_company(
 
     match existing {
         Ok(Some(company)) => {
-            let result = sqlx::query("UPDATE hrm.companies SET deleted_at = NOW() WHERE id = $1")
-                .bind(id)
-                .execute(&state.db)
-                .await;
+            let result = sqlx::query(only_own_schema_query!(
+                "hrm",
+                "UPDATE hrm.companies SET deleted_at = NOW() WHERE id = $1"
+            ))
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
             match result {
                 Ok(_) => {

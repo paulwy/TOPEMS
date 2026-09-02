@@ -7,6 +7,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -110,7 +111,7 @@ async fn list_leaves(
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, LeaveRequest>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         FROM hrm.leave_records
         WHERE deleted_at IS NULL
@@ -118,7 +119,7 @@ async fn list_leaves(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(emp_id)
     .bind(&status_filter)
@@ -129,13 +130,14 @@ async fn list_leaves(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.leave_records
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR status = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(emp_id)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -200,11 +202,11 @@ async fn create_leave(
         .unwrap_or(Uuid::nil());
 
     let result = sqlx::query_as::<_, LeaveRequest>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.leave_records (id, employee_id, leave_type, start_date, end_date, days, reason, status, organization_id, tenant_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11)
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(req.employee_id)
@@ -281,7 +283,7 @@ async fn get_leave(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let result = sqlx::query_as::<_, LeaveRequest>(
-        "SELECT id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at FROM hrm.leave_records WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at FROM hrm.leave_records WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -321,7 +323,7 @@ async fn update_leave(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, LeaveRequest>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.leave_records
         SET
             leave_type = COALESCE($1, leave_type),
@@ -332,7 +334,7 @@ async fn update_leave(
             updated_at = $6
         WHERE id = $7 AND status = 'pending'
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
-        "#
+        "#)
     )
     .bind(&req.leave_type)
     .bind(req.start_date)
@@ -376,9 +378,10 @@ async fn delete_leave(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.leave_records SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.leave_records SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -437,7 +440,7 @@ async fn approve_leave(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, LeaveRequest>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.leave_records
         SET
             status = 'approved',
@@ -446,7 +449,7 @@ async fn approve_leave(
             updated_at = $3
         WHERE id = $1 AND status = 'pending'
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(req.approver_id)
@@ -475,7 +478,7 @@ async fn reject_leave(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, LeaveRequest>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.leave_records
         SET
             status = 'rejected',
@@ -485,7 +488,7 @@ async fn reject_leave(
             updated_at = $3
         WHERE id = $1 AND status = 'pending'
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(req.approver_id)
