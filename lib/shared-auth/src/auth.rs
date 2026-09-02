@@ -568,7 +568,7 @@ pub fn get_permission_by_id(permission_id: &str) -> Option<Permission> {
         .find(|p| p.id == permission_id)
 }
 
-fn is_public_path(path: &str) -> bool {
+pub(crate) fn is_public_path(path: &str) -> bool {
     let public_paths = [
         "/",
         "/health",

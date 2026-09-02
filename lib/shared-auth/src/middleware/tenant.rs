@@ -1,4 +1,4 @@
-use crate::auth::Claims;
+use crate::auth::{is_public_path, Claims};
 use crate::service::is_service_claims;
 use axum::{
     body::Body,
@@ -83,6 +83,12 @@ pub fn tenant_middleware() -> impl Fn(
           req: Request<Body>,
           next: Next| {
         Box::pin(async move {
+            // 与 auth_middleware 一致：public 路径（/health、auth 端点等）豁免——
+            // axum nest 剥离前缀后 /api/{svc}/health → /health，auth_middleware 已豁免
+            // （Claims 不注入），此处对齐避免 public 路径误判 401。
+            if is_public_path(&req.uri().path().to_string()) {
+                return next.run(req).await;
+            }
             let claims = match req.extensions().get::<Claims>() {
                 Some(c) => c,
                 None => {
@@ -176,6 +182,12 @@ pub fn require_tenant_status(
     move |req: Request<Body>, next: Next| {
         let _status = status;
         Box::pin(async move {
+            // 与 auth_middleware 一致：public 路径（/health、auth 端点等）豁免——
+            // axum nest 剥离前缀后 /api/{svc}/health → /health，auth_middleware 已豁免
+            // （Claims 不注入），此处对齐避免 public 路径误判 401。
+            if is_public_path(&req.uri().path().to_string()) {
+                return next.run(req).await;
+            }
             let claims = match req.extensions().get::<Claims>() {
                 Some(c) => c,
                 None => {

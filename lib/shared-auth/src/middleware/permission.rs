@@ -7,6 +7,8 @@ use axum::{
     response::IntoResponse,
 };
 
+use crate::auth::is_public_path;
+
 fn extract_claims(req: &Request<Body>) -> Option<Claims> {
     req.extensions().get::<Claims>().cloned()
 }
@@ -23,6 +25,12 @@ pub fn require_permission(
     move |req: Request<Body>, next: Next| {
         let permission = permission;
         Box::pin(async move {
+            // 与 auth_middleware 一致：public 路径（/health、auth 端点等）豁免。
+            // axum nest 剥离前缀后 /api/{svc}/health → /health，auth_middleware 已豁免
+            // （Claims 不注入），此处若不复核会对 public 路径误判 401。
+            if is_public_path(&req.uri().path().to_string()) {
+                return next.run(req).await;
+            }
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
@@ -69,6 +77,12 @@ pub fn require_role(
     move |req: Request<Body>, next: Next| {
         let role = role;
         Box::pin(async move {
+            // 与 auth_middleware 一致：public 路径（/health、auth 端点等）豁免。
+            // axum nest 剥离前缀后 /api/{svc}/health → /health，auth_middleware 已豁免
+            // （Claims 不注入），此处若不复核会对 public 路径误判 401。
+            if is_public_path(&req.uri().path().to_string()) {
+                return next.run(req).await;
+            }
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
@@ -108,6 +122,12 @@ pub fn require_superuser() -> impl Fn(
        + Sync {
     move |req: Request<Body>, next: Next| {
         Box::pin(async move {
+            // 与 auth_middleware 一致：public 路径（/health、auth 端点等）豁免。
+            // axum nest 剥离前缀后 /api/{svc}/health → /health，auth_middleware 已豁免
+            // （Claims 不注入），此处若不复核会对 public 路径误判 401。
+            if is_public_path(&req.uri().path().to_string()) {
+                return next.run(req).await;
+            }
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
@@ -147,6 +167,12 @@ pub fn require_any_permission(
     move |req: Request<Body>, next: Next| {
         let permissions = permissions;
         Box::pin(async move {
+            // 与 auth_middleware 一致：public 路径（/health、auth 端点等）豁免。
+            // axum nest 剥离前缀后 /api/{svc}/health → /health，auth_middleware 已豁免
+            // （Claims 不注入），此处若不复核会对 public 路径误判 401。
+            if is_public_path(&req.uri().path().to_string()) {
+                return next.run(req).await;
+            }
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
@@ -193,6 +219,12 @@ pub fn require_all_permissions(
     move |req: Request<Body>, next: Next| {
         let permissions = permissions;
         Box::pin(async move {
+            // 与 auth_middleware 一致：public 路径（/health、auth 端点等）豁免。
+            // axum nest 剥离前缀后 /api/{svc}/health → /health，auth_middleware 已豁免
+            // （Claims 不注入），此处若不复核会对 public 路径误判 401。
+            if is_public_path(&req.uri().path().to_string()) {
+                return next.run(req).await;
+            }
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
