@@ -29,18 +29,24 @@ WORKDIR /app
 # 安装构建依赖
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig protobuf
 
-# cargo 国内镜像源 + sparse 协议（容器内无本机 ~/.cargo 缓存，直连 crates.io 索引国内网络易卡）
+# cargo 国内镜像源 + sparse 协议 + HTTP/1.1（容器内无本机 ~/.cargo 缓存，直连 crates.io 索引国内网络易卡；
+# rsproxy 偶发 HTTP/2 流重置 PROTOCOL_ERROR 会导致下载卡死，改用更稳定的中科大 sparse 镜像 + multiplexing=false 强制 HTTP/1.1）
 # 注意：不 COPY 项目 .cargo/config.toml（其 rustc-wrapper=sccache，容器内无 sccache 会失败）
 RUN mkdir -p /root/.cargo && \
     printf '%s\n' \
       '[net]' \
-      'retry = 2' \
+      'retry = 5' \
+      '' \
+      '[http]' \
+      'multiplexing = false' \
+      'timeout = 120' \
+      'low-speed-limit = 0' \
       '' \
       '[source.crates-io]' \
-      'replace-with = "rsproxy-sparse"' \
+      'replace-with = "ustc-sparse"' \
       '' \
-      '[source.rsproxy-sparse]' \
-      'registry = "sparse+https://rsproxy.cn/index/"' \
+      '[source.ustc-sparse]' \
+      'registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"' \
       > /root/.cargo/config.toml
 
 # 复制 workspace 文件（依赖缓存层）
