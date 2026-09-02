@@ -17,12 +17,13 @@ echo
 echo "════════════════════════════════════════════"
 echo " 步骤 2/4：应用治理迁移（5433 运行库）"
 echo "════════════════════════════════════════════"
+REPO_ROOT=/Users/air/TOPEMS
 echo "→ 2a. 归位 qa_ehs_*/qa_* → ehs/qms（69 张）"
-$DB -v ON_ERROR_STOP=1 -f database/migrations/20260902000001_rehome_ehs_qms.sql && echo "  归位 ✅"
+$DB -v ON_ERROR_STOP=1 -f "$REPO_ROOT/database/migrations/20260902000001_rehome_ehs_qms.sql" && echo "  归位 ✅"
 echo "→ 2b. DROP 剩余 public 影子表（59 张）"
-$DB -v ON_ERROR_STOP=1 -f database/migrations/20260902000002_drop_public_remaining_shadows.sql && echo "  DROP ✅"
+$DB -v ON_ERROR_STOP=1 -f "$REPO_ROOT/database/migrations/20260902000002_drop_public_remaining_shadows.sql" && echo "  DROP ✅"
 echo "→ 2c. auth FK → core_users（refresh_tokens/sessions）"
-$DB -v ON_ERROR_STOP=1 -f database/migrations/20260902000003_auth_fk_5433.sql && echo "  auth ✅"
+$DB -v ON_ERROR_STOP=1 -f "$REPO_ROOT/database/migrations/20260902000003_auth_fk_5433.sql" && echo "  auth ✅"
 
 echo
 echo "════════════════════════════════════════════"

@@ -1,6 +1,9 @@
 -- 2026-09-02 运行库(5433)治理：qa_ehs_*/qa_* 活跃表归位 ehs/qms schema（对齐 5432 治理后结构）
 -- 依据：5432 ehs/qms schema 同名表已归位；5433 因旧镜像服务未 schema 化残留在 public
 -- 执行时机：停服后、新服务启动前（避免新服务建空表冲突）
+-- 前置：5433 无 ehs/qms schema（服务 init_database 建 schema，停服期间需显式创建）
+CREATE SCHEMA IF NOT EXISTS ehs;
+CREATE SCHEMA IF NOT EXISTS qms;
 ALTER TABLE public."qa_ehs_accident_investigations" SET SCHEMA ehs;
 ALTER TABLE public."qa_ehs_accident_reviews" SET SCHEMA ehs;
 ALTER TABLE public."qa_ehs_accident_treatments" SET SCHEMA ehs;
