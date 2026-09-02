@@ -169,9 +169,9 @@ pub async fn list_records(
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, order_id, process_id, work_station_id, equipment_id,
+            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
-            quantity_produced, quantity_defective, status, notes,
+            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
             created_at, updated_at
         FROM production_records
         {}
@@ -273,27 +273,25 @@ pub async fn create_record(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_records (
-            order_id, process_id, work_station_id, equipment_id,
+            order_id, process_id, work_station_id,
             operator_id, start_time, end_time,
-            quantity_produced, quantity_defective, status, notes,
+            completed_quantity, status, notes,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, 'in_progress', $9, $10, $10)
+        ) VALUES ($1, $2, $3, $4, $5, NULL, $6, 'in_progress', $7, $8, $8)
         RETURNING 
-            id, order_id, process_id, work_station_id, equipment_id,
+            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
-            quantity_produced, quantity_defective, status, notes,
+            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
         req.order_id,
         req.process_id,
         req.work_station_id,
-        req.equipment_id,
         req.operator_id,
-        req.start_time.naive_utc(),
-        f64_to_big_decimal(req.quantity_produced),
-        f64_to_big_decimal(req.quantity_defective),
+        req.start_time,
+        req.quantity_produced.map(|v| v as i32),
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -313,14 +311,14 @@ pub async fn create_record(
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
-        start_time: naive_to_utc(Some(result.start_time)),
-        end_time: opt_naive_to_utc(result.end_time),
-        quantity_produced: big_decimal_to_f64(result.quantity_produced),
-        quantity_defective: big_decimal_to_f64(result.quantity_defective),
-        status: result.status.unwrap_or_else(|| "in_progress".to_string()),
+        start_time: result.start_time,
+        end_time: result.end_time,
+        quantity_produced: result.quantity_produced as f64,
+        quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
+        status: result.status,
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(record, "生产记录创建成功"))
@@ -338,9 +336,9 @@ pub async fn get_record(
     let result = sqlx::query!(
         r#"
         SELECT 
-            id, order_id, process_id, work_station_id, equipment_id,
+            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
-            quantity_produced, quantity_defective, status, notes,
+            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
             created_at, updated_at
         FROM production_records
         WHERE id = $1
@@ -367,14 +365,14 @@ pub async fn get_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: naive_to_utc(Some(r.start_time)),
-                end_time: opt_naive_to_utc(r.end_time),
-                quantity_produced: big_decimal_to_f64(r.quantity_produced),
-                quantity_defective: big_decimal_to_f64(r.quantity_defective),
-                status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+                start_time: r.start_time,
+                end_time: r.end_time,
+                quantity_produced: r.quantity_produced as f64,
+                quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
+                status: r.status,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "获取生产记录成功"))
         }
@@ -404,32 +402,28 @@ pub async fn update_record(
         UPDATE production_records SET
             process_id = COALESCE($2, process_id),
             work_station_id = COALESCE($3, work_station_id),
-            equipment_id = COALESCE($4, equipment_id),
-            operator_id = COALESCE($5, operator_id),
-            end_time = COALESCE($6, end_time),
-            quantity_produced = COALESCE($7, quantity_produced),
-            quantity_defective = COALESCE($8, quantity_defective),
-            status = $9,
-            notes = COALESCE($10, notes),
-            updated_at = $11
+            operator_id = COALESCE($4, operator_id),
+            end_time = COALESCE($5, end_time),
+            completed_quantity = COALESCE($6, completed_quantity),
+            status = $7,
+            notes = COALESCE($8, notes),
+            updated_at = $9
         WHERE id = $1
         RETURNING 
-            id, order_id, process_id, work_station_id, equipment_id,
+            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
-            quantity_produced, quantity_defective, status, notes,
+            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
         id,
         req.process_id,
         req.work_station_id,
-        req.equipment_id,
         req.operator_id,
-        req.end_time.map(|t| t.naive_utc()),
-        f64_to_big_decimal(req.quantity_produced),
-        f64_to_big_decimal(req.quantity_defective),
+        req.end_time,
+        req.quantity_produced.map(|v| v as i32),
         status,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -451,14 +445,14 @@ pub async fn update_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: naive_to_utc(Some(r.start_time)),
-                end_time: opt_naive_to_utc(r.end_time),
-                quantity_produced: big_decimal_to_f64(r.quantity_produced),
-                quantity_defective: big_decimal_to_f64(r.quantity_defective),
-                status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+                start_time: r.start_time,
+                end_time: r.end_time,
+                quantity_produced: r.quantity_produced as f64,
+                quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
+                status: r.status,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录更新成功"))
         }
@@ -519,13 +513,13 @@ pub async fn complete_record(
             updated_at = $2
         WHERE id = $1 AND status = 'in_progress'
         RETURNING 
-            id, order_id, process_id, work_station_id, equipment_id,
+            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
-            quantity_produced, quantity_defective, status, notes,
+            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -547,17 +541,95 @@ pub async fn complete_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: naive_to_utc(Some(r.start_time)),
-                end_time: opt_naive_to_utc(r.end_time),
-                quantity_produced: big_decimal_to_f64(r.quantity_produced),
-                quantity_defective: big_decimal_to_f64(r.quantity_defective),
-                status: r.status.unwrap_or_else(|| "completed".to_string()),
+                start_time: r.start_time,
+                end_time: r.end_time,
+                quantity_produced: r.quantity_produced as f64,
+                quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
+                status: r.status,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录完成成功"))
         }
         None => Json(ApiResponse::error(404, "生产记录不存在或状态不允许完成")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, NaiveDate, Timelike};
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn opt_naive_to_utc_some() {
+        let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
+            .unwrap()
+            .and_hms_opt(23, 59, 59)
+            .unwrap();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
+        assert_eq!(r.year(), 2024);
+        assert_eq!(r.month(), 2);
+        assert_eq!(r.day(), 28);
+        assert_eq!(r.hour(), 23);
+        assert_eq!(r.second(), 59);
+    }
+
+    #[test]
+    fn opt_naive_to_utc_none() {
+        assert!(opt_naive_to_utc(None).is_none());
+    }
+
+    #[test]
+    fn big_decimal_to_f64_some() {
+        let bd: BigDecimal = "1.25".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 1.25);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), 0.0);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_negative() {
+        let bd: BigDecimal = "-7.5".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), -7.5);
+    }
+
+    #[test]
+    fn f64_to_big_decimal_roundtrip() {
+        let bd = f64_to_big_decimal(Some(3.5)).unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 3.5);
+    }
+
+    #[test]
+    fn f64_to_big_decimal_none() {
+        assert!(f64_to_big_decimal(None).is_none());
+    }
+
+    #[test]
+    fn f64_to_big_decimal_zero() {
+        let bd = f64_to_big_decimal(Some(0.0)).unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 0.0);
     }
 }

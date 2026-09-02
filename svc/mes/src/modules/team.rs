@@ -180,7 +180,7 @@ pub async fn list_teams(
             t.id, t.team_code, t.team_name, t.team_type, t.work_station_id,
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
             t.created_at, t.updated_at,
-            COALESCE(ws.name, '') as work_station_name
+            COALESCE(ws.station_name, '') as work_station_name
         FROM teams t
         LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         {}
@@ -285,7 +285,7 @@ pub async fn get_team(
             t.id, t.team_code, t.team_name, t.team_type, t.work_station_id,
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
             t.created_at, t.updated_at,
-            ws.name as work_station_name
+            ws.station_name as work_station_name
         FROM teams t
         LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
@@ -720,5 +720,46 @@ pub async fn remove_team_member(
         Json(ApiResponse::success("".to_string(), "班组成员移除成功"))
     } else {
         Json(ApiResponse::error(404, "班组成员不存在"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn datetime_to_string_some_rfc3339() {
+        let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let s = datetime_to_string(Some(dt));
+        assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
+    }
+
+    #[test]
+    fn datetime_to_string_none_valid() {
+        let s = datetime_to_string(None);
+        assert!(s.contains('T'));
     }
 }

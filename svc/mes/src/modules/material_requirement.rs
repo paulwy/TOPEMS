@@ -614,7 +614,7 @@ pub async fn calculate_requirements(
 
     let order_result = sqlx::query!(
         r#"
-        SELECT order_no, product_code, product_name, quantity
+        SELECT order_number AS order_no, product_code, product_name, quantity
         FROM production_orders
         WHERE id = $1
         "#,
@@ -651,7 +651,7 @@ pub async fn calculate_requirements(
     match bom_items_result {
         Ok(items) => {
             for item in items {
-                let required_quantity_bd = item.quantity * &order.quantity;
+                let required_quantity_bd = item.quantity * order.quantity;
                 let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
                 let now_str = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
@@ -850,5 +850,86 @@ pub async fn release_requirement(
             tracing::error!("Failed to release material requirement: {}", e);
             Json(ApiResponse::error(500, "下发物料需求失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn datetime_to_string_some_rfc3339() {
+        let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let s = datetime_to_string(Some(dt));
+        assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
+    }
+
+    #[test]
+    fn datetime_to_string_none_valid() {
+        let s = datetime_to_string(None);
+        assert!(s.contains('T'));
+    }
+
+    #[test]
+    fn big_decimal_to_f64_some() {
+        let bd: BigDecimal = "1.25".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 1.25);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), 0.0);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_negative() {
+        let bd: BigDecimal = "-7.5".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), -7.5);
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_some() {
+        let bd: BigDecimal = "12.5".parse().unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(12.5));
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_none() {
+        assert_eq!(opt_big_decimal_to_f64(None), None);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_non_opt_some() {
+        let bd: BigDecimal = "99.99".parse().unwrap();
+        assert_eq!(big_decimal_to_f64_non_opt(bd), 99.99);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_non_opt_negative() {
+        let bd: BigDecimal = "-0.01".parse().unwrap();
+        assert_eq!(big_decimal_to_f64_non_opt(bd), -0.01);
     }
 }

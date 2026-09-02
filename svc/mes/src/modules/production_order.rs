@@ -14,7 +14,6 @@ use sqlx::{
     types::{BigDecimal, Uuid},
     Row,
 };
-use std::str::FromStr;
 use topems_shared::auth::Claims;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
@@ -246,11 +245,11 @@ pub async fn list_production_orders(
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
             where_clause.push_str(
-                " WHERE (order_no ILIKE $1 OR product_name ILIKE $1 OR product_code ILIKE $1)",
+                " WHERE (order_number ILIKE $1 OR product_name ILIKE $1 OR product_code ILIKE $1)",
             );
         } else {
             where_clause.push_str(&format!(
-                " AND (order_no ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${})",
+                " AND (order_number ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${})",
                 params.len() + 1,
                 params.len() + 1,
                 params.len() + 1
@@ -281,12 +280,12 @@ pub async fn list_production_orders(
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         FROM production_orders
         {}
         ORDER BY created_at DESC
@@ -347,38 +346,34 @@ pub async fn list_production_orders(
                 .try_get::<Option<String>, _>("source_order_number")
                 .ok()
                 .flatten(),
-            planned_start_date: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("planned_start_date")
-                    .ok()
-                    .flatten(),
-            ),
-            planned_end_date: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("planned_end_date")
-                    .ok()
-                    .flatten(),
-            ),
-            actual_start_date: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("actual_start_date")
-                    .ok()
-                    .flatten(),
-            ),
-            actual_end_date: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("actual_end_date")
-                    .ok()
-                    .flatten(),
-            ),
+            planned_start_date: r
+                .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
+                .ok()
+                .flatten(),
+            planned_end_date: r
+                .try_get::<Option<DateTime<Utc>>, _>("planned_end_date")
+                .ok()
+                .flatten(),
+            actual_start_date: r
+                .try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
+                .ok()
+                .flatten(),
+            actual_end_date: r
+                .try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
+                .ok()
+                .flatten(),
             workshop_id: r.try_get::<Option<Uuid>, _>("workshop_id").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
-            created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
-                    .ok()
-                    .flatten(),
-            ),
-            updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
-                    .ok()
-                    .flatten(),
-            ),
+            created_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten()
+                .unwrap_or_else(Utc::now),
+            updated_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten()
+                .unwrap_or_else(Utc::now),
         })
         .collect();
 
@@ -429,29 +424,28 @@ pub async fn create_production_order(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            planned_start_date, planned_end_date, workshop_id, notes,
+            order_number, product_name, product_code,
+            quantity, completed_quantity, status,
+            planned_start_date, planned_end_date, work_station_id, notes,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 0, 'pending', 'manual', $6, $7, $8, $9, $10, $10)
+        ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9)
         RETURNING 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         "#,
         order_no,
-        req.product_id,
         req.product_name,
         req.product_code,
-        BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
-        req.planned_start_date.map(|d| d.naive_utc()),
-        req.planned_end_date.map(|d| d.naive_utc()),
+        req.quantity as i32,
+        req.planned_start_date.map(|d| d.date_naive()),
+        req.planned_end_date.map(|d| d.date_naive()),
         req.workshop_id,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -469,21 +463,21 @@ pub async fn create_production_order(
         order_no: result.order_no,
         product_id: result.product_id,
         product_name: result.product_name,
-        product_code: result.product_code,
-        quantity: big_decimal_to_f64(Some(result.quantity)),
-        completed_quantity: big_decimal_to_f64(result.completed_quantity),
-        status: result.status.unwrap_or_else(|| "pending".to_string()),
+        product_code: result.product_code.unwrap_or_default(),
+        quantity: result.quantity.unwrap_or_default(),
+        completed_quantity: result.completed_quantity.unwrap_or_default(),
+        status: result.status,
         source: result.source.unwrap_or_else(|| "manual".to_string()),
         source_order_id: result.source_order_id,
         source_order_number: result.source_order_number,
-        planned_start_date: opt_naive_to_utc(result.planned_start_date),
-        planned_end_date: opt_naive_to_utc(result.planned_end_date),
-        actual_start_date: opt_naive_to_utc(result.actual_start_date),
-        actual_end_date: opt_naive_to_utc(result.actual_end_date),
+        planned_start_date: result.planned_start_date,
+        planned_end_date: result.planned_end_date,
+        actual_start_date: result.actual_start_date,
+        actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     if let Some(ref publisher) = state.event_publisher {
@@ -567,30 +561,30 @@ pub async fn create_from_erp(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_no, product_name, product_code, quantity,
-            status, source, source_order_id, source_order_number,
-            planned_start_date, planned_end_date, workshop_id, notes,
+            order_number, product_name, product_code, quantity,
+            status, sales_order_id, customer_order_number,
+            planned_start_date, planned_end_date, work_station_id, notes,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'pending', 'erp_sales_order', $5, $6, $7, $8, $9, $10, $11, $11)
+        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11)
         RETURNING 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         "#,
         order_no,
         req.erp_order.product_name,
         req.erp_order.product_code,
-        BigDecimal::from_str(&req.erp_order.quantity.to_string()).unwrap_or_default(),
+        req.erp_order.quantity as i32,
         req.erp_order.order_id,
         req.erp_order.order_number,
-        planned_start.naive_utc(),
-        planned_end.naive_utc(),
+        planned_start.date_naive(),
+        planned_end.date_naive(),
         req.workshop_id,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -608,23 +602,23 @@ pub async fn create_from_erp(
         order_no: result.order_no,
         product_id: result.product_id,
         product_name: result.product_name,
-        product_code: result.product_code,
-        quantity: big_decimal_to_f64(Some(result.quantity)),
-        completed_quantity: big_decimal_to_f64(result.completed_quantity),
-        status: result.status.unwrap_or_else(|| "pending".to_string()),
+        product_code: result.product_code.unwrap_or_default(),
+        quantity: result.quantity.unwrap_or_default(),
+        completed_quantity: result.completed_quantity.unwrap_or_default(),
+        status: result.status,
         source: result
             .source
             .unwrap_or_else(|| "erp_sales_order".to_string()),
         source_order_id: result.source_order_id,
         source_order_number: result.source_order_number,
-        planned_start_date: opt_naive_to_utc(result.planned_start_date),
-        planned_end_date: opt_naive_to_utc(result.planned_end_date),
-        actual_start_date: opt_naive_to_utc(result.actual_start_date),
-        actual_end_date: opt_naive_to_utc(result.actual_end_date),
+        planned_start_date: result.planned_start_date,
+        planned_end_date: result.planned_end_date,
+        actual_start_date: result.actual_start_date,
+        actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     tracing::info!(
@@ -663,12 +657,12 @@ pub async fn get_production_order(
     let result = sqlx::query!(
         r#"
         SELECT 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         FROM production_orders
         WHERE id = $1
         "#,
@@ -692,21 +686,21 @@ pub async fn get_production_order(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: r.quantity.unwrap_or_default(),
+                completed_quantity: r.completed_quantity.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
-                planned_start_date: opt_naive_to_utc(r.planned_start_date),
-                planned_end_date: opt_naive_to_utc(r.planned_end_date),
-                actual_start_date: opt_naive_to_utc(r.actual_start_date),
-                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                planned_start_date: r.planned_start_date,
+                planned_end_date: r.planned_end_date,
+                actual_start_date: r.actual_start_date,
+                actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "获取生产工单成功"))
         }
@@ -752,28 +746,27 @@ pub async fn update_production_order(
             quantity = COALESCE($4, quantity),
             planned_start_date = COALESCE($5, planned_start_date),
             planned_end_date = COALESCE($6, planned_end_date),
-            workshop_id = COALESCE($7, workshop_id),
+            work_station_id = COALESCE($7, work_station_id),
             notes = COALESCE($8, notes),
             updated_at = $9
         WHERE id = $1 AND status = 'pending'
         RETURNING 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         "#,
         id,
         req.product_name,
         req.product_code,
-        req.quantity
-            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.planned_start_date.map(|d| d.naive_utc()),
-        req.planned_end_date.map(|d| d.naive_utc()),
+        req.quantity.map(|v| v as i32),
+        req.planned_start_date.map(|d| d.date_naive()),
+        req.planned_end_date.map(|d| d.date_naive()),
         req.workshop_id,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -793,21 +786,21 @@ pub async fn update_production_order(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: r.quantity.unwrap_or_default(),
+                completed_quantity: r.completed_quantity.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
-                planned_start_date: opt_naive_to_utc(r.planned_start_date),
-                planned_end_date: opt_naive_to_utc(r.planned_end_date),
-                actual_start_date: opt_naive_to_utc(r.actual_start_date),
-                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                planned_start_date: r.planned_start_date,
+                planned_end_date: r.planned_end_date,
+                actual_start_date: r.actual_start_date,
+                actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单更新成功"))
         }
@@ -903,18 +896,19 @@ pub async fn start_production_order(
         UPDATE production_orders SET
             status = 'in_progress',
             actual_start_date = $2,
-            updated_at = $2
+            updated_at = $3
         WHERE id = $1 AND status = 'released'
         RETURNING 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         "#,
         id,
-        now.naive_utc(),
+        now.date_naive(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -934,21 +928,21 @@ pub async fn start_production_order(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: r.quantity.unwrap_or_default(),
+                completed_quantity: r.completed_quantity.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
-                planned_start_date: opt_naive_to_utc(r.planned_start_date),
-                planned_end_date: opt_naive_to_utc(r.planned_end_date),
-                actual_start_date: opt_naive_to_utc(r.actual_start_date),
-                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                planned_start_date: r.planned_start_date,
+                planned_end_date: r.planned_end_date,
+                actual_start_date: r.actual_start_date,
+                actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单启动成功"))
         }
@@ -992,18 +986,19 @@ pub async fn complete_production_order(
             status = 'completed',
             completed_quantity = quantity,
             actual_end_date = $2,
-            updated_at = $2
+            updated_at = $3
         WHERE id = $1 AND status = 'in_progress'
         RETURNING 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         "#,
         id,
-        now.naive_utc(),
+        now.date_naive(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1023,21 +1018,21 @@ pub async fn complete_production_order(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                status: r.status.unwrap_or_else(|| "completed".to_string()),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: r.quantity.unwrap_or_default(),
+                completed_quantity: r.completed_quantity.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
-                planned_start_date: opt_naive_to_utc(r.planned_start_date),
-                planned_end_date: opt_naive_to_utc(r.planned_end_date),
-                actual_start_date: opt_naive_to_utc(r.actual_start_date),
-                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                planned_start_date: r.planned_start_date,
+                planned_end_date: r.planned_end_date,
+                actual_start_date: r.actual_start_date,
+                actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单完成成功"))
         }
@@ -1082,15 +1077,15 @@ pub async fn cancel_production_order(
             updated_at = $2
         WHERE id = $1 AND status IN ('pending', 'released', 'paused')
         RETURNING 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1110,21 +1105,21 @@ pub async fn cancel_production_order(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                status: r.status.unwrap_or_else(|| "cancelled".to_string()),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: r.quantity.unwrap_or_default(),
+                completed_quantity: r.completed_quantity.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
-                planned_start_date: opt_naive_to_utc(r.planned_start_date),
-                planned_end_date: opt_naive_to_utc(r.planned_end_date),
-                actual_start_date: opt_naive_to_utc(r.actual_start_date),
-                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                planned_start_date: r.planned_start_date,
+                planned_end_date: r.planned_end_date,
+                actual_start_date: r.actual_start_date,
+                actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单取消成功"))
         }
@@ -1169,15 +1164,15 @@ pub async fn release_production_order(
             updated_at = $2
         WHERE id = $1 AND status = 'pending'
         RETURNING 
-            id, order_no, product_id, product_name, product_code,
-            quantity, completed_quantity, status, source,
-            source_order_id, source_order_number,
-            planned_start_date, planned_end_date,
-            actual_start_date, actual_end_date,
-            workshop_id, notes, created_at, updated_at
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
+            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
+            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
+            work_station_id AS workshop_id, notes, created_at, updated_at
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1197,21 +1192,21 @@ pub async fn release_production_order(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
-                completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                status: r.status.unwrap_or_else(|| "released".to_string()),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: r.quantity.unwrap_or_default(),
+                completed_quantity: r.completed_quantity.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
-                planned_start_date: opt_naive_to_utc(r.planned_start_date),
-                planned_end_date: opt_naive_to_utc(r.planned_end_date),
-                actual_start_date: opt_naive_to_utc(r.actual_start_date),
-                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                planned_start_date: r.planned_start_date,
+                planned_end_date: r.planned_end_date,
+                actual_start_date: r.actual_start_date,
+                actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单发布成功"))
         }

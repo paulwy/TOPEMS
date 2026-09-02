@@ -59,7 +59,7 @@ pub struct CreateProcessRouteRequest {
     pub name: String,
     pub description: Option<String>,
     pub version: Option<String>,
-    pub standard_time: Option<f64>,
+    pub estimated_time_minutes: Option<f64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -67,7 +67,7 @@ pub struct UpdateProcessRouteRequest {
     pub name: Option<String>,
     pub description: Option<String>,
     pub version: Option<String>,
-    pub standard_time: Option<f64>,
+    pub estimated_time_minutes: Option<f64>,
     pub status: Option<String>,
 }
 
@@ -79,8 +79,8 @@ pub struct ProcessRouteResponse {
     pub description: Option<String>,
     pub version: Option<String>,
     pub status: String,
-    pub standard_time: Option<f64>,
-    pub total_standard_time: Option<f64>,
+    pub estimated_time_minutes: Option<f64>,
+    pub total_estimated_time_minutes: Option<f64>,
     pub process_count: Option<i64>,
     pub created_at: String,
     pub updated_at: String,
@@ -90,7 +90,7 @@ pub struct ProcessRouteResponse {
 pub struct AddProcessRouteStepRequest {
     pub process_id: String,
     pub sequence: i32,
-    pub standard_time: Option<f64>,
+    pub estimated_time_minutes: Option<f64>,
     pub work_station_id: Option<String>,
     pub description: Option<String>,
 }
@@ -98,7 +98,7 @@ pub struct AddProcessRouteStepRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateProcessRouteStepRequest {
     pub sequence: Option<i32>,
-    pub standard_time: Option<f64>,
+    pub estimated_time_minutes: Option<f64>,
     pub work_station_id: Option<String>,
     pub description: Option<String>,
 }
@@ -116,7 +116,7 @@ pub struct ProcessRouteStepResponse {
     pub process_name: String,
     pub process_code: String,
     pub sequence: i32,
-    pub standard_time: Option<f64>,
+    pub estimated_time_minutes: Option<f64>,
     pub work_station_id: Option<String>,
     pub work_station_name: Option<String>,
     pub description: Option<String>,
@@ -163,10 +163,10 @@ pub async fn list_process_routes(
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
-            where_clause.push_str(" AND (pr.code ILIKE $1 OR pr.name ILIKE $1)");
+            where_clause.push_str(" AND (pr.route_code ILIKE $1 OR pr.route_name ILIKE $1)");
         } else {
             where_clause.push_str(&format!(
-                " AND (pr.code ILIKE ${} OR pr.name ILIKE ${})",
+                " AND (pr.route_code ILIKE ${} OR pr.route_name ILIKE ${})",
                 params.len() + 1,
                 params.len() + 1
             ));
@@ -196,7 +196,7 @@ pub async fn list_process_routes(
     let fetch_sql = format!(
         r#"
         SELECT 
-            pr.id, pr.code, pr.name, pr.description, pr.status,
+            pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
             pr.created_at, pr.updated_at
         FROM process_routes pr
         {}
@@ -235,8 +235,8 @@ pub async fn list_process_routes(
                 .ok()
                 .flatten()
                 .unwrap_or_else(|| "active".to_string()),
-            standard_time: None,
-            total_standard_time: None,
+            estimated_time_minutes: None,
+            total_estimated_time_minutes: None,
             process_count: None,
             created_at: datetime_to_string(
                 r.try_get::<Option<NaiveDateTime>, _>("created_at")
@@ -282,7 +282,7 @@ pub async fn get_process_route(
     let result = sqlx::query!(
         r#"
         SELECT 
-            pr.id, pr.code, pr.name, pr.description, pr.status,
+            pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
             pr.created_at, pr.updated_at
         FROM process_routes pr
         WHERE pr.id = $1
@@ -297,7 +297,7 @@ pub async fn get_process_route(
             let step_stats = sqlx::query(
                 r#"
                 SELECT 
-                    COALESCE(SUM(prs.standard_time), 0) as total_standard_time,
+                    COALESCE(SUM(prs.estimated_time_minutes), 0) as total_estimated_time_minutes,
                     COUNT(prs.id) as process_count
                 FROM process_route_steps prs
                 WHERE prs.route_id = $1
@@ -307,10 +307,10 @@ pub async fn get_process_route(
             .fetch_one(&state.pool)
             .await;
 
-            let (total_standard_time, process_count) = match step_stats {
+            let (total_estimated_time_minutes, process_count) = match step_stats {
                 Ok(s) => {
                     let tst = s
-                        .try_get::<BigDecimal, _>("total_standard_time")
+                        .try_get::<BigDecimal, _>("total_estimated_time_minutes")
                         .ok()
                         .and_then(|d| d.to_string().parse::<f64>().ok());
                     let pc = s.try_get::<i64, _>("process_count").ok();
@@ -326,12 +326,12 @@ pub async fn get_process_route(
                     name: r.name,
                     description: r.description,
                     version: None,
-                    status: r.status.unwrap_or_else(|| "active".to_string()),
-                    standard_time: None,
-                    total_standard_time,
+                    status: r.status,
+                    estimated_time_minutes: None,
+                    total_estimated_time_minutes,
                     process_count,
-                    created_at: datetime_to_string(r.created_at),
-                    updated_at: datetime_to_string(r.updated_at),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "获取工艺路线成功",
             ))
@@ -357,9 +357,9 @@ pub async fn create_process_route(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO process_routes (code, name, description)
+        INSERT INTO process_routes (route_code, route_name, description)
         VALUES ($1, $2, $3)
-        RETURNING id, code, name, description, status,
+        RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
         "#,
         body.code,
@@ -377,12 +377,12 @@ pub async fn create_process_route(
                 name: r.name,
                 description: r.description,
                 version: None,
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                standard_time: None,
-                total_standard_time: None,
+                status: r.status,
+                estimated_time_minutes: None,
+                total_estimated_time_minutes: None,
                 process_count: None,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "创建工艺路线成功",
         )),
@@ -416,12 +416,12 @@ pub async fn update_process_route(
         r#"
         UPDATE process_routes
         SET 
-            name = COALESCE($1, name),
+            route_name = COALESCE($1, route_name),
             description = COALESCE($2, description),
             status = COALESCE($3, status),
             updated_at = NOW()
         WHERE id = $4
-        RETURNING id, code, name, description, status,
+        RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
         "#,
         body.name,
@@ -440,12 +440,12 @@ pub async fn update_process_route(
                 name: r.name,
                 description: r.description,
                 version: None,
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                standard_time: None,
-                total_standard_time: None,
+                status: r.status,
+                estimated_time_minutes: None,
+                total_estimated_time_minutes: None,
                 process_count: None,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "更新工艺路线成功",
         )),
@@ -514,13 +514,13 @@ pub async fn get_route_steps(
         r#"
         SELECT 
             prs.id, prs.route_id, prs.process_id, prs.sequence,
-            prs.standard_time, prs.work_station_id,
-            prs.description, prs.created_at,
-            pp.name as process_name, pp.process_no as process_code,
-            ws.name as work_station_name
+            prs.estimated_time_minutes, pp.work_station_id,
+            NULL::text AS description, prs.created_at,
+            pp.process_name as process_name, pp.process_code as process_code,
+            ws.station_name as work_station_name
         FROM process_route_steps prs
         LEFT JOIN production_processes pp ON prs.process_id = pp.id
-        LEFT JOIN work_stations ws ON prs.work_station_id = ws.id
+        LEFT JOIN work_stations ws ON pp.work_station_id = ws.id
         WHERE prs.route_id = $1
         ORDER BY prs.sequence ASC
         "#,
@@ -538,13 +538,13 @@ pub async fn get_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
-                    standard_time: opt_big_decimal_to_f64(s.standard_time),
+                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -586,31 +586,28 @@ pub async fn add_route_step(
         }
     };
 
-    let work_station_uuid = body
+    let _work_station_uuid = body
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let standard_time = body
-        .standard_time
+    let estimated_time_minutes = body
+        .estimated_time_minutes
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
 
     let result = sqlx::query!(
         r#"
         INSERT INTO process_route_steps (
-            route_id, process_id, sequence, standard_time,
-            work_station_id, description
+            route_id, process_id, sequence, estimated_time_minutes
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4)
         RETURNING id, route_id, process_id, sequence,
-            standard_time, work_station_id,
-            description, created_at
+            estimated_time_minutes,
+            NULL::uuid AS work_station_id, NULL::text AS description, created_at
         "#,
         route_uuid,
         process_uuid,
         body.sequence,
-        standard_time,
-        work_station_uuid,
-        body.description,
+        estimated_time_minutes,
     )
     .fetch_one(&state.pool)
     .await;
@@ -619,7 +616,7 @@ pub async fn add_route_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT name, process_no FROM production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 process_uuid,
             )
@@ -627,7 +624,7 @@ pub async fn add_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (p.name, p.process_no),
+                Ok(p) => (p.name, p.process_no.unwrap_or_default()),
                 Err(_) => (String::new(), String::new()),
             };
 
@@ -639,11 +636,11 @@ pub async fn add_route_step(
                     process_name,
                     process_code,
                     sequence: s.sequence,
-                    standard_time: opt_big_decimal_to_f64(s.standard_time),
+                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "添加工艺路线步骤成功",
             ))
@@ -674,12 +671,12 @@ pub async fn update_route_step(
         }
     };
 
-    let work_station_uuid = body
+    let _work_station_uuid = body
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let standard_time = body
-        .standard_time
+    let estimated_time_minutes = body
+        .estimated_time_minutes
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
 
     let result = sqlx::query!(
@@ -687,18 +684,14 @@ pub async fn update_route_step(
         UPDATE process_route_steps
         SET 
             sequence = COALESCE($1, sequence),
-            standard_time = COALESCE($2, standard_time),
-            work_station_id = COALESCE($3, work_station_id),
-            description = COALESCE($4, description)
-        WHERE id = $5
+            estimated_time_minutes = COALESCE($2, estimated_time_minutes)
+        WHERE id = $3
         RETURNING id, route_id, process_id, sequence,
-            standard_time, work_station_id,
-            description, created_at
+            estimated_time_minutes,
+            NULL::uuid AS work_station_id, NULL::text AS description, created_at
         "#,
         body.sequence,
-        standard_time,
-        work_station_uuid,
-        body.description,
+        estimated_time_minutes,
         step_uuid,
     )
     .fetch_one(&state.pool)
@@ -708,7 +701,7 @@ pub async fn update_route_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT name, process_no FROM production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 s.process_id,
             )
@@ -716,7 +709,7 @@ pub async fn update_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (p.name, p.process_no),
+                Ok(p) => (p.name, p.process_no.unwrap_or_default()),
                 Err(_) => (String::new(), String::new()),
             };
 
@@ -728,11 +721,11 @@ pub async fn update_route_step(
                     process_name,
                     process_code,
                     sequence: s.sequence,
-                    standard_time: opt_big_decimal_to_f64(s.standard_time),
+                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "更新工艺路线步骤成功",
             ))
@@ -843,13 +836,13 @@ pub async fn reorder_route_steps(
         r#"
         SELECT 
             prs.id, prs.route_id, prs.process_id, prs.sequence,
-            prs.standard_time, prs.work_station_id,
-            prs.description, prs.created_at,
-            pp.name as process_name, pp.process_no as process_code,
-            ws.name as work_station_name
+            prs.estimated_time_minutes, pp.work_station_id,
+            NULL::text AS description, prs.created_at,
+            pp.process_name as process_name, pp.process_code as process_code,
+            ws.station_name as work_station_name
         FROM process_route_steps prs
         LEFT JOIN production_processes pp ON prs.process_id = pp.id
-        LEFT JOIN work_stations ws ON prs.work_station_id = ws.id
+        LEFT JOIN work_stations ws ON pp.work_station_id = ws.id
         WHERE prs.route_id = $1
         ORDER BY prs.sequence ASC
         "#,
@@ -867,13 +860,13 @@ pub async fn reorder_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
-                    standard_time: opt_big_decimal_to_f64(s.standard_time),
+                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -886,5 +879,57 @@ pub async fn reorder_route_steps(
             tracing::error!("Failed to fetch reordered steps: {}", e);
             Json(ApiResponse::error(500, "获取重排序后的步骤失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn datetime_to_string_some_rfc3339() {
+        let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let s = datetime_to_string(Some(dt));
+        assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
+    }
+
+    #[test]
+    fn datetime_to_string_none_valid() {
+        let s = datetime_to_string(None);
+        assert!(s.contains('T'));
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_some() {
+        let bd: BigDecimal = "12.5".parse().unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(12.5));
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_none() {
+        assert_eq!(opt_big_decimal_to_f64(None), None);
     }
 }

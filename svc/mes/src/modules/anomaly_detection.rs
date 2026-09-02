@@ -388,7 +388,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     // 1. 基于设备巡检数据检测温度/振动/噪音异常
     if let Ok(rows) = sqlx::query(
         r#"
-        SELECT e.id, e.equipment_no, e.name,
+        SELECT e.id, e.equipment_code AS equipment_no, e.equipment_name AS name,
                ei.temperature, ei.vibration, ei.noiselevel, ei.inspection_date,
                ei.status
         FROM equipment_inspections ei
@@ -573,7 +573,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     // 2. 基于设备 OEE 下降检测
     if let Ok(rows) = sqlx::query(
         r#"
-        SELECT e.id, e.equipment_no, e.name,
+        SELECT e.id, e.equipment_code AS equipment_no, e.equipment_name AS name,
                AVG(eo.oee) as avg_oee,
                MAX(eo.oee) as max_oee,
                MIN(eo.oee) as min_oee,
@@ -581,7 +581,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         FROM equipment_oee eo
         JOIN equipment e ON e.id = eo.equipment_id
         WHERE eo.record_date >= CURRENT_DATE - INTERVAL '30 days'
-        GROUP BY e.id, e.equipment_no, e.name
+        GROUP BY e.id, e.equipment_code, e.equipment_name
         HAVING AVG(eo.oee) < 0.60
         "#,
     )
@@ -630,7 +630,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     // 3. 基于维护周期过期检测
     if let Ok(rows) = sqlx::query(
         r#"
-        SELECT id, equipment_no, name, maintenance_cycle,
+        SELECT id, equipment_code AS equipment_no, equipment_name AS name, maintenance_frequency_days AS maintenance_cycle,
                last_maintenance_date, next_maintenance_date
         FROM equipment
         WHERE status != 'scrapped'
@@ -820,7 +820,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     // 1. 基于生产订单延期检测
     if let Ok(rows) = sqlx::query(
         r#"
-        SELECT id, order_no, product_name, status,
+        SELECT id, order_number AS order_no, product_name, status,
                planned_end_date, actual_end_date,
                quantity, completed_quantity
         FROM production_orders
@@ -836,20 +836,12 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let order_id: uuid::Uuid = row.get("id");
             let order_no: String = row.get("order_no");
             let product_name: String = row.get("product_name");
-            let planned_end: Option<chrono::NaiveDateTime> = row.get("planned_end_date");
-            let quantity: f64 = row
-                .get::<sqlx::types::BigDecimal, _>("quantity")
-                .to_string()
-                .parse()
-                .unwrap_or(0.0);
-            let completed: f64 = row
-                .get::<sqlx::types::BigDecimal, _>("completed_quantity")
-                .to_string()
-                .parse()
-                .unwrap_or(0.0);
+            let planned_end: Option<chrono::NaiveDate> = row.get("planned_end_date");
+            let quantity: f64 = row.get::<i32, _>("quantity") as f64;
+            let completed: f64 = row.get::<i32, _>("completed_quantity") as f64;
 
             let days_delay = if let Some(pe) = planned_end {
-                Utc::now().naive_utc().signed_duration_since(pe).num_days()
+                Utc::now().naive_utc().date().signed_duration_since(pe).num_days()
             } else {
                 0
             };
@@ -894,7 +886,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         r#"
         SELECT w.order_no, w.product_name, w.wip_no, w.status,
                w.quantity, w.start_time,
-               ws.name as station_name
+               ws.station_name as station_name
         FROM wips w
         LEFT JOIN work_stations ws ON ws.id = w.current_work_station_id
         WHERE w.status = 'in_progress'
@@ -1275,4 +1267,133 @@ pub async fn reject_anomaly_handling(
         build_reject_response(req.approval_id),
         "异常处置审批驳回成功",
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- is_increasing_trend ----
+    #[test]
+    fn trend_short_series_not_trend() {
+        assert!(!is_increasing_trend(&[]));
+        assert!(!is_increasing_trend(&[1.0]));
+        assert!(!is_increasing_trend(&[1.0, 2.0]));
+    }
+
+    #[test]
+    fn trend_strictly_increasing_is_trend() {
+        assert!(is_increasing_trend(&[1.0, 2.0, 3.0, 4.0, 5.0]));
+    }
+
+    #[test]
+    fn trend_decreasing_not_trend() {
+        assert!(!is_increasing_trend(&[5.0, 4.0, 3.0, 2.0, 1.0]));
+    }
+
+    #[test]
+    fn trend_flat_not_trend() {
+        assert!(!is_increasing_trend(&[3.0, 3.0, 3.0, 3.0]));
+    }
+
+    #[test]
+    fn trend_three_points_all_up() {
+        assert!(is_increasing_trend(&[1.0, 2.0, 3.0]));
+    }
+
+    #[test]
+    fn trend_three_points_half_up_not_trend() {
+        // [1,2,1] 只有 1/2 上升，50% <= 60%
+        assert!(!is_increasing_trend(&[1.0, 2.0, 1.0]));
+    }
+
+    #[test]
+    fn trend_75_percent_up_is_trend() {
+        // [1,2,1,2,3] 上升 3/4 = 75% > 60%
+        assert!(is_increasing_trend(&[1.0, 2.0, 1.0, 2.0, 3.0]));
+    }
+
+    #[test]
+    fn trend_50_percent_up_not_trend() {
+        // [1,2,1,2,1] 上升 2/4 = 50% <= 60%
+        assert!(!is_increasing_trend(&[1.0, 2.0, 1.0, 2.0, 1.0]));
+    }
+
+    #[test]
+    fn trend_with_noise_still_detects_upward() {
+        // 长序列线性上升，仅少量小回撤（约 75% 点上升）
+        let data = (0..20)
+            .map(|i| {
+                let v = i as f64;
+                if i % 4 == 3 {
+                    v - 0.2
+                } else {
+                    v
+                }
+            })
+            .collect::<Vec<_>>();
+        assert!(is_increasing_trend(&data));
+    }
+
+    // ---- default_rules ----
+    #[test]
+    fn default_rules_non_empty() {
+        let rules = default_rules();
+        assert!(!rules.is_empty());
+    }
+
+    #[test]
+    fn default_rules_contains_expected_rule() {
+        let rules = default_rules();
+        assert!(rules.iter().any(|r| r.id == "rule_equipment_overheat"));
+        assert!(rules.iter().any(|r| r.id == "rule_quality_defect_rate"));
+    }
+
+    #[test]
+    fn default_rules_all_enabled() {
+        assert!(default_rules().iter().all(|r| r.enabled));
+    }
+
+    #[test]
+    fn default_rules_thresholds_valid() {
+        for r in default_rules() {
+            if r.metric_name == "oee" {
+                // OEE 是"越低越差"指标：warning(0.60) 先于 critical(0.40) 触发
+                assert!(
+                    r.warning_threshold >= r.critical_threshold,
+                    "OEE 规则 {} 的 warning({}) 应 >= critical({})",
+                    r.id,
+                    r.warning_threshold,
+                    r.critical_threshold
+                );
+            } else {
+                // 其余"越高越差"指标：warning 应先于 critical 触发
+                assert!(
+                    r.warning_threshold <= r.critical_threshold,
+                    "规则 {} 的 warning({}) 应 <= critical({})",
+                    r.id,
+                    r.warning_threshold,
+                    r.critical_threshold
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn default_rules_have_metric_and_type() {
+        for r in default_rules() {
+            assert!(!r.metric_name.is_empty());
+            assert!(!r.rule_type.is_empty());
+            assert!(r.window_size >= 1);
+        }
+    }
+
+    #[test]
+    fn default_rules_have_unique_ids() {
+        let mut ids: Vec<_> = default_rules().into_iter().map(|r| r.id).collect();
+        let n = ids.len();
+        ids.sort();
+        ids.dedup();
+        assert_eq!(ids.len(), n, "规则 id 应唯一");
+    }
 }

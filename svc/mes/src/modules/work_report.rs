@@ -1161,3 +1161,156 @@ pub async fn reject_rework(
         "返工审批驳回成功",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, Timelike};
+
+    // ---- naive_to_utc ----
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 5, 20)
+            .unwrap()
+            .and_hms_opt(8, 30, 15)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.year(), 2024);
+        assert_eq!(utc.month(), 5);
+        assert_eq!(utc.day(), 20);
+        assert_eq!(utc.hour(), 8);
+        assert_eq!(utc.minute(), 30);
+        assert_eq!(utc.second(), 15);
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    // ---- datetime_to_string ----
+    #[test]
+    fn datetime_to_string_some_produces_rfc3339() {
+        let dt = NaiveDate::from_ymd_opt(2024, 1, 2)
+            .unwrap()
+            .and_hms_opt(3, 4, 5)
+            .unwrap();
+        let s = datetime_to_string(Some(dt));
+        assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
+    }
+
+    #[test]
+    fn datetime_to_string_none_is_valid_rfc3339() {
+        let s = datetime_to_string(None);
+        assert!(s.contains('T'), "got {}", s);
+        assert!(
+            s.contains("2024") || s.contains("2025") || s.contains("2026"),
+            "got {}",
+            s
+        );
+    }
+
+    // ---- opt_datetime_to_string ----
+    #[test]
+    fn opt_datetime_to_string_some_returns_some() {
+        let dt = NaiveDate::from_ymd_opt(2024, 6, 15)
+            .unwrap()
+            .and_hms_opt(12, 0, 0)
+            .unwrap();
+        let r = opt_datetime_to_string(Some(dt));
+        assert!(r.is_some());
+        assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
+    }
+
+    #[test]
+    fn opt_datetime_to_string_none_returns_none() {
+        assert!(opt_datetime_to_string(None).is_none());
+    }
+
+    // ---- big_decimal_to_f64 ----
+    #[test]
+    fn big_decimal_to_f64_some_parses() {
+        let bd: BigDecimal = "1.25".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 1.25);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_integer() {
+        let bd: BigDecimal = "42".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 42.0);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_none_defaults_zero() {
+        assert_eq!(big_decimal_to_f64(None), 0.0);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_negative() {
+        let bd: BigDecimal = "-7.5".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), -7.5);
+    }
+
+    // ---- parse_report_date ----
+    #[test]
+    fn parse_report_date_valid() {
+        let d = parse_report_date("2024-03-10").unwrap();
+        assert_eq!(d.year(), 2024);
+        assert_eq!(d.month(), 3);
+        assert_eq!(d.day(), 10);
+    }
+
+    #[test]
+    fn parse_report_date_leap_year() {
+        assert!(parse_report_date("2024-02-29").is_ok());
+    }
+
+    #[test]
+    fn parse_report_date_non_leap_year_rejected() {
+        assert!(parse_report_date("2023-02-29").is_err());
+    }
+
+    #[test]
+    fn parse_report_date_invalid_month() {
+        assert!(parse_report_date("2024-13-01").is_err());
+    }
+
+    #[test]
+    fn parse_report_date_empty_rejected() {
+        assert!(parse_report_date("").is_err());
+    }
+
+    #[test]
+    fn parse_report_date_bad_format() {
+        assert!(parse_report_date("2024/03/10").is_err());
+        assert!(parse_report_date("10-03-2024").is_err());
+    }
+
+    #[test]
+    fn parse_report_date_single_digit_day() {
+        let d = parse_report_date("2024-03-05").unwrap();
+        assert_eq!(d.day(), 5);
+    }
+
+    // ---- generate_report_no ----
+    #[test]
+    fn generate_report_no_has_prefix() {
+        assert!(generate_report_no().starts_with("WR"));
+    }
+
+    #[test]
+    fn generate_report_no_length() {
+        // "WR" + YYYYMMDDHHMMSS(14) = 16
+        assert_eq!(generate_report_no().len(), 16);
+    }
+
+    #[test]
+    fn generate_report_no_has_digits_only_after_prefix() {
+        let no = generate_report_no();
+        let digits = &no[2..];
+        assert!(digits.chars().all(|c| c.is_ascii_digit()));
+    }
+}

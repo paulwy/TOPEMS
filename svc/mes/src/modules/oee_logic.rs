@@ -248,7 +248,10 @@ mod tests {
 
     #[test]
     fn test_efficiency_trend_significantly_improved() {
-        assert_eq!(calculate_efficiency_trend(Some(70.0), 75.0), "significantly_improved");
+        assert_eq!(
+            calculate_efficiency_trend(Some(70.0), 75.0),
+            "significantly_improved"
+        );
     }
 
     #[test]
@@ -280,7 +283,10 @@ mod tests {
 
     #[test]
     fn test_efficiency_trend_significantly_decreased() {
-        assert_eq!(calculate_efficiency_trend(Some(70.0), 65.0), "significantly_decreased");
+        assert_eq!(
+            calculate_efficiency_trend(Some(70.0), 65.0),
+            "significantly_decreased"
+        );
     }
 
     #[test]
@@ -342,14 +348,18 @@ mod tests {
     fn test_validate_oee_inputs_good_exceeds_actual() {
         let result = validate_oee_inputs(480.0, 400.0, 80.0, 1.0, 50.0, 60.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Good output cannot exceed actual output"));
+        assert!(result
+            .unwrap_err()
+            .contains("Good output cannot exceed actual output"));
     }
 
     #[test]
     fn test_validate_oee_inputs_run_exceeds_planned_plus_downtime() {
         let result = validate_oee_inputs(400.0, 500.0, 50.0, 1.0, 50.0, 45.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Run time cannot exceed planned time plus downtime"));
+        assert!(result
+            .unwrap_err()
+            .contains("Run time cannot exceed planned time plus downtime"));
     }
 
     #[test]

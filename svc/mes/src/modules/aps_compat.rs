@@ -13,7 +13,6 @@
 //!   2. 或者在网关层配置 301 重定向
 
 use axum::{
-    extract::Request,
     http::{StatusCode, Uri},
     response::{IntoResponse, Redirect, Response},
     routing::any,
@@ -59,8 +58,7 @@ async fn redirect_to_mes(uri: Uri) -> Response {
 async fn redirect_forecasts(uri: Uri) -> Response {
     let path = uri.path();
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
-    let new_path = path
-        .replacen("/api/aps/forecasts", "/api/mes/demand-forecasts", 1);
+    let new_path = path.replacen("/api/aps/forecasts", "/api/mes/demand-forecasts", 1);
     let target = format!("{}{}", new_path, query);
     Redirect::permanent(&target).into_response()
 }
@@ -96,7 +94,6 @@ pub async fn compat_info() -> impl IntoResponse {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_redirect_path_mapping() {

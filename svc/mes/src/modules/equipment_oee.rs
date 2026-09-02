@@ -248,11 +248,11 @@ pub async fn list_oee_records(
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
             where_clause.push_str(
-                " WHERE (e.name ILIKE $1 OR e.equipment_no ILIKE $1 OR oee.operator ILIKE $1)",
+                " WHERE (e.equipment_name ILIKE $1 OR e.equipment_code ILIKE $1 OR oee.operator ILIKE $1)",
             );
         } else {
             where_clause.push_str(&format!(
-                " AND (e.name ILIKE ${} OR e.equipment_no ILIKE ${} OR oee.operator ILIKE ${})",
+                " AND (e.equipment_name ILIKE ${} OR e.equipment_code ILIKE ${} OR oee.operator ILIKE ${})",
                 params.len() + 1,
                 params.len() + 1,
                 params.len() + 1
@@ -288,7 +288,7 @@ pub async fn list_oee_records(
             oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
-            e.name as equipment_name, e.equipment_no
+            e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
         {}
@@ -490,7 +490,7 @@ pub async fn create_oee_record(
     };
 
     let equipment = sqlx::query!(
-        r#"SELECT name, equipment_no FROM equipment WHERE id = $1"#,
+        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1"#,
         req.equipment_id
     )
     .fetch_optional(&state.pool)
@@ -557,7 +557,7 @@ pub async fn get_oee_record(
             oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
-            e.name as equipment_name, e.equipment_no
+            e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE oee.id = $1
@@ -945,8 +945,8 @@ pub async fn get_oee_statistics(
         r#"
         SELECT 
             e.id as equipment_id,
-            e.name as equipment_name,
-            e.equipment_no as equipment_code,
+            e.equipment_name as equipment_name,
+            e.equipment_code as equipment_code,
             COALESCE(AVG(oee.availability), 0) as availability,
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
@@ -956,7 +956,7 @@ pub async fn get_oee_statistics(
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
         WHERE ($1::uuid IS NULL OR e.id = $1)
-        GROUP BY e.id, e.name, e.equipment_no
+        GROUP BY e.id, e.equipment_name, e.equipment_code
         ORDER BY oee DESC
         "#,
         req.equipment_id,
@@ -1033,7 +1033,7 @@ pub async fn get_equipment_efficiency_analysis(
     let result = sqlx::query!(
         r#"
         SELECT 
-            e.id as equipment_id, e.name as equipment_name, e.equipment_no,
+            e.id as equipment_id, e.equipment_name as equipment_name, e.equipment_code as equipment_no,
             COALESCE(AVG(oee.oee), 0) as oee,
             COALESCE(AVG(oee.availability), 0) as availability,
             COALESCE(AVG(oee.performance), 0) as performance,
@@ -1043,7 +1043,7 @@ pub async fn get_equipment_efficiency_analysis(
         LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND oee.record_date >= CURRENT_DATE - INTERVAL '30 days'
         WHERE e.id = $1
-        GROUP BY e.id, e.name, e.equipment_no, e.status
+        GROUP BY e.id, e.equipment_name, e.equipment_code, e.status
         ORDER BY oee DESC
         "#,
         equipment_uuid,

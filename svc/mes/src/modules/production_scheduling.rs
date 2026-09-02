@@ -250,9 +250,9 @@ pub async fn list_production_schedules(
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
             ps.created_at, ps.updated_at,
-            ws.name as work_station_name,
-            e.name as equipment_name,
-            pp.name as process_name
+            ws.station_name as work_station_name,
+            e.equipment_name as equipment_name,
+            pp.process_name as process_name
         FROM production_schedules ps
         LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
         LEFT JOIN equipment e ON ps.equipment_id = e.id
@@ -408,7 +408,7 @@ pub async fn create_production_schedule(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_no FROM production_orders WHERE id = $1"#,
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
             order_id
         )
         .fetch_optional(&state.pool)
@@ -533,9 +533,9 @@ pub async fn get_production_schedule(
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
             ps.created_at, ps.updated_at,
-            ws.name as work_station_name,
-            e.name as equipment_name,
-            pp.name as process_name
+            ws.station_name as work_station_name,
+            e.equipment_name as equipment_name,
+            pp.process_name as process_name
         FROM production_schedules ps
         LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
         LEFT JOIN equipment e ON ps.equipment_id = e.id
@@ -841,7 +841,7 @@ pub async fn get_gantt_data(
             ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.quantity, ps.completed_quantity,
-            ws.name as work_station_name
+            ws.station_name as work_station_name
         FROM production_schedules ps
         LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
         WHERE ps.planned_start_time IS NOT NULL
@@ -907,4 +907,71 @@ pub async fn get_gantt_data(
         GanttDataResponse { tasks, resources },
         "获取甘特图数据成功",
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, NaiveDate, Timelike};
+
+    // ---- naive_to_utc ----
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 9, 10)
+            .unwrap()
+            .and_hms_opt(14, 20, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.year(), 2024);
+        assert_eq!(utc.month(), 9);
+        assert_eq!(utc.day(), 10);
+        assert_eq!(utc.hour(), 14);
+        assert_eq!(utc.minute(), 20);
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    // ---- opt_naive_to_utc ----
+    #[test]
+    fn opt_naive_to_utc_some() {
+        let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
+            .unwrap()
+            .and_hms_opt(23, 59, 59)
+            .unwrap();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
+        assert_eq!(r.year(), 2024);
+        assert_eq!(r.month(), 2);
+        assert_eq!(r.day(), 28);
+        assert_eq!(r.hour(), 23);
+        assert_eq!(r.second(), 59);
+    }
+
+    #[test]
+    fn opt_naive_to_utc_none() {
+        assert!(opt_naive_to_utc(None).is_none());
+    }
+
+    // ---- big_decimal_to_f64 ----
+    #[test]
+    fn big_decimal_to_f64_some() {
+        let bd: BigDecimal = "99.99".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 99.99);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), 0.0);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_large() {
+        let bd: BigDecimal = "1234567.89".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 1234567.89);
+    }
 }

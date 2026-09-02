@@ -228,11 +228,12 @@ pub async fn list_equipment(
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
-            where_clause
-                .push_str(" WHERE (equipment_no ILIKE $1 OR name ILIKE $1 OR model ILIKE $1)");
+            where_clause.push_str(
+                " WHERE (equipment_code ILIKE $1 OR equipment_name ILIKE $1 OR model ILIKE $1)",
+            );
         } else {
             where_clause.push_str(&format!(
-                " AND (equipment_no ILIKE ${} OR name ILIKE ${} OR model ILIKE ${})",
+                " AND (equipment_code ILIKE ${} OR equipment_name ILIKE ${} OR model ILIKE ${})",
                 params.len() + 1,
                 params.len() + 1,
                 params.len() + 1
@@ -260,7 +261,7 @@ pub async fn list_equipment(
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, equipment_no, name, model, manufacturer,
+            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_end_date,
             maintenance_cycle, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
@@ -341,13 +342,13 @@ pub async fn create_equipment(
     let result = sqlx::query(
         r#"
         INSERT INTO equipment (
-            equipment_no, name, model, manufacturer, status,
+            equipment_code, equipment_name, model, manufacturer, status,
             location, purchase_date, warranty_end_date,
             maintenance_cycle, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
         RETURNING 
-            id, equipment_no, name, model, manufacturer,
+            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_end_date,
             maintenance_cycle, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
@@ -406,7 +407,7 @@ pub async fn get_equipment(
     let result = sqlx::query(
         r#"
         SELECT 
-            id, equipment_no, name, model, manufacturer,
+            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_end_date,
             maintenance_cycle, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
@@ -477,7 +478,7 @@ pub async fn update_equipment(
             updated_at = $13
         WHERE id = $1
         RETURNING 
-            id, equipment_no, name, model, manufacturer,
+            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_end_date,
             maintenance_cycle, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
@@ -601,7 +602,7 @@ pub async fn maintenance_equipment(
             updated_at = $4
         WHERE id = $1
         RETURNING 
-            id, equipment_no, name, model, manufacturer,
+            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_end_date,
             maintenance_cycle, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
@@ -656,7 +657,7 @@ pub async fn get_equipment_statistics(
             SUM(CASE WHEN status = 'normal' THEN 1 ELSE 0 END) as normal_count,
             SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_count,
             SUM(CASE WHEN status = 'fault' THEN 1 ELSE 0 END) as fault_count,
-            SUM(CASE WHEN next_maintenance IS NOT NULL AND next_maintenance <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
+            SUM(CASE WHEN next_maintenance_date IS NOT NULL AND next_maintenance_date <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
         FROM equipment
         "#,
     )
@@ -760,7 +761,7 @@ pub async fn list_maintenances(
     let result = sqlx::query!(
         r#"
         SELECT 
-            m.id, m.equipment_id, e.name as equipment_name, e.equipment_no,
+            m.id, m.equipment_id, e.equipment_name as equipment_name, e.equipment_code as equipment_no,
             m.maintenance_type, m.description, m.maintainer,
             m.start_time, m.end_time, m.cost, m.result, m.status, m.remarks,
             m.created_at, m.updated_at
@@ -789,20 +790,20 @@ pub async fn list_maintenances(
         .into_iter()
         .map(|r| MaintenanceRecord {
             id: r.id,
-            equipment_id: r.equipment_id.unwrap(),
+            equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
             equipment_no: Some(r.equipment_no),
-            maintenance_type: r.maintenance_type.unwrap_or_default(),
-            description: r.description,
-            maintainer: r.maintainer.unwrap(),
-            start_time: naive_to_utc(r.start_time),
-            end_time: r.end_time.map(|dt| naive_to_utc(Some(dt))),
+            maintenance_type: r.maintenance_type,
+            description: Some(r.description),
+            maintainer: r.maintainer,
+            start_time: r.start_time,
+            end_time: r.end_time,
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
-            status: r.status.unwrap_or_else(|| "pending".to_string()),
+            status: r.status,
             remarks: r.remarks,
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -875,13 +876,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time.naive_utc(),
-        end_time.map(|dt| dt.naive_utc()),
+        start_time,
+        end_time,
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -895,7 +896,7 @@ pub async fn create_maintenance(
     };
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT name FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -904,7 +905,7 @@ pub async fn create_maintenance(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_no FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -915,20 +916,20 @@ pub async fn create_maintenance(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: result.id,
-            equipment_id: result.equipment_id.unwrap(),
+            equipment_id: result.equipment_id,
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type.unwrap_or_default(),
-            description: result.description,
-            maintainer: result.maintainer.unwrap(),
-            start_time: naive_to_utc(result.start_time),
-            end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
+            maintenance_type: result.maintenance_type,
+            description: Some(result.description),
+            maintainer: result.maintainer,
+            start_time: result.start_time,
+            end_time: result.end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: result.status.unwrap_or_else(|| "pending".to_string()),
+            status: result.status,
             remarks: result.remarks,
-            created_at: naive_to_utc(result.created_at),
-            updated_at: naive_to_utc(result.updated_at),
+            created_at: result.created_at,
+            updated_at: result.updated_at,
         },
         "维护记录创建成功",
     ))
@@ -975,7 +976,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -990,7 +991,7 @@ pub async fn update_maintenance_status(
     };
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT name FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -999,7 +1000,7 @@ pub async fn update_maintenance_status(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_no FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
         result.equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -1010,20 +1011,20 @@ pub async fn update_maintenance_status(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: result.id,
-            equipment_id: result.equipment_id.unwrap(),
+            equipment_id: result.equipment_id,
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type.unwrap_or_default(),
-            description: result.description,
-            maintainer: result.maintainer.unwrap(),
-            start_time: naive_to_utc(result.start_time),
-            end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
+            maintenance_type: result.maintenance_type,
+            description: Some(result.description),
+            maintainer: result.maintainer,
+            start_time: result.start_time,
+            end_time: result.end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: result.status.unwrap_or_else(|| "pending".to_string()),
+            status: result.status,
             remarks: result.remarks,
-            created_at: naive_to_utc(result.created_at),
-            updated_at: naive_to_utc(result.updated_at),
+            created_at: result.created_at,
+            updated_at: result.updated_at,
         },
         "维护状态更新成功",
     ))
@@ -1222,7 +1223,7 @@ pub async fn create_inspection(
     };
 
     let equipment_info = sqlx::query!(
-        r#"SELECT equipment_no, name FROM equipment WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM equipment WHERE deleted_at IS NULL AND id = $1"#,
         equipment_uuid,
     )
     .fetch_optional(&state.pool)
@@ -1310,5 +1311,109 @@ pub async fn create_inspection(
             tracing::error!("Failed to create inspection: {}", e);
             Json(ApiResponse::error(500, "创建点检记录失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    // ---- naive_to_utc ----
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    // ---- opt_big_decimal_to_f64 ----
+    #[test]
+    fn opt_big_decimal_to_f64_some() {
+        let bd: BigDecimal = "12.5".parse().unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(12.5));
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_none() {
+        assert_eq!(opt_big_decimal_to_f64(None), None);
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_zero() {
+        let bd: BigDecimal = "0".parse().unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(0.0));
+    }
+
+    // ---- f64_to_big_decimal ----
+    #[test]
+    fn f64_to_big_decimal_roundtrip() {
+        let f = Some(3.5);
+        let bd = f64_to_big_decimal(f).unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(3.5));
+    }
+
+    #[test]
+    fn f64_to_big_decimal_none() {
+        assert!(f64_to_big_decimal(None).is_none());
+    }
+
+    #[test]
+    fn f64_to_big_decimal_zero() {
+        let bd = f64_to_big_decimal(Some(0.0)).unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(0.0));
+    }
+
+    #[test]
+    fn f64_to_big_decimal_integer_value() {
+        let bd = f64_to_big_decimal(Some(100.0)).unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(100.0));
+    }
+
+    // ---- naive_date_to_string ----
+    #[test]
+    fn naive_date_to_string_some() {
+        let d = NaiveDate::from_ymd_opt(2024, 12, 25).unwrap();
+        assert_eq!(naive_date_to_string(Some(d)).unwrap(), "2024-12-25");
+    }
+
+    #[test]
+    fn naive_date_to_string_none() {
+        assert!(naive_date_to_string(None).is_none());
+    }
+
+    #[test]
+    fn naive_date_to_string_single_digit_padding() {
+        let d = NaiveDate::from_ymd_opt(2024, 1, 5).unwrap();
+        assert_eq!(naive_date_to_string(Some(d)).unwrap(), "2024-01-05");
+    }
+
+    // ---- datetime_to_string ----
+    #[test]
+    fn datetime_to_string_some_rfc3339() {
+        let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let s = datetime_to_string(Some(dt));
+        assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
+    }
+
+    #[test]
+    fn datetime_to_string_none_valid() {
+        let s = datetime_to_string(None);
+        assert!(s.contains('T'));
     }
 }

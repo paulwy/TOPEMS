@@ -70,52 +70,27 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-                CREATE TABLE IF NOT EXISTS production_orders (
+        CREATE TABLE IF NOT EXISTS production_orders (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id UUID,
-            order_number VARCHAR(100) NOT NULL,
-            order_type VARCHAR(50),
-            product_name VARCHAR(255) NOT NULL,
-            product_code VARCHAR(100),
-            product_specification TEXT,
-            batch_number VARCHAR(100),
-            quantity INTEGER NOT NULL,
-            unit VARCHAR(20) DEFAULT 'piece',
-            planned_quantity INTEGER,
-            completed_quantity INTEGER DEFAULT 0,
-            rejected_quantity INTEGER DEFAULT 0,
-            scrapped_quantity INTEGER DEFAULT 0,
-            priority VARCHAR(20) DEFAULT 'normal',
-            status VARCHAR(20) NOT NULL DEFAULT 'created',
-            progress_percentage INTEGER DEFAULT 0,
-            planned_start_date DATE,
-            planned_end_date DATE,
-            actual_start_date DATE,
-            actual_end_date DATE,
-            estimated_duration_hours DECIMAL(10,2),
-            actual_duration_hours DECIMAL(10,2),
-            customer_id UUID,
-            customer_name VARCHAR(255),
-            customer_order_number VARCHAR(100),
-            sales_order_id UUID,
-            process_route_id UUID,
-            process_route_name VARCHAR(255),
-            work_station_id UUID,
-            work_station_name VARCHAR(255),
-            assigned_to VARCHAR(255),
-            assigned_to_id UUID,
-            team VARCHAR(100),
-            material_requirements JSONB,
-            tool_requirements JSONB,
-            quality_requirements JSONB,
-            special_instructions TEXT,
+            order_no VARCHAR(64) NOT NULL UNIQUE,
+            product_id UUID,
+            product_name VARCHAR(256) NOT NULL,
+            product_code VARCHAR(64) NOT NULL,
+            quantity DECIMAL(12,2) NOT NULL,
+            completed_quantity DECIMAL(12,2) DEFAULT 0,
+            status VARCHAR(32) DEFAULT 'pending',
+            source VARCHAR(32) DEFAULT 'manual',
+            source_order_id UUID,
+            source_order_number VARCHAR(64),
+            planned_start_date TIMESTAMP,
+            planned_end_date TIMESTAMP,
+            actual_start_date TIMESTAMP,
+            actual_end_date TIMESTAMP,
+            workshop_id UUID,
             notes TEXT,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            created_by UUID,
-            updated_by UUID,
-            deleted_at TIMESTAMPTZ,
-            tenant_id UUID
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -126,39 +101,19 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-                CREATE TABLE IF NOT EXISTS production_processes (
+        CREATE TABLE IF NOT EXISTS production_processes (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id UUID NOT NULL,
-            process_code VARCHAR(100),
-            process_name VARCHAR(255) NOT NULL,
-            process_type VARCHAR(50),
+            process_no VARCHAR(64) NOT NULL UNIQUE,
+            name VARCHAR(128) NOT NULL,
             description TEXT,
-            sequence INTEGER NOT NULL,
-            version VARCHAR(20) DEFAULT '1.0',
-            is_active BOOLEAN DEFAULT true,
-            standard_time_minutes DECIMAL(10,2),
-            setup_time_minutes DECIMAL(10,2),
-            cycle_time_minutes DECIMAL(10,2),
-            wait_time_minutes DECIMAL(10,2),
-            work_station_id UUID,
-            work_station_name VARCHAR(255),
-            required_skills JSONB,
-            required_tools JSONB,
-            required_materials JSONB,
-            quality_check_points JSONB,
-            safety_requirements TEXT,
-            environmental_requirements TEXT,
-            operation_instructions TEXT,
-            parameters JSONB,
-            predecessor_process_id UUID,
-            successor_process_id UUID,
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            created_by UUID,
-            updated_by UUID,
-            deleted_at TIMESTAMPTZ,
-            tenant_id UUID
+            version VARCHAR(32) DEFAULT '1.0',
+            status VARCHAR(32) DEFAULT 'active',
+            sequence INT DEFAULT 0,
+            equipment_required BOOLEAN DEFAULT false,
+            estimated_duration INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -169,48 +124,22 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-                CREATE TABLE IF NOT EXISTS production_records (
+        CREATE TABLE IF NOT EXISTS production_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id UUID NOT NULL,
-            order_id UUID NOT NULL,
-            process_id UUID,
-            process_name VARCHAR(255),
-            route_step_id UUID,
-            work_station_id UUID,
-            work_station_name VARCHAR(255),
-            operator VARCHAR(255) NOT NULL,
+            order_id UUID NOT NULL REFERENCES production_orders(id) ON DELETE CASCADE,
+            process_id UUID REFERENCES production_processes(id),
+            work_station_id UUID REFERENCES work_stations(id),
+            equipment_id UUID REFERENCES equipment(id),
             operator_id UUID,
-            team VARCHAR(100),
-            batch_number VARCHAR(100),
-            start_time TIMESTAMPTZ NOT NULL,
-            end_time TIMESTAMPTZ,
-            duration_minutes DECIMAL(10,2),
-            planned_quantity INTEGER,
-            completed_quantity INTEGER NOT NULL DEFAULT 0,
-            good_quantity INTEGER DEFAULT 0,
-            rejected_quantity INTEGER DEFAULT 0,
-            scrapped_quantity INTEGER DEFAULT 0,
-            rework_quantity INTEGER DEFAULT 0,
-            yield_rate DECIMAL(5,2),
-            efficiency_rate DECIMAL(5,2),
-            quality_check_result VARCHAR(20),
-            quality_check_notes TEXT,
-            material_usage JSONB,
-            tool_usage JSONB,
-            parameters JSONB,
-            deviations TEXT,
-            issues TEXT,
-            status VARCHAR(20) NOT NULL DEFAULT 'in_progress',
-            approved_by VARCHAR(255),
-            approved_at TIMESTAMPTZ,
+            start_time TIMESTAMP NOT NULL,
+            end_time TIMESTAMP,
+            quantity_produced DECIMAL(12,2) DEFAULT 0,
+            quantity_defective DECIMAL(12,2) DEFAULT 0,
+            status VARCHAR(32) DEFAULT 'in_progress',
             notes TEXT,
-            attachments JSONB,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            created_by UUID,
-            updated_by UUID,
-            deleted_at TIMESTAMPTZ,
-            tenant_id UUID
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -221,108 +150,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-                CREATE TABLE IF NOT EXISTS equipment (
+        CREATE TABLE IF NOT EXISTS equipment (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id UUID NOT NULL,
-            equipment_code VARCHAR(100) NOT NULL,
-            equipment_name VARCHAR(255) NOT NULL,
-            equipment_type VARCHAR(50),
-            category VARCHAR(50),
-            model VARCHAR(100),
-            brand VARCHAR(100),
-            serial_number VARCHAR(100),
-            specification TEXT,
-            manufacturer VARCHAR(255),
-            manufacture_date DATE,
+            equipment_no VARCHAR(64) NOT NULL UNIQUE,
+            name VARCHAR(128) NOT NULL,
+            model VARCHAR(64),
+            manufacturer VARCHAR(128),
+            status VARCHAR(32) DEFAULT 'normal',
+            location VARCHAR(256),
             purchase_date DATE,
-            installation_date DATE,
-            location VARCHAR(255),
-            building VARCHAR(100),
-            floor VARCHAR(50),
-            area VARCHAR(100),
-            work_station_id UUID,
-            responsible_person VARCHAR(255),
-            responsible_person_id UUID,
-            department VARCHAR(100),
-            purchase_price DECIMAL(15,2),
-            current_value DECIMAL(15,2),
-            depreciation_rate DECIMAL(5,2),
-            warranty_expiry_date DATE,
-            power_consumption DECIMAL(10,2),
-            capacity VARCHAR(100),
-            max_capacity DECIMAL(10,2),
-            current_capacity DECIMAL(10,2),
-            efficiency_percentage DECIMAL(5,2),
-            availability_percentage DECIMAL(5,2),
-            performance_percentage DECIMAL(5,2),
-            quality_percentage DECIMAL(5,2),
-            oee_percentage DECIMAL(5,2),
-            status VARCHAR(20) NOT NULL DEFAULT 'available',
-            operating_status VARCHAR(20),
-            last_inspection_date DATE,
-            next_inspection_date DATE,
+            warranty_end_date DATE,
+            maintenance_cycle INT DEFAULT 30,
             last_maintenance_date DATE,
             next_maintenance_date DATE,
-            maintenance_frequency_days INTEGER,
-            total_operating_hours DECIMAL(10,2),
-            total_maintenance_count INTEGER,
-            total_failure_count INTEGER,
-            last_failure_date DATE,
-            failure_description TEXT,
-            operating_hours JSONB,
-            maintenance_history JSONB,
-            inspection_history JSONB,
-            failure_history JSONB,
-            notes TEXT,
-            attachments JSONB,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            created_by UUID,
-            updated_by UUID,
-            deleted_at TIMESTAMPTZ,
-            tenant_id UUID
-        )
-        "#,
-    )
-    .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-
-    sqlx::query(
-        r#"
-                CREATE TABLE IF NOT EXISTS work_stations (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id UUID,
-            station_code VARCHAR(100),
-            station_name VARCHAR(255) NOT NULL,
-            station_type VARCHAR(50),
             description TEXT,
-            location VARCHAR(255),
-            building VARCHAR(100),
-            floor VARCHAR(50),
-            area VARCHAR(100),
-            capacity INTEGER DEFAULT 1,
-            current_load INTEGER DEFAULT 0,
-            efficiency_percentage DECIMAL(5,2) DEFAULT 100,
-            supervisor VARCHAR(255),
-            supervisor_id UUID,
-            team VARCHAR(100),
-            equipment_ids JSONB,
-            available_skills JSONB,
-            available_tools JSONB,
-            status VARCHAR(20) NOT NULL DEFAULT 'available',
-            last_maintenance_date DATE,
-            next_maintenance_date DATE,
-            maintenance_frequency_days INTEGER,
-            operating_hours JSONB,
-            notes TEXT,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            created_by UUID,
-            updated_by UUID,
-            deleted_at TIMESTAMPTZ,
-            tenant_id UUID
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -333,53 +177,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS process_routes (
+        CREATE TABLE IF NOT EXISTS work_stations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id UUID NOT NULL,
-            route_code VARCHAR(100) NOT NULL,
-            route_name VARCHAR(255) NOT NULL,
-            product_code VARCHAR(100),
-            product_name VARCHAR(255),
+            station_no VARCHAR(64) NOT NULL UNIQUE,
+            name VARCHAR(128) NOT NULL,
+            workshop_id UUID,
+            location VARCHAR(256),
+            status VARCHAR(32) DEFAULT 'active',
+            capacity INT DEFAULT 1,
+            equipment_id UUID REFERENCES equipment(id),
+            process_id UUID REFERENCES production_processes(id),
             description TEXT,
-            version VARCHAR(20) DEFAULT '1.0',
-            is_default BOOLEAN DEFAULT false,
-            is_active BOOLEAN DEFAULT true,
-            total_time_minutes DECIMAL(10,2),
-            total_cost DECIMAL(15,2),
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            created_by UUID,
-            updated_by UUID,
-            deleted_at TIMESTAMPTZ,
-            tenant_id UUID
-        )
-        "#,
-    )
-    .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS process_route_steps (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id UUID NOT NULL,
-            route_id UUID NOT NULL,
-            process_id UUID NOT NULL,
-            sequence INTEGER NOT NULL,
-            is_parallel BOOLEAN DEFAULT false,
-            parallel_group INTEGER,
-            estimated_time_minutes DECIMAL(10,2),
-            estimated_cost DECIMAL(15,2),
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            created_by UUID,
-            updated_by UUID,
-            deleted_at TIMESTAMPTZ,
-            tenant_id UUID
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+                deleted_at TIMESTAMP
         )
         "#,
     )
@@ -445,13 +256,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             .await
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_code ON equipment(equipment_code)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_no ON equipment(equipment_no)")
         .execute(pool)
             .await
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_work_stations_station_code ON work_stations(station_code)",
+        "CREATE INDEX IF NOT EXISTS idx_work_stations_station_no ON work_stations(station_no)",
     )
     .execute(pool)
             .await
@@ -1100,8 +911,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
 
-    // 创建 mes schema 与 audit_logs 表（与 migration 20260812120100 对齐）
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS mes")
+    // 创建 plugin_mes schema 与 audit_logs 表（与 migration 20260812120100 对齐）
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS plugin_mes")
         .execute(pool)
             .await
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
@@ -1109,7 +920,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS mes.audit_logs (
+        CREATE TABLE IF NOT EXISTS plugin_mes.audit_logs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             action VARCHAR(128) NOT NULL,
             entity_type VARCHAR(64) NOT NULL,
@@ -1134,29 +945,29 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             .ok();
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_action ON mes.audit_logs(action)",
+        "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_action ON plugin_mes.audit_logs(action)",
     )
     .execute(pool)
             .await
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_entity_type ON mes.audit_logs(entity_type)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_entity_type ON plugin_mes.audit_logs(entity_type)")
         .execute(pool)
             .await
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_tenant_id ON mes.audit_logs(tenant_id)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_tenant_id ON plugin_mes.audit_logs(tenant_id)")
         .execute(pool)
             .await
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_created_at ON mes.audit_logs(created_at DESC)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_created_at ON plugin_mes.audit_logs(created_at DESC)")
         .execute(pool)
             .await
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_user_id ON mes.audit_logs(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_user_id ON plugin_mes.audit_logs(user_id)",
     )
     .execute(pool)
             .await

@@ -692,7 +692,7 @@ async fn fetch_pending_orders(
         let placeholders: Vec<String> = (1..=ids.len()).map(|i| format!("${}", i)).collect();
         format!(
             r#"
-            SELECT id, order_no, product_name, product_code, quantity,
+            SELECT id, order_number AS order_no, product_name, product_code, quantity,
                    planned_start_date, planned_end_date, status, priority, product_id
             FROM production_orders
             WHERE id IN ({}) AND status IN ('pending', 'released')
@@ -702,7 +702,7 @@ async fn fetch_pending_orders(
         )
     } else {
         r#"
-        SELECT id, order_no, product_name, product_code, quantity,
+        SELECT id, order_number AS order_no, product_name, product_code, quantity,
                planned_start_date, planned_end_date, status, priority, product_id
         FROM production_orders
         WHERE status IN ('pending', 'released')
@@ -1014,7 +1014,7 @@ pub async fn check_schedule_constraints(
         // 获取订单信息
         let order = sqlx::query(
             r#"
-            SELECT id, order_no, product_name, product_code, quantity,
+            SELECT id, order_number AS order_no, product_name, product_code, quantity,
                    planned_start_date, planned_end_date
             FROM production_orders
             WHERE id = $1
@@ -1257,13 +1257,13 @@ pub async fn get_optimization_report(
     // 按工位统计负载
     let station_loads = sqlx::query(
         r#"
-        SELECT ws.name, COUNT(ps.id) as task_count,
+        SELECT ws.station_name, COUNT(ps.id) as task_count,
                SUM(EXTRACT(EPOCH FROM (ps.planned_end_time - ps.planned_start_time)) / 3600) as total_hours
         FROM work_stations ws
         LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
         WHERE ws.status = 'active'
-        GROUP BY ws.id, ws.name
+        GROUP BY ws.id, ws.station_name
         ORDER BY task_count DESC
         LIMIT 10
         "#
@@ -1428,14 +1428,14 @@ pub async fn get_bottleneck_analysis(
     let mut bottleneck_resources = Vec::new();
     let station_stats = sqlx::query(
         r#"
-        SELECT ws.name,
+        SELECT ws.station_name,
                COUNT(ps.id) as scheduled_tasks,
                COUNT(DISTINCT ps.order_id) as unique_orders
         FROM work_stations ws
         LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
         WHERE ws.status = 'active'
-        GROUP BY ws.id, ws.name
+        GROUP BY ws.id, ws.station_name
         ORDER BY scheduled_tasks DESC
         LIMIT 10
         "#,
@@ -1524,6 +1524,7 @@ pub async fn check_order_feasibility(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::NaiveDate;
     use serde::de::DeserializeOwned;
     use serde::Serialize;
 
@@ -1553,5 +1554,185 @@ mod tests {
             minimize_idle_time: 0.1,
         };
         roundtrip(&w);
+    }
+
+    // ---- calculate_processing_time ----
+    #[test]
+    fn processing_time_includes_setup() {
+        // 换型时间固定 0.5h，加工 = quantity * base
+        assert_eq!(calculate_processing_time(10.0, 1.0), 10.5);
+    }
+
+    #[test]
+    fn processing_time_zero_quantity_is_setup_only() {
+        assert_eq!(calculate_processing_time(0.0, 2.0), 0.5);
+    }
+
+    #[test]
+    fn processing_time_large_quantity() {
+        assert_eq!(calculate_processing_time(100.0, 0.5), 50.5);
+    }
+
+    #[test]
+    fn processing_time_zero_base() {
+        assert_eq!(calculate_processing_time(8.0, 0.0), 0.5);
+    }
+
+    // ---- calculate_risk_level ----
+    #[test]
+    fn risk_critical_when_material_missing() {
+        let planned_end = Utc::now() + chrono::Duration::hours(48);
+        assert!(matches!(
+            calculate_risk_level(planned_end, None, false, true),
+            RiskLevel::Critical
+        ));
+    }
+
+    #[test]
+    fn risk_critical_when_equipment_unavailable() {
+        let planned_end = Utc::now() + chrono::Duration::hours(48);
+        assert!(matches!(
+            calculate_risk_level(planned_end, None, true, false),
+            RiskLevel::Critical
+        ));
+    }
+
+    #[test]
+    fn risk_critical_when_delay_over_48h() {
+        let now = Utc::now();
+        let planned_end = now + chrono::Duration::hours(100);
+        let delivery = now + chrono::Duration::hours(40);
+        assert!(matches!(
+            calculate_risk_level(planned_end, Some(delivery), true, true),
+            RiskLevel::Critical
+        ));
+    }
+
+    #[test]
+    fn risk_high_when_delay_between_24_and_48h() {
+        let now = Utc::now();
+        let planned_end = now + chrono::Duration::hours(60);
+        let delivery = now + chrono::Duration::hours(30);
+        assert!(matches!(
+            calculate_risk_level(planned_end, Some(delivery), true, true),
+            RiskLevel::High
+        ));
+    }
+
+    #[test]
+    fn risk_medium_when_delay_under_24h() {
+        let now = Utc::now();
+        let planned_end = now + chrono::Duration::hours(10);
+        let delivery = now + chrono::Duration::hours(2);
+        assert!(matches!(
+            calculate_risk_level(planned_end, Some(delivery), true, true),
+            RiskLevel::Medium
+        ));
+    }
+
+    #[test]
+    fn risk_high_when_buffer_under_4h() {
+        let planned_end = Utc::now() + chrono::Duration::hours(2);
+        assert!(matches!(
+            calculate_risk_level(planned_end, None, true, true),
+            RiskLevel::High
+        ));
+    }
+
+    #[test]
+    fn risk_medium_when_buffer_4_24h() {
+        let planned_end = Utc::now() + chrono::Duration::hours(8);
+        assert!(matches!(
+            calculate_risk_level(planned_end, None, true, true),
+            RiskLevel::Medium
+        ));
+    }
+
+    #[test]
+    fn risk_low_when_buffer_over_24h() {
+        let planned_end = Utc::now() + chrono::Duration::hours(72);
+        assert!(matches!(
+            calculate_risk_level(planned_end, None, true, true),
+            RiskLevel::Low
+        ));
+    }
+
+    // ---- calculate_feasibility_score ----
+    #[test]
+    fn feasibility_full_marks() {
+        assert_eq!(calculate_feasibility_score(true, true, 10.0, 100.0), 100.0);
+    }
+
+    #[test]
+    fn feasibility_missing_material() {
+        assert_eq!(calculate_feasibility_score(false, true, 10.0, 100.0), 60.0);
+    }
+
+    #[test]
+    fn feasibility_missing_equipment() {
+        assert_eq!(calculate_feasibility_score(true, false, 10.0, 100.0), 60.0);
+    }
+
+    #[test]
+    fn feasibility_missing_both() {
+        assert_eq!(calculate_feasibility_score(false, false, 10.0, 100.0), 20.0);
+    }
+
+    #[test]
+    fn feasibility_long_processing_time() {
+        // >48h 扣 20
+        assert_eq!(calculate_feasibility_score(true, true, 50.0, 100.0), 80.0);
+        // 24-48h 扣 10
+        assert_eq!(calculate_feasibility_score(true, true, 30.0, 100.0), 90.0);
+    }
+
+    #[test]
+    fn feasibility_large_quantity() {
+        assert_eq!(calculate_feasibility_score(true, true, 10.0, 2000.0), 95.0);
+    }
+
+    #[test]
+    fn feasibility_score_clamped_at_zero() {
+        assert_eq!(
+            calculate_feasibility_score(false, false, 100.0, 5000.0),
+            0.0
+        );
+    }
+
+    // ---- 辅助转换函数 ----
+    #[test]
+    fn aps_naive_to_utc_some() {
+        let dt = NaiveDate::from_ymd_opt(2024, 8, 1)
+            .unwrap()
+            .and_hms_opt(6, 0, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn aps_naive_to_utc_none() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn aps_opt_naive_to_utc_some_none() {
+        let dt = NaiveDate::from_ymd_opt(2024, 8, 1)
+            .unwrap()
+            .and_hms_opt(6, 0, 0)
+            .unwrap();
+        assert!(opt_naive_to_utc(Some(dt)).is_some());
+        assert!(opt_naive_to_utc(None).is_none());
+    }
+
+    #[test]
+    fn aps_big_decimal_to_f64() {
+        let bd: BigDecimal = "1.25".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 1.25);
+        assert_eq!(big_decimal_to_f64(None), 0.0);
     }
 }

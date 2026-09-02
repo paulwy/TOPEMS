@@ -398,9 +398,10 @@ pub async fn delete_forecast(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({"id": id}), "需求预测删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "需求预测删除成功",
+        )),
         Ok(_) => Json(ApiResponse::error(404, "需求预测不存在")),
         Err(e) => {
             tracing::error!("删除需求预测失败: {}", e);

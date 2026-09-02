@@ -247,8 +247,8 @@ pub async fn list_wips(
             w.quantity, w.current_process_id, w.current_work_station_id,
             w.status, w.batch_no, w.start_time, w.last_transfer_time,
             w.operator, w.notes, w.created_at, w.updated_at,
-            pp.name as process_name,
-            ws.name as work_station_name
+            pp.process_name as process_name,
+            ws.station_name as work_station_name
         FROM wips w
         LEFT JOIN production_processes pp ON w.current_process_id = pp.id
         LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
@@ -377,7 +377,7 @@ pub async fn create_wip(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_no FROM production_orders WHERE id = $1"#,
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
             order_id
         )
         .fetch_optional(&state.pool)
@@ -485,8 +485,8 @@ pub async fn get_wip(
             w.quantity, w.current_process_id, w.current_work_station_id,
             w.status, w.batch_no, w.start_time, w.last_transfer_time,
             w.operator, w.notes, w.created_at, w.updated_at,
-            pp.name as process_name,
-            ws.name as work_station_name
+            pp.process_name as process_name,
+            ws.station_name as work_station_name
         FROM wips w
         LEFT JOIN production_processes pp ON w.current_process_id = pp.id
         LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
@@ -794,45 +794,57 @@ pub async fn transfer_wip(
     }
 
     let from_process_name = if let Some(pid) = req.from_process_id {
-        sqlx::query!("SELECT name FROM production_processes WHERE id = $1", pid)
-            .fetch_optional(&state.pool)
-            .await
-            .ok()
-            .flatten()
-            .map(|p| p.name)
+        sqlx::query!(
+            "SELECT process_name AS name FROM production_processes WHERE id = $1",
+            pid
+        )
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten()
+        .map(|p| p.name)
     } else {
         None
     };
 
     let to_process_name = if let Some(pid) = req.to_process_id {
-        sqlx::query!("SELECT name FROM production_processes WHERE id = $1", pid)
-            .fetch_optional(&state.pool)
-            .await
-            .ok()
-            .flatten()
-            .map(|p| p.name)
+        sqlx::query!(
+            "SELECT process_name AS name FROM production_processes WHERE id = $1",
+            pid
+        )
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten()
+        .map(|p| p.name)
     } else {
         None
     };
 
     let from_workstation_name = if let Some(wid) = req.from_work_station_id {
-        sqlx::query!("SELECT name FROM work_stations WHERE id = $1", wid)
-            .fetch_optional(&state.pool)
-            .await
-            .ok()
-            .flatten()
-            .map(|w| w.name)
+        sqlx::query!(
+            "SELECT station_name AS name FROM work_stations WHERE id = $1",
+            wid
+        )
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten()
+        .map(|w| w.name)
     } else {
         None
     };
 
     let to_workstation_name = if let Some(wid) = req.to_work_station_id {
-        sqlx::query!("SELECT name FROM work_stations WHERE id = $1", wid)
-            .fetch_optional(&state.pool)
-            .await
-            .ok()
-            .flatten()
-            .map(|w| w.name)
+        sqlx::query!(
+            "SELECT station_name AS name FROM work_stations WHERE id = $1",
+            wid
+        )
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten()
+        .map(|w| w.name)
     } else {
         None
     };
@@ -890,10 +902,10 @@ pub async fn list_wip_transfers(
             wt.from_process_id, wt.from_work_station_id,
             wt.to_process_id, wt.to_work_station_id,
             wt.quantity, wt.transfer_time, wt.operator, wt.transfer_type, wt.notes,
-            fp.name as from_process_name,
-            tp.name as to_process_name,
-            fws.name as from_work_station_name,
-            tws.name as to_work_station_name
+            fp.process_name as from_process_name,
+            tp.process_name as to_process_name,
+            fws.station_name as from_work_station_name,
+            tws.station_name as to_work_station_name
         FROM wip_transfers wt
         LEFT JOIN production_processes fp ON wt.from_process_id = fp.id
         LEFT JOIN production_processes tp ON wt.to_process_id = tp.id
@@ -1016,13 +1028,13 @@ pub async fn get_wip_statistics(
         r#"
         SELECT 
             w.current_process_id,
-            pp.name as process_name,
+            pp.process_name as process_name,
             COUNT(*) as count,
             COALESCE(SUM(w.quantity), 0) as quantity
         FROM wips w
         LEFT JOIN production_processes pp ON w.current_process_id = pp.id
         WHERE w.status = 'in_progress'
-        GROUP BY w.current_process_id, pp.name
+        GROUP BY w.current_process_id, pp.process_name
         ORDER BY quantity DESC
         "#
     )
@@ -1054,4 +1066,65 @@ pub async fn get_wip_statistics(
         },
         "获取WIP统计成功",
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, NaiveDate, Timelike};
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn opt_naive_to_utc_some() {
+        let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
+            .unwrap()
+            .and_hms_opt(23, 59, 59)
+            .unwrap();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
+        assert_eq!(r.year(), 2024);
+        assert_eq!(r.month(), 2);
+        assert_eq!(r.day(), 28);
+        assert_eq!(r.hour(), 23);
+        assert_eq!(r.second(), 59);
+    }
+
+    #[test]
+    fn opt_naive_to_utc_none() {
+        assert!(opt_naive_to_utc(None).is_none());
+    }
+
+    #[test]
+    fn big_decimal_to_f64_some() {
+        let bd: BigDecimal = "1.25".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 1.25);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), 0.0);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_negative() {
+        let bd: BigDecimal = "-7.5".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), -7.5);
+    }
 }

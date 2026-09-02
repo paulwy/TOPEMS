@@ -98,9 +98,9 @@ impl From<ProductionProcessRow> for ProductionProcessResponse {
             description: r.description,
             version: r.version.unwrap_or_else(|| "1.0".to_string()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
-            sequence: r.sequence.unwrap_or(0),
-            equipment_required: r.equipment_required.unwrap_or(false),
-            estimated_duration: r.estimated_duration.unwrap_or(0),
+            sequence: r.sequence.unwrap_or_default(),
+            equipment_required: false,
+            estimated_duration: 0,
             created_at: naive_to_utc(Some(r.created_at)),
             updated_at: naive_to_utc(Some(r.updated_at)),
         }
@@ -476,12 +476,12 @@ pub async fn deactivate_process(
             updated_at = $2
         WHERE id = $1 AND status = 'active'
         RETURNING 
-            id, process_no, name, description, version,
-            status, sequence, equipment_required, estimated_duration,
+            id, process_code AS process_no, process_name AS name, description, version,
+            status, sequence, NULL::text AS equipment_required, NULL::numeric AS estimated_duration,
             created_at, updated_at
         "#,
         id,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -498,16 +498,16 @@ pub async fn deactivate_process(
         Some(r) => {
             let process = ProductionProcessResponse {
                 id: r.id,
-                process_no: r.process_no,
+                process_no: r.process_no.unwrap_or_default(),
                 name: r.name,
                 description: r.description,
                 version: r.version.unwrap_or_else(|| "1.0".to_string()),
-                status: r.status.unwrap_or_else(|| "inactive".to_string()),
-                sequence: r.sequence.unwrap_or(0),
-                equipment_required: r.equipment_required.unwrap_or(false),
-                estimated_duration: r.estimated_duration.unwrap_or(0),
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                status: r.status,
+                sequence: r.sequence,
+                equipment_required: false,
+                estimated_duration: 0,
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }

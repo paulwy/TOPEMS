@@ -133,7 +133,7 @@ pub async fn forward_traceability(
 
     let order = sqlx::query!(
         r#"
-        SELECT id, order_no, product_id, product_name, product_code,
+        SELECT id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
                quantity, completed_quantity, status, actual_start_date, actual_end_date
         FROM production_orders
         WHERE id = $1
@@ -161,21 +161,23 @@ pub async fn forward_traceability(
         node_type: "order".to_string(),
         name: order.product_name.clone(),
         code: order.order_no.clone(),
-        quantity: Some(big_decimal_to_f64(Some(order.quantity))),
+        quantity: Some(order.quantity as f64),
         unit: Some("件".to_string()),
         batch_no: None,
-        status: Some(order.status.clone().unwrap_or_default()),
-        timestamp: opt_naive_to_utc(order.actual_start_date),
+        status: Some(order.status.clone()),
+        timestamp: order
+            .actual_start_date
+            .map(|d| Utc.from_utc_datetime(&d.and_hms_opt(0, 0, 0).unwrap_or_default())),
         operator: None,
         description: Some("生产工单".to_string()),
     });
 
     let records = sqlx::query!(
         r#"
-        SELECT pr.id, pr.process_id, pr.work_station_id, pr.equipment_id,
+        SELECT pr.id, pr.process_id, pr.work_station_id,
                pr.operator_id, pr.start_time, pr.end_time,
-               pr.quantity_produced, pr.quantity_defective, pr.status,
-               pp.name as process_name, pp.process_no
+               pr.completed_quantity AS quantity_produced, NULL::int AS quantity_defective, pr.status,
+               pp.process_name as process_name, pp.process_code
         FROM production_records pr
         LEFT JOIN production_processes pp ON pr.process_id = pp.id
         WHERE pr.order_id = $1
@@ -191,17 +193,17 @@ pub async fn forward_traceability(
     for record in &records {
         let record_node_id = format!("record_{}", record.id);
         let process_name = record.process_name.clone();
-        let process_no = record.process_no.clone();
+        let process_no = record.process_code.clone().unwrap_or_default();
         nodes.push(TraceNode {
             id: record_node_id.clone(),
             node_type: "process".to_string(),
             name: process_name,
             code: process_no,
-            quantity: Some(big_decimal_to_f64(record.quantity_produced.clone())),
+            quantity: Some(record.quantity_produced as f64),
             unit: Some("件".to_string()),
             batch_no: None,
-            status: record.status.clone(),
-            timestamp: opt_naive_to_utc(Some(record.start_time)),
+            status: Some(record.status.clone()),
+            timestamp: Some(record.start_time),
             operator: None,
             description: Some("生产工序记录".to_string()),
         });
@@ -210,7 +212,7 @@ pub async fn forward_traceability(
             from_id: prev_node_id.clone(),
             to_id: record_node_id.clone(),
             link_type: "production".to_string(),
-            quantity: Some(big_decimal_to_f64(record.quantity_produced.clone())),
+            quantity: Some(record.quantity_produced as f64),
         });
 
         prev_node_id = record_node_id.clone();
@@ -222,11 +224,13 @@ pub async fn forward_traceability(
         node_type: "finished_product".to_string(),
         name: format!("{} 成品", order.product_name.clone()),
         code: order.order_no.clone(),
-        quantity: Some(big_decimal_to_f64(order.completed_quantity.clone())),
+        quantity: order.completed_quantity.map(|v| v as f64),
         unit: Some("件".to_string()),
         batch_no: Some(format!("BATCH{}", order.order_no)),
-        status: Some(order.status.clone().unwrap_or_default()),
-        timestamp: opt_naive_to_utc(order.actual_end_date),
+        status: Some(order.status.clone()),
+        timestamp: order
+            .actual_end_date
+            .map(|d| Utc.from_utc_datetime(&d.and_hms_opt(0, 0, 0).unwrap_or_default())),
         operator: None,
         description: Some("成品入库".to_string()),
     });
@@ -235,7 +239,7 @@ pub async fn forward_traceability(
         from_id: prev_node_id.clone(),
         to_id: finished_node_id.clone(),
         link_type: "completion".to_string(),
-        quantity: Some(big_decimal_to_f64(order.completed_quantity.clone())),
+        quantity: order.completed_quantity.map(|v| v as f64),
     });
 
     Json(ApiResponse::success(
@@ -420,7 +424,7 @@ pub async fn get_trace_chain(
 
     let order = sqlx::query!(
         r#"
-        SELECT id, order_no, product_id, product_name, product_code,
+        SELECT id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
                quantity, completed_quantity, status
         FROM production_orders
         WHERE id = $1
@@ -654,4 +658,65 @@ pub async fn list_quality_records(
         },
         "获取质量记录列表成功",
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, NaiveDate, Timelike};
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn opt_naive_to_utc_some() {
+        let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
+            .unwrap()
+            .and_hms_opt(23, 59, 59)
+            .unwrap();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
+        assert_eq!(r.year(), 2024);
+        assert_eq!(r.month(), 2);
+        assert_eq!(r.day(), 28);
+        assert_eq!(r.hour(), 23);
+        assert_eq!(r.second(), 59);
+    }
+
+    #[test]
+    fn opt_naive_to_utc_none() {
+        assert!(opt_naive_to_utc(None).is_none());
+    }
+
+    #[test]
+    fn big_decimal_to_f64_some() {
+        let bd: BigDecimal = "1.25".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), 1.25);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), 0.0);
+    }
+
+    #[test]
+    fn big_decimal_to_f64_negative() {
+        let bd: BigDecimal = "-7.5".parse().unwrap();
+        assert_eq!(big_decimal_to_f64(Some(bd)), -7.5);
+    }
 }

@@ -199,10 +199,10 @@ pub async fn list_work_stations(
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
-            where_clause.push_str(" AND (ws.station_no ILIKE $1 OR ws.name ILIKE $1)");
+            where_clause.push_str(" AND (ws.station_no ILIKE $1 OR ws.station_name ILIKE $1)");
         } else {
             where_clause.push_str(&format!(
-                " AND (ws.station_no ILIKE ${} OR ws.name ILIKE ${})",
+                " AND (ws.station_no ILIKE ${} OR ws.station_name ILIKE ${})",
                 params.len() + 1,
                 params.len() + 1
             ));
@@ -232,11 +232,11 @@ pub async fn list_work_stations(
     let fetch_sql = format!(
         r#"
         SELECT 
-            ws.id, ws.station_no, ws.name, ws.workshop_id, ws.location,
+            ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
             ws.description, ws.created_at, ws.updated_at,
             e.name as equipment_name,
-            pp.name as process_name,
+            pp.process_name as process_name,
             '' as workshop_name
         FROM work_stations ws
         LEFT JOIN equipment e ON ws.equipment_id = e.id
@@ -365,11 +365,11 @@ pub async fn get_work_station(
     let result = sqlx::query(
         r#"
         SELECT 
-            ws.id, ws.station_no, ws.name, ws.workshop_id, ws.location,
+            ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
             ws.description, ws.created_at, ws.updated_at,
             e.name as equipment_name,
-            pp.name as process_name,
+            pp.process_name as process_name,
             '' as workshop_name
         FROM work_stations ws
         LEFT JOIN equipment e ON ws.equipment_id = e.id
@@ -595,5 +595,46 @@ pub async fn deactivate_work_station(
             "工位停用成功",
         )),
         None => Json(ApiResponse::error(404, "工位不存在或状态不允许停用")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn datetime_to_string_some_rfc3339() {
+        let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let s = datetime_to_string(Some(dt));
+        assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
+    }
+
+    #[test]
+    fn datetime_to_string_none_valid() {
+        let s = datetime_to_string(None);
+        assert!(s.contains('T'));
     }
 }

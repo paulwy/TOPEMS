@@ -19,10 +19,7 @@ use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route(
-            "/capacities",
-            get(list_capacities).post(create_capacity),
-        )
+        .route("/capacities", get(list_capacities).post(create_capacity))
         .route(
             "/capacities/{id}",
             get(get_capacity)
@@ -288,13 +285,12 @@ pub async fn update_capacity(
 ) -> Json<ApiResponse<Capacity>> {
     let tenant_id = get_tenant_id(&claims);
 
-    let existing = sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(tenant_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let existing =
+        sqlx::query_as::<_, Capacity>("SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let existing = match existing {
         Ok(Some(c)) => c,
@@ -355,9 +351,10 @@ pub async fn delete_capacity(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({"id": id}), "产能记录删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "产能记录删除成功",
+        )),
         Ok(_) => Json(ApiResponse::error(404, "产能记录不存在")),
         Err(e) => {
             tracing::error!("删除产能记录失败: {}", e);
@@ -528,7 +525,10 @@ pub async fn maintenance_capacity(
     if !can_transition(&existing.status, target_status) {
         return Json(ApiResponse::error(
             400,
-            &format!("当前状态 {} 不允许切换到 {}", existing.status, target_status),
+            &format!(
+                "当前状态 {} 不允许切换到 {}",
+                existing.status, target_status
+            ),
         ));
     }
 

@@ -241,7 +241,7 @@ pub async fn list_process_flows(
             pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
             pf.created_at, pf.updated_at,
-            pr.name as route_name
+            pr.route_name as route_name
         FROM process_flows pf
         LEFT JOIN process_routes pr ON pf.route_id = pr.id
         {}
@@ -343,7 +343,7 @@ pub async fn get_process_flow(
             pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
             pf.created_at, pf.updated_at,
-            pr.name as route_name
+            pr.route_name as route_name
         FROM process_flows pf
         LEFT JOIN process_routes pr ON pf.route_id = pr.id
         WHERE pf.id = $1
@@ -593,8 +593,8 @@ pub async fn get_flow_steps(
             pfs.work_station_id, pfs.equipment_ids,
             pfs.standard_time, pfs.wait_time, pfs.transfer_time,
             pfs.quality_check_required, pfs.description, pfs.created_at,
-            pp.name as process_name, pp.process_no as process_code,
-            ws.name as work_station_name
+            pp.process_name as process_name, pp.process_code as process_code,
+            ws.station_name as work_station_name
         FROM process_flow_steps pfs
         LEFT JOIN production_processes pp ON pfs.process_id = pp.id
         LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
@@ -615,7 +615,7 @@ pub async fn get_flow_steps(
                     flow_id: s.flow_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
@@ -732,7 +732,7 @@ pub async fn add_flow_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT name, process_no FROM production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 process_uuid,
             )
@@ -740,7 +740,7 @@ pub async fn add_flow_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (p.name, p.process_no),
+                Ok(p) => (p.name, p.process_no.unwrap_or_default()),
                 Err(_) => (String::new(), String::new()),
             };
 
@@ -860,7 +860,7 @@ pub async fn update_flow_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT name, process_no FROM production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 s.process_id,
             )
@@ -868,7 +868,7 @@ pub async fn update_flow_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (p.name, p.process_no),
+                Ok(p) => (p.name, p.process_no.unwrap_or_default()),
                 Err(_) => (String::new(), String::new()),
             };
 
@@ -997,8 +997,8 @@ pub async fn reorder_flow_steps(
             pfs.work_station_id, pfs.equipment_ids,
             pfs.standard_time, pfs.wait_time, pfs.transfer_time,
             pfs.quality_check_required, pfs.description, pfs.created_at,
-            pp.name as process_name, pp.process_no as process_code,
-            ws.name as work_station_name
+            pp.process_name as process_name, pp.process_code as process_code,
+            ws.station_name as work_station_name
         FROM process_flow_steps pfs
         LEFT JOIN production_processes pp ON pfs.process_id = pp.id
         LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
@@ -1019,7 +1019,7 @@ pub async fn reorder_flow_steps(
                     flow_id: s.flow_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
@@ -1088,7 +1088,7 @@ pub async fn analyze_capacity(
         r#"
         SELECT 
             pfs.id, pfs.sequence, pfs.standard_time,
-            pp.name as process_name
+            pp.process_name as process_name
         FROM process_flow_steps pfs
         LEFT JOIN production_processes pp ON pfs.process_id = pp.id
         WHERE pfs.flow_id = $1
@@ -1170,4 +1170,56 @@ pub async fn analyze_capacity(
         },
         "产能分析成功",
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn naive_to_utc_some_keeps_value() {
+        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
+            .unwrap()
+            .and_hms_opt(9, 45, 0)
+            .unwrap();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
+    }
+
+    #[test]
+    fn naive_to_utc_none_uses_now() {
+        let before = Utc::now();
+        let out = naive_to_utc(None);
+        let after = Utc::now();
+        assert!(out >= before && out <= after);
+    }
+
+    #[test]
+    fn datetime_to_string_some_rfc3339() {
+        let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let s = datetime_to_string(Some(dt));
+        assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
+    }
+
+    #[test]
+    fn datetime_to_string_none_valid() {
+        let s = datetime_to_string(None);
+        assert!(s.contains('T'));
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_some() {
+        let bd: BigDecimal = "12.5".parse().unwrap();
+        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(12.5));
+    }
+
+    #[test]
+    fn opt_big_decimal_to_f64_none() {
+        assert_eq!(opt_big_decimal_to_f64(None), None);
+    }
 }

@@ -145,7 +145,7 @@ pub async fn get_dashboard(
     // 今日产量
     let today_output = sqlx::query!(
         r#"
-        SELECT COALESCE(SUM(quantity_produced), 0) as today_output
+        SELECT COALESCE(SUM(completed_quantity), 0) as today_output
         FROM production_records
         WHERE start_time::date = CURRENT_DATE
         "#
@@ -154,7 +154,7 @@ pub async fn get_dashboard(
     .await;
 
     let today_output_val = match today_output {
-        Ok(r) => big_decimal_to_f64(r.today_output),
+        Ok(r) => r.today_output.unwrap_or_default() as f64,
         Err(e) => {
             tracing::error!("Failed to fetch today output: {}", e);
             0.0
@@ -225,7 +225,7 @@ pub async fn get_dashboard(
     let orders = sqlx::query!(
         r#"
         SELECT
-            id, order_no, product_name, quantity, completed_quantity, status
+            id, order_number AS order_no, product_name, quantity, completed_quantity, status
         FROM production_orders
         ORDER BY created_at DESC
         LIMIT 10
@@ -238,8 +238,8 @@ pub async fn get_dashboard(
         Ok(rows) => rows
             .into_iter()
             .map(|r| {
-                let planned = big_decimal_to_f64(Some(r.quantity));
-                let completed = big_decimal_to_f64(r.completed_quantity);
+                let planned = r.quantity as f64;
+                let completed = r.completed_quantity.unwrap_or_default() as f64;
                 let progress = if planned > 0.0 {
                     (completed / planned) * 100.0
                 } else {
@@ -252,7 +252,7 @@ pub async fn get_dashboard(
                     planned_quantity: planned,
                     completed_quantity: completed,
                     progress,
-                    status: r.status.unwrap_or_else(|| "pending".to_string()),
+                    status: r.status,
                 }
             })
             .collect(),
@@ -267,9 +267,9 @@ pub async fn get_dashboard(
         r#"
         SELECT
             ws.id           AS work_station_id,
-            ws.name         AS work_station_name,
+            ws.station_name         AS work_station_name,
             ws.status       AS status,
-            po.order_no     AS current_order,
+            po.order_number     AS current_order,
             po.product_name AS current_product,
             today_stats.output_today AS output_today,
             pr.operator_id  AS operator
@@ -283,12 +283,12 @@ pub async fn get_dashboard(
         ) pr ON true
         LEFT JOIN production_orders po ON pr.order_id = po.id
         LEFT JOIN LATERAL (
-            SELECT COALESCE(SUM(quantity_produced), 0) AS output_today
+            SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
             FROM production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
         ) today_stats ON true
-        ORDER BY ws.name
+        ORDER BY ws.station_name
         "#,
     )
     .fetch_all(&state.pool)
@@ -478,7 +478,7 @@ pub async fn get_order_progress(
     let result = sqlx::query!(
         r#"
         SELECT
-            id, order_no, product_name, quantity, completed_quantity, status
+            id, order_number AS order_no, product_name, quantity, completed_quantity, status
         FROM production_orders
         ORDER BY created_at DESC
         "#
@@ -497,8 +497,8 @@ pub async fn get_order_progress(
     let list: Vec<OrderProgressResponse> = orders
         .into_iter()
         .map(|r| {
-            let planned = big_decimal_to_f64(Some(r.quantity));
-            let completed = big_decimal_to_f64(r.completed_quantity);
+            let planned = r.quantity as f64;
+            let completed = r.completed_quantity.unwrap_or_default() as f64;
             let progress = if planned > 0.0 {
                 (completed / planned) * 100.0
             } else {
@@ -511,7 +511,7 @@ pub async fn get_order_progress(
                 planned_quantity: planned,
                 completed_quantity: completed,
                 progress,
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                status: r.status,
             }
         })
         .collect();
@@ -545,9 +545,9 @@ pub async fn get_workstation_status(
         r#"
         SELECT
             ws.id           AS work_station_id,
-            ws.name         AS work_station_name,
+            ws.station_name         AS work_station_name,
             ws.status       AS status,
-            po.order_no     AS current_order,
+            po.order_number     AS current_order,
             po.product_name AS current_product,
             today_stats.output_today AS output_today,
             pr.operator_id  AS operator
@@ -561,12 +561,12 @@ pub async fn get_workstation_status(
         ) pr ON true
         LEFT JOIN production_orders po ON pr.order_id = po.id
         LEFT JOIN LATERAL (
-            SELECT COALESCE(SUM(quantity_produced), 0) AS output_today
+            SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
             FROM production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
         ) today_stats ON true
-        ORDER BY ws.name
+        ORDER BY ws.station_name
         "#,
     )
     .fetch_all(&state.pool)

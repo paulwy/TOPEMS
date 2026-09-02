@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-use crate::shared::aps_fsm::{production_plan_can_transition, production_plan_requires_approval};
+use crate::shared::aps_fsm::production_plan_can_transition;
 use crate::AppState;
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
@@ -19,10 +19,7 @@ use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route(
-            "/production-plans",
-            get(list_plans).post(create_plan),
-        )
+        .route("/production-plans", get(list_plans).post(create_plan))
         .route(
             "/production-plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
@@ -363,18 +360,17 @@ pub async fn delete_plan(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims);
 
-    let result = sqlx::query(
-        "DELETE FROM production_plans WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(tenant_id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query("DELETE FROM production_plans WHERE id = $1 AND tenant_id = $2")
+        .bind(id)
+        .bind(tenant_id)
+        .execute(&state.pool)
+        .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({"id": id}), "生产计划删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "生产计划删除成功",
+        )),
         Ok(_) => Json(ApiResponse::error(404, "生产计划不存在")),
         Err(e) => {
             tracing::error!("删除生产计划失败: {}", e);
@@ -553,8 +549,17 @@ mod tests {
 
     #[test]
     fn test_requires_approval() {
-        assert!(production_plan_requires_approval("pending_approval", "approved"));
-        assert!(!production_plan_requires_approval("draft", "pending_approval"));
-        assert!(!production_plan_requires_approval("approved", "in_progress"));
+        assert!(crate::shared::aps_fsm::production_plan_requires_approval(
+            "pending_approval",
+            "approved"
+        ));
+        assert!(!crate::shared::aps_fsm::production_plan_requires_approval(
+            "draft",
+            "pending_approval"
+        ));
+        assert!(!crate::shared::aps_fsm::production_plan_requires_approval(
+            "approved",
+            "in_progress"
+        ));
     }
 }
