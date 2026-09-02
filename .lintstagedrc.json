@@ -4,6 +4,6 @@
     "cd apps/web && prettier --write"
   ],
   "svc/**/*.rs": [
-    "cargo fmt --"
+    "rustfmt --edition 2021"
   ]
 }
