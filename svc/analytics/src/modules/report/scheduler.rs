@@ -377,3 +377,59 @@ async fn notify_subscribers(pool: &PgPool, schedule_id: Uuid) -> Result<(), anyh
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- parse_interval ----
+    #[test]
+    fn interval_minutes() {
+        assert_eq!(parse_interval("10 minutes").unwrap(), 10);
+        assert_eq!(parse_interval("10 minute").unwrap(), 10);
+        assert_eq!(parse_interval("10 m").unwrap(), 10);
+    }
+
+    #[test]
+    fn interval_hours() {
+        assert_eq!(parse_interval("2 hours").unwrap(), 120);
+        assert_eq!(parse_interval("2 hour").unwrap(), 120);
+        assert_eq!(parse_interval("2 h").unwrap(), 120);
+    }
+
+    #[test]
+    fn interval_days() {
+        assert_eq!(parse_interval("1 day").unwrap(), 1440);
+        assert_eq!(parse_interval("1 days").unwrap(), 1440);
+        assert_eq!(parse_interval("1 d").unwrap(), 1440);
+    }
+
+    #[test]
+    fn interval_zero() {
+        assert_eq!(parse_interval("0 minutes").unwrap(), 0);
+    }
+
+    #[test]
+    fn interval_unknown_unit_rejected() {
+        assert!(parse_interval("10 mins").is_err());
+        assert!(parse_interval("10 weeks").is_err());
+    }
+
+    #[test]
+    fn interval_bad_format_rejected() {
+        assert!(parse_interval("10").is_err());
+        assert!(parse_interval("abc").is_err());
+        assert!(parse_interval("").is_err());
+    }
+
+    #[test]
+    fn interval_non_numeric_rejected() {
+        assert!(parse_interval("abc minutes").is_err());
+    }
+
+    #[test]
+    fn interval_case_insensitive() {
+        assert_eq!(parse_interval("2 HOURS").unwrap(), 120);
+        assert_eq!(parse_interval("1 DAY").unwrap(), 1440);
+    }
+}

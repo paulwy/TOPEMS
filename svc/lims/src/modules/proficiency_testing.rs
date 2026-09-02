@@ -1574,4 +1574,91 @@ mod tests {
         assert_eq!(en_eval.as_deref(), Some("unsatisfactory"));
         assert!(en.unwrap() > 1.0);
     }
+
+    // ---- compute_z_score 补充 ----
+    #[test]
+    fn z_score_normal() {
+        let z = compute_z_score(10.0, 5.0, Some(2.5)).unwrap();
+        assert!((z - 2.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn z_score_zero_sd_none() {
+        assert_eq!(compute_z_score(10.0, 5.0, Some(0.0)), None);
+        assert_eq!(compute_z_score(10.0, 5.0, None), None);
+    }
+
+    #[test]
+    fn z_score_negative() {
+        let z = compute_z_score(0.0, 10.0, Some(2.0)).unwrap();
+        assert!((z + 5.0).abs() < 1e-9);
+    }
+
+    // ---- compute_en_score ----
+    #[test]
+    fn en_score_normal() {
+        // |10-6| / sqrt(3^2+4^2) = 4 / 5 = 0.8
+        let en = compute_en_score(10.0, 6.0, Some(3.0), Some(4.0)).unwrap();
+        assert!((en - 0.8).abs() < 1e-9);
+    }
+
+    #[test]
+    fn en_score_missing_uncertainty_none() {
+        assert_eq!(compute_en_score(10.0, 6.0, None, Some(4.0)), None);
+        assert_eq!(compute_en_score(10.0, 6.0, Some(3.0), None), None);
+        assert_eq!(compute_en_score(10.0, 6.0, None, None), None);
+    }
+
+    #[test]
+    fn en_score_zero_denom_none() {
+        assert_eq!(compute_en_score(10.0, 6.0, Some(0.0), Some(0.0)), None);
+    }
+
+    // ---- evaluate_pt_result ----
+    #[test]
+    fn evaluate_z_score_tiers() {
+        assert_eq!(
+            evaluate_pt_result(Some(1.5), None, "z_score"),
+            Some("satisfactory".to_string())
+        );
+        assert_eq!(
+            evaluate_pt_result(Some(2.5), None, "z_score"),
+            Some("questionable".to_string())
+        );
+        assert_eq!(
+            evaluate_pt_result(Some(3.5), None, "z_score"),
+            Some("unsatisfactory".to_string())
+        );
+        assert_eq!(evaluate_pt_result(None, None, "z_score"), None);
+    }
+
+    #[test]
+    fn evaluate_en_tiers() {
+        assert_eq!(
+            evaluate_pt_result(None, Some(0.5), "en_score"),
+            Some("satisfactory".to_string())
+        );
+        assert_eq!(
+            evaluate_pt_result(None, Some(1.5), "en_score"),
+            Some("unsatisfactory".to_string())
+        );
+        assert_eq!(evaluate_pt_result(None, None, "en_score"), None);
+    }
+
+    #[test]
+    fn evaluate_z_score_boundary() {
+        // |z| == 2.0 → satisfactory；|z| == 3.0 → questionable
+        assert_eq!(
+            evaluate_pt_result(Some(2.0), None, "z_score"),
+            Some("satisfactory".to_string())
+        );
+        assert_eq!(
+            evaluate_pt_result(Some(-2.0), None, "z_score"),
+            Some("satisfactory".to_string())
+        );
+        assert_eq!(
+            evaluate_pt_result(Some(3.0), None, "z_score"),
+            Some("questionable".to_string())
+        );
+    }
 }

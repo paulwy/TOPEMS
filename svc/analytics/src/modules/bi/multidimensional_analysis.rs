@@ -772,3 +772,42 @@ pub async fn get_available_measures(
         }
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- validate_sort_order ----
+    #[test]
+    fn sort_order_asc() {
+        assert_eq!(validate_sort_order("asc").unwrap(), "ASC");
+        assert_eq!(validate_sort_order("ASC").unwrap(), "ASC");
+    }
+
+    #[test]
+    fn sort_order_desc() {
+        assert_eq!(validate_sort_order("desc").unwrap(), "DESC");
+        assert_eq!(validate_sort_order("Desc").unwrap(), "DESC");
+    }
+
+    #[test]
+    fn sort_order_invalid() {
+        assert!(validate_sort_order("sideways").is_err());
+        assert!(validate_sort_order("").is_err());
+    }
+
+    // ---- validate_identifiers ----
+    #[test]
+    fn identifiers_empty() {
+        assert_eq!(validate_identifiers(&[]).unwrap(), Vec::<String>::new());
+    }
+
+    #[test]
+    fn identifiers_valid() {
+        // quote_identifier 会给标识符加双引号包裹
+        assert_eq!(
+            validate_identifiers(&["a".to_string(), "b".to_string()]).unwrap(),
+            vec!["\"a\"".to_string(), "\"b\"".to_string()]
+        );
+    }
+}

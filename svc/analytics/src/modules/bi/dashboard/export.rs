@@ -354,3 +354,30 @@ pub async fn export_dashboard_excel(
         csv_data,
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- escape_pdf_string ----
+    #[test]
+    fn escape_parentheses() {
+        assert_eq!(escape_pdf_string("a(b)c"), "a\\\\(b\\\\)c");
+        assert_eq!(escape_pdf_string("(x)"), "\\\\(x\\\\)");
+    }
+
+    #[test]
+    fn escape_backslash() {
+        assert_eq!(escape_pdf_string("a\\b"), "a\\\\b");
+    }
+
+    #[test]
+    fn escape_plain_text() {
+        assert_eq!(escape_pdf_string("hello world"), "hello world");
+    }
+
+    #[test]
+    fn escape_empty() {
+        assert_eq!(escape_pdf_string(""), "");
+    }
+}

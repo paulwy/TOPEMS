@@ -821,3 +821,56 @@ pub async fn invalidate_all_widget_cache() -> Json<serde_json::Value> {
         "message": "All widget cache invalidated"
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- WidgetCache ----
+    #[test]
+    fn cache_miss() {
+        let cache = WidgetCache::new();
+        let id = Uuid::new_v4();
+        assert!(cache.get(&id).is_none());
+    }
+
+    #[test]
+    fn cache_set_get_roundtrip() {
+        let cache = WidgetCache::new();
+        let id = Uuid::new_v4();
+        cache.set(id, serde_json::json!({"k": "v"}), 60);
+        let got = cache.get(&id).unwrap();
+        assert_eq!(got.widget_id, id);
+        assert_eq!(got.data, serde_json::json!({"k": "v"}));
+    }
+
+    #[test]
+    fn cache_invalidate() {
+        let cache = WidgetCache::new();
+        let id = Uuid::new_v4();
+        cache.set(id, serde_json::json!(1), 60);
+        assert!(cache.get(&id).is_some());
+        cache.invalidate(&id);
+        assert!(cache.get(&id).is_none());
+    }
+
+    #[test]
+    fn cache_ttl_expiry() {
+        let cache = WidgetCache::new();
+        let id = Uuid::new_v4();
+        cache.set(id, serde_json::json!(1), -1);
+        assert!(cache.get(&id).is_none());
+    }
+
+    #[test]
+    fn cache_clear() {
+        let cache = WidgetCache::new();
+        let a = Uuid::new_v4();
+        let b = Uuid::new_v4();
+        cache.set(a, serde_json::json!(1), 60);
+        cache.set(b, serde_json::json!(2), 60);
+        cache.clear();
+        assert!(cache.get(&a).is_none());
+        assert!(cache.get(&b).is_none());
+    }
+}

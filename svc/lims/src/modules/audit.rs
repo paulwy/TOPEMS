@@ -452,3 +452,136 @@ mod tests {
         roundtrip(&minimal);
     }
 }
+// ---- validate_date_format ----
+#[test]
+fn date_valid() {
+    assert!(validate_date_format("2024-05-15"));
+}
+
+#[test]
+fn date_datetime_format() {
+    assert!(validate_date_format("2024-05-15T10:30:00"));
+}
+
+#[test]
+fn date_invalid_month() {
+    assert!(!validate_date_format("2024-13-01"));
+    assert!(!validate_date_format("2024-00-01"));
+}
+
+#[test]
+fn date_invalid_day() {
+    assert!(!validate_date_format("2024-05-32"));
+    assert!(!validate_date_format("2024-05-00"));
+}
+
+#[test]
+fn date_out_of_year_range() {
+    assert!(!validate_date_format("1999-01-01"));
+    assert!(!validate_date_format("2101-01-01"));
+}
+
+#[test]
+fn date_too_short() {
+    assert!(!validate_date_format("2024"));
+    assert!(!validate_date_format("2024-05"));
+}
+
+#[test]
+fn date_non_numeric() {
+    assert!(!validate_date_format("abc"));
+    assert!(!validate_date_format("2024-aa-bb"));
+}
+
+#[test]
+fn date_empty() {
+    assert!(!validate_date_format(""));
+}
+
+fn make_audit_log(action: &str, status: &str) -> AuditLog {
+    use chrono::TimeZone;
+    AuditLog {
+        id: Uuid::new_v4(),
+        tenant_id: Uuid::new_v4(),
+        action: action.to_string(),
+        entity_type: None,
+        entity_id: None,
+        entity_ids: None,
+        user_id: None,
+        user_name: None,
+        request_details: None,
+        response_details: None,
+        status: status.to_string(),
+        error_message: None,
+        ip_address: None,
+        user_agent: None,
+        created_at: Utc.with_ymd_and_hms(2026, 1, 2, 3, 4, 5).unwrap(),
+    }
+}
+
+#[test]
+fn csv_empty_logs_still_have_header() {
+    let csv = generate_csv(&[]);
+    // QuoteStyle::Always → 每个字段都被引号包裹
+    assert!(csv.starts_with("\"ID\",\"操作\",\"实体类型\""), "header should be quoted: {csv}");
+    let lines: Vec<&str> = csv.lines().collect();
+    assert_eq!(lines.len(), 1);
+    assert_eq!(lines[0].split(',').count(), 12);
+}
+
+#[test]
+fn csv_single_log_contains_all_fields() {
+    let mut log = make_audit_log("sample.create", "success");
+    log.entity_type = Some("sample".to_string());
+    log.user_name = Some("tester".to_string());
+    log.ip_address = Some("10.0.0.1".to_string());
+    let csv = generate_csv(&[log]);
+    let lines: Vec<&str> = csv.lines().collect();
+    assert_eq!(lines.len(), 2);
+    let row = lines[1];
+    assert!(row.contains("sample.create"), "action should appear in row");
+    assert!(row.contains("success"), "status should appear in row");
+    assert!(row.contains("sample"), "entity_type should appear in row");
+    assert!(row.contains("tester"), "user_name should appear in row");
+    assert!(row.contains("10.0.0.1"), "ip should appear in row");
+    assert!(row.contains("2026-01-02T03:04:05"), "timestamp should appear in row");
+}
+
+#[test]
+fn csv_none_fields_are_empty_placeholders() {
+    let log = make_audit_log("x", "y");
+    let csv = generate_csv(&[log]);
+    let row = csv.lines().nth(1).unwrap();
+    let cols: Vec<&str> = row.split(',').collect();
+    assert_eq!(cols.len(), 12, "row should have 12 columns");
+    assert_eq!(cols[2], "\"\"", "entity_type None should be empty placeholder");
+}
+
+#[test]
+fn csv_request_details_json_serialized() {
+    let mut log = make_audit_log("sample.update", "success");
+    log.request_details = Some(serde_json::json!({"key": "val", "n": 1}));
+    let csv = generate_csv(&[log]);
+    assert!(csv.contains("\"{\"\"key\"\":\"\"val\"\",\"\"n\"\":1}\""), "request details should be serialized & escaped");
+    assert!(csv.contains("sample.update"), "action should be present");
+}
+
+#[test]
+fn csv_multiple_logs_one_row_per_log() {
+    let logs = vec![
+        make_audit_log("a", "ok"),
+        make_audit_log("b", "ok"),
+        make_audit_log("c", "ok"),
+    ];
+    let csv = generate_csv(&logs);
+    assert_eq!(csv.lines().count(), 4, "header + 3 log rows");
+}
+
+#[test]
+fn csv_field_with_comma_is_quoted() {
+    let mut log = make_audit_log("create", "ok");
+    log.error_message = Some("contains,comma".to_string());
+    let csv = generate_csv(&[log]);
+    assert!(csv.contains("\"contains,comma\""), "comma field should stay quoted as one column");
+}
+

@@ -1110,3 +1110,38 @@ mod tests {
         assert_eq!(validate_barcode("BC\n123"), Err("条码包含非法控制字符"));
     }
 }
+
+#[cfg(test)]
+mod barcode_validate_tests {
+    use super::*;
+
+    #[test]
+    fn validate_empty_rejected() {
+        assert!(validate_barcode("").is_err());
+        assert!(validate_barcode("   ").is_err());
+    }
+
+    #[test]
+    fn validate_over_64_chars_rejected() {
+        let long = "A".repeat(65);
+        assert!(validate_barcode(&long).is_err());
+    }
+
+    #[test]
+    fn validate_control_char_rejected() {
+        assert!(validate_barcode("ab\tcd").is_err());
+        assert!(validate_barcode("ab\ncd").is_err());
+    }
+
+    #[test]
+    fn validate_exactly_64_ok() {
+        let b = "B".repeat(64);
+        assert!(validate_barcode(&b).is_ok());
+    }
+
+    #[test]
+    fn validate_normal_ok() {
+        assert!(validate_barcode("BC20260813101530ABCDEF").is_ok());
+        assert!(validate_barcode("样品-001").is_ok());
+    }
+}

@@ -31,7 +31,7 @@ pub async fn list_eightd_reports(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id::TEXT = $1");
+    let mut where_clause = String::from(" WHERE tenant_id = $1");
     params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(status) = &query.status {
@@ -66,7 +66,7 @@ pub async fn list_eightd_reports(
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
-        count_query = count_query.bind(p.as_str().unwrap_or(""));
+        count_query = count_query.bind(p.clone());
     }
 
     let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
@@ -79,7 +79,7 @@ pub async fn list_eightd_reports(
 
     let fetch_sql = format!(
         r#"
-        SELECT id::TEXT, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT,
+        SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT,
             d1_team, d1_leader, d2_problem_description, d3_containment_action,
             d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis,
             d5_permanent_action, d6_verification_result, d6_verified_at::TEXT,
@@ -97,7 +97,7 @@ pub async fn list_eightd_reports(
 
     let mut fetch_query = sqlx::query_as::<_, EightDReport>(&fetch_sql);
     for p in &params {
-        fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
+        fetch_query = fetch_query.bind(p.clone());
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
@@ -172,7 +172,7 @@ pub async fn get_eightd_report(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -474,7 +474,7 @@ pub async fn get_eightd_audit_logs(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, report_id, action, step, operator, comment, created_at::TEXT FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"#)).bind(id).bind(tenant_id)
+    let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, report_id, action, step, operator, comment, created_at::TEXT FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"#)).bind(id).bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 

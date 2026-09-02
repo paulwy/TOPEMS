@@ -601,3 +601,27 @@ impl From<SyncRecordRow> for SyncRecordResponse {
 fn format_dt(t: chrono::NaiveDateTime) -> String {
     chrono::DateTime::<Utc>::from_naive_utc_and_offset(t, Utc).to_rfc3339()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- format_dt ----
+    #[test]
+    fn format_dt_rfc3339() {
+        let dt = chrono::NaiveDate::from_ymd_opt(2024, 1, 2)
+            .unwrap()
+            .and_hms_opt(3, 4, 5)
+            .unwrap();
+        assert_eq!(format_dt(dt), "2024-01-02T03:04:05+00:00");
+    }
+
+    #[test]
+    fn format_dt_zero_time() {
+        let dt = chrono::NaiveDate::from_ymd_opt(2024, 12, 31)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        assert_eq!(format_dt(dt), "2024-12-31T00:00:00+00:00");
+    }
+}

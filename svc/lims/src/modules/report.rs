@@ -289,13 +289,12 @@ fn is_result_conforming(result: &str, standard: &str) -> bool {
     }
 
     if standard.contains('-') {
-        let parts: Vec<&str> = standard.split('-').collect();
-        if parts.len() == 2 {
-            if let (Ok(min), Ok(max)) = (
-                parts[0].trim().parse::<f64>(),
-                parts[1].trim().parse::<f64>(),
-            ) {
-                return result_val >= min && result_val <= max;
+        // 用最后一个 '-' 分隔，兼容负数区间如 "-5-5"（min=-5, max=5）
+        if let Some(dash) = standard.rfind('-') {
+            let min = &standard[..dash];
+            let max = &standard[dash + 1..];
+            if let (Ok(min_v), Ok(max_v)) = (min.trim().parse::<f64>(), max.trim().parse::<f64>()) {
+                return result_val >= min_v && result_val <= max_v;
             }
         }
     }
@@ -425,5 +424,89 @@ pub async fn export_report_pdf(
             tracing::error!("Failed to export report: {}", e);
             Json(ApiResponse::error(500, "导出报告失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- is_result_conforming 全分支 ----
+    #[test]
+    fn conform_pass_standard() {
+        assert!(is_result_conforming("pass", "pass"));
+        assert!(is_result_conforming("PASS", "pass"));
+        assert!(!is_result_conforming("fail", "pass"));
+    }
+
+    #[test]
+    fn conform_chinese_pass() {
+        assert!(is_result_conforming("合格", "合格"));
+        assert!(!is_result_conforming("不合格", "合格"));
+    }
+
+    #[test]
+    fn conform_range_within() {
+        assert!(is_result_conforming("7", "5-10"));
+        assert!(is_result_conforming("5", "5-10"));
+        assert!(is_result_conforming("10", "5-10"));
+    }
+
+    #[test]
+    fn conform_range_outside() {
+        assert!(!is_result_conforming("3", "5-10"));
+        assert!(!is_result_conforming("11", "5-10"));
+    }
+
+    #[test]
+    fn conform_range_with_negative() {
+        // -5-5 区间，负号解析需 trim 后 parse
+        assert!(is_result_conforming("-3", "-5-5"));
+        assert!(is_result_conforming("5", "-5-5"));
+        assert!(!is_result_conforming("6", "-5-5"));
+    }
+
+    #[test]
+    fn conform_greater_than() {
+        assert!(is_result_conforming("11", ">10"));
+        assert!(!is_result_conforming("10", ">10"));
+    }
+
+    #[test]
+    fn conform_greater_or_equal() {
+        assert!(is_result_conforming("10", ">=10"));
+        assert!(is_result_conforming("11", ">=10"));
+        assert!(!is_result_conforming("9", ">=10"));
+    }
+
+    #[test]
+    fn conform_less_than() {
+        assert!(is_result_conforming("99", "<100"));
+        assert!(!is_result_conforming("100", "<100"));
+    }
+
+    #[test]
+    fn conform_less_or_equal() {
+        assert!(is_result_conforming("100", "<=100"));
+        assert!(!is_result_conforming("101", "<=100"));
+    }
+
+    #[test]
+    fn conform_string_fallback_case_insensitive() {
+        assert!(is_result_conforming("abc", "abc"));
+        assert!(is_result_conforming("ABC", "abc"));
+        assert!(!is_result_conforming("abd", "abc"));
+    }
+
+    #[test]
+    fn conform_non_numeric_result_with_numeric_standard() {
+        // result 无法解析为数字 → 0.0 参与比较
+        assert!(is_result_conforming("abc", "> -1"));
+        assert!(!is_result_conforming("abc", "> 1"));
+    }
+
+    #[test]
+    fn conform_invalid_standard_falls_back_to_string() {
+        assert!(is_result_conforming("x-y", "x-y"));
     }
 }

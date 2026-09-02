@@ -29,7 +29,7 @@ pub async fn list_actions(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id::TEXT = $1");
+    let mut where_clause = String::from(" WHERE tenant_id = $1");
     params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(status) = &query.status {
@@ -65,7 +65,7 @@ pub async fn list_actions(
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
-        count_query = count_query.bind(p.as_str().unwrap_or(""));
+        count_query = count_query.bind(p.clone());
     }
 
     let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
@@ -78,7 +78,7 @@ pub async fn list_actions(
 
     let fetch_sql = format!(
         r#"
-        SELECT id::TEXT, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT
+        SELECT id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT
         FROM qms.qa_corrective_actions
         {}
         ORDER BY created_at DESC
@@ -91,7 +91,7 @@ pub async fn list_actions(
 
     let mut fetch_query = sqlx::query_as::<_, CorrectiveAction>(&fetch_sql);
     for p in &params {
-        fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
+        fetch_query = fetch_query.bind(p.clone());
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
@@ -162,7 +162,7 @@ pub async fn get_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_corrective_actions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_corrective_actions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -187,7 +187,7 @@ pub async fn get_action_items(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let items = sqlx::query_as::<_, ActionItem>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, action_id::TEXT, item_name, responsible, due_date::TEXT, status, completed_at::TEXT, remark, created_at::TEXT FROM qms.qa_corrective_action_items WHERE action_id = $1 AND tenant_id = $2 ORDER BY created_at"#)).bind(id).bind(tenant_id)
+    let items = sqlx::query_as::<_, ActionItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, action_id::TEXT, item_name, responsible, due_date::TEXT, status, completed_at::TEXT, remark, created_at::TEXT FROM qms.qa_corrective_action_items WHERE action_id = $1 AND tenant_id = $2 ORDER BY created_at"#)).bind(id).bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 

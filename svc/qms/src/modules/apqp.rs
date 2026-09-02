@@ -29,7 +29,7 @@ pub async fn list_apqp_projects(
     let projects = match (query.status.as_ref(), query.product_name.as_ref()) {
         (Some(st), Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#),
+                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#),
             )
             .bind(st)
             .bind(format!("%{}%", pn))
@@ -40,7 +40,7 @@ pub async fn list_apqp_projects(
         }
         (Some(st), None) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
+                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
             )
             .bind(st)
             .bind(page_size)
@@ -50,7 +50,7 @@ pub async fn list_apqp_projects(
         }
         (None, Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND product_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
+                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND product_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
             )
             .bind(format!("%{}%", pn))
             .bind(page_size)
@@ -60,7 +60,7 @@ pub async fn list_apqp_projects(
         }
         (None, None) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects ORDER BY created_at DESC LIMIT $1 OFFSET $2"#),
+                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects ORDER BY created_at DESC LIMIT $1 OFFSET $2"#),
             )
             .bind(page_size)
             .bind(offset)
@@ -167,7 +167,7 @@ pub async fn get_apqp_project(
     };
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"SELECT id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -309,14 +309,14 @@ pub async fn list_apqp_phases(
 
     let phases = if let Some(pid) = project_id {
         sqlx::query_as::<_, ApqpPhase>(
-            only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
+            only_own_schema_query!("qms", r#"SELECT id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
         )
         .bind(pid)
         .fetch_all(&state.pool)
         .await
     } else {
         sqlx::query_as::<_, ApqpPhase>(
-            only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases ORDER BY created_at DESC LIMIT 100"#),
+            only_own_schema_query!("qms", r#"SELECT id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases ORDER BY created_at DESC LIMIT 100"#),
         )
         .fetch_all(&state.pool)
         .await
@@ -379,7 +379,7 @@ pub async fn get_apqp_phase(
     };
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
-        only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -482,7 +482,7 @@ pub async fn list_apqp_tasks(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut sql = String::from(
-        "SELECT id::TEXT, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE 1=1",
+        "SELECT id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE 1=1",
     );
     let mut params: Vec<String> = Vec::new();
 
@@ -576,7 +576,7 @@ pub async fn get_apqp_task(
     };
 
     let task = sqlx::query_as::<_, ApqpTask>(
-        only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -669,7 +669,7 @@ pub async fn list_apqp_risks(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut sql = String::from(
-        "SELECT id::TEXT, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE 1=1",
+        "SELECT id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE 1=1",
     );
     let mut params: Vec<serde_json::Value> = Vec::new();
 
@@ -762,7 +762,7 @@ pub async fn get_apqp_risk(
     };
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
-        only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -899,7 +899,7 @@ pub async fn get_apqp_progress(
     };
 
     let phases_result = sqlx::query_as::<_, (String, String, String, String)>(
-        only_own_schema_query!("qms", r#"SELECT id::TEXT, phase_name, phase_code, COALESCE(status, 'pending') as status FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
+        only_own_schema_query!("qms", r#"SELECT id, phase_name, phase_code, COALESCE(status, 'pending') as status FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
     )
     .bind(project_id)
     .fetch_all(&state.pool)
@@ -968,14 +968,14 @@ pub async fn list_apqp_approvals(
 
     let approvals = if let Some(pid) = project_id {
         sqlx::query_as::<_, ApqpApproval>(
-            only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals WHERE project_id = $1 ORDER BY created_at DESC"#),
+            only_own_schema_query!("qms", r#"SELECT id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals WHERE project_id = $1 ORDER BY created_at DESC"#),
         )
         .bind(pid)
         .fetch_all(&state.pool)
         .await
     } else {
         sqlx::query_as::<_, ApqpApproval>(
-            only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals ORDER BY created_at DESC LIMIT 100"#),
+            only_own_schema_query!("qms", r#"SELECT id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals ORDER BY created_at DESC LIMIT 100"#),
         )
         .fetch_all(&state.pool)
         .await

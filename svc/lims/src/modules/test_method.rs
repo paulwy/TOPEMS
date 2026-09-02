@@ -1092,3 +1092,27 @@ pub async fn create_new_version(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- test_method_cache_key ----
+    #[test]
+    fn cache_key_prefix() {
+        assert_eq!(test_method_cache_key("abc"), "test_method:abc");
+    }
+
+    #[test]
+    fn cache_key_empty_id() {
+        assert_eq!(test_method_cache_key(""), "test_method:");
+    }
+
+    #[test]
+    fn cache_key_with_special_chars() {
+        assert_eq!(
+            test_method_cache_key("tm-001/abc"),
+            "test_method:tm-001/abc"
+        );
+    }
+}

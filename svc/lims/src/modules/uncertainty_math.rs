@@ -746,3 +746,47 @@ mod tests {
         assert!(combined.coverage_factor <= 2.262 + 0.1);
     }
 }
+
+#[cfg(test)]
+mod type_b_edge_tests {
+    use super::*;
+
+    #[test]
+    fn type_b_unknown_distribution_default_divisor_one() {
+        let r = type_b_uncertainty(10.0, "unknown_dist").unwrap();
+        assert_eq!(r.divisor, 1.0);
+        assert_eq!(r.standard_uncertainty, 10.0);
+    }
+
+    #[test]
+    fn type_b_uppercase_distribution() {
+        // 大小写不敏感
+        let r = type_b_uncertainty(10.0, "RECTANGULAR").unwrap();
+        assert!((r.divisor - 3f64.sqrt()).abs() < 1e-9);
+    }
+
+    #[test]
+    fn type_b_zero_value() {
+        let r = type_b_uncertainty(0.0, "rectangular").unwrap();
+        assert_eq!(r.standard_uncertainty, 0.0);
+    }
+
+    #[test]
+    fn type_b_non_finite_error() {
+        assert!(type_b_uncertainty(f64::NAN, "normal").is_err());
+        assert!(type_b_uncertainty(f64::INFINITY, "normal").is_err());
+    }
+
+    #[test]
+    fn type_b_negative_value() {
+        // 负值按绝对值语义处理（除数仍生效）
+        let r = type_b_uncertainty(-9.0, "rectangular").unwrap();
+        assert!((r.standard_uncertainty - (-9.0 / 3f64.sqrt())).abs() < 1e-9);
+    }
+
+    #[test]
+    fn type_b_dof_infinite() {
+        let r = type_b_uncertainty(1.0, "normal").unwrap();
+        assert!(r.degrees_of_freedom.is_infinite());
+    }
+}

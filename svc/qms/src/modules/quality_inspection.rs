@@ -470,42 +470,6 @@ pub async fn audit_inspection(
                     } else {
                         "审核驳回"
                     };
-                    // 发布端补全：QmsInspectionCompleted（审核通过 → integration → LIMS 建样/任务联动）
-                    if target_status == STATUS_COMPLETED {
-                        if let Some(ref publisher) = state.event_publisher {
-                            let publisher = publisher.clone();
-                            let insp_id = Uuid::parse_str(&data.id).unwrap_or_else(|_| Uuid::nil());
-                            let insp_no = data.inspection_no.clone();
-                            let product_id = data.product_id;
-                            let product_name = data.product_name.clone();
-                            let result = data.result.clone().unwrap_or_default();
-                            let rate = data
-                                .qualification_rate
-                                .clone()
-                                .map(|b| b.to_string().parse::<f64>().unwrap_or(0.0));
-                            let inspector = data.inspector.clone().unwrap_or_default();
-                            tokio::spawn(async move {
-                                let payload = topems_shared_event::event::QmsInspectionCompletedPayload {
-                                    inspection_id: insp_id,
-                                    inspection_no: insp_no,
-                                    product_id,
-                                    product_name,
-                                    result,
-                                    qualification_rate: rate,
-                                    inspector,
-                                };
-                                if let Err(e) = publisher
-                                    .publish_event(
-                                        topems_shared_event::event::EventType::QmsInspectionCompleted,
-                                        payload,
-                                    )
-                                    .await
-                                {
-                                    tracing::warn!("[qms] QmsInspectionCompleted 事件发布失败: {}", e);
-                                }
-                            });
-                        }
-                    }
                     Json(ApiResponse::success(data, msg))
                 }
                 Err(e) => {

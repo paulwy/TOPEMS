@@ -548,7 +548,7 @@ mod tests {
     fn test_parse_hl7_with_obx_segments() {
         let raw = json!({
             "segments": [
-                {"type": "MSH", "fields": ["MSH", "|", "^~\\&"]},
+                {"type": "MSH", "fields": ["MSH", "|", "^~&"]},
                 {
                     "type": "OBX",
                     // fields[2] 观察项目 ID, [4] 结果值, [5] 单位, [6] 范围, [7] 异常标志
@@ -601,4 +601,129 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].test_item, "A");
     }
+
+    #[test]
+    fn astm_ignores_non_r_records() {
+        let raw = json!({
+            "records": [
+                {"type": "H", "fields": ["H", "header"]},
+                {"type": "L", "fields": ["L", "1"]},
+                {"type": "P", "fields": ["P", "1", "2"]},
+            ]
+        });
+        let r = parse_data("ASTM", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 0, "non-R records should be ignored");
+    }
+
+    #[test]
+    fn astm_empty_records_array_yields_zero_quality() {
+        let raw = json!({"records": []});
+        let r = parse_data("ASTM", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert!(items.is_empty());
+        assert_eq!(r.quality_score, Some(0.0));
+    }
+
+    #[test]
+    fn astm_r_record_missing_fields_uses_empty_defaults() {
+        let raw = json!({
+            "records": [
+                {"type": "R", "fields": ["1"]},
+            ]
+        });
+        let r = parse_data("ASTM", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].test_item, "");
+        assert_eq!(items[0].result, None);
+        assert_eq!(items[0].numeric_result, None);
+        assert_eq!(items[0].unit, None);
+    }
+
+    #[test]
+    fn astm_non_numeric_result_keeps_string_result() {
+        let raw = json!({
+            "records": [
+                {"type": "R", "fields": ["1", "WBC", ">10", "10^9/L", "4-10"]},
+            ]
+        });
+        let r = parse_data("ASTM", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].result.as_deref(), Some(">10"));
+        assert_eq!(items[0].numeric_result, None, "non-numeric result should not parse to f64");
+        assert_eq!(items[0].unit.as_deref(), Some("10^9/L"));
+    }
+
+    #[test]
+    fn astm_no_records_key_falls_back_to_results() {
+        let raw = json!({"results": {"GLU": 5.6}});
+        let r = parse_data("ASTM", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].test_item, "GLU");
+    }
+
+
+    #[test]
+    fn hl7_empty_segments_yields_no_items() {
+        let raw = json!({"segments": []});
+        let r = parse_data("HL7", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert!(items.is_empty());
+        assert_eq!(r.quality_score, Some(0.0));
+    }
+
+    #[test]
+    fn hl7_ignores_non_obx_segments() {
+        let raw = json!({
+            "segments": [
+                {"type": "MSH", "fields": ["MSH", "^~&", "LAB"]},
+                {"type": "PID", "fields": ["PID", "1", "12345"]},
+            ]
+        });
+        let r = parse_data("HL7", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 0, "non-OBX segments should be ignored");
+    }
+
+    #[test]
+    fn hl7_obx_missing_fields_use_empty_defaults() {
+        let raw = json!({
+            "segments": [
+                {"type": "OBX", "fields": ["OBX", "1"]},
+            ]
+        });
+        let r = parse_data("HL7", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].test_item, "");
+        assert_eq!(items[0].result, None);
+        assert_eq!(items[0].numeric_result, None);
+    }
+
+    #[test]
+    fn hl7_abnormal_flag_marks_status_abnormal() {
+        let raw = json!({
+            "segments": [
+                {"type": "OBX", "fields": ["OBX", "1", "WBC", "", "10", "10^9/L", "4-10", "H"]},
+            ]
+        });
+        let r = parse_data("HL7", &raw);
+        assert!(r.success);
+        let items = r.test_items.unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].status.as_deref(), Some("abnormal"));
+        assert_eq!(items[0].abnormal_flag.as_deref(), Some("H"));
+    }
+
 }

@@ -751,3 +751,207 @@ pub async fn get_prediction_methods(State(_state): State<AppState>) -> Json<serd
         "data": methods
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- simple_moving_average ----
+    #[test]
+    fn sma_basic_window() {
+        let out = simple_moving_average(&[1.0, 2.0, 3.0, 4.0], 2);
+        assert_eq!(out.len(), 4);
+        assert!(out[0].is_none());
+        assert_eq!(out[1].unwrap(), 1.5);
+        assert_eq!(out[2].unwrap(), 2.5);
+        assert_eq!(out[3].unwrap(), 3.5);
+    }
+
+    #[test]
+    fn sma_window_one_is_identity() {
+        let out = simple_moving_average(&[10.0, 20.0, 30.0], 1);
+        assert_eq!(out, vec![Some(10.0), Some(20.0), Some(30.0)]);
+    }
+
+    #[test]
+    fn sma_window_larger_than_data() {
+        let out = simple_moving_average(&[1.0, 2.0, 3.0], 5);
+        assert_eq!(out, vec![None, None, None]);
+    }
+
+    #[test]
+    fn sma_empty_data() {
+        assert!(simple_moving_average(&[], 3).is_empty());
+    }
+
+    #[test]
+    fn sma_large_window_average() {
+        let out = simple_moving_average(&[1.0, 2.0, 3.0, 4.0, 5.0], 3);
+        assert!(out[0].is_none());
+        assert!(out[1].is_none());
+        assert_eq!(out[2].unwrap(), 2.0);
+        assert_eq!(out[3].unwrap(), 3.0);
+        assert_eq!(out[4].unwrap(), 4.0);
+    }
+
+    // ---- forecast_ma ----
+    #[test]
+    fn forecast_ma_rolling() {
+        // last [3,4] avg 3.5 → [3.5, 3.75, 3.625]
+        let out = forecast_ma(&[1.0, 2.0, 3.0, 4.0], 2, 3);
+        assert_eq!(out, vec![3.5, 3.75, 3.625]);
+    }
+
+    #[test]
+    fn forecast_ma_zero_periods() {
+        assert!(forecast_ma(&[1.0, 2.0, 3.0], 2, 0).is_empty());
+    }
+
+    #[test]
+    fn forecast_ma_window_exceeds_data() {
+        // window 5 但仅 3 个点：current=[1,2,3] avg=2 → 滚动后 [2,3,2] avg=7/3
+        let out = forecast_ma(&[1.0, 2.0, 3.0], 5, 2);
+        assert_eq!(out, vec![2.0, 7.0 / 3.0]);
+    }
+
+    #[test]
+    fn forecast_ma_constant_series() {
+        let out = forecast_ma(&[5.0, 5.0, 5.0], 2, 3);
+        assert_eq!(out, vec![5.0, 5.0, 5.0]);
+    }
+
+    // ---- exponential_smoothing ----
+    #[test]
+    fn es_empty() {
+        assert!(exponential_smoothing(&[], 0.5).is_empty());
+    }
+
+    #[test]
+    fn es_single_element() {
+        assert_eq!(exponential_smoothing(&[10.0], 0.5), vec![10.0]);
+    }
+
+    #[test]
+    fn es_alpha_one_identity() {
+        assert_eq!(
+            exponential_smoothing(&[10.0, 20.0, 30.0], 1.0),
+            vec![10.0, 20.0, 30.0]
+        );
+    }
+
+    #[test]
+    fn es_alpha_zero_flat() {
+        assert_eq!(
+            exponential_smoothing(&[10.0, 20.0, 30.0], 0.0),
+            vec![10.0, 10.0, 10.0]
+        );
+    }
+
+    #[test]
+    fn es_alpha_half() {
+        assert_eq!(exponential_smoothing(&[10.0, 20.0], 0.5), vec![10.0, 15.0]);
+    }
+
+    // ---- forecast_es ----
+    #[test]
+    fn forecast_es_constant() {
+        assert_eq!(forecast_es(7.5, 3), vec![7.5, 7.5, 7.5]);
+    }
+
+    #[test]
+    fn forecast_es_zero_periods() {
+        assert!(forecast_es(7.5, 0).is_empty());
+    }
+
+    // ---- calculate_linear_regression ----
+    #[test]
+    fn linreg_perfect_fit() {
+        let (slope, intercept, r2) =
+            calculate_linear_regression(&[(1.0, 3.0), (2.0, 5.0), (3.0, 7.0)]);
+        assert!((slope - 2.0).abs() < 1e-9);
+        assert!((intercept - 1.0).abs() < 1e-9);
+        assert!((r2 - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn linreg_empty() {
+        assert_eq!(calculate_linear_regression(&[]), (0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn linreg_flat_line() {
+        let (slope, intercept, r2) =
+            calculate_linear_regression(&[(1.0, 5.0), (2.0, 5.0), (3.0, 5.0)]);
+        assert!((slope - 0.0).abs() < 1e-9);
+        assert!((intercept - 5.0).abs() < 1e-9);
+        // 水平线 ss_tot=0 → r² 归零
+        assert_eq!(r2, 0.0);
+    }
+
+    // ---- calculate_mape ----
+    #[test]
+    fn mape_perfect() {
+        assert_eq!(
+            calculate_mape(&[10.0, 20.0, 30.0], &[10.0, 20.0, 30.0]),
+            0.0
+        );
+    }
+
+    #[test]
+    fn mape_empty() {
+        assert_eq!(calculate_mape(&[], &[]), 0.0);
+    }
+
+    #[test]
+    fn mape_mixed() {
+        // |10-20|/10*100=100, |30-40|/30*100≈33.33 → avg≈66.67
+        let m = calculate_mape(&[10.0, 0.0, 30.0], &[20.0, 0.0, 40.0]);
+        assert!((m - 66.6666).abs() < 0.01);
+    }
+
+    #[test]
+    fn mape_shorter_predicted() {
+        // min len=2: |1-100|/1*100=9900, |2-200|/2*100=9900 → 9900
+        let m = calculate_mape(&[1.0, 2.0, 3.0], &[100.0, 200.0]);
+        assert!((m - 9900.0).abs() < 1e-9);
+    }
+
+    // ---- calculate_mae ----
+    #[test]
+    fn mae_perfect() {
+        assert_eq!(calculate_mae(&[1.0, 2.0, 3.0], &[1.0, 2.0, 3.0]), 0.0);
+    }
+
+    #[test]
+    fn mae_known() {
+        assert_eq!(calculate_mae(&[1.0, 2.0, 3.0], &[2.0, 4.0, 6.0]), 2.0);
+    }
+
+    #[test]
+    fn mae_empty() {
+        assert_eq!(calculate_mae(&[], &[]), 0.0);
+    }
+
+    #[test]
+    fn mae_different_lengths() {
+        assert_eq!(calculate_mae(&[1.0, 2.0], &[5.0, 10.0, 99.0]), 6.0);
+    }
+
+    // ---- calculate_mse ----
+    #[test]
+    fn mse_perfect() {
+        assert_eq!(calculate_mse(&[1.0, 2.0, 3.0], &[1.0, 2.0, 3.0]), 0.0);
+    }
+
+    #[test]
+    fn mse_known() {
+        // (1+4+9)/3 = 14/3
+        let m = calculate_mse(&[1.0, 2.0, 3.0], &[2.0, 4.0, 6.0]);
+        assert!((m - 14.0 / 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn mse_empty() {
+        assert_eq!(calculate_mse(&[], &[]), 0.0);
+    }
+}

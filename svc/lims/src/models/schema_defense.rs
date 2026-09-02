@@ -4,6 +4,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_samples",
         &[
+            ("tenant_id", "UUID"),
             ("sample_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("sample_name", "VARCHAR(256) NOT NULL"),
             ("sample_type", "VARCHAR(64)"),
@@ -21,6 +22,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_tasks",
         &[
+            ("tenant_id", "UUID"),
             ("task_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("sample_id", "UUID NOT NULL"),
             ("sample_no", "VARCHAR(64) NOT NULL"),
@@ -42,6 +44,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_records",
         &[
+            ("tenant_id", "UUID"),
             ("record_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("task_id", "UUID NOT NULL"),
             ("test_data", "JSONB NOT NULL"),
@@ -55,6 +58,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_instruments",
         &[
+            ("tenant_id", "UUID"),
             ("instrument_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("name", "VARCHAR(256) NOT NULL"),
             ("model", "VARCHAR(128)"),
@@ -71,6 +75,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_reagents",
         &[
+            ("tenant_id", "UUID"),
             ("reagent_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("name", "VARCHAR(256) NOT NULL"),
             ("specification", "VARCHAR(128)"),
@@ -88,6 +93,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_processes",
         &[
+            ("tenant_id", "UUID"),
             ("process_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("name", "VARCHAR(256) NOT NULL"),
             ("description", "TEXT"),
@@ -101,6 +107,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_sample_lifecycle",
         &[
+            ("tenant_id", "UUID"),
             ("sample_id", "UUID NOT NULL"),
             ("sample_no", "VARCHAR(64) NOT NULL"),
             ("lifecycle_stage", "VARCHAR(32) NOT NULL"),
@@ -114,6 +121,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_calibration_records",
         &[
+            ("tenant_id", "UUID"),
             ("instrument_id", "UUID NOT NULL"),
             ("instrument_no", "VARCHAR(64) NOT NULL"),
             ("instrument_name", "VARCHAR(256) NOT NULL"),
@@ -130,6 +138,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_reagent_alerts",
         &[
+            ("tenant_id", "UUID"),
             ("reagent_id", "UUID NOT NULL"),
             ("reagent_no", "VARCHAR(64) NOT NULL"),
             ("reagent_name", "VARCHAR(256) NOT NULL"),
@@ -146,6 +155,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_reagent_history",
         &[
+            ("tenant_id", "UUID"),
             ("reagent_id", "UUID NOT NULL"),
             ("adjustment_type", "VARCHAR(16) NOT NULL"),
             ("quantity", "DECIMAL(12,2) NOT NULL"),
@@ -157,6 +167,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lab_inspection_reports",
         &[
+            ("tenant_id", "UUID"),
             ("report_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("sample_id", "UUID NOT NULL"),
             ("sample_no", "VARCHAR(64) NOT NULL"),
@@ -174,6 +185,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_sync_records",
         &[
+            ("tenant_id", "UUID"),
             ("sync_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("sync_type", "VARCHAR(32) NOT NULL"),
             ("source_id", "UUID"),
@@ -190,6 +202,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_sample_barcodes",
         &[
+            ("tenant_id", "UUID"),
             ("barcode", "VARCHAR(128) NOT NULL UNIQUE"),
             ("barcode_type", "VARCHAR(32) NOT NULL"),
             ("sample_id", "UUID"),
@@ -208,6 +221,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_barcode_scan_records",
         &[
+            ("tenant_id", "UUID"),
             ("barcode_id", "UUID NOT NULL"),
             ("barcode", "VARCHAR(128) NOT NULL"),
             ("scan_type", "VARCHAR(32) NOT NULL"),
@@ -222,6 +236,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_rfid_tags",
         &[
+            ("tenant_id", "UUID"),
             ("tag_id", "VARCHAR(128) NOT NULL UNIQUE"),
             ("tag_type", "VARCHAR(32) DEFAULT 'uhf'"),
             ("sample_id", "UUID"),
@@ -237,6 +252,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_method_categories",
         &[
+            ("tenant_id", "UUID"),
             ("category_code", "VARCHAR(64) NOT NULL UNIQUE"),
             ("category_name", "VARCHAR(256) NOT NULL"),
             ("parent_id", "UUID"),
@@ -251,6 +267,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_test_methods",
         &[
+            ("tenant_id", "UUID"),
             ("method_code", "VARCHAR(64) NOT NULL UNIQUE"),
             ("method_name", "VARCHAR(256) NOT NULL"),
             ("category_id", "UUID"),
@@ -277,6 +294,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_method_validations",
         &[
+            ("tenant_id", "UUID"),
             ("method_id", "UUID NOT NULL"),
             ("method_code", "VARCHAR(64) NOT NULL"),
             ("method_name", "VARCHAR(256) NOT NULL"),
@@ -295,6 +313,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_method_versions",
         &[
+            ("tenant_id", "UUID"),
             ("method_id", "UUID NOT NULL"),
             ("version", "VARCHAR(32) NOT NULL"),
             ("version_description", "TEXT"),
@@ -307,6 +326,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_pt_plans",
         &[
+            ("tenant_id", "UUID"),
             ("plan_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("plan_name", "VARCHAR(256) NOT NULL"),
             ("provider", "VARCHAR(256)"),
@@ -330,6 +350,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_pt_samples",
         &[
+            ("tenant_id", "UUID"),
             ("plan_id", "UUID NOT NULL"),
             ("plan_no", "VARCHAR(64) NOT NULL"),
             ("plan_name", "VARCHAR(256) NOT NULL"),
@@ -346,6 +367,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_pt_results",
         &[
+            ("tenant_id", "UUID"),
             ("plan_id", "UUID NOT NULL"),
             ("plan_no", "VARCHAR(64) NOT NULL"),
             ("sample_id", "UUID NOT NULL"),
@@ -370,6 +392,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_pt_evaluations",
         &[
+            ("tenant_id", "UUID"),
             ("plan_id", "UUID NOT NULL"),
             ("plan_no", "VARCHAR(64) NOT NULL"),
             ("sample_id", "UUID NOT NULL"),
@@ -393,6 +416,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_pt_corrective_actions",
         &[
+            ("tenant_id", "UUID"),
             ("plan_id", "UUID NOT NULL"),
             ("plan_no", "VARCHAR(64) NOT NULL"),
             ("evaluation_id", "UUID NOT NULL"),
@@ -412,6 +436,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_uncertainty_projects",
         &[
+            ("tenant_id", "UUID"),
             ("project_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("project_name", "VARCHAR(256) NOT NULL"),
             ("method_id", "UUID"),
@@ -436,6 +461,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_uncertainty_sources",
         &[
+            ("tenant_id", "UUID"),
             ("project_id", "UUID NOT NULL"),
             ("source_name", "VARCHAR(256) NOT NULL"),
             ("source_type", "VARCHAR(32) NOT NULL"),
@@ -451,6 +477,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_uncertainty_components",
         &[
+            ("tenant_id", "UUID"),
             ("project_id", "UUID NOT NULL"),
             ("source_id", "UUID NOT NULL"),
             ("component_type", "VARCHAR(16) NOT NULL"),
@@ -470,6 +497,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_instrument_data",
         &[
+            ("tenant_id", "UUID"),
             ("data_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("instrument_id", "UUID"),
             ("batch_no", "VARCHAR(64) NOT NULL"),
@@ -490,6 +518,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_collection_tasks",
         &[
+            ("tenant_id", "UUID"),
             ("task_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("task_name", "VARCHAR(256) NOT NULL"),
             ("instrument_id", "UUID"),
@@ -513,6 +542,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_parse_rules",
         &[
+            ("tenant_id", "UUID"),
             ("rule_no", "VARCHAR(64) NOT NULL UNIQUE"),
             ("rule_name", "VARCHAR(256) NOT NULL"),
             ("protocol", "VARCHAR(32) NOT NULL DEFAULT 'JSON'"),
@@ -531,6 +561,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "qa_lims_audit_logs",
         &[
+            ("tenant_id", "UUID"),
             ("action", "VARCHAR(64) NOT NULL"),
             ("entity_type", "VARCHAR(64)"),
             ("entity_id", "UUID"),

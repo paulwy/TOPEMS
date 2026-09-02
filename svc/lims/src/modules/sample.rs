@@ -876,4 +876,36 @@ mod tests {
     fn test_calculate_stage_progress_unknown_is_zero() {
         assert!((calculate_stage_progress("unknown_state") - 0.0).abs() < 1e-9);
     }
+
+    // ---- get_stage_name / calculate_stage_progress ----
+    #[test]
+    fn stage_progress_received_is_zero() {
+        assert_eq!(calculate_stage_progress("received"), 0.0);
+    }
+
+    #[test]
+    fn stage_progress_destroyed_is_one() {
+        assert_eq!(calculate_stage_progress("destroyed"), 1.0);
+    }
+
+    #[test]
+    fn stage_progress_intermediate() {
+        // completed idx=3 → 3/7*100=42.857 → round 43 → /100 = 0.43
+        assert_eq!(calculate_stage_progress("completed"), 0.43);
+    }
+
+    #[test]
+    fn stage_progress_unknown_stage_zero() {
+        assert_eq!(calculate_stage_progress("unknown_stage"), 0.0);
+    }
+
+    #[test]
+    fn stage_name_known() {
+        assert_eq!(get_stage_name("received"), "样品接收");
+    }
+
+    #[test]
+    fn stage_name_unknown_returns_input() {
+        assert_eq!(get_stage_name("custom_stage"), "custom_stage");
+    }
 }

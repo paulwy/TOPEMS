@@ -810,3 +810,42 @@ pub struct CheckPermissionQuery {
     pub resource_id: String,
     pub permission: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- validate_table_name ----
+    #[test]
+    fn table_name_empty_rejected() {
+        assert!(validate_table_name("").is_err());
+    }
+
+    #[test]
+    fn table_name_valid() {
+        assert!(validate_table_name("orders").is_ok());
+        assert!(validate_table_name("orders_2024").is_ok());
+        assert!(validate_table_name("_internal").is_ok());
+    }
+
+    #[test]
+    fn table_name_too_long_rejected() {
+        let long = "a".repeat(64);
+        assert!(validate_table_name(&long).is_err());
+        let ok = "a".repeat(63);
+        assert!(validate_table_name(&ok).is_ok());
+    }
+
+    #[test]
+    fn table_name_bad_start_rejected() {
+        assert!(validate_table_name("1orders").is_err());
+        assert!(validate_table_name("-orders").is_err());
+    }
+
+    #[test]
+    fn table_name_special_chars_rejected() {
+        assert!(validate_table_name("orders;drop").is_err());
+        assert!(validate_table_name("orders table").is_err());
+        assert!(validate_table_name("order\'s").is_err());
+    }
+}

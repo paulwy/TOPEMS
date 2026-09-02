@@ -373,16 +373,15 @@ pub async fn submit_result(
                 let conclusion = task.conclusion.clone().unwrap_or_default();
                 let recorded_by = task.recorded_by.clone().unwrap_or_default();
                 let result_val = task.result.clone().unwrap_or(serde_json::Value::Null);
-                let test_item = task.test_items.to_string();
                 tokio::spawn(async move {
                     let payload =
                         topems_shared_event::event::LimsInspectionResultSubmittedPayload {
                             task_id: tid,
-                            task_no: tno.clone(),
+                            task_no: tno,
                             sample_id: sid,
-                            sample_no: sno.clone(),
-                            conclusion: conclusion.clone(),
-                            result: result_val.clone(),
+                            sample_no: sno,
+                            conclusion,
+                            result: result_val,
                             recorded_by,
                         };
                     if let Err(e) = publisher
@@ -398,52 +397,6 @@ pub async fn submit_result(
                             "[lims] LimsInspectionResultSubmitted 事件发布成功 - task_id={}",
                             tid
                         );
-                    }
-
-                    // 发布端补全：LimsRecordCompleted（→ integration → QMS 结果回写）
-                    // qa_lab_tasks 无 related_inspection_no 关联 → None（integration handler 需空值保护）
-                    let payload = topems_shared_event::event::LimsRecordCompletedPayload {
-                        record_id: tid,
-                        record_no: tno.clone(),
-                        task_id: tid,
-                        task_no: tno.clone(),
-                        sample_id: sid,
-                        sample_no: sno.clone(),
-                        conclusion: conclusion.clone(),
-                        test_data: result_val.clone(),
-                        related_inspection_no: None,
-                    };
-                    if let Err(e) = publisher
-                        .publish_event(
-                            topems_shared_event::event::EventType::LimsRecordCompleted,
-                            payload,
-                        )
-                        .await
-                    {
-                        tracing::warn!("[lims] LimsRecordCompleted 事件发布失败（graceful fallback）: {}", e);
-                    }
-
-                    // 发布端补全：LimsInspectionAbnormalDetected（结论非合格 → EHS 隐患联动）
-                    if !conclusion.contains("合格") {
-                        let payload =
-                            topems_shared_event::event::LimsInspectionAbnormalDetectedPayload {
-                                task_id: tid,
-                                task_no: tno.clone(),
-                                sample_id: sid,
-                                sample_no: sno.clone(),
-                                test_item: test_item.clone(),
-                                abnormal_data: result_val.clone(),
-                                conclusion: conclusion.clone(),
-                            };
-                        if let Err(e) = publisher
-                            .publish_event(
-                                topems_shared_event::event::EventType::LimsInspectionAbnormalDetected,
-                                payload,
-                            )
-                            .await
-                        {
-                            tracing::warn!("[lims] LimsInspectionAbnormalDetected 事件发布失败（graceful fallback）: {}", e);
-                        }
                     }
                 });
             }

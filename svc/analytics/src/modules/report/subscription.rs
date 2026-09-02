@@ -405,3 +405,28 @@ pub async fn toggle_subscription(
         )),
     }
 }
+
+#[cfg(test)]
+mod frequency_tests {
+    use super::*;
+
+    #[test]
+    fn frequency_display_daily() {
+        assert_eq!(SubscriptionFrequency::Daily.to_string(), "daily");
+    }
+
+    #[test]
+    fn frequency_display_weekly() {
+        assert_eq!(SubscriptionFrequency::Weekly.to_string(), "weekly");
+    }
+
+    #[test]
+    fn frequency_display_monthly() {
+        assert_eq!(SubscriptionFrequency::Monthly.to_string(), "monthly");
+    }
+
+    #[test]
+    fn frequency_display_quarterly() {
+        assert_eq!(SubscriptionFrequency::Quarterly.to_string(), "quarterly");
+    }
+}

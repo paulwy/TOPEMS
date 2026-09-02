@@ -536,3 +536,64 @@ pub async fn toggle_schedule(
         )),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- ScheduleType FromStr ----
+    #[test]
+    fn schedule_type_parse() {
+        assert!(matches!(
+            "cron".parse::<ScheduleType>().unwrap(),
+            ScheduleType::Cron
+        ));
+        assert!(matches!(
+            "interval".parse::<ScheduleType>().unwrap(),
+            ScheduleType::Interval
+        ));
+        assert!(matches!(
+            "one_time".parse::<ScheduleType>().unwrap(),
+            ScheduleType::OneTime
+        ));
+    }
+
+    #[test]
+    fn schedule_type_aliases() {
+        assert!(matches!(
+            "onetime".parse::<ScheduleType>().unwrap(),
+            ScheduleType::OneTime
+        ));
+        assert!(matches!(
+            "once".parse::<ScheduleType>().unwrap(),
+            ScheduleType::OneTime
+        ));
+    }
+
+    #[test]
+    fn schedule_type_case_insensitive() {
+        assert!(matches!(
+            "CRON".parse::<ScheduleType>().unwrap(),
+            ScheduleType::Cron
+        ));
+        assert!(matches!(
+            "Interval".parse::<ScheduleType>().unwrap(),
+            ScheduleType::Interval
+        ));
+    }
+
+    #[test]
+    fn schedule_type_unknown_rejected() {
+        assert!("hourly".parse::<ScheduleType>().is_err());
+        assert!("".parse::<ScheduleType>().is_err());
+    }
+
+    // ---- ScheduleStatus Display ----
+    #[test]
+    fn schedule_status_display() {
+        assert_eq!(ScheduleStatus::Active.to_string(), "active");
+        assert_eq!(ScheduleStatus::Paused.to_string(), "paused");
+        assert_eq!(ScheduleStatus::Completed.to_string(), "completed");
+        assert_eq!(ScheduleStatus::Failed.to_string(), "failed");
+    }
+}

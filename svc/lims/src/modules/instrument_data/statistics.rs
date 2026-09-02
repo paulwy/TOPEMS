@@ -204,4 +204,73 @@ mod tests {
         let pct = protocol_percentages(&dist);
         assert!(pct.iter().all(|(_, p)| *p == 0.0));
     }
+
+    // ---- compute_parse_success_rate 补充 ----
+    #[test]
+    fn success_rate_zero_total() {
+        assert_eq!(compute_parse_success_rate(10, 0), 0.0);
+        assert_eq!(compute_parse_success_rate(10, -1), 0.0);
+    }
+
+    #[test]
+    fn success_rate_negative_success_clamped() {
+        assert_eq!(compute_parse_success_rate(-5, 10), 0.0);
+    }
+
+    #[test]
+    fn success_rate_rounding() {
+        // 1/3 ≈ 0.3333（4 位小数）
+        assert_eq!(compute_parse_success_rate(1, 3), 0.3333);
+    }
+
+    // ---- top_protocol ----
+    #[test]
+    fn top_protocol_empty_none() {
+        assert_eq!(top_protocol(&[]), None);
+    }
+
+    #[test]
+    fn top_protocol_picks_max() {
+        let dist = vec![
+            ProtocolStat {
+                protocol: "json".to_string(),
+                count: 10,
+            },
+            ProtocolStat {
+                protocol: "hl7".to_string(),
+                count: 30,
+            },
+            ProtocolStat {
+                protocol: "astm".to_string(),
+                count: 20,
+            },
+        ];
+        let (name, ratio) = top_protocol(&dist).unwrap();
+        assert_eq!(name, "hl7");
+        assert_eq!(ratio, 0.5);
+    }
+
+    // ---- protocol_percentages ----
+    #[test]
+    fn percentages_empty_all_zero() {
+        let out = protocol_percentages(&[]);
+        assert!(out.is_empty());
+    }
+
+    #[test]
+    fn percentages_normal() {
+        let dist = vec![
+            ProtocolStat {
+                protocol: "json".to_string(),
+                count: 25,
+            },
+            ProtocolStat {
+                protocol: "hl7".to_string(),
+                count: 75,
+            },
+        ];
+        let out = protocol_percentages(&dist);
+        assert_eq!(out[0].1, 25.0);
+        assert_eq!(out[1].1, 75.0);
+    }
 }

@@ -5,7 +5,6 @@ pub mod dashboard;
 pub mod data_sync;
 pub mod eight_d;
 pub mod fmea;
-pub mod integration;
 pub mod qms_plugin;
 pub mod quality_cost;
 pub mod quality_dashboard;
@@ -38,9 +37,6 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // 确保 qms schema 存在（容器重建/全新库后表 DDL 才能落库）
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS qms").execute(pool).await?;
-
     sqlx::query(only_own_schema_query!(
         "qms",
         r#"
