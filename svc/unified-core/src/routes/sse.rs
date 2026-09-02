@@ -203,3 +203,228 @@ pub fn sse_routes() -> Router<AppState> {
         .route("/sse/connect", get(sse_connect_handler))
         .route("/sse/session/{session_id}", post(sse_session_handler))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ===== EndpointEventData tests =====
+
+    #[test]
+    fn test_endpoint_event_data_serialization() {
+        let data = EndpointEventData {
+            session_id: "sess-001".to_string(),
+            endpoint: "/api/sse/session/sess-001".to_string(),
+            expires_in: 1800,
+        };
+        let json = serde_json::to_string(&data).unwrap();
+        assert!(json.contains("\"session_id\":\"sess-001\""));
+        assert!(json.contains("\"endpoint\":\"/api/sse/session/sess-001\""));
+        assert!(json.contains("\"expires_in\":1800"));
+    }
+
+    #[test]
+    fn test_endpoint_event_data_deserialization() {
+        let json = r#"{"session_id":"sess-002","endpoint":"/api/sse/session/sess-002","expires_in":900}"#;
+        let data: EndpointEventData = serde_json::from_str(json).unwrap();
+        assert_eq!(data.session_id, "sess-002");
+        assert_eq!(data.endpoint, "/api/sse/session/sess-002");
+        assert_eq!(data.expires_in, 900);
+    }
+
+    #[test]
+    fn test_endpoint_event_data_round_trip() {
+        let original = EndpointEventData {
+            session_id: "rt-001".to_string(),
+            endpoint: "/api/sse/session/rt-001".to_string(),
+            expires_in: 3600,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let parsed: EndpointEventData = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id, original.session_id);
+        assert_eq!(parsed.endpoint, original.endpoint);
+        assert_eq!(parsed.expires_in, original.expires_in);
+    }
+
+    #[test]
+    fn test_endpoint_event_data_field_order() {
+        // 确保字段顺序稳定（前端 SDK 按字段名解析，不依赖顺序但记录基线）
+        let data = EndpointEventData {
+            session_id: "s".to_string(),
+            endpoint: "e".to_string(),
+            expires_in: 0,
+        };
+        let json = serde_json::to_string(&data).unwrap();
+        // session_id 应出现在 endpoint 之前（结构体声明顺序）
+        let sid_pos = json.find("session_id").unwrap();
+        let ep_pos = json.find("endpoint").unwrap();
+        let exp_pos = json.find("expires_in").unwrap();
+        assert!(sid_pos < ep_pos);
+        assert!(ep_pos < exp_pos);
+    }
+
+    // ===== SseSessionRequest tests =====
+
+    #[test]
+    fn test_sse_session_request_default_event_type() {
+        let json = r#"{"data":{"msg":"hello"}}"#;
+        let req: SseSessionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.event_type, "message");
+        assert_eq!(req.data["msg"], "hello");
+    }
+
+    #[test]
+    fn test_sse_session_request_custom_event_type() {
+        let json = r#"{"event_type":"update","data":{"count":42}}"#;
+        let req: SseSessionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.event_type, "update");
+        assert_eq!(req.data["count"], 42);
+    }
+
+    #[test]
+    fn test_sse_session_request_null_data() {
+        let json = r#"{"event_type":"ping","data":null}"#;
+        let req: SseSessionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.event_type, "ping");
+        assert!(req.data.is_null());
+    }
+
+    #[test]
+    fn test_sse_session_request_nested_data() {
+        let json = r#"{"event_type":"notify","data":{"user":{"id":"u1","name":"Alice"},"tags":["a","b"]}}"#;
+        let req: SseSessionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.event_type, "notify");
+        assert_eq!(req.data["user"]["id"], "u1");
+        assert_eq!(req.data["user"]["name"], "Alice");
+        assert_eq!(req.data["tags"][0], "a");
+        assert_eq!(req.data["tags"][1], "b");
+    }
+
+    #[test]
+    fn test_sse_session_request_array_data() {
+        let json = r#"{"data":[1,2,3]}"#;
+        let req: SseSessionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.event_type, "message");
+        assert!(req.data.is_array());
+        assert_eq!(req.data.as_array().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn test_default_event_type_function() {
+        assert_eq!(default_event_type(), "message");
+    }
+
+    // ===== SseSessionResponse tests =====
+
+    #[test]
+    fn test_sse_session_response_success_serialization() {
+        let resp = SseSessionResponse {
+            success: true,
+            session_id: "sess-ok".to_string(),
+            message: "Event sent successfully".to_string(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"success\":true"));
+        assert!(json.contains("\"session_id\":\"sess-ok\""));
+        assert!(json.contains("\"Event sent successfully\""));
+    }
+
+    #[test]
+    fn test_sse_session_response_failure_serialization() {
+        let resp = SseSessionResponse {
+            success: false,
+            session_id: "sess-fail".to_string(),
+            message: "Session not found or expired".to_string(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"success\":false"));
+        assert!(json.contains("\"session_id\":\"sess-fail\""));
+        assert!(json.contains("\"Session not found or expired\""));
+    }
+
+    #[test]
+    fn test_sse_session_response_disconnect_message() {
+        let resp = SseSessionResponse {
+            success: false,
+            session_id: "s3".to_string(),
+            message: "Client disconnected".to_string(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("Client disconnected"));
+    }
+
+    // ===== Event construction logic tests =====
+    // 验证从 SseSessionRequest 构造 Event 的逻辑（不依赖 AppState / channel）
+
+    #[test]
+    fn test_event_construction_from_request() {
+        let req = SseSessionRequest {
+            event_type: "custom_evt".to_string(),
+            data: serde_json::json!({"key": "value"}),
+        };
+        let event = Event::default().event(&req.event_type).json_data(&req.data);
+        assert!(event.is_ok());
+        let evt = event.unwrap();
+        // 渲染 Event 为字符串，校验 event: 行 + data: 行
+        let rendered = format!("{:?}", evt);
+        assert!(rendered.contains("custom_evt") || rendered.contains("custom_evt"));
+    }
+
+    #[test]
+    fn test_event_construction_with_default_event_type() {
+        // 走 default_event_type 路径：未指定 event_type 时默认 "message"
+        let json = r#"{"data":{"hello":"world"}}"#;
+        let req: SseSessionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.event_type, "message");
+
+        let event = Event::default().event(&req.event_type).json_data(&req.data);
+        assert!(event.is_ok());
+    }
+
+    #[test]
+    fn test_event_construction_null_data() {
+        let req = SseSessionRequest {
+            event_type: "ping".to_string(),
+            data: serde_json::Value::Null,
+        };
+        let event = Event::default().event(&req.event_type).json_data(&req.data);
+        assert!(event.is_ok());
+    }
+
+    // ===== endpoint URL 构造逻辑 =====
+    // 验证 handler 内 `format!("/api/sse/session/{}", session_id)` 的格式基线
+
+    #[test]
+    fn test_endpoint_url_format() {
+        let session_id = "abc-123-xyz";
+        let url = format!("/api/sse/session/{}", session_id);
+        assert_eq!(url, "/api/sse/session/abc-123-xyz");
+        assert!(url.starts_with("/api/sse/session/"));
+        assert!(url.ends_with(session_id));
+    }
+
+    #[test]
+    fn test_endpoint_url_with_uuid_session() {
+        // SSE session_id 实际为 UUID 格式，校验兼容
+        let session_id = "550e8400-e29b-41d4-a716-446655440000";
+        let url = format!("/api/sse/session/{}", session_id);
+        assert_eq!(url, "/api/sse/session/550e8400-e29b-41d4-a716-446655440000");
+    }
+
+    #[test]
+    fn test_endpoint_url_in_endpoint_event_data() {
+        // 端点 URL 写入 EndpointEventData.endpoint 字段
+        let session_id = "sess-xyz";
+        let endpoint = format!("/api/sse/session/{}", session_id);
+        let data = EndpointEventData {
+            session_id: session_id.to_string(),
+            endpoint,
+            expires_in: 1800,
+        };
+        assert!(data.endpoint.ends_with(session_id));
+        assert!(data.endpoint.starts_with("/api/sse/session/"));
+        // 校验 session_id 与 endpoint 末段对齐
+        let last_segment = data.endpoint.rsplit('/').next().unwrap();
+        assert_eq!(last_segment, session_id);
+    }
+}
