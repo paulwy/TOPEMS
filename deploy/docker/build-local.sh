@@ -35,8 +35,8 @@ done
 
 # 断点续跑：跳过 START_FROM 之前的
 if [[ -n "$START_FROM" ]]; then
-  SERVICES=($(echo "${SERVICES[@]}" | tr ' ' '\n' | awk -v s="$START_FROM" 'found||$0==s{found=1} found' | tr '\n' ' '))
-  echo "→ 从 $START_FROM 续跑：${SERVICES[*]}"
+  SERVICES=($(printf '%s\n' "${SERVICES[*]:-}" | tr ' ' '\n' | awk -v s="$START_FROM" 'found||$0==s{found=1} found' | tr '\n' ' '))
+  echo "→ 从 $START_FROM 续跑：${SERVICES[*]:-}"
 fi
 
 # 内存检查（16GB 机器默认 1 并行；--parallel 可显式覆盖）
@@ -60,7 +60,7 @@ build_one() {
     echo "✅ OK   $svc"
     OK_LIST+=("$svc")
   else
-    echo "❌ FAIL $svc（日志: $log）"
+    echo "❌ FAIL ${svc}（日志: ${log}）"
     tail -5 "$log"
     FAIL_LIST+=("$svc")
   fi
