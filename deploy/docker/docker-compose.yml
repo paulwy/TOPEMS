@@ -1063,7 +1063,7 @@ services:
       integration:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:80/"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8089/ping"]
       interval: 10s
       timeout: 5s
       retries: 3
