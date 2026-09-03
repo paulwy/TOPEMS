@@ -2041,3 +2041,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **分片 8→5**：component 项目 `--shard=N/5`，每分片 ≤4 min；覆盖门槛"核心路径 100% + 全量 ≥ 下限"
 - **落地**：frontend-test-roi-review.md §6 已写入保留集/降级集完整清单 + 模板 + 分片方案
 - **待实施**：65 文件 smoke 化改造（按 §6.4 模板）→ 分片调整 → CI 预算实测
+
+## 2026-09-04 RLS 受限用户切换（③）完成 ✅
+- **21/21 服务镜像重建完成**（跨日网络攻坚 4 轮 Dockerfile 修复：cargo rsproxy 换源 + 低速检测、apk 阿里云源、超时 120→60s；ai/integration/crm 重试命中缓存）
+- **compose 连接串切 topems_app**（b5a63d2aa）：9 处服务级切换；unified-core/pgbouncer/postgres 保持 topems（迁移/DDL 需 owner）
+- **权限补齐**：topems_app 加 CONNECT ON DATABASE + 28 schema 全面授权（USAGE/ALL TABLES/SEQUENCES/DEFAULT PRIVILEGES；授权时遗漏的 doc/report/rs 等 schema 一次性补齐）
+- **3 服务启动 DDL 容错**（6676cebe3）：ai run_migrations / gis init_tables / finance init_database 用 `?` 传播导致受限用户 permission denied 崩溃 → 改 warning 容错（表已存在则跳过，运行时查询走 RLS 受限用户）
+- **端到端验证**：32 容器全部 healthy；登录（/api/core/iam/auth/login）✅ 核心服务 health 全 200 ✅ 带权限业务流 ✅ 无 token 401 ✅；**RLS 隔离实证**（插入 2 租户测试数据后清理）：topems_app 无 SET→0 行、SET tenant A→只见 A 行、SET nil UUID→全量豁免（service token 设计正确）✅
+- **遗留**：① 服务启动 DDL 容错跳过——未来新表/迁移需 owner 或建议为各服务加 MIGRATE_URL owner 连接串；② 5433 容器库业务数据少（RLS 表基本空）；③ schema_defense 增量补列不再生效（受限用户无法 ALTER），结构演进需统一走 owner 迁移
