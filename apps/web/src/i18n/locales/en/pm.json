@@ -152,7 +152,7 @@
     },
     "sections": {
       "basic": {
-        "title": "Basic Information",
+        "title": "Basic Info",
         "description": "Contract Basic Information"
       },
       "parties": {
@@ -251,7 +251,7 @@
     },
     "sections": {
       "basic": {
-        "title": "Basic Information",
+        "title": "Basic Info",
         "description": "Project Basic Information"
       },
       "description": {
@@ -343,7 +343,7 @@
     },
     "title": "Contract Detail",
     "overview": {
-      "basic_info": "Basic Information",
+      "basic_info": "Basic Info",
       "contract_no": "Contract No.",
       "contract_type": "Contract Type",
       "amount": "Contract Amount",
@@ -2808,7 +2808,7 @@
       "project_detail_title": "Details",
       "home": "Label",
       "project_management": "Project",
-      "basic_info": "basicInfo",
+      "basic_info": "Basic Info",
       "project_code": "Project",
       "project_type": "Project",
       "project_leader": "Project",
@@ -2827,7 +2827,7 @@
       "no_phase_data": "Data",
       "to": "to",
       "status": {
-        "active": "Active",
+        "active": "In Progress",
         "completed": "Completed",
         "pending": "Pending",
         "approved": "Approved",
@@ -2855,7 +2855,7 @@
       "gross_profit": "Gross Profit",
       "gross_margin": "Gross margin",
       "cost_composition": "Cost Composition",
-      "view_detail": "Details",
+      "view_detail": "View Details",
       "labor_cost": "Labor Cost",
       "material_cost": "Material Cost",
       "expense": "Expense",
@@ -2947,7 +2947,7 @@
   "pm.projectdetail.gross_profit": "Gross Profit",
   "pm.projectdetail.gross_margin": "Gross margin",
   "pm.projectdetail.cost_composition": "Cost Composition",
-  "pm.projectdetail.view_detail": "Details",
+  "pm.projectdetail.view_detail": "View Details",
   "pm.projectdetail.labor_cost": "Labor Cost",
   "pm.projectdetail.material_cost": "Material Cost",
   "pm.projectdetail.expense": "Expense",
@@ -2966,7 +2966,7 @@
   "pm.projectdetail.budget_execution_analysis": "Budget",
   "pm.projectdetail.generate_project_voucher": "Project",
   "pm.projectdetail.project_gantt": "Project",
-  "pm.project_detail.basic_info": "basicInfo",
+  "pm.project_detail.basic_info": "Basic Info",
   "pm.project_detail.project_code": "Project",
   "pm.project_detail.project_type": "Project",
   "pm.project_detail.project_leader": "Project",
@@ -2984,7 +2984,7 @@
   "pm.project_detail.time": "Time",
   "pm.project_detail.no_phase_data": "Data",
   "pm.project_detail.to": "to",
-  "pm.project_detail.status.active": "Active",
+  "pm.project_detail.status.active": "In Progress",
   "pm.project_detail.status.completed": "Completed",
   "pm.project_detail.status.pending": "Pending",
   "pm.project_detail.status.approved": "Approved",

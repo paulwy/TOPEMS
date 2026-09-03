@@ -181,7 +181,7 @@
   "system.system_params_page_components_log_config_panel.e5": "File Output",
   "system.system_params_page_components_log_config_panel.e6": "Advanced Config",
   "system.system_params_page_components_log_config_panel.e7": "Console and remote log configuration",
-  "system.system_params_page_components_system_config_panel.e1": "Basic Information",
+  "system.system_params_page_components_system_config_panel.e1": "Basic Info",
   "system.system_params_page_components_system_config_panel.e2": "Site name, description, and icon configuration",
   "system.system_params_page_components_system_config_panel.e3": "Appearance Config",
   "system.system_params_page_components_system_config_panel.e4": "Theme colors and interface settings",
@@ -229,7 +229,7 @@
     },
     "system_params_page_components_system_config_panel": {
       "e2": "Site name, description, and icon configuration",
-      "e1": "Basic Information",
+      "e1": "Basic Info",
       "e3": "Appearance Config",
       "e4": "Theme colors and interface settings",
       "e5": "Security Config",
@@ -414,7 +414,7 @@
     },
     "auditPage": {
       "detail_title": "Details",
-      "basic_info": "basicInfo",
+      "basic_info": "Basic Info",
       "id_label": "idLabel",
       "operation_label": "ActionLabel",
       "entity_type_label": "entity Type Label",
@@ -494,7 +494,7 @@
     }
   },
   "system.auditPage.detail_title": "Details",
-  "system.auditPage.basic_info": "basicInfo",
+  "system.auditPage.basic_info": "Basic Info",
   "system.auditPage.id_label": "idLabel",
   "system.auditPage.operation_label": "ActionLabel",
   "system.auditPage.entity_type_label": "entity Type Label",
