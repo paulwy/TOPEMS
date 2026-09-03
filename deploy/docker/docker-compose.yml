@@ -6,6 +6,7 @@ version: '3.8'
 
 x-common-env: &common-env
   DATABASE_URL: postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
+  MIGRATE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
   CORE_URL: http://unified-core:8000
   CONSUL_URL: http://consul:8500
   CONSUL_HOST: http://consul:8500

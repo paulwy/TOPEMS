@@ -129,3 +129,24 @@ pub async fn ensure_master_data_refs_table(pool: &PgPool, service_prefix: &str) 
     );
     Ok(())
 }
+
+/// 创建迁移专用连接池（DDL 走 owner，运行时查询走受限用户）。
+/// 读取 `MIGRATE_URL` 环境变量（owner 连接串），未设置则返回 None（回退运行时池）。
+/// 仅用于服务启动时的建表/补列/迁移等 DDL，不得用于运行时业务查询。
+pub async fn create_migrate_pool() -> Result<Option<PgPool>> {
+    let Ok(url) = std::env::var("MIGRATE_URL") else {
+        return Ok(None);
+    };
+    if url.trim().is_empty() {
+        return Ok(None);
+    }
+    let pool = PgPoolOptions::new()
+        .max_connections(3)
+        .min_connections(0)
+        .acquire_timeout(Duration::from_secs(15))
+        .connect(&url)
+        .await
+        .map_err(|e| TopemsError::Database(format!("MIGRATE_URL 连接失败: {e}")))?;
+    info!("✅ MIGRATE_URL 迁移连接池已创建（DDL 走 owner，max=3）");
+    Ok(Some(pool))
+}

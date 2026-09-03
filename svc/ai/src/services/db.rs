@@ -1,10 +1,12 @@
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::time::Duration;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::database::create_migrate_pool;
 
 #[derive(Clone)]
 pub struct Database {
     pool: PgPool,
+    migrate_pool: Option<PgPool>,
 }
 
 impl Database {
@@ -15,11 +17,21 @@ impl Database {
             .connect(database_url)
             .await?;
 
-        Ok(Self { pool })
+        let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
+            tracing::warn!("⚠️ MIGRATE_URL 迁移池创建失败，DDL 回退运行时池: {}", e);
+            None
+        });
+
+        Ok(Self { pool, migrate_pool })
     }
 
     pub fn pool(&self) -> &PgPool {
         &self.pool
+    }
+
+    /// DDL 走 owner 迁移池（MIGRATE_URL），未配置时回退运行时池
+    fn ddl_pool(&self) -> &PgPool {
+        self.migrate_pool.as_ref().unwrap_or(&self.pool)
     }
 
     /// 运行数据库迁移
@@ -30,7 +42,7 @@ impl Database {
             r#"CREATE SCHEMA IF NOT EXISTS ai;"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         // 创建扩展
@@ -39,7 +51,7 @@ impl Database {
             r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp";"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         // 创建 vector 扩展到 ai schema（可选，如果不可用则继续运行）
@@ -48,7 +60,7 @@ impl Database {
             r#"CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA ai;"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await;
 
         let mut vector_available = false;
@@ -69,7 +81,7 @@ impl Database {
             r#"CREATE SCHEMA IF NOT EXISTS ai;"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         // 创建文档表
@@ -101,30 +113,36 @@ impl Database {
             "#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         // 创建文档表索引
-        sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON ai.documents(tenant_id);"#, "plugin_ai"))
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON ai.documents(tenant_id);"#,
+            "plugin_ai"
+        ))
+        .execute(self.ddl_pool())
+        .await?;
 
         sqlx::query(only_own_schema_query!(
             "ai",
             r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON ai.documents(status);"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
-        sqlx::query(
-            only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON ai.documents(category);"#, "plugin_ai"),
-        )
-        .execute(&self.pool)
+        sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON ai.documents(category);"#,
+            "plugin_ai"
+        ))
+        .execute(self.ddl_pool())
         .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_documents_created_at ON ai.documents(created_at DESC);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!(
@@ -132,13 +150,15 @@ impl Database {
             r#"CREATE INDEX IF NOT EXISTS idx_documents_title ON ai.documents(title);"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
-        sqlx::query(
-            only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON ai.documents(deleted_at);"#, "plugin_ai"),
-        )
-        .execute(&self.pool)
+        sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON ai.documents(deleted_at);"#,
+            "plugin_ai"
+        ))
+        .execute(self.ddl_pool())
         .await?;
 
         // 创建文档块表（pgvector 可用时含 embedding 向量列，否则降级为 JSONB 存储）
@@ -167,7 +187,7 @@ impl Database {
                 "#,
                 "plugin_ai"
             ))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
         } else {
             sqlx::query(only_own_schema_query!(
@@ -194,34 +214,34 @@ impl Database {
                 "#,
                 "plugin_ai"
             ))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
         }
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_tenant_id ON ai.document_chunks(tenant_id);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON ai.document_chunks(document_id);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         if vector_available {
             sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding ON ai.document_chunks USING hnsw (embedding vector_cosine_ops);"#, "plugin_ai"))
-                .execute(&self.pool)
+                .execute(self.ddl_pool())
                 .await?;
         }
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_chunks_content_search ON ai.document_chunks USING gin(to_tsvector('simple', content));"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_chunk_index ON ai.document_chunks(chunk_index);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_deleted_at ON ai.document_chunks(deleted_at);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         // 创建触发器
@@ -238,7 +258,7 @@ impl Database {
             "#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         sqlx::query(only_own_schema_query!(
@@ -246,7 +266,7 @@ impl Database {
             r#"DROP TRIGGER IF EXISTS update_documents_updated_at ON ai.documents;"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         sqlx::query(only_own_schema_query!(
@@ -259,7 +279,7 @@ impl Database {
             "#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         // 创建问答历史表
@@ -281,7 +301,7 @@ impl Database {
             "#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         sqlx::query(only_own_schema_query!(
@@ -289,11 +309,11 @@ impl Database {
             r#"CREATE INDEX IF NOT EXISTS idx_qa_history_tenant_id ON ai.qa_history(tenant_id);"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_qa_history_created_at ON ai.qa_history(created_at DESC);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!(
@@ -301,7 +321,7 @@ impl Database {
             r#"CREATE INDEX IF NOT EXISTS idx_qa_history_rating ON ai.qa_history(rating);"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         sqlx::query(only_own_schema_query!(
@@ -309,7 +329,7 @@ impl Database {
             r#"CREATE INDEX IF NOT EXISTS idx_qa_history_deleted_at ON ai.qa_history(deleted_at);"#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         // 创建分析结果表
@@ -329,23 +349,23 @@ impl Database {
             "#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_analysis_results_tenant_id ON ai.analysis_results(tenant_id);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_analysis_type ON ai.analysis_results(analysis_type);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_analysis_created_at ON ai.analysis_results(created_at DESC);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_analysis_results_deleted_at ON ai.analysis_results(deleted_at);"#, "plugin_ai"))
-            .execute(&self.pool)
+            .execute(self.ddl_pool())
             .await?;
 
         // ai_training_samples：事件处理器（event_handlers）写入的训练样本表
@@ -370,7 +390,7 @@ impl Database {
             "#,
             "plugin_ai"
         ))
-        .execute(&self.pool)
+        .execute(self.ddl_pool())
         .await?;
 
         tracing::info!("✅ 数据库迁移完成");

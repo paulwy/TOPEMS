@@ -18,6 +18,7 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
+use topems_shared_db::database::create_migrate_pool;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 #[derive(OpenApi)]
@@ -199,8 +200,16 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = services::init_database(&ctx.db).await {
-        tracing::warn!("⚠️ Finance 初始化失败（表已存在则跳过，RLS 受限用户无 DDL 权限）: {}", e);
+    // Finance 初始化（DDL 走 MIGRATE_URL owner 池，未配置回退运行时池）
+    let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
+        tracing::warn!(
+            "⚠️ Finance MIGRATE_URL 迁移池创建失败，DDL 回退运行时池: {}",
+            e
+        );
+        None
+    });
+    if let Err(e) = services::init_database(migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+        tracing::warn!("⚠️ Finance 初始化失败: {}", e);
     }
 
     if let Err(e) =

@@ -9,6 +9,7 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::database::create_migrate_pool;
 use utoipa::OpenApi;
 
 use topems_shared_auth::auth::{AuthState, Claims};
@@ -95,9 +96,13 @@ async fn main() -> Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    // GIS 专属初始化：建表 + 事件订阅 + WebSocket Manager（RLS 受限用户无 DDL 权限，失败仅告警）
-    if let Err(e) = init_tables(&ctx.db).await {
-        tracing::warn!("⚠️ GIS 建表初始化失败（表已存在则跳过，RLS 受限用户无 DDL 权限）: {}", e);
+    // GIS 专属初始化：建表（DDL 走 MIGRATE_URL owner 池，未配置回退运行时池）
+    let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
+        tracing::warn!("⚠️ GIS MIGRATE_URL 迁移池创建失败，DDL 回退运行时池: {}", e);
+        None
+    });
+    if let Err(e) = init_tables(migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+        tracing::warn!("⚠️ GIS 建表初始化失败: {}", e);
     }
     tracing::info!("✅ 数据库表初始化成功");
 
