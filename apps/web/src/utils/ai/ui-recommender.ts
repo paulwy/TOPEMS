@@ -7,7 +7,7 @@ import { designTokens } from '@topems/tokens';
  * - 设计稿分析 → 组件方案
  * - 现有组件分析 → 优化建议
  *
- * 预置 MUI / Ant Design / Chakra UI 组件知识库，
+ * 预置 MUI / Chakra UI 组件知识库，
  * 支持组件组合推荐（多组件协作方案）。
  */
 
@@ -26,7 +26,6 @@ export enum ComponentCategory {
 
 export enum UILibrary {
   MUI = 'mui',
-  ANTDESIGN = 'ant_design',
   CHAKRAUI = 'chakra_ui',
 }
 
@@ -332,101 +331,6 @@ const MUI_COMPONENTS: ComponentKnowledge[] = [
   },
 ];
 
-const ANT_DESIGN_COMPONENTS: ComponentKnowledge[] = [
-  {
-    name: 'Layout',
-    library: UILibrary.ANTDESIGN,
-    category: ComponentCategory.LAYOUT,
-    description: '布局容器，包含 Header/Sider/Content/Footer',
-    keywords: ['layout', 'header', 'sider', 'content', '布局', '结构'],
-    props: ['className', 'style', 'hasSider'],
-    import_path: 'antd/Layout',
-    usage_example:
-      '<Layout><Layout.Header>头部</Layout.Header><Layout.Content>内容</Layout.Content></Layout>',
-    responsive_support: true,
-    composition_hints: ['Header', 'Sider', 'Content', 'Footer'],
-  },
-  {
-    name: 'Form',
-    library: UILibrary.ANTDESIGN,
-    category: ComponentCategory.DATAENTRY,
-    description: '高级表单组件，支持校验和布局',
-    keywords: ['form', 'input', 'validation', 'submit', '表单', '校验'],
-    props: ['form', 'layout', 'onFinish', 'onFinishFailed', 'initialValues'],
-    import_path: 'antd/Form',
-    usage_example:
-      '<Form form={form} onFinish={onFinish}><Form.Item name="name" rules={[{ required: true }]}><Input /></Form.Item></Form>',
-    accessibility_features: ['表单校验提示', '必填标记'],
-    responsive_support: true,
-    composition_hints: ['Form.Item', 'Input', 'Select', 'DatePicker'],
-  },
-  {
-    name: 'Table',
-    library: UILibrary.ANTDESIGN,
-    category: ComponentCategory.DATADISPLAY,
-    description: '功能丰富的数据表格',
-    keywords: ['table', 'data', 'grid', 'row', 'column', '表格', '数据'],
-    props: ['dataSource', 'columns', 'pagination', 'rowSelection', 'scroll', 'onChange'],
-    import_path: 'antd/Table',
-    usage_example: '<Table dataSource={data} columns={columns} pagination={{ pageSize: 10 }} />',
-    accessibility_features: ['键盘导航', '排序标识'],
-    responsive_support: true,
-    composition_hints: ['Table.Column', 'Table.ColumnGroup'],
-  },
-  {
-    name: 'Modal',
-    library: UILibrary.ANTDESIGN,
-    category: ComponentCategory.OVERLAY,
-    description: '模态对话框',
-    keywords: ['modal', 'dialog', 'popup', '对话框', '弹窗'],
-    props: ['open', 'onCancel', 'onOk', 'title', 'width', 'footer', 'centered'],
-    import_path: 'antd/Modal',
-    usage_example: '<Modal open={open} onCancel={onClose} title="标题">内容</Modal>',
-    accessibility_features: ['焦点管理', 'ESC 关闭'],
-    responsive_support: true,
-    composition_hints: ['Button'],
-  },
-  {
-    name: 'Menu',
-    library: UILibrary.ANTDESIGN,
-    category: ComponentCategory.NAVIGATION,
-    description: '导航菜单',
-    keywords: ['menu', 'navigation', 'dropdown', '菜单', '导航'],
-    props: ['mode', 'items', 'selectedKeys', 'onClick', 'theme'],
-    import_path: 'antd/Menu',
-    usage_example: '<Menu mode="horizontal" items={items} onClick={handleClick} />',
-    accessibility_features: ['键盘导航', 'ARIA menu role'],
-    responsive_support: true,
-    composition_hints: ['Menu.Item', 'Menu.SubMenu'],
-  },
-  {
-    name: 'message',
-    library: UILibrary.ANTDESIGN,
-    category: ComponentCategory.FEEDBACK,
-    description: '全局消息提示',
-    keywords: ['message', 'toast', 'notification', '提示', '消息'],
-    props: ['content', 'duration', 'type', 'onClose'],
-    import_path: 'antd/message',
-    usage_example: "message.success('操作成功')",
-    accessibility_features: ['ARIA alert role'],
-    responsive_support: true,
-    composition_hints: [],
-  },
-  {
-    name: 'DatePicker',
-    library: UILibrary.ANTDESIGN,
-    category: ComponentCategory.INPUT,
-    description: '日期选择器',
-    keywords: ['date', 'picker', 'calendar', '日期', '选择器'],
-    props: ['value', 'onChange', 'format', 'showTime', 'disabledDate', 'picker'],
-    import_path: 'antd/DatePicker',
-    usage_example: '<DatePicker value={value} onChange={handleChange} format="YYYY-MM-DD" />',
-    accessibility_features: ['键盘导航', 'ARIA grid role'],
-    responsive_support: true,
-    composition_hints: ['RangePicker'],
-  },
-];
-
 const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   {
     name: 'Box',
@@ -521,11 +425,7 @@ const CHAKRA_COMPONENTS: ComponentKnowledge[] = [
   },
 ];
 
-const ALL_COMPONENTS: ComponentKnowledge[] = [
-  ...MUI_COMPONENTS,
-  ...ANT_DESIGN_COMPONENTS,
-  ...CHAKRA_COMPONENTS,
-];
+const ALL_COMPONENTS: ComponentKnowledge[] = [...MUI_COMPONENTS, ...CHAKRA_COMPONENTS];
 
 // ============ UI 组件推荐器 ============
 
@@ -972,8 +872,6 @@ export class UIRecommender {
     switch (component.library) {
       case UILibrary.MUI:
         return `import ${component.name} from '${component.import_path}';`;
-      case UILibrary.ANTDESIGN:
-        return `import { ${component.name} } from '${component.import_path.split('/')[0]}';`;
       case UILibrary.CHAKRAUI:
         return `import { ${component.name} } from '${component.import_path}';`;
       default:
@@ -1168,30 +1066,12 @@ export class UIRecommender {
 
   private generateFormCompositionCode(
     primary: ComponentKnowledge,
-    supporting: ComponentKnowledge[]
+    _supporting: ComponentKnowledge[]
   ): string {
-    const hasSelect = supporting.some((s) => s.name === 'Select');
-
     const lines: string[] = [];
     lines.push(`// 表单组合示例`);
 
-    if (primary.library === UILibrary.ANTDESIGN) {
-      lines.push(`import { Form, Input, Button${hasSelect ? ', Select' : ''} } from 'antd';`);
-      lines.push('');
-      lines.push('<Form form={form} layout="vertical" onFinish={onFinish}>');
-      lines.push('  <Form.Item name="name" label="名称" rules={[{ required: true }]}>');
-      lines.push('    <Input placeholder="请输入名称" />');
-      lines.push('  </Form.Item>');
-      if (hasSelect) {
-        lines.push('  <Form.Item name="type" label="类型">');
-        lines.push('    <Select options={options} />');
-        lines.push('  </Form.Item>');
-      }
-      lines.push('  <Form.Item>');
-      lines.push('    <Button type="primary" htmlType="submit">提交</Button>');
-      lines.push('  </Form.Item>');
-      lines.push('</Form>');
-    } else {
+    {
       lines.push(`import { ${primary.name} } from '${primary.import_path}';`);
       lines.push('');
       lines.push(`<${primary.name}>`);
@@ -1261,7 +1141,6 @@ export class UIRecommender {
   private getLibraryName(library: UILibrary): string {
     const names: Record<UILibrary, string> = {
       [UILibrary.MUI]: 'MUI',
-      [UILibrary.ANTDESIGN]: 'Ant Design',
       [UILibrary.CHAKRAUI]: 'Chakra UI',
     };
     return names[library] ?? 'Unknown';
