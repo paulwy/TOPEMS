@@ -77,6 +77,10 @@ async fn main() -> Result<()> {
 
     // 业务路由
     let protected_routes = modules::create_routes::<ApiState>()
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
         .layer(axum::middleware::from_fn(require_permission("wms:admin")))
         .with_state(api_state);
 

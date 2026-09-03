@@ -54,6 +54,10 @@ async fn main() -> anyhow::Result<()> {
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
     let protected_routes = handlers::ticket_routes()
         .merge(feedback_compat::feedback_compat_routes())
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
         .layer(axum::middleware::from_fn(require_permission(
             "ticket:admin",
         )))

@@ -732,6 +732,10 @@ async fn main() -> anyhow::Result<()> {
         //       完整路径为 /api/bi/health/detailed，与上方 stateful_public 中
         //       无鉴权的 /health（服务级健康检查）区分开）
         .route("/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
         .layer(axum::middleware::from_fn(require_permission(
             "analytics:admin",
         )))

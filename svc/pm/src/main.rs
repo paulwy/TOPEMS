@@ -103,6 +103,10 @@ async fn main() -> Result<()> {
         ctx.event_publisher.clone(),
         workflow_client.clone(),
     )
+    .layer(axum::middleware::from_fn_with_state(
+        ctx.db.clone(),
+        topems_shared_auth::tenant_middleware(),
+    ))
     .layer(axum::middleware::from_fn(require_permission("pm:admin")));
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────

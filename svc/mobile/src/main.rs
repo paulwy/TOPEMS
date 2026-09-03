@@ -514,8 +514,12 @@ async fn main() -> Result<()> {
         )
         .with_state(app_state.clone());
 
-    // Protected 中间件链：auth → rls → request_context → rate_limit → state
+    // Protected 中间件链：tenant → auth → rls → request_context → rate_limit → state
     let protected_routes = protected_routes
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

@@ -241,7 +241,12 @@ async fn main() -> anyhow::Result<()> {
         .merge(im_write)
         .merge(mail_read)
         .merge(mail_write)
-        .layer(axum::middleware::from_fn(require_permission(
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn(
+            require_permission(
             "communication:admin",
         )))
         .with_state(ctx.db.clone());
