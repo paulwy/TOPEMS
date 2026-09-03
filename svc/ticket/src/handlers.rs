@@ -17,8 +17,8 @@ use crate::models::{
     CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, KnowledgeArticleRef,
     SeverityCount, SlaEscalationEvent, SourceCount, Ticket, TicketActivity, TicketComment,
     TicketListResponse, TicketQuery, TicketSlaInfo, TicketSlaPolicy, TicketSlaStats, TicketStats,
-    TicketStatus, TicketType, TypeCount, UpdateAutomationRuleRequest, UpdateKnowledgeArticleRequest,
-    UpdateSlaPolicyRequest, UpdateTicketRequest,
+    TicketStatus, TicketType, TypeCount, UpdateAutomationRuleRequest,
+    UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest, UpdateTicketRequest,
 };
 use crate::sla_service::TicketSlaService;
 
@@ -1203,7 +1203,6 @@ pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-
 // ==================== Automation Rules ====================
 
 pub async fn create_automation_rule_handler(
@@ -1238,7 +1237,10 @@ pub async fn create_automation_rule_handler(
     .await;
     match result {
         Ok(rule) => Json(ApiResponse::success(rule, "自动化规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建自动化规则失败: {}", e))),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("创建自动化规则失败: {}", e),
+        )),
     }
 }
 
@@ -1322,7 +1324,10 @@ pub async fn update_automation_rule_handler(
     match result {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新自动化规则失败: {}", e))),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("更新自动化规则失败: {}", e),
+        )),
     }
 }
 
@@ -1339,14 +1344,17 @@ pub async fn delete_automation_rule_handler(
         .execute(&pool)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => {
-            Json(ApiResponse::success(json!({"deleted": true}), "自动化规则已删除"))
-        }
+        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
+            json!({"deleted": true}),
+            "自动化规则已删除",
+        )),
         Ok(_) => Json(ApiResponse::error(404, "自动化规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除自动化规则失败: {}", e))),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("删除自动化规则失败: {}", e),
+        )),
     }
 }
-
 
 // ==================== Knowledge Base ====================
 
@@ -1398,7 +1406,12 @@ pub async fn list_knowledge_articles_handler(
     .await
     {
         Ok(a) => a,
-        Err(e) => return Json(ApiResponse::error(500, &format!("获取知识文章列表失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("获取知识文章列表失败: {}", e),
+            ))
+        }
     };
     if q.trim().is_empty() {
         return Json(ApiResponse::success(articles, "知识文章列表获取成功"));
@@ -1489,9 +1502,10 @@ pub async fn delete_knowledge_article_handler(
         .execute(&pool)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => {
-            Json(ApiResponse::success(json!({"deleted": true}), "知识文章已删除"))
-        }
+        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
+            json!({"deleted": true}),
+            "知识文章已删除",
+        )),
         Ok(_) => Json(ApiResponse::error(404, "知识文章不存在")),
         Err(e) => Json(ApiResponse::error(500, &format!("删除知识文章失败: {}", e))),
     }

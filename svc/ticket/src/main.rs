@@ -16,7 +16,7 @@ pub mod sla_service;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public");
+    std::env::set_var("SEARCH_PATH", "ticket, public");
 
     let config = ServiceConfig {
         name: "topems-ticket",
