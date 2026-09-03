@@ -5,7 +5,7 @@
 version: '3.8'
 
 x-common-env: &common-env
-  DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+  DATABASE_URL: postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
   CORE_URL: http://unified-core:8000
   CONSUL_URL: http://consul:8500
   CONSUL_HOST: http://consul:8500
@@ -684,7 +684,7 @@ services:
         SERVICE_DIR: rd
     container_name: topems-rd
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - RD_PORT=8053
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
@@ -733,7 +733,7 @@ services:
         SERVICE_DIR: analytics
     container_name: topems-bi
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - BI_PORT=8060
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
@@ -776,7 +776,7 @@ services:
         SERVICE_DIR: portal
     container_name: topems-portal
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - PORTAL_PORT=8063
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
@@ -816,7 +816,7 @@ services:
         SERVICE_DIR: finance
     container_name: topems-finance
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - FINANCE_PORT=8011
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
@@ -868,7 +868,7 @@ services:
         SERVICE_DIR: ai
     container_name: topems-ai
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - AI_PORT=8013
       - CORE_URL=http://unified-core:8000
       - IAM_SERVICE_URL=http://unified-core:8000
@@ -912,7 +912,7 @@ services:
         SERVICE_DIR: mobile
     container_name: topems-mobile
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - MOBILE_PORT=8070
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
@@ -952,7 +952,7 @@ services:
         SERVICE_DIR: gis
     container_name: topems-gis
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - GIS_PORT=8071
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
@@ -995,7 +995,7 @@ services:
         SERVICE_DIR: integration
     container_name: topems-integration
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
       - INTEGRATION_PORT=8072
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
