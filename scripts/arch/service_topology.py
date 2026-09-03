@@ -47,6 +47,7 @@ STATIC_DEPS = {
     "pm-service":      ["workflow-service"],
     "finance-service": ["workflow-service"],
     "ehs-service":     ["workflow-service"],
+    "hrm-service":     ["erp-service"],   # 09-03 跨服务直读走 API：payroll 凭证改走 erp 凭证 API
     "portal-service":  ["notification-service", "workflow-service", "mes-service",
                         "monitor-service", "iam-service", "hrm-service",
                         "erp-service", "crm-service", "finance-service"],
