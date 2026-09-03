@@ -52,7 +52,7 @@
 **后续待办**：
 - [x] RLS 受限用户 service 豁免补全（方案 A 已实施 2026-09-03）：with_service_token 默认带 x-tenant-id=nil header——rls_middleware 服务（pm/monitor/integration/search/master-data/server 模块）的 service 调用豁免；**安全评估结论**：A 仅影响 service token 调用（本应全量）、不涉转发用户 token（portal/mobile 用 set_auth_token）、无 token 混用——低风险；方案 B（补挂 tenant_middleware 用 claims 替代不可信 header）更安全但兼容风险（无 claims.tenant_id 请求 400）需逐个服务确认——列独立加固
 - [ ] 方案 B（可选安全加固）：rls_middleware 服务补挂 tenant_middleware（claims 替代 x-tenant-id header，修复 header 可控弱点）——需逐个服务确认无租户请求场景后实施
-- [ ] 全服务 SET 审计：确认每个有 RLS 表访问的服务用户请求路径都 SET app.tenant_id（tenant_middleware / rls_middleware / x-tenant-id header 覆盖）
+- [x] 全服务 SET 审计（2026-09-03 完成）：146 张 RLS 表 15 个 schema 全部映射到服务并确认 SET 覆盖——**新增补挂 tenant_middleware**（Claims SET）：wms/erp/scm/communication/hrm/pm/ticket/mes/analytics/mobile（10 个，因前端不带 x-tenant-id、rls_middleware header 依赖不可靠）；已有 tenant_middleware：crm/srm/gis/ehs/lims/pdm/portal/ai/integration；unified-core 用 tenant_rls（Claims）；**rd/qms/master-data/monitor/search/plugin-registry 无 RLS 表（不挂，避免无谓 401）**。**方案 B 必要性升级**：前端不设 x-tenant-id header → rls_middleware 服务（仅 header SET）切受限用户后隔离到 NULL 会故障 → 补挂 tenant_middleware 由"可选加固"变"切换必要前置"（本审计已完成此工作）
 - [ ] RLS 受限用户服务连接切换：5433 服务 DATABASE_URL → topems_app（RLS 真正生效）→ 全服务端到端回归（登录/业务流/服务间调用）
 
 ### 已完成：V285 后续任务（tms/aps 端口对齐 + openapi.d.ts 重新生成 TS 清零 + 评估类收尾）
