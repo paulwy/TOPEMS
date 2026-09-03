@@ -200,8 +200,7 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     if let Err(e) = services::init_database(&ctx.db).await {
-        tracing::error!("Failed to init finance database: {}", e);
-        std::process::exit(1);
+        tracing::warn!("⚠️ Finance 初始化失败（表已存在则跳过，RLS 受限用户无 DDL 权限）: {}", e);
     }
 
     if let Err(e) =

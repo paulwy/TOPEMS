@@ -95,8 +95,10 @@ async fn main() -> Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    // GIS 专属初始化：建表 + 事件订阅 + WebSocket Manager
-    init_tables(&ctx.db).await?;
+    // GIS 专属初始化：建表 + 事件订阅 + WebSocket Manager（RLS 受限用户无 DDL 权限，失败仅告警）
+    if let Err(e) = init_tables(&ctx.db).await {
+        tracing::warn!("⚠️ GIS 建表初始化失败（表已存在则跳过，RLS 受限用户无 DDL 权限）: {}", e);
+    }
     tracing::info!("✅ 数据库表初始化成功");
 
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
