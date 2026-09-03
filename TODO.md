@@ -27,6 +27,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-03 **新增遗留**：**i18n glossary 一致性 10 处不一致**（finance/pm/system 页面术语 vs standard 译法，verify-glossary --strict 拦截前端正常提交；`node scripts/i18n/apply_glossary.js` 可自动对齐）——与 antd 无关，需单独 i18n 专项
 > 09-03 i18n glossary 一致性已闭环：修复 4 个 en 命名空间非标准译法对齐 glossary.csv（Cancel/Disabled/All/Normal/Confirm Delete/View Details/Basic Info/In Progress 等 45+ 处）；根因是 apply_glossary.js 的 setByPath 无法处理 en JSON 带点平铺 key（误写嵌套位置）+ en/admin.json flatten key 冲突叶子（'Disable' 覆盖标准值）+ 混合结构（平铺 vs 嵌套下钻不一致 8 处）；verify-glossary --strict 100% 一致 + i18n-quality 混合结构 0 处 + 7-in-1 PASS + frontend-typecheck 全绿，前端恢复正常提交（不再 --no-verify）。提交 `49a90ae07`
 > 09-03 **smart-forms 契约对齐已闭环**（前端联调专项收尾）：前端 forms 层对齐后端 `/api/ai/dsh/smart-forms` 4 端点——business-intelligence.ts BASE_PATH `/api/ai/forms`→`/api/ai/dsh/smart-forms`，list/get→`templates`/`templates/{id}`、auto-fill→`ai-fill`、validate body 对齐 `{form_id,data}`；移除无后端端点的 generateFormFromText/submitForm/saveFormDraft（均无调用方）；删除 generated/client.ts dead formsApi（7 端点无任何引用）；后端 4 端点端到端验证全 200（templates/详情/validate/ai-fill）。提交 `2760344cc`。**后端 serde 瑕疵记录**：AiFillRequest 的 `existing_values`/`target_fields` 仅 `skip_serializing_if`（序列化侧）无 `#[serde(default)]`（反序列化侧必填），前端须显式传空值——可选后续补 default 修复（需重建容器）
+> 09-03 业务决策 4 分析与落地（SaaS/本地双部署 + DSH 支撑约束）：① **core_* 平台表归属决策定案——留 public（平台共享层）**：实测数百处跨服务直接 SQL 引用 core_*（core_tenants 87 / core_users 68 / core_workflows 30 / core_tickets 25 等，各服务 SEARCH_PATH 含 public 兜底），core_* 是平台公共表被所有服务共享依赖，迁 unified_core 违背共享层设计；曾尝试全量迁移（34 张）→ 影响面暴露（数百处引用 + finance/analytics/communication 直读）→ **数据 + 代码双回滚恢复**（登录验证恢复 200，全部容器 healthy）；② **认证会话表双轨收敛已闭环**：iam.sessions / iam.refresh_tokens → public.core_sessions / core_refresh_tokens（auth.rs 10 处 + iam/mod.rs 2 处建表 DDL；**双库 5432/5433 同步**；登录写入验证 core_sessions 行数增长 36→37）；iam schema 保留 RBAC 功能表（positions / user_positions / position_permissions / position_roles / resource_permissions）+ users 死表；③ **portal 嵌入**：闭环（已决策独立部署，SaaS/本地均支持）；④ **erp→IAM admin token**：闭环（IamClient 已删，待办过时）。提交 `86e6e47a6`
 
 **当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
@@ -1253,7 +1254,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **重测结果**：~31MB（32,372,415 B）/ 449 表 / 20 schema / **public 37（8.2%）** / 最大业务 schema finance 58 / RLS 298（66%）
 - **阈值对比**（全部远未达成）：总大小 31MB << 200GB ｜ 最大 schema 58 << 600 张 ｜ 连接/跨域/备份无压力
 - **预案更新**：`database-split-plan.md` 现状基线/表分布/关键观察/阈值当前值/阶段0状态/5.1 执行结果 全部同步；建议结论保持"当前不拆，阶段 1 逻辑隔离为下一步"
-- **剩余待定**：public 37 张 core_* 平台级表是否迁 unified_core schema（决策输入，不影响阶段 1）
+- **剩余待定**：~~public 37 张 core_* 平台级表是否迁 unified_core schema~~ → **✅ 已决策定案（09-03）：留 public（平台共享层）**——实测数百处跨服务直接 SQL 引用 core_*（core_tenants 87/core_users 68 等），core_* 是平台公共表被所有服务共享依赖；曾尝试全量迁移→影响面暴露→双回滚恢复；详见顶部 09-03 决策 4 记录
 
 ## 2026-08-31 P1-2 阶段1 逻辑隔离第一轮落地 ✅（门禁增强+基线显式化）
 - **门禁增强** `scripts/check_schema_boundary.py`：新增**无前缀跨 schema 直读检测**
