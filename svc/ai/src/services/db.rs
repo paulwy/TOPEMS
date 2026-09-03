@@ -30,7 +30,7 @@ impl Database {
     }
 
     /// DDL 走 owner 迁移池（MIGRATE_URL），未配置时回退运行时池
-    fn ddl_pool(&self) -> &PgPool {
+    pub fn ddl_pool(&self) -> &PgPool {
         self.migrate_pool.as_ref().unwrap_or(&self.pool)
     }
 
