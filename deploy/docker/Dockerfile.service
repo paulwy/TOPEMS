@@ -26,8 +26,8 @@ ARG SERVICE_DIR
 
 WORKDIR /app
 
-# 安装构建依赖（alpine 官方 apk 源国内慢/易卡，先换阿里云镜像源）
-RUN sed -i 's#dl-cdn.alpinelinux.org#mirrors.aliyun.com/alpine#g' /etc/apk/repositories && \
+# 安装构建依赖（alpine 官方 apk 源国内慢/易卡，先换阿里云镜像源——仅换域名，原 URL 已含 /alpine/v3.x）
+RUN sed -i 's#dl-cdn.alpinelinux.org#mirrors.aliyun.com#g' /etc/apk/repositories && \
     apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig protobuf
 
 # cargo 国内镜像源 + sparse 协议 + HTTP/1.1（容器内无本机 ~/.cargo 缓存，直连 crates.io 索引国内网络易卡；
@@ -76,8 +76,8 @@ ARG SERVICE_NAME
 ARG SERVICE_PORT
 ARG PORT_ENV_VAR
 
-# 安装运行时依赖（换阿里云 apk 镜像源）
-RUN sed -i 's#dl-cdn.alpinelinux.org#mirrors.aliyun.com/alpine#g' /etc/apk/repositories && \
+# 安装运行时依赖（换阿里云 apk 镜像源——仅换域名，原 URL 已含 /alpine/v3.x）
+RUN sed -i 's#dl-cdn.alpinelinux.org#mirrors.aliyun.com#g' /etc/apk/repositories && \
     apk add --no-cache libssl3 ca-certificates tzdata curl
 
 # 创建非 root 用户
