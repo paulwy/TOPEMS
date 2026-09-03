@@ -66,11 +66,19 @@ build_one() {
   fi
 }
 
-# 串行或按并行度分批
+# 串行或按并行度分批（每批 PARALLEL 个后台构建，完成后下一批，避免 16GB 机器 OOM）
 if [[ "$PARALLEL" -eq 1 ]]; then
   for svc in "${SERVICES[@]}"; do build_one "$svc"; done
 else
-  for svc in "${SERVICES[@]}"; do build_one "$svc" & done
+  _batch=0
+  for svc in "${SERVICES[@]}"; do
+    build_one "$svc" &
+    _batch=$((_batch + 1))
+    if [[ $_batch -ge $PARALLEL ]]; then
+      wait
+      _batch=0
+    fi
+  done
   wait
 fi
 
