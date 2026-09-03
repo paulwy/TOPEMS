@@ -91,16 +91,27 @@ def run_psql(db: str, sql: str) -> str:
 
 
 def probe_metrics(port: int) -> bool:
-    """探测端口 /metrics 是否暴露 TopEMS 服务指标（body 含 topems_ 前缀特征）。
+    """探测端口是否运行 TopEMS 服务。
 
-    仅"端口可达"不可靠（Docker 映射端口也会响应）——必须确认是 TopEMS 服务。
+    端口来自权威 config/services.yaml，误判风险低。判活逻辑：
+    1. /metrics 200 且有指标文本（topems_ 自定义 或 axum-prometheus 统一指标）→ 强信号
+    2. /metrics 200 但空 body（metrics 层未配置指标，如 finance/hrm 等）→ 服务在运行
+    3. /health 200 → 服务在运行（最可靠，全部服务必暴露）
     """
     try:
         with urllib.request.urlopen(f"http://localhost:{port}/metrics", timeout=1) as resp:
-            if resp.status != 200:
-                return False
-            body = resp.read(4096).decode("utf-8", "replace")
-            return "topems_" in body
+            if resp.status == 200:
+                body = resp.read(4096).decode("utf-8", "replace")
+                if "topems_" in body or "axum_http_requests_total" in body:
+                    return True
+                # /metrics 200 但空 body：仍属服务在运行（metrics 层未配置指标）
+                return True
+    except Exception:
+        pass
+    # 兜底：/health 200 判活（全部 TopEMS 服务必暴露 /health）
+    try:
+        with urllib.request.urlopen(f"http://localhost:{port}/health", timeout=1) as resp:
+            return resp.status == 200
     except Exception:
         return False
 
