@@ -19,6 +19,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-03 运行环境升级已闭环（#15）：重建 21 服务镜像 + 5433 治理迁移（2a 归位 69 张 + 2b DROP 59 张 + 2c auth FK）+ public 影子清理（163→36 对齐 5432）；网关登录豁免 + 端到端验证已闭环（#16）；运行环境遗留治理已闭环（#17）：bi/ai SEARCH_PATH 根治 + portal 缺 schema 修复 + 裸引用门禁治理 + sidecar 清理（health 401 转认证专项）。
 > 09-03 统一认证专项已闭环（#17 ④ 深化）：`is_public_path` 豁免统一到 require_permission（5 处）+ tenant_middleware（2 处），重建 21 服务 → erp/hrm `/api/{svc}/health` 带 token 200 + 业务回归全 200（32 容器全 healthy）。提交 `157277a79`
 > 09-03 跨服务直读走 API 专项已闭环（#17 ② 深化）：communication im_location POI 搜索改走 gis API（GET /api/gis/search，device 归 gis_count）；hrm payroll 直写改走 erp 凭证 API（erp 新增 finance 模块 `POST /api/erp/vouchers` + service token hrm-service/erp:admin）；compose hrm 注入 ERP_URL；schema_boundary.json bare_ref_baseline 9→4（移除 hrm/communication 5 条，保留 monitor SQL 模板）；check_schema_boundary 全 PASS；erp 凭证 API 端到端验证（service token 200 + 落库 + 清理测试数据）。提交 `d2046a67e`/`e9b8ad0c8`/`3dd193723`
+> 09-03 服务间认证批量扩展已闭环：mobile 6 客户端（wms/mes/qms/hrm/workflow/notification，mobile-service）+ ehs/pm/qms workflow 客户端（各自 service, workflow:read）接入 `with_service_token`；确认全部 svc 主客户端 + server real_module 均已 token 化（唯一裸客户端为测试代码）；unified-core→portal 已 service token（拆分前置）；剩余 erp→IAM 为 admin token 模式（后续专项）。重建 mobile/ehs/pm/qms 镜像 + 重启全 healthy；端到端验证 mobile-service→hrm `/api/hrm/employees` 200。提交 `205576df1`
 
 **当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
