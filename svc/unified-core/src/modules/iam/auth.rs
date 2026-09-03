@@ -330,7 +330,7 @@ pub async fn login(
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
     let insert_session_result = sqlx::query(
-        "INSERT INTO iam.sessions (user_id, token_hash, ip_address, user_agent, expires_at)
+        "INSERT INTO core_sessions (user_id, token_hash, ip_address, user_agent, expires_at)
          VALUES ($1, $2, $3::inet, $4, $5)",
     )
     .bind(user.id)
@@ -347,7 +347,7 @@ pub async fn login(
     }
 
     let insert_refresh_result = sqlx::query(
-        "INSERT INTO iam.refresh_tokens (user_id, token_hash, ip_address, user_agent, expires_at)
+        "INSERT INTO core_refresh_tokens (user_id, token_hash, ip_address, user_agent, expires_at)
          VALUES ($1, $2, $3::inet, $4, $5)",
     )
     .bind(user.id)
@@ -611,7 +611,7 @@ pub async fn refresh_token(
                      JOIN core_role_permissions rp ON rp.role_id = ur.role_id
                      JOIN core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
            rt.id as refresh_token_id
-         FROM iam.refresh_tokens rt
+         FROM core_refresh_tokens rt
          JOIN core_users u ON rt.user_id = u.id
          WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
     )
@@ -732,7 +732,7 @@ pub async fn refresh_token(
     };
 
     let revoke_result = sqlx::query(
-        "UPDATE iam.refresh_tokens
+        "UPDATE core_refresh_tokens
          SET revoked_at = NOW(), revoked_reason = 'rotated'
          WHERE id = $1 AND revoked_at IS NULL",
     )
@@ -750,7 +750,7 @@ pub async fn refresh_token(
     }
 
     let insert_result = sqlx::query(
-        "INSERT INTO iam.refresh_tokens (user_id, token_hash, expires_at)
+        "INSERT INTO core_refresh_tokens (user_id, token_hash, expires_at)
          VALUES ($1, $2, $3)",
     )
     .bind(user_id)
@@ -769,7 +769,7 @@ pub async fn refresh_token(
     }
 
     let session_result = sqlx::query(
-        "INSERT INTO iam.sessions (user_id, token_hash, expires_at)
+        "INSERT INTO core_sessions (user_id, token_hash, expires_at)
          VALUES ($1, $2, $3)",
     )
     .bind(user_id)
@@ -844,7 +844,7 @@ pub async fn logout(
     let token_hash = format!("{:x}", hasher.finalize());
 
     let user_id: Option<Uuid> = match sqlx::query_scalar(
-        "SELECT user_id FROM iam.refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
+        "SELECT user_id FROM core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
     )
     .bind(&token_hash)
     .fetch_optional(&state.pool)
@@ -881,7 +881,7 @@ pub async fn logout(
         }
     };
 
-    let delete_sessions = sqlx::query("DELETE FROM iam.sessions WHERE user_id = $1")
+    let delete_sessions = sqlx::query("DELETE FROM core_sessions WHERE user_id = $1")
         .bind(user_id)
         .execute(&mut *tx)
         .await;
@@ -893,7 +893,7 @@ pub async fn logout(
     }
 
     let revoke_refresh = sqlx::query(
-        "UPDATE iam.refresh_tokens SET revoked_at = NOW(), revoked_reason = 'logout'
+        "UPDATE core_refresh_tokens SET revoked_at = NOW(), revoked_reason = 'logout'
          WHERE user_id = $1 AND revoked_at IS NULL",
     )
     .bind(user_id)
@@ -1172,7 +1172,7 @@ pub async fn reset_password(
     }
 
     // 使所有现有会话失效
-    match sqlx::query("DELETE FROM iam.sessions WHERE user_id = $1")
+    match sqlx::query("DELETE FROM core_sessions WHERE user_id = $1")
         .bind(user_id)
         .execute(&mut *tx)
         .await

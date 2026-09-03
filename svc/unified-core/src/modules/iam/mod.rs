@@ -469,7 +469,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // ---- 兼容层：iam schema（auth/tenant 中间件依赖） ----
-    // auth.rs 引用 iam.users / iam.sessions / iam.refresh_tokens，
+    // auth.rs 引用 iam.users / core_sessions / core_refresh_tokens，
     // 但历史上未在建表迁移中创建。此处幂等补建 + 从 core_users 同步数据，
     // 保证新环境部署即可用，避免登录 500 / 租户 400。
     sqlx::query("CREATE SCHEMA IF NOT EXISTS iam")
@@ -496,7 +496,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS iam.sessions (
+        CREATE TABLE IF NOT EXISTS core_sessions (
             id BIGSERIAL PRIMARY KEY,
             user_id UUID NOT NULL,
             token_hash VARCHAR(255),
@@ -511,7 +511,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS iam.refresh_tokens (
+        CREATE TABLE IF NOT EXISTS core_refresh_tokens (
             id BIGSERIAL PRIMARY KEY,
             user_id UUID NOT NULL,
             token_hash VARCHAR(255),
