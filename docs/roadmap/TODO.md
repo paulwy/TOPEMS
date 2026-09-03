@@ -46,11 +46,13 @@
 **遗留（已全部处理，2026-09-03）**：
 - [x] ① 双库结构对齐：经核查 16 张 core_*（core_workflows 等）5433 无 tenant_id 是**设计正确**（schema_defense tenant_id=N、INSERT 不写、列全空）→ 5432 才是冗余方：清理 5432 16 张 core_* + 12 张业务表（wms.replenishment_* 5 / rs.project_* 4 / public.teams+team_members / report.report_templates）冗余 tenant_id 列（DISABLE RLS + DROP COLUMN CASCADE）；5433 补 hrm.initialization_logs/initialization_status tenant_id 列（hrm schema_defense 有定义）并同步 RLS
 - [x] ② RLS key 统一：5432 289 个 OLD 策略（current_setting('app.current_tenant_id')）重建为 NEW（app.tenant_id）——5432 全库策略 key 100% app.tenant_id（315→303，清 12 张冗余表策略）；mes 服务代码 svc/mes/src/shared/tenant.rs 3 处旧 key → app.tenant_id
-- [~] ③ RLS 受限用户切换：**就绪未切换**——已创建受限用户 topems_app（NOSUPERUSER NOBYPASSRLS）+ 651 表授权（26 schema）+ RLS 隔离验证通过（crm.customer_tags 租户 A 可见 / 租户 B 隔离）；**服务连接切换未执行**：前置全链路 SET 未满足（仅 4 文件 SET app.tenant_id + 约 9 服务挂 tenant_middleware + service claims 跳过 SET）——盲切会破坏未 SET 服务。切换列后续 TODO
+- [~] ③ RLS 受限用户切换：**service 豁免已实施（2026-09-03 推进）**——① tenant.rs service 分支由「跳过 SET」改为 **SET app.tenant_id=nil UUID**；② 5433 146 张 + 5432 303 张策略批量加 **service 豁免条件** `OR COALESCE(current_setting('app.tenant_id'),'')='00000000-0000-0000-0000-000000000000'`；③ 双场景验证通过（service nil 全量可见 1 / 用户租户隔离 0）。**服务连接切换仍未执行**：前置未满——仅 tenant_middleware 服务（crm/ehs/pdm/srm/gis/lims/portal/ai）service 豁免生效；rls_middleware 服务（pm/monitor/integration/search/master-data/server 模块）service 调用无 x-tenant-id header 时 current=NULL 不豁免（需 with_service_token 默认带 nil header 或补挂 tenant_middleware，注意转发用户 token 场景的租户语义）+ 全服务 SET 审计 → 切连接回归
 - [x] ④ 5433 全库 RLS 对齐：5433 RLS 表 10→146（同步 5432 有效策略 144 张 + hrm 2 张）；5432 315→303。5433 缺 157 张表为 5432 验证库独有（非运行缺口）
 
 **后续待办**：
-- [ ] RLS 受限用户服务连接切换：先全服务挂 tenant_middleware（shared-auth）+ service 调用 SET 策略统一（含 service claims 跳过 SET 的 RLS 覆盖设计）→ 再切换 5433 服务 DATABASE_URL 至 topems_app（RLS 真正生效）→ 双端到端回归
+- [ ] RLS 受限用户 service 豁免补全：rls_middleware 服务（pm/monitor/integration/search/master-data/server 模块）service 调用豁免——方案 A：with_service_token 默认带 x-tenant-id=nil header（注意转发用户 token 场景区分）；方案 B：给这些服务补挂 tenant_middleware。评估后实施
+- [ ] 全服务 SET 审计：确认每个有 RLS 表访问的服务用户请求路径都 SET app.tenant_id（tenant_middleware / rls_middleware / x-tenant-id header 覆盖）
+- [ ] RLS 受限用户服务连接切换：5433 服务 DATABASE_URL → topems_app（RLS 真正生效）→ 全服务端到端回归（登录/业务流/服务间调用）
 
 ### 已完成：V285 后续任务（tms/aps 端口对齐 + openapi.d.ts 重新生成 TS 清零 + 评估类收尾）
 
