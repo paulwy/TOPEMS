@@ -18,6 +18,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-02 提交后遗留处理已闭环（svc/aps+billing 归档删除、analytics 权限模块 + finance R5、旧 stash 清理 + 删除意图落地），#14 已闭环。
 > 09-03 运行环境升级已闭环（#15）：重建 21 服务镜像 + 5433 治理迁移（2a 归位 69 张 + 2b DROP 59 张 + 2c auth FK）+ public 影子清理（163→36 对齐 5432）；网关登录豁免 + 端到端验证已闭环（#16）；运行环境遗留治理已闭环（#17）：bi/ai SEARCH_PATH 根治 + portal 缺 schema 修复 + 裸引用门禁治理 + sidecar 清理（health 401 转认证专项）。
 > 09-03 统一认证专项已闭环（#17 ④ 深化）：`is_public_path` 豁免统一到 require_permission（5 处）+ tenant_middleware（2 处），重建 21 服务 → erp/hrm `/api/{svc}/health` 带 token 200 + 业务回归全 200（32 容器全 healthy）。提交 `157277a79`
+> 09-03 跨服务直读走 API 专项已闭环（#17 ② 深化）：communication im_location POI 搜索改走 gis API（GET /api/gis/search，device 归 gis_count）；hrm payroll 直写改走 erp 凭证 API（erp 新增 finance 模块 `POST /api/erp/vouchers` + service token hrm-service/erp:admin）；compose hrm 注入 ERP_URL；schema_boundary.json bare_ref_baseline 9→4（移除 hrm/communication 5 条，保留 monitor SQL 模板）；check_schema_boundary 全 PASS；erp 凭证 API 端到端验证（service token 200 + 落库 + 清理测试数据）。提交 `d2046a67e`/`e9b8ad0c8`/`3dd193723`
 
 **当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
@@ -35,7 +36,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 - **端到端验证**：网关登录 200 + token 访问 `/api/core/iam/users`、`/api/erp/inventory`、`/api/erp/inventory/low-stock`、`/api/hrm/employees` 全 200
 
 **已知遗留（不阻塞业务）**：
-- **communication→gis / hrm→erp 跨服务直读**（#17 ② 已加 baseline 承认，标注走 API 专项——communication im_location 应改走 gis API、hrm payroll 应改走 erp API）
+- ~~communication→gis / hrm→erp 跨服务直读~~ **已闭环（09-03）**——communication im_location 走 gis API、hrm payroll 走 erp 凭证 API（见上闭环记录）；schema_boundary.json 裸引用 baseline 9→4（monitor 4 条 SQL 模板保留）
 
 ---
 
