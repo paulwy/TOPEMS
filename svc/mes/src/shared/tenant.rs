@@ -1,7 +1,7 @@
 //! MES Tenant 工具函数
 //!
 //! 提取自 Claims / Header 的 tenant_id 用于 RLS 双写。
-//! 配合 axum 中间件设置 PostgreSQL 会话变量 `app.current_tenant_id`。
+//! 配合 axum 中间件设置 PostgreSQL 会话变量 `app.tenant_id`。
 
 use axum::http::HeaderMap;
 use topems_shared_auth::auth::Claims;
@@ -27,13 +27,13 @@ pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     Uuid::nil()
 }
 
-/// 在当前 PostgreSQL 会话设置 `app.current_tenant_id`，使 RLS 策略生效。
+/// 在当前 PostgreSQL 会话设置 `app.tenant_id`，使 RLS 策略生效。
 /// 必须在每条业务 SQL 之前调用（一次连接内一次即可，但 sqlx-pool 每次取连接需重设）。
 pub async fn set_session_tenant_id(
     pool: &sqlx::PgPool,
     tenant_id: Uuid,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("SELECT set_config('app.current_tenant_id', $1, false)")
+    sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
         .bind(tenant_id.to_string())
         .execute(pool)
         .await?;
