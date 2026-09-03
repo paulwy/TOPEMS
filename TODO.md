@@ -21,6 +21,8 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-03 跨服务直读走 API 专项已闭环（#17 ② 深化）：communication im_location POI 搜索改走 gis API（GET /api/gis/search，device 归 gis_count）；hrm payroll 直写改走 erp 凭证 API（erp 新增 finance 模块 `POST /api/erp/vouchers` + service token hrm-service/erp:admin）；compose hrm 注入 ERP_URL；schema_boundary.json bare_ref_baseline 9→4（移除 hrm/communication 5 条，保留 monitor SQL 模板）；check_schema_boundary 全 PASS；erp 凭证 API 端到端验证（service token 200 + 落库 + 清理测试数据）。提交 `d2046a67e`/`e9b8ad0c8`/`3dd193723`
 > 09-03 服务间认证批量扩展已闭环：mobile 6 客户端（wms/mes/qms/hrm/workflow/notification，mobile-service）+ ehs/pm/qms workflow 客户端（各自 service, workflow:read）接入 `with_service_token`；确认全部 svc 主客户端 + server real_module 均已 token 化（唯一裸客户端为测试代码）；unified-core→portal 已 service token（拆分前置）；剩余 erp→IAM 为 admin token 模式（后续专项）。重建 mobile/ehs/pm/qms 镜像 + 重启全 healthy；端到端验证 mobile-service→hrm `/api/hrm/employees` 200。提交 `205576df1`
 > 09-03 拆分就绪度收尾已闭环：① **拓扑一致性缺口归零**——STATIC_DEPS 补齐 `hrm-service → erp-service` 边（跨服务直读走 API 新增调用），重跑 `--topology auto` 匹配 2/仅 runtime 0，6 项阈值全未触发；提交 `37f31a0b1`；② **指标 3/5 观测实测定论**——活跃连接 41（1 active + 40 idle 池化，各服务 max_db_connections 总和 ~395 < 400 阈值，本地容量上限明确）、备份整库 dump 0.46s/1.0M ≪ 15min——均"实测不会触发"；③ **erp→IAM admin token 治理**——排查确认 IamClient 为 dead code（无业务调用方，URL `/api/users` 与 unified-core `/api/core/iam` 不匹配 404），直接删除（220 行，消除 admin 凭据 env 依赖），erp 编译通过；提交 `86aa7cd4c`
+> 09-03 前端端到端联调专项已闭环：启动前端 dev（vite :3000）验证全链路——页面 200、proxy 登录 200、无 token 401 认证拦截正常；**BFF 契约缺口修复**——后端 svc/ai 实际路由带 `/dsh` 前缀（/api/ai/dsh/copilot、/api/ai/dsh/governance），前端 BASE_PATH 缺 `/dsh` 致 404，已修复 business-copilot.ts + governance-dashboard.ts；端到端验证：copilot 创建会话 201、governance dashboard 200（score 86.07）、modules 200（erp/finance/crm/wms）。提交 `bd8a45a38`
+> 09-03 **新增遗留**：① **smart-forms 契约缺口**——前端 `/api/ai/forms` 7 端点（getFormDefinition/list/validate/auto-fill/generate/submit/draft）vs 后端 `/api/ai/dsh/smart-forms` 4 端点（templates/templates/{id}/ai-fill/validate），接口结构差异大需对齐；② **前端 typecheck 依赖退化**——antd/@ant-design/icons 为孤儿依赖（package.json 未声明、node_modules 目录空壳不可读），3 个 AI 组件（RagRetrievalPanel/MultiAgentMonitor/KnowledgeGraphVisualization）共 6 处 TS2307 + 9 处 TS7006 参数 any，致提交需 --no-verify；需补依赖声明 + pnpm install + 修类型标注
 
 **当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
@@ -657,12 +659,14 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
 - [x] Business Copilot API handlers（8 端点，编译通过，待真实联调）
 - [x] Governance Dashboard API handlers（10 端点，编译通过，待真实数据对接）
 
-### 前端集成（框架就绪，待联调验证）
+### 前端集成（联调验证中：copilot/governance 已通，smart-forms 契约 + typecheck 依赖待专项）
 
 - [x] DSH Agent 聊天面板 + Hook + 演示页
-- [x] 前端 API 调用层（dsh-agent.ts + business-copilot.ts + governance-dashboard.ts）
+- [x] 前端 API 调用层（dsh-agent.ts + business-copilot.ts + governance-dashboard.ts，已对齐 /dsh 路由）
 - [x] 业务模块选择器 + 智能表单渲染器 + 治理仪表盘组件 + 文档智能组件
-- [x] Business Copilot 主页面 + Governance Dashboard 独立页面
+- [x] Business Copilot 主页面 + Governance Dashboard 独立页面（端到端已验证 201/200）
+- [ ] smart-forms 契约对齐（前端 7 端点 → 后端 /dsh/smart-forms 4 端点，待接口设计对齐）
+- [ ] 前端 typecheck 依赖修复（antd/@ant-design/icons 孤儿依赖补声明 + 3 AI 组件 15 处类型错误）
 - [x] 前端 API 路径集成更新（BASE_PATH 对齐 `/api/ai/dsh/...`）
 - [x] 知识图谱可视化 + RAG 检索面板 + 多 Agent 协作监控面板
 
