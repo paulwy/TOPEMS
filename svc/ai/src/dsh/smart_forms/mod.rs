@@ -216,9 +216,10 @@ pub struct AiFillRequest {
     /// 上下文数据
     pub context: HashMap<String, serde_json::Value>,
     /// 已填写的字段
+    #[serde(default)]
     pub existing_values: HashMap<String, serde_json::Value>,
     /// 需要填充的字段（空表示全部）
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub target_fields: Vec<String>,
 }
 
