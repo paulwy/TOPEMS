@@ -48,40 +48,6 @@ export const copilotApi = {
 };
 
 // ============================================================================
-// 智能表单 API
-// ============================================================================
-
-export const formsApi = {
-  /** 获取所有表单定义 */
-  getAllForms: (category?: string): Promise<ApiResponse<Types.FormDefinition[]>> =>
-    apiClient.get('/forms', { params: category ? { category } : undefined }),
-
-  /** 获取表单定义 */
-  getForm: (formId: string): Promise<ApiResponse<Types.FormDefinition>> =>
-    apiClient.get(`/forms/${formId}`),
-
-  /** 验证表单数据 */
-  validateForm: (formId: string, values: Record<string, unknown>): Promise<ApiResponse<Types.FormValidationResult>> =>
-    apiClient.post(`/forms/${formId}/validate`, { values }),
-
-  /** 自动填充表单 */
-  autoFillForm: (formId: string, context: Record<string, unknown>): Promise<ApiResponse<Types.FormData>> =>
-    apiClient.post(`/forms/${formId}/auto-fill`, { context }),
-
-  /** 从自然语言生成表单 */
-  generateForm: (formId: string, text: string): Promise<ApiResponse<Types.FormData>> =>
-    apiClient.post(`/forms/${formId}/generate`, { text }),
-
-  /** 提交表单 */
-  submitForm: (formId: string, values: Record<string, unknown>, recordId?: string): Promise<ApiResponse<Types.FormData>> =>
-    apiClient.post(`/forms/${formId}/submit`, { values, record_id: recordId }),
-
-  /** 保存表单草稿 */
-  saveFormDraft: (formId: string, values: Record<string, unknown>, recordId?: string): Promise<ApiResponse<Types.FormData>> =>
-    apiClient.post(`/forms/${formId}/draft`, { values, record_id: recordId }),
-};
-
-// ============================================================================
 // 文档智能 API
 // ============================================================================
 
@@ -204,7 +170,6 @@ export const governanceApi = {
 
 export const aiBusinessApi = {
   ...copilotApi,
-  ...formsApi,
   ...documentsApi,
   ...governanceApi,
 };

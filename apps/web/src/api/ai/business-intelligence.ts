@@ -244,22 +244,22 @@ export interface DocumentGenerationRequest {
 // 智能表单 API
 // ============================================================================
 
-const FORM_BASE_PATH = '/api/ai/forms';
+const FORM_BASE_PATH = '/api/ai/dsh/smart-forms';
 
 /**
- * 获取表单定义
+ * 获取表单定义（模板详情）
  */
 export async function getFormDefinition(form_id: string): Promise<ApiResponse<FormDefinition>> {
-  return apiClient.get(`${FORM_BASE_PATH}/${form_id}`);
+  return apiClient.get(`${FORM_BASE_PATH}/templates/${form_id}`);
 }
 
 /**
- * 获取所有表单定义
+ * 获取所有表单定义（模板列表）
  */
 export async function getAllFormDefinitions(
   category?: string
 ): Promise<ApiResponse<FormDefinition[]>> {
-  return apiClient.get(FORM_BASE_PATH, {
+  return apiClient.get(`${FORM_BASE_PATH}/templates`, {
     params: category ? { category } : undefined,
   });
 }
@@ -271,54 +271,22 @@ export async function validateForm(
   form_id: string,
   data: Record<string, unknown>
 ): Promise<ApiResponse<FormValidationResult>> {
-  return apiClient.post(`${FORM_BASE_PATH}/${form_id}/validate`, { values: data });
+  return apiClient.post(`${FORM_BASE_PATH}/validate`, { form_id, data });
 }
 
 /**
- * 自动填充表单
+ * 自动填充表单（AI 填充）
  */
 export async function autoFillForm(
   form_id: string,
-  context: Record<string, unknown>
+  context: Record<string, unknown>,
+  existing_values?: Record<string, unknown>
 ): Promise<ApiResponse<FormData>> {
-  return apiClient.post(`${FORM_BASE_PATH}/${form_id}/auto-fill`, { context });
-}
-
-/**
- * 从自然语言生成表单数据
- */
-export async function generateFormFromText(
-  form_id: string,
-  text: string
-): Promise<ApiResponse<FormData>> {
-  return apiClient.post(`${FORM_BASE_PATH}/${form_id}/generate`, { text });
-}
-
-/**
- * 提交表单
- */
-export async function submitForm(
-  form_id: string,
-  data: Record<string, unknown>,
-  record_id?: string
-): Promise<ApiResponse<FormData>> {
-  return apiClient.post(`${FORM_BASE_PATH}/${form_id}/submit`, {
-    values: data,
-    record_id,
-  });
-}
-
-/**
- * 保存表单草稿
- */
-export async function saveFormDraft(
-  form_id: string,
-  data: Record<string, unknown>,
-  record_id?: string
-): Promise<ApiResponse<FormData>> {
-  return apiClient.post(`${FORM_BASE_PATH}/${form_id}/draft`, {
-    values: data,
-    record_id,
+  return apiClient.post(`${FORM_BASE_PATH}/ai-fill`, {
+    form_id,
+    context,
+    existing_values: existing_values ?? {},
+    target_fields: [],
   });
 }
 
