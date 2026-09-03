@@ -20,6 +20,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-03 统一认证专项已闭环（#17 ④ 深化）：`is_public_path` 豁免统一到 require_permission（5 处）+ tenant_middleware（2 处），重建 21 服务 → erp/hrm `/api/{svc}/health` 带 token 200 + 业务回归全 200（32 容器全 healthy）。提交 `157277a79`
 > 09-03 跨服务直读走 API 专项已闭环（#17 ② 深化）：communication im_location POI 搜索改走 gis API（GET /api/gis/search，device 归 gis_count）；hrm payroll 直写改走 erp 凭证 API（erp 新增 finance 模块 `POST /api/erp/vouchers` + service token hrm-service/erp:admin）；compose hrm 注入 ERP_URL；schema_boundary.json bare_ref_baseline 9→4（移除 hrm/communication 5 条，保留 monitor SQL 模板）；check_schema_boundary 全 PASS；erp 凭证 API 端到端验证（service token 200 + 落库 + 清理测试数据）。提交 `d2046a67e`/`e9b8ad0c8`/`3dd193723`
 > 09-03 服务间认证批量扩展已闭环：mobile 6 客户端（wms/mes/qms/hrm/workflow/notification，mobile-service）+ ehs/pm/qms workflow 客户端（各自 service, workflow:read）接入 `with_service_token`；确认全部 svc 主客户端 + server real_module 均已 token 化（唯一裸客户端为测试代码）；unified-core→portal 已 service token（拆分前置）；剩余 erp→IAM 为 admin token 模式（后续专项）。重建 mobile/ehs/pm/qms 镜像 + 重启全 healthy；端到端验证 mobile-service→hrm `/api/hrm/employees` 200。提交 `205576df1`
+> 09-03 拆分就绪度收尾已闭环：① **拓扑一致性缺口归零**——STATIC_DEPS 补齐 `hrm-service → erp-service` 边（跨服务直读走 API 新增调用），重跑 `--topology auto` 匹配 2/仅 runtime 0，6 项阈值全未触发；提交 `37f31a0b1`；② **指标 3/5 观测实测定论**——活跃连接 41（1 active + 40 idle 池化，各服务 max_db_connections 总和 ~395 < 400 阈值，本地容量上限明确）、备份整库 dump 0.46s/1.0M ≪ 15min——均"实测不会触发"；③ **erp→IAM admin token 治理**——排查确认 IamClient 为 dead code（无业务调用方，URL `/api/users` 与 unified-core `/api/core/iam` 不匹配 404），直接删除（220 行，消除 admin 凭据 env 依赖），erp 编译通过；提交 `86aa7cd4c`
 
 **当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
@@ -43,7 +44,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 | # | 待办 | 优先级 | 状态 | 说明 |
 |---|---|---|---|---|
-| 1 | 物理库拆分阶段 2 | P1 | ⏳ 待阈值触发 | 5 项阈值均未触发（DB 0.1GB/200GB、portal 116 表/600 张）；已配每日 09:30 巡检定时任务（`--topology auto` 含一致性告警） |
+| 1 | 物理库拆分阶段 2 | P1 | ⏳ 待阈值触发 | 6 项阈值均未触发：DB 0.1GB/200GB、portal 116 表/600 张（规模等待型）；活跃连接 41（池上限 ~395<400）、备份 0.46s≪15min（09-03 实测不会触发）；跨 schema 直读已清零、拓扑一致性已归零（治理达标）；已配每日 09:30 巡检定时任务（`--topology auto` 含一致性告警） |
 | 2 | analytics 接入模块化单体 | P1 | ✅ 已闭环（09-01） | 新增 `svc/analytics/src/routes.rs` lib 化 + server `analytics_real_module`（module-advanced 门控，19 模块）；独立部署（18060）与 server（18099）`/api/bi` 双通道验证通过；提交 `45c3fdcb0` |
 | 3 | unified-core 双轨认证统一 | P1 | ✅ 已闭环（09-01） | 登录/注册/refresh/找回/改密全链路改查 `core_users` + RBAC 实时组装（core_user_roles + core_role_permissions 聚合）；注册去 iam.users 双写；5 张 auth 表 FK 改指 core_users；提交 `04d81a5c1` |
 | 4 | 前端批 2 页面单测降级 | P2 | ✅ 已实施 | 167 文件分类：保留 103（核心 68 + hooks 34 + NotFoundPage）/ 降级 smoke 64 计划 → **实际 59 文件收敛 it + 1 gitignore 本地**；全量 vitest 通过（167 文件 / 756 用例，110s）；分片 8→5 已落地（package.json + ci.yml），CI 每片实测 ~22s ≪ 10min 预算；smoke 化不触及 coverage include（pages 不在其中） |
