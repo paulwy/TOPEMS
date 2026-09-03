@@ -189,7 +189,7 @@ export interface QuickActionItem {
 // API 函数
 // ============================================================================
 
-const BASE_PATH = '/api/ai/copilot';
+const BASE_PATH = '/api/ai/dsh/copilot';
 
 /**
  * 创建 Copilot 会话
