@@ -80,8 +80,10 @@ async fn main() -> Result<()> {
     }
 
     // ── 工作流服务客户端 ──────────────────────────────────────────────
-    let workflow_client =
-        TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "pm-service", &["workflow:read"]))
+        .expect("工作流服务客户端初始化失败");
     tracing::info!(
         "🔗 工作流服务客户端初始化成功: {}",
         std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".into())

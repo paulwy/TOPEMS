@@ -134,10 +134,13 @@ async fn main() -> Result<()> {
         tracing::warn!("⚠️ MOBILE 事件订阅者启动失败: {}", e);
     }
 
-    // 6 个服务客户端初始化
-    let wms_client = match TypedServiceClient::<WmsApi>::from_env_default() {
+    // 6 个服务客户端初始化（统一服务间认证：service token，最小权限 + 短时效）
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let wms_client = match TypedServiceClient::<WmsApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["wms:admin"]))
+    {
         Ok(client) => {
-            tracing::info!("✅ WMS服务客户端初始化成功");
+            tracing::info!("✅ WMS服务客户端初始化成功（service token）");
             client
         }
         Err(e) => {
@@ -146,13 +149,16 @@ async fn main() -> Result<()> {
                 e
             );
             TypedServiceClient::new(WmsApi, "http://localhost:8041")
+                .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["wms:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }
     };
 
-    let mes_api_client = match TypedServiceClient::<MesApi>::from_env_default() {
+    let mes_api_client = match TypedServiceClient::<MesApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["mes:admin"]))
+    {
         Ok(client) => {
-            tracing::info!("✅ MES API服务客户端初始化成功");
+            tracing::info!("✅ MES API服务客户端初始化成功（service token）");
             client
         }
         Err(e) => {
@@ -161,13 +167,16 @@ async fn main() -> Result<()> {
                 e
             );
             TypedServiceClient::new(MesApi, "http://localhost:8030")
+                .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["mes:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }
     };
 
-    let qms_api_client = match TypedServiceClient::<QmsApi>::from_env_default() {
+    let qms_api_client = match TypedServiceClient::<QmsApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["qms:admin"]))
+    {
         Ok(client) => {
-            tracing::info!("✅ QMS API服务客户端初始化成功");
+            tracing::info!("✅ QMS API服务客户端初始化成功（service token）");
             client
         }
         Err(e) => {
@@ -176,13 +185,16 @@ async fn main() -> Result<()> {
                 e
             );
             TypedServiceClient::new(QmsApi, "http://localhost:8050")
+                .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["qms:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }
     };
 
-    let hrm_client = match TypedServiceClient::<HrmApi>::from_env_default() {
+    let hrm_client = match TypedServiceClient::<HrmApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["hrm:admin"]))
+    {
         Ok(client) => {
-            tracing::info!("✅ HRM服务客户端初始化成功");
+            tracing::info!("✅ HRM服务客户端初始化成功（service token）");
             client
         }
         Err(e) => {
@@ -191,13 +203,16 @@ async fn main() -> Result<()> {
                 e
             );
             TypedServiceClient::new(HrmApi, "http://localhost:8020")
+                .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["hrm:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }
     };
 
-    let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default() {
+    let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["workflow:read"]))
+    {
         Ok(client) => {
-            tracing::info!("✅ Workflow服务客户端初始化成功");
+            tracing::info!("✅ Workflow服务客户端初始化成功（service token）");
             client
         }
         Err(e) => {
@@ -206,13 +221,18 @@ async fn main() -> Result<()> {
                 e
             );
             TypedServiceClient::new(WorkflowApi, "http://localhost:8000")
+                .and_then(|c| {
+                    c.with_service_token(&jwt_secret, "mobile-service", &["workflow:read"])
+                })
                 .expect("hardcoded fallback URL is valid")
         }
     };
 
-    let notification_client = match TypedServiceClient::<NotificationApi>::from_env_default() {
+    let notification_client = match TypedServiceClient::<NotificationApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["notification:read"]))
+    {
         Ok(client) => {
-            tracing::info!("✅ Notification服务客户端初始化成功");
+            tracing::info!("✅ Notification服务客户端初始化成功（service token）");
             client
         }
         Err(e) => {
@@ -221,6 +241,9 @@ async fn main() -> Result<()> {
                 e
             );
             TypedServiceClient::new(NotificationApi, "http://localhost:8000")
+                .and_then(|c| {
+                    c.with_service_token(&jwt_secret, "mobile-service", &["notification:read"])
+                })
                 .expect("hardcoded fallback URL is valid")
         }
     };
