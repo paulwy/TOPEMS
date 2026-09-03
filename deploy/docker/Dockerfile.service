@@ -30,7 +30,8 @@ WORKDIR /app
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig protobuf
 
 # cargo 国内镜像源 + sparse 协议 + HTTP/1.1（容器内无本机 ~/.cargo 缓存，直连 crates.io 索引国内网络易卡；
-# 中科大 sparse 实测 HTTP/2 流重置 PROTOCOL_ERROR 反复出现（portal/finance 构建卡死），改用字节 rsproxy sparse 镜像 + multiplexing=false 强制 HTTP/1.1）
+# 中科大/rsproxy sparse 均偶发 HTTP/2 流重置 PROTOCOL_ERROR（stream reset）致依赖下载挂起——故同时开启
+# low-speed-limit=10 + low-speed-time=60（挂起连接 60s 无进展即失败），配合 retry=5 快速失败重试，避免卡死）
 # 注意：不 COPY 项目 .cargo/config.toml（其 rustc-wrapper=sccache，容器内无 sccache 会失败）
 RUN mkdir -p /root/.cargo && \
     printf '%s\n' \
@@ -40,7 +41,8 @@ RUN mkdir -p /root/.cargo && \
       '[http]' \
       'multiplexing = false' \
       'timeout = 120' \
-      'low-speed-limit = 0' \
+      'low-speed-limit = 10' \
+      'low-speed-time = 60' \
       '' \
       '[source.crates-io]' \
       'replace-with = "rsproxy-sparse"' \
