@@ -284,6 +284,7 @@ services:
     environment:
       <<: *common-env-full
       HRM_PORT: "8020"
+      ERP_URL: http://erp:8010
     ports:
       - "${HRM_PORT:-8020}:8020"
     volumes:

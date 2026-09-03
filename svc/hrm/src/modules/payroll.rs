@@ -9,6 +9,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::str::FromStr;
+use topems_shared_auth::service::issue_service_token;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -794,93 +795,112 @@ async fn generate_payroll_voucher(
     // 生成凭证号（由 rand 注入 sequence）
     let voucher_number = generate_voucher_number(voucher_date, rand::random::<u16>() % 10000);
 
-    // 在ERP数据库中创建凭证
-    let voucher_id = Uuid::new_v4();
-    let now = Utc::now();
-    let department_id = req.department_id.unwrap_or_else(Uuid::nil);
+    // 通过 erp 服务 API 创建凭证（避免跨服务直写 erp 表，schema 边界门禁）
+    let summary = PayrollVoucherSummary {
+        total_gross: &total_gross,
+        total_tax: &total_tax,
+        total_social_security: &total_social_security,
+        net_salary: &net_salary,
+    };
+    let entries = build_payroll_voucher_entries(&summary);
 
-    // 创建凭证主记录
-    let voucher_result = sqlx::query(
-        only_own_schema_query!("hrm", r#"
-        INSERT INTO financial_vouchers (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12)
-        "#),
-    )
-    .bind(voucher_id)
-    .bind(&voucher_number)
-    .bind(voucher_date)
-    .bind(&period)
-    .bind(format!("发放{}月工资", payroll_run.pay_period))
-    .bind(req.maker_id)
-    .bind(req.maker_name.clone().unwrap_or_else(|| "系统".to_string()))
-    .bind(&total_gross)
-    .bind(&total_gross)
-    .bind(id)
-    .bind(now)
-    .bind(now)
-    .execute(&state.db)
-    .await;
+    let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .unwrap_or_else(|_| "topems_dev_secret_change_me_long_enough_32".to_string());
+    let client = reqwest::Client::new();
 
-    match voucher_result {
-        Ok(_) => {
-            // 创建凭证分录（由纯函数构建，保证借贷平衡）
-            let summary = PayrollVoucherSummary {
-                total_gross: &total_gross,
-                total_tax: &total_tax,
-                total_social_security: &total_social_security,
-                net_salary: &net_salary,
-            };
-            let entries = build_payroll_voucher_entries(&summary);
+    let payload = serde_json::json!({
+        "voucher_number": &voucher_number,
+        "voucher_date": &voucher_date,
+        "period": &period,
+        "summary": format!("发放{}月工资", payroll_run.pay_period),
+        "maker_id": req.maker_id,
+        "maker_name": req.maker_name.clone().unwrap_or_else(|| "系统".to_string()),
+        "total_debit": &total_gross,
+        "total_credit": &total_gross,
+        "source_system": "HRM",
+        "source_id": id.to_string(),
+        "department_id": req.department_id,
+        "entries": entries.iter().map(|e| serde_json::json!({
+            "line_number": e.line,
+            "subject_code": e.subject_code,
+            "subject_name": e.subject_name,
+            "summary": format!("发放{}月工资", payroll_run.pay_period),
+            "debit_amount": &e.debit,
+            "credit_amount": &e.credit,
+            "department_id": req.department_id,
+        })).collect::<Vec<_>>(),
+    });
 
-            for entry in entries {
-                let item_id = Uuid::new_v4();
-                let _ = sqlx::query(
-                    only_own_schema_query!("hrm", r#"
-                    INSERT INTO voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                    "#),
-                )
-                .bind(item_id)
-                .bind(voucher_id)
-                .bind(entry.line as i32)
-                .bind(entry.subject_code)
-                .bind(entry.subject_name)
-                .bind(format!("发放{}月工资", payroll_run.pay_period))
-                .bind(entry.debit)
-                .bind(entry.credit)
-                .bind(department_id)
-                .bind(now)
-                .bind(now)
-                .execute(&state.db)
+    match issue_service_token(&jwt_secret, "hrm-service", &["erp:admin"], None) {
+        Ok(token) => {
+            let resp = client
+                .post(format!("{}/api/erp/vouchers", erp_url))
+                .header("Authorization", format!("Bearer {}", token))
+                .json(&payload)
+                .send()
                 .await;
+
+            match resp {
+                Ok(resp) if resp.status().is_success() => {
+                    let body: serde_json::Value = resp.json().await.unwrap_or_default();
+                    let voucher_id = body["data"]["voucher_id"]
+                        .as_str()
+                        .and_then(|s| Uuid::parse_str(s).ok())
+                        .unwrap_or_else(Uuid::new_v4);
+                    let voucher_number = body["data"]["voucher_number"]
+                        .as_str()
+                        .unwrap_or(&voucher_number)
+                        .to_string();
+
+                    tracing::info!(
+                        "[HRM] Created payroll voucher {} via ERP API for payroll run {}",
+                        voucher_number,
+                        id
+                    );
+
+                    Json(ApiResponse::success(
+                        PayrollVoucherResponse {
+                            success: true,
+                            voucher_id: Some(voucher_id),
+                            voucher_number: Some(voucher_number),
+                            message: "薪资凭证生成成功".to_string(),
+                            total_salary: total_gross,
+                            total_social_security,
+                            total_housing_fund,
+                            total_tax,
+                            employee_count: payroll_run.employee_count,
+                        },
+                        "薪资凭证生成成功",
+                    ))
+                }
+                Ok(resp) => {
+                    let status = resp.status();
+                    let err_body = resp.text().await.unwrap_or_default();
+                    tracing::error!(
+                        "[HRM] ERP voucher API error: status={}, body={}",
+                        status,
+                        err_body
+                    );
+                    Json(ApiResponse::<PayrollVoucherResponse>::error(
+                        502,
+                        &format!("ERP 服务返回错误: {}", status),
+                    ))
+                }
+                Err(e) => {
+                    tracing::error!("[HRM] ERP voucher API request failed: {}", e);
+                    Json(ApiResponse::<PayrollVoucherResponse>::error(
+                        502,
+                        &format!("调用 ERP 凭证服务失败: {}", e),
+                    ))
+                }
             }
-
-            tracing::debug!(
-                "[HRM] Generated payroll voucher {} for payroll run {}",
-                voucher_number,
-                id
-            );
-
-            Json(ApiResponse::success(
-                PayrollVoucherResponse {
-                    success: true,
-                    voucher_id: Some(voucher_id),
-                    voucher_number: Some(voucher_number),
-                    message: "薪资凭证生成成功".to_string(),
-                    total_salary: total_gross,
-                    total_social_security,
-                    total_housing_fund,
-                    total_tax,
-                    employee_count: payroll_run.employee_count,
-                },
-                "薪资凭证生成成功",
-            ))
         }
         Err(e) => {
-            tracing::error!("[HRM] Failed to generate payroll voucher: {}", e);
+            tracing::error!("[HRM] Failed to issue service token: {}", e);
             Json(ApiResponse::<PayrollVoucherResponse>::error(
                 500,
-                &format!("薪资凭证生成失败: {}", e),
+                &format!("签发服务凭证失败: {}", e),
             ))
         }
     }
