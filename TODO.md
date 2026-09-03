@@ -25,6 +25,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-03 **新增遗留**：① **smart-forms 契约缺口**——前端 `/api/ai/forms` 7 端点（getFormDefinition/list/validate/auto-fill/generate/submit/draft）vs 后端 `/api/ai/dsh/smart-forms` 4 端点（templates/templates/{id}/ai-fill/validate），接口结构差异大需对齐；② **前端 typecheck 依赖退化**——antd/@ant-design/icons 为孤儿依赖（package.json 未声明、node_modules 目录空壳不可读），3 个 AI 组件（RagRetrievalPanel/MultiAgentMonitor/KnowledgeGraphVisualization）共 6 处 TS2307 + 9 处 TS7006 参数 any，致提交需 --no-verify；需补依赖声明 + pnpm install + 修类型标注
 > 09-03 **antd 全部移除已闭环**（项目禁止 antd，改走 MUI）：删除 3 个死 AI 组件（RagRetrievalPanel/MultiAgentMonitor/KnowledgeGraphVisualization，仅 barrel 导出无页面引用，含 15 处 antd 依赖）+ barrel export 清理；ui-recommender.ts 移除全部 antd 元数据（UILibrary.ANTDESIGN 枚举/case/7 条 import_path/表单生成器分支/名称映射）；清理 node_modules antd/@ant-design/icons 空壳；**typecheck 全绿**（tsc-exit=0，TS2307/TS7006 全部随死组件删除解决）。提交 `78d6dc8b9`
 > 09-03 **新增遗留**：**i18n glossary 一致性 10 处不一致**（finance/pm/system 页面术语 vs standard 译法，verify-glossary --strict 拦截前端正常提交；`node scripts/i18n/apply_glossary.js` 可自动对齐）——与 antd 无关，需单独 i18n 专项
+> 09-03 i18n glossary 一致性已闭环：修复 4 个 en 命名空间非标准译法对齐 glossary.csv（Cancel/Disabled/All/Normal/Confirm Delete/View Details/Basic Info/In Progress 等 45+ 处）；根因是 apply_glossary.js 的 setByPath 无法处理 en JSON 带点平铺 key（误写嵌套位置）+ en/admin.json flatten key 冲突叶子（'Disable' 覆盖标准值）+ 混合结构（平铺 vs 嵌套下钻不一致 8 处）；verify-glossary --strict 100% 一致 + i18n-quality 混合结构 0 处 + 7-in-1 PASS + frontend-typecheck 全绿，前端恢复正常提交（不再 --no-verify）。提交 `49a90ae07`
 
 **当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
@@ -669,7 +670,7 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
 - [x] Business Copilot 主页面 + Governance Dashboard 独立页面（端到端已验证 201/200）
 - [ ] smart-forms 契约对齐（前端 7 端点 → 后端 /dsh/smart-forms 4 端点，待接口设计对齐）
 - [x] 前端 typecheck 依赖修复（antd 全部移除后 typecheck 全绿，TS2307/TS7006 随 3 个死组件删除解决）
-- [ ] i18n glossary 一致性对齐（10 处非标准译法，阻塞前端正常提交，需 apply_glossary.js 专项）
+- [x] i18n glossary 一致性对齐（10 处非标准译法已对齐 glossary.csv，verify-glossary 100% + 混合结构 0 处 + 7-in-1 PASS，恢复正常提交，`49a90ae07`）
 - [x] 前端 API 路径集成更新（BASE_PATH 对齐 `/api/ai/dsh/...`）
 - [x] 知识图谱可视化 + RAG 检索面板 + 多 Agent 协作监控面板
 
