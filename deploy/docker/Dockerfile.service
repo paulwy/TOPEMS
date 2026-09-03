@@ -41,9 +41,9 @@ RUN mkdir -p /root/.cargo && \
       '' \
       '[http]' \
       'multiplexing = false' \
-      'timeout = 120' \
+      'timeout = 60' \
       'low-speed-limit = 10' \
-      'low-speed-time = 60' \
+      'low-speed-time = 45' \
       '' \
       '[source.crates-io]' \
       'replace-with = "rsproxy-sparse"' \
