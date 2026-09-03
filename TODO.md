@@ -23,6 +23,8 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-03 拆分就绪度收尾已闭环：① **拓扑一致性缺口归零**——STATIC_DEPS 补齐 `hrm-service → erp-service` 边（跨服务直读走 API 新增调用），重跑 `--topology auto` 匹配 2/仅 runtime 0，6 项阈值全未触发；提交 `37f31a0b1`；② **指标 3/5 观测实测定论**——活跃连接 41（1 active + 40 idle 池化，各服务 max_db_connections 总和 ~395 < 400 阈值，本地容量上限明确）、备份整库 dump 0.46s/1.0M ≪ 15min——均"实测不会触发"；③ **erp→IAM admin token 治理**——排查确认 IamClient 为 dead code（无业务调用方，URL `/api/users` 与 unified-core `/api/core/iam` 不匹配 404），直接删除（220 行，消除 admin 凭据 env 依赖），erp 编译通过；提交 `86aa7cd4c`
 > 09-03 前端端到端联调专项已闭环：启动前端 dev（vite :3000）验证全链路——页面 200、proxy 登录 200、无 token 401 认证拦截正常；**BFF 契约缺口修复**——后端 svc/ai 实际路由带 `/dsh` 前缀（/api/ai/dsh/copilot、/api/ai/dsh/governance），前端 BASE_PATH 缺 `/dsh` 致 404，已修复 business-copilot.ts + governance-dashboard.ts；端到端验证：copilot 创建会话 201、governance dashboard 200（score 86.07）、modules 200（erp/finance/crm/wms）。提交 `bd8a45a38`
 > 09-03 **新增遗留**：① **smart-forms 契约缺口**——前端 `/api/ai/forms` 7 端点（getFormDefinition/list/validate/auto-fill/generate/submit/draft）vs 后端 `/api/ai/dsh/smart-forms` 4 端点（templates/templates/{id}/ai-fill/validate），接口结构差异大需对齐；② **前端 typecheck 依赖退化**——antd/@ant-design/icons 为孤儿依赖（package.json 未声明、node_modules 目录空壳不可读），3 个 AI 组件（RagRetrievalPanel/MultiAgentMonitor/KnowledgeGraphVisualization）共 6 处 TS2307 + 9 处 TS7006 参数 any，致提交需 --no-verify；需补依赖声明 + pnpm install + 修类型标注
+> 09-03 **antd 全部移除已闭环**（项目禁止 antd，改走 MUI）：删除 3 个死 AI 组件（RagRetrievalPanel/MultiAgentMonitor/KnowledgeGraphVisualization，仅 barrel 导出无页面引用，含 15 处 antd 依赖）+ barrel export 清理；ui-recommender.ts 移除全部 antd 元数据（UILibrary.ANTDESIGN 枚举/case/7 条 import_path/表单生成器分支/名称映射）；清理 node_modules antd/@ant-design/icons 空壳；**typecheck 全绿**（tsc-exit=0，TS2307/TS7006 全部随死组件删除解决）。提交 `78d6dc8b9`
+> 09-03 **新增遗留**：**i18n glossary 一致性 10 处不一致**（finance/pm/system 页面术语 vs standard 译法，verify-glossary --strict 拦截前端正常提交；`node scripts/i18n/apply_glossary.js` 可自动对齐）——与 antd 无关，需单独 i18n 专项
 
 **当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
@@ -666,7 +668,8 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
 - [x] 业务模块选择器 + 智能表单渲染器 + 治理仪表盘组件 + 文档智能组件
 - [x] Business Copilot 主页面 + Governance Dashboard 独立页面（端到端已验证 201/200）
 - [ ] smart-forms 契约对齐（前端 7 端点 → 后端 /dsh/smart-forms 4 端点，待接口设计对齐）
-- [ ] 前端 typecheck 依赖修复（antd/@ant-design/icons 孤儿依赖补声明 + 3 AI 组件 15 处类型错误）
+- [x] 前端 typecheck 依赖修复（antd 全部移除后 typecheck 全绿，TS2307/TS7006 随 3 个死组件删除解决）
+- [ ] i18n glossary 一致性对齐（10 处非标准译法，阻塞前端正常提交，需 apply_glossary.js 专项）
 - [x] 前端 API 路径集成更新（BASE_PATH 对齐 `/api/ai/dsh/...`）
 - [x] 知识图谱可视化 + RAG 检索面板 + 多 Agent 协作监控面板
 
