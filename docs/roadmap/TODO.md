@@ -43,11 +43,14 @@
 | ② B 类表归位 | ticket：SEARCH_PATH/SERVICE_SCHEMA→ticket（7 表，无跨服务引用仅自引用）；communication：SEARCH_PATH/only_own_schema_query 宏参数 10 处→communication（6 表）；5432 DROP public 残留 5 张 core_ticket_*；5433 pg_dump 同步建表（ticket 7 + communication 6） | ✅ |
 | ③ RLS 补强 | A 类核心表标准 key（app.tenant_id）+ 非 FORCE（owner 绕过）：5432 14 张全成功；5433 6 张成功（core_users/core_roles/core_tenant_users/core_tenant_settings/core_tenant_modules/core_menus——真正的租户数据表）；core_tenants/core_permissions/core_sessions 等 5433 无 tenant_id（合理结构：租户根/全局权限/会话经 user 关联）不强行补 | ✅ 受限 |
 
-**遗留（记 TODO 后续）**：
-- [ ] 5432/5433 双库结构对齐：core_workflows 等 5433 缺 tenant_id 列（容器库 schema 落后于代码；schema_defense 仅 CREATE TABLE IF NOT EXISTS 不更新旧表）
-- [ ] RLS key 统一：5432 历史策略用 app.current_tenant_id（mes 旧 key），应用层 SET app.tenant_id（shared-auth/unified-core）——策略 key 归一为 app.tenant_id
-- [ ] RLS 受限用户切换：当前 owner（topems）连接绕过 RLS——真正生效需服务切受限 DB 用户 + 全链路 SET app.tenant_id
-- [ ] 5433 全库 RLS 对齐：5432 已有 319 张 RLS vs 5433 仅 10 张——容器库 RLS 覆盖缺口（同 ① 双库结构对齐一并处理）
+**遗留（已全部处理，2026-09-03）**：
+- [x] ① 双库结构对齐：经核查 16 张 core_*（core_workflows 等）5433 无 tenant_id 是**设计正确**（schema_defense tenant_id=N、INSERT 不写、列全空）→ 5432 才是冗余方：清理 5432 16 张 core_* + 12 张业务表（wms.replenishment_* 5 / rs.project_* 4 / public.teams+team_members / report.report_templates）冗余 tenant_id 列（DISABLE RLS + DROP COLUMN CASCADE）；5433 补 hrm.initialization_logs/initialization_status tenant_id 列（hrm schema_defense 有定义）并同步 RLS
+- [x] ② RLS key 统一：5432 289 个 OLD 策略（current_setting('app.current_tenant_id')）重建为 NEW（app.tenant_id）——5432 全库策略 key 100% app.tenant_id（315→303，清 12 张冗余表策略）；mes 服务代码 svc/mes/src/shared/tenant.rs 3 处旧 key → app.tenant_id
+- [~] ③ RLS 受限用户切换：**就绪未切换**——已创建受限用户 topems_app（NOSUPERUSER NOBYPASSRLS）+ 651 表授权（26 schema）+ RLS 隔离验证通过（crm.customer_tags 租户 A 可见 / 租户 B 隔离）；**服务连接切换未执行**：前置全链路 SET 未满足（仅 4 文件 SET app.tenant_id + 约 9 服务挂 tenant_middleware + service claims 跳过 SET）——盲切会破坏未 SET 服务。切换列后续 TODO
+- [x] ④ 5433 全库 RLS 对齐：5433 RLS 表 10→146（同步 5432 有效策略 144 张 + hrm 2 张）；5432 315→303。5433 缺 157 张表为 5432 验证库独有（非运行缺口）
+
+**后续待办**：
+- [ ] RLS 受限用户服务连接切换：先全服务挂 tenant_middleware（shared-auth）+ service 调用 SET 策略统一（含 service claims 跳过 SET 的 RLS 覆盖设计）→ 再切换 5433 服务 DATABASE_URL 至 topems_app（RLS 真正生效）→ 双端到端回归
 
 ### 已完成：V285 后续任务（tms/aps 端口对齐 + openapi.d.ts 重新生成 TS 清零 + 评估类收尾）
 
