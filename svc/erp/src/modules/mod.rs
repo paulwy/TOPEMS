@@ -29,6 +29,7 @@ pub mod demo_data;
 pub mod dict;
 pub mod erp_plugin;
 pub mod fixed_asset;
+pub mod finance;
 pub mod health;
 pub mod holidays;
 pub mod hr_proxy;
@@ -117,6 +118,7 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(audit::create_routes())
         .merge(consolidation::create_routes())
         .merge(fixed_asset::create_routes())
+        .merge(finance::create_routes())
         .merge(dict::create_routes())
         .merge(db_structure::create_routes())
         .merge(office_supplies::create_routes())
