@@ -126,6 +126,7 @@
 1. **当前不拆**：~31MB 规模物理拆分只会增加运维复杂度而无收益，采纳"阈值触发式"预案。
 2. **阶段 0（schema 归位）已完成（2026-08-31）**：public 219 → 37 张，建 lims/qms/mes/pdm/finance/master_data schema；执行中修正 11 项归属偏差（详见 `TODO.md` 阶段 0 记录与 §5.1）。
 3. **待定项（阶段 0 后剩余）**：`public.core_*` 37 张平台级表是否迁入 `unified_core` schema（当前在 public 由 unified-core 服务拥有）；qa 域归属已随阶段 0 落定（lims/qms 分设）。**定案（2026-09-01）**：`core_*` 保持 public（拆分单元映射中 public 平台契约进 `topems_core` 库，由 unified-core 服务拥有），无需迁入 `unified_core` schema——避免无收益的 schema 搬迁，门禁 allow 已全空不受影响。
+   - **平台共享层语义（2026-09-03 补充）**：`public.core_*` 是**跨服务平台共享层**（cross-service shared layer），而非 unified-core 服务专属域。DDL（建表/列定义）由 unified-core `schema_defense`（SERVICE_SCHEMA=public）统一管理，但**读写被多服务共享**——实测生产代码 440 处引用覆盖 8+ 服务（ticket CRUD `core_tickets`、communication 写 `core_notifications`、analytics 读 `core_roles/core_permissions`、search 读 `core_users/core_files`、portal 读 `core_faqs/core_guides`、finance 读 `core_tenants` 等）。DSH 边界模型/拆分单元映射应将 public 平台契约识别为「**共享层**」而非「unified-core 域」：跨服务直读合法（check_schema_boundary 全 PASS），物理拆分时整层进 `topems_core` 平台核心库。
 4. 文档版本同步：overview.md / 部署文档中 PG 版本统一为 18。
 
 > 本预案为决策输入；阶段 0（schema 归位）+ 阶段 1（逻辑隔离门禁）已落地，**拆分前置条件 #1 #2 #3 全部闭环（2026-09-01），拆分就绪**；阶段 2（物理拆分）待阈值达成后启动（当前 5 项阈值均未触发）。

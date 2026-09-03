@@ -56,6 +56,7 @@
 - **建议**：30 张平台级 `core_*` + 2 张 `team*` **保留在 `public`**（作为平台 schema），不迁入 `iam`（iam 仅 3 张认证表 sessions/users/refresh_tokens，平台表留在 public 可避免破坏 unified-core 大量无前缀查询）。
 - **但**：`core_finance_*`（10 张）剥离 → `finance`；`core_master_data_*`/`core_mdm_*`（5 张）→ `master_data`。
 - **理由**：`core_finance_*`/`core_master_data_*` 属业务域，`core_` 前缀掩盖了真实归属，是归类最大模糊源。
+- **平台共享层识别（2026-09-03 补充）**：保留 public 的 `core_*` 属**跨服务平台共享层**——unified-core 为 DDL 拥有者（schema_defense SERVICE_SCHEMA=public），但读写被多服务共享（ticket/communication/analytics/search/portal/finance 等，生产代码 440 处引用）。**DSH 边界模型应识别为「共享层」而非「unified-core 服务专属域」**；物理拆分的拆分单元映射已将其整层归入 `topems_core` 平台核心库，与本评审结论一致。
 
 ### C. material_* 归属（新识别待定）
 - **建议**：`material_*`（6 张：boms/issue/return/requirement）→ **`mes`**（物料需求/领退料与生产强耦合，MRP 属 mes）。

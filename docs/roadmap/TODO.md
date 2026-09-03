@@ -33,6 +33,22 @@
 
 ## 📊 当前状态
 
+### 已完成：决策4 core_* 归属实施（2026-09-03 · 平台共享层 + B 类归位 + RLS 补强）
+
+> 用户确认实施架构评估三项推荐。核心结论：core_* 留 public 作为**跨服务平台共享层**（非 unified-core 专属域），DSH 边界模型显式识别；B 类 core_ 前缀业务表归位业务 schema；A 类核心表补 RLS（就绪态，owner 绕过下不影响现有服务）。
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| ① 边界语义标注 | database-split-plan.md §5.1 / database-schema-ownership-review.md §4B 补「平台共享层」语义（DDL 由 unified-core 管理，读写被 8+ 服务共享，生产代码 440 处引用；物理拆分层进 topems_core 平台核心库） | ✅ |
+| ② B 类表归位 | ticket：SEARCH_PATH/SERVICE_SCHEMA→ticket（7 表，无跨服务引用仅自引用）；communication：SEARCH_PATH/only_own_schema_query 宏参数 10 处→communication（6 表）；5432 DROP public 残留 5 张 core_ticket_*；5433 pg_dump 同步建表（ticket 7 + communication 6） | ✅ |
+| ③ RLS 补强 | A 类核心表标准 key（app.tenant_id）+ 非 FORCE（owner 绕过）：5432 14 张全成功；5433 6 张成功（core_users/core_roles/core_tenant_users/core_tenant_settings/core_tenant_modules/core_menus——真正的租户数据表）；core_tenants/core_permissions/core_sessions 等 5433 无 tenant_id（合理结构：租户根/全局权限/会话经 user 关联）不强行补 | ✅ 受限 |
+
+**遗留（记 TODO 后续）**：
+- [ ] 5432/5433 双库结构对齐：core_workflows 等 5433 缺 tenant_id 列（容器库 schema 落后于代码；schema_defense 仅 CREATE TABLE IF NOT EXISTS 不更新旧表）
+- [ ] RLS key 统一：5432 历史策略用 app.current_tenant_id（mes 旧 key），应用层 SET app.tenant_id（shared-auth/unified-core）——策略 key 归一为 app.tenant_id
+- [ ] RLS 受限用户切换：当前 owner（topems）连接绕过 RLS——真正生效需服务切受限 DB 用户 + 全链路 SET app.tenant_id
+- [ ] 5433 全库 RLS 对齐：5432 已有 319 张 RLS vs 5433 仅 10 张——容器库 RLS 覆盖缺口（同 ① 双库结构对齐一并处理）
+
 ### 已完成：V285 后续任务（tms/aps 端口对齐 + openapi.d.ts 重新生成 TS 清零 + 评估类收尾）
 
 > 日期：2026-08-23 | 代码改动 9 files（tms/aps 端口 6 文件 + openapi.d.ts/index.ts 重新生成 + TODO）| 验收：cargo test service_port 12/12 pass · typecheck 0 errors · openapi.d.ts 568 schemas（+126）
