@@ -894,7 +894,10 @@ where
     E: std::fmt::Debug + Send + 'a,
 {
     if with_master_data_refs {
-        topems_shared_db::database::ensure_master_data_refs_table(pool, service_name).await?;
+        // master_data_refs 表已存在时无需重建；受限 DB 用户无 DDL 权限时仅记录（不阻塞启动）
+        if let Err(e) = topems_shared_db::database::ensure_master_data_refs_table(pool, service_name).await {
+            tracing::error!("[{}] master_data_refs 表检查失败（非阻塞）: {:?}", service_name, e);
+        }
     }
     if let Err(e) = schema_defense_fn(pool).await {
         tracing::error!("[{}] Schema 防御检查失败: {:?}", service_name, e);
