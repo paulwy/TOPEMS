@@ -202,6 +202,12 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     ) -> Result<(), TopemsError> {
         let token = issue_service_token(jwt_secret, service_name, permissions, None)?;
         self.inner.set_auth_token(token);
+        // RLS 受限用户切换铺路：service 间调用（service token 无租户）默认带 nil 租户上下文，
+        // 配合 RLS 策略豁免条件（current = nil → 全量放行），使目标服务在受限 DB 用户下仍可全量访问。
+        // 仅影响 service token 调用（with_service_token）；转发用户 token（set_auth_token）不受影响。
+        // 注意：若同一 client 后续混用 set_auth_token(用户 token)，需显式 add_header 覆盖或清除该 header。
+        self.inner
+            .add_header("x-tenant-id", "00000000-0000-0000-0000-000000000000");
         Ok(())
     }
 
