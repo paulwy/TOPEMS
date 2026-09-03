@@ -13,7 +13,7 @@ mod schema_defense;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public");
+    std::env::set_var("SEARCH_PATH", "communication, public");
 
     let config = ServiceConfig {
         name: "topems-communication",
@@ -262,7 +262,7 @@ async fn health_handler() -> &'static str {
 async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
     // 通知表
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         r#"
         CREATE TABLE IF NOT EXISTS core_notifications (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -285,7 +285,7 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     // 通知模板表
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         r#"
         CREATE TABLE IF NOT EXISTS core_notification_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -306,7 +306,7 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     // IM 聊天室表
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         r#"
         CREATE TABLE IF NOT EXISTS core_chat_rooms (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -323,7 +323,7 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     // IM 成员表
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         r#"
         CREATE TABLE IF NOT EXISTS core_chat_members (
             room_id UUID NOT NULL REFERENCES core_chat_rooms(id),
@@ -339,7 +339,7 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     // IM 消息表
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         r#"
         CREATE TABLE IF NOT EXISTS core_chat_messages (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -359,7 +359,7 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     // 邮件表
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         r#"
         CREATE TABLE IF NOT EXISTS core_emails (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -383,7 +383,7 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     // 邮件模板表
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         r#"
         CREATE TABLE IF NOT EXISTS core_email_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -402,19 +402,19 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     // 创建索引
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         "CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id)"
     ))
     .execute(pool)
     .await?;
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         "CREATE INDEX IF NOT EXISTS idx_core_chat_rooms_members ON core_chat_members(user_id)"
     ))
     .execute(pool)
     .await?;
     sqlx::query(only_own_schema_query!(
-        "public",
+        "communication",
         "CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room ON core_chat_messages(room_id)"
     ))
     .execute(pool)
