@@ -167,31 +167,6 @@
       "service": "monitor",
       "table": "projects",
       "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
-    },
-    {
-      "service": "hrm",
-      "table": "financial_vouchers",
-      "note": "HRM payroll 直写 erp 财务表（only_own_schema_query! 限定 hrm 但表在 erp），待改走 erp 服务 API"
-    },
-    {
-      "service": "hrm",
-      "table": "voucher_items",
-      "note": "HRM payroll 直写 erp 财务表（同上），待改走 erp 服务 API"
-    },
-    {
-      "service": "communication",
-      "table": "business_locations",
-      "note": "communication im_location 直读 gis 表（SQL 指定 public 错误，表在 gis），待改走 gis 服务 API"
-    },
-    {
-      "service": "communication",
-      "table": "device_locations",
-      "note": "communication im_location 直读 gis 表（同上），待改走 gis 服务 API"
-    },
-    {
-      "service": "communication",
-      "table": "warehouse_locations",
-      "note": "communication im_location 直读 gis 表（同上），待改走 gis 服务 API"
     }
   ],
   "bare_ref_allow": {}

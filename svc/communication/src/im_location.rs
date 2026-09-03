@@ -4,7 +4,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool, Row};
+use sqlx::{FromRow, PgPool};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -613,98 +613,84 @@ pub async fn delete_geofence(
 }
 
 pub async fn unified_search_pois(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     Json(payload): Json<SearchPoiRequest>,
 ) -> Json<ApiResponse<UnifiedPoiResult>> {
     let mut items: Vec<UnifiedPoiItem> = Vec::new();
     let mut gis_count: i32 = 0;
-    let mut third_party_count: i32 = 0;
+    let third_party_count: i32 = 0;
     let mut providers: Vec<String> = Vec::new();
 
     let include_gis = payload.include_gis.unwrap_or(true);
-    let keyword = format!("%{}%", payload.keyword);
 
-    if include_gis {
-        if let Ok(gis_results) = sqlx::query(
-            only_own_schema_query!("public", "SELECT id, name, business_type, position, address FROM business_locations WHERE business_name ILIKE $1 OR business_code ILIKE $1"),
-        )
-        .bind(&keyword)
-        .fetch_all(&pool)
+    // 通过 gis 服务 API 搜索 POI（避免跨服务直读 gis 表，schema 边界门禁）
+    let gis_service_url =
+        std::env::var("GIS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8071".to_string());
+    let client = reqwest::Client::new();
+
+    if let Ok(resp) = client
+        .get(format!("{}/api/gis/search", gis_service_url))
+        .query(&[("q", &payload.keyword)])
+        .send()
         .await
-        {
-            for row in gis_results {
-                let id: Uuid = row.try_get("id").unwrap_or_default();
-                let name: String = row.try_get("name").unwrap_or_default();
-                let business_type: Option<String> = row.try_get("business_type").ok();
-                let position: serde_json::Value = row.try_get("position").unwrap_or(serde_json::json!({}));
-                let address: Option<String> = row.try_get("address").ok();
+    {
+        if resp.status().is_success() {
+            if let Ok(body) = resp.json::<serde_json::Value>().await {
+                if let Some(results) = body["data"]["results"].as_array() {
+                    for r in results {
+                        let loc_type = r["type"].as_str().unwrap_or("");
+                        // business/warehouse 受 include_gis 控制；device 始终（保持原语义）
+                        let allowed = match loc_type {
+                            "business" | "warehouse" => include_gis,
+                            "device" => true,
+                            _ => false,
+                        };
+                        if !allowed {
+                            continue;
+                        }
+                        let id: Uuid = r["id"]
+                            .as_str()
+                            .and_then(|s| Uuid::parse_str(s).ok())
+                            .unwrap_or_default();
+                        let name = r["name"].as_str().unwrap_or("").to_string();
+                        let position = r["position"].clone();
+                        let (item_id, category, address, gis_location_id) = match loc_type {
+                            "business" => (
+                                format!("gis-{}", id),
+                                r["business_type"]
+                                    .as_str()
+                                    .unwrap_or("business")
+                                    .to_string(),
+                                r["address"].as_str().map(|s| s.to_string()),
+                                Some(id),
+                            ),
+                            "warehouse" => (
+                                format!("gis-{}", id),
+                                "warehouse".to_string(),
+                                None,
+                                Some(id),
+                            ),
+                            _ => (format!("device-{}", id), "device".to_string(), None, None),
+                        };
 
-                items.push(UnifiedPoiItem {
-                    id: format!("gis-{}", id),
-                    name,
-                    category: business_type.unwrap_or_else(|| "business".to_string()),
-                    coordinates: position,
-                    address,
-                    map_provider: "gis".to_string(),
-                    gis_location_id: Some(id),
-                });
-                gis_count += 1;
+                        items.push(UnifiedPoiItem {
+                            id: item_id,
+                            name,
+                            category,
+                            coordinates: position,
+                            address,
+                            map_provider: "gis".to_string(),
+                            gis_location_id,
+                        });
+                        gis_count += 1;
+                    }
+                }
             }
-        }
-
-        if let Ok(warehouses) = sqlx::query(
-            only_own_schema_query!("public", "SELECT id, warehouse_name, position FROM warehouse_locations WHERE warehouse_name ILIKE $1"),
-        )
-        .bind(&keyword)
-        .fetch_all(&pool)
-        .await
-        {
-            for row in warehouses {
-                let id: Uuid = row.try_get("id").unwrap_or_default();
-                let name: String = row.try_get("warehouse_name").unwrap_or_default();
-                let position: serde_json::Value = row.try_get("position").unwrap_or(serde_json::json!({}));
-
-                items.push(UnifiedPoiItem {
-                    id: format!("gis-{}", id),
-                    name,
-                    category: "warehouse".to_string(),
-                    coordinates: position,
-                    address: None,
-                    map_provider: "gis".to_string(),
-                    gis_location_id: Some(id),
-                });
-                gis_count += 1;
-            }
-        }
-
-        if !providers.contains(&"gis".to_string()) {
-            providers.push("gis".to_string());
         }
     }
 
-    if let Ok(device_results) = sqlx::query(
-        only_own_schema_query!("public", "SELECT id, device_name, position FROM device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1"),
-    )
-    .bind(&keyword)
-    .fetch_all(&pool)
-    .await
-    {
-        for row in device_results {
-            let id: Uuid = row.try_get("id").unwrap_or_default();
-            let name: String = row.try_get("device_name").unwrap_or_default();
-            let position: serde_json::Value = row.try_get("position").unwrap_or(serde_json::json!({}));
-
-            items.push(UnifiedPoiItem {
-                id: format!("device-{}", id),
-                name,
-                category: "device".to_string(),
-                coordinates: position,
-                address: None,
-                map_provider: "gis".to_string(),
-                gis_location_id: None,
-            });
-            third_party_count += 1;
-        }
+    if !providers.contains(&"gis".to_string()) {
+        providers.push("gis".to_string());
     }
 
     if !providers.contains(&"amap".to_string()) {
