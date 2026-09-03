@@ -52,10 +52,10 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("🚀 TOPEMS Analytics Service starting...");
 
     // ── 模块级数据库初始化 ────────────────────────────────────────────
-    if let Err(e) = modules::bi::init_database(&ctx.db).await {
+    if let Err(e) = modules::bi::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("BI module database init warning: {}", e);
     }
-    if let Err(e) = modules::report::init_database(&ctx.db).await {
+    if let Err(e) = modules::report::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("Report module database init warning: {}", e);
     }
 

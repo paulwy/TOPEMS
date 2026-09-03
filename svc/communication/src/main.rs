@@ -31,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     // 初始化数据库表
-    if let Err(e) = init_database(&ctx.db).await {
+    if let Err(e) = init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("Database initialization warning: {}", e);
     }
 

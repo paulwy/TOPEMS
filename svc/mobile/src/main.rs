@@ -119,12 +119,12 @@ async fn main() -> Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     // Mobile 专属初始化：建表 + 离线记录表
-    if let Err(e) = init_database(&ctx.db).await {
+    if let Err(e) = init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("数据库初始化警告: {}", e);
     } else {
         tracing::info!("✅ 数据库表初始化完成");
     }
-    if let Err(e) = modules::offline_records::init_database(&ctx.db).await {
+    if let Err(e) = modules::offline_records::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("离线记录表初始化警告: {}", e);
     }
 

@@ -104,15 +104,15 @@ async fn main() -> anyhow::Result<()> {
 
     let app_state = AppState::new(ctx.db.clone(), ctx.event_publisher.clone()).await;
 
-    // V68.1 A2.4.2: 帮助中心数据表初始化（FAQ / Guides / Lessons）
-    if let Err(e) = modules::help::init_database(&ctx.db).await {
+    // V68.1 A2.4.2: 帮助中心数据表初始化（DDL 走 MIGRATE_URL owner 池）
+    if let Err(e) = modules::help::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("help center tables skipped: {}", e);
     } else {
         tracing::info!("✅ 帮助中心模块已初始化（Portal BFF）");
     }
 
-    // Portal 全模块增量迁移 + schema 自检（115 表 / 728 列）
-    if let Err(e) = models::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
+    // Portal 全模块增量迁移 + schema 自检（115 表 / 728 列，DDL 走 owner 池）
+    if let Err(e) = models::schema_defense::run_schema_migration_and_verify(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("⚠️ Portal schema 防御初始化失败（不阻塞启动）: {}", e);
     }
 

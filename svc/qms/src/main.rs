@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     // QMS 模块 DB 初始化
-    if let Err(e) = modules::init_database(&ctx.db).await {
+    if let Err(e) = modules::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("QMS module database init warning: {}", e);
     }
 

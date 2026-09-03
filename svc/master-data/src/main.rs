@@ -39,10 +39,10 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("🚀 TOPEMS Master Data Service starting...");
 
     // 初始化数据库表 + V69.3 Schema 防御
-    if let Err(e) = modules::dict::init_database(&ctx.db).await {
+    if let Err(e) = modules::dict::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("dict::init_database warning: {}", e);
     }
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(&ctx.db).await {
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::error!("[master-data] Schema 防御检查失败: {:?}", e);
     }
 

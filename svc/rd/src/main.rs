@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("✅ Prometheus 监控已初始化");
 
     // ── 数据库初始化 ───────────────────────────────────────────────
-    if let Err(e) = init_db(&ctx.db).await {
+    if let Err(e) = init_db(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 

@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = models::init_database(&ctx.db).await {
+    if let Err(e) = models::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("EHS database init warning: {}", e);
     }
     if let Err(e) =

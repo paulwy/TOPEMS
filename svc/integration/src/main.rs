@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     // 业务初始化：表 + 事件订阅者
-    if let Err(e) = init_database(&ctx.db).await {
+    if let Err(e) = init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("⚠️ Database initialization warning: {}", e);
     }
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {

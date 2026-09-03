@@ -48,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // 初始化数据库表 + Schema 防御（V69.3）
-    if let Err(e) = modules::plugin::init_database(&ctx.db).await {
+    if let Err(e) = modules::plugin::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::error!("Failed to init plugin-registry database: {:?}", e);
     }
 

@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
     let ctx = bootstrap_service(&config).await?;
 
     if let Err(e) = default_init_db(
-        &ctx.db,
+        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
         "tms",
         false,
         schema_defense::run_schema_migration_and_verify,

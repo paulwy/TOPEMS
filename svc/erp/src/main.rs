@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
 
     // 数据库初始化
     if let Err(e) = default_init_db(
-        &ctx.db,
+        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
         "erp",
         true,
         schema_defense::run_schema_migration_and_verify,
