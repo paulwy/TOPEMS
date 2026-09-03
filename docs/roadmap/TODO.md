@@ -50,7 +50,8 @@
 - [x] ④ 5433 全库 RLS 对齐：5433 RLS 表 10→146（同步 5432 有效策略 144 张 + hrm 2 张）；5432 315→303。5433 缺 157 张表为 5432 验证库独有（非运行缺口）
 
 **后续待办**：
-- [ ] RLS 受限用户 service 豁免补全：rls_middleware 服务（pm/monitor/integration/search/master-data/server 模块）service 调用豁免——方案 A：with_service_token 默认带 x-tenant-id=nil header（注意转发用户 token 场景区分）；方案 B：给这些服务补挂 tenant_middleware。评估后实施
+- [x] RLS 受限用户 service 豁免补全（方案 A 已实施 2026-09-03）：with_service_token 默认带 x-tenant-id=nil header——rls_middleware 服务（pm/monitor/integration/search/master-data/server 模块）的 service 调用豁免；**安全评估结论**：A 仅影响 service token 调用（本应全量）、不涉转发用户 token（portal/mobile 用 set_auth_token）、无 token 混用——低风险；方案 B（补挂 tenant_middleware 用 claims 替代不可信 header）更安全但兼容风险（无 claims.tenant_id 请求 400）需逐个服务确认——列独立加固
+- [ ] 方案 B（可选安全加固）：rls_middleware 服务补挂 tenant_middleware（claims 替代 x-tenant-id header，修复 header 可控弱点）——需逐个服务确认无租户请求场景后实施
 - [ ] 全服务 SET 审计：确认每个有 RLS 表访问的服务用户请求路径都 SET app.tenant_id（tenant_middleware / rls_middleware / x-tenant-id header 覆盖）
 - [ ] RLS 受限用户服务连接切换：5433 服务 DATABASE_URL → topems_app（RLS 真正生效）→ 全服务端到端回归（登录/业务流/服务间调用）
 
