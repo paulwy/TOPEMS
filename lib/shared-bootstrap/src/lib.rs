@@ -265,7 +265,7 @@ use topems_shared_core::{
     response::ApiResponse,
 };
 
-use topems_shared_db::database::create_database_pool;
+use topems_shared_db::database::{create_database_pool, create_migrate_pool};
 use topems_shared_db::rls::rls_middleware;
 
 use topems_shared_auth::auth::{auth_middleware, AuthState};
@@ -763,6 +763,8 @@ impl Default for ServiceConfig {
 pub struct ServiceContext {
     /// 数据库连接池
     pub db: sqlx::PgPool,
+    /// 迁移专用连接池（MIGRATE_URL owner，DDL 走 owner、运行时走受限用户）
+    pub migrate_pool: Option<sqlx::PgPool>,
     /// 认证状态
     pub auth_state: AuthState,
     /// 系统指标
@@ -811,6 +813,12 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
 
     let db = create_database_pool(&db_config).await?;
 
+    // MIGRATE_URL 双轨：DDL 走 owner 迁移池，运行时查询走受限用户池（未配置回退 None）
+    let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
+        tracing::warn!("⚠️ MIGRATE_URL 迁移池创建失败（DDL 回退运行时池）: {}", e);
+        None
+    });
+
     let metrics = Arc::new(SystemMetrics::new());
     let auth_state = AuthState::from_env();
     let start_time = Instant::now();
@@ -834,6 +842,7 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
 
     Ok(ServiceContext {
         db,
+        migrate_pool,
         auth_state,
         metrics,
         event_publisher,
@@ -2136,6 +2145,7 @@ mod tests {
         let start_time = Instant::now();
         let ctx = ServiceContext {
             db: db.clone(),
+            migrate_pool: None,
             auth_state: auth_state.clone(),
             metrics: metrics.clone(),
             event_publisher: None,
@@ -2162,6 +2172,7 @@ mod tests {
         let start_time = Instant::now();
         let ctx = ServiceContext {
             db: db.clone(),
+            migrate_pool: None,
             auth_state: auth_state.clone(),
             metrics: metrics.clone(),
             event_publisher: None,
