@@ -468,32 +468,12 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // ---- 兼容层：iam schema（auth/tenant 中间件依赖） ----
-    // auth.rs 引用 iam.users / core_sessions / core_refresh_tokens，
-    // 但历史上未在建表迁移中创建。此处幂等补建 + 从 core_users 同步数据，
-    // 保证新环境部署即可用，避免登录 500 / 租户 400。
+    // ---- iam schema 保留（RBAC 功能表：positions/user_positions/position_permissions/position_roles/resource_permissions，由 position 模块 + migration 管理） ----
+    // 认证数据（core_users/core_sessions/core_refresh_tokens 等）已统一在 public schema；
+    // 历史兼容副本 iam.users 已于 2026-09-03 移除（无代码读取，死表）。
     sqlx::query("CREATE SCHEMA IF NOT EXISTS iam")
         .execute(pool)
         .await?;
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS iam.users (
-            id UUID PRIMARY KEY,
-            username VARCHAR(100) NOT NULL UNIQUE,
-            email VARCHAR(255) NOT NULL UNIQUE,
-            password_hash VARCHAR(255) NOT NULL,
-            full_name VARCHAR(255),
-            is_active BOOLEAN DEFAULT true,
-            is_superuser BOOLEAN DEFAULT false,
-            roles JSONB,
-            permissions JSONB,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS core_sessions (
@@ -520,17 +500,6 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             expires_at TIMESTAMPTZ,
             created_at TIMESTAMPTZ DEFAULT NOW()
         )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    // 同步 core_users → iam.users（幂等）
-    sqlx::query(
-        r#"
-        INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser, created_at)
-        SELECT id, username, email, password_hash, full_name, (status = 'active'), is_superuser, created_at
-        FROM core_users
-        ON CONFLICT (username) DO NOTHING
         "#,
     )
     .execute(pool)
