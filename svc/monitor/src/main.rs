@@ -12,6 +12,7 @@ use topems_shared_bootstrap::{
 use topems_shared_core::health::{
     simple_health_check, ServiceHealth, SimpleHealthConfig, SystemMetrics,
 };
+use crate::modules::monitor::monitor_plugin;
 
 mod shared;
 
@@ -76,7 +77,11 @@ async fn main() -> anyhow::Result<()> {
         app.port
     );
 
-    // TODO: 后续补齐 monitor_plugin::auto_register_to_core 调用
+        // ── 启动时自动注册到统一核心 ──────────────────────────────────────
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        monitor_plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
 
     run(app).await?;
     Ok(())
