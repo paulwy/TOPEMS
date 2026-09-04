@@ -21,7 +21,13 @@
     {
       "id": "hrm-service",
       "name": "hrm-service",
-      "category": "被调用平台服务",
+      "category": "调用方服务",
+      "symbolSize": 34
+    },
+    {
+      "id": "mes-service",
+      "name": "mes-service",
+      "category": "调用方服务",
       "symbolSize": 34
     },
     {
@@ -40,12 +46,6 @@
       "id": "mobile-service",
       "name": "mobile-service",
       "category": "调用方服务",
-      "symbolSize": 34
-    },
-    {
-      "id": "mes-service",
-      "name": "mes-service",
-      "category": "被调用平台服务",
       "symbolSize": 34
     },
     {
@@ -137,6 +137,12 @@
       "name": "server-ehs-module",
       "category": "模块化单体模块",
       "symbolSize": 26
+    },
+    {
+      "id": "unified-core-service",
+      "name": "unified-core-service",
+      "category": "调用方服务",
+      "symbolSize": 34
     }
   ],
   "links": [
@@ -161,6 +167,24 @@
     {
       "source": "erp-service",
       "target": "hrm-service",
+      "value": 1,
+      "lineStyle": {
+        "width": 2
+      },
+      "sourceFlag": "design"
+    },
+    {
+      "source": "erp-service",
+      "target": "mes-service",
+      "value": 1,
+      "lineStyle": {
+        "width": 2
+      },
+      "sourceFlag": "design"
+    },
+    {
+      "source": "mes-service",
+      "target": "erp-service",
       "value": 1,
       "lineStyle": {
         "width": 2
@@ -287,6 +311,15 @@
     {
       "source": "ehs-service",
       "target": "workflow-service",
+      "value": 1,
+      "lineStyle": {
+        "width": 2
+      },
+      "sourceFlag": "design"
+    },
+    {
+      "source": "hrm-service",
+      "target": "erp-service",
       "value": 1,
       "lineStyle": {
         "width": 2
@@ -458,6 +491,15 @@
     {
       "source": "server-ehs-module",
       "target": "workflow-service",
+      "value": 1,
+      "lineStyle": {
+        "width": 2
+      },
+      "sourceFlag": "design"
+    },
+    {
+      "source": "unified-core-service",
+      "target": "portal-service",
       "value": 1,
       "lineStyle": {
         "width": 2
