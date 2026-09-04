@@ -4,6 +4,8 @@
 
 mod models;
 
+use std::sync::Arc;
+
 use topems_mes::{modules, AppState};
 
 use axum::routing::get;
@@ -15,6 +17,7 @@ use topems_shared_bootstrap::{
     ServiceConfig,
 };
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedServiceClient};
 
 use modules::openapi::MesApiDoc;
 
@@ -53,11 +56,20 @@ async fn main() -> anyhow::Result<()> {
 
     let health_config = SimpleHealthConfig::new("topems-mes").with_db(ctx.db.clone());
 
+    // ERP 服务客户端（生产执行闭环：报工后回传生产进度，service token erp:write；失败优雅降级）
+    let erp_client = TypedServiceClient::<ErpApi>::from_env_default()
+        .and_then(|c| {
+            c.with_service_token(&ctx.auth_state.jwt_secret, "mes-service", &["erp:write"])
+        })
+        .map(Arc::new)
+        .ok();
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
         health_config,
         event_publisher: ctx.event_publisher.clone(),
+        erp_client,
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）

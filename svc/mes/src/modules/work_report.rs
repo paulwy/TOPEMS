@@ -583,7 +583,44 @@ pub async fn create_work_report(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => {
+            // 生产执行闭环：报工后异步回传 ERP 生产进度（服务间认证，失败不阻塞主流程）
+            let mes_order_id = r.order_id;
+            let erp_client_opt = state.erp_client.clone();
+            let pool = state.pool.clone();
+            let output_qty = big_decimal_to_f64(r.output_quantity.clone());
+            if let (Some(mes_order_id), Some(erp_client)) = (mes_order_id, erp_client_opt) {
+                tokio::spawn(async move {
+                    let erp_order_id: Option<Uuid> = sqlx::query_scalar(
+                        "SELECT sales_order_id FROM production_orders WHERE id = $1",
+                    )
+                    .bind(mes_order_id)
+                    .fetch_optional(&pool)
+                    .await
+                    .ok()
+                    .flatten();
+                    if let Some(erp_order_id) = erp_order_id {
+                        let payload = serde_json::json!({
+                            "mes_order_id": mes_order_id,
+                            "erp_order_id": erp_order_id,
+                            "completed_quantity": output_qty,
+                            "status": "in_progress",
+                        });
+                        match erp_client.sync_mes_progress(&payload).await {
+                            Ok(resp) => {
+                                tracing::info!("[MES→ERP] 生产进度回传成功: {}", resp);
+                            }
+                            Err(e) => {
+                                tracing::error!(
+                                    "[MES→ERP] 生产进度回传失败（异步降级，不影响报工）: {}",
+                                    e
+                                );
+                            }
+                        }
+                    }
+                });
+            }
+            Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
                 report_no: r.report_no,
@@ -608,7 +645,8 @@ pub async fn create_work_report(
                 updated_at: datetime_to_string(r.updated_at),
             },
             "创建工报成功",
-        )),
+        ))
+        }
         Err(e) => {
             tracing::error!("Failed to create work report: {}", e);
             Json(ApiResponse::error(500, "创建工报失败"))
