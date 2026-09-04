@@ -136,7 +136,7 @@ const DatasetPage = () => {
     });
     setViewMode('editor');
     setEditorTab(0);
-  }, [i18n.t]);
+  }, []);
   const handleEdit = useCallback((dataset: Dataset) => {
     setSelectedDataset(dataset);
     setFormData(dataset);

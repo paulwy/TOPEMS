@@ -38,7 +38,7 @@ const FlowNotificationCenter: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const notifications = notificationsQuery.data ?? [];
+  const notifications = useMemo(() => notificationsQuery.data ?? [], [notificationsQuery.data]);
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.is_read).length,
     [notifications]

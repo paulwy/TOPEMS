@@ -58,7 +58,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         });
       }
     },
-    [addNotification, queryClient, i18n.t]
+    [addNotification, queryClient]
   );
   const productionOrderApiAdapter: CrudApiAdapter<ProductionOrder> = {
     list: async (params) => {
@@ -139,7 +139,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         show: (row: Record<string, unknown>) => row.status === 'pending' || row.status === 'paused',
       },
     ],
-    [handleStatusChange, i18n.t]
+    [handleStatusChange]
   );
   return (
     <PageContainer

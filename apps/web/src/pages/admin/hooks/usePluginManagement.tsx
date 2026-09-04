@@ -188,7 +188,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
         );
       },
     }),
-    [fetchInstalledPlugins, fetchHealthStatus, i18n.t]
+    [fetchInstalledPlugins, fetchHealthStatus]
   );
   const enableMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
@@ -339,7 +339,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
         plugin_type: code === 'workflow' ? 'core' : 'business',
         permissions: [],
       })),
-    [i18n.t]
+    []
   );
   const filteredMarketplace = useMemo(
     () =>
@@ -394,27 +394,24 @@ export function usePluginManagement(): UsePluginManagementReturn {
     } else if (installStep === 2) {
       handleCloseMarketplace();
     }
-  }, [installStep, installMutation, installingPlugin, loadPlugins, handleCloseMarketplace, i18n.t]);
+  }, [installStep, installMutation, installingPlugin, loadPlugins, handleCloseMarketplace]);
   const handleInstallBack = useCallback(() => {
     if (installStep > 0) {
       setInstallStep(installStep - 1);
     }
   }, [installStep]);
-  const getUninstallMessage = useCallback(
-    (pluginCode: string, tier: UninstallTier) => {
-      switch (tier) {
-        case 'disable':
-          return i18n.t('admin.plugin_management_page.text_ede147', { pluginCode });
-        case 'uninstall':
-          return i18n.t('admin.plugin_management_page.text_c0b87f', { pluginCode });
-        case 'delete':
-          return i18n.t('admin.plugin_management_page.text_5cb48f', { pluginCode });
-        default:
-          return i18n.t(`admin.plugin_management_page.text_3ad04c${{ pluginCode }}`);
-      }
-    },
-    [i18n.t]
-  );
+  const getUninstallMessage = useCallback((pluginCode: string, tier: UninstallTier) => {
+    switch (tier) {
+      case 'disable':
+        return i18n.t('admin.plugin_management_page.text_ede147', { pluginCode });
+      case 'uninstall':
+        return i18n.t('admin.plugin_management_page.text_c0b87f', { pluginCode });
+      case 'delete':
+        return i18n.t('admin.plugin_management_page.text_5cb48f', { pluginCode });
+      default:
+        return i18n.t(`admin.plugin_management_page.text_3ad04c${{ pluginCode }}`);
+    }
+  }, []);
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
@@ -450,7 +447,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
         divider: true,
       },
     ],
-    [enableMutation, disableMutation, upgradeMutation, allMarketplacePlugins, i18n.t]
+    [enableMutation, disableMutation, upgradeMutation, allMarketplacePlugins]
   );
   return {
     marketplaceOpen,

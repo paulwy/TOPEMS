@@ -17,6 +17,7 @@ use futures_util::stream::Stream;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
+use crate::shared::SseSessionManager;
 use crate::AppState;
 
 // ===== SSE Event Types =====
@@ -52,6 +53,74 @@ pub struct SseSessionResponse {
 }
 
 // ===== SSE Route Handlers =====
+
+/// Pure session-request processing logic, testable without a full `AppState`.
+///
+/// Handles the three outcome branches of `sse_session_handler`:
+/// - session not found → `success=false, "Session not found or expired"`
+/// - event build failure → `success=false, "Failed to build event: {e}"`
+/// - send failure (receiver dropped) → `success=false, "Client disconnected"`
+async fn process_session_request(
+    sessions: &SseSessionManager,
+    session_id: &str,
+    request: &SseSessionRequest,
+) -> SseSessionResponse {
+    let sender = match sessions.get_sender(session_id).await {
+        Some(s) => s,
+        None => {
+            tracing::warn!("SSE session not found: session_id={}", session_id);
+            return SseSessionResponse {
+                success: false,
+                session_id: session_id.to_string(),
+                message: "Session not found or expired".to_string(),
+            };
+        }
+    };
+
+    // Build the SSE event from the request.
+    let event = Event::default()
+        .event(&request.event_type)
+        .json_data(&request.data);
+
+    match event {
+        Ok(evt) => match sender.send(Ok(evt)).await {
+            Ok(_) => {
+                tracing::debug!(
+                    "SSE event sent: session_id={}, event_type={}",
+                    session_id,
+                    request.event_type
+                );
+                SseSessionResponse {
+                    success: true,
+                    session_id: session_id.to_string(),
+                    message: "Event sent successfully".to_string(),
+                }
+            }
+            Err(_) => {
+                // Receiver dropped — client disconnected.
+                tracing::warn!("SSE client disconnected: session_id={}", session_id);
+                sessions.remove_session(session_id).await;
+                SseSessionResponse {
+                    success: false,
+                    session_id: session_id.to_string(),
+                    message: "Client disconnected".to_string(),
+                }
+            }
+        },
+        Err(e) => {
+            tracing::error!(
+                "SSE event build failed: session_id={}, error={}",
+                session_id,
+                e
+            );
+            SseSessionResponse {
+                success: false,
+                session_id: session_id.to_string(),
+                message: format!("Failed to build event: {}", e),
+            }
+        }
+    }
+}
 
 /// `GET /api/sse/connect` — Establish an SSE connection.
 ///
@@ -133,63 +202,7 @@ pub async fn sse_session_handler(
         request.event_type
     );
 
-    let sender = match state.sse_sessions.get_sender(&session_id).await {
-        Some(s) => s,
-        None => {
-            tracing::warn!("SSE session not found: session_id={}", session_id);
-            return Json(SseSessionResponse {
-                success: false,
-                session_id,
-                message: "Session not found or expired".to_string(),
-            });
-        }
-    };
-
-    // Build the SSE event from the request.
-    let event = Event::default()
-        .event(&request.event_type)
-        .json_data(&request.data);
-
-    match event {
-        Ok(evt) => {
-            match sender.send(Ok(evt)).await {
-                Ok(_) => {
-                    tracing::debug!(
-                        "SSE event sent: session_id={}, event_type={}",
-                        session_id,
-                        request.event_type
-                    );
-                    Json(SseSessionResponse {
-                        success: true,
-                        session_id,
-                        message: "Event sent successfully".to_string(),
-                    })
-                }
-                Err(_) => {
-                    // Receiver dropped — client disconnected.
-                    tracing::warn!("SSE client disconnected: session_id={}", session_id);
-                    state.sse_sessions.remove_session(&session_id).await;
-                    Json(SseSessionResponse {
-                        success: false,
-                        session_id,
-                        message: "Client disconnected".to_string(),
-                    })
-                }
-            }
-        }
-        Err(e) => {
-            tracing::error!(
-                "SSE event build failed: session_id={}, error={}",
-                session_id,
-                e
-            );
-            Json(SseSessionResponse {
-                success: false,
-                session_id,
-                message: format!("Failed to build event: {}", e),
-            })
-        }
-    }
+    Json(process_session_request(&state.sse_sessions, &session_id, &request).await)
 }
 
 // ===== Route Registration =====
@@ -225,7 +238,8 @@ mod tests {
 
     #[test]
     fn test_endpoint_event_data_deserialization() {
-        let json = r#"{"session_id":"sess-002","endpoint":"/api/sse/session/sess-002","expires_in":900}"#;
+        let json =
+            r#"{"session_id":"sess-002","endpoint":"/api/sse/session/sess-002","expires_in":900}"#;
         let data: EndpointEventData = serde_json::from_str(json).unwrap();
         assert_eq!(data.session_id, "sess-002");
         assert_eq!(data.endpoint, "/api/sse/session/sess-002");
@@ -426,5 +440,137 @@ mod tests {
         // 校验 session_id 与 endpoint 末段对齐
         let last_segment = data.endpoint.rsplit('/').next().unwrap();
         assert_eq!(last_segment, session_id);
+    }
+
+    // ===== process_session_request handler logic tests (V479) =====
+    // 覆盖 sse_session_handler 的核心分支，不依赖 AppState：
+    // session 不存在 / 发送成功 / 客户端断开（receiver dropped）+ 会话清理。
+
+    use crate::shared::SseSessionManager;
+
+    #[tokio::test]
+    async fn test_process_session_request_not_found() {
+        let sessions = SseSessionManager::new();
+        let req = SseSessionRequest {
+            event_type: "message".to_string(),
+            data: serde_json::json!({"msg": "hi"}),
+        };
+
+        let resp = process_session_request(&sessions, "missing-session", &req).await;
+
+        assert!(!resp.success);
+        assert_eq!(resp.session_id, "missing-session");
+        assert_eq!(resp.message, "Session not found or expired");
+        // 未创建任何会话
+        assert_eq!(sessions.session_count().await, 0);
+    }
+
+    #[tokio::test]
+    async fn test_process_session_request_success() {
+        let sessions = SseSessionManager::new();
+        let (session_id, mut receiver) = sessions.create_session().await.unwrap();
+        let req = SseSessionRequest {
+            event_type: "message".to_string(),
+            data: serde_json::json!({"msg": "hello"}),
+        };
+
+        let resp = process_session_request(&sessions, &session_id, &req).await;
+
+        assert!(resp.success);
+        assert_eq!(resp.message, "Event sent successfully");
+        // 事件应实际到达客户端的 receiver
+        let evt = receiver.recv().await.unwrap().unwrap();
+        assert!(format!("{:?}", evt).contains("message"));
+        // 会话仍存在
+        assert_eq!(sessions.session_count().await, 1);
+    }
+
+    #[tokio::test]
+    async fn test_process_session_request_custom_event_type_reaches_receiver() {
+        let sessions = SseSessionManager::new();
+        let (session_id, mut receiver) = sessions.create_session().await.unwrap();
+        let req = SseSessionRequest {
+            event_type: "update".to_string(),
+            data: serde_json::json!({"count": 42}),
+        };
+
+        let resp = process_session_request(&sessions, &session_id, &req).await;
+        assert!(resp.success);
+
+        let evt = receiver.recv().await.unwrap().unwrap();
+        let rendered = format!("{:?}", evt);
+        assert!(rendered.contains("update"));
+        assert!(rendered.contains("42"));
+    }
+
+    #[tokio::test]
+    async fn test_process_session_request_client_disconnected() {
+        let sessions = SseSessionManager::new();
+        let (session_id, receiver) = sessions.create_session().await.unwrap();
+        // 模拟客户端断开：drop receiver
+        drop(receiver);
+
+        let req = SseSessionRequest {
+            event_type: "message".to_string(),
+            data: serde_json::json!({"msg": "nobody listens"}),
+        };
+
+        let resp = process_session_request(&sessions, &session_id, &req).await;
+
+        assert!(!resp.success);
+        assert_eq!(resp.message, "Client disconnected");
+        // 断开后会话应被清理
+        assert_eq!(sessions.session_count().await, 0);
+        assert!(sessions.get_sender(&session_id).await.is_none());
+    }
+
+    // ===== SseSessionManager behavior tests (V479) =====
+    // 覆盖 sse_connect_handler 依赖的会话生命周期边界：上限拒绝 /
+    // get_sender / remove_session / cleanup_expired。
+
+    #[tokio::test]
+    async fn test_sse_session_manager_max_limit_rejects_overflow() {
+        let sessions = SseSessionManager::with_max_sessions(1);
+
+        assert!(sessions.create_session().await.is_some());
+        // 达到上限后拒绝新会话（connect handler 将发送 error 事件）
+        assert!(sessions.create_session().await.is_none());
+        assert_eq!(sessions.session_count().await, 1);
+    }
+
+    #[tokio::test]
+    async fn test_sse_session_manager_get_and_remove() {
+        let sessions = SseSessionManager::new();
+        let (session_id, _receiver) = sessions.create_session().await.unwrap();
+
+        assert!(sessions.get_sender(&session_id).await.is_some());
+        assert!(sessions.get_sender("missing").await.is_none());
+
+        sessions.remove_session(&session_id).await;
+        assert!(sessions.get_sender(&session_id).await.is_none());
+        assert_eq!(sessions.session_count().await, 0);
+    }
+
+    #[tokio::test]
+    async fn test_sse_session_manager_cleanup_expired_removes_idle() {
+        let sessions = SseSessionManager::new();
+        sessions.create_session().await.unwrap();
+        assert_eq!(sessions.session_count().await, 1);
+
+        // 0ms 超时 → 全部视为过期
+        let removed = sessions.cleanup_expired(Duration::from_millis(0)).await;
+        assert_eq!(removed, 1);
+        assert_eq!(sessions.session_count().await, 0);
+    }
+
+    #[tokio::test]
+    async fn test_sse_session_manager_cleanup_expired_keeps_recent() {
+        let sessions = SseSessionManager::new();
+        sessions.create_session().await.unwrap();
+
+        // 长超时（1 小时）→ 刚创建的会话不过期
+        let removed = sessions.cleanup_expired(Duration::from_secs(3600)).await;
+        assert_eq!(removed, 0);
+        assert_eq!(sessions.session_count().await, 1);
     }
 }

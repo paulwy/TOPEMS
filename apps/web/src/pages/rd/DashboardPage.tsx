@@ -76,7 +76,7 @@ export const DashboardPage: React.FC = () => {
         color: 'warning',
       },
     ],
-    [stats, i18n.t]
+    [stats]
   );
   const charts: ChartCard[] = useMemo(() => {
     const barData = [
@@ -139,7 +139,7 @@ export const DashboardPage: React.FC = () => {
         height: 300,
       },
     ];
-  }, [stats, i18n.t]);
+  }, [stats]);
   const quickActions: QuickAction[] = [
     {
       id: 'create-research-project',

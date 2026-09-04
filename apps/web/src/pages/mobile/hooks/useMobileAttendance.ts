@@ -240,7 +240,7 @@ export const useMobileAttendance = () => {
       return;
     }
     applyLeaveMutation.mutate(leaveForm);
-  }, [leaveForm, applyLeaveMutation, addNotification, i18n.t]);
+  }, [leaveForm, applyLeaveMutation, addNotification]);
   const handleBottomTabChange = useCallback(
     (tabId: string) => {
       switch (tabId) {

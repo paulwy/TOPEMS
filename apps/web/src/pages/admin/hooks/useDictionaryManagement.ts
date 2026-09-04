@@ -214,7 +214,7 @@ export function useDictionaryManagement() {
       type: 'success',
     });
     setShowExportModal(false);
-  }, [selectedType, addNotification, queryClient, i18n.t]);
+  }, [selectedType, addNotification, queryClient]);
   const handleImport = useCallback(async () => {
     if (!importFile || !selectedType) return;
     try {
@@ -262,7 +262,7 @@ export function useDictionaryManagement() {
         type: 'error',
       });
     }
-  }, [importFile, selectedType, addNotification, queryClient, i18n.t]);
+  }, [importFile, selectedType, addNotification, queryClient]);
   const dictItemAdapter: CrudApiAdapter = useMemo(
     () => ({
       list: async (params) => {
@@ -300,7 +300,7 @@ export function useDictionaryManagement() {
           throw new Error(res.message || i18n.t('admin.dictionary_management.delete_failed'));
       },
     }),
-    [selectedType, i18n.t]
+    [selectedType]
   );
   const filteredTypes = useMemo(() => {
     return dictTypes.filter(

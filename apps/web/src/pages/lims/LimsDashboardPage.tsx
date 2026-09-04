@@ -56,7 +56,7 @@ const LimsDashboardPage: React.FC = () => {
         } as StatCardConfig;
       }) ?? []
     );
-  }, [schema.statCards, loading, i18n.t]);
+  }, [schema.statCards, loading]);
   const charts = useMemo<ChartConfig[]>(() => {
     return (
       schema.charts?.map((ch) => {
@@ -75,7 +75,7 @@ const LimsDashboardPage: React.FC = () => {
         };
       }) ?? []
     );
-  }, [schema.charts, loading, i18n.t]);
+  }, [schema.charts, loading]);
   return (
     <PageContainer
       title={i18n.t('lims.dashboard.title')}

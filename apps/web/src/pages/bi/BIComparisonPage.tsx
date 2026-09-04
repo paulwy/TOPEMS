@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Filter, TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -80,7 +80,7 @@ const BIComparisonPage = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const comparisons = comparisonsQuery.data ?? [];
+  const comparisons = useMemo(() => comparisonsQuery.data ?? [], [comparisonsQuery.data]);
   useEffect(() => {
     if (comparisons.length > 0 && !currentComparisonId) {
       setCurrentComparisonId(comparisons[0].id);
@@ -107,7 +107,7 @@ const BIComparisonPage = () => {
     enabled: !!currentComparisonId,
     staleTime: 5 * 60 * 1000,
   });
-  const data = comparisonResultQuery.data ?? [];
+  const data = useMemo(() => comparisonResultQuery.data ?? [], [comparisonResultQuery.data]);
   const loading = comparisonResultQuery.isLoading;
   useEffect(() => {
     if (comparisonResultQuery.isError) {

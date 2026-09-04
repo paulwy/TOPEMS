@@ -33,7 +33,7 @@ export const useMobileScan = () => {
       i18n.t('mobile.scan.section.history'),
       i18n.t('mobile.scan.section.manual'),
     ],
-    [i18n.t]
+    []
   );
   useEffect(() => {
     const history: ScanHistoryItem[] = [
@@ -99,7 +99,7 @@ export const useMobileScan = () => {
       },
     ];
     setScanHistory(history);
-  }, [i18n.t]);
+  }, []);
   const simulateScan = useCallback(() => {
     if (!scanning) return;
     const mockResults = [
@@ -132,7 +132,7 @@ export const useMobileScan = () => {
         });
       }
     }, 2000);
-  }, [scanning, addNotification, i18n.t]);
+  }, [scanning, addNotification]);
   useEffect(() => {
     if (activeTab === 0 && scanning && !scanResult) {
       const timer = setTimeout(() => {
@@ -191,7 +191,7 @@ export const useMobileScan = () => {
       message: manualInput,
       type: 'success',
     });
-  }, [manualInput, addNotification, i18n.t]);
+  }, [manualInput, addNotification]);
   const handleCopyResult = useCallback(() => {
     if (scanResult) {
       navigator.clipboard.writeText(scanResult);
@@ -201,7 +201,7 @@ export const useMobileScan = () => {
         type: 'info',
       });
     }
-  }, [scanResult, addNotification, i18n.t]);
+  }, [scanResult, addNotification]);
   const handleClearHistory = useCallback(() => {
     setScanHistory([]);
     addNotification({
@@ -209,7 +209,7 @@ export const useMobileScan = () => {
       message: i18n.t('mobile.scan.message.history_cleared'),
       type: 'info',
     });
-  }, [addNotification, i18n.t]);
+  }, [addNotification]);
   const filteredHistory = useMemo(
     () =>
       scanHistory.filter((item) => item.content.toLowerCase().includes(searchQuery.toLowerCase())),

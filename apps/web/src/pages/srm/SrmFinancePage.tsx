@@ -147,7 +147,7 @@ const SrmFinancePage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const records = recordsQuery.data ?? [];
+  const records = useMemo(() => recordsQuery.data ?? [], [recordsQuery.data]);
 
   const stats = useMemo(() => {
     return {

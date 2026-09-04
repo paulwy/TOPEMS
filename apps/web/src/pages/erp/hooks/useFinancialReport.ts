@@ -70,7 +70,7 @@ export function useFinancialReport() {
         type: 'error',
       });
     }
-  }, [balanceSheetQuery.isError, balanceSheetQuery.error, addNotification, i18n.t]);
+  }, [balanceSheetQuery.isError, balanceSheetQuery.error, addNotification]);
   useEffect(() => {
     if (incomeStatementQuery.isError) {
       apiLogger.error('Failed to load income statement:', incomeStatementQuery.error);
@@ -80,7 +80,7 @@ export function useFinancialReport() {
         type: 'error',
       });
     }
-  }, [incomeStatementQuery.isError, incomeStatementQuery.error, addNotification, i18n.t]);
+  }, [incomeStatementQuery.isError, incomeStatementQuery.error, addNotification]);
   useEffect(() => {
     if (cashFlowQuery.isError) {
       apiLogger.error('Failed to load cash flow statement:', cashFlowQuery.error);
@@ -90,7 +90,7 @@ export function useFinancialReport() {
         type: 'error',
       });
     }
-  }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification, i18n.t]);
+  }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification]);
   const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE,
@@ -107,7 +107,7 @@ export function useFinancialReport() {
       message: i18n.t('erp.financial_report.message.exported_excel'),
       type: 'success',
     });
-  }, [i18n.t, addNotification]);
+  }, [addNotification]);
   const periodOptions = useMemo<PeriodOption[]>(() => {
     if (periodType === 'year') {
       return [
@@ -133,7 +133,7 @@ export function useFinancialReport() {
         { value: '2024-06', label: i18n.t('erp.financial_report.period.month_2024_06') },
       ];
     }
-  }, [periodType, i18n.t]);
+  }, [periodType]);
   const tabs: TabConfig[] = useMemo(
     () => [
       {
@@ -153,7 +153,7 @@ export function useFinancialReport() {
         value: 'equity-change',
       },
     ],
-    [i18n.t]
+    []
   );
   const handlePeriodTypeChange = useCallback((newPeriodType: string) => {
     setPeriodType(newPeriodType);

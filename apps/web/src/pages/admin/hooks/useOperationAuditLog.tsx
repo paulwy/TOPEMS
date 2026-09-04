@@ -44,7 +44,7 @@ export const useOperationAuditLog = () => {
       { value: 'core', label: i18n.t('admin.operation_audit_log.core_service') },
       { value: 'unknown', label: i18n.t('admin.operation_audit_log.unrecognized') },
     ],
-    [i18n.t]
+    []
   );
   const OPERATION_OPTIONS: Array<{ value: string; label: string }> = useMemo(
     () => [
@@ -54,7 +54,7 @@ export const useOperationAuditLog = () => {
       { value: 'delete', label: i18n.t('admin.operation_audit_log.delete') },
       { value: 'unknown', label: i18n.t('admin.operation_audit_log.unrecognized') },
     ],
-    [i18n.t]
+    []
   );
   const [userFilter, setUserFilter] = useState('');
   const [moduleFilter, setModuleFilter] = useState('');
@@ -154,56 +154,53 @@ export const useOperationAuditLog = () => {
     },
     [OPERATION_OPTIONS]
   );
-  const getResponseStatusBadge = useCallback(
-    (status?: number) => {
-      if (status === undefined || status === null) {
-        return (
-          <Chip
-            size='small'
-            label={i18n.t('admin.operation_audit_log.not_logged')}
-            variant='outlined'
-          />
-        );
-      }
-      if (status >= 200 && status < 300) {
-        return (
-          <Chip
-            size='small'
-            color='success'
-            label={String(status)}
-            icon={<CheckCircle size={14} />}
-          />
-        );
-      }
-      if (status >= 400 && status < 500) {
-        return (
-          <Chip
-            size='small'
-            color='warning'
-            label={String(status)}
-            icon={<XCircle size={14} />}
-          />
-        );
-      }
-      if (status >= 500) {
-        return (
-          <Chip
-            size='small'
-            color='error'
-            label={String(status)}
-            icon={<XCircle size={14} />}
-          />
-        );
-      }
+  const getResponseStatusBadge = useCallback((status?: number) => {
+    if (status === undefined || status === null) {
       return (
         <Chip
           size='small'
-          label={String(status)}
+          label={i18n.t('admin.operation_audit_log.not_logged')}
+          variant='outlined'
         />
       );
-    },
-    [i18n.t]
-  );
+    }
+    if (status >= 200 && status < 300) {
+      return (
+        <Chip
+          size='small'
+          color='success'
+          label={String(status)}
+          icon={<CheckCircle size={14} />}
+        />
+      );
+    }
+    if (status >= 400 && status < 500) {
+      return (
+        <Chip
+          size='small'
+          color='warning'
+          label={String(status)}
+          icon={<XCircle size={14} />}
+        />
+      );
+    }
+    if (status >= 500) {
+      return (
+        <Chip
+          size='small'
+          color='error'
+          label={String(status)}
+          icon={<XCircle size={14} />}
+        />
+      );
+    }
+    return (
+      <Chip
+        size='small'
+        label={String(status)}
+      />
+    );
+  }, []);
   const handleViewDetail = useCallback((log: OperationLog) => {
     setCurrentLog(log);
     setShowDetailModal(true);

@@ -190,7 +190,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
         ),
       },
     ],
-    [i18n.t]
+    []
   );
   const alertRowActions: RowAction<Alert>[] = useMemo(
     () => [
@@ -214,7 +214,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
         show: (row) => row.status !== 'escalated' && row.status !== 'resolved',
       },
     ],
-    [i18n.t, onAcknowledge, onResolve, onEscalate]
+    [onAcknowledge, onResolve, onEscalate]
   );
   return (
     <ListPageTemplate<Alert>

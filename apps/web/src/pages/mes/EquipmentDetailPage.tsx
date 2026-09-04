@@ -155,7 +155,7 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [equipment, i18n.t]);
+  }, [equipment]);
   const specsContent = useMemo(() => {
     if (!equipment) return null;
     return (
@@ -208,7 +208,7 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [equipment, i18n.t]);
+  }, [equipment]);
   const purchaseInfoContent = useMemo(() => {
     if (!equipment) return null;
     return (
@@ -239,7 +239,7 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [equipment, i18n.t]);
+  }, [equipment]);
   const footerSection = useMemo<SectionConfig>(() => {
     if (!equipment) return { id: 'footer', content: null };
     return {
@@ -296,7 +296,7 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       ),
     };
-  }, [equipment, i18n.t]);
+  }, [equipment]);
   const tabs = useMemo<TabConfig[]>(
     () => [
       {
@@ -315,7 +315,7 @@ const EquipmentDetailPage: React.FC = () => {
         content: purchaseInfoContent || <></>,
       },
     ],
-    [i18n.t, basicInfoContent, specsContent, purchaseInfoContent]
+    [basicInfoContent, specsContent, purchaseInfoContent]
   );
   const infoCard = useMemo(
     () => ({
@@ -339,7 +339,7 @@ const EquipmentDetailPage: React.FC = () => {
         },
       ],
     }),
-    [equipment, i18n.t]
+    [equipment]
   );
   return (
     <PageContainer

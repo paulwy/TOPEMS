@@ -220,7 +220,7 @@ export default function EquipmentManagementPage() {
         onClick: (row: Equipment) => handleOpenMaintenance(row),
       },
     ],
-    [i18n.t]
+    []
   );
   return (
     <PageContainer

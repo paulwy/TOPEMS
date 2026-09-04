@@ -1,9 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V478 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V479 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V289-V477 已完成**（详见下方各版本章节与 releases/archives/ 归档）。V478 基于项目现状分析报告（2026-09-05）按优先级推进：
-> **P0 预存编译错误验证清零**（erp 131 / portal 6 已在 9 月初提交修复，workspace cargo check 0 errors）+ **shared-auth clippy 7 处 + unified-core clippy 2 处清零** + **权限批量操作纯单元测试 8 个新增**（InMemoryPermissionStore 覆盖 batchCreate/batchUpdate/batchDelete）+ **文档真相源同步**（README 版本徽章、过期 test-results JSON 清理）。
+> **V289-V478 已完成**（详见下方各版本章节与 releases/archives/ 归档）。V479 完成：**轨C SSE handler 纯单元测试扩展**（process_session_request 纯函数 + SseSessionManager 边界直测，+9 单测，27/27 passed）+ **轨A exhaustive-deps 分类修复前 20%**（412→323 处，i18n.t 无效依赖 61 + useUrlListState 稳定化 12 + data??[] 逻辑表达式 16，26 文件 0 lint error / 0 TS error）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21652,11 +21651,69 @@ handler 变薄壳：`State(state)` 提取 store 后委托纯函数，行为零�
 
 ### V478 后续扩展（留给 V479+）
 
-- [ ] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（沿用本次 execute_* 纯函数模式）
-- [ ] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps
+- [x] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（沿用本次 execute_* 纯函数模式）— ✅ V479 完成：process_session_request 纯函数提取（sse_session_handler 三大分支：session 不存在/发送成功/客户端断开+清理），SseSessionManager 生命周期边界（上限拒绝/get_sender/remove/cleanup_expired）直测，新增 9 个单测，routes::sse 模块 22→27 passed
+- [x] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps — ✅ V479 完成：全量分类（412 处，unstable-reference 112 / unnecessary-dependency 108（其中 i18n.t 68）/ missing-dependencies 81 / complex-expression 5），按安全模式修复 **89 处（21.6%）**：i18n.t 无效依赖移除 61 处、useUrlListState 稳定化 12 处、data??[] 逻辑表达式 useMemo 包裹 16 处；26 文件改动 0 lint error / 0 TS error
 - [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
-- [ ] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理（建议 V479 单独执行）
+- [ ] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理
 - [ ] **P0 版本节奏治理**：从"每天多版本"切换为"每周 1-2 稳定版本 + 里程碑验收"，恢复 pre-commit 门禁常态化
+
+---
+
+## 🎯 V479 — 轨C SSE 单测扩展 + 轨A exhaustive-deps 修复 20%（✅ 完成）
+
+> **日期**：2026-09-05 | 代码改动 27 files（后端 sse.rs + 前端 26 文件）| 验收：routes::sse 27/27 passed · unified-core clippy 0 warnings · web tsc 0 errors · 26 前端文件 eslint 0 errors · exhaustive-deps 412→323（-89，21.6%）
+
+### 轨C：SSE handler 纯单元测试扩展（V478 后续扩展第 1 项）
+
+**背景**：sse.rs 原仅有序列化/事件构造/URL 格式 22 个纯逻辑测试，`sse_session_handler` 三大分支（session 不存在 / 事件发送成功 / 客户端断开）与 `SseSessionManager` 生命周期边界无测试覆盖（依赖完整 AppState 20+ 字段，单测成本高）。
+
+**重构**：沿用 V478 execute_* 纯函数模式——
+
+- `process_session_request(&SseSessionManager, &str, &SseSessionRequest) -> SseSessionResponse`：sse_session_handler 核心逻辑提取，handler 变薄壳（State 提取 manager 后委托）
+- 关键依赖 `SseSessionManager`（shared/mod.rs）可直接 `SseSessionManager::new()` / `with_max_sessions(N)` 实例化，天然可测
+
+**新增 9 个单测**（模块 22 → 27 passed）：
+
+| 测试 | 覆盖 |
+|------|------|
+| test_process_session_request_not_found | session 不存在 → "Session not found or expired" |
+| test_process_session_request_success | 发送成功 + 事件到达 receiver + 会话保留 |
+| test_process_session_request_custom_event_type_reaches_receiver | 自定义 event_type 透传到流 |
+| test_process_session_request_client_disconnected | drop receiver → "Client disconnected" + 会话清理 |
+| test_sse_session_manager_max_limit_rejects_overflow | 上限拒绝（connect handler error 事件前置） |
+| test_sse_session_manager_get_and_remove | get_sender 存在/缺失 + remove 后消失 |
+| test_sse_session_manager_cleanup_expired_removes_idle | 0ms 超时全清 |
+| test_sse_session_manager_cleanup_expired_keeps_recent | 1h 超时不过期 |
+| test_event_construction_null_data | （已有逻辑补测） |
+
+### 轨A：exhaustive-deps 分类 + 修复前 20%（V478 后续扩展第 2 项）
+
+**全量分类**（eslint JSON 解析，412 处 / 187 文件）：
+
+| 模式 | 数量 | 修复策略 |
+|------|------|----------|
+| unstable-reference（函数/表达式每次渲染变化） | 112 | useCallback/useMemo 包裹（`data ?? []` 型安全） |
+| unnecessary-dependency（无效依赖） | 108 | 移除；其中 **i18n.t 型 68 处**（外层值不会触发重渲染，安全移除） |
+| missing-dependencies（缺依赖） | 81 | 补依赖（有行为风险，V480 逐个评估） |
+| complex-expression（依赖数组复杂表达式） | 5 | 提取独立变量 |
+| 其他 | 6 | 逐案 |
+
+文件分布：src/pages 303 · src/components 60 · src/hooks 42 · 其他 7。
+
+**本次修复 89 处（21.6%）**：
+
+1. **i18n.t 无效依赖移除 61 处（21 文件）**：`[i18n.t]`→`[]`、`, i18n.t]`→`]` 精确替换，逐文件 eslint 验证（useMonitorSettings 型复杂场景自动回退）
+2. **useUrlListState.ts 稳定化 12 处**：shouldRemoveFromUrl → useCallback([])；get*FromUrl 5 函数 → useCallback（含各自依赖）；URL 同步 effect 依赖数组补齐（searchParamsStr 独立变量 + 全部 state 依赖，幂等保护下无副作用）；clearAll 补 ps 依赖
+3. **`data ?? []` 逻辑表达式 useMemo 包裹 16 处（9 文件）**：BIComparisonPage/useDatabaseManagement/PmReportPage/WorkflowNotificationCenterPage/TenantDetailPage/useMobileQuality/usePmReport/SrmFinancePage 等，自动补 useMemo 导入
+
+**验证**：26 前端文件 eslint 0 errors（21 个剩余 warning 均为预存类型：filename 命名/unused var/少量缺依赖）；`npx tsc --noEmit` 0 errors；全量 exhaustive-deps 412→323。
+
+### V479 后续扩展（留给 V480+）
+
+- [ ] **轨A exhaustive-deps 第二批（补依赖类）**：missing-dependencies 81 处逐案评估（先 hooks 后 components/pages），每文件单测/typecheck 验证
+- [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
+- [ ] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理
+- [ ] **P0 版本节奏治理**：每周 1-2 稳定版本 + 里程碑验收，pre-commit 门禁常态化
 
 ---
 

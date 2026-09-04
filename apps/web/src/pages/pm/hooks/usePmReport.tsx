@@ -120,7 +120,7 @@ export const usePmReport = (): UsePmReportReturn => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const stats = statsQuery.data ?? DEFAULT_STATS;
-  const benefits = benefitsQuery.data ?? [];
+  const benefits = useMemo(() => benefitsQuery.data ?? [], [benefitsQuery.data]);
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
   const error =
     statsQuery.isError || benefitsQuery.isError ? i18n.t('pm.pm_report_page.text_ca2c36') : '';
@@ -291,7 +291,7 @@ export const usePmReport = (): UsePmReportReturn => {
         color: 'error',
       },
     ],
-    [stats, i18n.t]
+    [stats]
   );
   const projectStatusData: ChartDatum[] = useMemo(
     () =>
@@ -322,7 +322,7 @@ export const usePmReport = (): UsePmReportReturn => {
           fill: 'error.main',
         },
       ].filter((d) => d.value > 0),
-    [stats, i18n.t]
+    [stats]
   );
   const riskData: ChartDatum[] = useMemo(
     () =>
@@ -343,7 +343,7 @@ export const usePmReport = (): UsePmReportReturn => {
           fill: 'success.main',
         },
       ].filter((d) => (d.value ?? 0) > 0),
-    [stats, i18n.t]
+    [stats]
   );
   const trendData: TrendDatum[] = useMemo(
     () =>
@@ -352,7 +352,7 @@ export const usePmReport = (): UsePmReportReturn => {
         cpi: b.cpi,
         spi: b.spi,
       })),
-    [benefits, i18n.t]
+    [benefits]
   );
   const budgetUtilization = useMemo(
     () => (stats.total_budget > 0 ? (stats.spent_budget / stats.total_budget) * 100 : 0),
@@ -366,7 +366,7 @@ export const usePmReport = (): UsePmReportReturn => {
       { label: i18n.t('pm.pm_report_page.label_0477ce'), value: 'quarter' },
       { label: i18n.t('pm.pm_report_page.label_04ab9d'), value: 'year' },
     ],
-    [i18n.t]
+    []
   );
   const pageTitle = i18n.t('pm.pm_report_page.attr_d5179b');
   const pageSubtitle = params.projectId

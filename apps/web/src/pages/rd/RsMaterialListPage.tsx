@@ -125,7 +125,7 @@ const RsMaterialListPage: React.FC = () => {
         message: i18n.t('rd.material_list_page.notification.export_failed_message'),
       });
     }
-  }, [addNotification, i18n.t]);
+  }, [addNotification]);
   const stats = useMemo(() => {
     const materials = materialsResp?.data?.materials || [];
     const total = materialsResp?.data?.total || materials.length;

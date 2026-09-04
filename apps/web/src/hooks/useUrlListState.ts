@@ -167,28 +167,31 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
   const initialPage = defaultPage ?? firstPage;
 
   // ---- 从 URL 读取初始值 ----
-  const getSearchFromUrl = (): string => searchParams.get(q) ?? defaultSearch;
+  const getSearchFromUrl = useCallback(
+    (): string => searchParams.get(q) ?? defaultSearch,
+    [searchParams, q, defaultSearch]
+  );
 
-  const getPageFromUrl = (): number => {
+  const getPageFromUrl = useCallback((): number => {
     const raw = searchParams.get(p);
     const parsed = raw ? Number(raw) : NaN;
     return Number.isFinite(parsed) ? parsed : initialPage;
-  };
+  }, [searchParams, p, initialPage]);
 
-  const getPageSizeFromUrl = (): number => {
+  const getPageSizeFromUrl = useCallback((): number => {
     const raw = searchParams.get(ps);
     const parsed = raw ? Number(raw) : NaN;
     return Number.isFinite(parsed) ? parsed : defaultPageSize;
-  };
+  }, [searchParams, ps, defaultPageSize]);
 
-  const getSortFromUrl = (): { sortBy: string; sortOrder: 'asc' | 'desc' } => {
+  const getSortFromUrl = useCallback((): { sortBy: string; sortOrder: 'asc' | 'desc' } => {
     const sortBy = searchParams.get(sb) ?? defaultSortBy;
     const rawOrder = searchParams.get(so);
     const sortOrder = rawOrder === 'desc' ? 'desc' : rawOrder === 'asc' ? 'asc' : defaultSortOrder;
     return { sortBy, sortOrder };
-  };
+  }, [searchParams, sb, so, defaultSortBy, defaultSortOrder]);
 
-  const getFiltersFromUrl = (): TFilters => {
+  const getFiltersFromUrl = useCallback((): TFilters => {
     const result = { ...defaultFilters } as TFilters;
     searchParams.forEach((value, key) => {
       if (key.startsWith(fPrefix)) {
@@ -201,7 +204,7 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       }
     });
     return result;
-  };
+  }, [searchParams, defaultFilters, fPrefix]);
 
   // ---- 内部状态 ----
   const [searchQuery, setSearchQueryState] = useState<string>(getSearchFromUrl);
@@ -217,13 +220,13 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
 
   // ---- 写入 URL ----
   // 值为 null / '' / 等于默认值 时从 URL 移除
-  const shouldRemoveFromUrl = (
-    value: string | number | null,
-    defaultValue: string | number
-  ): boolean => {
-    if (value === null || value === '') return true;
-    return value === defaultValue;
-  };
+  const shouldRemoveFromUrl = useCallback(
+    (value: string | number | null, defaultValue: string | number): boolean => {
+      if (value === null || value === '') return true;
+      return value === defaultValue;
+    },
+    []
+  );
 
   const updateUrl = useCallback(
     (updates: Record<string, string | number | null>) => {
@@ -498,6 +501,7 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
     initialPage,
     fPrefix,
     p,
+    ps,
     q,
     sb,
     so,
@@ -507,6 +511,7 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
   ]);
 
   // ---- 监听 URL 变化（前进/后退），同步回内部状态 ----
+  const searchParamsStr = searchParams.toString();
   useEffect(() => {
     if (internalUpdateRef.current) return;
 
@@ -547,7 +552,20 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
     if (filtersChanged) {
       setFiltersState(urlFilters);
     }
-  }, [searchParams.toString()]);
+  }, [
+    searchParamsStr,
+    searchQuery,
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    filters,
+    getSearchFromUrl,
+    getPageFromUrl,
+    getPageSizeFromUrl,
+    getSortFromUrl,
+    getFiltersFromUrl,
+  ]);
 
   return {
     searchQuery,

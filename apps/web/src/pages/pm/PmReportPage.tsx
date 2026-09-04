@@ -102,7 +102,7 @@ const PmReportPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const stats = statsQuery.data ?? DEFAULT_STATS;
-  const benefits = benefitsQuery.data ?? [];
+  const benefits = useMemo(() => benefitsQuery.data ?? [], [benefitsQuery.data]);
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
   const loadReportData = useCallback(() => {
     statsQuery.refetch();

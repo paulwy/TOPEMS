@@ -99,7 +99,7 @@ export function useDatabaseManagement() {
     enabled: activeTab === 'tables',
     staleTime: 5 * 60 * 1000,
   });
-  const tables = tablesQuery.data ?? [];
+  const tables = useMemo(() => tablesQuery.data ?? [], [tablesQuery.data]);
   const loading = tablesQuery.isLoading;
   const tableDetailQuery = useQuery<TableDetail | null>({
     queryKey: [...QUERY_KEYS.AD_HOC.ERP_DATABASE_TABLE_DETAIL_BASE, currentTable?.table_name],
@@ -188,7 +188,7 @@ export function useDatabaseManagement() {
       message: i18n.t('erp.database.message.backup_completed'),
       type: 'success',
     });
-  }, [i18n.t, addNotification]);
+  }, [addNotification]);
   const handleRestore = useCallback((backupId: string) => {
     setRestoreBackupId(backupId);
     setShowRestoreModal(true);
@@ -201,7 +201,7 @@ export function useDatabaseManagement() {
       type: 'info',
     });
     setRestoreBackupId(null);
-  }, [i18n.t, addNotification]);
+  }, [addNotification]);
   const handleDeleteBackup = useCallback((id: string) => {
     setDeletingBackupId(id);
     setDeleteBackupDialogOpen(true);
@@ -225,7 +225,7 @@ export function useDatabaseManagement() {
       setDeleteBackupDialogOpen(false);
       setDeletingBackupId(null);
     }
-  }, [deletingBackupId, i18n.t, addNotification]);
+  }, [deletingBackupId, addNotification]);
   return {
     // State
     activeTab,

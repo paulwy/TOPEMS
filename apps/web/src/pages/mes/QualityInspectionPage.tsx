@@ -123,7 +123,7 @@ const QualityInspectionPage: React.FC = () => {
         });
       }
     },
-    [addNotification, i18n.t]
+    [addNotification]
   );
   const customRowActions: RowAction[] = useMemo(
     () => [
@@ -137,7 +137,7 @@ const QualityInspectionPage: React.FC = () => {
         },
       },
     ],
-    [handleBatchExport, i18n.t]
+    [handleBatchExport]
   );
   const handleStatsExport = useCallback(
     (rows: Record<string, unknown>[]) => {

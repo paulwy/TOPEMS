@@ -135,7 +135,7 @@ const TenantDetailPage: React.FC = () => {
   const tenant = tenantQuery.data ?? null;
   const stats = statsQuery.data ?? null;
   const users = usersQuery.data?.items ?? [];
-  const invoices = invoicesQuery.data ?? [];
+  const invoices = useMemo(() => invoicesQuery.data ?? [], [invoicesQuery.data]);
   const loading = tenantQuery.isLoading;
   const usersLoading = usersQuery.isLoading;
 

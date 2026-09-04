@@ -120,54 +120,51 @@ export const useMobileApproval = () => {
       i18n.t('mobile.approval.tab.approved'),
       i18n.t('mobile.approval.tab.initiated'),
     ],
-    [i18n.t]
+    []
   );
-  const mapApiApprovalToApprovalItem = useCallback(
-    (apiApproval: ApiApproval): ApprovalItem => {
-      const typeMap: Record<string, ApprovalItem['type']> = {
-        purchase: 'purchase',
-        leave: 'leave',
-        expense: 'expense',
-        contract: 'contract',
-      };
-      const priorityMap: Record<string, ApprovalItem['priority']> = {
-        high: 'high',
-        medium: 'medium',
-        low: 'low',
-      };
-      const statusMap: Record<string, ApprovalItem['status']> = {
-        pending: 'pending',
-        approved: 'approved',
-        rejected: 'rejected',
-      };
-      return {
-        id: apiApproval.id || String(apiApproval.task_id || apiApproval.id),
-        title:
-          apiApproval.title ||
-          apiApproval.task_name ||
-          `${i18n.t('mobile.approval.nav.approval')} ${apiApproval.id}`,
-        type: apiApproval.type ? typeMap[apiApproval.type] : 'other',
-        applicant:
-          apiApproval.applicant_name ||
-          apiApproval.assignee_name ||
-          apiApproval.applicant ||
-          i18n.t('mobile.approval.priority.unknown'),
-        department: apiApproval.department || apiApproval.department_name || '',
-        submitTime: apiApproval.created_at
-          ? new Date(apiApproval.created_at).toLocaleString('zh-CN')
-          : '',
-        amount: apiApproval.amount ? `¥${Number(apiApproval.amount).toFixed(2)}` : undefined,
-        priority: apiApproval.priority ? priorityMap[apiApproval.priority] : 'medium',
-        status: apiApproval.status ? statusMap[apiApproval.status] : 'pending',
-        description: apiApproval.description || apiApproval.remarks || '',
-        steps: apiApproval.steps || [
-          { name: i18n.t('mobile.approval.action.submit'), status: 'completed' },
-          { name: i18n.t('mobile.approval.status.processing'), status: 'current' },
-        ],
-      };
-    },
-    [i18n.t]
-  );
+  const mapApiApprovalToApprovalItem = useCallback((apiApproval: ApiApproval): ApprovalItem => {
+    const typeMap: Record<string, ApprovalItem['type']> = {
+      purchase: 'purchase',
+      leave: 'leave',
+      expense: 'expense',
+      contract: 'contract',
+    };
+    const priorityMap: Record<string, ApprovalItem['priority']> = {
+      high: 'high',
+      medium: 'medium',
+      low: 'low',
+    };
+    const statusMap: Record<string, ApprovalItem['status']> = {
+      pending: 'pending',
+      approved: 'approved',
+      rejected: 'rejected',
+    };
+    return {
+      id: apiApproval.id || String(apiApproval.task_id || apiApproval.id),
+      title:
+        apiApproval.title ||
+        apiApproval.task_name ||
+        `${i18n.t('mobile.approval.nav.approval')} ${apiApproval.id}`,
+      type: apiApproval.type ? typeMap[apiApproval.type] : 'other',
+      applicant:
+        apiApproval.applicant_name ||
+        apiApproval.assignee_name ||
+        apiApproval.applicant ||
+        i18n.t('mobile.approval.priority.unknown'),
+      department: apiApproval.department || apiApproval.department_name || '',
+      submitTime: apiApproval.created_at
+        ? new Date(apiApproval.created_at).toLocaleString('zh-CN')
+        : '',
+      amount: apiApproval.amount ? `¥${Number(apiApproval.amount).toFixed(2)}` : undefined,
+      priority: apiApproval.priority ? priorityMap[apiApproval.priority] : 'medium',
+      status: apiApproval.status ? statusMap[apiApproval.status] : 'pending',
+      description: apiApproval.description || apiApproval.remarks || '',
+      steps: apiApproval.steps || [
+        { name: i18n.t('mobile.approval.action.submit'), status: 'completed' },
+        { name: i18n.t('mobile.approval.status.processing'), status: 'current' },
+      ],
+    };
+  }, []);
   const approvalsQuery = useQuery<ApprovalItem[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_APPROVALS_BASE, activeTab, searchQuery, user?.id],
     queryFn: async () => {
@@ -196,13 +193,13 @@ export const useMobileApproval = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const approvals = approvalsQuery.data ?? [];
+  const approvals = useMemo(() => approvalsQuery.data ?? [], [approvalsQuery.data]);
   const loading = approvalsQuery.isLoading;
   useEffect(() => {
     if (approvalsQuery.isError) {
       apiLogger.error(i18n.t('mobile.approval.message.load_failed'), approvalsQuery.error);
     }
-  }, [approvalsQuery.isError, approvalsQuery.error, i18n.t]);
+  }, [approvalsQuery.isError, approvalsQuery.error]);
   const handleRefresh = useCallback(async () => {
     await approvalsQuery.refetch();
   }, [approvalsQuery]);

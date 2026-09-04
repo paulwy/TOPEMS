@@ -35,7 +35,7 @@ export const useMobileQuality = () => {
   });
   const tabs = useMemo(
     () => [i18n.t('mobile.quality.tabs.tasks'), i18n.t('mobile.quality.tabs.defect_report')],
-    [i18n.t]
+    []
   );
   const tasksQuery = useQuery<QualityTask[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_TASKS_BASE, user?.fullName],
@@ -106,7 +106,7 @@ export const useMobileQuality = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const qualityTasks = tasksQuery.data ?? [];
+  const qualityTasks = useMemo(() => tasksQuery.data ?? [], [tasksQuery.data]);
   const defectsQuery = useQuery<DefectRecord[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_DEFECTS_BASE, user?.fullName],
     queryFn: async () => {
@@ -155,7 +155,7 @@ export const useMobileQuality = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const defectRecords = defectsQuery.data ?? [];
+  const defectRecords = useMemo(() => defectsQuery.data ?? [], [defectsQuery.data]);
   const loading = tasksQuery.isLoading || defectsQuery.isLoading;
   useEffect(() => {
     if (tasksQuery.isError) {
@@ -164,40 +164,34 @@ export const useMobileQuality = () => {
     if (defectsQuery.isError) {
       apiLogger.error(i18n.t('mobile.quality.message.load_defects_failed'), defectsQuery.error);
     }
-  }, [tasksQuery.isError, tasksQuery.error, defectsQuery.isError, defectsQuery.error, i18n.t]);
+  }, [tasksQuery.isError, tasksQuery.error, defectsQuery.isError, defectsQuery.error]);
   const handleRefresh = useCallback(async () => {
     await Promise.all([tasksQuery.refetch(), defectsQuery.refetch()]);
   }, [tasksQuery, defectsQuery]);
   const handleTabChange = useCallback((_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   }, []);
-  const getTypeLabel = useCallback(
-    (type: string) => {
-      const map: Record<string, string> = {
-        incoming: i18n.t('mobile.quality.type.incoming'),
-        process: i18n.t('mobile.quality.type.process'),
-        finished: i18n.t('mobile.quality.type.finished'),
-        outgoing: i18n.t('mobile.quality.type.outgoing'),
-      };
-      return map[type] || type;
-    },
-    [i18n.t]
-  );
-  const getStatusLabel = useCallback(
-    (status: string) => {
-      const map: Record<string, string> = {
-        pending: i18n.t('mobile.quality.status.pending'),
-        in_progress: i18n.t('mobile.quality.status.in_progress'),
-        passed: i18n.t('mobile.quality.status.passed'),
-        failed: i18n.t('mobile.quality.status.failed'),
-        open: i18n.t('mobile.quality.status.open'),
-        processing: i18n.t('mobile.quality.status.processing'),
-        closed: i18n.t('mobile.quality.status.closed'),
-      };
-      return map[status] || status;
-    },
-    [i18n.t]
-  );
+  const getTypeLabel = useCallback((type: string) => {
+    const map: Record<string, string> = {
+      incoming: i18n.t('mobile.quality.type.incoming'),
+      process: i18n.t('mobile.quality.type.process'),
+      finished: i18n.t('mobile.quality.type.finished'),
+      outgoing: i18n.t('mobile.quality.type.outgoing'),
+    };
+    return map[type] || type;
+  }, []);
+  const getStatusLabel = useCallback((status: string) => {
+    const map: Record<string, string> = {
+      pending: i18n.t('mobile.quality.status.pending'),
+      in_progress: i18n.t('mobile.quality.status.in_progress'),
+      passed: i18n.t('mobile.quality.status.passed'),
+      failed: i18n.t('mobile.quality.status.failed'),
+      open: i18n.t('mobile.quality.status.open'),
+      processing: i18n.t('mobile.quality.status.processing'),
+      closed: i18n.t('mobile.quality.status.closed'),
+    };
+    return map[status] || status;
+  }, []);
   const getStatusColor = useCallback((status: string): ChipColor => {
     const map: Record<string, ChipColor> = {
       pending: 'warning',
@@ -210,17 +204,14 @@ export const useMobileQuality = () => {
     };
     return map[status] || 'default';
   }, []);
-  const getSeverityLabel = useCallback(
-    (severity: string) => {
-      const map: Record<string, string> = {
-        minor: i18n.t('mobile.quality.severity.minor'),
-        major: i18n.t('mobile.quality.severity.major'),
-        critical: i18n.t('mobile.quality.severity.critical'),
-      };
-      return map[severity] || severity;
-    },
-    [i18n.t]
-  );
+  const getSeverityLabel = useCallback((severity: string) => {
+    const map: Record<string, string> = {
+      minor: i18n.t('mobile.quality.severity.minor'),
+      major: i18n.t('mobile.quality.severity.major'),
+      critical: i18n.t('mobile.quality.severity.critical'),
+    };
+    return map[severity] || severity;
+  }, []);
   const getSeverityColor = useCallback((severity: string): SeverityChipColor => {
     const map: Record<string, SeverityChipColor> = {
       minor: 'warning',
@@ -299,7 +290,7 @@ export const useMobileQuality = () => {
       return;
     }
     submitDefectMutation.mutate();
-  }, [defectForm, submitDefectMutation, addNotification, i18n.t]);
+  }, [defectForm, submitDefectMutation, addNotification]);
   const updateTaskStatusMutation = useMutation({
     mutationFn: async (params: { task: QualityTask; action: TaskAction }) => {
       return params;

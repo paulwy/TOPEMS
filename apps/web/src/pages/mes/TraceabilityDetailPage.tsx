@@ -289,7 +289,7 @@ const TraceabilityDetailPage: React.FC = () => {
         ))}
       </Box>
     );
-  }, [traceChain, i18n.t]);
+  }, [traceChain]);
   // 批次基本信息
   const batchInfoContent = useMemo(() => {
     if (!traceChain || traceChain.nodes.length === 0) return null;
@@ -347,7 +347,7 @@ const TraceabilityDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [traceChain, i18n.t]);
+  }, [traceChain]);
   // 质检记录内容
   const qualityContent = useMemo(() => {
     if (qualityRecords.length === 0) {
@@ -471,7 +471,7 @@ const TraceabilityDetailPage: React.FC = () => {
         ))}
       </Box>
     );
-  }, [qualityRecords, i18n.t]);
+  }, [qualityRecords]);
   const tabs = useMemo<TabConfig[]>(
     () => [
       {
@@ -490,7 +490,7 @@ const TraceabilityDetailPage: React.FC = () => {
         content: qualityContent || <></>,
       },
     ],
-    [i18n.t, traceChainContent, batchInfoContent, qualityContent]
+    [traceChainContent, batchInfoContent, qualityContent]
   );
   const infoCard = useMemo(() => {
     const rootNode = traceChain?.nodes.find((n) => n.id === traceChain.root_id);
@@ -521,7 +521,7 @@ const TraceabilityDetailPage: React.FC = () => {
         },
       ],
     };
-  }, [traceChain, i18n.t]);
+  }, [traceChain]);
   return (
     <PageContainer
       autoTitle
