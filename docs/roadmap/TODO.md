@@ -21726,7 +21726,9 @@ handler 变薄壳：`State(state)` 提取 store 后委托纯函数，行为零�
 
 **根因**：lint-staged 17.1.1 在 26+ 文件批量时 "Failed to stage changes from tasks"（内部 `git add` 失败，具体 git 错误被 lint-staged 吞掉）；单文件场景正常。该问题自 8 月底持续存在（清理时发现 7 个 lint-staged 自动备份 stash 残留，最早可追溯到 c85ac2c80 时代）。
 
-**修复**：`lefthook.yml` 的 frontend-lint 由 `npx lint-staged` 改为直接命令链：
+**根因深挖（两处）**：① lint-staged 17.1.1 批量 re-stage 失败；② 实测定位真正根因——**git 2.50.1 新增行为：被 .gitignore 目录规则（如 `apps/web/src/pages/admin/hooks/`"页面级实验 hooks"）覆盖的 tracked 文件，`git add <path>` 返回 exit 1**（lint-staged 历史批量失败同根因，含 8 月底残留）。`git add -A` 不受影响。
+
+**修复**：`lefthook.yml` 的 frontend-lint 由 `npx lint-staged` 改为直接命令链（`git add -f`，STAGED 全部来自 index，安全）：
 
 ```bash
 STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/src/.*\.(ts|tsx)$' || true)
