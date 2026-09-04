@@ -327,18 +327,18 @@ async fn main() -> anyhow::Result<()> {
         )
         .layer(axum::middleware::from_fn_with_state(
             app_state.pool.clone(),
-            topems_shared_auth::tenant_middleware(),
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
-            auth_middleware,
+            rls_middleware,
         ))
         .layer(axum::middleware::from_fn(require_permission(
             "portal:admin",
         )))
         .layer(axum::middleware::from_fn_with_state(
             app_state.pool.clone(),
-            rls_middleware,
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
         ));
 
     let rate_limit_config = RateLimitConfig::new(200, 60)
