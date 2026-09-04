@@ -33,6 +33,15 @@ impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> RetentionCleanupTask<S> 
         }
     }
 
+    /// Create a new cleanup task from an existing RetentionManager.
+    pub fn from_retention_manager(retention_manager: Arc<RetentionManager<S>>) -> Self {
+        Self {
+            policy: Arc::new(Mutex::new(retention_manager.policy().clone())),
+            store: retention_manager.get_store().clone(),
+            handle: None,
+        }
+    }
+
     /// Start the background cleanup task.
     pub fn start(&mut self) {
         if self.handle.is_some() {

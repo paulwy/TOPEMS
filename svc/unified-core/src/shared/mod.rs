@@ -1,6 +1,7 @@
 //! Shared module for unified-core service
 //! Contains unified types and utilities for all core modules
 
+pub mod config_store_simple;
 pub mod consul_service_discovery;
 pub mod dns_service_discovery;
 pub mod etcd_service_discovery;
@@ -34,6 +35,7 @@ use crate::middleware::input_validation::InputValidationConfig;
 use crate::middleware::rate_limit::RateLimitMiddleware;
 use crate::middleware::versioning::VersionMiddleware;
 use crate::modules::communication::ws::WsState;
+use crate::shared::config_store_simple::ConfigStoreService;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -63,6 +65,10 @@ pub struct AppState {
     /// V465: Audit log retention policy configuration.
     pub audit_retention_policy:
         Arc<Mutex<crate::routes::business_tools::audit_retention::RetentionPolicy>>,
+    /// V465: Audit log retention manager for cleanup operations.
+    pub retention_manager: Arc<crate::routes::business_tools::audit_retention::RetentionManager<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore + Send + Sync>>,
+    /// V465: Configuration store for persistent system configurations.
+    pub config_store: ConfigStoreService,
 }
 
 impl FromRef<AppState> for AuthState {

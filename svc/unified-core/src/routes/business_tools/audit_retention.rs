@@ -170,6 +170,11 @@ impl<S: AuditLogStore + ?Sized> RetentionManager<S> {
         self.archiver.as_ref()
     }
 
+    /// Get a reference to the audit log store.
+    pub fn get_store(&self) -> &Arc<S> {
+        &self.store
+    }
+
     /// Update the retention policy.
     pub fn update_policy(&mut self, policy: RetentionPolicy) {
         self.policy = policy;

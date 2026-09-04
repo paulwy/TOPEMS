@@ -12,6 +12,8 @@ mod shared;
 pub mod middleware;
 pub mod modules;
 
+use crate::shared::config_store_simple::ConfigStoreService;
+
 use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;
 
@@ -452,46 +454,95 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    // V465: Initialize audit log retention policy
-    // Defaults to 90 days retention. Set AUDIT_RETENTION_DAYS to customize.
-    let audit_retention_policy = {
-        let retention_days = std::env::var("AUDIT_RETENTION_DAYS")
-            .ok()
-            .and_then(|v| v.parse::<u32>().ok())
-            .unwrap_or(90);
-        let archive_enabled = std::env::var("AUDIT_ARCHIVE_ENABLED")
-            .ok()
-            .map(|v| v == "true" || v == "1")
-            .unwrap_or(false);
-        let archive_path = std::env::var("AUDIT_ARCHIVE_PATH").ok();
-        let batch_size = std::env::var("AUDIT_CLEANUP_BATCH_SIZE")
-            .ok()
-            .and_then(|v| v.parse::<u32>().ok())
-            .unwrap_or(1000);
-        let cleanup_interval = std::env::var("AUDIT_CLEANUP_INTERVAL_HOURS")
-            .ok()
-            .and_then(|v| v.parse::<u32>().ok())
-            .unwrap_or(24);
-
-        let mut policy =
-            crate::routes::business_tools::audit_retention::RetentionPolicy::new(retention_days)
-                .with_batch_size(batch_size)
-                .with_cleanup_interval(cleanup_interval);
-        if archive_enabled {
-            if let Some(path) = archive_path {
-                policy = policy.with_archive(path);
-            } else {
-                policy.archive_enabled = true;
-            }
+    // V465: Initialize configuration store
+    let config_store = {
+        let store = ConfigStoreService::new(ctx.db.clone());
+        if let Err(e) = store.init().await {
+            tracing::warn!("Failed to initialize config store: {}", e);
         }
-        tracing::info!(
-            retention_days = policy.retention_days,
-            archive_enabled = policy.archive_enabled,
-            batch_size = policy.batch_size,
-            cleanup_interval_hours = policy.cleanup_interval_hours,
-            "Audit log retention policy initialized"
+        store
+    };
+
+    // V465: Initialize audit log retention policy and RetentionManager
+    // Defaults to 90 days retention. Set AUDIT_RETENTION_DAYS to customize.
+    // Load from config store or use defaults
+    let (audit_retention_policy, retention_manager) = {
+        // Try to load from config store first
+        let policy = match config_store.store().get_audit_retention_policy().await {
+            Ok(Some(policy)) => {
+                tracing::info!(
+                    retention_days = policy.retention_days,
+                    archive_enabled = policy.archive_enabled,
+                    batch_size = policy.batch_size,
+                    cleanup_interval_hours = policy.cleanup_interval_hours,
+                    "Audit log retention policy loaded from config store"
+                );
+                policy
+            }
+            Ok(None) => {
+                // Use defaults and save to config store
+                let retention_days = std::env::var("AUDIT_RETENTION_DAYS")
+                    .ok()
+                    .and_then(|v| v.parse::<u32>().ok())
+                    .unwrap_or(90);
+                let archive_enabled = std::env::var("AUDIT_ARCHIVE_ENABLED")
+                    .ok()
+                    .map(|v| v == "true" || v == "1")
+                    .unwrap_or(false);
+                let archive_path = std::env::var("AUDIT_ARCHIVE_PATH").ok();
+                let batch_size = std::env::var("AUDIT_CLEANUP_BATCH_SIZE")
+                    .ok()
+                    .and_then(|v| v.parse::<u32>().ok())
+                    .unwrap_or(1000);
+                let cleanup_interval = std::env::var("AUDIT_CLEANUP_INTERVAL_HOURS")
+                    .ok()
+                    .and_then(|v| v.parse::<u32>().ok())
+                    .unwrap_or(24);
+
+                let mut policy =
+                    crate::routes::business_tools::audit_retention::RetentionPolicy::new(retention_days)
+                        .with_batch_size(batch_size)
+                        .with_cleanup_interval(cleanup_interval);
+                if archive_enabled {
+                    if let Some(path) = archive_path {
+                        policy = policy.with_archive(path);
+                    } else {
+                        policy.archive_enabled = true;
+                    }
+                }
+                
+                tracing::info!(
+                    retention_days = policy.retention_days,
+                    archive_enabled = policy.archive_enabled,
+                    batch_size = policy.batch_size,
+                    cleanup_interval_hours = policy.cleanup_interval_hours,
+                    "Audit log retention policy initialized with defaults"
+                );
+
+                // Save default policy to config store
+                if let Err(e) = config_store.store().set_audit_retention_policy(&policy).await {
+                    tracing::error!("Failed to save default audit retention policy: {}", e);
+                }
+
+                policy
+            }
+            Err(e) => {
+                tracing::error!("Failed to load audit retention policy: {}", e);
+                // Use defaults as fallback
+                let policy = crate::routes::business_tools::audit_retention::RetentionPolicy::default();
+                policy
+            }
+        };
+
+        let policy_mutex = std::sync::Arc::new(tokio::sync::Mutex::new(policy.clone()));
+        let retention_manager: std::sync::Arc<crate::routes::business_tools::audit_retention::RetentionManager<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore + Send + Sync>> = std::sync::Arc::new(
+            crate::routes::business_tools::audit_retention::RetentionManager::new(
+                policy.clone(),
+                audit_logger.clone(),
+            )
         );
-        std::sync::Arc::new(tokio::sync::Mutex::new(policy))
+        
+        (policy_mutex, retention_manager)
     };
 
     let state = AppState {
@@ -515,6 +566,8 @@ async fn main() -> anyhow::Result<()> {
         permission_store,
         audit_logger,
         audit_retention_policy,
+        retention_manager,
+        config_store,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections
@@ -534,11 +587,10 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // V466: Spawn background task for audit log retention cleanup
-    let audit_retention_policy = state.audit_retention_policy.clone();
-    let audit_logger = state.audit_logger.clone();
+    let retention_manager = state.retention_manager.clone();
     tokio::spawn(async move {
         use crate::routes::business_tools::audit_retention_task::RetentionCleanupTask;
-        let mut task = RetentionCleanupTask::new(audit_retention_policy, audit_logger);
+        let mut task = RetentionCleanupTask::from_retention_manager(retention_manager);
         task.start();
         // Keep the task running for the lifetime of the application
         // The task will run until the application shuts down
