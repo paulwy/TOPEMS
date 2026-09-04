@@ -249,7 +249,7 @@ pub mod audit;
 
 use anyhow::Result;
 use axum::{extract::State, routing::get, Router};
-use axum_prometheus::PrometheusMetricLayer;
+use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
 use prometheus::{Encoder as _, TextEncoder};
 use sqlx::postgres::PgPoolOptions;
 use std::env;
@@ -915,6 +915,10 @@ where
 }
 
 /// 组装最终的应用路由：rate_limit + auth + rls 中间件、CORS、Prometheus、telemetry 层
+/// 全局 Prometheus handle：build_application 时存入，prometheus_metrics_handler 用
+/// handle.render() 导出（缺口②修复——pair() 指标在独立 registry，gather() 不可见）。
+static GLOBAL_METRIC_HANDLE: std::sync::OnceLock<PrometheusHandle> = std::sync::OnceLock::new();
+
 pub fn build_application(
     ctx: &ServiceContext,
     config: &ServiceConfig,
@@ -923,10 +927,11 @@ pub fn build_application(
     openapi_json: Option<String>,
 ) -> Application {
     let cors = create_cors_layer();
-    // 缺口②修复：pair() 用独立 registry（axum 指标进不去默认 registry），
-    // prometheus_metrics_handler 的 gather() 只见默认 registry → /metrics 空 body。
-    // 改 new() 用默认全局 registry，使 gather() 可见 axum 请求指标（统一可观测性）。
-    let prometheus_layer = PrometheusMetricLayer::new();
+    // 缺口②修复：PrometheusMetricLayer 指标在独立 registry，prometheus_metrics_handler
+    // 的 gather()（默认 registry）不可见 → /metrics 空 body。正确方案：pair() 取 handle，
+    // 存入全局静态，handler 用 handle.render() 导出（与 ai/portal/integration 一致）。
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let _ = GLOBAL_METRIC_HANDLE.set(metric_handle);
 
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)
@@ -1046,6 +1051,11 @@ pub async fn check_iam_health() -> DependencyHealth {
 
 /// Prometheus 指标导出端点
 pub async fn prometheus_metrics_handler() -> String {
+    // 缺口②修复：优先用全局 handle.render()（含 axum 请求指标，与 ai/portal 一致），
+    // fallback gather()（默认 registry，仅自定义指标场景）。
+    if let Some(handle) = GLOBAL_METRIC_HANDLE.get() {
+        return handle.render();
+    }
     let encoder = TextEncoder::new();
     let metrics = prometheus::gather();
     let mut buffer = Vec::new();
