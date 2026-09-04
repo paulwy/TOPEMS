@@ -246,6 +246,7 @@ services:
     environment:
       <<: *common-env-full
       ERP_PORT: "8010"
+      MES_SERVICE_URL: http://mes:8030
     ports:
       - "${ERP_PORT:-8010}:8010"
     volumes:
@@ -397,6 +398,7 @@ services:
     environment:
       <<: *common-env
       MES_PORT: "8030"
+      ERP_SERVICE_URL: http://erp:8010
       RUST_LOG: info,service_discovery=info
     ports:
       - "${MES_PORT:-8030}:8030"
