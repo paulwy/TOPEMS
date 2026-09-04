@@ -558,6 +558,23 @@ pub async fn create_from_erp(
         .or(req.erp_order.delivery_date)
         .unwrap_or_else(|| now + chrono::Duration::days(7));
 
+    // 服务间调用（service token）：事务内设置 nil 租户上下文，确保与 INSERT 同一连接（RLS 放行）
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for create_from_erp: {}", e);
+            return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+        .bind(Uuid::nil().to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("Failed to set nil RLS context for create_from_erp: {}", e);
+        return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+    }
+
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
@@ -586,8 +603,13 @@ pub async fn create_from_erp(
         req.notes,
         now,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("Failed to commit tx for create_from_erp: {}", e);
+        return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+    }
 
     let result = match result {
         Ok(r) => r,

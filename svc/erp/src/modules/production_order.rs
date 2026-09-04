@@ -516,6 +516,23 @@ pub async fn receive_mes_progress(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<MesProgressUpdate>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    // 服务间调用（service token）：事务内设置 nil 租户上下文，确保同连接（RLS 放行）
+    let mut tx = match state.db.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("begin tx failed in receive_mes_progress: {}", e);
+            return Json(api_error(500, "更新生产进度失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+        .bind(Uuid::nil().to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("set nil RLS context failed in receive_mes_progress: {}", e);
+        return Json(api_error(500, "更新生产进度失败"));
+    }
+
     let order_id = match req.erp_order_id {
         Some(id) => id,
         None => {
@@ -523,7 +540,7 @@ pub async fn receive_mes_progress(
                 only_own_schema_query!("erp", "SELECT id FROM erp.erp_production_orders WHERE source_order_id = $1 AND deleted_at IS NULL LIMIT 1"),
             )
             .bind(req.mes_order_id.to_string())
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut *tx)
             .await;
 
             match result {
@@ -565,11 +582,16 @@ pub async fn receive_mes_progress(
     .bind(req.actual_start_date.map(|d| d.naive_utc()))
     .bind(req.actual_end_date.map(|d| d.naive_utc()))
     .bind(now.naive_utc())
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
         Ok(Some(order)) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("commit tx failed in receive_mes_progress: {}", e);
+                return Json(api_error(500, "更新生产进度失败"));
+            }
+
             tracing::debug!(
                 "[ERP] Received MES progress update for order: {}",
                 order.order_no

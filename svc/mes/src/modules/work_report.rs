@@ -546,6 +546,23 @@ pub async fn create_work_report(
 
     let report_no = generate_report_no();
 
+    // 事务内设置 RLS 上下文（与 create_from_erp 一致）：确保 set_config 与 INSERT 同连接
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for create_work_report: {}", e);
+            return Json(ApiResponse::error(500, "创建工报失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+        .bind(Uuid::nil().to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("Failed to set nil RLS context for create_work_report: {}", e);
+        return Json(ApiResponse::error(500, "创建工报失败"));
+    }
+
     let result = sqlx::query!(
         r#"
         INSERT INTO work_reports (
@@ -579,11 +596,16 @@ pub async fn create_work_report(
         labor_hours,
         body.remark,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match result {
         Ok(r) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("Failed to commit tx for create_work_report: {}", e);
+                return Json(ApiResponse::error(500, "创建工报失败"));
+            }
+
             // 生产执行闭环：报工后异步回传 ERP 生产进度（服务间认证，失败不阻塞主流程）
             let mes_order_id = r.order_id;
             let erp_client_opt = state.erp_client.clone();
