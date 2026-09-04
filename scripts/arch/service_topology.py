@@ -313,7 +313,7 @@ def consistency_report(runtime_edges, design_edges):
     lines.append(f"匹配边（design 已声明）       : {len(matched)}")
     lines.append(f"仅 runtime（设计未声明/新增） : {len(only_runtime)}")
     for e in sorted(only_runtime):
-        lines.append(f"    {e[0]} → {e[1]}  ({runtime_edges.get(e, '?')} 次)")
+        lines.append(f"    {e[0]} → {e[1]}  ({runtime_edges.get(e, '?')} 次)【需人工核实：真实调用补 STATIC_DEPS；手工 service token 验证噪声则不补】")
     lines.append(f"仅 design（runtime 未捕获）   : {len(only_design)}")
     for e in sorted(only_design):
         lines.append(f"    {e[0]} → {e[1]}")
