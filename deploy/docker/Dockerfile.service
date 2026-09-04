@@ -46,11 +46,18 @@ RUN mkdir -p /root/.cargo && \
       'low-speed-time = 45' \
       '' \
       '[source.crates-io]' \
-      'replace-with = "rsproxy-sparse"' \
+      'replace-with = "ustc-sparse"' \
       '' \
-      '[source.rsproxy-sparse]' \
-      'registry = "sparse+https://rsproxy.cn/index/"' \
+      '[source.ustc-sparse]' \
+      'registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"' \
       > /root/.cargo/config.toml
+
+# 强制 HTTP/1.1（cargo sparse 并发 HTTP/2 在 rsproxy/中科大偶发 stream reset 致索引下载挂起）
+ENV CARGO_HTTP_MULTIPLEXING=false \
+    CARGO_NET_RETRY=5 \
+    CARGO_HTTP_TIMEOUT=120 \
+    CARGO_HTTP_LOW_SPEED_LIMIT=10 \
+    CARGO_HTTP_LOW_SPEED_TIME=45
 
 # 复制 workspace 文件（依赖缓存层）
 COPY Cargo.toml Cargo.lock ./
