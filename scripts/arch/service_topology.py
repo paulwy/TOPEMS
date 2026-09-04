@@ -44,6 +44,8 @@ STATIC_DEPS = {
                         "workflow-service", "notification-service"],
     "srm-service":     ["workflow-service"],
     "qms-service":     ["workflow-service"],
+    "pdm-service":     [],   # 09-04 叶子服务，无跨服务调用（CORE_URL 注册不计入业务边）
+    "lims-service":    [],   # 09-04 叶子服务，无跨服务调用（CORE_URL 注册不计入业务边）
     "pm-service":      ["workflow-service"],
     "finance-service": ["workflow-service"],
     "ehs-service":     ["workflow-service"],
@@ -84,6 +86,7 @@ LOGIC_SERVICE_NAMES = {
     "iam", "workflow", "notification", "mes", "qms", "monitor",
     "srm", "pm", "ehs", "scm", "ai", "bi", "gis", "integration",
     "tms", "rd", "ticket", "search", "plugin-registry", "master-data",
+    "pdm", "lims",   # 09-04 补叶子服务（探测判活后不再 warn）
 }
 
 # 进程名 → 逻辑服务名映射：collect 的 spec 通常用进程名（如 unified-core），
