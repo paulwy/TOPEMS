@@ -335,7 +335,7 @@ def main():
         print("未指定模式，默认 --static")
         args.static = True
 
-    edges, source = build_edges(static=args.static or (not runtime), runtime=runtime)
+    edges, source = build_edges(static=True, runtime=runtime)
     if not edges:
         print("无任何依赖边，退出")
         sys.exit(1)
@@ -343,11 +343,12 @@ def main():
     mode = "runtime" if runtime else "design"
     os.makedirs(args.out, exist_ok=True)
 
-    # runtime vs design 一致性对比（仅 --collect 时输出）
+    # runtime vs design 一致性对比（仅 --collect 时输出，用纯 runtime 边对比设计声明）
     if runtime:
+        runtime_only, _ = build_edges(static=False, runtime=runtime)
         design_edges, _ = build_edges(static=True, runtime=None)
         print("\n== runtime vs design 一致性 ==")
-        print(consistency_report(edges, design_edges))
+        print(consistency_report(runtime_only, design_edges))
 
     graph = to_echarts_data(edges, source)
     option = {
