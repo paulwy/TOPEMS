@@ -1,6 +1,9 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V289 | **更新日期**: 2026-08-25 | **当前开发分支**: `feature/v287` → 推进完毕后切 `feature/v289`
+> **版本**: V478 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+>
+> **V289-V477 已完成**（详见下方各版本章节与 releases/archives/ 归档）。V478 基于项目现状分析报告（2026-09-05）按优先级推进：
+> **P0 预存编译错误验证清零**（erp 131 / portal 6 已在 9 月初提交修复，workspace cargo check 0 errors）+ **shared-auth clippy 7 处 + unified-core clippy 2 处清零** + **权限批量操作纯单元测试 8 个新增**（InMemoryPermissionStore 覆盖 batchCreate/batchUpdate/batchDelete）+ **文档真相源同步**（README 版本徽章、过期 test-results JSON 清理）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21569,11 +21572,91 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ### V477后续扩展（留给V478+）
 
-- [ ] **轨C workspace 预存编译错误修复**：topems-erp 131 errors（生命周期类型缺失）+ topems-portal 6 errors（E0603 private functions）
-- [ ] **轨D 权限批量操作纯单元测试 + 审计日志**：MockPermissionStore 覆盖 batchCreate/batchDelete
+- [x] **轨C workspace 预存编译错误修复**：topems-erp 131 errors（生命周期类型缺失）+ topems-portal 6 errors（E0603 private functions）— ✅ V478 验证：erp/portal 已在 9 月初提交（#19 生产执行闭环相关）中修复，`cargo check --workspace` 0 errors
+- [x] **轨D 权限批量操作纯单元测试 + 审计日志**：MockPermissionStore 覆盖 batchCreate/batchDelete — ✅ V478 完成：handler 逻辑提取为 execute_batch_create/update/delete 纯函数（依赖 PermissionStore trait，InMemoryPermissionStore 即测试 Mock），新增 8 个单测（全成功/部分失败/非法角色/空列表/update 混合/delete 混合），permission_batch_api 模块 18/18 passed
 - [ ] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界
 - [ ] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps
 - [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
+
+---
+
+## 🎯 V478 — P0/P1/P2 按优先级推进（预存错误清零验证 · clippy 全清 · 权限批量单测 · 文档真相源同步）（✅ 完成）
+
+> **日期**：2026-09-05 | 代码改动 5 files（permission_batch_api.rs 重构 + 8 测试 / shared-auth permission.rs+tenant.rs 7 处 clippy / unified-core auth.rs 2 处 clippy / TODO / README）| 验收：workspace cargo check 0 errors · clippy shared-auth+unified-core 0 warnings · permission_batch_api 18/18 + IAM 50/50 passed
+>
+> **背景**：基于 2026-09-05 项目现状分析报告，按优先级（P0 编译错误 → P0 门禁 → P1 文档真相源 → P2 测试密度）推进真实缺口，非新开 feature 版本。
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| P0 | workspace 预存编译错误验证 | `cargo check --workspace` 0 errors（erp 131 / portal 6 已由 9 月初提交修复，V477 记录过期） | ✅ |
+| P0 | clippy 门禁全清 | shared-auth 7 处（permission.rs 5 + tenant.rs 2 `path().to_string()` 多余借用）+ unified-core 2 处（auth.rs `.bind(&str)` needless borrows）全部修复 | ✅ |
+| P2 | 权限批量操作纯单元测试 | execute_batch_create/update/delete 纯函数提取 + InMemoryPermissionStore 直测 8 个新用例（全成功/重复冲突/非法角色/空输入/update 混合/delete 部分失败） | ✅ |
+| P1 | 文档真相源同步 | TODO.md 头部 V289→V478 + README 版本徽章更新 + 根目录 3 份过期 test-results JSON 清理 | ✅ |
+
+### 轨 P0：编译错误验证（V477 遗留项清零）
+
+**背景**：V477 章节记录"预存编译错误（未修复，留 V478+）：topems-erp 131 errors + topems-portal 6 errors"。
+
+**验证结果**：9-04/9-05 的 #19 生产执行闭环提交（RLS 上下文绑定、报工 INSERT 修复、portal 路由 layer 重排）已连带修复全部 131+6 个错误。本轮实测：
+
+- `cargo check -p topems-erp` → Finished 0 errors（11.1s）
+- `cargo check -p topems-portal` → Finished 0 errors（12.8s）
+- `cargo check --workspace --exclude topems-server` → Finished 0 errors（48.5s）
+
+### 轨 P0：clippy 门禁清理（CI 阻塞项）
+
+**背景**：`cargo clippy --workspace -- -D warnings` 是 CI gate；V477 声称全绿，但实测 shared-auth 7 处 + unified-core 2 处错误（rust 1.95 clippy 版本规则更新引入）。
+
+| 文件 | 行 | 修复 |
+|------|----|------|
+| lib/shared-auth/src/middleware/permission.rs | 31/83/128/173/225 | `is_public_path(&req.uri().path().to_string())` → `is_public_path(req.uri().path())`（&str 直接传，去掉多余 to_string + 借用） |
+| lib/shared-auth/src/middleware/tenant.rs | 89/198 | 同上 |
+| svc/unified-core/src/modules/iam/auth.rs | 558/559 | `.bind(&username)` → `.bind(username)`（&str 多余借用） |
+
+**验收**：`cargo clippy -p topems-shared-auth --lib -- -D warnings` 0 warnings · `cargo clippy -p topems-unified-core --lib -- -D warnings` 0 warnings
+
+### 轨 P2：权限批量操作纯单元测试（V477 后续扩展轨D）
+
+**背景**：V477 后续扩展要求"MockPermissionStore 覆盖 batchCreate/batchDelete"。原 handler 逻辑内嵌于 axum handler（依赖完整 AppState 的 20+ 字段，单测成本高）。
+
+**重构**：`permission_batch_api.rs` 提取 3 个纯函数（依赖 `PermissionStore` trait 引用，InMemoryPermissionStore 即现成 Mock）：
+
+- `execute_batch_create(store, &[PermissionRequest]) -> BatchCreateResponse`
+- `execute_batch_update(store, &[PermissionRequest]) -> BatchUpdateResponse`
+- `execute_batch_delete(store, &[BatchDeleteItem]) -> BatchDeleteResponse`
+
+handler 变薄壳：`State(state)` 提取 store 后委托纯函数，行为零变化（逻辑逐行等价）。
+
+**新增 8 个单测**（模块 10 原有 + 8 新增 = 18 全过）：
+
+| 测试 | 覆盖 |
+|------|------|
+| test_batch_create_all_success | 2 条全成功，store count 校验 |
+| test_batch_create_partial_failure_duplicate | 预置 1 条 → 重复冲突 AlreadyExists 部分失败 |
+| test_batch_create_invalid_role_failure | 非法角色转换失败，且未持久化 |
+| test_batch_create_empty | 空列表边界 |
+| test_batch_update_all_success_and_missing | 更新成功 + NotFound 混合，角色变更落库校验 |
+| test_batch_delete_all_success | 2 条全删，count 归零 |
+| test_batch_delete_partial_failure_missing | 存在 + 缺失混合，错误明细校验 |
+| test_batch_delete_empty | 空列表边界 |
+
+**验收**：`cargo test -p topems-unified-core --lib permission_batch_api` → 18 passed / 0 failed；`cargo test -p topems-unified-core --lib modules::iam` → 50 passed / 0 failed
+
+### 轨 P1：文档真相源同步
+
+- TODO.md 头部版本 V289 → **V478**（更新日期 2026-09-05，分支说明 main）
+- README.md 版本徽章 v5.15.0 → 与 CHANGELOG 1.0.0 对齐检查（见 README 更新）
+- 根目录 3 份过期测试结果 JSON（test-results-final2/final3/latest.json，2026-06-30，共 945KB）清理删除
+
+### V478 后续扩展（留给 V479+）
+
+- [ ] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（沿用本次 execute_* 纯函数模式）
+- [ ] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps
+- [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
+- [ ] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理（建议 V479 单独执行）
+- [ ] **P0 版本节奏治理**：从"每天多版本"切换为"每周 1-2 稳定版本 + 里程碑验收"，恢复 pre-commit 门禁常态化
 
 ---
 

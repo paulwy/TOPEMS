@@ -11,6 +11,7 @@ use axum::Router;
 use serde::{Deserialize, Serialize};
 
 use super::permission_api::{ErrorResponse, PermissionRequest, PermissionResponse};
+use super::permission_store::PermissionStore;
 use super::TenantPermission;
 use crate::shared::AppState;
 
@@ -114,35 +115,29 @@ fn try_convert(request: &PermissionRequest) -> Result<TenantPermission, String> 
 
 // ===== Route Handlers =====
 
-/// `POST /api/business-tools/permissions/batch` — Batch create permissions.
-pub async fn batch_create_permissions(
-    State(state): State<AppState>,
-    Json(request): Json<BatchCreateRequest>,
-) -> Result<Json<BatchCreateResponse>, (StatusCode, Json<ErrorResponse>)> {
+/// Pure batch create logic, testable without a full `AppState`.
+async fn execute_batch_create(
+    store: &dyn PermissionStore,
+    permissions: &[PermissionRequest],
+) -> BatchCreateResponse {
     let mut created = Vec::new();
     let mut errors = Vec::new();
 
-    for req in &request.permissions {
+    for req in permissions {
         match try_convert(req) {
-            Ok(permission) => {
-                match state
-                    .permission_store
-                    .create_permission(permission.clone())
-                    .await
-                {
-                    Ok(_) => {
-                        created.push(PermissionResponse::from(&permission));
-                    }
-                    Err(e) => {
-                        errors.push(BatchOperationResult {
-                            tenant_id: req.tenant_id.clone(),
-                            user_id: req.user_id.clone(),
-                            success: false,
-                            error: Some(format!("{}", e)),
-                        });
-                    }
+            Ok(permission) => match store.create_permission(permission.clone()).await {
+                Ok(_) => {
+                    created.push(PermissionResponse::from(&permission));
                 }
-            }
+                Err(e) => {
+                    errors.push(BatchOperationResult {
+                        tenant_id: req.tenant_id.clone(),
+                        user_id: req.user_id.clone(),
+                        success: false,
+                        error: Some(format!("{}", e)),
+                    });
+                }
+            },
             Err(e) => {
                 errors.push(BatchOperationResult {
                     tenant_id: req.tenant_id.clone(),
@@ -154,48 +149,42 @@ pub async fn batch_create_permissions(
         }
     }
 
-    let total = request.permissions.len();
+    let total = permissions.len();
     let succeeded = created.len();
     let failed = errors.len();
 
-    Ok(Json(BatchCreateResponse {
+    BatchCreateResponse {
         total,
         succeeded,
         failed,
         created,
         errors,
-    }))
+    }
 }
 
-/// `PUT /api/business-tools/permissions/batch` — Batch update permissions.
-pub async fn batch_update_permissions(
-    State(state): State<AppState>,
-    Json(request): Json<BatchUpdateRequest>,
-) -> Result<Json<BatchUpdateResponse>, (StatusCode, Json<ErrorResponse>)> {
+/// Pure batch update logic, testable without a full `AppState`.
+async fn execute_batch_update(
+    store: &dyn PermissionStore,
+    permissions: &[PermissionRequest],
+) -> BatchUpdateResponse {
     let mut updated = Vec::new();
     let mut errors = Vec::new();
 
-    for req in &request.permissions {
+    for req in permissions {
         match try_convert(req) {
-            Ok(permission) => {
-                match state
-                    .permission_store
-                    .update_permission(permission.clone())
-                    .await
-                {
-                    Ok(_) => {
-                        updated.push(PermissionResponse::from(&permission));
-                    }
-                    Err(e) => {
-                        errors.push(BatchOperationResult {
-                            tenant_id: req.tenant_id.clone(),
-                            user_id: req.user_id.clone(),
-                            success: false,
-                            error: Some(format!("{}", e)),
-                        });
-                    }
+            Ok(permission) => match store.update_permission(permission.clone()).await {
+                Ok(_) => {
+                    updated.push(PermissionResponse::from(&permission));
                 }
-            }
+                Err(e) => {
+                    errors.push(BatchOperationResult {
+                        tenant_id: req.tenant_id.clone(),
+                        user_id: req.user_id.clone(),
+                        success: false,
+                        error: Some(format!("{}", e)),
+                    });
+                }
+            },
             Err(e) => {
                 errors.push(BatchOperationResult {
                     tenant_id: req.tenant_id.clone(),
@@ -207,30 +196,29 @@ pub async fn batch_update_permissions(
         }
     }
 
-    let total = request.permissions.len();
+    let total = permissions.len();
     let succeeded = updated.len();
     let failed = errors.len();
 
-    Ok(Json(BatchUpdateResponse {
+    BatchUpdateResponse {
         total,
         succeeded,
         failed,
         updated,
         errors,
-    }))
+    }
 }
 
-/// `DELETE /api/business-tools/permissions/batch` — Batch delete permissions.
-pub async fn batch_delete_permissions(
-    State(state): State<AppState>,
-    Json(request): Json<BatchDeleteRequest>,
-) -> Result<Json<BatchDeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
+/// Pure batch delete logic, testable without a full `AppState`.
+async fn execute_batch_delete(
+    store: &dyn PermissionStore,
+    items: &[BatchDeleteItem],
+) -> BatchDeleteResponse {
     let mut errors = Vec::new();
     let mut succeeded = 0;
 
-    for item in &request.permissions {
-        match state
-            .permission_store
+    for item in items {
+        match store
             .delete_permission(&item.tenant_id, &item.user_id)
             .await
         {
@@ -248,15 +236,45 @@ pub async fn batch_delete_permissions(
         }
     }
 
-    let total = request.permissions.len();
+    let total = items.len();
     let failed = errors.len();
 
-    Ok(Json(BatchDeleteResponse {
+    BatchDeleteResponse {
         total,
         succeeded,
         failed,
         errors,
-    }))
+    }
+}
+
+/// `POST /api/business-tools/permissions/batch` — Batch create permissions.
+pub async fn batch_create_permissions(
+    State(state): State<AppState>,
+    Json(request): Json<BatchCreateRequest>,
+) -> Result<Json<BatchCreateResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let response =
+        execute_batch_create(state.permission_store.as_ref(), &request.permissions).await;
+    Ok(Json(response))
+}
+
+/// `PUT /api/business-tools/permissions/batch` — Batch update permissions.
+pub async fn batch_update_permissions(
+    State(state): State<AppState>,
+    Json(request): Json<BatchUpdateRequest>,
+) -> Result<Json<BatchUpdateResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let response =
+        execute_batch_update(state.permission_store.as_ref(), &request.permissions).await;
+    Ok(Json(response))
+}
+
+/// `DELETE /api/business-tools/permissions/batch` — Batch delete permissions.
+pub async fn batch_delete_permissions(
+    State(state): State<AppState>,
+    Json(request): Json<BatchDeleteRequest>,
+) -> Result<Json<BatchDeleteResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let response =
+        execute_batch_delete(state.permission_store.as_ref(), &request.permissions).await;
+    Ok(Json(response))
 }
 
 // ===== Route Registration =====
@@ -420,5 +438,209 @@ mod tests {
         assert!(json.contains("\"total\":5"));
         assert!(json.contains("\"succeeded\":4"));
         assert!(json.contains("\"failed\":1"));
+    }
+
+    // ===== execute_* pure logic tests (V478: MockPermissionStore coverage) =====
+
+    fn make_request(tenant_id: &str, user_id: &str, role: &str) -> PermissionRequest {
+        PermissionRequest {
+            tenant_id: tenant_id.to_string(),
+            user_id: user_id.to_string(),
+            role: role.to_string(),
+            active: true,
+            tool_permissions: vec![],
+        }
+    }
+
+    #[tokio::test]
+    async fn test_batch_create_all_success() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+        let reqs = vec![
+            make_request("t1", "u1", "admin"),
+            make_request("t1", "u2", "member"),
+        ];
+
+        let resp = execute_batch_create(&store, &reqs).await;
+
+        assert_eq!(resp.total, 2);
+        assert_eq!(resp.succeeded, 2);
+        assert_eq!(resp.failed, 0);
+        assert_eq!(resp.created.len(), 2);
+        assert!(resp.errors.is_empty());
+        assert_eq!(store.count().await.unwrap(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_batch_create_partial_failure_duplicate() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+        // Pre-seed one permission so the batch create hits AlreadyExists.
+        store
+            .create_permission(TenantPermission::owner("t1", "u1"))
+            .await
+            .unwrap();
+        let reqs = vec![
+            make_request("t1", "u1", "admin"),
+            make_request("t1", "u2", "member"),
+        ];
+
+        let resp = execute_batch_create(&store, &reqs).await;
+
+        assert_eq!(resp.total, 2);
+        assert_eq!(resp.succeeded, 1);
+        assert_eq!(resp.failed, 1);
+        assert_eq!(resp.created.len(), 1);
+        assert_eq!(resp.errors.len(), 1);
+        let err = &resp.errors[0];
+        assert_eq!(err.tenant_id, "t1");
+        assert_eq!(err.user_id, "u1");
+        assert!(!err.success);
+        assert!(err.error.as_deref().unwrap().contains("already exists"));
+    }
+
+    #[tokio::test]
+    async fn test_batch_create_invalid_role_failure() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+        let reqs = vec![
+            make_request("t1", "u1", "invalid_role"),
+            make_request("t1", "u2", "member"),
+        ];
+
+        let resp = execute_batch_create(&store, &reqs).await;
+
+        assert_eq!(resp.total, 2);
+        assert_eq!(resp.succeeded, 1);
+        assert_eq!(resp.failed, 1);
+        assert_eq!(resp.created.len(), 1);
+        assert_eq!(resp.errors.len(), 1);
+        assert_eq!(resp.errors[0].user_id, "u1");
+        assert!(resp.errors[0]
+            .error
+            .as_deref()
+            .unwrap()
+            .contains("Invalid role"));
+        // The invalid request must not be persisted.
+        assert!(store.get_permission("t1", "u1").await.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_batch_create_empty() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+
+        let resp = execute_batch_create(&store, &[]).await;
+
+        assert_eq!(resp.total, 0);
+        assert_eq!(resp.succeeded, 0);
+        assert_eq!(resp.failed, 0);
+        assert!(resp.created.is_empty());
+        assert!(resp.errors.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_batch_update_all_success_and_missing() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+        store
+            .create_permission(TenantPermission::owner("t1", "u1"))
+            .await
+            .unwrap();
+
+        let reqs = vec![
+            make_request("t1", "u1", "admin"),
+            make_request("t1", "u2", "member"), // does not exist -> NotFound
+        ];
+
+        let resp = execute_batch_update(&store, &reqs).await;
+
+        assert_eq!(resp.total, 2);
+        assert_eq!(resp.succeeded, 1);
+        assert_eq!(resp.failed, 1);
+        assert_eq!(resp.updated.len(), 1);
+        assert_eq!(resp.errors.len(), 1);
+        assert_eq!(resp.errors[0].user_id, "u2");
+        assert!(resp.errors[0]
+            .error
+            .as_deref()
+            .unwrap()
+            .contains("not found"));
+        // The existing permission role should have been updated.
+        let perm = store.get_permission("t1", "u1").await.unwrap().unwrap();
+        assert!(matches!(perm.role, TenantRole::Admin));
+    }
+
+    #[tokio::test]
+    async fn test_batch_delete_all_success() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+        store
+            .create_permission(TenantPermission::owner("t1", "u1"))
+            .await
+            .unwrap();
+        store
+            .create_permission(TenantPermission::owner("t1", "u2"))
+            .await
+            .unwrap();
+
+        let items = vec![
+            BatchDeleteItem {
+                tenant_id: "t1".to_string(),
+                user_id: "u1".to_string(),
+            },
+            BatchDeleteItem {
+                tenant_id: "t1".to_string(),
+                user_id: "u2".to_string(),
+            },
+        ];
+
+        let resp = execute_batch_delete(&store, &items).await;
+
+        assert_eq!(resp.total, 2);
+        assert_eq!(resp.succeeded, 2);
+        assert_eq!(resp.failed, 0);
+        assert!(resp.errors.is_empty());
+        assert_eq!(store.count().await.unwrap(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_batch_delete_partial_failure_missing() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+        store
+            .create_permission(TenantPermission::owner("t1", "u1"))
+            .await
+            .unwrap();
+
+        let items = vec![
+            BatchDeleteItem {
+                tenant_id: "t1".to_string(),
+                user_id: "u1".to_string(),
+            },
+            BatchDeleteItem {
+                tenant_id: "t1".to_string(),
+                user_id: "missing".to_string(),
+            },
+        ];
+
+        let resp = execute_batch_delete(&store, &items).await;
+
+        assert_eq!(resp.total, 2);
+        assert_eq!(resp.succeeded, 1);
+        assert_eq!(resp.failed, 1);
+        assert_eq!(resp.errors.len(), 1);
+        assert_eq!(resp.errors[0].user_id, "missing");
+        assert!(resp.errors[0]
+            .error
+            .as_deref()
+            .unwrap()
+            .contains("not found"));
+        assert_eq!(store.count().await.unwrap(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_batch_delete_empty() {
+        let store = super::super::permission_store::InMemoryPermissionStore::new();
+
+        let resp = execute_batch_delete(&store, &[]).await;
+
+        assert_eq!(resp.total, 0);
+        assert_eq!(resp.succeeded, 0);
+        assert_eq!(resp.failed, 0);
+        assert!(resp.errors.is_empty());
     }
 }

@@ -555,8 +555,8 @@ pub async fn register(
         "#,
     )
     .bind(user_id)
-    .bind(&username)
-    .bind(&email)
+    .bind(username)
+    .bind(email)
     .bind(&password_hash)
     .bind(&full_name)
     .execute(&state.pool)
