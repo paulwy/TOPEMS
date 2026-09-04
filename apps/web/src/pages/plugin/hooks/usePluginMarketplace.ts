@@ -76,13 +76,13 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
     if (pluginsQuery.isError && pluginsQuery.error) {
       logger.error(t('plugin.marketplace_page.log.load_plugins_failed'), pluginsQuery.error);
     }
-  }, [pluginsQuery.isError, pluginsQuery.error]);
+  }, [pluginsQuery.isError, pluginsQuery.error, t]);
 
   useEffect(() => {
     if (healthQuery.isError && healthQuery.error) {
       logger.error(t('plugin.marketplace_page.log.load_health_failed'), healthQuery.error);
     }
-  }, [healthQuery.isError, healthQuery.error]);
+  }, [healthQuery.isError, healthQuery.error, t]);
 
   const loading = pluginsQuery.isLoading;
   const plugins = pluginsQuery.data || [];

@@ -113,7 +113,7 @@ const FinanceReportsPage: React.FC = () => {
             : ([ct.error.main, ct.error[700]] as [string, string]),
       },
     ];
-  }, [businessOverview]);
+  }, [businessOverview, t]);
 
   const charts = useMemo<ChartConfig[]>(() => {
     if (!monthlyTrends.length) return [];
@@ -133,7 +133,7 @@ const FinanceReportsPage: React.FC = () => {
         height: 280,
       },
     ];
-  }, [monthlyTrends]);
+  }, [monthlyTrends, t]);
 
   const tables = useMemo<DataTable[]>(() => {
     if (activeTab === 'overview') {
@@ -262,7 +262,7 @@ const FinanceReportsPage: React.FC = () => {
     }
 
     return [];
-  }, [activeTab, projectSummaries, departmentSummaries, loading]);
+  }, [activeTab, projectSummaries, departmentSummaries, loading, t]);
 
   const tabs = [
     {

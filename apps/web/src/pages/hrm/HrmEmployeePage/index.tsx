@@ -90,7 +90,7 @@ const HrmEmployeePage: React.FC = () => {
         }
       },
     }),
-    [addNotification, queryClient]
+    [addNotification, queryClient, t]
   );
 
   const customRowActions: RowAction[] = useMemo(

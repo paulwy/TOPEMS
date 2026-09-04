@@ -103,7 +103,7 @@ export const IntegrationDashboardPage: React.FC = () => {
         color: 'error',
       },
     ],
-    []
+    [t]
   );
 
   const charts: ChartCard[] = useMemo(

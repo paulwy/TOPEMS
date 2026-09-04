@@ -202,7 +202,7 @@ export const DashboardPage: React.FC = () => {
               { name: t('hrm.dashboard_page.text_727190'), value: 10 },
             ],
     };
-  }, [departmentsQuery.data, employeesQuery.data]);
+  }, [departmentsQuery.data, employeesQuery.data, t]);
 
   const stats: StatCard[] = useMemo(
     () => [

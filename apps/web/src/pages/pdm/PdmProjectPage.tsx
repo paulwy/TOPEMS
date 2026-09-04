@@ -252,7 +252,7 @@ const PdmProjectPage: React.FC = () => {
         await projectApi.delete(id);
       },
     }),
-    []
+    [t]
   );
 
   const customRowActions: RowAction[] = useMemo(

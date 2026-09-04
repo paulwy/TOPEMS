@@ -172,7 +172,7 @@ export const GisTrackingPage: React.FC = () => {
         type: 'info',
       });
     },
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleTrackPlayback = useCallback(
@@ -184,7 +184,7 @@ export const GisTrackingPage: React.FC = () => {
         type: 'info',
       });
     },
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleDeviceChange = useCallback((deviceId: string) => {
@@ -201,7 +201,7 @@ export const GisTrackingPage: React.FC = () => {
       message: newPlaying ? t('gis.gis_tracking_page.k13') : t('gis.gis_tracking_page.k12'),
       type: 'info',
     });
-  }, [isPlaying, addNotification]);
+  }, [isPlaying, addNotification, t]);
 
   const handleReset = useCallback(() => {
     setIsPlaying(false);
@@ -211,7 +211,7 @@ export const GisTrackingPage: React.FC = () => {
       message: t('gis.gis_tracking_page.k14'),
       type: 'info',
     });
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   if (loading) {
     return (

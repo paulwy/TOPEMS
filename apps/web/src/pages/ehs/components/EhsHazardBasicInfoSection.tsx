@@ -135,7 +135,7 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
         </Box>
       </Box>
     );
-  }, [hazard]);
+  }, [hazard, t]);
 
   return <>{content}</>;
 };

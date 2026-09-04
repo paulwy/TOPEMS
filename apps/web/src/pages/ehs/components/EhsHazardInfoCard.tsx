@@ -57,7 +57,7 @@ const EhsHazardInfoCard: React.FC<EhsHazardInfoCardProps> = ({ hazard }) => {
         },
       ],
     };
-  }, [hazard]);
+  }, [hazard, t]);
 
   return <>{infoCard}</>;
 };

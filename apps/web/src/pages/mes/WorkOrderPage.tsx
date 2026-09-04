@@ -70,7 +70,7 @@ export default function WorkOrderPage() {
         });
       }
     },
-    [addNotification, queryClient]
+    [addNotification, queryClient, t]
   );
 
   const customRowActions = [

@@ -110,7 +110,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         });
       }
     },
-    [queryClient, addNotification]
+    [queryClient, addNotification, t]
   );
 
   const customRowActions = React.useMemo<RowAction[]>(
@@ -236,7 +236,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         },
       },
     ],
-    [runStatusAction]
+    [runStatusAction, t]
   );
 
   return (

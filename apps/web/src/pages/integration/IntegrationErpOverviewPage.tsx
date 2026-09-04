@@ -384,7 +384,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
           />
         </ListItem>
       )),
-    []
+    [t]
   );
 
   return (

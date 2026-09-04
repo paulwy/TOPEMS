@@ -261,7 +261,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [employee]);
+  }, [employee, t]);
 
   const emergencyInfoContent = useMemo(() => {
     if (!employee) return null;
@@ -331,7 +331,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         content: emergencyInfoContent || <></>,
       },
     ],
-    [basicInfoContent, workInfoContent, emergencyInfoContent]
+    [basicInfoContent, workInfoContent, emergencyInfoContent, t]
   );
 
   const infoCard = useMemo(

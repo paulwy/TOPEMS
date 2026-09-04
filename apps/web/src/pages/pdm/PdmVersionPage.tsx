@@ -104,7 +104,7 @@ export default function PdmVersionPage() {
         }),
       },
     };
-  }, [documents]);
+  }, [documents, t]);
 
   return (
     <CrudPage

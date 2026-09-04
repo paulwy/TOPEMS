@@ -90,7 +90,7 @@ const VoucherDetailPage: React.FC = () => {
         type: 'error',
       });
     }
-  }, [voucherQuery.isError, voucherQuery.error, addNotification]);
+  }, [voucherQuery.isError, voucherQuery.error, addNotification, t]);
 
   const handleEdit = () => {
     navigate(FINANCE_PATHS.voucherDetail.replace(':id', id!));

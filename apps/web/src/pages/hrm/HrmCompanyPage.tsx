@@ -101,7 +101,7 @@ const HrmCompanyPage: React.FC = () => {
         }
       },
     }),
-    [addNotification]
+    [addNotification, t]
   );
 
   const customRowActions: RowAction[] = useMemo(

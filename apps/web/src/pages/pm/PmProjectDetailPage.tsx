@@ -341,7 +341,7 @@ const PmProjectDetailPage: React.FC = () => {
         ),
       },
     ];
-  }, [project, phases, milestones, completedPhases, completedMilestones]);
+  }, [project, phases, milestones, completedPhases, completedMilestones, t]);
 
   const phasesContent = useMemo(
     () => (
@@ -486,7 +486,7 @@ const PmProjectDetailPage: React.FC = () => {
         </CardContent>
       </Card>
     ),
-    [phases]
+    [phases, t]
   );
 
   const milestonesContent = useMemo(

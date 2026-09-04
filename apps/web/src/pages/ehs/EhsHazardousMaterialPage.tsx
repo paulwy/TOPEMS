@@ -146,7 +146,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       }).length,
     };
-  }, [allMaterials]);
+  }, [allMaterials, t]);
 
   // MSDS 弹窗状态
   const [showMSDSModal, setShowMSDSModal] = useState(false);

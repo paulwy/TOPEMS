@@ -126,7 +126,7 @@ export default function PdmBomPage() {
         });
       },
     }),
-    [queryClient, selectedProduct]
+    [queryClient, selectedProduct, t]
   );
 
   const headerContent = useCallback(
@@ -231,7 +231,7 @@ export default function PdmBomPage() {
         </Box>
       );
     },
-    [selectedProduct, products]
+    [selectedProduct, products, t]
   );
 
   return (

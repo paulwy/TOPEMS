@@ -72,84 +72,87 @@ export default function PdmFormulaPage() {
         });
       },
     }),
-    [queryClient]
+    [queryClient, t]
   );
 
-  const headerContent = useCallback((rows: Record<string, unknown>[], _total: number) => {
-    const stats = {
-      total: rows.length,
-      active: rows.filter((r) => r.status === 'active').length,
-      draft: rows.filter((r) => r.status === 'draft').length,
-      approved: rows.filter((r) => r.status === 'approved').length,
-    };
-    return (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Box sx={{ p: 2, bgcolor: ct.pink[50], borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.pdm_formula_page.e1')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.total}
-          </Typography>
+  const headerContent = useCallback(
+    (rows: Record<string, unknown>[], _total: number) => {
+      const stats = {
+        total: rows.length,
+        active: rows.filter((r) => r.status === 'active').length,
+        draft: rows.filter((r) => r.status === 'draft').length,
+        approved: rows.filter((r) => r.status === 'approved').length,
+      };
+      return (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <Box sx={{ p: 2, bgcolor: ct.pink[50], borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.pdm_formula_page.e1')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.total}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.pdm_formula_page.e2')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.active}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.pdm_formula_page.e3')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.draft}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.change_page.e3')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.approved}
+            </Typography>
+          </Box>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.pdm_formula_page.e2')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.active}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.pdm_formula_page.e3')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.draft}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.change_page.e3')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.approved}
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }, []);
+      );
+    },
+    [t]
+  );
 
   return (
     <CrudPage

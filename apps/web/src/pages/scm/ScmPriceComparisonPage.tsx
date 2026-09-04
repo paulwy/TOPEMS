@@ -32,7 +32,7 @@ const ScmPriceComparisonPage: React.FC = () => {
         fileName: t('scm.scm_price_comparison_page.k0'),
       },
     }),
-    []
+    [t]
   );
 
   return (

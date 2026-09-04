@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V479 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V480 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V289-V478 已完成**（详见下方各版本章节与 releases/archives/ 归档）。V479 完成：**轨C SSE handler 纯单元测试扩展**（process_session_request 纯函数 + SseSessionManager 边界直测，+9 单测，27/27 passed）+ **轨A exhaustive-deps 分类修复前 20%**（412→323 处，i18n.t 无效依赖 61 + useUrlListState 稳定化 12 + data??[] 逻辑表达式 16，26 文件 0 lint error / 0 TS error）。
+> **V289-V479 已完成**（详见下方各版本章节与 releases/archives/ 归档）。V480 完成：**P1 lint-staged 门禁修复**（frontend-lint 改直接命令链，14 gate 全绿，门禁常态化恢复）+ **轨A 第二批 t 缺失依赖 80 处全清**（42 文件，exhaustive-deps 323→255）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21710,10 +21710,53 @@ handler 变薄壳：`State(state)` 提取 store 后委托纯函数，行为零�
 
 ### V479 后续扩展（留给 V480+）
 
-- [ ] **轨A exhaustive-deps 第二批（补依赖类）**：missing-dependencies 81 处逐案评估（先 hooks 后 components/pages），每文件单测/typecheck 验证
+- [x] **轨A exhaustive-deps 第二批（补依赖类）**：missing-dependencies 81 处逐案评估（先 hooks 后 components/pages），每文件单测/typecheck 验证 — ✅ V480 完成第 1 子批：**`t`（useTranslation 稳定引用）缺失 80 处全清（42 文件）**，含多行依赖数组补 t（HrmReportsPage 等）
+- [x] **P1 修复 lint-staged 批量 re-stage bug** — ✅ V480 完成：lefthook frontend-lint 改为直接 eslint/prettier/git add 命令链，14 gate 全绿（提交 e3e91c733）
 - [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
 - [ ] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理
 - [ ] **P0 版本节奏治理**：每周 1-2 稳定版本 + 里程碑验收，pre-commit 门禁常态化
+
+---
+
+## 🎯 V480 — lint-staged 门禁修复 + 轨A 第二批 t 缺失依赖 80 处（✅ 完成）
+
+> **日期**：2026-09-05 | 提交 2 个（e3e91c733 门禁修复 + 本批 t 缺失）| 代码改动 42 前端文件 + lefthook.yml | 验收：pre-commit 14 gate 全绿 · web tsc 0 errors · exhaustive-deps 323→255
+
+### P1：lint-staged 批量 re-stage bug 修复（阻塞门禁常态化）
+
+**根因**：lint-staged 17.1.1 在 26+ 文件批量时 "Failed to stage changes from tasks"（内部 `git add` 失败，具体 git 错误被 lint-staged 吞掉）；单文件场景正常。该问题自 8 月底持续存在（清理时发现 7 个 lint-staged 自动备份 stash 残留，最早可追溯到 c85ac2c80 时代）。
+
+**修复**：`lefthook.yml` 的 frontend-lint 由 `npx lint-staged` 改为直接命令链：
+
+```bash
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/src/.*\.(ts|tsx)$' || true)
+[ -z "$STAGED" ] && exit 0
+cd apps/web
+npx eslint $(echo "$STAGED" | sed 's|^apps/web/||') --fix
+npx prettier --write $(echo "$STAGED" | sed 's|^apps/web/||')
+cd "$(git rev-parse --show-toplevel)"
+git add $STAGED
+```
+
+**坑点记录**：`cd apps/web` 后 `cd ..` 只回到 `apps/`（非仓库根），必须用 `git rev-parse --show-toplevel` 回根再 `git add`，否则 pathspec 报错。
+
+**验证**：`npx lefthook run pre-commit` 14 gate 全绿（frontend-lint 9.08s ✔️）；后续 V480 提交走完整 pre-commit 无阻塞。
+
+### 轨A：第二批补依赖类（t 缺失 80 处全清）
+
+**背景**：V479 遗留 missing-dependencies 类（缺依赖需补，行为风险高于无效依赖移除）。经逐案评估，**`missing dependency: 't'` 是最大安全子集**（80 处/42 文件）：`t` 为 `useTranslation()` 解构的稳定引用（i18next 保证引用不变），补入依赖数组不会触发 effect/useMemo 重跑，语义完全等价。
+
+**修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
+
+**验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V480 后续扩展（留给 V481+）
+
+- [ ] **轨A 第三批（剩余 missing-dependencies ~110 处）**：非 t 类缺依赖（组件状态/回调），逐案行为分析后修复
+- [ ] **轨A unstable-reference 残余**：logical expression 型（departmentSummary 等）useMemo 包裹
+- [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
+- [ ] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理
+- [ ] **P0 版本节奏治理**：每周 1-2 稳定版本 + 里程碑验收
 
 ---
 

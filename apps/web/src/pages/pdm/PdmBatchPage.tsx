@@ -68,84 +68,87 @@ export default function PdmBatchPage() {
         });
       },
     }),
-    [queryClient]
+    [queryClient, t]
   );
 
-  const headerContent = useCallback((rows: Record<string, unknown>[], _total: number) => {
-    const stats = {
-      total: rows.length,
-      planning: rows.filter((r) => r.status === 'planning').length,
-      inProgress: rows.filter((r) => r.status === 'in_progress').length,
-      completed: rows.filter((r) => r.status === 'completed').length,
-    };
-    return (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Box sx={{ p: 2, bgcolor: 'cyan.light', borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.pdm_batch_page.e1')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.total}
-          </Typography>
+  const headerContent = useCallback(
+    (rows: Record<string, unknown>[], _total: number) => {
+      const stats = {
+        total: rows.length,
+        planning: rows.filter((r) => r.status === 'planning').length,
+        inProgress: rows.filter((r) => r.status === 'in_progress').length,
+        completed: rows.filter((r) => r.status === 'completed').length,
+      };
+      return (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <Box sx={{ p: 2, bgcolor: 'cyan.light', borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.pdm_batch_page.e1')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.total}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.pdm_batch_page.e2')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.planning}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.pdm_batch_page.e3')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.inProgress}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600' }}
+            >
+              {t('pdm.pdm_batch_page.e4')}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {stats.completed}
+            </Typography>
+          </Box>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.pdm_batch_page.e2')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.planning}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.pdm_batch_page.e3')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.inProgress}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-          <Typography
-            variant='body2'
-            sx={{ color: 'slate.600' }}
-          >
-            {t('pdm.pdm_batch_page.e4')}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700 }}
-          >
-            {stats.completed}
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }, []);
+      );
+    },
+    [t]
+  );
 
   return (
     <CrudPage

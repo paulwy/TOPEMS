@@ -236,7 +236,7 @@ export const IntegrationMappingsPage: React.FC = () => {
         });
       }
     },
-    [addNotification, queryClient]
+    [addNotification, queryClient, t]
   );
 
   const handleExport = useCallback(async () => {
@@ -277,7 +277,7 @@ export const IntegrationMappingsPage: React.FC = () => {
         type: 'error',
       });
     }
-  }, [addNotification, queryClient]);
+  }, [addNotification, queryClient, t]);
 
   const apiAdapter = useMemo<CrudApiAdapter<Mapping>>(
     () => ({
@@ -319,7 +319,7 @@ export const IntegrationMappingsPage: React.FC = () => {
         });
       },
     }),
-    [addNotification]
+    [addNotification, t]
   );
 
   const customRowActions = useMemo<RowAction[]>(
@@ -332,7 +332,7 @@ export const IntegrationMappingsPage: React.FC = () => {
         },
       },
     ],
-    [handleToggleStatus]
+    [handleToggleStatus, t]
   );
 
   // 通过 schema.exportConfig 启用导出按钮

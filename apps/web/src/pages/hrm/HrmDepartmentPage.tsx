@@ -102,7 +102,7 @@ const HrmDepartmentPage: React.FC = () => {
         }
       },
     }),
-    [addNotification, queryClient, selectedDeptId]
+    [addNotification, queryClient, selectedDeptId, t]
   );
 
   const customRowActions: RowAction[] = useMemo(

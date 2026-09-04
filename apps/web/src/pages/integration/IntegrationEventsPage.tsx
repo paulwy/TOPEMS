@@ -147,7 +147,7 @@ export const IntegrationEventsPage: React.FC = () => {
         });
       }
     },
-    [addNotification, queryClient]
+    [addNotification, queryClient, t]
   );
 
   const apiAdapter = useMemo<CrudApiAdapter<IntegrationEvent>>(
@@ -174,7 +174,7 @@ export const IntegrationEventsPage: React.FC = () => {
         },
       },
     ],
-    [handleRetry]
+    [handleRetry, t]
   );
 
   return (

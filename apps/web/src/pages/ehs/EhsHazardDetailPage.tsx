@@ -528,7 +528,7 @@ const EhsHazardDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [hazard]);
+  }, [hazard, t]);
 
   const assessmentsContent = useMemo(() => {
     return (
@@ -636,7 +636,7 @@ const EhsHazardDetailPage: React.FC = () => {
         content: controlsContent,
       },
     ],
-    [basicInfoContent, assessmentsContent, controlsContent]
+    [basicInfoContent, assessmentsContent, controlsContent, t]
   );
 
   const infoCard = useMemo(() => {
@@ -668,7 +668,7 @@ const EhsHazardDetailPage: React.FC = () => {
         },
       ],
     };
-  }, [hazard]);
+  }, [hazard, t]);
 
   return (
     <PageContainer

@@ -74,7 +74,7 @@ const HrmReportsPage: React.FC = () => {
       apiLogger.error('Failed to load reports:', queryError);
       error(t('hrm.hrm_reports_page.fail'));
     }
-  }, [queryError, error]);
+  }, [queryError, error, t]);
 
   const employeeSummary = reportsData?.employeeSummary ?? null;
   const departmentSummary: DepartmentSummary[] = reportsData?.departmentSummary ?? [];
@@ -260,6 +260,7 @@ const HrmReportsPage: React.FC = () => {
     trainingSummary,
     attendanceSummary,
     payrollSummary,
+    t,
   ]);
 
   const charts = useMemo(() => {
@@ -490,6 +491,7 @@ const HrmReportsPage: React.FC = () => {
     trainingSummary,
     attendanceSummary,
     payrollSummary,
+    t,
   ]);
 
   const tables = useMemo(() => {
@@ -663,7 +665,7 @@ const HrmReportsPage: React.FC = () => {
       default:
         return [];
     }
-  }, [activeTab, employeeSummary, departmentSummary, trainingSummary, payrollSummary]);
+  }, [activeTab, employeeSummary, departmentSummary, trainingSummary, payrollSummary, t]);
 
   return (
     <PageContainer maxWidth='xl'>

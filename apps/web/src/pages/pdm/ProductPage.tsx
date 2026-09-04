@@ -76,111 +76,117 @@ export default function ProductPage() {
         });
       },
     }),
-    [queryClient]
+    [queryClient, t]
   );
 
-  const headerContent = useCallback((rows: Record<string, unknown>[], _total: number) => {
-    const products = rows as unknown as Product[];
-    const stats = {
-      total: products.length,
-      active: products.filter((p) => p.status === 'active').length,
-      draft: products.filter((p) => p.status === 'draft').length,
-    };
-    return (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
+  const headerContent = useCallback(
+    (rows: Record<string, unknown>[], _total: number) => {
+      const products = rows as unknown as Product[];
+      const stats = {
+        total: products.length,
+        active: products.filter((p) => p.status === 'active').length,
+        draft: products.filter((p) => p.status === 'draft').length,
+      };
+      return (
         <Box
           sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)' },
+            gap: 2,
+            mb: 3,
           }}
         >
-          <Typography
-            variant='body2'
+          <Box
             sx={{
-              color: 'text.secondary',
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              mb: 1,
+              p: 2,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
             }}
           >
-            {t('pdm.product_page.e1')}
-          </Typography>
-          <Typography
-            sx={{ fontWeight: 'bold', fontSize: designTokens.typography.fontSize.scale['1.5rem'] }}
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                mb: 1,
+              }}
+            >
+              {t('pdm.product_page.e1')}
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 'bold',
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+              }}
+            >
+              {t('pdm.product_page.m1', { v1: stats.total })}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
+            }}
           >
-            {t('pdm.product_page.m1', { v1: stats.total })}
-          </Typography>
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                mb: 1,
+              }}
+            >
+              {t('pdm.product_page.e2')}
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 'bold',
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                color: 'success.main',
+              }}
+            >
+              {t('pdm.product_page.m1', { v1: stats.active })}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                mb: 1,
+              }}
+            >
+              {t('pdm.product_page.e3')}
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 'bold',
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                color: 'warning.main',
+              }}
+            >
+              {t('pdm.product_page.m1', { v1: stats.draft })}
+            </Typography>
+          </Box>
         </Box>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography
-            variant='body2'
-            sx={{
-              color: 'text.secondary',
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              mb: 1,
-            }}
-          >
-            {t('pdm.product_page.e2')}
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 'bold',
-              fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-              color: 'success.main',
-            }}
-          >
-            {t('pdm.product_page.m1', { v1: stats.active })}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography
-            variant='body2'
-            sx={{
-              color: 'text.secondary',
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              mb: 1,
-            }}
-          >
-            {t('pdm.product_page.e3')}
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 'bold',
-              fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-              color: 'warning.main',
-            }}
-          >
-            {t('pdm.product_page.m1', { v1: stats.draft })}
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }, []);
+      );
+    },
+    [t]
+  );
 
   return (
     <PageContainer

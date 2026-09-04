@@ -400,7 +400,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
         description: t('admin.rate_limit_config_page.description_242ed1'),
       },
     ],
-    []
+    [t]
   );
 
   return {

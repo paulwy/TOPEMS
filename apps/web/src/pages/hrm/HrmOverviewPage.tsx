@@ -93,7 +93,7 @@ const HrmOverviewPage: React.FC = () => {
         color: 'success',
       },
     ],
-    []
+    [t]
   );
 
   const departmentData = [

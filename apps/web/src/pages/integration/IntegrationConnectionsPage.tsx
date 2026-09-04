@@ -161,7 +161,7 @@ export const IntegrationConnectionsPage: React.FC = () => {
         });
       }
     },
-    [addNotification, queryClient]
+    [addNotification, queryClient, t]
   );
 
   const apiAdapter = useMemo<CrudApiAdapter<IntegrationConnection>>(
@@ -205,7 +205,7 @@ export const IntegrationConnectionsPage: React.FC = () => {
         });
       },
     }),
-    [addNotification]
+    [addNotification, t]
   );
 
   const customRowActions = useMemo<RowAction[]>(
@@ -218,7 +218,7 @@ export const IntegrationConnectionsPage: React.FC = () => {
         },
       },
     ],
-    [handleTest]
+    [handleTest, t]
   );
 
   return (

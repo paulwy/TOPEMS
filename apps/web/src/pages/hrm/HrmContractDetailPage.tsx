@@ -384,7 +384,7 @@ const HrmContractDetailPage: React.FC = () => {
         content: salaryContent || <></>,
       },
     ],
-    [basicInfoContent, durationContent, salaryContent]
+    [basicInfoContent, durationContent, salaryContent, t]
   );
 
   const infoCard = useMemo(

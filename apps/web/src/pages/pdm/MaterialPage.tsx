@@ -95,116 +95,122 @@ export default function MaterialPage() {
         });
       },
     }),
-    [queryClient]
+    [queryClient, t]
   );
 
-  const headerContent = useCallback((rows: Record<string, unknown>[], _total: number) => {
-    const materials = rows as unknown as Material[];
-    const totalValue = materials.reduce(
-      (sum, m) => sum + (m.unit_price || 0) * (m.inventory_quantity || 0),
-      0
-    );
-    const totalInventory = materials.reduce((sum, m) => sum + (m.inventory_quantity || 0), 0);
-    const stats = {
-      total: materials.length,
-      totalInventory,
-      totalValue,
-    };
-    return (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
+  const headerContent = useCallback(
+    (rows: Record<string, unknown>[], _total: number) => {
+      const materials = rows as unknown as Material[];
+      const totalValue = materials.reduce(
+        (sum, m) => sum + (m.unit_price || 0) * (m.inventory_quantity || 0),
+        0
+      );
+      const totalInventory = materials.reduce((sum, m) => sum + (m.inventory_quantity || 0), 0);
+      const stats = {
+        total: materials.length,
+        totalInventory,
+        totalValue,
+      };
+      return (
         <Box
           sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)' },
+            gap: 2,
+            mb: 3,
           }}
         >
-          <Typography
-            variant='body2'
+          <Box
             sx={{
-              color: 'text.secondary',
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              mb: 1,
+              p: 2,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
             }}
           >
-            {t('pdm.material_page.e1')}
-          </Typography>
-          <Typography
-            sx={{ fontWeight: 'bold', fontSize: designTokens.typography.fontSize.scale['1.5rem'] }}
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                mb: 1,
+              }}
+            >
+              {t('pdm.material_page.e1')}
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 'bold',
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+              }}
+            >
+              {t('pdm.material_page.m1', { v1: stats.total })}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
+            }}
           >
-            {t('pdm.material_page.m1', { v1: stats.total })}
-          </Typography>
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                mb: 1,
+              }}
+            >
+              {t('pdm.material_page.e2')}
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 'bold',
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                color: 'primary.main',
+              }}
+            >
+              {t('pdm.material_page.m2', { v1: stats.totalInventory })}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                mb: 1,
+              }}
+            >
+              {t('pdm.material_page.e3')}
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 'bold',
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                color: 'success.main',
+              }}
+            >
+              ¥ {stats.totalValue.toLocaleString()}
+            </Typography>
+          </Box>
         </Box>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography
-            variant='body2'
-            sx={{
-              color: 'text.secondary',
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              mb: 1,
-            }}
-          >
-            {t('pdm.material_page.e2')}
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 'bold',
-              fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-              color: 'primary.main',
-            }}
-          >
-            {t('pdm.material_page.m2', { v1: stats.totalInventory })}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography
-            variant='body2'
-            sx={{
-              color: 'text.secondary',
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              mb: 1,
-            }}
-          >
-            {t('pdm.material_page.e3')}
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 'bold',
-              fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-              color: 'success.main',
-            }}
-          >
-            ¥ {stats.totalValue.toLocaleString()}
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }, []);
+      );
+    },
+    [t]
+  );
 
   return (
     <PageContainer

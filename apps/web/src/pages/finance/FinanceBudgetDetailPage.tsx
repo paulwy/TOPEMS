@@ -455,7 +455,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         </TableContainer>
       </Box>
     );
-  }, [budget]);
+  }, [budget, t]);
 
   const analysisContent = useMemo(() => {
     if (!budget) return null;
@@ -552,7 +552,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [budget]);
+  }, [budget, t]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [
@@ -572,7 +572,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         content: analysisContent || <></>,
       },
     ],
-    [basicInfoContent, itemsContent, analysisContent]
+    [basicInfoContent, itemsContent, analysisContent, t]
   );
 
   const infoCard = useMemo(
@@ -601,7 +601,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         },
       ],
     }),
-    [budget]
+    [budget, t]
   );
 
   return (

@@ -68,7 +68,7 @@ const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, onClose
     if (reviewsQuery.isError && reviewsQuery.error) {
       logger.error(t('plugin.marketplace_page.log.load_reviews_failed'), reviewsQuery.error);
     }
-  }, [reviewsQuery.isError, reviewsQuery.error]);
+  }, [reviewsQuery.isError, reviewsQuery.error, t]);
 
   useEffect(() => {
     if (versionsQuery.isError && versionsQuery.error) {

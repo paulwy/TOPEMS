@@ -203,28 +203,31 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
 // ── 主页面 ──
 export const FinanceApprovalConfigPage: React.FC = () => {
   const { t } = useTranslation('finance');
-  const detailContent = React.useCallback((row: Record<string, unknown>) => {
-    const config = row as unknown as ApprovalConfig;
-    const nodes = config.nodes || [];
-    return (
-      <Box sx={{ mt: 2 }}>
-        <Stack
-          direction='row'
-          spacing={1}
-          sx={{ mb: 2, alignItems: 'center' }}
-        >
-          <Settings size={18} />
-          <Typography
-            variant='subtitle2'
-            sx={{ fontWeight: 600 }}
+  const detailContent = React.useCallback(
+    (row: Record<string, unknown>) => {
+      const config = row as unknown as ApprovalConfig;
+      const nodes = config.nodes || [];
+      return (
+        <Box sx={{ mt: 2 }}>
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ mb: 2, alignItems: 'center' }}
           >
-            {t('finance.finance_approval_config_page.e1', { v1: nodes.length })}
-          </Typography>
-        </Stack>
-        <NodesTable nodes={nodes} />
-      </Box>
-    );
-  }, []);
+            <Settings size={18} />
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
+            >
+              {t('finance.finance_approval_config_page.e1', { v1: nodes.length })}
+            </Typography>
+          </Stack>
+          <NodesTable nodes={nodes} />
+        </Box>
+      );
+    },
+    [t]
+  );
 
   return (
     <CrudPage

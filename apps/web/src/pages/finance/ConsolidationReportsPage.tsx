@@ -134,11 +134,11 @@ export default function ConsolidationReportsPage() {
 
   useEffect(() => {
     if (scopesError) notifyError(t('finance.consolidation_reports_page.list'));
-  }, [scopesError, notifyError]);
+  }, [scopesError, notifyError, t]);
 
   useEffect(() => {
     if (reportsError) notifyError(t('finance.consolidation_reports_page.list_1'));
-  }, [reportsError, notifyError]);
+  }, [reportsError, notifyError, t]);
 
   const handleOpenGenerateModal = () => {
     setGenerateFormData({
@@ -201,7 +201,7 @@ export default function ConsolidationReportsPage() {
         gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
     ],
-    [reports]
+    [reports, t]
   );
 
   const charts = useMemo<ChartConfig[]>(() => {
@@ -244,7 +244,7 @@ export default function ConsolidationReportsPage() {
         height: 250,
       },
     ];
-  }, [reports]);
+  }, [reports, t]);
 
   const tableColumns: TableColumn[] = [
     {

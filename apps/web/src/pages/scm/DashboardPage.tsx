@@ -200,7 +200,7 @@ export const DashboardPage: React.FC = () => {
         color: 'info',
       },
     ],
-    [overview]
+    [overview, t]
   );
 
   const charts: ChartCard[] = useMemo(

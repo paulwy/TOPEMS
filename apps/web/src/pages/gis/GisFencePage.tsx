@@ -325,7 +325,7 @@ export const GisFencePage: React.FC = () => {
         type: 'info',
       });
     },
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleFenceClick = useCallback(
@@ -336,7 +336,7 @@ export const GisFencePage: React.FC = () => {
         type: 'info',
       });
     },
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleCreateFence = useCallback(() => {

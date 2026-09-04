@@ -308,7 +308,7 @@ const BIAnalyticsPage = () => {
     } else {
       setError(null);
     }
-  }, [overviewQuery.isError, overviewQuery.error]);
+  }, [overviewQuery.isError, overviewQuery.error, t]);
 
   const handleRefresh = useCallback(() => {
     overviewQuery.refetch();
