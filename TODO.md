@@ -1870,6 +1870,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - `--collect svc:port,...`：扫运行中服务 /metrics → 实际调用边（被调用方 metrics 记录调用方 label）
 - **输出** docs/architecture/service-topology/：ECharts graph JSON + 依赖矩阵 CSV + 自包含 HTML 图谱。
 - **验证**：静态 36 边/23 节点；动态实测 erp-service→wms-service（5 次调用捕获）。
+- **09-04 更新（runtime 边恢复采集 + 脚本修复）**：可观测性缺口④ 修复（handler 合并导出默认 registry）后 `--collect` 恢复采集 runtime 边；**修复脚本缺陷**——`--collect` 原只输出 runtime 边（static=False 未合并设计基线），改为 `build_edges(static=True, runtime=runtime)` 合并 design 基线 + runtime 实际（source 标记），一致性报告改用纯 runtime 边对比（提交 `00ac85116`）→ **40 边/24 节点完整图谱**（design 35 + runtime 5：crm→erp、portal→mes×2、portal→erp、finance→hrm、erp→mes），依赖矩阵 CSV 含调用次数。
 
 ## 2026-09-01 跨库调用标记（拓扑 × 物理库拆分预案）✅
 - **新增** scripts/arch/mark_cross_db.py：把服务调用拓扑叠加 database-split-plan.md §3 阶段 2 的 5 物理库分组。
