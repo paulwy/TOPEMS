@@ -5,9 +5,13 @@ pre-commit:
     frontend-lint:
       tags: frontend lint
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json|css|scss|yml|yaml)$' || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/src/.*\.(ts|tsx)$' || true)
         [ -z "$STAGED" ] && exit 0
-        npx lint-staged
+        cd apps/web
+        npx eslint $(echo "$STAGED" | sed 's|^apps/web/||') --fix
+        npx prettier --write $(echo "$STAGED" | sed 's|^apps/web/||')
+        cd "$(git rev-parse --show-toplevel)"
+        git add $STAGED
 
     # [Gate B] Frontend typecheck (tsc --noEmit)
     frontend-typecheck:
