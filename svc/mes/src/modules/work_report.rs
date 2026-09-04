@@ -607,17 +607,28 @@ pub async fn create_work_report(
             }
 
             // 生产执行闭环：报工后异步回传 ERP 生产进度（服务间认证，失败不阻塞主流程）
-            let mes_order_id = r.order_id;
+            // 回传基于工单 ID（work_order_id）反查 ERP 销售订单，而非可选 order_id 字段
+            let mes_order_id = r.work_order_id;
             let erp_client_opt = state.erp_client.clone();
             let pool = state.pool.clone();
             let output_qty = big_decimal_to_f64(r.output_quantity.clone());
             if let (Some(mes_order_id), Some(erp_client)) = (mes_order_id, erp_client_opt) {
                 tokio::spawn(async move {
+                    // RLS 连接级隔离：反查工单需在独立连接上绑定 nil 租户上下文
+                    // （service token 无租户，未设置则受限 DB 用户下 RLS 拒绝该查询）
+                    let mut conn = match pool.acquire().await {
+                        Ok(c) => c,
+                        Err(_) => return,
+                    };
+                    let _ = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                        .bind(Uuid::nil().to_string())
+                        .execute(&mut *conn)
+                        .await;
                     let erp_order_id: Option<Uuid> = sqlx::query_scalar(
                         "SELECT sales_order_id FROM production_orders WHERE id = $1",
                     )
                     .bind(mes_order_id)
-                    .fetch_optional(&pool)
+                    .fetch_optional(&mut *conn)
                     .await
                     .ok()
                     .flatten();
