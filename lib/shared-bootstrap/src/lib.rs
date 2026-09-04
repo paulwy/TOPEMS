@@ -1051,19 +1051,28 @@ pub async fn check_iam_health() -> DependencyHealth {
 
 /// Prometheus 指标导出端点
 pub async fn prometheus_metrics_handler() -> String {
-    // 缺口②修复：优先用全局 handle.render()（含 axum 请求指标，与 ai/portal 一致），
-    // fallback gather()（默认 registry，仅自定义指标场景）。
-    if let Some(handle) = GLOBAL_METRIC_HANDLE.get() {
-        return handle.render();
-    }
+    // 合并导出两套 registry：
+    //   1) gather()（默认 registry）——业务指标（record_service_call 的
+    //      topems_service_to_service_calls_total、进程指标等）注册于此；
+    //   2) GLOBAL_METRIC_HANDLE.render()（pair() layer registry）——axum 请求指标。
+    // 缺口②只 render layer registry → 业务指标丢失（缺口④：runtime 调用边采不到）。
     let encoder = TextEncoder::new();
-    let metrics = prometheus::gather();
-    let mut buffer = Vec::new();
-    match encoder.encode(&metrics, &mut buffer) {
-        Ok(()) => String::from_utf8(buffer)
-            .unwrap_or_else(|_| "Error: invalid UTF-8 in metrics".to_string()),
-        Err(e) => format!("Error encoding metrics: {}", e),
+    let mut out = String::new();
+    let mut default_buf = Vec::new();
+    if let Err(e) = encoder.encode(&prometheus::gather(), &mut default_buf) {
+        return format!("Error encoding default metrics: {}", e);
     }
+    out.push_str(&String::from_utf8_lossy(&default_buf));
+    if let Some(handle) = GLOBAL_METRIC_HANDLE.get() {
+        let layer_s = handle.render();
+        if !layer_s.is_empty() {
+            if !out.is_empty() && !out.ends_with('\n') {
+                out.push('\n');
+            }
+            out.push_str(&layer_s);
+        }
+    }
+    out
 }
 
 /// 标准服务指标响应
