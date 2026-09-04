@@ -77,7 +77,10 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new().route("/", get(home)).route(
         "/api/plugins/info",
         get(modules::bi::plugin::get_plugin_info),
-    );
+    )
+    // /metrics 放 build_application 内（prometheus_layer 包裹），请求被 layer
+    // 记录 → GLOBAL_METRIC_HANDLE.render() 含 axum 指标（避免 registry 空）
+    .route("/metrics", get(prometheus_metrics_handler));
 
     // ── protected_routes（业务路由：需要 State<AppState>） ────────────
     // 中间件层（auth / rls / rate_limit）由 build_application 统一处理
@@ -756,10 +759,6 @@ async fn main() -> anyhow::Result<()> {
     // 放在 build_application 外层嵌套，避免 State 类型与顶层 Router<()> 冲突
     let stateful_public = Router::new()
         .route("/health", get(health))
-        .route(
-            "/metrics",
-            get(move || async { prometheus_metrics_handler().await }),
-        )
         // WebSocket: auth handled internally via token query param (subscribe message)
         .route(
             "/ws/bi/dashboard/{dashboard_id}",

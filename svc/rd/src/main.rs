@@ -103,7 +103,10 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/api/plugins/health",
             get(modules::rs_plugin::plugin_health_check),
-        );
+        )
+        // /metrics 放 build_application 内（prometheus_layer 包裹），请求被 layer
+        // 记录 → GLOBAL_METRIC_HANDLE.render() 含 axum 指标（避免 registry 空）
+        .route("/metrics", get(prometheus_metrics_handler));
 
     // ── protected_routes（业务路由 + State<ApiState>） ────────────────────
     // auth / rls / rate_limit 中间件由 build_application 在 protected 层自动叠加
@@ -127,7 +130,6 @@ async fn main() -> anyhow::Result<()> {
         .route("/health", get(health_check))
         .route("/health/detailed", get(health_check_detailed))
         .route("/metrics/json", get(get_metrics))
-        .route("/metrics", get(prometheus_metrics_handler))
         .with_state(api_state.clone());
 
     // ── 最终 Application 合并 ───────────────────────────────────────
