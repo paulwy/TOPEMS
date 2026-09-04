@@ -923,7 +923,10 @@ pub fn build_application(
     openapi_json: Option<String>,
 ) -> Application {
     let cors = create_cors_layer();
-    let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
+    // 缺口②修复：pair() 用独立 registry（axum 指标进不去默认 registry），
+    // prometheus_metrics_handler 的 gather() 只见默认 registry → /metrics 空 body。
+    // 改 new() 用默认全局 registry，使 gather() 可见 axum 请求指标（统一可观测性）。
+    let prometheus_layer = PrometheusMetricLayer::new();
 
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)
