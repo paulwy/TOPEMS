@@ -38,7 +38,8 @@ OUT_DIR = os.path.join(REPO, "docs", "architecture", "service-topology")
 # 调用方 → [被调用方, ...]
 # ---------------------------------------------------------------------------
 STATIC_DEPS = {
-    "erp-service":     ["wms-service", "finance-service", "hrm-service"],
+    "erp-service":     ["wms-service", "finance-service", "hrm-service", "mes-service"],  # 09-04 生产执行闭环：审核后下达 mes 生产工单
+    "mes-service":     ["erp-service"],   # 09-04 生产执行闭环：报工后回传 erp 生产进度
     "crm-service":     ["erp-service", "wms-service", "workflow-service"],
     "mobile-service":  ["wms-service", "mes-service", "qms-service", "hrm-service",
                         "workflow-service", "notification-service"],
