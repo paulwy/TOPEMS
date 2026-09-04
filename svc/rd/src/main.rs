@@ -4,6 +4,7 @@ use serde::Serialize;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, build_detailed_service_health,
+    prometheus_metrics_handler,
     build_simple_status_response, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::Config;
@@ -126,6 +127,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/health", get(health_check))
         .route("/health/detailed", get(health_check_detailed))
         .route("/metrics/json", get(get_metrics))
+        .route("/metrics", get(prometheus_metrics_handler))
         .with_state(api_state.clone());
 
     // ── 最终 Application 合并 ───────────────────────────────────────

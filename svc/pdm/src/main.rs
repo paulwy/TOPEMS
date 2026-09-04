@@ -14,7 +14,7 @@ use utoipa::OpenApi;
 use topems_shared::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, default_init_db, run, ServiceConfig,
+    bootstrap_service, build_application, default_init_db, prometheus_metrics_handler, run, ServiceConfig,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 
@@ -73,6 +73,7 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/metrics", get(prometheus_metrics_handler))
         .route(
             "/api/plugins/info",
             get(modules::pdm_plugin::get_plugin_info),

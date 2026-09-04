@@ -14,7 +14,7 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared::ApiResponse;
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -86,6 +86,7 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/metrics", get(prometheus_metrics_handler))
         .route(
             "/api/plugins/info",
             get(modules::ehs_plugin::get_plugin_info),

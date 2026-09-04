@@ -13,7 +13,7 @@ use utoipa::OpenApi;
 
 use topems_shared::{ApiResponse, AuthState};
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
@@ -89,6 +89,7 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/metrics", get(prometheus_metrics_handler))
         .with_state(api_state.clone());
 
     // Protected routes（QMS create_routes 返回 Router<AppState>，最后 with_state 擦除类型）
