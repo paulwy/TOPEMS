@@ -59,7 +59,8 @@ async fn main() -> anyhow::Result<()> {
     // ERP 服务客户端（生产执行闭环：报工后回传生产进度，service token erp:write；失败优雅降级）
     let erp_client = TypedServiceClient::<ErpApi>::from_env_default()
         .and_then(|c| {
-            c.with_service_token(&ctx.auth_state.jwt_secret, "mes-service", &["erp:write"])
+            // erp 全局受保护路由要求 erp:admin（与 crm 等服务间调用 erp 一致）
+            c.with_service_token(&ctx.auth_state.jwt_secret, "mes-service", &["erp:admin"])
         })
         .map(Arc::new)
         .ok();
