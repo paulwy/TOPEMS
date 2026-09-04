@@ -12,7 +12,7 @@ use topems_shared_core::health::SystemMetrics;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
-    api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
+    api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi, TypedServiceClient,
 };
 
 pub mod addressbook;
@@ -95,6 +95,8 @@ pub struct ApiState {
     pub event_publisher: Option<Arc<EventPublisher>>,
     // V32.0 Finance 迁移：Finance 服务客户端
     pub finance_client: Arc<TypedServiceClient<FinanceApi>>,
+    // 生产执行闭环：MES 服务客户端（erp 审核通过后下达生产工单）
+    pub mes_client: Arc<TypedServiceClient<MesApi>>,
 }
 
 impl FromRef<ApiState> for AuthState {

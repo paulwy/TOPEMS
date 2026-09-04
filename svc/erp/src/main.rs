@@ -23,7 +23,7 @@ use topems_shared_bootstrap::{
 };
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
-    api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
+    api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi, TypedServiceClient,
 };
 
 lazy_static::lazy_static! {
@@ -120,6 +120,21 @@ async fn main() -> Result<()> {
             )
         });
 
+    // MES 服务客户端（生产执行闭环：erp 审核通过后下达生产工单，service token mes:admin）
+    let mes_client = TypedServiceClient::<MesApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "erp-service", &["mes:admin"]))
+        .map(Arc::new)
+        .unwrap_or_else(|e| {
+            tracing::warn!("MES服务客户端初始化失败: {}, 将使用mock模式", e);
+            let default_url = "http://localhost:8030".to_string();
+            Arc::new(
+                TypedServiceClient::new(MesApi, default_url).unwrap_or_else(|e| {
+                    tracing::error!("默认MES客户端创建失败: {}", e);
+                    panic!("MES客户端创建失败，请检查MES服务配置")
+                }),
+            )
+        });
+
     let api_state = ApiState {
         db: ctx.db.clone(),
         auth_state: ctx.auth_state.clone(),
@@ -131,6 +146,7 @@ async fn main() -> Result<()> {
         encryption: Arc::new(encryption_service),
         event_publisher: ctx.event_publisher.clone(),
         finance_client,
+        mes_client,
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）

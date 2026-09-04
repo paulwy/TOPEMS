@@ -448,7 +448,41 @@ pub async fn update_production_status(
     .await;
 
     match result {
-        Ok(Some(order)) => Json(ApiResponse::success(order, "生产订单状态更新成功")),
+        Ok(Some(order)) => {
+            // 生产执行闭环：审核通过（approved）后异步下达 MES 生产工单（服务间认证，失败不阻塞主流程）
+            if req.status == "approved" {
+                let mes_client = state.mes_client.clone();
+                let order_clone = order.clone();
+                tokio::spawn(async move {
+                    let payload = serde_json::json!({
+                        "erp_order": {
+                            "order_id": order_clone.id,
+                            "order_number": order_clone.order_no,
+                            "customer_name": "",
+                            "product_name": order_clone.product_name,
+                            "product_code": order_clone.product_code,
+                            "quantity": order_clone.quantity,
+                            "unit": "pcs",
+                            "delivery_date": order_clone.planned_end_date,
+                            "priority": order_clone.priority,
+                        },
+                        "planned_start_date": order_clone.planned_start_date,
+                        "planned_completion_date": order_clone.planned_end_date,
+                        "workshop_id": order_clone.workshop_id,
+                        "notes": order_clone.notes,
+                    });
+                    match mes_client.create_from_erp(&payload).await {
+                        Ok(resp) => {
+                            tracing::info!("[ERP→MES] 生产工单下达成功: {}", resp);
+                        }
+                        Err(e) => {
+                            tracing::error!("[ERP→MES] 生产工单下达失败（异步降级，不影响ERP订单）: {}", e);
+                        }
+                    }
+                });
+            }
+            Json(ApiResponse::success(order, "生产订单状态更新成功"))
+        }
         Ok(None) => Json(api_error(404, "生产订单不存在")),
         Err(e) => {
             tracing::error!("更新生产订单状态失败: {}", e);
