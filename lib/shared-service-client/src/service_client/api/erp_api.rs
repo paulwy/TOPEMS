@@ -156,6 +156,18 @@ impl TypedServiceClient<ErpApi> {
         );
         self.get(&self.build_path(&path)).await
     }
+
+    /// MES 回传生产进度（POST /api/erp/production-orders/sync/mes-progress）
+    /// payload: { "mes_order_id": Uuid, "erp_order_id": Option<Uuid>,
+    ///            "completed_quantity": Option<f64>, "status": Option<String>,
+    ///            "actual_start_date": ..., "actual_end_date": ... }
+    pub async fn sync_mes_progress(
+        &self,
+        data: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/production-orders/sync/mes-progress"), data)
+            .await
+    }
 }
 
 #[cfg(test)]

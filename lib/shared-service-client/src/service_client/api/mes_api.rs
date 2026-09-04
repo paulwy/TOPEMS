@@ -102,4 +102,13 @@ impl TypedServiceClient<MesApi> {
         let path = format!("/equipment/{}", id);
         self.get(&self.build_path(&path)).await
     }
+
+    /// ERP 下达生产工单（POST /api/mes/orders/from-erp）
+    /// payload: { "erp_order": ErpSalesOrderInfo, "planned_start_date": ..., "notes": ... }
+    pub async fn create_from_erp(
+        &self,
+        data: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/orders/from-erp"), data).await
+    }
 }
