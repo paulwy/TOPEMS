@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V509 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V510 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
+> **V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -62,6 +62,24 @@
 **验证**：eslint 全量 0（no-unused-vars 0 + prettier 0，v573/v574/v575/v576 逐步归零）；tsc --noEmit 0；scan-hardcoded-precise 0 拦截；pre-commit 14 gate 待跑（sandbox-launcher 环境故障中）。
 
 **提交链**：V509 主提交 + TODO 章节小提交（HEAD 由 V508 71bfb2a0b 推进）。
+
+---
+
+## V510 工程卫生：.gitignore 死规则清理 + 待办环境评估（2026-09-06）
+
+**目标**：推进 TODO 遗留待办（RLS 连接切换 L90 / 方案 B L88 / vitest 单测环境 / .gitignore 清理）。
+
+**已完成**：
+- **.gitignore 死规则清理 25 条**（`apps/web/src/` 段指向已删除路径的规则：design-system/、AIAnomalyAssistant/AIReportAssistant、useCrud* 等 5 hooks、cdnScheduler/pwaCacheOptimizer/resourceOptimizer、*Typed.ts 10 个 api 生成文件、MobileQualityTaskList/PmProjectDetailHeader/WorkflowApprovalDetailTabs/useWorkflowApprovalDetail、navTree.ts）——保留 microfrontend/utils/ai 等 ALIVE 规则；删除后 `git ls-files --others --exclude-standard` 验证无 untracked 现形。提交 `39ac0f98f`。
+- **前端 eslint 全量 0 收官复查**（V509 后 v577 确认：no-unused-vars 0 + prettier 0，无其他规则残留）。
+
+**环境评估（阻碍项）**：
+- **RLS 受限用户连接切换（L90）与方案 B（L88）**：本机仅 5432 postgres 运行中，**5433 实例未启动**——切换前置（5433 DATABASE_URL → topems_app + 全服务回归）依赖 5433 环境，**当前环境不具备**，未执行（高风险生产变更不贸然触发）。待 5433 环境就绪后按 L90 计划推进。
+- **vitest 单测环境（MODULE_NOT_FOUND）**：根因 = apps/web 无 package-lock.json + `workspace:*` 依赖使 `npm install` 触发 **npm arborist EUNSUPPORTEDPROTOCOL**（npm 10.9.8/11 均复现，log 显示 @topems/* 已正确映射 file: 后仍报错）——npm 生态 bug，未修复；**备选 pnpm 9 可解析但会全量重装 node_modules（结构切换，影响现有工具链）**——待用户决策后实施。
+
+**验证**：git status 干净（仅 `scripts/start-local.sh` 未跟踪，历史遗留未动）；`.gitignore` 清理后无 untracked 现形；V509 提交已推送 origin/main（61 commits）。
+
+**提交链**：V510 主提交 `39ac0f98f`（TODO 更新随本版）。
 
 ---
 
