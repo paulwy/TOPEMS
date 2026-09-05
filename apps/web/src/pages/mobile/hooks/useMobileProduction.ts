@@ -233,7 +233,6 @@ export const useMobileProduction = () => {
     reportsQuery.error,
     equipmentQuery.isError,
     equipmentQuery.error,
-    i18n.t,
   ]);
   // Mutations
   const submitReportMutation = useMutation({

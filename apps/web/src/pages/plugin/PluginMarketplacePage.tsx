@@ -896,7 +896,7 @@ const PluginMarketplacePage: React.FC = () => {
 
   const loading = pluginsQuery.isLoading;
   const plugins = useMemo(() => pluginsQuery.data || [], [pluginsQuery]);
-  const suites = useMemo(() => SUITES(), [t]);
+  const suites = useMemo(() => SUITES(), []);
 
   const handleRefresh = useCallback(() => {
     Promise.all([pluginsQuery.refetch(), healthQuery.refetch(), fetchInstalledPlugins(true)]);

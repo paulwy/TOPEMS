@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V484 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V485 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V483 轨A 第四批 unnecessary 清理 30 处**（exhaustive-deps 194→164，14 gate 全绿）；**V484 missing 全量分类 + 自动化三坑验证 + t 型 7 处精确补入**（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V485 轨A 第五批 unnecessary 清理（-5 提交）**（exhaustive-deps 164→158，PmProjectDetailPage 触发 +2 logical 回滚；useMonitorSettings 为 .gitignore 未跟踪文件，本地修复不提交）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,21 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V485
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨A 第五批——unnecessary 依赖清理（-5 提交）
+
+### V485 完成内容
+
+1. **轨A 第五批（unnecessary 型，-5 提交 / -6 全仓含本地）**：exhaustive-deps 158（V484 后 164 → 158）
+   - 提交 4 文件 5 处：CommandPalette 2（open，含独占数组 `[open]`→`[]`）、AiKnowledgeBasePage 1（t）、useMobileProduction 1（i18n.t，跨行数组）、PluginMarketplacePage 1（t，独占 `[t]`→`[]`）
+   - **PmProjectDetailPage 回滚**：删除 getStatusLabels/getRiskLabels 后 78/82 行 logical 警告 +2（V483 同款"删除触发新警告"风险）→ git checkout 回滚，2 处 unnecessary 保留待人工
+   - **useMonitorSettings.tsx 未跟踪发现**：`.gitignore:335` 忽略 `apps/web/src/pages/monitor/hooks/` 目录（与 V480 发现的"页面级实验 hooks"ignore 不一致问题同类）——该文件不在 HEAD/版本控制，本地修复 i18n.t（unnecessary 消除，0 lint error）**不提交**；快照未存原文（值结构存错），但修复为净改进，保留
+2. **验证**：4 提交文件 0 lint error / 0 TS error；全量 exhaustive-deps 158（unnecessary 15→9，logical 23 不变——回滚后恢复）；tsc 0 errors
+3. **遗留**：unnecessary 剩余 9（useEdgeCompute 2 / useIsr 1 / ReturnDetailPage 1 / FinanceVoucherPage 3 / TenantDetailPage 1 为 V483 已探明的"unnecessary+missing 并存"边界文件，需先解决内部使用冲突再删；PmProjectDetailPage 2 需先化解 78/82 logical）；.gitignore 未跟踪 hooks 文件治理（monitor/hooks 等目录 vs tracked 不一致）并入 V480 遗留决策点
+
 
 ### V484
 

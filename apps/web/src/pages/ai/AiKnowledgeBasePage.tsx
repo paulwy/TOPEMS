@@ -135,7 +135,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
     setChatHistory((prev) => [...prev, aiMessage]);
     setSearching(false);
     setQuery('');
-  }, [query, addNotification, t]);
+  }, [query, addNotification]);
 
   const handleSelectDocument = (docId: string) => {
     setSelectedDocs((prev) =>

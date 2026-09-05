@@ -82,7 +82,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
     } catch {
       return [];
     }
-  }, [open]);
+  }, []);
 
   // 获取收藏
   const favoriteItems = useMemo<NavItem[]>(() => {
@@ -93,7 +93,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
     } catch {
       return [];
     }
-  }, [allNavItems, open]);
+  }, [allNavItems]);
 
   // 操作命令
   const actionCommands = useMemo<CommandItem[]>(
