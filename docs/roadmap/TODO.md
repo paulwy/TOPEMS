@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V504 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V505 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21752,7 +21752,29 @@ git add $STAGED
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
 
+### V505
+
+> 状态：**已完成**（提交 `556e1b044`）｜日期：2026-09-05
+> 主题：no-explicit-any 治理（第六批——**全量清零 311→0**）
+
+### V505 完成内容
+
+**no-explicit-any 从 311 清零至 0**（六批合计：V500 215 / V501 182 / V502 143 / V503 87 / V504 47 / V505 0）。V505 本批处理约 47 文件：
+
+1. **api 层**：assistant data 字段、crm customer、finance report、mobile user、wms serialNumber `any[]→unknown[]`；hrm execute 具体化 ContractRenewal；response-normalize/responseNormalize import.meta 断言（`as unknown as { env?: { V79_...?: string } }`，去掉 `|| val === true` 布尔比较）；gis pipeline/storage 采用 V502 map.ts 的 RawPaginatedResponse 方案（`get<RawPaginatedResponse>` + 重建返回对象 `as unknown as`）。
+2. **组件**：PriorityBadge/ServiceStatusCard/ServiceStatusMonitor `React.ComponentType`→`ComponentType<{ style?: React.CSSProperties }>`；LazyLoadWrapper 设计性 disable；PerformanceMonitor 用原生 PerformanceObserver。
+3. **MapView 三文件**：`React.RefObject<any>`→`RefObject<L.Map | null>`（leaflet 需 `import type L from 'leaflet'`），子组件 MapLayers/FitBoundsControl prop 同步 `RefObject<L.Map | null>`。
+4. **lib**：iconMapping lucideIcons 具体化 `ComponentType<{ size?: number; style?: React.CSSProperties }>`；moduleThemes 27 个模块名硬编码中文 → `i18n.t('module_themes.<code>')`（zh/en theme.json 新增 module_themes 命名空间，scan 拦出）；dashboardAdapter。
+5. **模板/微前端/页面**：TreePageTemplate/CardView/ListBatchActions/useCrudForm/MasterDetailPageTemplate/SubTableBuilder 泛型默认 any→unknown；intelligent-monitor 时间差 `??` 改 `startTime ? ... : 0`；ObservabilityDashboard getPopularPaths `() => NavigationPath[]`；mes config `import('...') as Promise<{default: any}>`→`as unknown as Promise<{default: React.ComponentType}>`；MaterialShortagePage filter 回调 `MaterialPlan & { shortageQty?: number }`；BIDataSourcePage/BIReportPage `createCrudPageAdapter(x as any)`→`as unknown as Parameters<typeof createCrudPageAdapter>[0]`；ModulesOverviewPage 经 iconMapping 类型自动消解。
+6. **最后 13 处**：ApsConfigPage `mesApi as any`→内联接口（aps?.health/health 探测）；telemetry spanProcessors `any[]→SpanProcessor[]`；storage `StorageItem<T = any>→unknown`；stockTake renderCell unknown + as number 断言；StatCard/HrmDashboardPage/PdmDashboardPage iconMap `ComponentType<any>→ComponentType<{ size?: number }>`；MarkdownEditorTemplate `props as any→as React.HTMLAttributes<HTMLElement>`。
+7. **设计性 disable（带理由，无法消除）**：MarkdownEditorTemplate renderer props（后改断言消除）、crudPageAdapter list 参数泛型逆变、cross-framework 索引签名（V504）。
+
+**验证**：tsc 0 error；eslint no-explicit-any 47→13→**0**；scan 0 lines；pre-commit 14 gate 全绿。no-unused-vars 350→348（V505 引入 1 处删参数注解 + prettier 消 1）。
+
+**坑点**：① pipeline import RawPaginatedResponse 用正则插入需匹配 `} from './types';` 实际缩进；② storage 替换后残留旧 `return response as ...` 死行（替换块外未覆盖）须手动删；③ responseNormalize.ts 与 response-normalize.ts 是**两个不同文件**（布尔比较各一处）；④ `props as never` spread 非法（TS2698）须用 `as React.HTMLAttributes<HTMLElement>`；⑤ en theme.json 手写 en_map 用错 code（doc/lab/req 等 5 个与真实 code docs/lims/rs/srm 不一致）——**必须从 zh key 集合反向核对**；⑥ eslint 全量仍报 503 prettier/prettier 是未 staged 文件存量，commit 走 lint gate 自动 fix。
+
 ### V504
+
 
 > 状态：**已完成**（提交 `4a9f14e1b`）｜日期：2026-09-05
 > 主题：no-explicit-any 治理（第五批——API/组件/微前端收尾）
