@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import {
   Play,
@@ -75,28 +75,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
     };
   }, []);
 
-  useEffect(() => {
-    if (selectedDevice) {
-      fetchTrackData();
-    }
-  }, [selectedDevice, timeRange]);
-
-  useEffect(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-
-    if (isPlaying && trackData.length > 0 && currentIndex < trackData.length - 1) {
-      timerRef.current = setTimeout(() => {
-        setCurrentIndex((prev) => prev + 1);
-      }, 500);
-    } else if (currentIndex >= trackData.length - 1) {
-      setIsPlaying(false);
-    }
-  }, [isPlaying, currentIndex, trackData.length]);
-
-  const fetchTrackData = async () => {
+  const fetchTrackData = useCallback(async () => {
     if (!selectedDevice) return;
     setLoading(true);
     try {
@@ -123,7 +102,28 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDevice, timeRange]);
+
+  useEffect(() => {
+    if (selectedDevice) {
+      fetchTrackData();
+    }
+  }, [selectedDevice, timeRange, fetchTrackData]);
+
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (isPlaying && trackData.length > 0 && currentIndex < trackData.length - 1) {
+      timerRef.current = setTimeout(() => {
+        setCurrentIndex((prev) => prev + 1);
+      }, 500);
+    } else if (currentIndex >= trackData.length - 1) {
+      setIsPlaying(false);
+    }
+  }, [isPlaying, currentIndex, trackData.length]);
 
   const togglePlayback = () => {
     if (currentIndex >= trackData.length - 1) {

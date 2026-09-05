@@ -91,15 +91,7 @@ export function useIsrCache<T = unknown>(
         setIsRevalidating(false);
       }
     }
-  }, [
-    cacheKey,
-    fetcher,
-    options.revalidate,
-    options.staleWhileRevalidate,
-    options.onRevalidate,
-    options.onSuccess,
-    options.onError,
-  ]);
+  }, [cacheKey, fetcher, options]);
 
   const invalidate = useCallback((): boolean => {
     const result = isrManager.invalidate(cacheKey);

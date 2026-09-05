@@ -1,5 +1,5 @@
 import { Button, useTheme } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Bell, Check, CheckCheck, Clock } from 'lucide-react';
 
 import { imApi, type Notification } from '../../api/im';
@@ -18,7 +18,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const response = await imApi.listNotifications(userId);
@@ -33,11 +33,11 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     loadNotifications();
-  }, [userId]);
+  }, [userId, loadNotifications]);
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

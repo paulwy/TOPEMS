@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Play, Eye, RotateCcw, FileSearch, Database } from 'lucide-react';
 import {
   Box,
@@ -73,8 +73,8 @@ const MigrationAdminPage: React.FC = () => {
     enabled: !!servicesQuery.data && servicesQuery.data.length > 0,
     staleTime: 5 * 60 * 1000,
   });
-  const services = servicesQuery.data || [];
-  const statusMap = statusQuery.data || {};
+  const services = useMemo(() => servicesQuery.data || [], [servicesQuery.data]);
+  const statusMap = useMemo(() => statusQuery.data || {}, [statusQuery.data]);
   const apiAdapter: CrudApiAdapter<MigrationService> = useMemo(
     () => ({
       list: async () => {
@@ -151,37 +151,46 @@ const MigrationAdminPage: React.FC = () => {
       });
     },
   });
-  const handleApply = async (service: MigrationService) => {
-    setApplyingService(service.name);
-    await applyMutation.mutateAsync(service.name);
-    setApplyingService(null);
-  };
-  const handleRollback = (service: MigrationService) => {
-    openConfirmDialog({
-      title: i18n.t('admin.migration_admin_page.confirm_rollback_title'),
-      message: i18n.t('admin:migration_admin_page.confirm_rollback_msg', {
-        serviceName: service.name,
-      }),
-      danger: true,
-      onConfirm: async () => {
-        setRollingBackService(service.name);
-        await rollbackMutation.mutateAsync(service.name);
-        setRollingBackService(null);
-      },
-    });
-  };
-  const handleShowStatus = async (service: MigrationService) => {
-    setActiveService(service);
-    setStatusDialogOpen(true);
-    if (!statusMap[service.name]) {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
-        exact: false,
-        refetchType: 'active',
+  const handleApply = useCallback(
+    async (service: MigrationService) => {
+      setApplyingService(service.name);
+      await applyMutation.mutateAsync(service.name);
+      setApplyingService(null);
+    },
+    [applyMutation]
+  );
+  const handleRollback = useCallback(
+    (service: MigrationService) => {
+      openConfirmDialog({
+        title: i18n.t('admin.migration_admin_page.confirm_rollback_title'),
+        message: i18n.t('admin:migration_admin_page.confirm_rollback_msg', {
+          serviceName: service.name,
+        }),
+        danger: true,
+        onConfirm: async () => {
+          setRollingBackService(service.name);
+          await rollbackMutation.mutateAsync(service.name);
+          setRollingBackService(null);
+        },
       });
-    }
-  };
-  const handleBatchApply = () => {
+    },
+    [openConfirmDialog, rollbackMutation]
+  );
+  const handleShowStatus = useCallback(
+    async (service: MigrationService) => {
+      setActiveService(service);
+      setStatusDialogOpen(true);
+      if (!statusMap[service.name]) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
+      }
+    },
+    [statusMap, queryClient]
+  );
+  const handleBatchApply = useCallback(() => {
     if (services.length === 0) return;
     openConfirmDialog({
       title: i18n.t('admin.migration_admin_page.confirm_batch_title'),
@@ -225,9 +234,15 @@ const MigrationAdminPage: React.FC = () => {
         setBatchApplying(false);
       },
     });
-  };
-  const getPendingCount = (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0;
-  const getAppliedCount = (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0;
+  }, [services, openConfirmDialog, addNotification, queryClient]);
+  const getPendingCount = useCallback(
+    (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0,
+    [statusMap]
+  );
+  const getAppliedCount = useCallback(
+    (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0,
+    [statusMap]
+  );
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
@@ -247,7 +262,7 @@ const MigrationAdminPage: React.FC = () => {
         onClick: (row) => handleApply(row as unknown as MigrationService),
       },
     ],
-    [statusMap]
+    [handleApply, handleRollback, handleShowStatus]
   );
   const headerContent = useMemo(() => {
     const totalServices = services.length;
@@ -358,7 +373,7 @@ const MigrationAdminPage: React.FC = () => {
         </Box>
       </Paper>
     );
-  }, [services, statusMap, batchApplying]);
+  }, [services, batchApplying, getAppliedCount, getPendingCount, handleBatchApply]);
   return (
     <PageContainer
       title={i18n.t('admin.migration_admin_page.page_title')}

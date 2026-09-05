@@ -1,5 +1,5 @@
 import { Chip, Typography, Box, InputLabel, LinearProgress } from '@mui/material';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -76,17 +76,20 @@ const OpportunityDetailPage: React.FC = () => {
     return new Date(date).toLocaleString('zh-CN');
   };
 
-  const getStageLabel = (stage: string) => {
-    const stages: Record<string, string> = {
-      prospecting: t('crm.opportunityDetail.stage_prospecting'),
-      qualified: t('crm.opportunityDetail.stage_qualified'),
-      proposal: t('crm.opportunityDetail.stage_proposal'),
-      negotiation: t('crm.opportunityDetail.stage_negotiation'),
-      closed_won: t('crm.opportunityDetail.stage_closed_won'),
-      closed_lost: t('crm.opportunityDetail.stage_closed_lost'),
-    };
-    return stages[stage] || stage;
-  };
+  const getStageLabel = useCallback(
+    (stage: string) => {
+      const stages: Record<string, string> = {
+        prospecting: t('crm.opportunityDetail.stage_prospecting'),
+        qualified: t('crm.opportunityDetail.stage_qualified'),
+        proposal: t('crm.opportunityDetail.stage_proposal'),
+        negotiation: t('crm.opportunityDetail.stage_negotiation'),
+        closed_won: t('crm.opportunityDetail.stage_closed_won'),
+        closed_lost: t('crm.opportunityDetail.stage_closed_lost'),
+      };
+      return stages[stage] || stage;
+    },
+    [t]
+  );
 
   const getStageColor = (stage: string) => {
     const colors: Record<
@@ -167,7 +170,7 @@ const OpportunityDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [opportunity, customerName, t]);
+  }, [opportunity, customerName, t, getStageLabel]);
 
   const probabilityContent = useMemo(() => {
     if (!opportunity) return null;
@@ -304,7 +307,7 @@ const OpportunityDetailPage: React.FC = () => {
         },
       ],
     }),
-    [opportunity, customerName, t]
+    [opportunity, customerName, t, getStageLabel]
   );
 
   const handleDelete = async () => {

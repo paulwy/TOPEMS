@@ -150,16 +150,19 @@ export const MicroFrontendLoader: React.FC<MicroFrontendLoaderProps> = ({
   }, []);
   useEffect(() => {
     let cancelled = false;
+    const container = containerRef.current;
+    let mountedModule: MountFunction | null = null;
     const mountModule = async () => {
       try {
         setLoading(true);
         setError(null);
         const module = await loadRemoteModule(remoteName, remoteModule);
-        if (cancelled || !containerRef.current) {
+        if (cancelled || !container) {
           return;
         }
         moduleRef.current = module;
-        module.mount(containerRef.current, { basename });
+        mountedModule = module;
+        module.mount(container, { basename });
         mountedRef.current = true;
         setLoading(false);
         onMount?.();
@@ -183,9 +186,9 @@ export const MicroFrontendLoader: React.FC<MicroFrontendLoaderProps> = ({
     mountModule();
     return () => {
       cancelled = true;
-      if (mountedRef.current && containerRef.current && moduleRef.current) {
+      if (mountedModule && container) {
         try {
-          moduleRef.current.unmount(containerRef.current);
+          mountedModule.unmount(container);
           mountedRef.current = false;
           onUnmount?.();
         } catch (err) {

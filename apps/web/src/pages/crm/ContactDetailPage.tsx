@@ -1,5 +1,5 @@
 import { Chip, Typography, Box, InputLabel } from '@mui/material';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -62,26 +62,29 @@ const ContactDetailPage: React.FC = () => {
     return new Date(dateStr).toLocaleDateString('zh-CN');
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      {
-        label: string;
-        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-      }
-    > = {
-      active: { label: t('crm.contactDetail.status_active'), color: 'success' },
-      inactive: { label: t('crm.contactDetail.status_inactive'), color: 'default' },
-    };
-    const s = statusMap[status] || { label: status, color: 'default' };
-    return (
-      <Chip
-        size='small'
-        color={s.color}
-        label={s.label}
-      />
-    );
-  };
+  const getStatusBadge = useCallback(
+    (status: string) => {
+      const statusMap: Record<
+        string,
+        {
+          label: string;
+          color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+        }
+      > = {
+        active: { label: t('crm.contactDetail.status_active'), color: 'success' },
+        inactive: { label: t('crm.contactDetail.status_inactive'), color: 'default' },
+      };
+      const s = statusMap[status] || { label: status, color: 'default' };
+      return (
+        <Chip
+          size='small'
+          color={s.color}
+          label={s.label}
+        />
+      );
+    },
+    [t]
+  );
 
   const basicInfoContent = useMemo(() => {
     if (!contact) return null;
@@ -141,7 +144,7 @@ const ContactDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [contact, customerName, t]);
+  }, [contact, customerName, t, getStatusBadge]);
 
   const contactInfoContent = useMemo(() => {
     if (!contact) return null;

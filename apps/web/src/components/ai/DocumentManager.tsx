@@ -16,15 +16,8 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { useState, useEffect, useRef } from 'react';
-import {
-  Upload,
-  FileText,
-  Trash2,
-  Search,
-  Plus,
-  Loader2,
-} from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Upload, FileText, Trash2, Search, Plus, Loader2 } from 'lucide-react';
 import type { Document } from '@/api/ai';
 import { aiApi } from '@/api/ai';
 import { documentApi } from '@/api/ai/documents';
@@ -60,12 +53,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
   >([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadDocuments();
-    loadStats();
-  }, []);
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await documentApi.listDocuments();
@@ -82,9 +70,9 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const mockStats = {
         total_documents: (documents || []).length,
@@ -96,7 +84,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
     } catch (err: unknown) {
       logger.error(i18n.t('components.document_manager.k1'), err);
     }
-  };
+  }, [documents]);
+
+  useEffect(() => {
+    loadDocuments();
+    loadStats();
+  }, [loadDocuments, loadStats]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -230,6 +230,8 @@ export function useAutoSharding<T = unknown>(
   useEffect(() => {
     if (!enabled) return;
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     let mounted = true;
 
     const execute = async () => {
@@ -241,9 +243,7 @@ export function useAutoSharding<T = unknown>(
 
     return () => {
       mounted = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      controller.abort();
     };
   }, [enabled, executeSharded]);
 

@@ -9,11 +9,11 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Sparkles, RefreshCw, Copy, Check, Quote } from 'lucide-react';
 
 import { AIGenerateModal } from './AIGenerateModal';
-import { useAIHelper } from '../../hooks/useAIHelper';
+import { useAIHelper, type UseAIHelperOptions } from '../../hooks/useAIHelper';
 import type { SummarizeRequest, SummarizeResponse } from '@/types/ai';
 
 interface AISummarizerProps {
@@ -47,26 +47,30 @@ export function AISummarizer({
   const [summaryType, setSummaryType] = useState<'short' | 'medium' | 'detailed'>('medium');
   const [copied, setCopied] = useState(false);
 
-  const { isLoading, summarize, result } = useAIHelper<SummarizeResponse>({
-    featureType: 'document',
-    onSuccess: () => {
-      // Summary will be available in result
-    },
-  });
+  const helperOptions = useMemo<UseAIHelperOptions>(
+    () => ({
+      featureType: 'document',
+      onSuccess: () => {
+        // Summary will be available in result
+      },
+    }),
+    []
+  );
+  const { isLoading, summarize, result } = useAIHelper<SummarizeResponse>(helperOptions);
+
+  const handleSummarize = useCallback(async () => {
+    await summarize({
+      ...summarizeRequest,
+      type: summaryType,
+    });
+  }, [summarize, summarizeRequest, summaryType]);
 
   useEffect(() => {
     if (isOpen) {
       setCopied(false);
       handleSummarize();
     }
-  }, [isOpen]);
-
-  const handleSummarize = async () => {
-    await summarize({
-      ...summarizeRequest,
-      type: summaryType,
-    });
-  };
+  }, [isOpen, handleSummarize]);
 
   const handleTypeChange = async (type: 'short' | 'medium' | 'detailed') => {
     setSummaryType(type);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Sparkles,
   RefreshCw,
@@ -105,24 +105,76 @@ export function AIAnalyzer({
     keywords: true,
   });
 
+  const clearResults = useCallback(() => {
+    setSentimentResult(null);
+    setClassificationResult(null);
+    setEntitiesResult([]);
+    setKeywordsResult([]);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       setText(initialText);
       clearResults();
       if (initialText.trim()) {
-        runAllAnalysis();
+        runAllAnalysisRef.current();
       }
     }
-  }, [isOpen, initialText]);
+  }, [isOpen, initialText, clearResults]);
 
-  const clearResults = () => {
-    setSentimentResult(null);
-    setClassificationResult(null);
-    setEntitiesResult([]);
-    setKeywordsResult([]);
-  };
+  const analyzeSentiment = useCallback(async () => {
+    try {
+      const response = await aiApi.analyzeSentiment({ text });
+      if (response.success && response.data) {
+        setSentimentResult({
+          sentiment: response.data.sentiment as 'positive' | 'negative' | 'neutral',
+          confidence: response.data.confidence,
+          details: response.data.details as SentimentResult['details'],
+        });
+      }
+    } catch (error: unknown) {
+      logger.error(i18n.t('components.ai_analyzer.k1'), error);
+    }
+  }, [text]);
 
-  const runAllAnalysis = async () => {
+  const classifyText = useCallback(async () => {
+    try {
+      const response = await aiApi.classifyText({ text });
+      if (response.success && response.data) {
+        setClassificationResult({
+          category: response.data.category,
+          confidence: response.data.confidence,
+          all_categories: response.data.all_categories,
+        });
+      }
+    } catch (error: unknown) {
+      logger.error(i18n.t('components.ai_analyzer.k2'), error);
+    }
+  }, [text]);
+
+  const extractEntities = useCallback(async () => {
+    try {
+      const response = await aiApi.extractEntities({ text });
+      if (response.success && response.data) {
+        setEntitiesResult(response.data.entities);
+      }
+    } catch (error: unknown) {
+      logger.error(i18n.t('components.ai_analyzer.k3'), error);
+    }
+  }, [text]);
+
+  const extractKeywords = useCallback(async () => {
+    try {
+      const response = await aiApi.extractKeywords({ text });
+      if (response.success && response.data) {
+        setKeywordsResult(response.data.keywords);
+      }
+    } catch (error: unknown) {
+      logger.error(i18n.t('components.ai_analyzer.k4'), error);
+    }
+  }, [text]);
+
+  const runAllAnalysis = useCallback(async () => {
     if (!text.trim()) return;
 
     setIsLoading(true);
@@ -141,60 +193,24 @@ export function AIAnalyzer({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    text,
+    onAnalysisComplete,
+    sentimentResult,
+    classificationResult,
+    entitiesResult,
+    keywordsResult,
+    analyzeSentiment,
+    classifyText,
+    extractEntities,
+    extractKeywords,
+  ]);
 
-  const analyzeSentiment = async () => {
-    try {
-      const response = await aiApi.analyzeSentiment({ text });
-      if (response.success && response.data) {
-        setSentimentResult({
-          sentiment: response.data.sentiment as 'positive' | 'negative' | 'neutral',
-          confidence: response.data.confidence,
-          details: response.data.details as SentimentResult['details'],
-        });
-      }
-    } catch (error: unknown) {
-      logger.error(i18n.t('components.ai_analyzer.k1'), error);
-    }
-  };
+  const runAllAnalysisRef = useRef<() => Promise<void>>(async () => {});
 
-  const classifyText = async () => {
-    try {
-      const response = await aiApi.classifyText({ text });
-      if (response.success && response.data) {
-        setClassificationResult({
-          category: response.data.category,
-          confidence: response.data.confidence,
-          all_categories: response.data.all_categories,
-        });
-      }
-    } catch (error: unknown) {
-      logger.error(i18n.t('components.ai_analyzer.k2'), error);
-    }
-  };
-
-  const extractEntities = async () => {
-    try {
-      const response = await aiApi.extractEntities({ text });
-      if (response.success && response.data) {
-        setEntitiesResult(response.data.entities);
-      }
-    } catch (error: unknown) {
-      logger.error(i18n.t('components.ai_analyzer.k3'), error);
-    }
-  };
-
-  const extractKeywords = async () => {
-    try {
-      const response = await aiApi.extractKeywords({ text });
-      if (response.success && response.data) {
-        setKeywordsResult(response.data.keywords);
-      }
-    } catch (error: unknown) {
-      logger.error(i18n.t('components.ai_analyzer.k4'), error);
-    }
-  };
-
+  useEffect(() => {
+    runAllAnalysisRef.current = runAllAnalysis;
+  }, [runAllAnalysis]);
   const handleCopyResults = async () => {
     const results = {
       sentiment: sentimentResult,

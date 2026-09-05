@@ -80,27 +80,7 @@ export const ChatInterface: React.FC = () => {
     onClose: handleWsClose,
   });
 
-  useEffect(() => {
-    loadChatRooms();
-    connect();
-
-    return () => {
-      disconnect();
-    };
-  }, [connect, disconnect]);
-
-  useEffect(() => {
-    if (selectedRoom) {
-      loadMessages(selectedRoom.id);
-      markAllMessagesRead(selectedRoom.id);
-    }
-  }, [selectedRoom]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const loadChatRooms = async () => {
+  const loadChatRooms = useCallback(async () => {
     try {
       setLoading(true);
       const response = await imApi.listChatRooms();
@@ -121,7 +101,42 @@ export const ChatInterface: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification]);
+
+  const markAllMessagesRead = useCallback(
+    async (_chatRoomId: string) => {
+      try {
+        const unreadMessages = messages.filter((m) => !m.is_read && m.sender_id !== 'current-user');
+        for (const message of unreadMessages) {
+          await imApi.markMessageRead(message.id);
+        }
+        setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
+      } catch (error: unknown) {
+        logger.error('Failed to mark messages as read:', error);
+      }
+    },
+    [messages]
+  );
+
+  useEffect(() => {
+    loadChatRooms();
+    connect();
+
+    return () => {
+      disconnect();
+    };
+  }, [connect, disconnect, loadChatRooms]);
+
+  useEffect(() => {
+    if (selectedRoom) {
+      loadMessages(selectedRoom.id);
+      markAllMessagesRead(selectedRoom.id);
+    }
+  }, [selectedRoom, markAllMessagesRead]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSelectContact = async (friend: Friend) => {
     try {
@@ -170,18 +185,6 @@ export const ChatInterface: React.FC = () => {
       }
     } catch (error: unknown) {
       logger.error('Failed to load messages:', error);
-    }
-  };
-
-  const markAllMessagesRead = async (_chatRoomId: string) => {
-    try {
-      const unreadMessages = messages.filter((m) => !m.is_read && m.sender_id !== 'current-user');
-      for (const message of unreadMessages) {
-        await imApi.markMessageRead(message.id);
-      }
-      setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
-    } catch (error: unknown) {
-      logger.error('Failed to mark messages as read:', error);
     }
   };
 

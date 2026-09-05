@@ -1,10 +1,10 @@
 import { designTokens } from '@topems/tokens';
 import { Card, CardContent, Box, Typography, Button } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Sparkles, Check } from 'lucide-react';
 
 import { AIGenerateModal } from './AIGenerateModal';
-import { useAIHelper } from '../../hooks/useAIHelper';
+import { useAIHelper, type UseAIHelperOptions } from '../../hooks/useAIHelper';
 import type { CompleteRequest, CompletionItem, CompleteResponse } from '@/types/ai';
 import i18n from '@/i18n';
 
@@ -42,16 +42,29 @@ export function AIDataCompleter({
   const [completions, setCompletions] = useState<Record<string, CompletionItem>>({});
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
 
-  const { isLoading, complete } = useAIHelper<CompleteResponse>({
-    featureType: 'complete',
-    onSuccess: (result) => {
-      const data = result as CompleteResponse;
-      if (data?.completions) {
-        setCompletions(data.completions);
-        setSelectedFields(new Set(Object.keys(data.completions)));
-      }
-    },
-  });
+  const helperOptions = useMemo<UseAIHelperOptions>(
+    () => ({
+      featureType: 'complete',
+      onSuccess: (result) => {
+        const data = result as CompleteResponse;
+        if (data?.completions) {
+          setCompletions(data.completions);
+          setSelectedFields(new Set(Object.keys(data.completions)));
+        }
+      },
+    }),
+    []
+  );
+  const { isLoading, complete } = useAIHelper<CompleteResponse>(helperOptions);
+
+  const handleComplete = useCallback(async () => {
+    // 兼容 data 和 partialData 字段
+    const request = {
+      ...completeRequest,
+      partialData: completeRequest.partialData || completeRequest.data,
+    };
+    await complete(request);
+  }, [completeRequest, complete]);
 
   useEffect(() => {
     if (isOpen) {
@@ -59,16 +72,7 @@ export function AIDataCompleter({
       setSelectedFields(new Set());
       handleComplete();
     }
-  }, [isOpen]);
-
-  const handleComplete = async () => {
-    // 兼容 data 和 partialData 字段
-    const request = {
-      ...completeRequest,
-      partialData: completeRequest.partialData || completeRequest.data,
-    };
-    await complete(request);
-  };
+  }, [isOpen, handleComplete]);
 
   const toggleField = (field: string) => {
     const newSelected = new Set(selectedFields);

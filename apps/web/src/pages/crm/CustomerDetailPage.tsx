@@ -1,5 +1,5 @@
 import { Chip, Typography, Box, InputLabel, Button } from '@mui/material';
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
@@ -46,37 +46,40 @@ const CustomerDetailPage: React.FC = () => {
     customerQuery.data?.success && customerQuery.data.data ? customerQuery.data.data : null;
   const loading = customerQuery.isLoading;
 
-  const formatCurrency = (amount?: number) => {
+  const formatCurrency = useCallback((amount?: number) => {
     if (!amount) return '¥0';
     return new Intl.NumberFormat('zh-CN', {
       style: 'currency',
       currency: 'CNY',
       minimumFractionDigits: 0,
     }).format(amount);
-  };
+  }, []);
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      {
-        label: string;
-        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-      }
-    > = {
-      active: { label: t('crm.customerDetail.status_active'), color: 'success' },
-      inactive: { label: t('crm.customerDetail.status_inactive'), color: 'default' },
-      prospect: { label: t('crm.customerDetail.status_prospect'), color: 'info' },
-      blocked: { label: t('crm.customerDetail.status_blocked'), color: 'error' },
-    };
-    const s = statusMap[status] || { label: status, color: 'default' };
-    return (
-      <Chip
-        size='small'
-        color={s.color}
-        label={s.label}
-      />
-    );
-  };
+  const getStatusBadge = useCallback(
+    (status: string) => {
+      const statusMap: Record<
+        string,
+        {
+          label: string;
+          color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+        }
+      > = {
+        active: { label: t('crm.customerDetail.status_active'), color: 'success' },
+        inactive: { label: t('crm.customerDetail.status_inactive'), color: 'default' },
+        prospect: { label: t('crm.customerDetail.status_prospect'), color: 'info' },
+        blocked: { label: t('crm.customerDetail.status_blocked'), color: 'error' },
+      };
+      const s = statusMap[status] || { label: status, color: 'default' };
+      return (
+        <Chip
+          size='small'
+          color={s.color}
+          label={s.label}
+        />
+      );
+    },
+    [t]
+  );
 
   const finInfo = financeInfo?.data;
 
@@ -148,7 +151,7 @@ const CustomerDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [customer, t]);
+  }, [customer, t, getStatusBadge]);
 
   const financeInfoContent = useMemo(() => {
     if (!finInfo) return null;
@@ -400,7 +403,7 @@ const CustomerDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [finInfo, t]);
+  }, [finInfo, t, formatCurrency]);
 
   const invoicesContent = useMemo(() => {
     const invoiceList = invoicesData?.data?.items || [];
@@ -481,7 +484,7 @@ const CustomerDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [invoicesData, t]);
+  }, [invoicesData, t, formatCurrency]);
 
   const collectionsContent = useMemo(() => {
     const collectionList = collectionsData?.data?.items || [];
@@ -560,7 +563,7 @@ const CustomerDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [collectionsData, t]);
+  }, [collectionsData, t, formatCurrency]);
 
   const footerSection = useMemo<SectionConfig>(() => {
     if (!customer) return { id: 'footer', content: null };
@@ -627,7 +630,7 @@ const CustomerDetailPage: React.FC = () => {
         </Box>
       ),
     };
-  }, [customer, t]);
+  }, [customer, t, getStatusBadge]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [
@@ -677,7 +680,7 @@ const CustomerDetailPage: React.FC = () => {
         },
       ],
     }),
-    [customer, finInfo, t]
+    [customer, finInfo, t, formatCurrency]
   );
 
   const sections = useMemo<SectionConfig[]>(() => [footerSection], [footerSection]);

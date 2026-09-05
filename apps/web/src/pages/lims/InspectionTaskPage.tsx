@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -73,7 +73,7 @@ const InspectionTaskPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const processes = (processesData || []) as InspectionProcess[];
+  const processes = useMemo(() => (processesData || []) as InspectionProcess[], [processesData]);
   const inspectionTaskApiAdapter: CrudApiAdapter<InspectionTask> = useMemo(
     () => ({
       list: async (params) => {
@@ -162,21 +162,24 @@ const InspectionTaskPage: React.FC = () => {
       });
     }
   };
-  const openRecordModal = (row: Record<string, unknown>) => {
-    const task = row as unknown as InspectionTask;
-    const process = processes.find((p) => p.id === task.process_id);
-    const currentStepObj = process?.steps.find((_, idx) => idx + 1 === task.current_step);
-    setSelectedTask(task);
-    setRecordFormData({
-      task_id: task.id,
-      step_id: currentStepObj?.id || '',
-      step_name: currentStepObj?.name || '',
-      result: '',
-      conclusion: '',
-      inspector: task.inspector || '',
-    });
-    setShowRecordModal(true);
-  };
+  const openRecordModal = useCallback(
+    (row: Record<string, unknown>) => {
+      const task = row as unknown as InspectionTask;
+      const process = processes.find((p) => p.id === task.process_id);
+      const currentStepObj = process?.steps.find((_, idx) => idx + 1 === task.current_step);
+      setSelectedTask(task);
+      setRecordFormData({
+        task_id: task.id,
+        step_id: currentStepObj?.id || '',
+        step_name: currentStepObj?.name || '',
+        result: '',
+        conclusion: '',
+        inspector: task.inspector || '',
+      });
+      setShowRecordModal(true);
+    },
+    [processes]
+  );
   const handleCompleteStep = async () => {
     if (!selectedTask) return;
     if (!recordFormData.result.trim()) {
@@ -207,7 +210,7 @@ const InspectionTaskPage: React.FC = () => {
         onClick: (row: Record<string, unknown>) => openRecordModal(row),
       },
     ],
-    [processes]
+    [openRecordModal]
   );
   const statsContent = (rows: Record<string, unknown>[]) => {
     const tasks = rows as unknown as InspectionTask[];

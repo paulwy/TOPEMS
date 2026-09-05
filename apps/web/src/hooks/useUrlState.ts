@@ -108,6 +108,7 @@ export function useUrlState<T>(
     [key, defaultValue, mode, removeDefault, setSearchParams]
   );
 
+  const searchParamsString = searchParams.toString();
   // 监听 URL 变化（前进/后退），同步回内部状态
   useEffect(() => {
     if (internalUpdateRef.current) return;
@@ -117,7 +118,7 @@ export function useUrlState<T>(
       if (JSON.stringify(prev) === JSON.stringify(parsed)) return prev;
       return parsed;
     });
-  }, [searchParams.toString(), defaultValue, key, searchParams]);
+  }, [searchParamsString, defaultValue, key, searchParams]);
 
   return [state, setStateAndUrl];
 }

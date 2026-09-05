@@ -205,6 +205,7 @@ export function useColumnConfig(options: UseColumnConfigOptions = {}): UseColumn
     persist(defaults);
   }, [defaults, persist]);
 
+  const searchParamsString = searchParams.toString();
   // 监听 URL 变化（前进/后退），同步回内部状态
   useEffect(() => {
     if (!urlSync || internalUpdateRef.current) return;
@@ -225,7 +226,7 @@ export function useColumnConfig(options: UseColumnConfigOptions = {}): UseColumn
       setVisibleColumnIds(target);
     }
   }, [
-    searchParams.toString(),
+    searchParamsString,
     colsParam,
     defaults,
     searchParams,

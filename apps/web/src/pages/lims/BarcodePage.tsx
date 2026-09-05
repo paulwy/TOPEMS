@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { Barcode as BarcodeIcon, Printer, ScanLine } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -68,56 +68,62 @@ const BarcodePage: React.FC = () => {
     }),
     []
   );
-  const handlePrint = async (row: Record<string, unknown>) => {
-    const id = String(row.id);
-    try {
-      const response = await limsApi.printBarcode({ barcode_ids: [id] });
-      if (response.success) {
+  const handlePrint = useCallback(
+    async (row: Record<string, unknown>) => {
+      const id = String(row.id);
+      try {
+        const response = await limsApi.printBarcode({ barcode_ids: [id] });
+        if (response.success) {
+          addNotification({
+            title: i18n.t('lims.barcode_page.k5'),
+            message: i18n.t('lims.barcode_page.k4'),
+            type: 'success',
+          });
+        } else {
+          addNotification({
+            title: i18n.t('lims.barcode_page.k7'),
+            message: response.message || i18n.t('lims.barcode_page.k6'),
+            type: 'error',
+          });
+        }
+      } catch (err) {
         addNotification({
-          title: i18n.t('lims.barcode_page.k5'),
-          message: i18n.t('lims.barcode_page.k4'),
-          type: 'success',
-        });
-      } else {
-        addNotification({
-          title: i18n.t('lims.barcode_page.k7'),
-          message: response.message || i18n.t('lims.barcode_page.k6'),
+          title: i18n.t('lims.barcode_page.k8'),
+          message: (err as { message?: string })?.message || i18n.t('lims.barcode_page.k9'),
           type: 'error',
         });
       }
-    } catch (err) {
-      addNotification({
-        title: i18n.t('lims.barcode_page.k8'),
-        message: (err as { message?: string })?.message || i18n.t('lims.barcode_page.k9'),
-        type: 'error',
-      });
-    }
-  };
-  const handleScan = async (row: Record<string, unknown>) => {
-    const barcode = String(row.barcode);
-    try {
-      const response = await limsApi.scanBarcode(barcode);
-      if (response.success) {
+    },
+    [addNotification]
+  );
+  const handleScan = useCallback(
+    async (row: Record<string, unknown>) => {
+      const barcode = String(row.barcode);
+      try {
+        const response = await limsApi.scanBarcode(barcode);
+        if (response.success) {
+          addNotification({
+            title: i18n.t('lims.barcode_page.k10'),
+            message: `${i18n.t('pages.barcode_page.k0')}${barcode}${i18n.t('pages.barcode_page.k1')}`,
+            type: 'success',
+          });
+        } else {
+          addNotification({
+            title: i18n.t('lims.barcode_page.k12'),
+            message: response.message || i18n.t('lims.barcode_page.k11'),
+            type: 'error',
+          });
+        }
+      } catch (err) {
         addNotification({
-          title: i18n.t('lims.barcode_page.k10'),
-          message: `${i18n.t('pages.barcode_page.k0')}${barcode}${i18n.t('pages.barcode_page.k1')}`,
-          type: 'success',
-        });
-      } else {
-        addNotification({
-          title: i18n.t('lims.barcode_page.k12'),
-          message: response.message || i18n.t('lims.barcode_page.k11'),
+          title: i18n.t('lims.barcode_page.k13'),
+          message: (err as { message?: string })?.message || i18n.t('lims.barcode_page.k14'),
           type: 'error',
         });
       }
-    } catch (err) {
-      addNotification({
-        title: i18n.t('lims.barcode_page.k13'),
-        message: (err as { message?: string })?.message || i18n.t('lims.barcode_page.k14'),
-        type: 'error',
-      });
-    }
-  };
+    },
+    [addNotification]
+  );
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
@@ -135,7 +141,7 @@ const BarcodePage: React.FC = () => {
         onClick: (row: Record<string, unknown>) => handleScan(row),
       },
     ],
-    []
+    [handlePrint, handleScan]
   );
   const statsContent = (rows: Record<string, unknown>[]) => {
     const barcodes = rows as unknown as BarcodeType[];

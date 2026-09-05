@@ -352,7 +352,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
     monitoringApi.exportAlerts({ format: 'excel' });
   }, []);
 
-  const getLevelIcon = (level: string) => {
+  const getLevelIcon = useCallback((level: string) => {
     switch (level) {
       case 'critical':
         return <AlertCircle className='w-5 h-5 text-red-600' />;
@@ -363,7 +363,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
       default:
         return <Bell className='w-5 h-5 text-gray-600' />;
     }
-  };
+  }, []);
 
   const getLevelLabel = (level: string) => {
     const labels: Record<string, string> = {
@@ -521,7 +521,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
         ),
       },
     ],
-    []
+    [getLevelIcon]
   );
 
   const ruleColumns: ColumnDef<AlertRule>[] = useMemo(

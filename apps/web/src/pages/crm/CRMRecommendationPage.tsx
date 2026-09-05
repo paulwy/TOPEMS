@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -65,18 +65,21 @@ const CRMRecommendationPage: React.FC = () => {
   const [period] = useState<Period>('MTD');
   const { data: mockRec, mockEnabled } = useCrmMock<RecommendationData>({ period });
 
-  const getRecommendationTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      product: t('crm.recommendation.type_product'),
-      opportunity: t('crm.recommendation.type_opportunity'),
-      service: t('crm.recommendation.type_service'),
-      'cross-sell': t('crm.recommendation.type_cross_sell'),
-      upsell: t('crm.recommendation.type_upsell'),
-      content: t('crm.recommendation.type_content'),
-      general: t('crm.recommendation.type_general'),
-    };
-    return labels[type] || type;
-  };
+  const getRecommendationTypeLabel = useCallback(
+    (type: string) => {
+      const labels: Record<string, string> = {
+        product: t('crm.recommendation.type_product'),
+        opportunity: t('crm.recommendation.type_opportunity'),
+        service: t('crm.recommendation.type_service'),
+        'cross-sell': t('crm.recommendation.type_cross_sell'),
+        upsell: t('crm.recommendation.type_upsell'),
+        content: t('crm.recommendation.type_content'),
+        general: t('crm.recommendation.type_general'),
+      };
+      return labels[type] || type;
+    },
+    [t]
+  );
 
   // ============ API 适配器 ============
 
@@ -307,7 +310,7 @@ const CRMRecommendationPage: React.FC = () => {
         </Box>
       );
     },
-    [t]
+    [t, getRecommendationTypeLabel]
   );
 
   const typeColumnConfig: Array<{

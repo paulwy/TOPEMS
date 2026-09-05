@@ -14,7 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import {
   Search,
@@ -75,16 +75,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   const [variableValues, setVariableValues] = useState<Record<string, unknown>>({});
   const [isRendering, setIsRendering] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      loadTemplates();
-      loadCategories();
-      setSelectedTemplate(null);
-      setVariableValues({});
-    }
-  }, [open, templateType]);
-
-  const loadTemplates = async () => {
+  const loadTemplates = useCallback(async () => {
     try {
       const response = await templateApi.list({
         type: templateType,
@@ -99,9 +90,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     } catch (error: unknown) {
       apiLogger.error('Failed to load templates:', error);
     }
-  };
+  }, [templateType, selectedCategory, searchQuery]);
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const response = await templateApi.listCategories({ type: templateType });
       if (response.success && response.data) {
@@ -110,7 +101,16 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     } catch (error: unknown) {
       apiLogger.error('Failed to load categories:', error);
     }
-  };
+  }, [templateType]);
+
+  useEffect(() => {
+    if (open) {
+      loadTemplates();
+      loadCategories();
+      setSelectedTemplate(null);
+      setVariableValues({});
+    }
+  }, [open, templateType, loadTemplates, loadCategories]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);

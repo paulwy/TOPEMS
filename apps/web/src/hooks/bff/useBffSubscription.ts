@@ -96,6 +96,7 @@ export function useBffSubscription<T>(
   );
 
   useEffect(() => {
+    const subId = subIdRef.current;
     // V64 静默降级：开发环境下 portal 服务（8063）通常未启动，
     // 跳过 WebSocket 连接避免 Firefox "无法建立连接" 刷屏。
     // 如需在开发环境启用 BFF WebSocket，设置 VITE_BFF_WS_ENABLED=true
@@ -201,7 +202,7 @@ export function useBffSubscription<T>(
       // 主动发送 complete 停止订阅
       if (ws && ws.readyState === WebSocket.OPEN) {
         try {
-          ws.send(JSON.stringify({ id: subIdRef.current, type: 'complete' }));
+          ws.send(JSON.stringify({ id: subId, type: 'complete' }));
         } catch {
           // ignore
         }
@@ -209,7 +210,7 @@ export function useBffSubscription<T>(
       ws?.close();
       updateStatus('disconnected');
     };
-  }, [query, JSON.stringify(variables), initialReconnectDelay, maxReconnectDelay]);
+  }, [query, variables, initialReconnectDelay, maxReconnectDelay]);
 
   return {
     connected: status === 'connected',

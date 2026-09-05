@@ -19,7 +19,7 @@ import {
   Alert,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -66,11 +66,21 @@ const VoucherCreatePage: React.FC = () => {
 
   const subjects = subjectsQuery.data || [];
 
-  useEffect(() => {
-    initializeForm();
+  const addVoucherItem = useCallback(() => {
+    setVoucherItems((prev) => {
+      const newItem: VoucherItemRequest = {
+        line_number: prev.length + 1,
+        subject_code: '',
+        subject_name: '',
+        summary: '',
+        debit_amount: 0,
+        credit_amount: 0,
+      };
+      return [...prev, newItem];
+    });
   }, []);
 
-  const initializeForm = () => {
+  const initializeForm = useCallback(() => {
     const today = new Date();
     const period = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     setFormData((prev) => ({
@@ -81,7 +91,11 @@ const VoucherCreatePage: React.FC = () => {
     // 添加两行空白的凭证明细
     addVoucherItem();
     addVoucherItem();
-  };
+  }, [addVoucherItem]);
+
+  useEffect(() => {
+    initializeForm();
+  }, [initializeForm]);
 
   const handleFieldChange = (
     field: keyof typeof formData,
@@ -91,18 +105,6 @@ const VoucherCreatePage: React.FC = () => {
       ...prev,
       [field]: value,
     }));
-  };
-
-  const addVoucherItem = () => {
-    const newItem: VoucherItemRequest = {
-      line_number: voucherItems.length + 1,
-      subject_code: '',
-      subject_name: '',
-      summary: '',
-      debit_amount: 0,
-      credit_amount: 0,
-    };
-    setVoucherItems((prev) => [...prev, newItem]);
   };
 
   const updateVoucherItem = (

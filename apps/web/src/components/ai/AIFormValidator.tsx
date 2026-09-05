@@ -1,9 +1,9 @@
 import { designTokens } from '@topems/tokens';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AlertCircle, CheckCircle, AlertTriangle, Info, Sparkles, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Box, Typography, Button, useTheme } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
-import { useAIHelper } from '../../hooks/useAIHelper';
+import { useAIHelper, type UseAIHelperOptions } from '../../hooks/useAIHelper';
 import type { ValidateRequest, ValidationIssue, Suggestion, ValidateResponse } from '@/types/ai';
 import i18n from '@/i18n';
 
@@ -31,16 +31,20 @@ export function AIFormValidator({
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
-  const { isLoading, validate } = useAIHelper<ValidateResponse>({
-    featureType: 'validate',
-    onSuccess: (result) => {
-      const data = result as ValidateResponse;
-      if (data) {
-        setIssues(data.issues || []);
-        setSuggestions(data.suggestions || []);
-      }
-    },
-  });
+  const helperOptions = useMemo<UseAIHelperOptions>(
+    () => ({
+      featureType: 'validate',
+      onSuccess: (result) => {
+        const data = result as ValidateResponse;
+        if (data) {
+          setIssues(data.issues || []);
+          setSuggestions(data.suggestions || []);
+        }
+      },
+    }),
+    []
+  );
+  const { isLoading, validate } = useAIHelper<ValidateResponse>(helperOptions);
 
   const theme = useTheme();
 
@@ -50,17 +54,17 @@ export function AIFormValidator({
     info: <Info style={{ width: 20, height: 20, color: theme.palette.primary.main }} />,
   };
 
+  const handleValidate = useCallback(async () => {
+    await validate(validateRequest);
+  }, [validate, validateRequest]);
+
   useEffect(() => {
     if (isOpen) {
       setIssues([]);
       setSuggestions([]);
       handleValidate();
     }
-  }, [isOpen]);
-
-  const handleValidate = async () => {
-    await validate(validateRequest);
-  };
+  }, [isOpen, handleValidate]);
 
   const handleApplyAllSuggestions = () => {
     if (suggestions.length > 0 && onApplySuggestions) {

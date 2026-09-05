@@ -139,16 +139,16 @@ const AuditLogPage = () => {
     };
   }, [autoRefresh, isDesktop, fetchLogs, appliedFilters]);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     setAppliedFilters(filters);
     fetchLogs(filters);
-  };
+  }, [filters, fetchLogs]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setFilters(INITIAL_FILTERS);
     setAppliedFilters(INITIAL_FILTERS);
     fetchLogs(INITIAL_FILTERS);
-  };
+  }, [fetchLogs]);
 
   const handleSort = useCallback((_sortBy: string, order: 'asc' | 'desc') => {
     setSortAsc(order === 'asc');
@@ -399,7 +399,7 @@ const AuditLogPage = () => {
         </CardContent>
       </Card>
     ),
-    [filterOpen, filters, t]
+    [filterOpen, filters, t, handleSearch, handleReset]
   );
 
   const headerContent = useMemo(

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Box, Typography, InputLabel, Avatar } from '@mui/material';
@@ -49,41 +49,50 @@ const HrmEmployeeDetailPage: React.FC = () => {
     navigate(HRM_PATHS.employeeDetail.replace(':id', id!));
   };
 
-  const getStatusConfig = (status: string) => {
-    const config: Record<
-      string,
-      { color: 'success' | 'error' | 'default' | 'warning'; label: string }
-    > = {
-      active: { color: 'success', label: t('hrm.hrm_employee_detail_page.text_b5509b') },
-      probation: { color: 'warning', label: t('hrm.hrm_employee_detail_page.text_9a3256') },
-      leave: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_62a8cf') },
-      resigned: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_370e61') },
-      terminated: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_43e92e') },
-      retired: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_399695') },
-    };
-    return config[status] || config.active;
-  };
+  const getStatusConfig = useCallback(
+    (status: string) => {
+      const config: Record<
+        string,
+        { color: 'success' | 'error' | 'default' | 'warning'; label: string }
+      > = {
+        active: { color: 'success', label: t('hrm.hrm_employee_detail_page.text_b5509b') },
+        probation: { color: 'warning', label: t('hrm.hrm_employee_detail_page.text_9a3256') },
+        leave: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_62a8cf') },
+        resigned: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_370e61') },
+        terminated: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_43e92e') },
+        retired: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_399695') },
+      };
+      return config[status] || config.active;
+    },
+    [t]
+  );
 
-  const getGenderLabel = (gender: string) => {
-    return gender === 'male'
-      ? t('hrm.hrm_employee_detail_page.text_36a490')
-      : gender === 'female'
-        ? t('hrm.hrm_employee_detail_page.text_87c835')
-        : '-';
-  };
+  const getGenderLabel = useCallback(
+    (gender: string) => {
+      return gender === 'male'
+        ? t('hrm.hrm_employee_detail_page.text_36a490')
+        : gender === 'female'
+          ? t('hrm.hrm_employee_detail_page.text_87c835')
+          : '-';
+    },
+    [t]
+  );
 
-  const getEducationLabel = (education: string) => {
-    const labels: Record<string, string> = {
-      primary: t('hrm.hrm_employee_detail_page.text_79898d'),
-      junior: t('hrm.hrm_employee_detail_page.text_b21914'),
-      senior: t('hrm.hrm_employee_detail_page.text_8d9a85'),
-      college: t('hrm.hrm_employee_detail_page.text_2aa9f5'),
-      bachelor: t('hrm.hrm_employee_detail_page.text_40b14f'),
-      master: t('hrm.hrm_employee_detail_page.text_e6de69'),
-      doctor: t('hrm.hrm_employee_detail_page.text_7d27be'),
-    };
-    return labels[education] || education;
-  };
+  const getEducationLabel = useCallback(
+    (education: string) => {
+      const labels: Record<string, string> = {
+        primary: t('hrm.hrm_employee_detail_page.text_79898d'),
+        junior: t('hrm.hrm_employee_detail_page.text_b21914'),
+        senior: t('hrm.hrm_employee_detail_page.text_8d9a85'),
+        college: t('hrm.hrm_employee_detail_page.text_2aa9f5'),
+        bachelor: t('hrm.hrm_employee_detail_page.text_40b14f'),
+        master: t('hrm.hrm_employee_detail_page.text_e6de69'),
+        doctor: t('hrm.hrm_employee_detail_page.text_7d27be'),
+      };
+      return labels[education] || education;
+    },
+    [t]
+  );
 
   const formatDate = (date: string | undefined) => {
     if (!date) return '-';
@@ -187,7 +196,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [employee, t]);
+  }, [employee, t, getEducationLabel, getGenderLabel]);
 
   const workInfoContent = useMemo(() => {
     if (!employee) return null;
@@ -356,7 +365,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         },
       ],
     }),
-    [employee]
+    [employee, getStatusConfig]
   );
 
   return (

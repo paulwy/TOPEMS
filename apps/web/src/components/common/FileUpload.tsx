@@ -161,12 +161,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
   /**
    * 验证文件类型
    */
-  const validateFileType = (file: File): boolean => {
-    if (accept.length === 0) return true;
-    const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
-    const mimeType = file.type;
-    return accept.some((type) => type.toLowerCase() === ext || type.toLowerCase() === mimeType);
-  };
+  const validateFileType = useCallback(
+    (file: File): boolean => {
+      if (accept.length === 0) return true;
+      const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
+      const mimeType = file.type;
+      return accept.some((type) => type.toLowerCase() === ext || type.toLowerCase() === mimeType);
+    },
+    [accept]
+  );
 
   /**
    * 处理文件选择
@@ -228,7 +231,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       onChange?.(updatedFiles.filter((f) => f.url).map((f) => f.url!));
     },
 
-    [files, maxCount, maxSize, maxTotalSize, onChange]
+    [files, maxCount, maxSize, maxTotalSize, onChange, validateFileType]
   );
 
   /**

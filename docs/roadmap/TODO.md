@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V494 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V495 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,23 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V495
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨D 收官——missing 43→0 + OTH 变体清零，exhaustive-deps 51→**0**
+
+### V495 完成内容
+
+1. **missing 43→0 全清（分 4 波）**：
+   - **波1 AI 组（7 文件）**：AIAnalyzer 用 ref 模式（runAllAnalysisRef 同步更新 + 初始 effect 调 ref）；AIDataCompleter/AIFormValidator/AISummarizer 用 helperOptions 两段式（`useMemo<UseAIHelperOptions>(() => ({ featureType, onSuccess }), [])` + 正常调用 useAIHelper，规避 useMemo 回调内调 hook 的 TS2339）；useAIHelper.ts 第 15 行 `export interface UseAIHelperOptions`（原未导出 TS2459）；DocumentManager/FileUpload handle* useCallback 化 + 上移
+   - **波2 GIS/IM/templates/bff（12 文件）**：AmapLayer/DeviceTrackPanel/MapView 上移 useCallback + effect 数组补；ChatInterface/NotificationList load* useCallback + 上移；ListPageTemplate/SubTableBuilder/TemplateSelector 同上；useEdgeCompute/useIsr execute/validate deps 改整体 `options`；useBffSubscription 212 处 complex 改 `variables`
+   - **波3 pages 组（11 文件）**：MonitoringAlertPage/CRMRecommendationPage/ContactDetailPage/OpportunityDetailPage/HrmContractDetailPage/HrmEmployeeDetailPage/InspectionTaskPage/FavoritesPage/FinanceVoucherPage/VoucherCreatePage（initializeForm 前置 addVoucherItem 函数式 setter useCallback([])）/CustomerDetailPage 等
+   - **波4 missing 剩余 16 处收官**：MigrationAdminPage（handle* 6 个 useCallback + statusMap/services useMemo 稳定化 + 250/361 deps）、AuditLogPage（handleSearch/handleReset useCallback）、FinanceBudgetDetailPage（getBudgetTypeName/getStatusConfig useCallback）、CustomerDetailPage（formatCurrency ×4 useMemo deps）、FinanceVoucherPage（refreshVouchers/loadVoucherItems/handleAudit/handleUnaudit useCallback + 335/619 deps）、HrmContractDetailPage（287/339/421）、HrmEmployeeDetailPage（193）、BarcodePage（handlePrint/handleScan useCallback）
+2. **OTH 变体 11 处清零**：ref cleanup ×3（useAutoSharding abortController effect 内创建+快照 / useBffSubscription subId 快照 / MicroFrontendLoader container+mountedModule 快照）、spread ×2（useBffErrorHandling/useModuleData deps 透传——eslint 静态限制，disable-next-line 注释 + 说明）、complex ×2（useColumnConfig/useUrlState searchParams.toString() 提取 searchParamsString）、logical ×3（Migration services/statusMap、Inspection processes useMemo 化）、NotificationList loadNotifications useCallback
+3. **脚本坑（已记）**：① useCallback 化脚本对已 useCallback 化的函数重跑会双嵌套（HrmEmployee getGenderLabel/getEducationLabel `useCallback(useCallback(`）→ 需幂等检查；② old 头含 `() => {` 时 body 提取丢箭头（NotificationList `useCallback(async` 缺 `()`）；③ 单行箭头函数无 `\n  };` 需按 `;` 截断（getAppliedCount/getPendingCount）；④ 多行依赖数组（`    ],\n    [statusMap]\n  );`）与单行（`  }, [x]);`）锚格式不同需分别匹配；⑤ disable-next-line 必须放在报告行（deps 数组行）前一行才生效；⑥ 补 useCallback 后 import 需同步补（Migration/Budget/Barcode/NotificationList TS2304）
+4. **验证**：全量 exhaustive-deps **0**（unnecessary/unstable/logical/missing/ref/spread/complex 全 0）；tsc 0 errors；prettier 修复 5 文件后复验仍 0
+5. **剩余**：exhaustive-deps 治理**全部清零** 🎯；后续可考虑 unused-vars 等其它 lint 类别或 V496 归档
 
 ### V494
 

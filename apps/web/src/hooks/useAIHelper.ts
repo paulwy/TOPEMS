@@ -12,7 +12,7 @@ import type {
 import i18n from '@/i18n';
 import type { AIGenerateRequest } from '../api/ai';
 
-interface UseAIHelperOptions {
+export interface UseAIHelperOptions {
   featureType: AIFeatureType;
   onSuccess?: (result: unknown) => void;
   onError?: (error: Error) => void;

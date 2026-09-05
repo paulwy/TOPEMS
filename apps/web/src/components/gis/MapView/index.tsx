@@ -1,4 +1,13 @@
-import React, { useState, useRef, useEffect, useMemo, useId, lazy, Suspense } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useId,
+  lazy,
+  Suspense,
+  useCallback,
+} from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Box as MuiBox, Typography, Paper, IconButton } from '@mui/material';
@@ -127,16 +136,6 @@ const MapView: React.FC<MapViewProps> = ({
     if (onMarkerClick) {
       onMarkerClick(item);
     }
-  };
-
-  const finishDrawing = () => {
-    if (
-      currentDrawing &&
-      currentDrawing.points.length >= (currentDrawing.type === 'point' ? 1 : 2)
-    ) {
-      setDrawFeatures([...drawFeatures, currentDrawing]);
-    }
-    setCurrentDrawing(null);
   };
 
   const clearMeasure = () => {
@@ -324,6 +323,16 @@ const MapView: React.FC<MapViewProps> = ({
     setSelectedItem(null);
   };
 
+  const finishDrawing = useCallback(() => {
+    if (
+      currentDrawing &&
+      currentDrawing.points.length >= (currentDrawing.type === 'point' ? 1 : 2)
+    ) {
+      setDrawFeatures([...drawFeatures, currentDrawing]);
+    }
+    setCurrentDrawing(null);
+  }, [currentDrawing, drawFeatures]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -335,9 +344,10 @@ const MapView: React.FC<MapViewProps> = ({
         finishDrawing();
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentDrawing]);
+  }, [currentDrawing, finishDrawing]);
 
   return (
     <MuiBox

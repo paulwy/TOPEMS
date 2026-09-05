@@ -176,22 +176,25 @@ const FavoritesPage: React.FC = () => {
   });
 
   // 检查是否已收藏
-  const checkFavorite = async (entityType: string, entityId: string) => {
-    try {
-      const response = await favoriteApi.check(entityType, entityId);
-      if (response.success && response.data) {
-        addNotification({
-          type: 'info',
-          title: i18n.t('pages.favorites_page.k10'),
-          message: response.data
-            ? i18n.t('pages.favorites_page.k12')
-            : i18n.t('pages.favorites_page.k11'),
-        });
+  const checkFavorite = useCallback(
+    async (entityType: string, entityId: string) => {
+      try {
+        const response = await favoriteApi.check(entityType, entityId);
+        if (response.success && response.data) {
+          addNotification({
+            type: 'info',
+            title: i18n.t('pages.favorites_page.k10'),
+            message: response.data
+              ? i18n.t('pages.favorites_page.k12')
+              : i18n.t('pages.favorites_page.k11'),
+          });
+        }
+      } catch (error) {
+        apiLogger.error(i18n.t('pages.favorites_page.k2'), error);
       }
-    } catch (error) {
-      apiLogger.error(i18n.t('pages.favorites_page.k2'), error);
-    }
-  };
+    },
+    [addNotification]
+  );
 
   // 获取搜索建议
   const fetchSuggestions = useCallback(async (query: string) => {
@@ -304,7 +307,7 @@ const FavoritesPage: React.FC = () => {
         color: 'error',
       },
     ],
-    [removeMutation]
+    [removeMutation, checkFavorite]
   );
 
   const favoriteActions = useMemo(

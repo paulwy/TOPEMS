@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Typography, Box } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -145,25 +145,28 @@ const FinanceVoucherPage: React.FC = () => {
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
-  const refreshVouchers = () => {
+  const refreshVouchers = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_BASE,
       exact: false,
       refetchType: 'active',
     });
-  };
+  }, [queryClient]);
 
   // ── 凭证操作 ──
-  const loadVoucherItems = async (voucherId: string) => {
-    try {
-      const result = await voucherApi.getItems(voucherId);
-      if (result.success && result.data) {
-        setVoucherItems(result.data);
+  const loadVoucherItems = useCallback(
+    async (voucherId: string) => {
+      try {
+        const result = await voucherApi.getItems(voucherId);
+        if (result.success && result.data) {
+          setVoucherItems(result.data);
+        }
+      } catch (err: unknown) {
+        apiLogger.error(t('finance.finance_voucher_page_index.fail_1'), err);
       }
-    } catch (err: unknown) {
-      apiLogger.error(t('finance.finance_voucher_page_index.fail_1'), err);
-    }
-  };
+    },
+    [t]
+  );
 
   const resetForm = () => {
     setNewVoucher({
@@ -295,84 +298,93 @@ const FinanceVoucherPage: React.FC = () => {
     }
   };
 
-  const handleBatchAudit = async (ids: string[]) => {
-    if (ids.length === 0) return;
+  const handleBatchAudit = useCallback(
+    async (ids: string[]) => {
+      if (ids.length === 0) return;
 
-    try {
-      const promises = ids.map((id) => voucherApi.update(id, { status: 'approved' }));
-      const results = await Promise.allSettled(promises);
-      const successCount = results.filter((r) => r.status === 'fulfilled').length;
+      try {
+        const promises = ids.map((id) => voucherApi.update(id, { status: 'approved' }));
+        const results = await Promise.allSettled(promises);
+        const successCount = results.filter((r) => r.status === 'fulfilled').length;
 
-      if (successCount === ids.length) {
+        if (successCount === ids.length) {
+          addNotification({
+            title: t('finance.finance_voucher_page_index.success'),
+            message: i18n.t('finance.finance_voucher_page_index.e3', { v1: successCount }),
+            type: 'success',
+          });
+        } else {
+          addNotification({
+            title: t('finance.finance_voucher_page_index.success_1'),
+            message: i18n.t('finance.finance_voucher_page_index.e4', {
+              v1: successCount,
+              v2: ids.length - successCount,
+            }),
+            type: 'warning',
+          });
+        }
+
+        setSelectedIds([]);
+        refreshVouchers();
+      } catch (err: unknown) {
+        addNotification({
+          title: t('finance.finance_voucher_page_index.error'),
+          message:
+            (err as { message?: string }).message || t('finance.finance_voucher_page_index.fail_2'),
+          type: 'error',
+        });
+      }
+    },
+    [addNotification, refreshVouchers, t]
+  );
+
+  const handleAudit = useCallback(
+    async (id: string) => {
+      try {
+        const result = await voucherApi.update(id, { status: 'approved' });
+        if (!result.success) {
+          throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
+        }
         addNotification({
           title: t('finance.finance_voucher_page_index.success'),
-          message: i18n.t('finance.finance_voucher_page_index.e3', { v1: successCount }),
+          message: t('finance.finance_voucher_page_index.approved'),
           type: 'success',
         });
-      } else {
+        refreshVouchers();
+      } catch (err: unknown) {
         addNotification({
-          title: t('finance.finance_voucher_page_index.success_1'),
-          message: i18n.t('finance.finance_voucher_page_index.e4', {
-            v1: successCount,
-            v2: ids.length - successCount,
-          }),
-          type: 'warning',
+          title: t('finance.finance_voucher_page_index.error'),
+          message: (err as Error).message,
+          type: 'error',
         });
       }
+    },
+    [addNotification, refreshVouchers, t]
+  );
 
-      setSelectedIds([]);
-      refreshVouchers();
-    } catch (err: unknown) {
-      addNotification({
-        title: t('finance.finance_voucher_page_index.error'),
-        message:
-          (err as { message?: string }).message || t('finance.finance_voucher_page_index.fail_2'),
-        type: 'error',
-      });
-    }
-  };
-
-  const handleAudit = async (id: string) => {
-    try {
-      const result = await voucherApi.update(id, { status: 'approved' });
-      if (!result.success) {
-        throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
+  const handleUnaudit = useCallback(
+    async (id: string) => {
+      try {
+        const result = await voucherApi.update(id, { status: 'pending' });
+        if (!result.success) {
+          throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
+        }
+        addNotification({
+          title: t('finance.finance_voucher_page_index.success'),
+          message: t('finance.finance_voucher_page_index.pending_review'),
+          type: 'success',
+        });
+        refreshVouchers();
+      } catch (err: unknown) {
+        addNotification({
+          title: t('finance.finance_voucher_page_index.error'),
+          message: (err as Error).message,
+          type: 'error',
+        });
       }
-      addNotification({
-        title: t('finance.finance_voucher_page_index.success'),
-        message: t('finance.finance_voucher_page_index.approved'),
-        type: 'success',
-      });
-      refreshVouchers();
-    } catch (err: unknown) {
-      addNotification({
-        title: t('finance.finance_voucher_page_index.error'),
-        message: (err as Error).message,
-        type: 'error',
-      });
-    }
-  };
-
-  const handleUnaudit = async (id: string) => {
-    try {
-      const result = await voucherApi.update(id, { status: 'pending' });
-      if (!result.success) {
-        throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
-      }
-      addNotification({
-        title: t('finance.finance_voucher_page_index.success'),
-        message: t('finance.finance_voucher_page_index.pending_review'),
-        type: 'success',
-      });
-      refreshVouchers();
-    } catch (err: unknown) {
-      addNotification({
-        title: t('finance.finance_voucher_page_index.error'),
-        message: (err as Error).message,
-        type: 'error',
-      });
-    }
-  };
+    },
+    [addNotification, refreshVouchers, t]
+  );
 
   const handleImport = async (fileContent: string) => {
     try {
@@ -613,7 +625,7 @@ const FinanceVoucherPage: React.FC = () => {
         onClick: (row: Record<string, unknown>) => handleDelete(String(row.id)),
       },
     ],
-    [t]
+    [handleAudit, handleUnaudit, loadVoucherItems]
   );
 
   // ── 批量操作（合并到 schema）──
@@ -639,7 +651,7 @@ const FinanceVoucherPage: React.FC = () => {
         },
       ] as BatchActionConfig[],
     }),
-    [t]
+    [t, handleBatchAudit]
   );
 
   // ── Tab 配置 ──

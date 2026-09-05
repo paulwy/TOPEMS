@@ -93,15 +93,7 @@ export function useEdgeCompute<T = unknown>(
         }
       }
     },
-    [
-      functionName,
-      options.region,
-      options.strategy,
-      options.ttl,
-      options.payload,
-      options.onSuccess,
-      options.onError,
-    ]
+    [functionName, options]
   );
 
   const invalidate = useCallback(() => {

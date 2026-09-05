@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import {
@@ -74,92 +74,104 @@ const HrmContractDetailPage: React.FC = () => {
     navigate(HRM_PATHS.contractDetail.replace(':id', id!));
   };
 
-  const getStatusConfig = (status: string) => {
-    const config: Record<
-      string,
-      {
-        color: 'success' | 'error' | 'default' | 'warning';
-        label: string;
-        icon: React.ReactElement;
-      }
-    > = {
-      draft: {
-        color: 'default',
-        label: t('hrm.hrm_contract_detail_page.text_22b433'),
-        icon: <FileText size={14} />,
-      },
-      pending: {
-        color: 'warning',
-        label: t('hrm.hrm_contract_detail_page.text_b0bf01'),
-        icon: <Clock size={14} />,
-      },
-      approved: {
-        color: 'success',
-        label: t('hrm.hrm_contract_detail_page.text_618acb'),
-        icon: <CheckCircle2 size={14} />,
-      },
-      active: {
-        color: 'success',
-        label: t('hrm.hrm_contract_detail_page.text_c062e3'),
-        icon: <CheckCircle2 size={14} />,
-      },
-      expired: {
-        color: 'error',
-        label: t('hrm.hrm_contract_detail_page.text_e5b59f'),
-        icon: <AlertCircle size={14} />,
-      },
-      terminated: {
-        color: 'error',
-        label: t('hrm.hrm_contract_detail_page.text_255412'),
-        icon: <AlertCircle size={14} />,
-      },
-    };
-    return config[status] || config.draft;
-  };
+  const getStatusConfig = useCallback(
+    (status: string) => {
+      const config: Record<
+        string,
+        {
+          color: 'success' | 'error' | 'default' | 'warning';
+          label: string;
+          icon: React.ReactElement;
+        }
+      > = {
+        draft: {
+          color: 'default',
+          label: t('hrm.hrm_contract_detail_page.text_22b433'),
+          icon: <FileText size={14} />,
+        },
+        pending: {
+          color: 'warning',
+          label: t('hrm.hrm_contract_detail_page.text_b0bf01'),
+          icon: <Clock size={14} />,
+        },
+        approved: {
+          color: 'success',
+          label: t('hrm.hrm_contract_detail_page.text_618acb'),
+          icon: <CheckCircle2 size={14} />,
+        },
+        active: {
+          color: 'success',
+          label: t('hrm.hrm_contract_detail_page.text_c062e3'),
+          icon: <CheckCircle2 size={14} />,
+        },
+        expired: {
+          color: 'error',
+          label: t('hrm.hrm_contract_detail_page.text_e5b59f'),
+          icon: <AlertCircle size={14} />,
+        },
+        terminated: {
+          color: 'error',
+          label: t('hrm.hrm_contract_detail_page.text_255412'),
+          icon: <AlertCircle size={14} />,
+        },
+      };
+      return config[status] || config.draft;
+    },
+    [t]
+  );
 
-  const getContractTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      labor: t('hrm.hrm_contract_detail_page.text_46f54e'),
-      probation: t('hrm.hrm_contract_detail_page.text_144fe2'),
-      project: t('hrm.hrm_contract_detail_page.text_ea048f'),
-      outsourcing: t('hrm.hrm_contract_detail_page.text_42e7fe'),
-      internship: t('hrm.hrm_contract_detail_page.text_5040bb'),
-      part_time: t('hrm.hrm_contract_detail_page.text_a97d2a'),
-      other: t('hrm.hrm_contract_detail_page.other'),
-    };
-    return labels[type] || type;
-  };
+  const getContractTypeLabel = useCallback(
+    (type: string) => {
+      const labels: Record<string, string> = {
+        labor: t('hrm.hrm_contract_detail_page.text_46f54e'),
+        probation: t('hrm.hrm_contract_detail_page.text_144fe2'),
+        project: t('hrm.hrm_contract_detail_page.text_ea048f'),
+        outsourcing: t('hrm.hrm_contract_detail_page.text_42e7fe'),
+        internship: t('hrm.hrm_contract_detail_page.text_5040bb'),
+        part_time: t('hrm.hrm_contract_detail_page.text_a97d2a'),
+        other: t('hrm.hrm_contract_detail_page.other'),
+      };
+      return labels[type] || type;
+    },
+    [t]
+  );
 
-  const getSalaryTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      monthly: t('hrm.hrm_contract_detail_page.text_4eb9e5'),
-      daily: t('hrm.hrm_contract_detail_page.text_2eddda'),
-      hourly: t('hrm.hrm_contract_detail_page.text_bae8cf'),
-      project: t('hrm.hrm_contract_detail_page.text_66566b'),
-      commission: t('hrm.hrm_contract_detail_page.text_2668b2'),
-      other: t('hrm.hrm_contract_detail_page.other'),
-    };
-    return labels[type] || type;
-  };
+  const getSalaryTypeLabel = useCallback(
+    (type: string) => {
+      const labels: Record<string, string> = {
+        monthly: t('hrm.hrm_contract_detail_page.text_4eb9e5'),
+        daily: t('hrm.hrm_contract_detail_page.text_2eddda'),
+        hourly: t('hrm.hrm_contract_detail_page.text_bae8cf'),
+        project: t('hrm.hrm_contract_detail_page.text_66566b'),
+        commission: t('hrm.hrm_contract_detail_page.text_2668b2'),
+        other: t('hrm.hrm_contract_detail_page.other'),
+      };
+      return labels[type] || type;
+    },
+    [t]
+  );
 
   const formatDate = (date: string | undefined) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('zh-CN');
   };
 
-  const formatCurrency = (amount: number | undefined) => {
-    const value = amount || 0;
-    return `${value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} ${contract?.currency || 'CNY'}`;
-  };
+  const formatCurrency = useCallback(
+    (amount: number | undefined) => {
+      const value = amount || 0;
+      return `${value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} ${contract?.currency || 'CNY'}`;
+    },
+    [contract]
+  );
 
-  const calculateDaysRemaining = () => {
+  const calculateDaysRemaining = useCallback(() => {
     if (!contract?.end_date) return null;
     const endDate = new Date(contract.end_date);
     const today = new Date();
     const diffTime = endDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
-  };
+  }, [contract]);
 
   const basicInfoContent = useMemo(() => {
     if (!contract) return null;
@@ -275,7 +287,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [contract, t]);
+  }, [contract, t, calculateDaysRemaining, getContractTypeLabel, getStatusConfig]);
 
   const durationContent = useMemo(() => {
     if (!contract) return null;
@@ -327,7 +339,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [contract, t]);
+  }, [contract, t, getSalaryTypeLabel]);
 
   const salaryContent = useMemo(() => {
     if (!contract) return null;
@@ -364,7 +376,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [contract]);
+  }, [contract, formatCurrency]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [
@@ -409,7 +421,7 @@ const HrmContractDetailPage: React.FC = () => {
         },
       ],
     }),
-    [contract]
+    [contract, getContractTypeLabel, getStatusConfig]
   );
 
   return (

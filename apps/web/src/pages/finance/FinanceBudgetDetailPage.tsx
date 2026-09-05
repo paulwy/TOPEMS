@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
@@ -166,37 +166,43 @@ const FinanceBudgetDetailPage: React.FC = () => {
     return labels[category || ''] || t('finance.finance_budget_detail_page.other');
   };
 
-  const getBudgetTypeName = (type: string) => {
-    const labels: Record<string, string> = {
-      operating: t('finance.finance_budget_detail_page.text_e9e771'),
-      capital: t('finance.finance_budget_detail_page.text_2fc835'),
-      project: t('finance.finance_budget_detail_page.text_fa2986'),
-      marketing: t('finance.finance_budget_detail_page.text_fb0bc4'),
-      personnel: t('finance.finance_budget_detail_page.text_859388'),
-      office: t('finance.finance_budget_detail_page.text_976cad'),
-      development: t('finance.finance_budget_detail_page.text_6d566d'),
-      travel: t('finance.finance_budget_detail_page.text_2038cb'),
-      training: t('finance.finance_budget_detail_page.text_b11633'),
-      other: t('finance.finance_budget_detail_page.other'),
-    };
-    return labels[type] || type;
-  };
+  const getBudgetTypeName = useCallback(
+    (type: string) => {
+      const labels: Record<string, string> = {
+        operating: t('finance.finance_budget_detail_page.text_e9e771'),
+        capital: t('finance.finance_budget_detail_page.text_2fc835'),
+        project: t('finance.finance_budget_detail_page.text_fa2986'),
+        marketing: t('finance.finance_budget_detail_page.text_fb0bc4'),
+        personnel: t('finance.finance_budget_detail_page.text_859388'),
+        office: t('finance.finance_budget_detail_page.text_976cad'),
+        development: t('finance.finance_budget_detail_page.text_6d566d'),
+        travel: t('finance.finance_budget_detail_page.text_2038cb'),
+        training: t('finance.finance_budget_detail_page.text_b11633'),
+        other: t('finance.finance_budget_detail_page.other'),
+      };
+      return labels[type] || type;
+    },
+    [t]
+  );
 
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
-  const getStatusConfig = (status: string) => {
-    const config: Record<
-      string,
-      { color: 'success' | 'error' | 'default' | 'warning'; label: string }
-    > = {
-      active: { color: 'success', label: t('finance.finance_budget_detail_page.text_46e386') },
-      completed: { color: 'warning', label: t('finance.finance_budget_detail_page.completed') },
-      frozen: { color: 'default', label: t('finance.finance_budget_detail_page.text_92cff4') },
-      expired: { color: 'error', label: t('finance.finance_budget_detail_page.text_4d5ccd') },
-    };
-    return config[status] || config.active;
-  };
+  const getStatusConfig = useCallback(
+    (status: string) => {
+      const config: Record<
+        string,
+        { color: 'success' | 'error' | 'default' | 'warning'; label: string }
+      > = {
+        active: { color: 'success', label: t('finance.finance_budget_detail_page.text_46e386') },
+        completed: { color: 'warning', label: t('finance.finance_budget_detail_page.completed') },
+        frozen: { color: 'default', label: t('finance.finance_budget_detail_page.text_92cff4') },
+        expired: { color: 'error', label: t('finance.finance_budget_detail_page.text_4d5ccd') },
+      };
+      return config[status] || config.active;
+    },
+    [t]
+  );
 
   const handleExport = () => {
     success(t('finance.finance_budget_detail_page.export'));
@@ -342,7 +348,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [budget, t]);
+  }, [budget, t, getBudgetTypeName, getStatusConfig]);
 
   const itemsContent = useMemo(() => {
     if (!budget) return null;

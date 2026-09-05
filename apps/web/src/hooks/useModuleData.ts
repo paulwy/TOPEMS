@@ -68,6 +68,8 @@ export function useModuleData<T>({
     if (autoFetch) {
       refetch();
     }
+    // deps 为调用方透传的动态数组，spread 展开是设计意图（eslint 无法静态验证）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoFetch, refetch, ...deps]);
 
   return { data, loading, error, isAvailable, refetch };

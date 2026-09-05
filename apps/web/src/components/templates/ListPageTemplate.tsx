@@ -892,7 +892,7 @@ export function ListPageTemplate<
     return filters;
   }, [quickFilters, crud]);
   // crud 模式下的统一 fetch 构建（拼接搜索/筛选/排序参数，支持 transformParams 转换）
-  const buildCrudFetchParams = (): Record<string, unknown> => {
+  const buildCrudFetchParams = useCallback((): Record<string, unknown> => {
     if (!crud || !internalListStateResult) return {};
     const stateParams = {
       search: internalListStateResult.debouncedSearch,
@@ -928,7 +928,7 @@ export function ListPageTemplate<
     return mapListParamsToBackend(stateParams, {
       style: 'standard',
     });
-  };
+  }, [crud, internalListStateResult]);
   // 当启用 crud 时，用内部状态驱动列表查询
   useEffect(() => {
     if (!crud || !internalListStateResult) return;
@@ -941,6 +941,7 @@ export function ListPageTemplate<
     internalListStateResult?.sortOrder,
     internalListStateResult?.filters,
     internalListStateResult,
+    buildCrudFetchParams,
   ]);
   // crud 数据加载回调
   useEffect(() => {
@@ -2198,7 +2199,7 @@ export function ListPageTemplate<
       )
     );
     crud.onSelectionChange(effectiveSelectedIds, selectedRows);
-  }, [effectiveSelectedIds, crud, getRowId]);
+  }, [effectiveSelectedIds, crud, getRowId, data]);
   // 处理排序
   const handleSort = useCallback(
     (columnId: string) => {
