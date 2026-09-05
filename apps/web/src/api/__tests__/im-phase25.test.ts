@@ -137,6 +137,7 @@ describe('IM Document Message API Tests', () => {
     annotation_type: 'highlight',
     content: '重要数据',
     position: { x: 100, y: 200, width: 300, height: 20 },
+    // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
     color: '#FFD700',
     author_id: 'user-001',
     author_name: '张三',
@@ -208,6 +209,7 @@ describe('IM Document Message API Tests', () => {
     text: '机密文件',
     position: 'diagonal',
     opacity: 0.3,
+    // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
     color: '#FF0000',
     font_size: 24,
   };
@@ -323,6 +325,7 @@ describe('IM Document Message API Tests', () => {
         annotation_type: 'highlight',
         content: '重要数据',
         position: { x: 100, y: 200, width: 300, height: 20 },
+        // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
         color: '#FFD700',
       };
       apiClient.im.post.mockResolvedValue({ data: mockAnnotation });

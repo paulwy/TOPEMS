@@ -237,11 +237,13 @@ describe('V149 masterData Asset Catalog API bindings', () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataAssetCatalogApiV66.createTag({
         name: '核心数据',
+        // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
         color: '#FF6B6B',
         category: 'importance',
       });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v66/tags', {
         name: '核心数据',
+        // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
         color: '#FF6B6B',
         category: 'importance',
       });
@@ -257,7 +259,9 @@ describe('V149 masterData Asset Catalog API bindings', () => {
 
     it('should update tag', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
+      // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
       await dataAssetCatalogApiV66.updateTag('t-1', { color: '#4ECDC4' });
+      // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
       expect(mockClient.put).toHaveBeenCalledWith('/mdm-v66/tags/t-1', { color: '#4ECDC4' });
     });
 

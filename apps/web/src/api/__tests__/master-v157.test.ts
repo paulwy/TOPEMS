@@ -278,9 +278,11 @@ describe('V157 masterData Data Product Catalog API bindings', () => {
 
     it('should create tag', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
+      // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
       await dataProductCatalogApiV72.createTag({ name: 'PII', color: 'red' });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v72/tags', {
         name: 'PII',
+        // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
         color: 'red',
       });
     });

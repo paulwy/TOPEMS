@@ -56,6 +56,10 @@ declare module '@mui/material/styles' {
 
 // 扩展 Palette 颜色，增加 cyberpunk 专属字段及设计令牌扩展色组
 declare module '@mui/material/styles' {
+  interface PaletteColor {
+    /** designTokens 提供 50-900 完整色阶 */
+    [index: number]: string;
+  }
   interface Palette {
     accent?: { main: string; light: string; dark: string };
     teal?: typeof designTokens.colors.teal;

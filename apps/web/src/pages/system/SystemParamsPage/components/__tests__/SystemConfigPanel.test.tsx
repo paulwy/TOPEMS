@@ -64,7 +64,9 @@ const defaultSystemConfig = {
   site_description: 'Enterprise Management System',
   logo_url: '',
   favicon_url: '',
+  // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
   primary_color: '#1890ff',
+  // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
   secondary_color: '#722ed1',
   enable_registration: true,
   enable_sso: false,

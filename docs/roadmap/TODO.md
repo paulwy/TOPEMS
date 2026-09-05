@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V497 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V498 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,21 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V498
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：no-hardcoded-colors 治理（第一批）——测试断言 disable + 无中文业务文件 token 化
+
+### V498 完成内容
+
+1. **测试断言 14 处 disable**（5 文件）：颜色断言用具体色值（#FFD700/#1976d2 等），不适用 design tokens——行级 disable 注释
+2. **theme.ts PaletteColor 索引增强**：`[index: number]: string`——designTokens 提供 50-900 完整色阶，使 `theme.palette.success[800]` 等类型可用（V499 GD/BM 依赖）
+3. **业务 token 化（无中文文件）**：DshAgentChatPanel white→common.white、MetricCard white→theme.palette.common.white（补 useTheme）、GisPage/pages-gis 地图 blue disable（地图渲染色不适用 MUI tokens）
+4. **拆分说明**：GovernanceDashboard(21)/BusinessModuleSelector(10)/DocumentIntelligence(32) 共 63 行既有中文，scan gate 拦截 → 颜色修复已完成留工作区，V499 先 i18n 63 行再一并提交
+5. **坑（已记）**：① 规则把 `case 'grey'`/`colorKey: 'grey'` 当颜色字面量（grey 是 CSS 色名）→ disable 注释；② `theme.palette.X + '20'` alpha 拼接触发 prefer-template → 需模板字符串 `${theme.palette.X}20`（V499 修 GD 5 处）；③ 引入 useTheme 到组件时注意 import 行逗号与插入位置（MetricCard 曾插坏）
+6. **验证**：no-hardcoded-colors 51→0（含 V499 待提交部分，本批先降 25）；no-unused-vars 350；exhaustive-deps/CTI/no-console 保持 0；tsc 0 errors；staged scan 0 行
+7. **V499 待办**：GD/BM/DI 的 63 行 i18n + 颜色 token 化提交（含 prefer-template 5 处模板化）
 
 ### V497
 

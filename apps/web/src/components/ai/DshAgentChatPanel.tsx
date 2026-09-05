@@ -356,7 +356,7 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             bgcolor: isUser ? 'primary.main' : 'secondary.main',
-            color: 'white',
+            color: 'common.white',
             flexShrink: 0,
           }}
         >

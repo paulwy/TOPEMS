@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { useCountUp, countUpEasings } from '@/hooks/useCountUp';
 import { designTokens } from '@topems/tokens';
 
@@ -174,6 +174,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   sparklineData,
   animate = true,
 }) => {
+  const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -253,7 +254,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     if (React.isValidElement(icon)) {
       return React.cloneElement(icon as React.ReactElement<{ size?: number; color?: string }>, {
         size: 24,
-        color: 'white',
+        color: theme.palette.common.white,
       });
     }
     const IconComponent = icon as LucideIcon;
