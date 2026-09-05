@@ -10,6 +10,7 @@
  *       通过 typeof import('recharts') 从主入口获取类型。
  */
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- 全局声明文件须保持无 import 语句，typeof import() 为唯一取类型途径
 type _RechartsExports = typeof import('recharts');
 
 // ============================================================================

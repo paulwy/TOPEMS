@@ -2,6 +2,7 @@
  * LocationPage — Schema 驱动的库位管理页面
  */
 
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
@@ -16,9 +17,7 @@ import i18n from '@/i18n';
 
 const locationApiAdapter = createCrudPageAdapter(wmsApi.locations);
 const locationCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  locationApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
-    Record<string, unknown>
-  >
+  locationApiAdapter as unknown as CrudApiAdapter<Record<string, unknown>>
 );
 
 const LocationPage: React.FC = () => {

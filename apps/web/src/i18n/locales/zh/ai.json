@@ -3393,5 +3393,21 @@
   "ai.governance_dashboard.enable_auto_refresh": "开启自动刷新",
   "ai.governance_dashboard.refreshing": "刷新中",
   "ai.governance_dashboard.refresh": "刷新",
-  "ai.governance_dashboard.trend": "趋势: {{value}}"
+  "ai.governance_dashboard.trend": "趋势: {{value}}",
+  "ai.business_copilot.welcome_title": "欢迎使用业务 Copilot",
+  "ai.business_copilot.welcome_subtitle": "选择业务模块，开始智能对话",
+  "ai.business_copilot.header_title": "业务 Copilot 智能助手",
+  "ai.business_copilot.header_subtitle": "集成业务模块选择、智能表单、文档智能和治理仪表盘的一站式 AI 助手",
+  "ai.business_copilot.select_module": "选择业务模块",
+  "ai.business_copilot.session_info": "会话信息",
+  "ai.business_copilot.session_id": "会话 ID: {{id}}...",
+  "ai.business_copilot.session_messages": "消息数: {{count}}",
+  "ai.business_copilot.session_module": "当前模块: {{module}}",
+  "ai.business_copilot.clear_session": "清除会话",
+  "ai.business_copilot.no_session": "暂无会话",
+  "ai.business_copilot.quick_actions": "快捷操作",
+  "ai.business_copilot.smart_form_title": "智能表单 - {{name}}",
+  "ai.business_copilot.document_processing": "文档智能处理",
+  "ai.business_copilot.governance_dashboard": "AI 治理仪表盘",
+  "ai.business_copilot.refresh": "刷新"
 }

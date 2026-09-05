@@ -31,11 +31,14 @@ export function toCamelCase(str: string): string {
 }
 
 export function toSnakeCase(str: string): string {
-  return str.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase().replace(/\s+/g, '_');
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/\s+/g, '_');
 }
 
 export function pluralize(str: string): string {
-  return str.endsWith('s') ? str : str + 's';
+  return str.endsWith('s') ? str : `${str}s`;
 }
 
 export function singularize(str: string): string {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- 测试对象即 logger 本身，console 输出为被测行为 */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   createLogger,

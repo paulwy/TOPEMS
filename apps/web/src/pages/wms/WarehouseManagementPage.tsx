@@ -2,6 +2,7 @@
  * 仓库管理页面 — Schema 驱动的 CRUD 页面
  */
 
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { SchemaForm } from '@/components/templates/list/SchemaForm';
@@ -16,9 +17,7 @@ import i18n from '@/i18n';
 
 const warehouseApiAdapter = createCrudPageAdapter(wmsApi.warehouses);
 const warehouseCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  warehouseApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
-    Record<string, unknown>
-  >
+  warehouseApiAdapter as unknown as CrudApiAdapter<Record<string, unknown>>
 );
 
 const WarehouseManagementPage: React.FC = () => {

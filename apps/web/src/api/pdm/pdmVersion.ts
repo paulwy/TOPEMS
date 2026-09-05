@@ -1,3 +1,4 @@
+import type { ProductionStatistics } from './index';
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
@@ -45,8 +46,8 @@ export const pdmVersionApi = {
     return apiClient.pdm.delete<boolean>(`/versions/${id}`);
   },
 
-  getStatisticsById: (id: string): Promise<ApiResponse<import('./index').ProductionStatistics>> => {
-    return apiClient.pdm.get<import('./index').ProductionStatistics>(`/statistics/${id}`);
+  getStatisticsById: (id: string): Promise<ApiResponse<ProductionStatistics>> => {
+    return apiClient.pdm.get<ProductionStatistics>(`/statistics/${id}`);
   },
 };
 

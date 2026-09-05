@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V495 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V496 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,20 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V496
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：warn 级小类别清零——consistent-type-imports 20→0 / prefer-template 4→1 / no-console 43→0
+
+### V496 完成内容
+
+1. **consistent-type-imports 20→0（13 文件）**：全部为 `import()` 内联类型注解——批量改为顶部 `import type`（api/finance/report、api/pdm/changeNoticeAction|documentApproval|pdmVersion、api/unified-core/search、components/common/Avatar、pages/wms 5 页）；recharts.d.ts 为全局声明文件（设计约束无 import 语句）→ disable-next-line 注释说明
+2. **prefer-template 4→1**：codegen 1 处改模板字符串；DshAgentChatPanel 3 处因 hardcoded-precise gate 拆出（该文件另有 16 行硬编码中文待 i18n），V497 一并处理
+3. **no-console 43→0（4 文件）**：BusinessCopilotPage 5 行占位 console.log 删除（handler 参数改 `_` 前缀消新 unused）+ 16 处裸中文字面量 i18n 化（新增 32 key zh/en，过 hardcoded-precise gate）；tauriAuth 4 行 `[TauriAuth]` 调试日志 disable 注释；logger.test.ts 文件级 disable（被测对象即 logger）；CrmMobDbg.test 单行 disable
+4. **坑（已记）**：① `import()` 类型替换后可能与文件已有同名导入冲突（report.ts BalanceSheet 已绑定 ../../types/finance，与 ../erp/types 同名）→ TS2300 Duplicate identifier，需别名导入 `as ERPBalanceSheetType`；② 删除引用变量的 console.log 会产生新 no-unused-vars（参数未用 → `_` 前缀）；③ eslint --fix 会连带 prettier 改动，需限定 `--fix-type suggestion`
+5. **验证**：CTI/no-console 全 0、prefer-template 余 3（DshAgentChatPanel 待办）；no-unused-vars 355→351（回到基线，无净新增）；exhaustive-deps 保持 0；tsc 0 errors；prettier 全部通过；hardcoded-precise staged scan 0 行
+6. **剩余（warn 级大类别）**：no-unused-vars 351（224 文件）/ no-explicit-any 311（96 文件）/ no-hardcoded-colors 51 / filename-naming-convention 50 / naming-convention 27——V497 起按类别分版
 
 ### V495
 

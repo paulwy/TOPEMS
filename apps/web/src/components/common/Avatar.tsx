@@ -1,7 +1,7 @@
+import type { SxProps, Theme } from '@mui/material/styles';
 import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Avatar as MuiAvatar, Box, Typography, Badge, Tooltip } from '@mui/material';
-import type { SxProps, Theme } from '@mui/material';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 type AvatarStatus = 'online' | 'offline' | 'busy' | 'away';
@@ -148,13 +148,12 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
   return withStatus;
 };
 
-
 export interface AvatarGroupProps {
   avatars: Array<Omit<CustomAvatarProps, 'size'>>;
   max?: number;
   size?: AvatarSize;
   spacing?: number;
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
 }
 
 export const AvatarGroup: React.FC<AvatarGroupProps> = ({

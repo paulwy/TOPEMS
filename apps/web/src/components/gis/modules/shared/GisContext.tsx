@@ -1,5 +1,6 @@
 // modules/shared/GisContext.tsx
-import React, { createContext, useContext, type ReactNode } from 'react';
+import type React from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import type { MapModuleConfig } from '../MapModule/types';
 import type { TrackRecord } from '../TrackModule/types';
 import type { EvidenceRecord } from '../EvidenceModule/types';
@@ -86,7 +87,6 @@ type GisAction =
   | { type: 'SET_SHOW_DETAILS_PANEL'; payload: boolean }
   | { type: 'SET_SHOW_LAYER_PANEL'; payload: boolean }
   | { type: 'SET_SELECTED_ITEM'; payload: { item: unknown; show: boolean } };
-
 
 // Reducer
 export function gisReducer(state: GisState, action: GisAction): GisState {

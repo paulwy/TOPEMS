@@ -1,3 +1,4 @@
+import type { SearchResult } from '../shared';
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
@@ -8,7 +9,7 @@ export const unifiedSearchApi = {
     scope?: string;
     page?: number;
     pagesize?: number;
-  }): Promise<ApiResponse<import('../shared').SearchResult[]>> => {
+  }): Promise<ApiResponse<SearchResult[]>> => {
     return apiClient.core.get('/api/core/search', { params });
   },
 

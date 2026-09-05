@@ -1,3 +1,8 @@
+import type {
+  BalanceSheet as ERPBalanceSheetType,
+  IncomeStatement as ERPIncomeStatementType,
+  CashFlowStatement as ERPCashFlowStatementType,
+} from '../erp/types';
 import { apiClient, downloadBlob } from '../client';
 import type {
   BalanceSheet,
@@ -143,7 +148,9 @@ export const reportApi = {
     return apiClient.finance.get('/reports/aging-analysis');
   },
 
-  getVoucherStatistics: (params?: { period?: string }): Promise<ApiResponse<Record<string, any>>> => {
+  getVoucherStatistics: (params?: {
+    period?: string;
+  }): Promise<ApiResponse<Record<string, any>>> => {
     return apiClient.finance.get('/reports/voucher-statistics', {
       params,
     });
@@ -181,9 +188,9 @@ export const reportApi = {
  */
 type ReportParams = { period?: string; [key: string]: unknown };
 
-type ERPBalanceSheet = import('../erp/types').BalanceSheet;
-type ERPIncomeStatement = import('../erp/types').IncomeStatement;
-type ERPCashFlowStatement = import('../erp/types').CashFlowStatement;
+type ERPBalanceSheet = ERPBalanceSheetType;
+type ERPIncomeStatement = ERPIncomeStatementType;
+type ERPCashFlowStatement = ERPCashFlowStatementType;
 
 export const financeReportApi = {
   balanceSheet: (params: ReportParams) =>

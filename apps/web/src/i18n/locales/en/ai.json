@@ -5953,5 +5953,21 @@
   "ai.governance_dashboard.enable_auto_refresh": "Enable auto-refresh",
   "ai.governance_dashboard.refreshing": "Refreshing",
   "ai.governance_dashboard.refresh": "Refresh",
-  "ai.governance_dashboard.trend": "Trend: {{value}}"
+  "ai.governance_dashboard.trend": "Trend: {{value}}",
+  "ai.business_copilot.welcome_title": "Welcome to Business Copilot",
+  "ai.business_copilot.welcome_subtitle": "Select a business module to start a conversation",
+  "ai.business_copilot.header_title": "Business Copilot Assistant",
+  "ai.business_copilot.header_subtitle": "One-stop AI assistant integrating business module selection, smart forms, document intelligence and governance dashboards",
+  "ai.business_copilot.select_module": "Select business module",
+  "ai.business_copilot.session_info": "Session Info",
+  "ai.business_copilot.session_id": "Session ID: {{id}}...",
+  "ai.business_copilot.session_messages": "Messages: {{count}}",
+  "ai.business_copilot.session_module": "Current module: {{module}}",
+  "ai.business_copilot.clear_session": "Clear session",
+  "ai.business_copilot.no_session": "No sessions",
+  "ai.business_copilot.quick_actions": "Quick actions",
+  "ai.business_copilot.smart_form_title": "Smart Form - {{name}}",
+  "ai.business_copilot.document_processing": "Document Intelligence",
+  "ai.business_copilot.governance_dashboard": "AI Governance Dashboard",
+  "ai.business_copilot.refresh": "Refresh"
 }

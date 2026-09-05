@@ -214,7 +214,7 @@ const createSampleSummary = (t: (k: string) => string): DocumentSummary => ({
     { keyword: t('ai.business_copilot.keyword.revenue'), weight: 0.95, frequency: 15 },
     { keyword: t('ai.business_copilot.keyword.profit'), weight: 0.88, frequency: 12 },
     { keyword: t('ai.business_copilot.keyword.finance'), weight: 0.75, frequency: 8 },
-    { keyword: t('ai.business_copilot.keyword.growth'), weight: 0.70, frequency: 20 },
+    { keyword: t('ai.business_copilot.keyword.growth'), weight: 0.7, frequency: 20 },
     { keyword: t('ai.business_copilot.keyword.fy2024'), weight: 0.65, frequency: 10 },
   ],
   generated_at: '2024-12-31T10:05:00Z',
@@ -280,32 +280,27 @@ const BusinessCopilotPage: React.FC = () => {
   };
 
   // 处理表单提交
-  const handleFormSubmit = (values: Record<string, unknown>) => {
-    console.log('表单提交:', values);
+  const handleFormSubmit = (_values: Record<string, unknown>) => {
     // 实际应用中调用 API 提交表单
   };
 
   // 处理表单草稿保存
-  const handleFormSaveDraft = (values: Record<string, unknown>) => {
-    console.log('保存草稿:', values);
+  const handleFormSaveDraft = (_values: Record<string, unknown>) => {
     // 实际应用中调用 API 保存草稿
   };
 
   // 处理文档上传
-  const handleDocumentUpload = (file: File) => {
-    console.log('上传文档:', file.name);
+  const handleDocumentUpload = (_file: File) => {
     // 实际应用中调用 API 上传文档
   };
 
   // 处理文档摘要生成
-  const handleGenerateSummary = (type: string) => {
-    console.log('生成摘要:', type);
+  const handleGenerateSummary = (_type: string) => {
     // 实际应用中调用 API 生成摘要
   };
 
   // 处理文档解析
   const handleParseDocument = () => {
-    console.log('解析文档');
     // 实际应用中调用 API 解析文档
   };
 
@@ -313,13 +308,28 @@ const BusinessCopilotPage: React.FC = () => {
   const renderMessages = () => {
     if (messages.length === 0) {
       return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'text.secondary' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: 'text.secondary',
+          }}
+        >
           <SmartToyIcon sx={{ fontSize: 64, mb: 2, opacity: 0.3 }} />
-          <Typography variant="h6" gutterBottom>
-            欢迎使用业务 Copilot
+          <Typography
+            variant='h6'
+            gutterBottom
+          >
+            {t('ai.business_copilot.welcome_title')}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            选择业务模块，开始智能对话
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {t('ai.business_copilot.welcome_subtitle')}
           </Typography>
         </Box>
       );
@@ -328,19 +338,30 @@ const BusinessCopilotPage: React.FC = () => {
     return (
       <List sx={{ width: '100%' }}>
         {messages.map((msg) => (
-          <ListItem key={msg.message_id} sx={{ alignItems: 'flex-start', mb: 2 }}>
-            <Avatar sx={{ mr: 2, bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main' }}>
+          <ListItem
+            key={msg.message_id}
+            sx={{ alignItems: 'flex-start', mb: 2 }}
+          >
+            <Avatar
+              sx={{ mr: 2, bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main' }}
+            >
               {msg.role === 'user' ? <PersonIcon /> : <SmartToyIcon />}
             </Avatar>
             <ListItemText
               primary={
-                <Typography variant="subtitle2" color="text.secondary">
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                >
                   {msg.role === 'user' ? t('ai.business_copilot.me') : 'Copilot'}
                 </Typography>
               }
               secondary={
                 <Box>
-                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ whiteSpace: 'pre-wrap' }}
+                  >
                     {msg.content}
                   </Typography>
                   {msg.tool_calls && msg.tool_calls.length > 0 && (
@@ -349,8 +370,8 @@ const BusinessCopilotPage: React.FC = () => {
                         <Chip
                           key={call.call_id}
                           label={`${call.tool_name}: ${call.status}`}
-                          size="small"
-                          variant="outlined"
+                          size='small'
+                          variant='outlined'
                           sx={{ mr: 1, mb: 1 }}
                         />
                       ))}
@@ -369,31 +390,55 @@ const BusinessCopilotPage: React.FC = () => {
   const tabs = [
     { value: 'chat' as TabType, label: t('ai.business_copilot.tab.chat'), icon: <SmartToyIcon /> },
     { value: 'form' as TabType, label: t('ai.business_copilot.tab.form'), icon: <BuildIcon /> },
-    { value: 'document' as TabType, label: t('ai.business_copilot.tab.document'), icon: <DescriptionIcon /> },
-    { value: 'governance' as TabType, label: t('ai.business_copilot.tab.governance'), icon: <DashboardIcon /> },
+    {
+      value: 'document' as TabType,
+      label: t('ai.business_copilot.tab.document'),
+      icon: <DescriptionIcon />,
+    },
+    {
+      value: 'governance' as TabType,
+      label: t('ai.business_copilot.tab.governance'),
+      icon: <DashboardIcon />,
+    },
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Container
+      maxWidth='xl'
+      sx={{ py: 3 }}
+    >
       {/* 页面标题 */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <BusinessIcon color="primary" sx={{ fontSize: 40 }} />
-          业务 Copilot 智能助手
+        <Typography
+          variant='h4'
+          gutterBottom
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <BusinessIcon
+            color='primary'
+            sx={{ fontSize: 40 }}
+          />
+          {t('ai.business_copilot.header_title')}
         </Typography>
-        <Typography variant="body1" color="text.secondary">
-          集成业务模块选择、智能表单、文档智能和治理仪表盘的一站式 AI 助手
+        <Typography
+          variant='body1'
+          color='text.secondary'
+        >
+          {t('ai.business_copilot.header_subtitle')}
         </Typography>
       </Box>
 
       {/* 错误提示 */}
       {error && (
         <Alert
-          severity="error"
+          severity='error'
           sx={{ mb: 2 }}
           action={
-            <IconButton size="small" onClick={clearError}>
-              <ClearIcon fontSize="small" />
+            <IconButton
+              size='small'
+              onClick={clearError}
+            >
+              <ClearIcon fontSize='small' />
             </IconButton>
           }
         >
@@ -403,9 +448,13 @@ const BusinessCopilotPage: React.FC = () => {
 
       {/* 业务模块选择器 */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <BusinessIcon fontSize="small" />
-          选择业务模块
+        <Typography
+          variant='h6'
+          gutterBottom
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <BusinessIcon fontSize='small' />
+          {t('ai.business_copilot.select_module')}
         </Typography>
         <BusinessModuleSelector
           selectedModule={currentModule}
@@ -414,12 +463,20 @@ const BusinessCopilotPage: React.FC = () => {
         {moduleConfig && (
           <Box sx={{ mt: 2 }}>
             <Divider sx={{ my: 1 }} />
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {moduleConfig.description}
             </Typography>
             <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {moduleConfig.supported_intents.map((intent) => (
-                <Chip key={intent} label={intent} size="small" variant="outlined" />
+                <Chip
+                  key={intent}
+                  label={intent}
+                  size='small'
+                  variant='outlined'
+                />
               ))}
             </Box>
           </Box>
@@ -431,8 +488,8 @@ const BusinessCopilotPage: React.FC = () => {
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
-          variant="scrollable"
-          scrollButtons="auto"
+          variant='scrollable'
+          scrollButtons='auto'
         >
           {tabs.map((tab) => (
             <Tab
@@ -440,7 +497,7 @@ const BusinessCopilotPage: React.FC = () => {
               value={tab.value}
               label={tab.label}
               icon={tab.icon}
-              iconPosition="start"
+              iconPosition='start'
             />
           ))}
         </Tabs>
@@ -450,13 +507,27 @@ const BusinessCopilotPage: React.FC = () => {
       <Box>
         {/* 智能对话 */}
         {activeTab === 'chat' && (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
+          <Grid
+            container
+            spacing={3}
+          >
+            <Grid
+              item
+              xs={12}
+              md={8}
+            >
               <Paper sx={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
                 {/* 消息列表 */}
                 <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
                   {isLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100%',
+                      }}
+                    >
                       <CircularProgress />
                     </Box>
                   ) : (
@@ -467,7 +538,11 @@ const BusinessCopilotPage: React.FC = () => {
                 {/* 输入区域 */}
                 <Divider />
                 <Box sx={{ p: 2 }}>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-end' }}>
+                  <Stack
+                    direction='row'
+                    spacing={1}
+                    sx={{ alignItems: 'flex-end' }}
+                  >
                     <TextField
                       fullWidth
                       multiline
@@ -479,8 +554,8 @@ const BusinessCopilotPage: React.FC = () => {
                       disabled={isSending}
                     />
                     <Button
-                      variant="contained"
-                      color="primary"
+                      variant='contained'
+                      color='primary'
                       onClick={handleSend}
                       disabled={!inputValue.trim() || isSending}
                       startIcon={isSending ? <CircularProgress size={20} /> : <SendIcon />}
@@ -493,39 +568,63 @@ const BusinessCopilotPage: React.FC = () => {
             </Grid>
 
             {/* 侧边栏：快捷操作和会话信息 */}
-            <Grid item xs={12} md={4}>
+            <Grid
+              item
+              xs={12}
+              md={4}
+            >
               <Stack spacing={2}>
                 {/* 会话信息 */}
                 <Card>
                   <CardContent>
-                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <SmartToyIcon fontSize="small" />
-                      会话信息
+                    <Typography
+                      variant='h6'
+                      gutterBottom
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                    >
+                      <SmartToyIcon fontSize='small' />
+                      {t('ai.business_copilot.session_info')}
                     </Typography>
                     {session ? (
                       <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          会话 ID: {session.session_id.slice(0, 8)}...
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {t('ai.business_copilot.session_id', {
+                            id: session.session_id.slice(0, 8),
+                          })}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          消息数: {session.conversation_history.length}
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {t('ai.business_copilot.session_messages', {
+                            count: session.conversation_history.length,
+                          })}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          当前模块: {session.module}
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {t('ai.business_copilot.session_module', { module: session.module })}
                         </Typography>
                         <Button
-                          size="small"
-                          color="error"
+                          size='small'
+                          color='error'
                           startIcon={<ClearIcon />}
                           onClick={clearSession}
                           sx={{ mt: 1 }}
                         >
-                          清除会话
+                          {t('ai.business_copilot.clear_session')}
                         </Button>
                       </Box>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        暂无会话
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {t('ai.business_copilot.no_session')}
                       </Typography>
                     )}
                   </CardContent>
@@ -535,15 +634,18 @@ const BusinessCopilotPage: React.FC = () => {
                 {moduleConfig && moduleConfig.quick_actions.length > 0 && (
                   <Card>
                     <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        快捷操作
+                      <Typography
+                        variant='h6'
+                        gutterBottom
+                      >
+                        {t('ai.business_copilot.quick_actions')}
                       </Typography>
                       <Stack spacing={1}>
                         {moduleConfig.quick_actions.slice(0, 5).map((action) => (
                           <Button
                             key={action.action_id}
-                            variant="outlined"
-                            size="small"
+                            variant='outlined'
+                            size='small'
                             fullWidth
                             onClick={() => send(action.preset_prompt)}
                           >
@@ -562,9 +664,13 @@ const BusinessCopilotPage: React.FC = () => {
         {/* 智能表单 */}
         {activeTab === 'form' && (
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <Typography
+              variant='h6'
+              gutterBottom
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}
+            >
               <BuildIcon />
-              智能表单 - {sampleForm.name}
+              {t('ai.business_copilot.smart_form_title', { name: sampleForm.name })}
             </Typography>
             <SmartFormRenderer
               form={sampleForm}
@@ -577,9 +683,13 @@ const BusinessCopilotPage: React.FC = () => {
         {/* 文档智能 */}
         {activeTab === 'document' && (
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <Typography
+              variant='h6'
+              gutterBottom
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}
+            >
               <DescriptionIcon />
-              文档智能处理
+              {t('ai.business_copilot.document_processing')}
             </Typography>
             <DocumentIntelligence
               document={sampleDocument}
@@ -594,58 +704,65 @@ const BusinessCopilotPage: React.FC = () => {
         {/* 治理仪表盘 */}
         {activeTab === 'governance' && (
           <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+            >
+              <Typography
+                variant='h6'
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
                 <DashboardIcon />
-                AI 治理仪表盘
+                {t('ai.business_copilot.governance_dashboard')}
               </Typography>
               <Button
                 startIcon={<RefreshIcon />}
                 onClick={() => window.location.reload()}
               >
-                刷新
+                {t('ai.business_copilot.refresh')}
               </Button>
             </Box>
-            <GovernanceDashboard data={{
-              overall_score: 0,
-              governance_level: 'N/A',
-              key_metrics: {
-                total_requests: 0,
-                successful_requests: 0,
-                failed_requests: 0,
-                success_rate: 0,
-                total_tokens: 0,
-                average_response_ms: 0,
-                p95_response_ms: 0,
-                active_users: 0,
-                active_agents: 0,
-                total_tool_calls: 0,
-                cache_hit_rate: 0,
-              },
-              risk_assessment: {
-                overall_risk_level: 'low',
-                risk_score: 0,
-                high_risk_items: [],
-              },
-              compliance_status: {
-                overall_compliance_rate: 0,
-                total_checks: 0,
-                passed_checks: 0,
-                failed_checks: 0,
-              },
-              cost_analysis: {
-                total_cost: 0,
-                currency: 'USD',
-                llm_cost: 0,
-                tool_cost: 0,
-                budget_usage: {
-                  total_budget: 0,
-                  used_amount: 0,
-                  usage_percent: 0,
-                  is_over_budget: false,
+            <GovernanceDashboard
+              data={{
+                overall_score: 0,
+                governance_level: 'N/A',
+                key_metrics: {
+                  total_requests: 0,
+                  successful_requests: 0,
+                  failed_requests: 0,
+                  success_rate: 0,
+                  total_tokens: 0,
+                  average_response_ms: 0,
+                  p95_response_ms: 0,
+                  active_users: 0,
+                  active_agents: 0,
+                  total_tool_calls: 0,
+                  cache_hit_rate: 0,
                 },
-              },
-            }} />
+                risk_assessment: {
+                  overall_risk_level: 'low',
+                  risk_score: 0,
+                  high_risk_items: [],
+                },
+                compliance_status: {
+                  overall_compliance_rate: 0,
+                  total_checks: 0,
+                  passed_checks: 0,
+                  failed_checks: 0,
+                },
+                cost_analysis: {
+                  total_cost: 0,
+                  currency: 'USD',
+                  llm_cost: 0,
+                  tool_cost: 0,
+                  budget_usage: {
+                    total_budget: 0,
+                    used_amount: 0,
+                    usage_percent: 0,
+                    is_over_budget: false,
+                  },
+                },
+              }}
+            />
           </Paper>
         )}
       </Box>

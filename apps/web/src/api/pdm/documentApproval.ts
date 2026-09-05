@@ -1,3 +1,4 @@
+import type { PdmDocument } from './document';
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
@@ -17,12 +18,7 @@ export const documentApprovalApi = {
     pagesize?: number;
     type?: string;
   }): Promise<
-    ApiResponse<
-      Pick<
-        import('./document').PdmDocument,
-        'id' | 'document_no' | 'name' | 'type' | 'status' | 'created_at'
-      >
-    >
+    ApiResponse<Pick<PdmDocument, 'id' | 'document_no' | 'name' | 'type' | 'status' | 'created_at'>>
   > => {
     return apiClient.pdm.get('/documents/pending-approval', { params });
   },
@@ -34,7 +30,7 @@ export const documentApprovalApi = {
   approveDocument: (
     documentId: string,
     data?: { comment?: string }
-  ): Promise<ApiResponse<import('./document').PdmDocument>> => {
+  ): Promise<ApiResponse<PdmDocument>> => {
     return apiClient.pdm.post(`/documents/${documentId}/approve`, data || {});
   },
 };

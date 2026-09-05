@@ -2,6 +2,7 @@
  * OutboundOrderPage — Schema 驱动的出库订单管理页面
  */
 
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
@@ -16,9 +17,7 @@ import i18n from '@/i18n';
 
 const outboundOrderApiAdapter = createCrudPageAdapter(wmsApi.outboundOrders);
 const outboundOrderCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  outboundOrderApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
-    Record<string, unknown>
-  >
+  outboundOrderApiAdapter as unknown as CrudApiAdapter<Record<string, unknown>>
 );
 
 const OutboundOrderPage: React.FC = () => {

@@ -5,6 +5,7 @@
  * 列表列、表单字段、详情展示、行操作全部由 inboundOrderSchema 驱动。
  */
 
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { wmsApi } from '@/api/wms';
 import i18n from '@/i18n';
@@ -19,9 +20,7 @@ import type { EntitySchema } from '@/schema';
 
 const inboundOrderApiAdapter = createCrudPageAdapter(wmsApi.inboundOrders);
 const inboundOrderCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  inboundOrderApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
-    Record<string, unknown>
-  >
+  inboundOrderApiAdapter as unknown as CrudApiAdapter<Record<string, unknown>>
 );
 
 const InboundOrderPage: React.FC = () => {
