@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V510 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V511 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
+> **V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -75,11 +75,11 @@
 
 **环境评估（阻碍项）**：
 - **RLS 受限用户连接切换（L90）与方案 B（L88）**：本机仅 5432 postgres 运行中，**5433 实例未启动**——切换前置（5433 DATABASE_URL → topems_app + 全服务回归）依赖 5433 环境，**当前环境不具备**，未执行（高风险生产变更不贸然触发）。待 5433 环境就绪后按 L90 计划推进。
-- **vitest 单测环境（MODULE_NOT_FOUND）**：根因 = apps/web 无 package-lock.json + `workspace:*` 依赖使 `npm install` 触发 **npm arborist EUNSUPPORTEDPROTOCOL**（npm 10.9.8/11 均复现，log 显示 @topems/* 已正确映射 file: 后仍报错）——npm 生态 bug，未修复；**备选 pnpm 9 可解析但会全量重装 node_modules（结构切换，影响现有工具链）**——待用户决策后实施。
+- **vitest 单测环境（MODULE_NOT_FOUND）**：✅ **已修复（V511，用户决策=pnpm 重装）**——根因 = apps/web 无 package-lock.json + `workspace:*` 依赖使 `npm install` 触发 **npm arborist EUNSUPPORTEDPROTOCOL**（npm 10.9.8/11 均复现，npm 生态 bug）；改用 `cd apps/web && pnpm add -D vitest@4.1.9` 成功，unit 全量 **3588/3588 绿（117 文件）**。顺带修复 sseClient 多 chunk 边界提前 dispatch 真实 bug（SSE-UT-004/005）、清理 12 个引用已删实现的死测试、moduleThemes 测试期望对齐 i18n key。
 
-**验证**：git status 干净（仅 `scripts/start-local.sh` 未跟踪，历史遗留未动）；`.gitignore` 清理后无 untracked 现形；V509 提交已推送 origin/main（61 commits）。
+**验证**：git status 干净（仅 `scripts/start-local.sh` 未跟踪，历史遗留未动）；`.gitignore` 清理后无 untracked 现形；V509 提交已推送 origin/main（61 commits）；tsc 0 / eslint 0 / unit 3588/3588 全绿。
 
-**提交链**：V510 主提交 `39ac0f98f`（TODO 更新随本版）。
+**提交链**：V510 主提交 `39ac0f98f`（TODO 更新随本版）；V511 `fab66c9c5`（unit 全绿 + sseClient 修复 + 死测试清理 + pnpm-lock）。
 
 ---
 
