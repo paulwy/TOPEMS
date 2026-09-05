@@ -98,7 +98,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
         groups[group].push(field);
       });
     return groups;
-  }, [form.fields]);
+  }, [form.fields, t]);
 
   const validateField = (field: FormFieldDefinition, value: unknown): string | null => {
     if (field.required && (value === undefined || value === null || value === '')) {

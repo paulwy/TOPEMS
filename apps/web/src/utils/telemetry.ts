@@ -1,9 +1,9 @@
 import { logger } from './logger';
-import type { SpanProcessor } from '@opentelemetry/sdk-trace-web';
 import {
   ConsoleSpanExporter,
   BatchSpanProcessor,
   WebTracerProvider,
+  type SpanProcessor,
 } from '@opentelemetry/sdk-trace-web';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { ZoneContextManager } from '@opentelemetry/context-zone';
