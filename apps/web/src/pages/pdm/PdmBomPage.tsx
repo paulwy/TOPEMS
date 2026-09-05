@@ -126,7 +126,7 @@ export default function PdmBomPage() {
         });
       },
     }),
-    [queryClient, selectedProduct, t]
+    [queryClient, t]
   );
 
   const headerContent = useCallback(

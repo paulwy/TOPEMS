@@ -226,7 +226,7 @@ const TaxHeader: React.FC = () => {
       { key: 'owed_amount', title: i18n.t('finance.finance_tax_page.amount_2') },
       { key: 'status', title: i18n.t('finance.finance_tax_page.status_1') },
     ],
-    [t]
+    []
   );
 
   return (

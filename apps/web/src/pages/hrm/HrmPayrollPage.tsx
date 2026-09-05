@@ -209,7 +209,7 @@ const HrmPayrollPage: React.FC = () => {
         onClick: (row: Record<string, unknown>) => payMutation.mutate(row.id as string),
       },
     ],
-    [t, calculateMutation, payMutation]
+    [calculateMutation, payMutation]
   );
 
   const formatCurrency = (amount: number) => {

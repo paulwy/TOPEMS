@@ -254,7 +254,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         <MaintenanceStatsCard />
       </Box>
     );
-  }, [instrument, theme]);
+  }, [instrument]);
   if (loadingInstrument) {
     return (
       <Box

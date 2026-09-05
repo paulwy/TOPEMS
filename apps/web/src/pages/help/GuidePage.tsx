@@ -248,7 +248,6 @@ export const GuidePage: React.FC = () => {
       guides.length,
       totalProgress,
       theme.palette.primary.main,
-      t,
     ]
   );
 
@@ -434,7 +433,7 @@ export const GuidePage: React.FC = () => {
         })}
       </Box>
     ),
-    [getCategoryInfo, theme, i18n.language]
+    [getCategoryInfo, theme]
   );
 
   const footerContent = useMemo(

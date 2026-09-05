@@ -68,7 +68,10 @@ interface UseBusinessCopilotReturn extends UseBusinessCopilotState {
   /** 创建会话 */
   createNewSession: (module: BusinessModuleType) => Promise<CopilotSession | null>;
   /** 发送消息 */
-  send: (user_input: string, options?: Partial<SendMessageRequest>) => Promise<CopilotResponse | null>;
+  send: (
+    user_input: string,
+    options?: Partial<SendMessageRequest>
+  ) => Promise<CopilotResponse | null>;
   /** 识别意图 */
   recognize: (text: string) => Promise<IntentRecognitionResult | null>;
   /** 切换模块 */
@@ -135,80 +138,86 @@ export function useBusinessCopilot(
   }, []);
 
   /** 发送消息 */
-  const send = useCallback(async (
-    user_input: string,
-    options?: Partial<SendMessageRequest>
-  ) => {
-    setState((s) => ({ ...s, isSending: true, error: null }));
-    try {
-      const sessionId = state.session?.session_id;
-      if (!sessionId) {
-        throw new Error('No active session');
-      }
+  const send = useCallback(
+    async (user_input: string, options?: Partial<SendMessageRequest>) => {
+      setState((s) => ({ ...s, isSending: true, error: null }));
+      try {
+        const sessionId = state.session?.session_id;
+        if (!sessionId) {
+          throw new Error('No active session');
+        }
 
-      const request: SendMessageRequest = {
-        module: state.currentModule,
-        session_id: sessionId,
-        user_input,
-        ...options,
-      };
-
-      const response = await sendMessage(request);
-      if (response.data) {
-        // 添加用户消息
-        const userMessage: ConversationMessage = {
-          message_id: `msg_${Date.now()}_user`,
-          role: 'user',
-          content: user_input,
-          timestamp: new Date().toISOString(),
+        const request: SendMessageRequest = {
+          module: state.currentModule,
+          session_id: sessionId,
+          user_input,
+          ...options,
         };
 
-        // 添加助手消息
-        const assistantMessage: ConversationMessage = {
-          message_id: `msg_${Date.now()}_assistant`,
-          role: 'assistant',
-          content: response.data.reply,
-          timestamp: new Date().toISOString(),
-          tool_calls: response.data.tool_calls,
-        };
+        const response = await sendMessage(request);
+        if (response.data) {
+          // 添加用户消息
+          const userMessage: ConversationMessage = {
+            message_id: `msg_${Date.now()}_user`,
+            role: 'user',
+            content: user_input,
+            timestamp: new Date().toISOString(),
+          };
 
-        setState((s) => ({
-          ...s,
-          messages: [...s.messages, userMessage, assistantMessage],
-          lastResponse: response.data!,
-          isSending: false,
-        }));
-        return response.data;
+          // 添加助手消息
+          const assistantMessage: ConversationMessage = {
+            message_id: `msg_${Date.now()}_assistant`,
+            role: 'assistant',
+            content: response.data.reply,
+            timestamp: new Date().toISOString(),
+            tool_calls: response.data.tool_calls,
+          };
+
+          setState((s) => ({
+            ...s,
+            messages: [...s.messages, userMessage, assistantMessage],
+            lastResponse: response.data!,
+            isSending: false,
+          }));
+          return response.data;
+        }
+        throw new Error('Failed to send message');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setState((s) => ({ ...s, error: message, isSending: false }));
+        return null;
       }
-      throw new Error('Failed to send message');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setState((s) => ({ ...s, error: message, isSending: false }));
-      return null;
-    }
-  }, [state.session, state.currentModule, state.selectedRecords]);
+    },
+    [state.session, state.currentModule]
+  );
 
   /** 识别意图 */
-  const recognize = useCallback(async (text: string) => {
-    try {
-      const response = await recognizeIntent(text, state.currentModule);
-      if (response.data) {
-        setState((s) => ({ ...s, intentResult: response.data! }));
-        return response.data;
+  const recognize = useCallback(
+    async (text: string) => {
+      try {
+        const response = await recognizeIntent(text, state.currentModule);
+        if (response.data) {
+          setState((s) => ({ ...s, intentResult: response.data! }));
+          return response.data;
+        }
+        return null;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setState((s) => ({ ...s, error: message }));
+        return null;
       }
-      return null;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setState((s) => ({ ...s, error: message }));
-      return null;
-    }
-  }, [state.currentModule]);
+    },
+    [state.currentModule]
+  );
 
   /** 切换模块 */
-  const switchModule = useCallback(async (module: BusinessModuleType) => {
-    setState((s) => ({ ...s, currentModule: module, session: null, messages: [] }));
-    await createNewSession(module);
-  }, [createNewSession]);
+  const switchModule = useCallback(
+    async (module: BusinessModuleType) => {
+      setState((s) => ({ ...s, currentModule: module, session: null, messages: [] }));
+      await createNewSession(module);
+    },
+    [createNewSession]
+  );
 
   /** 加载模块配置 */
   const loadModuleConfig = useCallback(async (module: BusinessModuleType) => {
@@ -243,20 +252,23 @@ export function useBusinessCopilot(
   }, []);
 
   /** 搜索 FAQ */
-  const searchFaq = useCallback(async (query: string) => {
-    try {
-      const response = await searchFAQ(state.currentModule, query);
-      if (response.data) {
-        setState((s) => ({ ...s, faqResults: response.data! }));
-        return response.data;
+  const searchFaq = useCallback(
+    async (query: string) => {
+      try {
+        const response = await searchFAQ(state.currentModule, query);
+        if (response.data) {
+          setState((s) => ({ ...s, faqResults: response.data! }));
+          return response.data;
+        }
+        return [];
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setState((s) => ({ ...s, error: message }));
+        return [];
       }
-      return [];
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setState((s) => ({ ...s, error: message }));
-      return [];
-    }
-  }, [state.currentModule]);
+    },
+    [state.currentModule]
+  );
 
   /** 更新选中记录 */
   const updateRecords = useCallback((records: SelectedRecord[]) => {

@@ -176,7 +176,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
         return prev + 1;
       });
     }, 800);
-  }, [selectedDocument, uploadedFile, addNotification, t]);
+  }, [selectedDocument, uploadedFile, addNotification]);
 
   const handleAskQuestion = () => {
     if (!question.trim()) return;

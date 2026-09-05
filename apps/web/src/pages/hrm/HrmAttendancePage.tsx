@@ -119,7 +119,7 @@ const HrmAttendancePage: React.FC = () => {
         onClick: (row: Record<string, unknown>) => handleLeaveAction(row.id as string, 'reject'),
       },
     ],
-    [handleLeaveAction, t]
+    [handleLeaveAction]
   );
 
   const statisticsContent = useMemo(

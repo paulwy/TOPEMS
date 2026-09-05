@@ -257,7 +257,7 @@ const MonitorNotificationPage: React.FC = () => {
         notifySuccess(i18n.t('monitor.monitor_notification_page.k19'));
       },
     }),
-    [notifySuccess, notifyError]
+    [notifySuccess]
   );
   const customColumns = useMemo<ColumnDef[]>(
     () => [

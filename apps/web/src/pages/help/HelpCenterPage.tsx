@@ -175,7 +175,7 @@ export const HelpCenterPage: React.FC = () => {
         message: i18n.t('help.help_center_page.faq_40'),
       });
     }
-  }, [faqsQuery.isError, faqsQuery.error, apiLogger, addNotification]);
+  }, [faqsQuery.isError, faqsQuery.error, addNotification]);
 
   React.useEffect(() => {
     if (guidesQuery.isError) {
@@ -186,7 +186,7 @@ export const HelpCenterPage: React.FC = () => {
         message: i18n.t('help.help_center_page.k42'),
       });
     }
-  }, [guidesQuery.isError, guidesQuery.error, apiLogger, addNotification]);
+  }, [guidesQuery.isError, guidesQuery.error, addNotification]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

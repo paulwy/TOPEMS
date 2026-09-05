@@ -129,7 +129,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     const found = topItems.find((item) => item.code === currentModule);
     if (found?.labelKey) return i18n.t(found.labelKey);
     return found?.label || currentModule;
-  }, [currentModule, i18n.language]);
+  }, [currentModule]);
 
   const [groupedModules, setGroupedModules] = useState<Record<string, NavItem[]>>({});
   const [suiteOrder, setSuiteOrder] = useState<string[]>([]);
@@ -206,7 +206,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         return next;
       });
     return translate(raw);
-  }, [currentModule, checkPermission, i18n.language]);
+  }, [currentModule, checkPermission]);
 
   return (
     <Paper

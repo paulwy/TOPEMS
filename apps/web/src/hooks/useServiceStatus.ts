@@ -62,7 +62,7 @@ export const useServiceStatus = (autoRefreshInterval: number = PLUGIN_TIMEOUT.DE
         port: cfg.port,
         name: i18n.t(cfg.nameKey),
       })),
-    [i18n.language]
+    []
   );
 
   const checkServiceStatus = useCallback(async (serviceKey: string): Promise<boolean> => {

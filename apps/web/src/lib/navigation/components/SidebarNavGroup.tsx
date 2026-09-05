@@ -222,7 +222,7 @@ export default function SidebarNavGroup({ grouped, collapsed }: SidebarNavGroupP
       };
     }
     return result;
-  }, [i18n.language]);
+  }, []);
 
   const sortedGroups = Object.entries(translatedNavGroups)
     .filter(([key]) => grouped[key as NavGroup]?.length > 0)

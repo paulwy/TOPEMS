@@ -90,13 +90,13 @@ export const FaqPage: React.FC = () => {
         message: i18n.t('help.faq_page.faq_7'),
       });
     }
-  }, [faqsQuery.isError, faqsQuery.error, apiLogger, addNotification]);
+  }, [faqsQuery.isError, faqsQuery.error, addNotification]);
 
   useEffect(() => {
     if (categoriesQuery.isError) {
       apiLogger.error(i18n.t('pages.faq_page.faq_1'), categoriesQuery.error);
     }
-  }, [categoriesQuery.isError, categoriesQuery.error, apiLogger]);
+  }, [categoriesQuery.isError, categoriesQuery.error]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

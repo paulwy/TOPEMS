@@ -38,7 +38,7 @@ const PluginMarketplaceFilters: React.FC<PluginMarketplaceFiltersProps> = ({
   onRefresh,
 }) => {
   const { t } = useTranslation();
-  const suites = useMemo(() => SUITES(), [t]);
+  const suites = useMemo(() => SUITES(), []);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 6, mb: 8 }}>

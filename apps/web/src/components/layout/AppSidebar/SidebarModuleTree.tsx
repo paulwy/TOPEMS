@@ -58,7 +58,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
       };
     }
     return result;
-  }, [i18n.language]);
+  }, []);
 
   const translatedSuiteGroups = useMemo(() => {
     const result: Record<string, { label: string; emoji: string; icon: string; order: number }> =
@@ -70,7 +70,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
       };
     }
     return result;
-  }, [i18n.language]);
+  }, []);
 
   const collapsedModuleGroups = useMemo(() => {
     if (!collapsedModuleCode) return [] as Array<[NavGroup, NavItem[]]>;

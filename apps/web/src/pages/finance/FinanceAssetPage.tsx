@@ -208,7 +208,7 @@ const FinanceAssetPage: React.FC = () => {
         onClick: (row) => setDisableTarget(row as unknown as Account),
       },
     ],
-    [t]
+    []
   );
 
   const headerContent = useCallback(

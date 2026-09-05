@@ -141,7 +141,7 @@ const FinanceCostPage: React.FC = () => {
         onClick: (row) => setAnalysisTarget(row as unknown as Account),
       },
     ],
-    [t]
+    []
   );
 
   const headerContent = useCallback(

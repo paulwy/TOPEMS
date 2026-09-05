@@ -214,7 +214,7 @@ const BudgetManagementPage: React.FC = () => {
         confirmMessage: i18n.t('finance.budget_management_page.confirm_1'),
       },
     ],
-    [t, handleBatchUpdateStatus, handleBatchDelete]
+    [handleBatchUpdateStatus, handleBatchDelete]
   );
 
   const schema = useMemo<EntitySchema>(() => {

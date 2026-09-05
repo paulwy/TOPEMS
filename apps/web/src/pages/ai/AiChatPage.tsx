@@ -239,7 +239,7 @@ export const AiChatPage: React.FC = () => {
         type: 'success',
       });
     }, 1500);
-  }, [inputValue, activeTab, addNotification, t]);
+  }, [inputValue, activeTab, addNotification]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
