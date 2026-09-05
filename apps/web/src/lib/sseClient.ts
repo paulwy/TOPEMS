@@ -129,6 +129,7 @@ export class SSEClient {
 
     const decoder = new TextDecoder();
     let buffer = '';
+    let event: SSEEvent = { data: '' };
 
     try {
       while (true) {
@@ -143,8 +144,6 @@ export class SSEClient {
         // 按换行符分割事件
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
-
-        let event: SSEEvent = { data: '' };
 
         for (const line of lines) {
           if (line === '') {
@@ -189,11 +188,11 @@ export class SSEClient {
               break;
           }
         }
+      }
 
-        // 处理缓冲区中可能的最后一个事件
-        if (event.data !== '' || event.event) {
-          this.dispatchEvent(event);
-        }
+      // 流结束时处理缓冲区中可能的最后一个事件（无空行结尾）
+      if (event.data !== '' || event.event) {
+        this.dispatchEvent(event);
       }
     } catch (error) {
       if (this.closed) {

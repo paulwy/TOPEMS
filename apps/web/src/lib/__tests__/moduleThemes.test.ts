@@ -64,7 +64,7 @@ describe('lib/moduleThemes', () => {
       const theme = getModuleTheme('iam');
       expect(theme).toBeDefined();
       expect(theme?.code).toBe('iam');
-      expect(theme?.name).toBe('系统管理');
+      expect(theme?.name).toBe('module_themes.iam');
     });
 
     it('is case-insensitive', () => {
