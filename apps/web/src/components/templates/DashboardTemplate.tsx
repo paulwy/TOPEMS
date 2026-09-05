@@ -112,10 +112,16 @@ export interface ChartConfig {
   emptyText?: string;
 }
 
+export interface DataTableColumn {
+  id: string;
+  label: string;
+  render?: (value: unknown, row: Record<string, unknown>, index: number) => React.ReactNode;
+}
+
 export interface DataTableConfig {
   title: string;
-  columns: any[];
-  data: any[];
+  columns: DataTableColumn[];
+  data: Array<Record<string, unknown>>;
   loading?: boolean;
   searchable?: boolean;
 }
@@ -967,8 +973,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
         id: c.id,
         label: String(c.label ?? c.id),
         render: c.render
-          ? (_value: unknown, row: Record<string, unknown>, index: number) =>
-              c.render!(row as any, index)
+          ? (_value: unknown, row: Record<string, unknown>, index: number) => c.render!(row, index)
           : undefined,
       }));
     } else {

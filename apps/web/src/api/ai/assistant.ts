@@ -50,7 +50,7 @@ export interface FlowAssistantResponse {
 }
 
 // 异常预测
-interface AnomalyPoint {
+export interface AnomalyPoint {
   timestamp: string;
   value: number;
   expected?: number;

@@ -563,7 +563,7 @@ export function MasterDetailPageTemplate<T>({
                         const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
                         return primaryColumn.render!(
                           primaryColumn.field ? safeItem[primaryColumn.field!] : undefined,
-                          item ?? ({} as any),
+                          item ?? ({} as unknown as T),
                           index
                         );
                       } catch (e) {
@@ -594,7 +594,7 @@ export function MasterDetailPageTemplate<T>({
                         const safeItem = (item ?? {}) as unknown as Record<string, unknown>;
                         return secondaryColumn.render!(
                           secondaryColumn.field ? safeItem[secondaryColumn.field!] : undefined,
-                          item ?? ({} as any),
+                          item ?? ({} as unknown as T),
                           index
                         );
                       } catch (e) {

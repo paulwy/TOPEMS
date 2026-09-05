@@ -6,7 +6,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import type { RowAction } from '@/components/templates/list/types';
 import { testSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
-import type { UpdateTestCaseRequest } from '@/api/rd';
+import type { UpdateTestCaseRequest, CreateTestCaseRequest } from '@/api/rd';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -14,9 +14,9 @@ import i18n from '@/i18n';
 
 const testApiAdapter = createCrudPageAdapter(
   {
-    list: (params?: any) => rdApi.listTests(params),
-    create: (data: any) => rdApi.createTest(data),
-    update: (id: string, data: any) => rdApi.updateTest(id, data),
+    list: (params?) => rdApi.listTests(params),
+    create: (data: CreateTestCaseRequest) => rdApi.createTest(data),
+    update: (id, data) => rdApi.updateTest(id, data),
     delete: (id: string) => rdApi.deleteTest(id),
   },
   { itemsField: 'test_cases' }

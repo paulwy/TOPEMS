@@ -4,6 +4,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { hazardSchema } from '@/schemas/ehs/hazard';
 import { ehsApi } from '@/api/ehs';
+import type { CreateSafetyHazardRequest } from '@/api/ehs';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
@@ -145,9 +146,9 @@ const HazardStats: React.FC = () => {
 };
 
 const hazardApiAdapter = createCrudPageAdapter({
-  list: (params?: any) => ehsApi.listHazards(params),
-  create: (data: any) => ehsApi.createHazard(data),
-  update: (id: string, data: any) => ehsApi.updateHazard(id, data),
+  list: (params?) => ehsApi.listHazards(params),
+  create: (data: CreateSafetyHazardRequest) => ehsApi.createHazard(data),
+  update: (id, data) => ehsApi.updateHazard(id, data),
   delete: (id: string) => ehsApi.deleteHazard(id),
 });
 

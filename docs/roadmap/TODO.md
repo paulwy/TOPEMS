@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V502 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V503 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,23 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V503
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：no-explicit-any 治理（第四批——组件/模板/API 层清零）
+
+### V503 完成内容
+
+1. **组件层**：BarChart 5（tooltipFormatter unknown 化 + as never 兜底）、AIAnomalyAssistant 4（复用 API 已有 AnomalyPredictResponse/AnomalyPoint——导出 AnomalyPoint）、SmartFormRenderer 4（default_value/validateField/handleFieldChange unknown + ChangeEvent 事件）
+2. **hooks/工具**：useRateLimitConfig 4（useMutation 泛型具体化 ApiResponse<RateLimitConfig>）、batchOperation 4（泛型默认 unknown）、lazyImport/routes 7（**关键坑**：ComponentType<unknown> 破坏 React.lazy 约束——具体组件无法赋给 unknown 泛型，回退 any + disable 带理由）
+3. **模板**：DashboardTemplate 3（DataTableColumn 接口 + data Record 化）、MasterDetailPageTemplate 3（{} as unknown as T）
+4. **pages**：BIVisualizationPage 3（as any 去掉——icon 本是 ReactNode）、CompliancePage 3（StatusItem 接口）、HazardPage/RsProjectListPage/RsTestPage 9（adapter 省略注解→显式 CreateXXXRequest 类型）
+5. **gis 3 文件 6 处**：business/device/storage get<any> → RawPaginatedResponse + 重建返回对象 + as unknown as 双层断言
+6. **新增 i18n**：routes/utils 2 key（lazy_load_failed/lazy_refresh_retry，scan gate 拦出）
+7. **验证**：no-explicit-any 143→87；tsc 0；scan 0 行
+8. **坑（已记）**：① ComponentType<unknown> 与 React.lazy 不兼容（具体组件 props 逆变）——此 any 为设计性，disable 而非 unknown；② createCrudPageAdapter 省略参数注解会推断 Partial<unknown>——需显式 CreateXXXRequest；③ gis map 模式在 device.ts 的 adapted.items.map 需匿名对象类型（DevicePoint 无 position 字段）
+9. **V504 待办**：剩余 87 处（每文件 1-2 处，广布 60+ 文件：api/iam/user、api/pdm、LazyChart、FormSelect、CrudPage、WizardBuilder、PluginLoader、RemoteLoader、dependency-governor、cross-framework、aps 分析页、MailPage 等）
 
 ### V502
 

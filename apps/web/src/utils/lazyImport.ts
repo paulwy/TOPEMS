@@ -11,6 +11,7 @@ const logger = createLogger('lazyImport');
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.lazy 约束需 ComponentType<any>（unknown 泛型使具体组件赋值失败）
 interface LazyImportOptions<T extends ComponentType<any>> {
   factory: () => Promise<{ default: T }>;
   moduleName?: string;
@@ -21,15 +22,18 @@ interface LazyImportOptions<T extends ComponentType<any>> {
   fallback?: ComponentType;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 同上：React.lazy 泛型约束
 export function lazyImport<T extends ComponentType<any>>(
   options: LazyImportOptions<T>
 ): LazyExoticComponent<T>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 同上：React.lazy 泛型约束
 export function lazyImport<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
   moduleName?: string
 ): LazyExoticComponent<T>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 同上：React.lazy 泛型约束
 export function lazyImport<T extends ComponentType<any>>(
   factoryOrOptions: (() => Promise<{ default: T }>) | LazyImportOptions<T>,
   moduleName?: string

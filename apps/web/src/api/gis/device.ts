@@ -7,6 +7,7 @@ import type {
   PaginatedResponse,
   TrackQueryParams,
   DeviceLocationRecord,
+  RawPaginatedResponse,
 } from './types';
 import { adaptResponse } from './utils';
 
@@ -20,23 +21,29 @@ export const deviceApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(`/device-locations?${queryParams.toString()}`);
-    if (response.success && response.data) {
-      const adapted = adaptResponse<any>(response.data, 'device_locations');
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
+      `/device-locations?${queryParams.toString()}`
+    );
+    if (rawResponse.success && rawResponse.data) {
+      const adapted = adaptResponse<DevicePoint>(rawResponse.data, 'device_locations');
       adapted.items = adapted.items.map(
         (item: {
           position?: { lat?: number; lng?: number };
           latitude?: number;
           longitude?: number;
-        }) => ({
-          ...item,
-          latitude: item.position?.lat ?? item.latitude ?? 0,
-          longitude: item.position?.lng ?? item.longitude ?? 0,
-        })
+        }) =>
+          ({
+            ...item,
+            latitude: item.position?.lat ?? item.latitude ?? 0,
+            longitude: item.position?.lng ?? item.longitude ?? 0,
+          }) as DevicePoint
       );
-      response.data = adapted;
+      return {
+        ...rawResponse,
+        data: adapted,
+      } as unknown as ApiResponse<PaginatedResponse<DevicePoint>>;
     }
-    return response as ApiResponse<PaginatedResponse<DevicePoint>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<DevicePoint>>;
   },
 
   getDevicePoint: async (id: string): Promise<ApiResponse<DevicePoint>> => {

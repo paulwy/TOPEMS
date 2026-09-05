@@ -1,5 +1,6 @@
 import type { ComponentType, LazyExoticComponent, ReactElement } from 'react';
 import React from 'react';
+import i18n from '@/i18n';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
@@ -7,9 +8,11 @@ const RETRY_DELAY_MS = 1000;
 // 内联简单错误组件，避免导入 ErrorPage 导致循环依赖
 // 使用 React.createElement 避免在 .ts 文件中使用 JSX
 const SimpleErrorPage: React.FC = () =>
-  React.createElement('div', { style: { padding: 24, textAlign: 'center' } },
-    React.createElement('h2', null, '组件加载失败'),
-    React.createElement('p', null, '请刷新页面重试')
+  React.createElement(
+    'div',
+    { style: { padding: 24, textAlign: 'center' } },
+    React.createElement('h2', null, i18n.t('routes.utils.lazy_load_failed')),
+    React.createElement('p', null, i18n.t('routes.utils.lazy_refresh_retry'))
   );
 
 // 简单日志函数，避免导入 logger 导致循环依赖
@@ -17,6 +20,7 @@ const logError = (message: string, ...args: unknown[]) => {
   console.error(message, ...args);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.lazy 约束需 ComponentType<any>
 export function lazyWithRetry<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
   moduleName?: string
@@ -47,7 +51,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
 }
 
 export const createSafeLazy = () => {
-  return <T extends ComponentType<any>>(
+  return <T extends ComponentType<any>>( // eslint-disable-line @typescript-eslint/no-explicit-any -- 同上
     factory: () => Promise<{ default: T }>,
     moduleName?: string
   ): LazyExoticComponent<T> => {
@@ -57,10 +61,7 @@ export const createSafeLazy = () => {
         return result;
       } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logError(
-          `[Safe Lazy] Failed to load component ${moduleName || 'unknown'}:`,
-          err.message
-        );
+        logError(`[Safe Lazy] Failed to load component ${moduleName || 'unknown'}:`, err.message);
         return { default: SimpleErrorPage as unknown as T };
       }
     });
@@ -69,7 +70,7 @@ export const createSafeLazy = () => {
 
 export interface RouteConfig {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<any>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- 同上
   requiredPermissions?: string[];
   module?: string;
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';

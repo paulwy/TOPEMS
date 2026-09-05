@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import type { ApiResponse } from '@/api/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Shield, Globe, Users, Server } from 'lucide-react';
@@ -89,7 +90,7 @@ interface UseRateLimitConfigReturn {
   antiReplayQuery: ReturnType<typeof useQuery<AntiReplayConfig>>;
   saveMutation: ReturnType<typeof useMutation<unknown, unknown, RateLimitConfig>>;
   saveAntiReplayMutation: ReturnType<typeof useMutation<unknown, unknown, AntiReplayConfig>>;
-  resetMutation: ReturnType<typeof useMutation<any, any, any, any>>;
+  resetMutation: ReturnType<typeof useMutation<ApiResponse<RateLimitConfig>, Error, void, unknown>>;
   updateRule: (
     key: keyof Pick<
       RateLimitConfig,

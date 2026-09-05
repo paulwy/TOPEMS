@@ -14,5 +14,9 @@
       "k4": "Customer Relationship Management",
       "k5": "Dashboard"
     }
+  },
+  "utils": {
+    "lazy_load_failed": "Failed to load component",
+    "lazy_refresh_retry": "Please refresh and retry"
   }
 }

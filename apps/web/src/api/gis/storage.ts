@@ -8,6 +8,7 @@ import type {
   LocationPhoto,
   ListQueryParams,
   PaginatedResponse,
+  RawPaginatedResponse,
 } from './types';
 import { adaptResponse } from './utils';
 
@@ -70,11 +71,16 @@ export const storageApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.gis.get<any>(`/location-photos?${queryParams.toString()}`);
-    if (response.success && response.data) {
-      response.data = adaptResponse<EvidenceRecord>(response.data, 'location_photos');
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
+      `/location-photos?${queryParams.toString()}`
+    );
+    if (rawResponse.success && rawResponse.data) {
+      return {
+        ...rawResponse,
+        data: adaptResponse<EvidenceRecord>(rawResponse.data, 'location_photos'),
+      } as unknown as ApiResponse<PaginatedResponse<EvidenceRecord>>;
     }
-    return response as ApiResponse<PaginatedResponse<EvidenceRecord>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<EvidenceRecord>>;
   },
 
   getEvidenceRecord: async (id: string): Promise<ApiResponse<LocationPhoto>> => {

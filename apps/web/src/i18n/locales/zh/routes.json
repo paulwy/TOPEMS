@@ -4,5 +4,9 @@
   "routes.app_routes.k2": "或者访问其他模块：",
   "routes.app_routes.k3": "人力资源管理",
   "routes.app_routes.k4": "客户关系管理",
-  "routes.app_routes.k5": "仪表盘"
+  "routes.app_routes.k5": "仪表盘",
+  "utils": {
+    "lazy_load_failed": "组件加载失败",
+    "lazy_refresh_retry": "请刷新页面重试"
+  }
 }

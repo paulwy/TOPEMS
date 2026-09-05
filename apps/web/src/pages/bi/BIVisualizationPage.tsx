@@ -431,7 +431,7 @@ const BIVisualizationPage = () => {
                   >
                     {viewMode === 'list' ? (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={{ color: 'primary.main' }}>{comp.icon as any}</Box>
+                        <Box sx={{ color: 'primary.main' }}>{comp.icon}</Box>
                         <Box>
                           <Typography
                             variant='body2'
@@ -449,7 +449,7 @@ const BIVisualizationPage = () => {
                       </Box>
                     ) : (
                       <Box sx={{ textAlign: 'center' }}>
-                        <Box sx={{ color: 'primary.main', mb: 0.5 }}>{comp.icon as any}</Box>
+                        <Box sx={{ color: 'primary.main', mb: 0.5 }}>{comp.icon}</Box>
                         <Typography variant='caption'>{comp.name}</Typography>
                       </Box>
                     )}
@@ -554,7 +554,7 @@ const BIVisualizationPage = () => {
                         }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          {getComponentIcon(comp.type) as any}
+                          {getComponentIcon(comp.type)}
                           <Typography variant='caption'>
                             {(comp.config.title as string) || comp.type}
                           </Typography>

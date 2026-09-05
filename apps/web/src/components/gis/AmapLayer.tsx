@@ -13,13 +13,15 @@ interface AmapLayerProps {
 }
 
 interface AmapLayerRef {
-  getMap: () => any;
+  getMap: () => unknown;
 }
 
 const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
   ({ devicePoints, storageLocations, center = [116.397428, 39.90923], zoom = 10 }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- AMap 实例来自无类型 JS SDK
     const mapRef = useRef<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- AMap.Marker 无类型声明
     const markersRef = useRef<Map<string, any>>(new Map());
 
     useImperativeHandle(ref, () => ({

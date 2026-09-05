@@ -25,10 +25,10 @@ interface BarChartProps {
   animate?: boolean;
   cellColors?: string[];
   tooltipFormatter?: (
-    value: any,
-    name: any,
-    props: any
-  ) => React.ReactNode | [React.ReactNode, any] | void;
+    value: unknown,
+    name: unknown,
+    props: unknown
+  ) => React.ReactNode | [React.ReactNode, unknown] | void;
 }
 
 export const BarChartComponent: React.FC<BarChartProps> = ({
@@ -76,7 +76,7 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
               borderRadius: 8,
               padding: 12,
             }}
-            {...(tooltipFormatter ? { formatter: tooltipFormatter as any } : {})}
+            {...(tooltipFormatter ? { formatter: tooltipFormatter as never } : {})}
           />
           {series.map((item) => (
             <Bar

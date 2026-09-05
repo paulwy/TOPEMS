@@ -9,20 +9,20 @@ interface EventListeners {
 export class EventBus {
   private listeners: EventListeners = {};
 
-  on<T = any>(eventName: string, handler: EventHandler<T>): void {
+  on<T = unknown>(eventName: string, handler: EventHandler<T>): void {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = new Set();
     }
     this.listeners[eventName].add(handler);
   }
 
-  off<T = any>(eventName: string, handler: EventHandler<T>): void {
+  off<T = unknown>(eventName: string, handler: EventHandler<T>): void {
     if (this.listeners[eventName]) {
       this.listeners[eventName].delete(handler);
     }
   }
 
-  emit<T = any>(eventName: string, data?: T): void {
+  emit<T = unknown>(eventName: string, data?: T): void {
     if (this.listeners[eventName]) {
       this.listeners[eventName].forEach((handler) => {
         try {
@@ -34,7 +34,7 @@ export class EventBus {
     }
   }
 
-  once<T = any>(eventName: string, handler: EventHandler<T>): void {
+  once<T = unknown>(eventName: string, handler: EventHandler<T>): void {
     const onceHandler: EventHandler<T> = (data) => {
       handler(data);
       this.off(eventName, onceHandler);

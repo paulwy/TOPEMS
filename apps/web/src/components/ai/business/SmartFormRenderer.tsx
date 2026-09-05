@@ -30,7 +30,7 @@ export interface FormFieldDefinition {
   field_type: string;
   description?: string;
   placeholder?: string;
-  default_value?: any;
+  default_value?: unknown;
   required?: boolean;
   read_only?: boolean;
   hidden?: boolean;
@@ -100,7 +100,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
     return groups;
   }, [form.fields]);
 
-  const validateField = (field: FormFieldDefinition, value: any): string | null => {
+  const validateField = (field: FormFieldDefinition, value: unknown): string | null => {
     if (field.required && (value === undefined || value === null || value === '')) {
       return t('ai.smart_form_renderer.error_required', { label: field.label });
     }
@@ -163,7 +163,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
     return null;
   };
 
-  const handleFieldChange = (fieldId: string, value: any) => {
+  const handleFieldChange = (fieldId: string, value: unknown) => {
     const newValues = { ...values, [fieldId]: value };
     setValues(newValues);
     onValuesChange?.(newValues);
@@ -222,7 +222,8 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
       error: !!error,
       helperText: error || field.description,
       value,
-      onChange: (e: any) => handleFieldChange(field.field_id, e.target.value),
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        handleFieldChange(field.field_id, e.target.value),
     };
 
     switch (field.field_type) {

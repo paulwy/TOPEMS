@@ -6,14 +6,15 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import type { RowAction } from '@/components/templates/list/types';
 import { projectSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
+import type { CreateProjectRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import i18n from '@/i18n';
 
 const projectApiAdapter = createCrudPageAdapter(
   {
-    list: (params?: any) => rdApi.listProjects(params),
-    create: (data: any) => rdApi.createProject(data),
-    update: (id: string, data: any) => rdApi.updateProject(id, data),
+    list: (params?) => rdApi.listProjects(params),
+    create: (data: CreateProjectRequest) => rdApi.createProject(data),
+    update: (id, data) => rdApi.updateProject(id, data),
     delete: (id: string) => rdApi.deleteProject(id),
   },
   { itemsField: 'projects' }

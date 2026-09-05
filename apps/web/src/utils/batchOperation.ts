@@ -1,6 +1,6 @@
 import { apiLogger } from './logger';
 
-interface BatchOperationOptions<T = any> {
+interface BatchOperationOptions<T = unknown> {
   concurrency?: number;
   onProgress?: (processed: number, total: number) => void;
   onComplete?: (successCount: number, failureCount: number, failures: T[]) => void;
@@ -18,7 +18,7 @@ interface BatchOperationOptions<T = any> {
   consistencyCheck?: (item: T, original: T) => boolean;
 }
 
-export interface BatchOperationResult<T = any> {
+export interface BatchOperationResult<T = unknown> {
   successCount: number;
   failureCount: number;
   cancelledCount: number;
@@ -56,7 +56,7 @@ const DEFAULTRetryableErrors = (error: unknown): boolean => {
   return false;
 };
 
-const executeWithRetry = async <T = any>(
+const executeWithRetry = async <T = unknown>(
   item: T,
   index: number,
   signal: AbortSignal | undefined,
@@ -111,7 +111,7 @@ const executeWithRetry = async <T = any>(
   return { success: false, cancelled: false, item, retried: attempts > 0, error: lastError };
 };
 
-export async function batchOperation<T = any>(
+export async function batchOperation<T = unknown>(
   items: T[],
   operation: (item: T, index: number, signal?: AbortSignal) => Promise<boolean | void>,
   options: BatchOperationOptions<T> = {}

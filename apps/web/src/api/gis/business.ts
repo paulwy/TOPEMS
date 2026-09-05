@@ -5,6 +5,7 @@ import type {
   CreateBusinessLocationRequest,
   ListQueryParams,
   PaginatedResponse,
+  RawPaginatedResponse,
 } from './types';
 import { adaptResponse } from './utils';
 
@@ -18,11 +19,16 @@ export const businessApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(`/business-locations?${queryParams.toString()}`);
-    if (response.success && response.data) {
-      response.data = adaptResponse<BusinessLocation>(response.data, 'business_locations');
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
+      `/business-locations?${queryParams.toString()}`
+    );
+    if (rawResponse.success && rawResponse.data) {
+      return {
+        ...rawResponse,
+        data: adaptResponse<BusinessLocation>(rawResponse.data, 'business_locations'),
+      } as unknown as ApiResponse<PaginatedResponse<BusinessLocation>>;
     }
-    return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },
 
   getBusinessLocation: async (id: string): Promise<ApiResponse<BusinessLocation>> => {
@@ -37,13 +43,16 @@ export const businessApi = {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
-    const response = await apiClient.gis.get<any>(
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
       `/business-locations/type/${type}?${queryParams.toString()}`
     );
-    if (response.success && response.data) {
-      response.data = adaptResponse<BusinessLocation>(response.data, 'business_locations');
+    if (rawResponse.success && rawResponse.data) {
+      return {
+        ...rawResponse,
+        data: adaptResponse<BusinessLocation>(rawResponse.data, 'business_locations'),
+      } as unknown as ApiResponse<PaginatedResponse<BusinessLocation>>;
     }
-    return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },
 
   createBusinessLocation: async (

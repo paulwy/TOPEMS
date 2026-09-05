@@ -14,6 +14,10 @@ import i18n from '@/i18n';
 
 const ct = designTokens.colors;
 
+interface StatusItem {
+  status: string;
+}
+
 function extractListData<T>(response: unknown): T[] {
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
@@ -165,9 +169,9 @@ const CompliancePage: React.FC = () => {
   });
 
   const stats: ComplianceStats = useMemo(() => {
-    const regulations = extractListData<any>(regulationsResp);
-    const assessments = extractListData<any>(assessmentsResp);
-    const permits = extractListData<any>(permitsResp);
+    const regulations = extractListData<StatusItem>(regulationsResp);
+    const assessments = extractListData<StatusItem>(assessmentsResp);
+    const permits = extractListData<StatusItem>(permitsResp);
 
     return {
       totalRegulations: regulations.length,
