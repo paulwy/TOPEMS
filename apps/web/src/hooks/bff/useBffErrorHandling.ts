@@ -406,7 +406,7 @@ export function useBffFallback<T>(
   // deps 变化时重新执行
   useEffect(() => {
     void execute();
-  }, deps);
+  }, [execute, ...deps]);
 
   return {
     data,

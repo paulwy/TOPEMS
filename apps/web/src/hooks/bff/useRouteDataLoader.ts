@@ -370,12 +370,12 @@ export function useRouteDataLoader<T extends Record<string, RouteDataLoader>>(
     } else if (state.status === 'idle') {
       void executeLoaders();
     }
-  }, [loaders, params, executeLoaders]);
+  }, [loaders, params, executeLoaders, state.status]);
 
   // 首次加载
   useEffect(() => {
     void executeLoaders();
-  }, []);
+  }, [executeLoaders]);
 
   const retry = useCallback(
     (key: string) => {

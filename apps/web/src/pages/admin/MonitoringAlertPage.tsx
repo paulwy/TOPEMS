@@ -602,7 +602,7 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
         ),
       },
     ],
-    [isRuleMutating]
+    [isRuleMutating, handleToggleRule]
   );
 
   const alertFilters = useMemo<FilterConfig[]>(

@@ -275,7 +275,7 @@ const PerformanceTestPage: React.FC = () => {
       clsObserver.disconnect();
       clearInterval(ttiCheckTimer);
     };
-  }, []);
+  }, [ttiTime]);
 
   const metrics = [
     {

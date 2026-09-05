@@ -117,7 +117,7 @@ export function useUrlState<T>(
       if (JSON.stringify(prev) === JSON.stringify(parsed)) return prev;
       return parsed;
     });
-  }, [searchParams.toString()]);
+  }, [searchParams.toString(), defaultValue, key, searchParams]);
 
   return [state, setStateAndUrl];
 }

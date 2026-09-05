@@ -322,7 +322,7 @@ export function AICodeGenerator({
       setSelectedCode(null);
       setCustomCode('');
     }
-  }, [isOpen, context.entityType, existingCodes]);
+  }, [isOpen, context.entityType, existingCodes, context]);
 
   const handleRegenerate = () => {
     setRegenerating(true);

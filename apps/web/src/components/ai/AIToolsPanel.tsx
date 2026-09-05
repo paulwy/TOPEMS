@@ -191,7 +191,7 @@ const DateCalculator: React.FC = () => {
       setStartDate(date.toISOString().split('T')[0]);
     },
 
-    [startDate]
+    [startDate, today]
   );
 
   const setToToday = useCallback(() => {

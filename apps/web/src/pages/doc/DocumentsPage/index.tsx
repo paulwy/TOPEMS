@@ -358,7 +358,7 @@ const DocumentsPage: React.FC = () => {
       },
       danger: true,
     });
-  }, [selectedFiles, addNotification, deleteMutation]);
+  }, [selectedFiles, addNotification, deleteMutation, openConfirmDialog]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

@@ -1610,7 +1610,7 @@ export function ListPageTemplate<
         />
       </Box>
     );
-  }, [crud, formMode, formData, handleAutoFormSubmit]);
+  }, [crud, formMode, formData, handleAutoFormSubmit, formErrors]);
   // 最终表单内容：renderForm 优先级高于 formFields
   const formContent = useMemo(() => {
     if (crud?.renderForm) {
@@ -1857,7 +1857,7 @@ export function ListPageTemplate<
       });
       return result;
     });
-  }, [columnConfigResult.visibleColumnIds]);
+  }, [columnConfigResult.visibleColumnIds, columnConfig, urlColSyncEnabled]);
   // 内部 columnConfig 变化时同步回 useColumnConfig（写 URL 和 localStorage）
   useEffect(() => {
     if (!urlColSyncEnabled) return;
@@ -1865,7 +1865,7 @@ export function ListPageTemplate<
     if (ids.join(',') !== columnConfigResult.visibleColumnIds.join(',')) {
       columnConfigResult.reorderColumns(ids);
     }
-  }, [columnConfig]);
+  }, [columnConfig, columnConfigResult, urlColSyncEnabled]);
   // 列配置持久化
   useEffect(() => {
     if (persistColumnConfig && !urlColSyncEnabled) {
@@ -2198,7 +2198,7 @@ export function ListPageTemplate<
       )
     );
     crud.onSelectionChange(effectiveSelectedIds, selectedRows);
-  }, [effectiveSelectedIds]);
+  }, [effectiveSelectedIds, crud, getRowId]);
   // 处理排序
   const handleSort = useCallback(
     (columnId: string) => {

@@ -66,7 +66,7 @@ const NotificationCenter: React.FC = () => {
         message: i18n.t('pages.notification_center.k1'),
       });
     }
-  }, [isError, error]);
+  }, [isError, error, addNotification]);
 
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => markAsRead(id),

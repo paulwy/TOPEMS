@@ -51,7 +51,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
     } else {
       loadDepartments();
     }
-  }, [value.orgId, loadDepartments]);
+  }, [value.orgId, loadDepartments, value]);
 
   useEffect(() => {
     if (value.departmentId) {
@@ -60,7 +60,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
     } else {
       loadEmployees();
     }
-  }, [value.departmentId, loadEmployees]);
+  }, [value.departmentId, loadEmployees, value]);
 
   const filteredDepartments = useMemo(() => {
     if (!value.orgId) return departments;

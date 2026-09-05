@@ -465,7 +465,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, selectedNodeId, handleDuplicateNode]);
+  }, [mode, selectedNodeId, handleDuplicateNode, handleDeleteNode]);
 
   const handleCanvasScroll = useCallback(() => {
     const vp = canvasViewportRef.current;

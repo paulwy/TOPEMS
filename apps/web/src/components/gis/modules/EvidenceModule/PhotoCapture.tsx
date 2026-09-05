@@ -57,7 +57,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [facingMode]);
+  }, [facingMode, stream]);
 
   // Switch camera
   const switchCamera = useCallback(() => {

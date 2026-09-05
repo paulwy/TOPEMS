@@ -475,7 +475,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         ),
       },
     ];
-  }, [details]);
+  }, [details, theme.palette.grey, theme.palette.text.secondary]);
   return (
     <PageContainer
       padding={false}

@@ -107,7 +107,7 @@ export function useNotificationWebSocket(
     return () => {
       unsubscribe?.();
     };
-  }, [userId, enabled]);
+  }, [userId, enabled, onNotification, onUnreadCountChange]);
 
   const markAsRead = useCallback((notificationId: string) => {
     webSocketService.send({

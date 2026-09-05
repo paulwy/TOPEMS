@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V490 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V491 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V490 logical 表达式清零（-18）**（exhaustive-deps 127→109，**logical 18→0**；10 文件 14 处变量 useMemo 稳定化，V481+V488 模式批量收官）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V491 missing 批量补入（-31）**（exhaustive-deps 109→78，missing 100→69；25 文件补入稳定引用依赖，回滚 unstable/TDZ 风险批）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,27 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V491
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨D 首批——missing 100→69（-31，批量补入稳定引用 + 风险批回滚）
+
+### V491 完成内容
+
+1. **missing 净 -31（100 → 69）**：25 文件补入依赖数组缺失项（仅限**稳定引用**）：
+   - hook 解构/稳定 hook 变量：addNotification/openConfirmDialog/crud/columnConfigResult
+   - 已 useCallback 定义：loadRelated/execute(修正为 useEffect `[execute, ...deps]`)/handleToggleRule/handleDeleteNode/getModuleLabel/getOperationLabel/getResponseStatusBadge/handleViewDetail
+   - plain-var 静态数据：navItems/today/getDirection→回滚/tables 配置（colsParam/defaults/searchParams/storageKey/urlSync/visibleColumnIds/pluginDisplayNames）
+   - unknown 组验证通过：context/stream/content/value/state.status/queries(回滚)/onNotification/onUnreadCountChange/defaultValue/key/isoConfig.*/jsSandboxOptions/theme.palette.*/ttiTime/tableColumns(回滚)
+   - 附带 unnecessary 清理：FileUpload useCallback 删 accept（体内无引用）
+2. **风险批回滚（16 文件）**：
+   - **unstable 11 文件**（补入字面量数组/对象/函数 → change on every render）：PageTransition(getDirection)/useBIQueries(queries)/CRMSalesForecast、Consolidation、EhsHazardDetail、HrmOverview、RsOverview、ScmOverview(tableColumns/assessment/controlColumns/statusData×9)/SrmContract(statusLabels)/SrmSupplier(riskColors)/ReturnDetail(statusLabelMap/timelineSteps)——**这些 dep 需先 useMemo/模块化再补（V492）**
+   - **TDZ 5 文件**（useCallback 定义晚于依赖数组）：AudioCapture/VideoCapture(stopRecording)/OfflineManager(syncPendingItems)/NotificationPanel(fetchNotifications/fetchUnreadCount)/useAuth(logout)——**需上移 useCallback 定义再补（V492）**
+3. **脚本三坑（已记）**：① 依赖数组插入用 `repr()` 生成引号 → eslint 视字符串为常量 missing 不消（v501/v502 教训）；② 空数组 `[, 'x']` 稀疏数组；③ prettier 重排行号错位 → locate 需 ±1 行窗口 + 全量 tsc 兜底 TDZ
+4. **验证**：全量 exhaustive-deps 78（missing 69 / unstable 0 / unnecessary 0 / logical 0）；tsc 0 errors
+5. **剩余**：missing 69（TDZ 5 文件 9 处 + unstable 11 文件 14 处 + plain-fn 44 组 + 其余）
+
 
 ### V490
 

@@ -224,7 +224,15 @@ export function useColumnConfig(options: UseColumnConfigOptions = {}): UseColumn
       const target = fromStorage && fromStorage.length > 0 ? fromStorage : defaults;
       setVisibleColumnIds(target);
     }
-  }, [searchParams.toString()]);
+  }, [
+    searchParams.toString(),
+    colsParam,
+    defaults,
+    searchParams,
+    storageKey,
+    urlSync,
+    visibleColumnIds,
+  ]);
 
   return {
     visibleColumnIds,

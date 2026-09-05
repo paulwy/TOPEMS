@@ -101,7 +101,7 @@ export const useNotificationState = (enabled = true) => {
     if (!enabled) return;
     fetchNotifications();
     fetchUnreadCount();
-  }, [enabled]);
+  }, [enabled, fetchNotifications, fetchUnreadCount]);
 
   return {
     ...state,

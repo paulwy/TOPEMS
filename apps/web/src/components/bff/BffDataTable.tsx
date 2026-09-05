@@ -159,7 +159,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
       params.sort = { field: sortField, order: sortOrder };
     }
     crud.fetch(params);
-  }, [searchKeyword, allFilters, sortField, sortOrder, searchableFields]);
+  }, [searchKeyword, allFilters, sortField, sortOrder, searchableFields, crud]);
 
   const handlePageChange = useCallback(
     (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {

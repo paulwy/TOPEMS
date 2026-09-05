@@ -40,7 +40,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
       setActiveTab(matchedItem.id);
     }
     setShowBackButton(!navItems.some((item) => path === item.path));
-  }, [location.pathname]);
+  }, [location.pathname, navItems]);
 
   useEffect(() => {
     const handleResize = () => {

@@ -228,7 +228,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       onChange?.(updatedFiles.filter((f) => f.url).map((f) => f.url!));
     },
 
-    [files, maxCount, maxSize, maxTotalSize, accept, onChange]
+    [files, maxCount, maxSize, maxTotalSize, onChange]
   );
 
   /**

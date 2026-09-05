@@ -188,7 +188,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
         );
       },
     }),
-    [fetchInstalledPlugins, fetchHealthStatus]
+    [fetchInstalledPlugins, fetchHealthStatus, pluginDisplayNames]
   );
   const enableMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
@@ -339,7 +339,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
         plugin_type: code === 'workflow' ? 'core' : 'business',
         permissions: [],
       })),
-    []
+    [pluginDisplayNames]
   );
   const filteredMarketplace = useMemo(
     () =>

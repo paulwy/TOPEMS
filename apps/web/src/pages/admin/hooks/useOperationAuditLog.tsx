@@ -366,7 +366,7 @@ export const useOperationAuditLog = () => {
         ),
       },
     ],
-    []
+    [getModuleLabel, getOperationLabel, getResponseStatusBadge, handleViewDetail]
   );
   const rowActions: RowAction<OperationLog>[] = useMemo(
     () => [
@@ -377,7 +377,7 @@ export const useOperationAuditLog = () => {
         onClick: (row) => handleViewDetail(row),
       },
     ],
-    []
+    [handleViewDetail]
   );
   return {
     // Data

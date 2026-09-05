@@ -393,7 +393,7 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
     if (defaultValue !== content) {
       setContent(defaultValue);
     }
-  }, [defaultValue]);
+  }, [defaultValue, content]);
 
   useEffect(() => {
     onChange?.(content);

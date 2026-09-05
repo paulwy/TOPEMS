@@ -346,7 +346,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
     if (entityId) {
       crud.get(entityId);
     }
-  }, [entityId]);
+  }, [entityId, crud]);
 
   const handleBack = useCallback(() => {
     if (onBack) {
@@ -422,7 +422,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
         loadRelated(q.key);
       }
     });
-  }, []);
+  }, [loadRelated, relatedQueries]);
 
   const displayTitle = String(
     title ?? dataObj.name ?? dataObj.title ?? entityName ?? i18n.t('components.bff_detail_page.k4')

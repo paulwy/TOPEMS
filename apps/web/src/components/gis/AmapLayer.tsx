@@ -60,7 +60,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
         .catch((error) => {
           logger.error(i18n.t('components.amap_layer.k0'), error);
         });
-    }, []);
+    }, [center, zoom]);
 
     useEffect(() => {
       if (!mapRef.current) return;
