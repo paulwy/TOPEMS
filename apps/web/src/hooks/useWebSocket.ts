@@ -590,6 +590,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     onOpen,
     onClose,
     onError,
+    reconnectCount,
     reconnectAttempts,
     maxReconnectDelay,
     minReconnectDelay,

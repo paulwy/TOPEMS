@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V493 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V494 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V493 unstable 11 文件收官（-14）**（exhaustive-deps 69→54，missing 60→46；9 文件字面量模块级提取 + 3 文件 useMemo/useCallback 化，16 处全清）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,24 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V494
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨D 四批——missing 稳定引用组（-3）
+
+### V494 完成内容
+
+1. **missing 46→43（-3，稳定引用直接补入）**：
+   - useResponsive：useMemo 数组补 `theme.breakpoints.values`（模块级 theme，稳定），并删冗余展开 values.xs/sm/md/lg/xl
+   - useAuth：useMemo 数组补 `state`（useState 引用，setState 间稳定），并删冗余展开 state.user/token/isAuthenticated/...
+   - useWebSocket：useEffect 数组补 `reconnectCount`（useState 引用，稳定）
+2. **脚本坑（已记）**：① options 解构与 useEffect 数组同形（`onMessage,
+    onOpen,` 缩进一致）→ replace 命中第一个（options 解构）→ 重名 TS2451 → 需用数组独有序列锚点（`reconnectAttempts,
+    maxReconnectDelay`）；② 补整体引用后原展开项变 unnecessary → 需同步删展开
+3. **验证**：全量 exhaustive-deps 51（missing 43 / unstable 0 / unnecessary 0 / logical 0）；tsc 0 errors
+4. **剩余**：missing 43（全为 plain-fn：handle*/get*/load*/calc* 等 25+ 文件，需 useCallback 化 + 依赖链，V495 起逐文件）
+
 
 ### V493
 

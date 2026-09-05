@@ -660,12 +660,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       getMyTenants,
     }),
     [
-      state.user,
-      state.token,
-      state.isAuthenticated,
-      state.isLoading,
-      state.roles,
-      state.permissions,
+      state,
       login,
       logout,
       hasPermission,

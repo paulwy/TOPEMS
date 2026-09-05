@@ -211,11 +211,7 @@ export const useResponsive = (): ResponsiveContext => {
       isTouch,
       isRetina,
       dpr,
-      theme.breakpoints.values.xs,
-      theme.breakpoints.values.sm,
-      theme.breakpoints.values.md,
-      theme.breakpoints.values.lg,
-      theme.breakpoints.values.xl,
+      theme.breakpoints.values,
     ]
   );
 };
