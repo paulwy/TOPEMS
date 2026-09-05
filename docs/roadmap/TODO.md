@@ -21752,7 +21752,25 @@ git add $STAGED
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
 
-### V481
+### V482
+
+> 状态：**已完成**（提交 `{{COMMIT}}`）｜日期：2026-09-05
+> 主题：P1 磁盘瘦身——Rust 增量缓存 + 发布归档治理
+
+### V482 完成内容
+
+1. **磁盘占用基线**（TOPEMS 61G）：target 45G（incremental 36G + deps 6G + release 2.7G）· releases/archives 14G（189 个 tgz）· node_modules 1.7G
+2. **清理动作**：
+   - `target/debug/incremental` 36G：纯增量编译缓存，删除不影响正确性（下次 cargo build/test 全量重编一次后恢复）
+   - `releases/archives` V251-V452 共 169 个旧归档删除（-12.4G），**保留最近 20 个（V453-V472，1.6G）**
+   - 净释放约 45G（TOPEMS 61G → ~16G；磁盘可用 95G → 127G）
+3. **治理建议**（已生效的保留策略）：
+   - 归档保留窗口 = 最近 20 个版本，后续发布时旧归档按此滚动清理（脚本可加 `ls | sort -V | head -n -20 | xargs rm`）
+   - target/debug/incremental 在磁盘吃紧时可随时删（纯缓存）；deps/release 保留以加速迭代
+4. **注意**：删除增量缓存后，首次 `cargo check/test`（如 pre-push gate）将全量重编（3-5 分钟），属预期
+
+
+## V481
 
 > 状态：**已完成**（提交 `3c90de302`）｜日期：2026-09-05
 > 主题：轨A 第三批——logical/conditional 型表达式 useMemo 稳定化 + prettier 格式基线统一
