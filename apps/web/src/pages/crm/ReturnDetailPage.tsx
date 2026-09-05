@@ -84,8 +84,10 @@ const ReturnDetailPage: React.FC = () => {
 
   const record: ReturnRecord | null =
     returnQuery.data?.success && returnQuery.data.data ? returnQuery.data.data : null;
-  const items: ReturnItem[] =
-    itemsQuery.data?.success && itemsQuery.data.data ? itemsQuery.data.data : [];
+  const items: ReturnItem[] = useMemo(
+    () => (itemsQuery.data?.success && itemsQuery.data.data ? itemsQuery.data.data : []),
+    [itemsQuery.data]
+  );
   const financeStatus =
     financeQuery.data?.success && financeQuery.data.data ? financeQuery.data.data : null;
   const inventoryStatus =

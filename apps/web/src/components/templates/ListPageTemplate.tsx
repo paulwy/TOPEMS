@@ -314,7 +314,10 @@ export function ListPageTemplate<
   // 解析最终数据/加载状态/错误：外部传入优先，其次 crud 内部
   // V64 防御：过滤掉 data 中可能存在的 null / undefined 元素，避免 300+ 处
   // schema renderCell 因 "row is undefined" 抛错（典型：can't access property "isactive"）
-  const rawData = propData ?? (crud ? crudResult.data : []);
+  const rawData = useMemo(
+    () => propData ?? (crud ? crudResult.data : []),
+    [propData, crud, crudResult]
+  );
   const data = useMemo(
     () =>
       Array.isArray(rawData) ? rawData.filter((r): r is NonNullable<typeof r> => r != null) : [],

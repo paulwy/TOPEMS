@@ -121,7 +121,10 @@ const EhsHazardousMaterialPage: React.FC = () => {
     },
     staleTime: 60 * 1000,
   });
-  const allMaterials = (allMaterialsData as HazardousMaterialItem[]) || [];
+  const allMaterials = useMemo(
+    () => (allMaterialsData as HazardousMaterialItem[]) || [],
+    [allMaterialsData]
+  );
 
   const stats = useMemo(() => {
     const isExpiring = (m: HazardousMaterialItem) => {

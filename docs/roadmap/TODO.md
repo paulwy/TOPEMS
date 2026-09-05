@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V489 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V490 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V489 unstable-fn 清零（-17）**（exhaustive-deps 144→127，**unstable 17→0**；13 处 handleXxx useCallback 化 + 4 处数组/条件 useMemo 稳定化）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V490 logical 表达式清零（-18）**（exhaustive-deps 127→109，**logical 18→0**；10 文件 14 处变量 useMemo 稳定化，V481+V488 模式批量收官）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,21 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V490
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨C 收官——logical 表达式清零（18 处消息 / 12 变量 / 10 文件，V481+V488 模式批量）
+
+### V490 完成内容
+
+1. **logical 18 处清零（exhaustive-deps 127 → 109，轨C logical 全清）**——query 派生值 `xx.data || []` / `cond ? a : b` 包 useMemo（依赖 `[xxQuery.data]`）：
+   - 三目条件（5 变量 9 消息）：ReturnDetailPage items、useVoucherManagement vouchers、PmContractDetailPage milestones/payments、usePmProjectDetail phases/milestones（后两者含 `as unknown as` 类型断言，整体保留进 useMemo 体）
+   - 空值合并/逻辑或（7 变量 9 消息）：ListPageTemplate rawData（deps `[propData, crud, crudResult]`，唯一非常规）、EhsHazardousMaterialPage allMaterials、HrmReportsPage departmentSummary、MetricsDashboardPage kpis、MonitorDashboardPage systemMetrics/dbMetrics、SLOStatusPage budgets/violations
+2. **ListPageTemplate 特殊处理**：rawData 的 `crud ? crudResult.data : []` 依赖 props.crud + hook 返回对象——useMemo deps 全列，验证 0 新 unstable
+3. **验证**：10 文件 0 lint error；全量 exhaustive-deps 109（**missing 100** / logical 0 / unstable 0 / unnecessary 0）；tsc 0 errors
+4. **轨C 状态**：logical 型 18 处全部清零；**exhaustive-deps 仅剩 missing 100**（需人工逐案，方法见 V484：useCallback 22 / t 7 / plain-fn 52 / unknown 65 分类）
+
 
 ### V489
 

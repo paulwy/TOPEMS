@@ -3,9 +3,7 @@ import type { SyntheticEvent } from 'react';
 import { voucherApi } from '@/api/erp';
 import { accountingSubjectApi } from '@/api/finance';
 import type { AccountingSubject } from '@/api/finance';
-import type {
-  VoucherItemRequest,
-} from '@/api/erp/types';
+import type { VoucherItemRequest } from '@/api/erp/types';
 import type { Voucher, VoucherEntry } from '@/types/finance';
 import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
@@ -73,10 +71,13 @@ export const useVoucherManagement = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const vouchers =
-    vouchersQuery.data?.success && vouchersQuery.data.data
-      ? vouchersQuery.data.data.items || []
-      : [];
+  const vouchers = useMemo(
+    () =>
+      vouchersQuery.data?.success && vouchersQuery.data.data
+        ? vouchersQuery.data.data.items || []
+        : [],
+    [vouchersQuery.data]
+  );
   const totalCount =
     vouchersQuery.data?.success && vouchersQuery.data.data ? vouchersQuery.data.data.total || 0 : 0;
   const loading = vouchersQuery.isLoading;

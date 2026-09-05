@@ -77,7 +77,10 @@ const HrmReportsPage: React.FC = () => {
   }, [queryError, error, t]);
 
   const employeeSummary = reportsData?.employeeSummary ?? null;
-  const departmentSummary: DepartmentSummary[] = reportsData?.departmentSummary ?? [];
+  const departmentSummary: DepartmentSummary[] = useMemo(
+    () => reportsData?.departmentSummary ?? [],
+    [reportsData]
+  );
   const contractSummary = reportsData?.contractSummary ?? null;
   const trainingSummary = reportsData?.trainingSummary ?? null;
   const attendanceSummary = reportsData?.attendanceSummary ?? null;

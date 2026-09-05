@@ -236,8 +236,11 @@ const SLOStatusPage: React.FC = () => {
 
   const summary = summaryQuery.data;
   const slos: Slo[] = listQuery.data ?? [];
-  const budgets: SloBudget[] = budgetQuery.data ?? [];
-  const violations: SloViolation[] = violationsQuery.data ?? [];
+  const budgets: SloBudget[] = useMemo(() => budgetQuery.data ?? [], [budgetQuery.data]);
+  const violations: SloViolation[] = useMemo(
+    () => violationsQuery.data ?? [],
+    [violationsQuery.data]
+  );
 
   const stats: StatCard[] = useMemo(
     () => [

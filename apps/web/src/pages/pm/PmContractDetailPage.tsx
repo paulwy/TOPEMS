@@ -65,14 +65,20 @@ const PmContractDetailPage: React.FC = () => {
   });
   const contract =
     contractQuery.data?.success && contractQuery.data.data ? contractQuery.data.data : null;
-  const milestones =
-    milestonesQuery.data?.success && milestonesQuery.data.data
-      ? milestonesQuery.data.data.milestones || milestonesQuery.data.data || []
-      : [];
-  const payments =
-    paymentsQuery.data?.success && paymentsQuery.data.data
-      ? paymentsQuery.data.data.payments || paymentsQuery.data.data || []
-      : [];
+  const milestones = useMemo(
+    () =>
+      milestonesQuery.data?.success && milestonesQuery.data.data
+        ? milestonesQuery.data.data.milestones || milestonesQuery.data.data || []
+        : [],
+    [milestonesQuery.data]
+  );
+  const payments = useMemo(
+    () =>
+      paymentsQuery.data?.success && paymentsQuery.data.data
+        ? paymentsQuery.data.data.payments || paymentsQuery.data.data || []
+        : [],
+    [paymentsQuery.data]
+  );
   const loading = contractQuery.isLoading || milestonesQuery.isLoading || paymentsQuery.isLoading;
   const error = contractQuery.error || milestonesQuery.error || paymentsQuery.error;
   const formatDate = (dateStr?: string) => {
