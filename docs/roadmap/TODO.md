@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V488 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V489 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V488 useMemo 稳定化收官（-10）**（exhaustive-deps 154→144，**unnecessary 全部清零**、logical 23→18；FinanceVoucherPage/TenantDetailPage/PmProjectDetailPage 三文件 logical 表达式稳定化后删除全部 unnecessary）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V489 unstable-fn 清零（-17）**（exhaustive-deps 144→127，**unstable 17→0**；13 处 handleXxx useCallback 化 + 4 处数组/条件 useMemo 稳定化）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,24 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V489
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨B 收官——unstable-fn 清零（17 处：13 函数 + 4 数组/条件）
+
+### V489 完成内容
+
+1. **unstable 17 处清零（exhaustive-deps 144 → 127，轨B unstable 全清）**：
+   - **13 处函数 useCallback 化**（每次渲染新建函数进依赖数组 → 列定义 useMemo 反复重建）：
+     - LimsInstrumentDataPage 9：handleViewDataDetail/handleEditData/handleEditTask/handleEditRule（`[]`）、handleParseData/handleTriggerTask（`[xxMutation]`）、handleDeleteData/handleDeleteTask/handleDeleteRule（`[openConfirmDialog, xxMutation]`）
+     - MonitorAlertRulesPage 3：handleToggleStatus/handleCopy（`[rules, addNotification]`）
+     - WorkflowStatisticsPage 1：handleRefresh（`[statisticsQuery, addNotification]`）
+   - **4 处数组/条件 useMemo 稳定化**：CrudPage `treeQueryKey = useMemo(() => [schema.entity, 'tree'], [schema.entity])`（消 3 条 useCallback 依赖 unstable）；PmTemplatePage `templates` 静态数组包 useMemo（`[]`，消 filteredTemplates 依赖 unstable）
+2. **脚本三坑（已记）**：① useCallback 包装正则漏 `async` 前缀 → TS1308（handleParseData/handleTriggerTask 需 `useCallback(async ...)`）；② 依赖数组生成时误加字符串引号（`['rules']` 被当字面量）→ 新 missing 8 处，去引号后消失；③ Monitor/Workflow 未 import useCallback → TS2304，补 react import（正则需带 `React, ` 前缀）
+3. **验证**：5 文件 0 lint error；全量 exhaustive-deps 127（missing 100 / logical 18，**unstable 0**、unnecessary 0）；tsc 0 errors
+4. **轨B 状态**：unstable 型 17 处全部清零；剩余 missing 100（需人工，方法见 V484）/ logical 18（V481+V488 模式可批量）
+
 
 ### V488
 

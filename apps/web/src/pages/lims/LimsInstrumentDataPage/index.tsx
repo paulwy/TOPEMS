@@ -511,14 +511,17 @@ const LimsInstrumentDataPage: React.FC = () => {
     setRulePage(0);
   };
 
-  const handleViewDataDetail = (data: InstrumentData) => {
+  const handleViewDataDetail = useCallback((data: InstrumentData) => {
     setSelectedData(data);
     setShowDataDetail(true);
-  };
+  }, []);
 
-  const handleParseData = async (id: string) => {
-    await parseDataMutation.mutateAsync(id);
-  };
+  const handleParseData = useCallback(
+    async (id: string) => {
+      await parseDataMutation.mutateAsync(id);
+    },
+    [parseDataMutation]
+  );
 
   const handleCreateData = () => {
     setIsEditingData(false);
@@ -531,7 +534,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     setShowDataForm(true);
   };
 
-  const handleEditData = (data: InstrumentData) => {
+  const handleEditData = useCallback((data: InstrumentData) => {
     setIsEditingData(true);
     setSelectedData(data);
     setDataFormData({
@@ -541,7 +544,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       batch_no: data.batch_no,
     });
     setShowDataForm(true);
-  };
+  }, []);
 
   const handleSaveData = async () => {
     if (isEditingData && selectedData) {
@@ -552,16 +555,19 @@ const LimsInstrumentDataPage: React.FC = () => {
     }
   };
 
-  const handleDeleteData = (id: string) => {
-    openConfirmDialog({
-      title: i18n.t('lims.index.k24'),
-      message: i18n.t('lims.index.k25'),
-      danger: true,
-      onConfirm: () => {
-        deleteDataMutation.mutate(id);
-      },
-    });
-  };
+  const handleDeleteData = useCallback(
+    (id: string) => {
+      openConfirmDialog({
+        title: i18n.t('lims.index.k24'),
+        message: i18n.t('lims.index.k25'),
+        danger: true,
+        onConfirm: () => {
+          deleteDataMutation.mutate(id);
+        },
+      });
+    },
+    [openConfirmDialog, deleteDataMutation]
+  );
 
   const handleCreateTask = () => {
     setIsEditingTask(false);
@@ -577,7 +583,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     setShowTaskForm(true);
   };
 
-  const handleEditTask = (task: CollectionTask) => {
+  const handleEditTask = useCallback((task: CollectionTask) => {
     setIsEditingTask(true);
     setSelectedData(task as unknown as InstrumentData);
     setTaskFormData({
@@ -590,7 +596,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       parse_rule_id: task.parse_rule_id,
     });
     setShowTaskForm(true);
-  };
+  }, []);
 
   const handleSaveTask = async () => {
     if (isEditingTask) {
@@ -608,20 +614,26 @@ const LimsInstrumentDataPage: React.FC = () => {
     }
   };
 
-  const handleTriggerTask = async (id: string) => {
-    await triggerTaskMutation.mutateAsync(id);
-  };
+  const handleTriggerTask = useCallback(
+    async (id: string) => {
+      await triggerTaskMutation.mutateAsync(id);
+    },
+    [triggerTaskMutation]
+  );
 
-  const handleDeleteTask = (id: string) => {
-    openConfirmDialog({
-      title: i18n.t('lims.index.k26'),
-      message: i18n.t('lims.index.k27'),
-      danger: true,
-      onConfirm: () => {
-        deleteTaskMutation.mutate(id);
-      },
-    });
-  };
+  const handleDeleteTask = useCallback(
+    (id: string) => {
+      openConfirmDialog({
+        title: i18n.t('lims.index.k26'),
+        message: i18n.t('lims.index.k27'),
+        danger: true,
+        onConfirm: () => {
+          deleteTaskMutation.mutate(id);
+        },
+      });
+    },
+    [openConfirmDialog, deleteTaskMutation]
+  );
 
   const handleCreateRule = () => {
     setIsEditingRule(false);
@@ -636,7 +648,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     setShowRuleForm(true);
   };
 
-  const handleEditRule = (rule: ParseRule) => {
+  const handleEditRule = useCallback((rule: ParseRule) => {
     setIsEditingRule(true);
     setSelectedData(rule as unknown as InstrumentData);
     setRuleFormData({
@@ -648,7 +660,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       description: rule.description,
     });
     setShowRuleForm(true);
-  };
+  }, []);
 
   const handleSaveRule = async () => {
     if (isEditingRule) {
@@ -666,16 +678,19 @@ const LimsInstrumentDataPage: React.FC = () => {
     }
   };
 
-  const handleDeleteRule = (id: string) => {
-    openConfirmDialog({
-      title: i18n.t('lims.index.k28'),
-      message: i18n.t('lims.index.k29'),
-      danger: true,
-      onConfirm: () => {
-        deleteRuleMutation.mutate(id);
-      },
-    });
-  };
+  const handleDeleteRule = useCallback(
+    (id: string) => {
+      openConfirmDialog({
+        title: i18n.t('lims.index.k28'),
+        message: i18n.t('lims.index.k29'),
+        danger: true,
+        onConfirm: () => {
+          deleteRuleMutation.mutate(id);
+        },
+      });
+    },
+    [openConfirmDialog, deleteRuleMutation]
+  );
 
   const handleTestParse = async () => {
     await testParseMutation.mutateAsync(parseTestData);

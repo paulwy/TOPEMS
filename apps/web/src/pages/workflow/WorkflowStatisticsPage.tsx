@@ -5,7 +5,7 @@
  * @path /workflow/statistics
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
   CheckCircle,
@@ -269,14 +269,14 @@ export const WorkflowStatisticsPage: React.FC = () => {
     timeRangeOptions.find((o) => o.value === timeRange)?.label ||
     i18n.t('pages.workflow_statistics_page.k39');
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     statisticsQuery.refetch();
     addNotification({
       message: i18n.t('pages.workflow_statistics_page.k40'),
       type: 'success',
       duration: 3000,
     });
-  };
+  }, [statisticsQuery, addNotification]);
 
   const trendData = useMemo(() => generateTrendData(timeRange), [timeRange]);
 

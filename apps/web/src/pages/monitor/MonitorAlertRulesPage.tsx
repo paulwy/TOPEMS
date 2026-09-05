@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Chip, Switch } from '@mui/material';
 import { PageContainer } from '@/components/common';
@@ -274,44 +274,50 @@ const MonitorAlertRulesPage: React.FC = () => {
       setRules(rules.filter((r) => r.id !== id));
     },
   };
-  const handleToggleStatus = (ruleId: string) => {
-    const rule = rules.find((r) => r.id === ruleId);
-    if (!rule) return;
-    const action = rule.enabled
-      ? i18n.t('monitor.monitor_alert_rules_page.k19')
-      : i18n.t('monitor.monitor_alert_rules_page.k18');
-    setRules(
-      rules.map((r) =>
-        r.id === ruleId
-          ? { ...r, enabled: !r.enabled, updated_at: new Date().toISOString().split('T')[0] }
-          : r
-      )
-    );
-    addNotification({
-      title: i18n.t('monitor.monitor_alert_rules_page.k20'),
-      message: `${i18n.t('pages.monitor_alert_rules_page.k4')}${action}${i18n.t('pages.monitor_alert_rules_page.k5')}`,
-      type: 'success',
-    });
-  };
-  const handleCopy = (ruleId: string) => {
-    const rule = rules.find((r) => r.id === ruleId);
-    if (rule) {
-      const newRule: AlertRule = {
-        ...rule,
-        id: String(Date.now()),
-        name: `${rule.name}${i18n.t('pages.monitor_alert_rules_page.k6')}`,
-        enabled: false,
-        created_at: new Date().toISOString().split('T')[0],
-        updated_at: new Date().toISOString().split('T')[0],
-      };
-      setRules([...rules, newRule]);
+  const handleToggleStatus = useCallback(
+    (ruleId: string) => {
+      const rule = rules.find((r) => r.id === ruleId);
+      if (!rule) return;
+      const action = rule.enabled
+        ? i18n.t('monitor.monitor_alert_rules_page.k19')
+        : i18n.t('monitor.monitor_alert_rules_page.k18');
+      setRules(
+        rules.map((r) =>
+          r.id === ruleId
+            ? { ...r, enabled: !r.enabled, updated_at: new Date().toISOString().split('T')[0] }
+            : r
+        )
+      );
       addNotification({
-        title: i18n.t('monitor.monitor_alert_rules_page.k21'),
-        message: i18n.t('monitor.monitor_alert_rules_page.k22'),
+        title: i18n.t('monitor.monitor_alert_rules_page.k20'),
+        message: `${i18n.t('pages.monitor_alert_rules_page.k4')}${action}${i18n.t('pages.monitor_alert_rules_page.k5')}`,
         type: 'success',
       });
-    }
-  };
+    },
+    [rules, addNotification]
+  );
+  const handleCopy = useCallback(
+    (ruleId: string) => {
+      const rule = rules.find((r) => r.id === ruleId);
+      if (rule) {
+        const newRule: AlertRule = {
+          ...rule,
+          id: String(Date.now()),
+          name: `${rule.name}${i18n.t('pages.monitor_alert_rules_page.k6')}`,
+          enabled: false,
+          created_at: new Date().toISOString().split('T')[0],
+          updated_at: new Date().toISOString().split('T')[0],
+        };
+        setRules([...rules, newRule]);
+        addNotification({
+          title: i18n.t('monitor.monitor_alert_rules_page.k21'),
+          message: i18n.t('monitor.monitor_alert_rules_page.k22'),
+          type: 'success',
+        });
+      }
+    },
+    [rules, addNotification]
+  );
   const customColumns: ColumnDef<AlertRule>[] = useMemo(
     () => [
       {

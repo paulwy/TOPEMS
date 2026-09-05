@@ -512,7 +512,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const [wizardValues, setWizardValues] = useState<Record<string, unknown>>({});
 
   // ── 树形数据查询 ──
-  const treeQueryKey = [schema.entity, 'tree'];
+  const treeQueryKey = useMemo(() => [schema.entity, 'tree'], [schema.entity]);
 
   const { data: treeRawData, isPending: treeLoading } = useQuery({
     queryKey: treeQueryKey,
