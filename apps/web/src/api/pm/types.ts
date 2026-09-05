@@ -432,9 +432,9 @@ export interface QualityCheck {
   status?: string;
   check_date?: string;
   checked_by?: string;
-  result_details?: Record<string, any>;
-  nonconformities?: Record<string, any>;
-  corrective_actions?: Record<string, any>;
+  result_details?: Record<string, unknown>;
+  nonconformities?: Record<string, unknown>;
+  corrective_actions?: Record<string, unknown>;
   follow_up_date?: string;
   created_by?: string;
   created_at: string;
@@ -471,8 +471,8 @@ export interface AcceptancePlan {
   acceptance_criteria?: string;
   expected_date?: string;
   status?: string;
-  participants?: Record<string, any>;
-  documents_required?: Record<string, any>;
+  participants?: Record<string, unknown>;
+  documents_required?: Record<string, unknown>;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -501,9 +501,9 @@ export interface AcceptanceRecord {
   conclusion?: string;
   score?: number;
   accepted_by?: string;
-  attendees?: Record<string, any>;
-  findings?: Record<string, any>;
-  recommendations?: Record<string, any>;
+  attendees?: Record<string, unknown>;
+  findings?: Record<string, unknown>;
+  recommendations?: Record<string, unknown>;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -555,7 +555,7 @@ export interface SettlementAdjustment {
   description?: string;
   amount: number;
   reason?: string;
-  supporting_documents?: Record<string, any>;
+  supporting_documents?: Record<string, unknown>;
   created_by?: string;
   created_at: string;
 }
@@ -609,7 +609,7 @@ export interface ProjectReport {
   report_period?: string;
   status?: string;
   generated_at?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   summary?: string;
   generated_by?: string;
   created_at: string;
@@ -621,7 +621,7 @@ export interface ReportTemplate {
   template_code: string;
   template_name: string;
   report_type: string;
-  content: Record<string, any>;
+  content: Record<string, unknown>;
   isactive: boolean;
   created_by?: string;
   created_at: string;
@@ -637,7 +637,7 @@ export interface Notification {
   message: string;
   status?: string;
   priority?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   due_date?: string;
   delivered_at?: string;
   read_at?: string;

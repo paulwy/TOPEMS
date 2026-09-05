@@ -16,6 +16,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { Grid } from '@/components/common';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import Error from '@mui/icons-material/Error';
@@ -61,10 +62,10 @@ export interface FormValidationError {
 
 interface SmartFormRendererProps {
   form: FormDefinition;
-  initialValues?: Record<string, any>;
-  onSubmit?: (values: Record<string, any>) => void;
-  onSaveDraft?: (values: Record<string, any>) => void;
-  onValuesChange?: (values: Record<string, any>) => void;
+  initialValues?: Record<string, unknown>;
+  onSubmit?: (values: Record<string, unknown>) => void;
+  onSaveDraft?: (values: Record<string, unknown>) => void;
+  onValuesChange?: (values: Record<string, unknown>) => void;
   readOnly?: boolean;
   showActions?: boolean;
 }
@@ -79,7 +80,8 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
   showActions = true,
 }) => {
   const theme = useTheme();
-  const [values, setValues] = useState<Record<string, any>>(initialValues);
+  const { t } = useTranslation();
+  const [values, setValues] = useState<Record<string, unknown>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
 
@@ -89,7 +91,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
       .filter((f) => !f.hidden)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .forEach((field) => {
-        const group = field.group || '基本信息';
+        const group = field.group || t('ai.smart_form_renderer.group_default');
         if (!groups[group]) {
           groups[group] = [];
         }
@@ -100,21 +102,61 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
 
   const validateField = (field: FormFieldDefinition, value: any): string | null => {
     if (field.required && (value === undefined || value === null || value === '')) {
-      return `${field.label} 为必填项`;
+      return t('ai.smart_form_renderer.error_required', { label: field.label });
     }
 
     if (value && field.validation) {
-      if (field.validation.min_length && typeof value === 'string' && value.length < field.validation.min_length) {
-        return field.validation.error_message || `${field.label} 最少需要 ${field.validation.min_length} 个字符`;
+      if (
+        field.validation.min_length &&
+        typeof value === 'string' &&
+        value.length < field.validation.min_length
+      ) {
+        return (
+          field.validation.error_message ||
+          t('ai.smart_form_renderer.error_min_length', {
+            label: field.label,
+            min: field.validation.min_length,
+          })
+        );
       }
-      if (field.validation.max_length && typeof value === 'string' && value.length > field.validation.max_length) {
-        return field.validation.error_message || `${field.label} 最多 ${field.validation.max_length} 个字符`;
+      if (
+        field.validation.max_length &&
+        typeof value === 'string' &&
+        value.length > field.validation.max_length
+      ) {
+        return (
+          field.validation.error_message ||
+          t('ai.smart_form_renderer.error_max_length', {
+            label: field.label,
+            max: field.validation.max_length,
+          })
+        );
       }
-      if (field.validation.min_value && typeof value === 'number' && value < field.validation.min_value) {
-        return field.validation.error_message || `${field.label} 不能小于 ${field.validation.min_value}`;
+      if (
+        field.validation.min_value &&
+        typeof value === 'number' &&
+        value < field.validation.min_value
+      ) {
+        return (
+          field.validation.error_message ||
+          t('ai.smart_form_renderer.error_min_value', {
+            label: field.label,
+            min: field.validation.min_value,
+          })
+        );
       }
-      if (field.validation.max_value && typeof value === 'number' && value > field.validation.max_value) {
-        return field.validation.error_message || `${field.label} 不能大于 ${field.validation.max_value}`;
+      if (
+        field.validation.max_value &&
+        typeof value === 'number' &&
+        value > field.validation.max_value
+      ) {
+        return (
+          field.validation.error_message ||
+          t('ai.smart_form_renderer.error_max_value', {
+            label: field.label,
+            max: field.validation.max_value,
+          })
+        );
       }
     }
 
@@ -205,7 +247,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             {...commonProps}
             label={field.label}
             placeholder={field.placeholder}
-            type="number"
+            type='number'
             required={field.required}
             slotProps={{
               htmlInput: {
@@ -220,7 +262,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
           <TextField
             {...commonProps}
             label={field.label}
-            type="date"
+            type='date'
             required={field.required}
             slotProps={{ inputLabel: { shrink: true } }}
           />
@@ -231,7 +273,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
           <TextField
             {...commonProps}
             label={field.label}
-            type="datetime-local"
+            type='datetime-local'
             required={field.required}
             slotProps={{ inputLabel: { shrink: true } }}
           />
@@ -255,15 +297,26 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
       case 'select':
       case 'radio':
         return (
-          <FormControl fullWidth size="small" error={!!error} disabled={disabled}>
-            <InputLabel>{field.label}{field.required && ' *'}</InputLabel>
+          <FormControl
+            fullWidth
+            size='small'
+            error={!!error}
+            disabled={disabled}
+          >
+            <InputLabel>
+              {field.label}
+              {field.required && ' *'}
+            </InputLabel>
             <Select
               value={value}
               label={`${field.label}${field.required ? ' *' : ''}`}
               onChange={(e) => handleFieldChange(field.field_id, e.target.value)}
             >
               {field.options?.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
+                <MenuItem
+                  key={opt.value}
+                  value={opt.value}
+                >
                   {opt.label}
                 </MenuItem>
               ))}
@@ -289,7 +342,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             {...commonProps}
             label={field.label}
             placeholder={field.placeholder || 'example@email.com'}
-            type="email"
+            type='email'
             required={field.required}
           />
         );
@@ -299,8 +352,8 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
           <TextField
             {...commonProps}
             label={field.label}
-            placeholder={field.placeholder || '请输入手机号'}
-            type="tel"
+            placeholder={field.placeholder || t('ai.smart_form_renderer.phone_placeholder')}
+            type='tel'
             required={field.required}
           />
         );
@@ -311,7 +364,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             {...commonProps}
             label={field.label}
             placeholder={field.placeholder || 'https://'}
-            type="url"
+            type='url'
             required={field.required}
           />
         );
@@ -322,7 +375,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             {...commonProps}
             label={field.label}
             placeholder={field.placeholder}
-            type="password"
+            type='password'
             required={field.required}
           />
         );
@@ -353,37 +406,64 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
   const errorCount = Object.keys(errors).length;
 
   return (
-    <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+    <Paper
+      elevation={2}
+      sx={{ p: 3, borderRadius: 2 }}
+    >
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 0.5 }}
+        >
           {form.name}
         </Typography>
         {form.description && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {form.description}
           </Typography>
         )}
       </Box>
 
       {submitted && errorCount > 0 && (
-        <Alert severity="error" sx={{ mb: 2 }} icon={<Error />}>
-          表单包含 {errorCount} 个错误，请检查后重新提交。
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          icon={<Error />}
+        >
+          {t('ai.smart_form_renderer.form_errors', { count: errorCount })}
         </Alert>
       )}
 
       {submitted && errorCount === 0 && (
-        <Alert severity="success" sx={{ mb: 2 }} icon={<CheckCircle />}>
-          表单验证通过！
+        <Alert
+          severity='success'
+          sx={{ mb: 2 }}
+          icon={<CheckCircle />}
+        >
+          {t('ai.smart_form_renderer.form_success')}
         </Alert>
       )}
 
       {Object.entries(groupedFields).map(([group, fields], groupIndex) => (
-        <Box key={group} sx={{ mb: groupIndex < Object.keys(groupedFields).length - 1 ? 3 : 0 }}>
+        <Box
+          key={group}
+          sx={{ mb: groupIndex < Object.keys(groupedFields).length - 1 ? 3 : 0 }}
+        >
           {groupIndex > 0 && <Divider sx={{ mb: 2 }} />}
-          <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 600, mb: 1.5 }}>
+          <Typography
+            variant='subtitle2'
+            color='primary'
+            sx={{ fontWeight: 600, mb: 1.5 }}
+          >
             {group}
           </Typography>
-          <Grid container spacing={2}>
+          <Grid
+            container
+            spacing={2}
+          >
             {fields.map((field) => (
               <Grid
                 item
@@ -402,20 +482,20 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
         <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
           {onSaveDraft && (
             <Button
-              variant="outlined"
+              variant='outlined'
               startIcon={<Save />}
               onClick={handleSaveDraft}
             >
-              保存草稿
+              {t('ai.smart_form_renderer.save_draft')}
             </Button>
           )}
           {onSubmit && (
             <Button
-              variant="contained"
+              variant='contained'
               startIcon={<Send />}
               onClick={handleSubmit}
             >
-              提交
+              {t('ai.smart_form_renderer.submit')}
             </Button>
           )}
         </Box>

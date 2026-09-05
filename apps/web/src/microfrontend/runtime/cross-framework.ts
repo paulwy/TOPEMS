@@ -155,7 +155,7 @@ export class ReactAdapter implements FrameworkAdapter {
     this.state = { mounted: true, framework: 'react', propsCount: Object.keys(props).length };
   }
 
-  getState(): Record<string, any> {
+  getState(): Record<string, unknown> {
     return { ...this.state, currentProps: this.currentProps };
   }
 
@@ -224,7 +224,7 @@ export class VueAdapter implements FrameworkAdapter {
     this.state = { mounted: true, framework: 'vue', propsCount: Object.keys(props).length };
   }
 
-  getState(): Record<string, any> {
+  getState(): Record<string, unknown> {
     return { ...this.state, currentProps: this.currentProps };
   }
 
@@ -295,7 +295,7 @@ export class AngularAdapter implements FrameworkAdapter {
     this.state = { mounted: true, framework: 'angular', propsCount: Object.keys(props).length };
   }
 
-  getState(): Record<string, any> {
+  getState(): Record<string, unknown> {
     return { ...this.state, currentProps: this.currentProps };
   }
 
@@ -373,7 +373,7 @@ export class SvelteAdapter implements FrameworkAdapter {
     this.state = { mounted: true, framework: 'svelte', propsCount: Object.keys(props).length };
   }
 
-  getState(): Record<string, any> {
+  getState(): Record<string, unknown> {
     return { ...this.state, currentProps: this.currentProps };
   }
 

@@ -1885,7 +1885,7 @@ export function ListPageTemplate<
   // 筛选状态
   // - internalListState 启用时：使用 internalListStateResult.filters（支持 URL 同步）
   // - 否则：使用本地 state（支持 localStorage 持久化）
-  const [localFiltersState, setLocalFiltersState] = useState<Record<string, any>>(() => {
+  const [localFiltersState, setLocalFiltersState] = useState<Record<string, unknown>>(() => {
     if (persistFilters) {
       const key = filterStorageKey || window.location.pathname;
       try {
@@ -1900,10 +1900,10 @@ export function ListPageTemplate<
     return filtersValue || {};
   });
   const localFilters = internalListStateResult
-    ? (internalListStateResult.filters as Record<string, any>)
+    ? (internalListStateResult.filters as Record<string, unknown>)
     : localFiltersState;
   const setLocalFilters = useCallback(
-    (newFilters: Record<string, any>) => {
+    (newFilters: Record<string, unknown>) => {
       if (internalListStateResult) {
         internalListStateResult.setFilters(newFilters);
       } else {
@@ -2069,14 +2069,14 @@ export function ListPageTemplate<
     setPendingAction(null);
   }, []);
   const handleFilterChange = useCallback(
-    (newFilters: Record<string, any>) => {
+    (newFilters: Record<string, unknown>) => {
       setLocalFilters(newFilters);
       onFilterChange?.(newFilters);
     },
     [setLocalFilters, onFilterChange]
   );
   const handleQuickFilter = useCallback(
-    (quickFilter: { filters: Record<string, any>; searchValue?: string }) => {
+    (quickFilter: { filters: Record<string, unknown>; searchValue?: string }) => {
       setLocalFilters(quickFilter.filters);
       onFilterChange?.(quickFilter.filters);
       if (quickFilter.searchValue !== undefined) {
@@ -2105,7 +2105,7 @@ export function ListPageTemplate<
   );
   // 点击快速筛选时更新 URL 和激活态
   const effectiveOnQuickFilter = useCallback(
-    (quickFilter: { key?: string; filters: Record<string, any>; searchValue?: string }) => {
+    (quickFilter: { key?: string; filters: Record<string, unknown>; searchValue?: string }) => {
       const key = quickFilter.key ?? null;
       if (isQuickFilterUrlSyncEnabled) {
         setActiveQuickFilterKey(key);

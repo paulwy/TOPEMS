@@ -25,7 +25,7 @@ vi.mock('lucide-react', () => ({
 }));
 
 vi.mock('@/components/templates/ListPageTemplate', () => ({
-  default: (props: Record<string, any>) => {
+  default: (props: Record<string, unknown>) => {
     mockListPageTemplate(props);
     const rows = props.data as Alert[];
     return (
@@ -168,9 +168,7 @@ describe('OperationAuditLogFilter', () => {
     expect(screen.getByDisplayValue('customer')).toBeInTheDocument();
     expect(screen.getByDisplayValue('trace-1')).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '清除筛选' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '清除筛选' }));
 
     expect(defaultProps.clearFilters).toHaveBeenCalledTimes(1);
   });
@@ -235,9 +233,7 @@ describe('OperationAuditLogFilter', () => {
       />
     );
 
-    expect(
-      screen.queryByRole('button', { name: '清除筛选' })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '清除筛选' })).not.toBeInTheDocument();
   });
 });
 
@@ -347,15 +343,9 @@ describe('MonitoringAlertTable', () => {
       />
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '确认' })
-    );
-    fireEvent.click(
-      screen.getByRole('button', { name: '解决' })
-    );
-    fireEvent.click(
-      screen.getAllByRole('button', { name: '升级' })[0]
-    );
+    fireEvent.click(screen.getByRole('button', { name: '确认' }));
+    fireEvent.click(screen.getByRole('button', { name: '解决' }));
+    fireEvent.click(screen.getAllByRole('button', { name: '升级' })[0]);
     fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'go-page-3' }));
 

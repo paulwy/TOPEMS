@@ -150,7 +150,7 @@ export const reportApi = {
 
   getVoucherStatistics: (params?: {
     period?: string;
-  }): Promise<ApiResponse<Record<string, any>>> => {
+  }): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.finance.get('/reports/voucher-statistics', {
       params,
     });

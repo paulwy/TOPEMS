@@ -314,8 +314,30 @@ const BIAnalyticsPage = () => {
     overviewQuery.refetch();
   }, [overviewQuery]);
 
+  interface AnalyticsModuleData {
+    total_projects?: number;
+    active_projects?: number;
+    project_status_distribution?: { completed?: number };
+    total_inspections?: number;
+    pass_rate?: number;
+    failed_inspections?: number;
+    total_production_batches?: number;
+    completed_batches?: number;
+    production_efficiency?: number;
+    total_samples?: number;
+    completed_tests?: number;
+    instrument_usage_rate?: number;
+    total_risks?: number;
+    high_risks?: number;
+    incidents?: number;
+    total_suppliers?: number;
+    qualified?: number;
+    avg_rating?: number;
+    trend?: 'up' | 'down' | 'stable';
+  }
+
   const getModuleStats = (moduleId: string): Record<string, string | number> => {
-    const data = modulesData[moduleId] as Record<string, any>;
+    const data = modulesData[moduleId] as AnalyticsModuleData;
     if (!data) {
       const fallbackStats: Record<string, Record<string, string | number>> = {
         development: {
@@ -394,7 +416,7 @@ const BIAnalyticsPage = () => {
   };
 
   const getModuleTrend = (moduleId: string): 'up' | 'down' | 'stable' => {
-    const data = modulesData[moduleId] as Record<string, any>;
+    const data = modulesData[moduleId] as AnalyticsModuleData;
     if (!data) {
       const fallbackTrends: Record<string, 'up' | 'down' | 'stable'> = {
         development: 'up',

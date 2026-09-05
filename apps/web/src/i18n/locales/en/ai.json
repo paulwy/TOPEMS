@@ -6049,5 +6049,16 @@
   "ai.document_intelligence.alert_no_meta": "Document metadata is unavailable.",
   "ai.document_intelligence.search_placeholder": "Search in document...",
   "ai.document_intelligence.alert_no_results": "No content found containing \"{{query}}\".",
-  "ai.document_intelligence.search_hint": "Enter keywords to search in the document."
+  "ai.document_intelligence.search_hint": "Enter keywords to search in the document.",
+  "ai.smart_form_renderer.group_default": "Basic Information",
+  "ai.smart_form_renderer.error_required": "{{label}} is required",
+  "ai.smart_form_renderer.error_min_length": "{{label}} requires at least {{min}} characters",
+  "ai.smart_form_renderer.error_max_length": "{{label}} allows at most {{max}} characters",
+  "ai.smart_form_renderer.error_min_value": "{{label}} cannot be less than {{min}}",
+  "ai.smart_form_renderer.error_max_value": "{{label}} cannot be greater than {{max}}",
+  "ai.smart_form_renderer.phone_placeholder": "Enter phone number",
+  "ai.smart_form_renderer.form_errors": "The form contains {{count}} errors. Please review and resubmit.",
+  "ai.smart_form_renderer.form_success": "Form validation passed!",
+  "ai.smart_form_renderer.save_draft": "Save Draft",
+  "ai.smart_form_renderer.submit": "Submit"
 }

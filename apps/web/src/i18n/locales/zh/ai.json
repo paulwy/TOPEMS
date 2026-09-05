@@ -3489,5 +3489,16 @@
   "ai.document_intelligence.alert_no_meta": "文档元数据不可用。",
   "ai.document_intelligence.search_placeholder": "在文档中搜索...",
   "ai.document_intelligence.alert_no_results": "未找到包含 “{{query}}” 的内容。",
-  "ai.document_intelligence.search_hint": "输入关键词在文档中搜索。"
+  "ai.document_intelligence.search_hint": "输入关键词在文档中搜索。",
+  "ai.smart_form_renderer.group_default": "基本信息",
+  "ai.smart_form_renderer.error_required": "{{label}} 为必填项",
+  "ai.smart_form_renderer.error_min_length": "{{label}} 最少需要 {{min}} 个字符",
+  "ai.smart_form_renderer.error_max_length": "{{label}} 最多 {{max}} 个字符",
+  "ai.smart_form_renderer.error_min_value": "{{label}} 不能小于 {{min}}",
+  "ai.smart_form_renderer.error_max_value": "{{label}} 不能大于 {{max}}",
+  "ai.smart_form_renderer.phone_placeholder": "请输入手机号",
+  "ai.smart_form_renderer.form_errors": "表单包含 {{count}} 个错误，请检查后重新提交。",
+  "ai.smart_form_renderer.form_success": "表单验证通过！",
+  "ai.smart_form_renderer.save_draft": "保存草稿",
+  "ai.smart_form_renderer.submit": "提交"
 }

@@ -154,7 +154,7 @@ vi.mock('lucide-react', async (importOriginal) => {
     ({ size: _s, color: _c, ...rest }: any = {}) =>
       React.createElement('svg', { 'data-testid': `icon-${name}`, ...rest });
   const allKeys = Object.keys(actual).filter((k) => k[0] === k[0].toUpperCase() && k !== 'default');
-  const out: Record<string, any> = {};
+  const out: Record<string, unknown> = {};
   for (const k of allKeys) {
     out[k] = mockIcon(k);
   }

@@ -20,8 +20,8 @@ export const acceptancePlanApi = {
       phase_id?: string;
       acceptance_criteria?: string;
       expected_date?: string;
-      participants?: Record<string, any>;
-      documents_required?: Record<string, any>;
+      participants?: Record<string, unknown>;
+      documents_required?: Record<string, unknown>;
       created_by?: string;
     }
   ) => {
@@ -36,8 +36,8 @@ export const acceptancePlanApi = {
       acceptance_criteria?: string;
       expected_date?: string;
       status?: string;
-      participants?: Record<string, any>;
-      documents_required?: Record<string, any>;
+      participants?: Record<string, unknown>;
+      documents_required?: Record<string, unknown>;
     }
   ) => {
     return apiClient.pm.put(`/acceptance-plans/${id}`, data);
@@ -94,9 +94,9 @@ export const acceptanceRecordApi = {
       conclusion?: string;
       score?: number;
       accepted_by?: string;
-      attendees?: Record<string, any>;
-      findings?: Record<string, any>;
-      recommendations?: Record<string, any>;
+      attendees?: Record<string, unknown>;
+      findings?: Record<string, unknown>;
+      recommendations?: Record<string, unknown>;
       created_by?: string;
     }
   ) => {
@@ -109,9 +109,9 @@ export const acceptanceRecordApi = {
       status?: string;
       conclusion?: string;
       score?: number;
-      attendees?: Record<string, any>;
-      findings?: Record<string, any>;
-      recommendations?: Record<string, any>;
+      attendees?: Record<string, unknown>;
+      findings?: Record<string, unknown>;
+      recommendations?: Record<string, unknown>;
     }
   ) => {
     return apiClient.pm.put(`/acceptance-records/${id}`, data);

@@ -118,7 +118,6 @@ vi.mock('react-i18next', () => {
   };
 });
 
-
 // ─── window.matchMedia ─────────────────────────────────────────────────────
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -140,7 +139,7 @@ Object.defineProperty(window, 'matchMedia', {
 // required by source code that iterates via Object.keys(localStorage) — e.g.
 // storage.ts keys()/clear() — which the previous Map-backed mock broke.
 const createStorageMock = (): Storage => {
-  const storage: Record<string, any> = {};
+  const storage: Record<string, unknown> = {};
 
   Object.defineProperties(storage, {
     length: {

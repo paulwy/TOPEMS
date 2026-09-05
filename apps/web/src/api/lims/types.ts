@@ -417,7 +417,7 @@ export interface PrintConfig {
   papersize: string;
   label_template?: string;
   is_default: boolean;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -432,10 +432,10 @@ export interface TestMethod {
   version: string;
   description?: string;
   principle?: string;
-  instruments?: Record<string, any>;
-  reagents?: Record<string, any>;
-  parameters?: Record<string, any>;
-  steps?: Record<string, any>;
+  instruments?: Record<string, unknown>;
+  reagents?: Record<string, unknown>;
+  parameters?: Record<string, unknown>;
+  steps?: Record<string, unknown>;
   calculation_formula?: string;
   uncertainty_ref?: string;
   status: string;
@@ -454,10 +454,10 @@ export interface CreateTestMethodRequest {
   standard?: string;
   description?: string;
   principle?: string;
-  instruments?: Record<string, any>;
-  reagents?: Record<string, any>;
-  parameters?: Record<string, any>;
-  steps?: Record<string, any>;
+  instruments?: Record<string, unknown>;
+  reagents?: Record<string, unknown>;
+  parameters?: Record<string, unknown>;
+  steps?: Record<string, unknown>;
   calculation_formula?: string;
   uncertainty_ref?: string;
 }
@@ -468,10 +468,10 @@ export interface UpdateTestMethodRequest {
   standard?: string;
   description?: string;
   principle?: string;
-  instruments?: Record<string, any>;
-  reagents?: Record<string, any>;
-  parameters?: Record<string, any>;
-  steps?: Record<string, any>;
+  instruments?: Record<string, unknown>;
+  reagents?: Record<string, unknown>;
+  parameters?: Record<string, unknown>;
+  steps?: Record<string, unknown>;
   calculation_formula?: string;
   uncertainty_ref?: string;
   status?: string;
@@ -531,7 +531,7 @@ export interface MethodValidation {
   validation_date: string;
   validated_by: string;
   conclusion: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
   report_url?: string;
   notes?: string;
   status: string;
@@ -544,7 +544,7 @@ export interface CreateMethodValidationRequest {
   validation_date?: string;
   validated_by: string;
   conclusion: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
   report_url?: string;
   notes?: string;
 }
@@ -558,7 +558,7 @@ export interface PtPlan {
   test_method?: string;
   plan_year?: string;
   sample_type?: string;
-  expected_result?: Record<string, any>;
+  expected_result?: Record<string, unknown>;
   registration_date?: string;
   test_deadline?: string;
   report_deadline?: string;
@@ -577,7 +577,7 @@ export interface CreatePtPlanRequest {
   test_method?: string;
   plan_year?: string;
   sample_type?: string;
-  expected_result?: Record<string, any>;
+  expected_result?: Record<string, unknown>;
   registration_date?: string;
   test_deadline?: string;
   report_deadline?: string;
@@ -593,7 +593,7 @@ export interface UpdatePtPlanRequest {
   test_method?: string;
   plan_year?: string;
   sample_type?: string;
-  expected_result?: Record<string, any>;
+  expected_result?: Record<string, unknown>;
   registration_date?: string;
   test_deadline?: string;
   report_deadline?: string;
@@ -640,7 +640,7 @@ export interface PtResult {
   tested_by?: string;
   instrument?: string;
   test_method?: string;
-  replicate_results?: Record<string, any>;
+  replicate_results?: Record<string, unknown>;
   mean_value?: number;
   standard_deviation?: number;
   coefficient_variation?: number;
@@ -660,7 +660,7 @@ export interface CreatePtResultRequest {
   tested_by?: string;
   instrument?: string;
   test_method?: string;
-  replicate_results?: Record<string, any>;
+  replicate_results?: Record<string, unknown>;
   notes?: string;
 }
 
@@ -830,7 +830,7 @@ export interface UncertaintyComponent {
   sensitivity_coefficient?: number;
   degrees_freedom?: number;
   calculation_method?: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
   description?: string;
   created_at?: string;
   updated_at?: string;
@@ -846,7 +846,7 @@ export interface CreateUncertaintyComponentRequest {
   sensitivity_coefficient?: number;
   degrees_freedom?: number;
   calculation_method?: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
   description?: string;
 }
 
@@ -857,7 +857,7 @@ export interface UpdateUncertaintyComponentRequest {
   sensitivity_coefficient?: number;
   degrees_freedom?: number;
   calculation_method?: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
   description?: string;
 }
 
@@ -892,9 +892,9 @@ export interface UncertaintyReport {
   report_title: string;
   report_no: string;
   generated_at: string;
-  project: Record<string, any>;
-  sources: Record<string, any>[];
-  components: Record<string, any>[];
+  project: Record<string, unknown>;
+  sources: Record<string, unknown>[];
+  components: Record<string, unknown>[];
   summary: {
     source_count: number;
     component_count: number;
@@ -916,8 +916,8 @@ export interface SyncRecord {
   status: 'pending' | 'success' | 'failed' | 'retrying';
   retry_count: number;
   max_retries?: number;
-  payload?: Record<string, any>;
-  result?: Record<string, any>;
+  payload?: Record<string, unknown>;
+  result?: Record<string, unknown>;
   error_message?: string;
   synced_at?: string;
   created_at: string;
@@ -961,8 +961,8 @@ export interface InstrumentData {
   instrument_name?: string;
   batch_no: string;
   protocol: string;
-  raw_data?: Record<string, any>;
-  parsed_data?: Record<string, any>;
+  raw_data?: Record<string, unknown>;
+  parsed_data?: Record<string, unknown>;
   status: string;
   quality_score?: number;
   error_msg?: string;
@@ -976,13 +976,13 @@ export interface InstrumentData {
 export interface CreateInstrumentDataRequest {
   instrument_id?: string;
   protocol: string;
-  raw_data: Record<string, any>;
+  raw_data: Record<string, unknown>;
   batch_no?: string;
 }
 
 export interface UpdateInstrumentDataRequest {
   status?: string;
-  parsed_data?: Record<string, any>;
+  parsed_data?: Record<string, unknown>;
   error_msg?: string;
 }
 
@@ -999,7 +999,7 @@ interface TestItemResult {
 
 export interface ParseResult {
   success: boolean;
-  parsed_data?: Record<string, any>;
+  parsed_data?: Record<string, unknown>;
   quality_score?: number;
   error_msg?: string;
   testitems?: TestItemResult[];
@@ -1007,7 +1007,7 @@ export interface ParseResult {
 
 export interface ParseDataRequest {
   protocol: string;
-  raw_data: Record<string, any>;
+  raw_data: Record<string, unknown>;
   parse_rule_id?: string;
 }
 
@@ -1058,8 +1058,8 @@ export interface ParseRule {
   rule_name: string;
   protocol: string;
   instrument_type?: string;
-  parse_config?: Record<string, any>;
-  quality_rules?: Record<string, any>;
+  parse_config?: Record<string, unknown>;
+  quality_rules?: Record<string, unknown>;
   status: string;
   version: string;
   description?: string;
@@ -1072,16 +1072,16 @@ export interface CreateParseRuleRequest {
   rule_name: string;
   protocol: string;
   instrument_type?: string;
-  parse_config?: Record<string, any>;
-  quality_rules?: Record<string, any>;
+  parse_config?: Record<string, unknown>;
+  quality_rules?: Record<string, unknown>;
   description?: string;
 }
 
 export interface UpdateParseRuleRequest {
   rule_name?: string;
   status?: string;
-  parse_config?: Record<string, any>;
-  quality_rules?: Record<string, any>;
+  parse_config?: Record<string, unknown>;
+  quality_rules?: Record<string, unknown>;
   description?: string;
 }
 

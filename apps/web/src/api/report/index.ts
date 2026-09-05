@@ -44,30 +44,30 @@ export interface DataSourceConfig {
   source_type: string;
   connection_string?: string;
   query: string;
-  params: Record<string, any>;
+  params: Record<string, unknown>;
 }
 
 export interface LayoutConfig {
   layout_type: string;
   orientation: string;
   papersize: string;
-  margins: Record<string, any>;
-  sections: Record<string, any>;
+  margins: Record<string, unknown>;
+  sections: Record<string, unknown>;
 }
 
 export interface FilterConfig {
-  conditions: Record<string, any>[];
-  date_range?: Record<string, any>;
-  sort_by: Record<string, any>[];
+  conditions: Record<string, unknown>[];
+  date_range?: Record<string, unknown>;
+  sort_by: Record<string, unknown>[];
 }
 
 interface StyleConfig {
   theme: string;
-  colors: Record<string, any>;
-  fonts: Record<string, any>;
-  borders: Record<string, any>;
-  header_style: Record<string, any>;
-  body_style: Record<string, any>;
+  colors: Record<string, unknown>;
+  fonts: Record<string, unknown>;
+  borders: Record<string, unknown>;
+  header_style: Record<string, unknown>;
+  body_style: Record<string, unknown>;
 }
 
 export interface ReportTemplate {
@@ -81,7 +81,7 @@ export interface ReportTemplate {
   layout_config: LayoutConfig;
   filter_config: FilterConfig;
   style_config: StyleConfig;
-  columns: Record<string, any>[];
+  columns: Record<string, unknown>[];
   outputformat: string;
   isactive: boolean;
   created_at: string;
@@ -99,7 +99,7 @@ export interface CreateTemplateRequest {
   layout_config: LayoutConfig;
   filter_config: FilterConfig;
   style_config: StyleConfig;
-  columns: Record<string, any>[];
+  columns: Record<string, unknown>[];
   outputformat: string;
 }
 
@@ -112,7 +112,7 @@ export interface UpdateTemplateRequest {
   layout_config?: LayoutConfig;
   filter_config?: FilterConfig;
   style_config?: StyleConfig;
-  columns?: Record<string, any>[];
+  columns?: Record<string, unknown>[];
   outputformat?: string;
   isactive?: boolean;
 }
@@ -120,7 +120,7 @@ export interface UpdateTemplateRequest {
 export interface CreateReportFromTemplateRequest {
   template_id: string;
   report_name?: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
   created_by: string;
 }
 
@@ -128,7 +128,7 @@ export interface ReportData {
   id: string;
   config: ReportConfig;
   template?: ReportTemplate;
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   row_count: number;
   created_at: string;
 }
