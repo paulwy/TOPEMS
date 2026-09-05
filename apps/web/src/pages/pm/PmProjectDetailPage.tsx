@@ -75,14 +75,20 @@ const PmProjectDetailPage: React.FC = () => {
 
   const project =
     projectQuery.data?.success && projectQuery.data.data ? projectQuery.data.data : null;
-  const phases =
-    phasesQuery.data?.success && phasesQuery.data.data
-      ? phasesQuery.data.data.phases || phasesQuery.data.data || []
-      : [];
-  const milestones =
-    milestonesQuery.data?.success && milestonesQuery.data.data
-      ? milestonesQuery.data.data.milestones || milestonesQuery.data.data || []
-      : [];
+  const phases = useMemo(
+    () =>
+      phasesQuery.data?.success && phasesQuery.data.data
+        ? phasesQuery.data.data.phases || phasesQuery.data.data || []
+        : [],
+    [phasesQuery.data]
+  );
+  const milestones = useMemo(
+    () =>
+      milestonesQuery.data?.success && milestonesQuery.data.data
+        ? milestonesQuery.data.data.milestones || milestonesQuery.data.data || []
+        : [],
+    [milestonesQuery.data]
+  );
   const loading = projectQuery.isLoading || phasesQuery.isLoading || milestonesQuery.isLoading;
   const error = projectQuery.error || phasesQuery.error || milestonesQuery.error;
 
@@ -1180,16 +1186,7 @@ const PmProjectDetailPage: React.FC = () => {
         },
       ],
     };
-  }, [
-    project,
-    phases,
-    milestones,
-    completedPhases,
-    completedMilestones,
-    t,
-    getStatusLabels,
-    getRiskLabels,
-  ]);
+  }, [project, phases, milestones, completedPhases, completedMilestones, t]);
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({

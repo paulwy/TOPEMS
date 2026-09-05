@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V487 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V488 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V486 unnecessary 第六批（-4）**（exhaustive-deps 164→154）、**V487 ReturnDetailPage 连带债务清理**（删除暴露的 queryClient import / actionMutation / invalidate 未使用代码）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V488 useMemo 稳定化收官（-10）**（exhaustive-deps 154→144，**unnecessary 全部清零**、logical 23→18；FinanceVoucherPage/TenantDetailPage/PmProjectDetailPage 三文件 logical 表达式稳定化后删除全部 unnecessary）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,22 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V488
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨A 收官——unnecessary 清零（5 处）+ logical 表达式 useMemo 稳定化（V481 模式复用）
+
+### V488 完成内容
+
+1. **unnecessary 最后 5 处清零（exhaustive-deps 154 → 144，轨A unnecessary 全清）**：
+   - **FinanceVoucherPage 3 处**：`allVouchers = voucherStatsQuery.data || []`、`subjects = subjectsQuery.data || []` useMemo 稳定化（`useMemo(() => data || [], [data])`）→ 删 `[allVouchers, t]`/`[subjects, t]`/`[t, subjectStatCards]` 的 t——127/141 logical 随之消失（V481 模式，验证 V486 回滚结论正确）
+   - **TenantDetailPage 1 处**：`users = usersQuery.data?.items ?? []` useMemo 稳定化（文件内 invoices 已是 V481 模式，users 为漏网）→ 删 usersLoading——137 行 logical 消失，文件 exhaustive 全清
+   - **PmProjectDetailPage 1 处**：phases/milestones 三目表达式 useMemo 稳定化（`useMemo(() => cond ? a || b : [], [query.data])`）→ 删 getRiskLabels/getStatusLabels——78/82 行 logical 5 条消失，文件 exhaustive 全清
+2. **脚本踩坑**：首版 stabilize 把原表达式结尾分号带入 useMemo 体（`: [];,` → Parsing error），从快照恢复后改为**表达式体去结尾分号**重做成功
+3. **验证**：3 文件 0 lint error / 0 TS error；全量 exhaustive-deps 144（missing 100 / logical 18 / unstable 17 / complex 4，**unnecessary 0**）；tsc 0 errors
+4. **轨A 状态**：unnecessary 型 44 处（V483 30 + V485 5 + V486 4 + V488 5）**全部清零**；剩余 missing 100（需人工，方法见 V484）/ logical 18 / unstable 17 / complex 4
+
 
 ### V487
 

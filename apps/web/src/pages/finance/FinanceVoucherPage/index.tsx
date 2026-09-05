@@ -124,7 +124,7 @@ const FinanceVoucherPage: React.FC = () => {
     },
     staleTime: 30 * 1000,
   });
-  const allVouchers = voucherStatsQuery.data || [];
+  const allVouchers = useMemo(() => voucherStatsQuery.data || [], [voucherStatsQuery.data]);
 
   // ── 会计科目查询（科目 Tab 统计 + 凭证表单科目下拉）──
   const subjectsQuery = useQuery({
@@ -138,7 +138,7 @@ const FinanceVoucherPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const subjects = subjectsQuery.data || [];
+  const subjects = useMemo(() => subjectsQuery.data || [], [subjectsQuery.data]);
 
   // ── CrudPage 适配器 ──
   const voucherAdapter = useMemo(() => createCrudPageAdapter(voucherApi), []);
@@ -514,7 +514,7 @@ const FinanceVoucherPage: React.FC = () => {
         color: 'secondary' as const,
       },
     ],
-    [allVouchers, t]
+    [allVouchers]
   );
 
   // ── 科目统计卡片 ──
@@ -545,7 +545,7 @@ const FinanceVoucherPage: React.FC = () => {
         color: 'info' as const,
       },
     ],
-    [subjects, t]
+    [subjects]
   );
 
   // ── 凭证 headerContent（统计卡片）──
@@ -658,7 +658,7 @@ const FinanceVoucherPage: React.FC = () => {
         content: <SubjectCrudPanel statCards={subjectStatCards} />,
       },
     ],
-    [t, subjectStatCards]
+    [subjectStatCards]
   );
 
   return (

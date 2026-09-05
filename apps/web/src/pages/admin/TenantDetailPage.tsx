@@ -134,10 +134,9 @@ const TenantDetailPage: React.FC = () => {
 
   const tenant = tenantQuery.data ?? null;
   const stats = statsQuery.data ?? null;
-  const users = usersQuery.data?.items ?? [];
+  const users = useMemo(() => usersQuery.data?.items ?? [], [usersQuery.data]);
   const invoices = useMemo(() => invoicesQuery.data ?? [], [invoicesQuery.data]);
   const loading = tenantQuery.isLoading;
-  const usersLoading = usersQuery.isLoading;
 
   useEffect(() => {
     if (tenantQuery.isError) {
@@ -380,7 +379,7 @@ const TenantDetailPage: React.FC = () => {
         }
       />
     ),
-    [users, usersLoading, tenantId]
+    [users, tenantId]
   );
 
   const settingsContent = useMemo(() => {
