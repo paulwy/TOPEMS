@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Paper, Typography } from '@mui/material';
 import { Activity, TrendingUp, TrendingDown } from 'lucide-react';
 import { apsApi } from '@/api/aps';
+import type { Capacity } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@topems/tokens';
@@ -51,9 +52,13 @@ export default function CapacityUtilizationPage() {
       try {
         const res = await apsApi.listCapacities();
         const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
-        const totalUsed = items.reduce((s: number, c: any) => s + (c.usedQty || c.used || 0), 0);
-        const totalCap = items.reduce(
-          (s: number, c: any) => s + (c.totalQty || c.total || c.capacity || 0),
+        const totalUsed = items.reduce<number>(
+          (s, c: Capacity & { usedQty?: number; used?: number }) => s + (c.usedQty || c.used || 0),
+          0
+        );
+        const totalCap = items.reduce<number>(
+          (s, c: Capacity & { totalQty?: number; total?: number; capacity?: number }) =>
+            s + (c.totalQty || c.total || c.capacity || 0),
           0
         );
         return {

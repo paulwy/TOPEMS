@@ -495,11 +495,11 @@ export const pdmApi = {
     return apiClient.pdm.get<string>('/health');
   },
 
-  importData: async (type: string, file: File): Promise<ApiResponse<any>> => {
+  importData: async (type: string, file: File): Promise<ApiResponse<unknown>> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
-    return apiClient.pdm.post<any>('/import', formData, {
+    return apiClient.pdm.post<unknown>('/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

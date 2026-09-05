@@ -52,7 +52,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                 </Typography>
                 <Typography sx={{ fontWeight: 500 }}>{selectedEmail.from_address}</Typography>
               </Box>
-              {getStatusBadge(selectedEmail.status) as any}
+              {getStatusBadge(selectedEmail.status)}
             </Box>
             <Box>
               <Typography
@@ -104,7 +104,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
               >
                 {i18n.t('im.mail_page_components_email_detail_dialog.e5')}
               </Typography>
-              {getPriorityBadge(selectedEmail.priority) as any}
+              {getPriorityBadge(selectedEmail.priority)}
             </Box>
             <Box>
               <Typography

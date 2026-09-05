@@ -25,7 +25,11 @@ class RemoteErrorBoundary extends Component<
   { children: ReactNode; moduleName: string; onError?: (error: Error) => void },
   { error: Error | null }
 > {
-  constructor(props: any) {
+  constructor(props: {
+    children: ReactNode;
+    moduleName: string;
+    onError?: (error: Error) => void;
+  }) {
     super(props);
     this.state = { error: null };
   }
@@ -354,7 +358,7 @@ export function prefetchOnIdle(entries: string[], timeout = 3000): void {
     return;
   }
 
-  (window as any).requestIdleCallback(
+  window.requestIdleCallback(
     (deadline: IdleDeadline) => {
       // 只在浏览器确实空闲时预加载
       if (deadline.timeRemaining() > 0 || deadline.didTimeout) {

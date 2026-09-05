@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Paper, Typography } from '@mui/material';
 import { Target, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apsApi } from '@/api/aps';
+import type { DemandForecast } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@topems/tokens';
@@ -52,14 +53,32 @@ export default function ForecastAccuracyPage() {
         const res = await apsApi.listForecasts();
         const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
         const valid = items.filter(
-          (f: any) => f.forecastQty || f.forecast || f.actualQty || f.actual
+          (
+            f: DemandForecast & {
+              forecastQty?: number;
+              forecast?: number;
+              actualQty?: number;
+              actual?: number;
+            }
+          ) => f.forecastQty || f.forecast || f.actualQty || f.actual
         );
-        const totalAcc = valid.reduce((s: number, f: any) => {
-          const fc = f.forecastQty || f.forecast || 0;
-          const ac = f.actualQty || f.actual || 0;
-          if (fc <= 0) return s;
-          return s + (100 - (Math.abs(ac - fc) / fc) * 100);
-        }, 0);
+        const totalAcc = valid.reduce<number>(
+          (
+            s,
+            f: DemandForecast & {
+              forecastQty?: number;
+              forecast?: number;
+              actualQty?: number;
+              actual?: number;
+            }
+          ) => {
+            const fc = f.forecastQty || f.forecast || 0;
+            const ac = f.actualQty || f.actual || 0;
+            if (fc <= 0) return s;
+            return s + (100 - (Math.abs(ac - fc) / fc) * 100);
+          },
+          0
+        );
         return {
           forecasts: items,
           accuracy: valid.length > 0 ? totalAcc / valid.length : 0,

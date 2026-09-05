@@ -16,7 +16,7 @@ interface FormSelectProps {
   options: FormSelectOption[];
   value?: string | number | string[] | number[];
   placeholder?: string;
-  onChange?: (value: any) => void;
+  onChange?: (value: string | number | string[] | number[] | undefined) => void;
   disabled?: boolean;
   error?: string;
   required?: boolean;
@@ -50,7 +50,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
     ? Array.isArray(value) && value.length > 0
     : value !== undefined && value !== null && value !== '';
 
-  const handleChange = (event: SelectChangeEvent<any>) => {
+  const handleChange = (event: SelectChangeEvent<string | number | string[] | number[]>) => {
     const newValue = event.target.value;
     onChange?.(newValue);
   };

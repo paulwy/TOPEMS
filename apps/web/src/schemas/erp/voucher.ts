@@ -337,10 +337,11 @@ export const voucherSchema: EntitySchema & {
               })
             );
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
+          const err = e as { message?: string };
           alert(
             i18n.t('schema:erp.voucher.batchAction.batchSubmit.error', {
-              defaultValue: String(e?.message || i18n.t('shared.voucher.k29')),
+              defaultValue: String(err?.message || i18n.t('shared.voucher.k29')),
             })
           );
         }
@@ -370,10 +371,11 @@ export const voucherSchema: EntitySchema & {
               })
             );
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
+          const err = e as { message?: string };
           alert(
             i18n.t('schema:erp.voucher.batchAction.batchApprove.error', {
-              defaultValue: String(e?.message || i18n.t('shared.voucher.k32')),
+              defaultValue: String(err?.message || i18n.t('shared.voucher.k32')),
             })
           );
         }

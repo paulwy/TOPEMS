@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V503 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V504 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,21 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V504
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：no-explicit-any 治理（第五批——API/组件/微前端收尾）
+
+### V504 完成内容
+
+1. **API 层**：iam/user（getUserRoles 具体化 Role[]）、pdm（importData unknown）、gis/aps 分析页（reduce 回调交叉类型 Capacity/DemandForecast & 宽松字段）
+2. **组件**：FormSelect（onChange 联合类型 + SelectChangeEvent 联合）、CrudPage/WizardBuilder/PageHeader、PluginLoader（cache unknown + moduleComponent ComponentType）、LazyChart、MailPage（as any 去掉）
+3. **微前端**：RemoteLoader（constructor props 内联类型 + requestIdleCallback 原生）、dependency-governor（DependencyTree 接口 + 移到类外）、cross-framework（disable 设计性索引签名）
+4. **其他**：routes/v2/types 泛型回退 disable（逆变）、voucher catch unknown、template row Record 化、createSafeLazy disable
+5. **验证**：no-explicit-any 87→47；tsc 0；scan 0 行
+6. **坑（已记）**：① RouteConfig<P>/CrudPage adapter 泛型逆变——具体 Props 无法赋给 unknown 泛型，any 为设计性需 disable 而非 unknown；② reduce 回调参数具体化时需 reduce<number> 显式泛型 + 交叉类型（API 接口字段与页面宽松字段名不一致）；③ DependencyTree 接口误插类内导致 18 语法错误——接口必须放类外
+7. **V505 待办**：剩余 47 处（每文件 1 处：api/ai/assistant、api/crm/customer、api/finance/report、gis/pipeline、gis/storage、hrm/contract、mobile/user、response-normalize x2、wms/serialNumber、LazyLoadWrapper、PerformanceMonitor、PriorityBadge、dashboard x2、MapView x3、MarkdownEditorTemplate、MasterDetailPageTemplate 等 47 文件）
 
 ### V503
 

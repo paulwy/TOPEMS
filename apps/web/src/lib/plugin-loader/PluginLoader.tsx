@@ -106,7 +106,7 @@ export const ModuleErrorFallback: React.FC<{
   </Box>
 );
 export class PluginLoader {
-  private cache: Map<string, any> = new Map();
+  private cache: Map<string, unknown> = new Map();
   private retryCount: Map<string, number> = new Map();
   private loadedPlugins: Map<string, PluginInfo> = new Map();
   private options: PluginLoaderOptions;
@@ -396,7 +396,7 @@ export const PluginRouteWrapper: React.FC<PluginRouteWrapperProps> = ({
   moduleId,
   fallback,
 }) => {
-  const [moduleComponent, setModuleComponent] = useState<any>(null);
+  const [moduleComponent, setModuleComponent] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {

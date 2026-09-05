@@ -47,8 +47,11 @@ export default function OeeDashboardPage() {
     queryKey: ['aps', 'OeeDashboardPage'],
     queryFn: async () => {
       try {
-        const res = await (typeof (mesApi as any).equipmentOee?.list === 'function'
-          ? (mesApi as any).equipmentOee.list()
+        const mesApiWithOee = mesApi as {
+          equipmentOee?: { list?: () => Promise<unknown> };
+        };
+        const res = await (typeof mesApiWithOee.equipmentOee?.list === 'function'
+          ? (mesApi as { equipmentOee: { list: () => Promise<unknown> } }).equipmentOee.list()
           : Promise.resolve({ data: { records: [] } }));
         const data = (res as { data?: unknown })?.data;
         const items = Array.isArray(data)

@@ -100,8 +100,8 @@ export const userApi = {
     return apiClient.iam.get<UserWithPermissions>(`/users/${userId}/permissions`);
   },
 
-  getUserRoles: async (userId: string): Promise<ApiResponse<any[]>> => {
-    return apiClient.iam.get<any[]>(`/users/${userId}/roles`);
+  getUserRoles: async (userId: string): Promise<ApiResponse<Role[]>> => {
+    return apiClient.iam.get<Role[]>(`/users/${userId}/roles`);
   },
 
   addUserRole: async (userId: string, roleId: string): Promise<ApiResponse<string>> => {

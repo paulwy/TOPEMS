@@ -450,13 +450,13 @@ const EmailList: React.FC<EmailListProps> = ({
                         component='td'
                         sx={{ px: 3, py: 2 }}
                       >
-                        {getStatusBadge(email.status) as any}
+                        {getStatusBadge(email.status)}
                       </Box>
                       <Box
                         component='td'
                         sx={{ px: 3, py: 2 }}
                       >
-                        {getPriorityBadge(email.priority) as any}
+                        {getPriorityBadge(email.priority)}
                       </Box>
                       <Box
                         component='td'

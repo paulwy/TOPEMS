@@ -22,7 +22,7 @@ interface PrimaryActionButton {
   gradient?: string;
 }
 
-export interface PageHeaderProps<T = any> {
+export interface PageHeaderProps<T = unknown> {
   title?: string;
   subtitle?: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
@@ -51,7 +51,7 @@ export interface PageHeaderProps<T = any> {
  * 列表页头部（标题栏、面包屑、操作按钮）
  * 从 ListPageTemplate 中抽离的页面头部 UI
  */
-export function PageHeader<T = any>({
+export function PageHeader<T = unknown>({
   title,
   subtitle,
   breadcrumbs,

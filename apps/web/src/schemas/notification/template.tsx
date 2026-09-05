@@ -164,7 +164,7 @@ export const notificationTemplateSchema: EntitySchema = {
         ],
       },
       renderCell: (row: Record<string, unknown>) => {
-        const status = (row as any).status || 'draft';
+        const status = String(row.status ?? 'draft');
         const label = STATUS_LABELS[status] || status;
         const color = STATUS_COLORS[status] || 'default';
         const variant = status === 'active' ? 'filled' : 'outlined';
@@ -190,7 +190,7 @@ export const notificationTemplateSchema: EntitySchema = {
           variant='body2'
           color='text.secondary'
         >
-          {new Date((row as any).updated_at).toLocaleString('zh-CN')}
+          {new Date(String(row.updated_at)).toLocaleString('zh-CN')}
         </Typography>
       ),
     },

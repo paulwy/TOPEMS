@@ -112,6 +112,7 @@ export interface CrudTab {
 
 export interface CrudPageProps<T = Record<string, unknown>> {
   schema: EntitySchema<T>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- adapter 具体类型与 CrudPage 泛型 T 逆变不兼容，any 为设计性
   apiAdapter: CrudApiAdapter<any>;
   /** 自定义列表列（覆盖 Schema 生成的列） */
   customColumns?: ColumnDef<T>[];
@@ -123,7 +124,7 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   idField?: string;
   /** 自定义头部内容（覆盖 Schema 中的 headerContent）。支持渲染函数接收数据、总数和当前搜索词 */
   headerContent?:
-    React.ReactNode | ((rows: any[], total: number, search: string) => React.ReactNode);
+    React.ReactNode | ((rows: any[], total: number, search: string) => React.ReactNode); // eslint-disable-line @typescript-eslint/no-explicit-any -- 同 apiAdapter：泛型逆变约束
   /**
    * 树形模式数据适配器
    *

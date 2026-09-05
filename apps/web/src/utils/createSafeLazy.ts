@@ -6,6 +6,7 @@ interface LazyOptions {
   fallback?: React.ReactNode;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.lazy 约束需 ComponentType<any>
 export function createSafeLazy<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   options: LazyOptions = {}
@@ -27,6 +28,7 @@ export function createSafeLazy<T extends ComponentType<any>>(
   return LazyComponent;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 同上：React.lazy 泛型约束
 export function lazyWithPreload<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   options: LazyOptions = {}

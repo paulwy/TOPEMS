@@ -262,6 +262,13 @@ const UPGRADE_SUGGESTIONS: VersionUpgradeSuggestion[] = [
   },
 ];
 
+interface DependencyTree {
+  node?: DependencyGraphNode;
+  children?: DependencyTree[];
+  circular?: boolean;
+  id?: string;
+}
+
 export class DependencyGovernor {
   private modules: Map<string, MarketplaceModule> = new Map();
   private graph: DependencyGraph | null = null;
@@ -548,12 +555,12 @@ export class DependencyGovernor {
     return { graph, cycles, conflicts, stats };
   }
 
-  getDependencyTree(moduleId: string): { node: DependencyGraphNode; children: any[] } | null {
+  getDependencyTree(moduleId: string): DependencyTree | null {
     const graph = this.buildGraph();
     const node = graph.nodes.some((n) => n.id === moduleId);
     if (!node) return null;
 
-    const buildTree = (id: string, visited: Set<string>): any => {
+    const buildTree = (id: string, visited: Set<string>): DependencyTree => {
       if (visited.has(id)) return { circular: true, id };
       visited.add(id);
 
