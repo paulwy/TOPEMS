@@ -275,7 +275,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [contract]);
+  }, [contract, t]);
 
   const durationContent = useMemo(() => {
     if (!contract) return null;
@@ -327,7 +327,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [contract]);
+  }, [contract, t]);
 
   const salaryContent = useMemo(() => {
     if (!contract) return null;

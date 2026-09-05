@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V480 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V484 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V289-V479 已完成**（详见下方各版本章节与 releases/archives/ 归档）。V480 完成：**P1 lint-staged 门禁修复**（frontend-lint 改直接命令链，14 gate 全绿，门禁常态化恢复）+ **轨A 第二批 t 缺失依赖 80 处全清**（42 文件，exhaustive-deps 323→255）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V483 轨A 第四批 unnecessary 清理 30 处**（exhaustive-deps 194→164，14 gate 全绿）；**V484 missing 全量分类 + 自动化三坑验证 + t 型 7 处精确补入**（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,26 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V484
+
+> 状态：**已完成**（提交 `8c5b39458`）｜日期：2026-09-05
+> 主题：轨A missing 全量分类 + 自动化方案三坑验证 + t 型精确补入 7 处
+
+### V484 完成内容
+
+1. **missing 100 处（72 文件）全量分类完成**（dep 引用 147 个 / 唯一名 115）
+   - 按定义来源：useCallback 22 / `t`（useTranslation）7 / useMemo 1 / setter 0 / 组件内普通函数（plain-fn）52 / unknown 65
+   - dep top：t 7、stopRecording 4、getStatusConfig 4、crud 3、getStatusBadge 3；文件 top：ListPageTemplate 5、HrmContractDetailPage 4
+   - 结论：**missing 型无安全批量窗口**（V483 的 unnecessary 型可批量；missing 均为个案）
+2. **自动化补入三坑验证（重要教训，本轮核心产出）**
+   - 坑① **TDZ 声明顺序**：hook 依赖数组文本上引用**晚于 hook 声明的 useCallback 函数**（stopRecording/fetchNotifications/logout 等）→ 补入后 tsc TS2448/TS2454 "used before its declaration"（AudioCapture/VideoCapture/NotificationPanel/useAuth 回滚）
+   - 坑② **hook 体内数组字面量误匹配**：依赖数组定位正则命中 useEffect/useMemo 体内的数据数组（OfflineManager 把 syncPendingItems 补进 tile bounds 数据 → TS2749 类型被污染；行号向后窗口会误取**下一个** hook 的数组）——**missing 报错行 = 依赖数组行本身**，必须用 ±2 行小窗口
+   - 坑③ **组件内普通函数补入引发 unstable**：getContractTypeLabel/getStatusConfig/assessmentColumns 等为组件内 `const fn = () => {}`，每次渲染新建，补入会转成 unstable-fn 警告（不能补；useCallback 化属更大重构）
+3. **t 型 7 处精确补入（5 文件）**：EhsHazardDetailPage 568/619、ConsolidationReportsPage 340、FinanceBudgetDetailPage 345、HrmContractDetailPage 278/330、HrmEmployeeDetailPage 190——`[assessments]`→`[assessments, t]` 等（t 为 useTranslation 稳定引用，顶部声明无 TDZ）
+   - 注意：t 均与其它 plain-fn dep 同消息，**消息数不降**（100→100），但 dep 引用更精确（147→140）；验证 5 文件 0 lint error / 0 TS error
+4. **遗留（需人工逐案，已明确方法）**：missing 100 消息中 useCallback 型（22 处，AudioCapture/VideoCapture/NotificationPanel/useAuth/useNotificationState 等）需**调整声明顺序**后补入（将 useCallback 上移到 hook 之前）；plain-fn 型（52 处）需 useCallback 化或作为已知 unstable 保留；unknown 65 处需逐条读代码确认。人工修复时可复用 /tmp/eslint-v491.json 基线 + 小窗口定位法
+
 
 ### V483
 

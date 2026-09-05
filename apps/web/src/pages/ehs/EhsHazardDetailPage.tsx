@@ -565,7 +565,7 @@ const EhsHazardDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [assessments]);
+  }, [assessments, t]);
 
   const controlsContent = useMemo(() => {
     return (
@@ -616,7 +616,7 @@ const EhsHazardDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [controls]);
+  }, [controls, t]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [

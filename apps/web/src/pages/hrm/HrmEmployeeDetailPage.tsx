@@ -187,7 +187,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [employee]);
+  }, [employee, t]);
 
   const workInfoContent = useMemo(() => {
     if (!employee) return null;

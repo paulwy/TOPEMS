@@ -342,7 +342,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [budget]);
+  }, [budget, t]);
 
   const itemsContent = useMemo(() => {
     if (!budget) return null;

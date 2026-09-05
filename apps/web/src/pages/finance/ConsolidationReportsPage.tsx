@@ -337,7 +337,7 @@ export default function ConsolidationReportsPage() {
         loading: isLoading,
       },
     ],
-    [reports, isLoading]
+    [reports, isLoading, t]
   );
 
   const customToolbar = (
