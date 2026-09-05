@@ -588,7 +588,7 @@ describe('useGlobalSearch', () => {
       const mockNavigate = vi.fn();
       const { searchApi } = await import('@/api/search');
       let resolvePromise: (value: any) => void;
-      const pendingPromise = new Promise<any>((resolve) => {
+      const pendingPromise = new Promise<unknown>((resolve) => {
         resolvePromise = resolve;
       });
       vi.mocked(searchApi.globalSearch).mockReturnValue(pendingPromise);

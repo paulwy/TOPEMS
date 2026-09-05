@@ -133,7 +133,7 @@ class ModuleRegistry {
   /**
    * Load a remote module dynamically
    */
-  async loadRemoteModule(moduleId: string): Promise<any> {
+  async loadRemoteModule(moduleId: string): Promise<unknown> {
     const module = this.modules.get(moduleId);
     if (!module) {
       throw new Error(`Module ${moduleId} not found`);

@@ -111,7 +111,7 @@ export class PluginLoader {
   private loadedPlugins: Map<string, PluginInfo> = new Map();
   private options: PluginLoaderOptions;
   private systemJS?: {
-    import: (modulePath: string) => Promise<any>;
+    import: (modulePath: string) => Promise<unknown>;
   };
   private maxRetries = 3;
   public readonly emitter: EventEmitter = new EventEmitter();
@@ -134,7 +134,7 @@ export class PluginLoader {
       this.systemJS = (
         window as unknown as {
           System: {
-            import: (modulePath: string) => Promise<any>;
+            import: (modulePath: string) => Promise<unknown>;
           };
         }
       ).System;
@@ -151,7 +151,7 @@ export class PluginLoader {
           window as unknown as Record<
             string,
             {
-              import: (modulePath: string) => Promise<any>;
+              import: (modulePath: string) => Promise<unknown>;
             }
           >
         ).System;
@@ -247,7 +247,7 @@ export class PluginLoader {
       throw error;
     }
   }
-  public async loadBundle(frontend: PluginManifest['frontend']): Promise<any> {
+  public async loadBundle(frontend: PluginManifest['frontend']): Promise<unknown> {
     switch (frontend.type) {
       case 'systemjs':
         if (!this.systemJS) {
@@ -262,7 +262,7 @@ export class PluginLoader {
         throw new Error(`Unsupported frontend type: ${frontend.type}`);
     }
   }
-  private async loadUMDBundle(url: string): Promise<any> {
+  private async loadUMDBundle(url: string): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = url;
@@ -279,7 +279,7 @@ export class PluginLoader {
       document.head.appendChild(script);
     });
   }
-  async loadModule(component: () => Promise<any>, moduleId?: string): Promise<any> {
+  async loadModule(component: () => Promise<unknown>, moduleId?: string): Promise<unknown> {
     const cacheKey = moduleId || component.toString();
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey);
@@ -366,14 +366,18 @@ export class PluginLoader {
 }
 export const pluginLoader = new PluginLoader();
 export interface ModuleLoaderProps {
-  component: () => Promise<any>;
+  component: () => Promise<unknown>;
   fallback?: React.ReactNode;
 }
 export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
   component,
   fallback = <ModuleLoadingFallback />,
 }) => {
-  const LazyComponent = lazy(component);
+  const LazyComponent = lazy(async () => {
+    const mod = await component();
+    const Comp = (mod as { default?: React.ComponentType }).default ?? (mod as React.ComponentType);
+    return { default: Comp };
+  });
   return (
     <Suspense fallback={fallback}>
       <LazyComponent />
@@ -382,7 +386,7 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
 };
 interface PluginRouteWrapperProps {
   routePath: string;
-  component: () => Promise<any>;
+  component: () => Promise<unknown>;
   moduleId?: string;
   fallback?: React.ReactNode;
 }
@@ -400,9 +404,11 @@ export const PluginRouteWrapper: React.FC<PluginRouteWrapperProps> = ({
     const loadComponent = async () => {
       try {
         setLoading(true);
-        const mod = await pluginLoader.loadModule(component, moduleId);
+        const mod = (await pluginLoader.loadModule(component, moduleId)) as {
+          default?: React.ComponentType;
+        };
         if (mounted) {
-          setModuleComponent(() => mod.default || mod);
+          setModuleComponent(() => mod.default ?? (mod as React.ComponentType));
           setError(null);
         }
       } catch (err: unknown) {

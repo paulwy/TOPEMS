@@ -46,7 +46,7 @@ export interface LoadCondition {
 export interface OnDemandModule {
   id: string;
   name: string;
-  loaderFn: () => Promise<any>;
+  loaderFn: () => Promise<unknown>;
   priority: LoadPriority;
   preloadStrategy: PreloadStrategy;
   conditions: LoadCondition;
@@ -129,7 +129,7 @@ export type OnDemandCallback = (result: LoadResult) => void;
 
 class OnDemandLoaderImpl {
   private readonly modules = new Map<string, OnDemandModule>();
-  private readonly loadPromises = new Map<string, Promise<any>>();
+  private readonly loadPromises = new Map<string, Promise<unknown>>();
   private readonly preloadQueue: LoadRequest[] = [];
   private readonly history: AccessRecord[] = [];
   private readonly listeners = new Set<OnDemandCallback>();
@@ -171,7 +171,7 @@ class OnDemandLoaderImpl {
 
   register(
     id: string,
-    loaderFn: () => Promise<any>,
+    loaderFn: () => Promise<unknown>,
     options?: Partial<
       Omit<
         OnDemandModule,
@@ -529,7 +529,7 @@ class OnDemandLoaderImpl {
 
   // -------------------- 内部实现 --------------------
 
-  private async executeLoad(mod: OnDemandModule): Promise<any> {
+  private async executeLoad(mod: OnDemandModule): Promise<unknown> {
     mod.status = 'loading';
     const startTime = Date.now();
 
@@ -560,7 +560,7 @@ class OnDemandLoaderImpl {
     }
   }
 
-  private async doLoadWithRetry(mod: OnDemandModule): Promise<any> {
+  private async doLoadWithRetry(mod: OnDemandModule): Promise<unknown> {
     let lastError: Error | null = null;
     const retryCount = this.config.defaultRetryCount;
 
@@ -584,9 +584,9 @@ class OnDemandLoaderImpl {
     );
   }
 
-  private async doLoadWithTimeout(mod: OnDemandModule): Promise<any> {
+  private async doLoadWithTimeout(mod: OnDemandModule): Promise<unknown> {
     const timeoutMs = this.config.defaultTimeoutMs;
-    return new Promise<any>((resolve, reject) => {
+    return new Promise<unknown>((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(
           new Error(

@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V500 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V501 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,23 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V501
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：no-explicit-any 治理（第二批——Promise<any> 全量 unknown 化 + 下游修复）
+
+### V501 完成内容
+
+1. **Promise<any> → Promise<unknown> 全量批量**（34 处/8 文件）：动态加载/模块机制文件的异步返回类型安全化
+2. **下游 11 个 tsc 错误修复**：
+   - PluginLoader：ModuleLoader lazy 包装（mod as {default?} + ComponentType 断言）、loadModule 返回处断言
+   - RemoteLoader：loadRemoteModule 返回断言 + default ?? 处理
+   - function-as-module：output as TOutput
+   - BIModuleDetailPage：新增 ModuleApiResponse<T> 接口 + moduleApiMap 具体化（summary/timeline/distribution）+ timelineItems 双重断言保留原逻辑
+3. **验证**：no-explicit-any 215→182；tsc 0 errors；scan 0 行
+4. **坑（已记）**：① Promise<unknown> 破坏面集中在调用处（mod.default/模块实例访问）——统一 as {default?: React.ComponentType} 断言；② 动态 import 的模块结构断言为 {default?} 是最小侵入方案；③ API 泛型（apiClient.get<any>）需逐文件看调用方使用方式
+5. **V502 待办**：剩余 182 处（on-demand-loader 15 的 instance/global 断言、function-as-module 13 的泛型默认 any、EventBus 5 的 T=any、gis/map 6 的 get<any>、BarChart 5 的 tooltip params 等）
 
 ### V500
 

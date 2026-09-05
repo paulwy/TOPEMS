@@ -191,7 +191,9 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
             `${i18n.t('microfrontend.remote_loader.remoteloader_5')}${moduleName}/${component}${i18n.t('microfrontend.remote_loader.k6')}${moduleVersion}, ${canaryStatus})`
           );
 
-          const module = await loadRemoteModule(moduleName, component);
+          const module = (await loadRemoteModule(moduleName, component)) as {
+            default?: React.ComponentType;
+          };
           const loadEnd = performance.now();
           const moduleLoadTime = loadEnd - loadStart;
 
@@ -212,7 +214,7 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
             modulePerformanceMetrics.collectResourceTiming(moduleId);
           }, 100);
 
-          return { default: module.default || module };
+          return { default: module.default ?? (module as React.ComponentType) };
         } catch (err) {
           console.error(
             `${i18n.t('microfrontend.remote_loader.remoteloader_7')}${moduleName}/${component}${i18n.t('microfrontend.remote_loader.k8')}`,
@@ -277,7 +279,7 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
  * 优先使用 module-federation 的 import动态导入，
  * 失败时尝试降级入口。
  */
-async function loadRemoteModule(moduleName: string, component: string): Promise<any> {
+async function loadRemoteModule(moduleName: string, component: string): Promise<unknown> {
   const entryStart = performance.now();
   const module = await import(/* @vite-ignore */ `${moduleName}/${component}`);
   const entryLoadTime = performance.now() - entryStart;

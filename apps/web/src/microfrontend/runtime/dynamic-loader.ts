@@ -83,7 +83,7 @@ export class DynamicModuleLoader {
   /** 已注册的模块表: id -> RuntimeModule */
   private readonly modules = new Map<string, RuntimeModule>();
   /** 加载缓存: id -> 加载完成的 Promise（避免重复加载） */
-  private readonly loadingPromises = new Map<string, Promise<any>>();
+  private readonly loadingPromises = new Map<string, Promise<unknown>>();
   /** 当前正在加载的数量 */
   private currentLoading = 0;
   /** 等待队列（当并发达到上限时排队） */
@@ -115,7 +115,7 @@ export class DynamicModuleLoader {
    */
   registerModule(
     id: string,
-    loader: () => Promise<any>,
+    loader: () => Promise<unknown>,
     name?: string,
     url?: string
   ): RuntimeModule {
@@ -156,7 +156,7 @@ export class DynamicModuleLoader {
   /**
    * 加载模块（带并发控制 + 超时 + 重试 + 缓存）
    */
-  async loadModule(id: string): Promise<any> {
+  async loadModule(id: string): Promise<unknown> {
     const mod = this.modules.get(id);
     if (!mod) {
       throw new Error(
@@ -191,7 +191,7 @@ export class DynamicModuleLoader {
   /**
    * 从字符串 URL 动态加载模块（基于 import()）
    */
-  async loadModuleFromString(id: string, url: string, name?: string): Promise<any> {
+  async loadModuleFromString(id: string, url: string, name?: string): Promise<unknown> {
     if (!this.modules.has(id)) {
       this.registerModule(id, () => this.dynamicImport(url), name || id, url);
     }
@@ -233,7 +233,7 @@ export class DynamicModuleLoader {
   /**
    * 重新加载模块（先卸载再加载）
    */
-  async reloadModule(id: string): Promise<any> {
+  async reloadModule(id: string): Promise<unknown> {
     this.unloadModule(id);
     // 临时禁用缓存以强制重新加载
     const wasCached = this.config.cache_enabled;
@@ -295,9 +295,11 @@ export class DynamicModuleLoader {
   // -------------------- 内部实现 --------------------
 
   /** 动态 import 远程模块 */
-  private async dynamicImport(url: string): Promise<any> {
+  private async dynamicImport(url: string): Promise<unknown> {
     // 使用 new Function 避免打包工具静态分析
-    const dynamicImport = new Function('url', 'return import(url)') as (u: string) => Promise<any>;
+    const dynamicImport = new Function('url', 'return import(url)') as (
+      u: string
+    ) => Promise<unknown>;
     return dynamicImport(url);
   }
 
@@ -326,7 +328,7 @@ export class DynamicModuleLoader {
   }
 
   /** 带并发控制的加载流程 */
-  private async doLoadWithConcurrency(id: string): Promise<any> {
+  private async doLoadWithConcurrency(id: string): Promise<unknown> {
     await this.acquireSlot();
     try {
       return await this.doLoadWithRetry(id);
@@ -336,7 +338,7 @@ export class DynamicModuleLoader {
   }
 
   /** 带重试的加载流程 */
-  private async doLoadWithRetry(id: string): Promise<any> {
+  private async doLoadWithRetry(id: string): Promise<unknown> {
     const mod = this.modules.get(id)!;
     mod.status = ModuleLoadStatus.LOADING;
     mod.error = undefined;
@@ -377,11 +379,11 @@ export class DynamicModuleLoader {
   }
 
   /** 带超时的加载流程 */
-  private async doLoadWithTimeout(id: string): Promise<any> {
+  private async doLoadWithTimeout(id: string): Promise<unknown> {
     const mod = this.modules.get(id)!;
     const timeoutMs = this.config.timeout_ms;
 
-    return new Promise<any>((resolve, reject) => {
+    return new Promise<unknown>((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(
           new Error(

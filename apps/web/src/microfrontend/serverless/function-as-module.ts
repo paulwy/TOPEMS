@@ -273,7 +273,7 @@ class FunctionAsModuleImpl {
       );
       const execTime = Date.now() - startTime;
       const result: InvokeResult<TOutput> = {
-        data: output,
+        data: output as TOutput,
         status: 'success',
         execTime,
         fromCache: false,
@@ -493,7 +493,7 @@ class FunctionAsModuleImpl {
     def: FunctionDefinition,
     context: InvokeContext,
     timeoutMs: number
-  ): Promise<any> {
+  ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(

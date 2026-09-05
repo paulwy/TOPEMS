@@ -209,12 +209,24 @@ const getFallbackData = (moduleId: string): ModuleData => {
   };
   return fallbackData[moduleId] || fallbackData.rs;
 };
+interface ModuleApiResponse<T> {
+  success: boolean;
+  data?: T;
+}
+
+interface ModuleTimelineItem {
+  month?: string;
+  date?: string;
+  count?: number;
+  value?: number;
+}
+
 const moduleApiMap: Record<
   string,
   {
-    summary: () => Promise<any>;
-    timeline?: () => Promise<any>;
-    distribution?: () => Promise<any>;
+    summary: () => Promise<ModuleApiResponse<Record<string, number | string>>>;
+    timeline?: () => Promise<ModuleApiResponse<{ items?: Array<ModuleTimelineItem> }>>;
+    distribution?: () => Promise<ModuleApiResponse<Array<{ name: string; value: number }>>>;
   }
 > = {
   rs: {
@@ -302,7 +314,10 @@ const BIModuleDetailPage = () => {
         try {
           const timelineRes = await apiConfig.timeline();
           if (timelineRes.success && timelineRes.data) {
-            const timelineItems = timelineRes.data.items || timelineRes.data || [];
+            const timelineItems =
+              (timelineRes.data as { items?: Array<ModuleTimelineItem> } | undefined)?.items ||
+              (timelineRes.data as Array<ModuleTimelineItem> | undefined) ||
+              [];
             if (Array.isArray(timelineItems) && timelineItems.length > 0) {
               timelineData = timelineItems.map(
                 (
