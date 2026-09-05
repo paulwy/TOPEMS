@@ -5969,5 +5969,20 @@
   "ai.business_copilot.smart_form_title": "Smart Form - {{name}}",
   "ai.business_copilot.document_processing": "Document Intelligence",
   "ai.business_copilot.governance_dashboard": "AI Governance Dashboard",
-  "ai.business_copilot.refresh": "Refresh"
+  "ai.business_copilot.refresh": "Refresh",
+  "ai.dsh_agent_panel.title": "DSH Agent Assistant",
+  "ai.dsh_agent_panel.thinking": "Thinking...",
+  "ai.dsh_agent_panel.tool_call": "{{content}}\n\n🔧 Tool call: {{tool}}...",
+  "ai.dsh_agent_panel.tool_done": "{{content}}\n✅ Tool {{tool}} completed",
+  "ai.dsh_agent_panel.tool_error": "{{content}}\n❌ Error: {{error}}",
+  "ai.dsh_agent_panel.error_unknown": "Unknown error",
+  "ai.dsh_agent_panel.exec_failed": "❌ Execution failed: {{message}}",
+  "ai.dsh_agent_panel.step": "Step {{number}}: {{description}}",
+  "ai.dsh_agent_panel.generating": "Generating...",
+  "ai.dsh_agent_panel.exec_steps": "Execution steps ({{count}})",
+  "ai.dsh_agent_panel.session_label": "Session: {{id}}...",
+  "ai.dsh_agent_panel.clear_session": "Clear session",
+  "ai.dsh_agent_panel.help_title": "How can I help you?",
+  "ai.dsh_agent_panel.help_subtitle": "Ask a question and I will use tools to find the answer",
+  "ai.dsh_agent_panel.input_placeholder": "Type your question..."
 }

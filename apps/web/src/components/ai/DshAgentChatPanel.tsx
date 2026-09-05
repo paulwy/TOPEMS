@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -93,13 +94,16 @@ interface DshAgentChatPanelProps {
 
 export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
   sessionId,
-  title = 'DSH Agent 智能助手',
+  title,
   maxHeight = 600,
   showHeader = true,
   initialMessages = [],
   onMessageSent,
   onResponseReceived,
 }) => {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t('ai.dsh_agent_panel.title');
+
   // 状态
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState('');
@@ -134,7 +138,7 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
             case 'thinking':
               return {
                 ...msg,
-                content: data.thought || '思考中...',
+                content: data.thought || t('ai.dsh_agent_panel.thinking'),
               };
             case 'content_delta':
               return {
@@ -150,17 +154,26 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
             case 'tool_call_start':
               return {
                 ...msg,
-                content: msg.content + `\n\n🔧 调用工具: ${data.tool_name}...`,
+                content: t('ai.dsh_agent_panel.tool_call', {
+                  content: msg.content,
+                  tool: data.tool_name,
+                }),
               };
             case 'tool_call_complete':
               return {
                 ...msg,
-                content: msg.content + `\n✅ 工具 ${data.tool_name} 执行完成`,
+                content: t('ai.dsh_agent_panel.tool_done', {
+                  content: msg.content,
+                  tool: data.tool_name,
+                }),
               };
             case 'error':
               return {
                 ...msg,
-                content: msg.content + `\n❌ 错误: ${data.error}`,
+                content: t('ai.dsh_agent_panel.tool_error', {
+                  content: msg.content,
+                  error: data.error,
+                }),
                 error: true,
                 streaming: false,
               };
@@ -172,10 +185,10 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
             default:
               return msg;
           }
-        }),
+        })
       );
     },
-    [],
+    [t]
   );
 
   // 发送消息
@@ -219,36 +232,35 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
           if (data.session_id && !currentSessionId) {
             setCurrentSessionId(data.session_id);
           }
-        },
+        }
       );
 
       // 流式结束后，获取完整响应（用于步骤和工具信息）
       // 注意：这里简化处理，实际应用中可以从流式事件中收集步骤信息
       setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessageId ? { ...msg, streaming: false } : msg,
-        ),
+        prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, streaming: false } : msg))
       );
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '未知错误';
+      const errorMessage =
+        err instanceof Error ? err.message : t('ai.dsh_agent_panel.error_unknown');
       setError(errorMessage);
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessageId
             ? {
                 ...msg,
-                content: `❌ 执行失败: ${errorMessage}`,
+                content: t('ai.dsh_agent_panel.exec_failed', { message: errorMessage }),
                 error: true,
                 streaming: false,
               }
-            : msg,
-        ),
+            : msg
+        )
       );
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, currentSessionId, onMessageSent, handleStreamEvent]);
+  }, [input, isLoading, currentSessionId, onMessageSent, handleStreamEvent, t]);
 
   // 清除会话
   const handleClearSession = useCallback(async () => {
@@ -272,30 +284,48 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
         handleSend();
       }
     },
-    [handleSend],
+    [handleSend]
   );
 
   // 渲染工具步骤
   const renderStep = (step: ExecutionStep, index: number) => (
-    <Box key={index} sx={{ mb: 1, ml: 2 }}>
+    <Box
+      key={index}
+      sx={{ mb: 1, ml: 2 }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {step.success ? (
-          <CheckCircleIcon color="success" fontSize="small" />
+          <CheckCircleIcon
+            color='success'
+            fontSize='small'
+          />
         ) : (
-          <ErrorIcon color="error" fontSize="small" />
+          <ErrorIcon
+            color='error'
+            fontSize='small'
+          />
         )}
-        <Typography variant="body2" component="span">
-          步骤 {step.step_number}: {step.description}
+        <Typography
+          variant='body2'
+          component='span'
+        >
+          {t('ai.dsh_agent_panel.step', {
+            number: step.step_number,
+            description: step.description,
+          })}
         </Typography>
         {step.tool_name && (
           <Chip
             icon={<BuildIcon />}
             label={step.tool_name}
-            size="small"
-            variant="outlined"
+            size='small'
+            variant='outlined'
           />
         )}
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant='caption'
+          color='text.secondary'
+        >
           ({step.duration_ms}ms)
         </Typography>
       </Box>
@@ -330,7 +360,7 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
             flexShrink: 0,
           }}
         >
-          {isUser ? <PersonIcon fontSize="small" /> : <SmartToyIcon fontSize="small" />}
+          {isUser ? <PersonIcon fontSize='small' /> : <SmartToyIcon fontSize='small' />}
         </Box>
 
         {/* 消息内容 */}
@@ -348,21 +378,24 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
         >
           {/* 消息文本 */}
           <Typography
-            variant="body1"
+            variant='body1'
             sx={{
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
             }}
           >
-            {message.content || (message.streaming ? '思考中...' : '')}
+            {message.content || (message.streaming ? t('ai.dsh_agent_panel.thinking') : '')}
           </Typography>
 
           {/* 流式指示器 */}
           {message.streaming && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
               <CircularProgress size={16} />
-              <Typography variant="caption" color="text.secondary">
-                正在生成...
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {t('ai.dsh_agent_panel.generating')}
               </Typography>
             </Box>
           )}
@@ -371,7 +404,9 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
           {message.steps && message.steps.length > 0 && (
             <Accordion sx={{ mt: 1 }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="body2">执行步骤 ({message.steps.length})</Typography>
+                <Typography variant='body2'>
+                  {t('ai.dsh_agent_panel.exec_steps', { count: message.steps.length })}
+                </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 {message.steps.map((step, index) => renderStep(step, index))}
@@ -387,15 +422,19 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
                   key={index}
                   icon={<BuildIcon />}
                   label={tool}
-                  size="small"
-                  variant="outlined"
+                  size='small'
+                  variant='outlined'
                 />
               ))}
             </Box>
           )}
 
           {/* 时间戳 */}
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ mt: 1, display: 'block' }}
+          >
             {message.timestamp.toLocaleTimeString()}
           </Typography>
         </Paper>
@@ -427,18 +466,23 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SmartToyIcon color="primary" />
-            <Typography variant="h6">{title}</Typography>
+            <SmartToyIcon color='primary' />
+            <Typography variant='h6'>{resolvedTitle}</Typography>
             {currentSessionId && (
               <Chip
-                label={`会话: ${currentSessionId.substring(0, 8)}...`}
-                size="small"
-                variant="outlined"
+                label={t('ai.dsh_agent_panel.session_label', {
+                  id: currentSessionId.substring(0, 8),
+                })}
+                size='small'
+                variant='outlined'
               />
             )}
           </Box>
-          <Tooltip title="清除会话">
-            <IconButton onClick={handleClearSession} size="small">
+          <Tooltip title={t('ai.dsh_agent_panel.clear_session')}>
+            <IconButton
+              onClick={handleClearSession}
+              size='small'
+            >
               <DeleteIcon />
             </IconButton>
           </Tooltip>
@@ -447,7 +491,11 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
 
       {/* 错误提示 */}
       {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ m: 1 }}>
+        <Alert
+          severity='error'
+          onClose={() => setError(null)}
+          sx={{ m: 1 }}
+        >
           {error}
         </Alert>
       )}
@@ -474,11 +522,17 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
             }}
           >
             <SmartToyIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-            <Typography variant="h6" gutterBottom>
-              有什么可以帮助你的？
+            <Typography
+              variant='h6'
+              gutterBottom
+            >
+              {t('ai.dsh_agent_panel.help_title')}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              输入问题，我会调用工具帮你查找答案
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {t('ai.dsh_agent_panel.help_subtitle')}
             </Typography>
           </Box>
         ) : (
@@ -501,16 +555,16 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
           fullWidth
           multiline
           maxRows={4}
-          placeholder="输入你的问题..."
+          placeholder={t('ai.dsh_agent_panel.input_placeholder')}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
           inputRef={inputRef}
-          size="small"
+          size='small'
         />
         <IconButton
-          color="primary"
+          color='primary'
           onClick={handleSend}
           disabled={!input.trim() || isLoading}
           sx={{ alignSelf: 'flex-end' }}

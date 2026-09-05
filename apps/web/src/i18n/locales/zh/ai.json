@@ -3409,5 +3409,20 @@
   "ai.business_copilot.smart_form_title": "智能表单 - {{name}}",
   "ai.business_copilot.document_processing": "文档智能处理",
   "ai.business_copilot.governance_dashboard": "AI 治理仪表盘",
-  "ai.business_copilot.refresh": "刷新"
+  "ai.business_copilot.refresh": "刷新",
+  "ai.dsh_agent_panel.title": "DSH Agent 智能助手",
+  "ai.dsh_agent_panel.thinking": "思考中...",
+  "ai.dsh_agent_panel.tool_call": "{{content}}\n\n🔧 调用工具: {{tool}}...",
+  "ai.dsh_agent_panel.tool_done": "{{content}}\n✅ 工具 {{tool}} 执行完成",
+  "ai.dsh_agent_panel.tool_error": "{{content}}\n❌ 错误: {{error}}",
+  "ai.dsh_agent_panel.error_unknown": "未知错误",
+  "ai.dsh_agent_panel.exec_failed": "❌ 执行失败: {{message}}",
+  "ai.dsh_agent_panel.step": "步骤 {{number}}: {{description}}",
+  "ai.dsh_agent_panel.generating": "正在生成...",
+  "ai.dsh_agent_panel.exec_steps": "执行步骤 ({{count}})",
+  "ai.dsh_agent_panel.session_label": "会话: {{id}}...",
+  "ai.dsh_agent_panel.clear_session": "清除会话",
+  "ai.dsh_agent_panel.help_title": "有什么可以帮助你的？",
+  "ai.dsh_agent_panel.help_subtitle": "输入问题，我会调用工具帮你查找答案",
+  "ai.dsh_agent_panel.input_placeholder": "输入你的问题..."
 }
