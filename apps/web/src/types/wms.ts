@@ -33,6 +33,7 @@
 // ============================================================================
 
 // ==================== FSM-1 InboundOrder ====================
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const INBOUND_ORDER_STATES = [
   'created',
   'confirmed',
@@ -43,6 +44,7 @@ const INBOUND_ORDER_STATES = [
 export type InboundOrderState = (typeof INBOUND_ORDER_STATES)[number];
 
 // ==================== FSM-2 OutboundOrder ====================
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const OUTBOUND_ORDER_STATES = [
   'created',
   'confirmed',
@@ -55,10 +57,12 @@ const OUTBOUND_ORDER_STATES = [
 export type OutboundOrderState = (typeof OUTBOUND_ORDER_STATES)[number];
 
 // ==================== FSM-3 StockTake ====================
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const STOCK_TAKE_STATES = ['planned', 'in_progress', 'completed', 'cancelled'] as const;
 export type StockTakeState = (typeof STOCK_TAKE_STATES)[number];
 
 // ==================== FSM-4 TransferOrder ====================
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const TRANSFER_ORDER_STATES = [
   'pending',
   'confirmed',
@@ -70,14 +74,17 @@ const TRANSFER_ORDER_STATES = [
 export type TransferOrderState = (typeof TRANSFER_ORDER_STATES)[number];
 
 // ==================== FSM-5 WavePick ====================
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const WAVE_PICK_STATES = ['created', 'assigned', 'picking', 'completed', 'cancelled'] as const;
 export type WavePickState = (typeof WAVE_PICK_STATES)[number];
 
 // ==================== FSM-6 InventoryMovement ====================
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const INVENTORY_MOVEMENT_STATES = ['draft', 'posted', 'completed', 'cancelled'] as const;
 export type InventoryMovementState = (typeof INVENTORY_MOVEMENT_STATES)[number];
 
 // ==================== FSM-7 SerialNumber ====================
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const SERIAL_NUMBER_STATES = ['pending', 'assigned', 'used', 'archived'] as const;
 export type SerialNumberState = (typeof SERIAL_NUMBER_STATES)[number];
 

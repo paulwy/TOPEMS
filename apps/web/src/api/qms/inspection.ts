@@ -10,7 +10,6 @@ import type {
   AuditInspectionRequestBackend,
   InspectionResult,
   InspectionAudit,
-  PaginatedResponse,
   QmsPaginatedResponse,
 } from './types';
 import { adaptInspectionToFrontend, adaptInspectionToBackend } from './adapters';

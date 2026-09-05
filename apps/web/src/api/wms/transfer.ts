@@ -4,7 +4,6 @@ import type {
   TransferOrder,
   TransferOrderItem,
   CreateTransferOrderRequest,
-  CreateTransferOrderItemRequest,
   PaginationParams,
 } from './types';
 

@@ -30,7 +30,7 @@ export const useNotificationState = (enabled = true) => {
           loading: false,
         }));
       }
-    } catch (error: unknown) {
+    } catch {
       setState((prev) => ({
         ...prev,
         loading: false,

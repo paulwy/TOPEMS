@@ -3,7 +3,7 @@ import { Chip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const getStatusStyle = (status: string, t: (key: string) => string) => {
+const getStatusStyle = (status: string, _t: (key: string) => string) => {
   if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
   const s = status.toLowerCase();
   if (s.includes('active') || s.includes(` + ${i18n.t('gis.index.status_active')} + `))

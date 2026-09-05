@@ -12,7 +12,6 @@ import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { scmApi } from '@/api/scm';
 
 const ct = designTokens.colors;
 
@@ -42,17 +41,6 @@ const mrpStatusData = [
 ];
 
 const ScmOverviewPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['scm-overview-summary'],
-    queryFn: async () => {
-      try {
-        const res = await scmApi.supplyChainDashboard.overview();
-        return res.data ?? {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('scm');
   const navigate = useNavigate();
 

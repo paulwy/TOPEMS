@@ -99,13 +99,6 @@ const LimsInstrumentDataPage: React.FC = () => {
     closeConfirm: setConfirmDialogClosed,
   } = useConfirmDialog();
 
-  const showNotification = (
-    message: string,
-    severity: 'success' | 'error' | 'info' | 'warning'
-  ) => {
-    setNotification({ open: true, message, severity });
-  };
-
   const invalidateAll = () => {
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.LIMS.INSTRUMENT_DATA,

@@ -110,11 +110,6 @@ const MonitorPage: React.FC = () => {
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${days}${i18n.t('pages.monitor_page.k3')}${hours}${i18n.t('pages.monitor_page.k4')}${minutes}${i18n.t('pages.monitor_page.k5')}`;
   };
-  const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB/s`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB/s`;
-  };
 
   const serviceHealthColumns: ColumnDef<ServiceHealth>[] = useMemo(
     () => [

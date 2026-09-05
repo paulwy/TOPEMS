@@ -115,7 +115,7 @@ const QualityInspectionPage: React.FC = () => {
           title: i18n.t('mes.quality_inspection_page.export'),
           message: `${i18n.t('pages.quality_inspection_page.k1')}${rows.length}${i18n.t('pages.quality_inspection_page.k2')}`,
         });
-      } catch (error: unknown) {
+      } catch {
         addNotification({
           type: 'error',
           title: i18n.t('mes.quality_inspection_page.export_2'),

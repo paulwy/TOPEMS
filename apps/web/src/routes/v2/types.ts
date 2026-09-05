@@ -141,17 +141,6 @@ export function flattenRoutes(routes: RouteConfigV2[]): RouteConfigV2[] {
  * currently pass an empty set, which means advanced modules are hidden
  * until the integration is completed in a later phase.
  */
-function filterModulesByTier(
-  modules: RouteModuleConfig[],
-  activeAdvancedModuleCodes: Set<string> = new Set()
-): RouteModuleConfig[] {
-  return modules.filter((m) => {
-    const tier = m.tier ?? 'basic';
-    if (tier === 'basic') return true;
-    if (tier === 'advanced') return activeAdvancedModuleCodes.has(m.code);
-    return true;
-  });
-}
 
 /**
  * P34-4: filter routes by tier. Same semantics as {@link filterModulesByTier}

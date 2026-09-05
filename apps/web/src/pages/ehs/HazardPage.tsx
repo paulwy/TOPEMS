@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 const HazardStats: React.FC = () => {
-  const { t } = useTranslation('ehs');
+  const {} = useTranslation('ehs');
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.EHS.HAZARDS, 'stats'],
     queryFn: async () => {

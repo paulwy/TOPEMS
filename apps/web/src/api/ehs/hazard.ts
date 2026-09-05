@@ -5,7 +5,6 @@ import type {
   CreateControlMeasureRequest,
   CreateRiskAssessmentRequest,
   CreateSafetyHazardRequest,
-  Hazard,
   ListQueryParams,
   PaginatedResponse,
   RiskAssessment,

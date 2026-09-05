@@ -5,7 +5,7 @@ import { reportApi } from '@/api/report';
 import i18n from '@/i18n';
 
 const ReportBuilderPage = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { isLoading: isBackendLoading } = useQuery({
     queryKey: ['report-builder'],
     queryFn: async () => {
       try {

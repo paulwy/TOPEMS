@@ -6,7 +6,6 @@ import type {
   RefreshTokenResponseData,
   ResetPasswordRequest,
   SetNewPasswordRequest,
-  User,
 } from './types';
 
 export const authModuleApi = {
@@ -37,7 +36,7 @@ export const authModuleApi = {
     try {
       const refreshToken = localStorage.getItem('refresh_token');
       await apiClient.iam.post('/auth/logout', { refresh_token: refreshToken });
-    } catch (error) {
+    } catch {
       // Backend logout failed; continue with local cleanup
     }
     localStorage.removeItem('token');

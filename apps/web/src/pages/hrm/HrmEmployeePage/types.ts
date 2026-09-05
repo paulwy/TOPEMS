@@ -17,12 +17,6 @@ export interface EmployeeListParams {
   [key: string]: string | number | undefined;
 }
 
-interface ValidationSuggestion {
-  field: string;
-  value?: string | number;
-  message?: string;
-}
-
 export type ViewMode = 'list' | 'tree';
 
 export interface EmployeeFormDialogProps {

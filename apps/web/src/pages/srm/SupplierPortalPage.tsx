@@ -90,7 +90,7 @@ const SupplierPortalPage: React.FC = () => {
           if (statsRes.success && statsRes.data) {
             stats = statsRes.data;
           }
-        } catch (e) {
+        } catch {
           stats = {
             total_orders: 128,
             pending_orders: 12,
@@ -115,7 +115,7 @@ const SupplierPortalPage: React.FC = () => {
               status: po.status,
             }));
           }
-        } catch (e) {
+        } catch {
           orders = [
             {
               id: '1',

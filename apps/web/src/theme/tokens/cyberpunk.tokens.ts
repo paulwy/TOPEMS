@@ -5,6 +5,7 @@
  * 对比度：所有文字色均满足 WCAG AA 标准（≥ 4.5:1）
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const cyberpunkTokens = {
   colors: {
     // 主色 — 霓虹青
@@ -187,12 +188,11 @@ const cyberpunkTokens = {
   },
 } as const;
 
-type CyberpunkTokens = typeof cyberpunkTokens;
-
 /**
  * 赛博朋克主题的语义化 Token
  * 覆盖 semanticTokens 中的关键字段
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const cyberpunkSemanticTokens = {
   // 玻璃拟态卡片
   glassCard: {
@@ -251,5 +251,3 @@ const cyberpunkSemanticTokens = {
     input: 'rgba(255, 255, 255, 0.03)',
   },
 } as const;
-
-type CyberpunkSemanticTokens = typeof cyberpunkSemanticTokens;

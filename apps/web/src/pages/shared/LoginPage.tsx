@@ -47,7 +47,7 @@ interface LoginPageProps {
   onLogin?: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const LoginPage: React.FC<LoginPageProps> = ({}) => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const addNotification = useNotificationStore((state) => state.addNotification);

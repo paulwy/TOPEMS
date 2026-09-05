@@ -131,9 +131,6 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   showTimeRange = true,
   searchValue,
   onSearch,
-  filterConfig,
-  filters,
-  onFilterChange,
   timeRanges = [
     {
       id: 'today',
@@ -165,7 +162,6 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   actions = [],
   headerContent,
   footerContent,
-  defaultGroupExpanded = true,
   ...props
 }) => {
   const theme = useTheme();

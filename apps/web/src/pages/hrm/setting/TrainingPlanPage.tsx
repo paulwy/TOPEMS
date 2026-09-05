@@ -4,20 +4,8 @@ import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { useQuery } from '@tanstack/react-query';
-import { hrmApi } from '@/api/hrm';
 
 export const TrainingPlanPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['hrm-training-plan'],
-    queryFn: async () => {
-      try {
-        return await hrmApi.trainingPlans.list();
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('hrm');
   return (
     <PageContainer

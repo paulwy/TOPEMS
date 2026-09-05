@@ -162,7 +162,7 @@ const getTypeLabel = (type: Message['type']) => {
 };
 
 export const AiChatPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['ai', 'chat'],
     queryFn: async () => {
       try {

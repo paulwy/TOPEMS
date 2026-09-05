@@ -28,7 +28,7 @@ const HrmLeavePage: React.FC = () => {
             message: t('hrm.hrm_leave_page.text_337737'),
           });
         }
-      } catch (error) {
+      } catch {
         addNotification({
           type: 'error',
           title: t('common.fail'),
@@ -51,7 +51,7 @@ const HrmLeavePage: React.FC = () => {
             message: t('hrm.hrm_leave_page.text_81233d'),
           });
         }
-      } catch (error) {
+      } catch {
         addNotification({
           type: 'error',
           title: t('common.fail'),

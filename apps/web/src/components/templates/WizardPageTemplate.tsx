@@ -110,7 +110,6 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
   submitting,
   error,
   success,
-  showStepNumbers = true,
   showProgress = true,
   showNavigation = true,
   backButtonText = i18n.t('templates.wizard_page_template.k0'),

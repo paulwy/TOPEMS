@@ -280,7 +280,7 @@ class OnDemandLoaderImpl {
         this.preloadHits++;
         this.successfulLoads++;
         return { id, status: 'loaded', instance, loadTime: 0, fromPreload: true };
-      } catch (err) {
+      } catch {
         this.loadPromises.delete(id);
       }
     }

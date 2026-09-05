@@ -42,7 +42,7 @@ const tableColumns: TableColumn[] = [
 
 const CRMSalesForecastPage: React.FC = () => {
   const { t } = useTranslation();
-  const [timeRange, setTimeRange] = useState('monthly');
+  const [timeRange, _setTimeRange] = useState('monthly');
   const [period, setPeriod] = useState<Period>('MTD');
   const { data: mockForecast, mockEnabled } = useCrmMock<ForecastData>({ period });
 

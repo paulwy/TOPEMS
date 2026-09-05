@@ -6,7 +6,6 @@ import type {
   CreateInboundOrderRequest,
   CreateInboundOrderItemRequest,
   ReceiveItemRequest,
-  UpdateInboundOrderRequest,
   PaginationParams,
 } from './types';
 

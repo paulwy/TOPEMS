@@ -19,7 +19,6 @@ import {
   Typography,
   CircularProgress,
   Chip,
-  Divider,
   Tooltip,
   Accordion,
   AccordionSummary,
@@ -99,7 +98,6 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
   showHeader = true,
   initialMessages = [],
   onMessageSent,
-  onResponseReceived,
 }) => {
   const { t } = useTranslation();
   const resolvedTitle = title ?? t('ai.dsh_agent_panel.title');

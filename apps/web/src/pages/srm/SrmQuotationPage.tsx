@@ -52,7 +52,7 @@ const SrmQuotationPage: React.FC = () => {
           message: t('srm.quotation_page.award_success', i18n.t('pages.srm_quotation_page.k1')),
         });
       }
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: t('common.fail', i18n.t('pages.srm_quotation_page.k2')),
@@ -72,7 +72,7 @@ const SrmQuotationPage: React.FC = () => {
           message: t('srm.quotation_page.reject_success', i18n.t('pages.srm_quotation_page.k5')),
         });
       }
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: t('common.fail', i18n.t('pages.srm_quotation_page.k6')),

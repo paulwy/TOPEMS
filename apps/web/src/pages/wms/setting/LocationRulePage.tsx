@@ -13,7 +13,7 @@ export const LocationRulePage: React.FC = () => {
       try {
         const res = await wmsApi.slotting.listRules();
         return res?.data ?? {};
-      } catch (e) {
+      } catch {
         return {};
       }
     },

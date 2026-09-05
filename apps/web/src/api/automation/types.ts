@@ -374,7 +374,3 @@ export interface AutomationDashboardStats {
 }
 
 /** 触发一次手动运行 */
-interface TriggerRunRequest {
-  /** 输入变量 */
-  input_variables?: Record<string, unknown>;
-}

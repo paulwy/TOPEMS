@@ -236,7 +236,7 @@ const initialMockRules: AlertRule[] = [
   },
 ];
 const MonitorAlertRulesPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['monitor', 'alertRules'],
     queryFn: async () => {
       try {

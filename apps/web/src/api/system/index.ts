@@ -130,14 +130,6 @@ export interface BatchCreateDictItemRequest {
   items: Partial<DictItem>[];
 }
 
-interface DictItemExport {
-  code: string;
-  name: string;
-  value?: string;
-  sort_order: number;
-  status: string;
-}
-
 export const dictItemApi = {
   async list(
     dictTypeId: string,

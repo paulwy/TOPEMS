@@ -114,7 +114,7 @@ const PluginUploadPage: React.FC = () => {
         type: 'success',
       });
       setActiveStep(3);
-    } catch (error: unknown) {
+    } catch {
       addNotification({
         title: t('plugin.upload_page.notification.submit_failed_title'),
         message: t('plugin.upload_page.notification.submit_failed_message'),

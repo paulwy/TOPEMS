@@ -16,7 +16,7 @@ import { limsApi } from '@/api/lims';
 const LimsDashboardPage: React.FC = () => {
   const schema = useLimsDashboardSchema();
 
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['lims', 'dashboard-backend'],
     queryFn: async () => {
       try {

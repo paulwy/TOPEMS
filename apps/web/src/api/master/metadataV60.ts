@@ -6,7 +6,6 @@ import type { ApiResponse } from '../client';
 type MetadataType = 'table' | 'column' | 'entity' | 'field' | 'document' | 'report';
 export type LifecycleStage =
   'design' | 'development' | 'testing' | 'production' | 'archive' | 'retire';
-type LifecycleStatus = 'active' | 'completed' | 'cancelled';
 
 interface MetadataV60 {
   id: string;

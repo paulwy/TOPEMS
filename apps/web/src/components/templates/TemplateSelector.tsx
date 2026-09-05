@@ -26,12 +26,7 @@ import {
   Check,
   Sparkles,
 } from 'lucide-react';
-import type {
-  Template,
-  TemplateType,
-  TemplateCategory,
-  RenderTemplateResponse,
-} from '../../api/template';
+import type { Template, TemplateType, TemplateCategory } from '../../api/template';
 import { templateApi } from '../../api/template';
 import { apiLogger } from '@/utils/logger';
 

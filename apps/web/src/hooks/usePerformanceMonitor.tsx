@@ -86,7 +86,7 @@ class PerformanceMonitor {
 
     try {
       paintObserver.observe({ type: 'paint', buffered: true });
-    } catch (e: unknown) {
+    } catch {
       logger.warn('Paint observer not supported');
     }
 
@@ -99,7 +99,7 @@ class PerformanceMonitor {
 
     try {
       resourceObserver.observe({ type: 'resource', buffered: true });
-    } catch (e: unknown) {
+    } catch {
       logger.warn('Resource observer not supported');
     }
 
@@ -113,7 +113,7 @@ class PerformanceMonitor {
 
     try {
       lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
-    } catch (e: unknown) {
+    } catch {
       logger.warn('LCP observer not supported');
     }
 
@@ -126,7 +126,7 @@ class PerformanceMonitor {
 
     try {
       fidObserver.observe({ type: 'first-input', buffered: true });
-    } catch (e: unknown) {
+    } catch {
       logger.warn('FID observer not supported');
     }
   }

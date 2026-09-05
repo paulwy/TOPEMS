@@ -1,6 +1,5 @@
 import apiClient from '../client';
 import type {
-  ApprovalTask,
   TaskQueryParams,
   TaskDelegateRequest,
   TaskTransferRequest,

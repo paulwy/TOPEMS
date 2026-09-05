@@ -6,7 +6,6 @@ import type {
   QualityStandardBackend,
   UpdateQualityStandardRequestBackend,
   StandardRevision,
-  PaginatedResponse,
   QmsPaginatedResponse,
 } from './types';
 import { adaptStandardToFrontend, adaptStandardToBackend } from './adapters';

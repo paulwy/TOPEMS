@@ -196,7 +196,7 @@ const PerformanceTestPage: React.FC = () => {
 
     try {
       paintObserver.observe({ entryTypes: ['paint'] });
-    } catch (e) {
+    } catch {
       const fallbackTime = performance.now();
       setFirstPaint(fallbackTime);
       setFirstContentfulPaint(fallbackTime);
@@ -212,7 +212,7 @@ const PerformanceTestPage: React.FC = () => {
 
     try {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
-    } catch (e) {
+    } catch {
       logger.warn('LCP observer not supported');
     }
 
@@ -227,7 +227,7 @@ const PerformanceTestPage: React.FC = () => {
 
     try {
       fidObserver.observe({ entryTypes: ['first-input'] });
-    } catch (e) {
+    } catch {
       logger.warn('FID observer not supported');
     }
 
@@ -244,7 +244,7 @@ const PerformanceTestPage: React.FC = () => {
 
     try {
       clsObserver.observe({ entryTypes: ['layout-shift'], buffered: true });
-    } catch (e) {
+    } catch {
       logger.warn('CLS observer not supported');
     }
 

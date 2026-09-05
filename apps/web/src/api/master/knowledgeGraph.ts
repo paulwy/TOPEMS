@@ -59,14 +59,6 @@ interface KGAsset {
   updated_at: string;
 }
 
-interface KGInteraction {
-  id: string;
-  user_id: string;
-  node_id: string;
-  type: 'view' | 'search' | 'bookmark' | 'share' | 'edit';
-  created_at: string;
-}
-
 interface KGCategory {
   id: string;
   name: string;

@@ -115,12 +115,12 @@ const mockActivities = [
   },
 ];
 export const MobileHomePage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['mobile-home-page'],
     queryFn: async () => {
       try {
         return (await mobileApi.analytics.getUsageStats()) ?? {};
-      } catch (e) {
+      } catch {
         return {};
       }
     },

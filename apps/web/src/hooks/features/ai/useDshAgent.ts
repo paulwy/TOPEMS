@@ -16,8 +16,6 @@ import {
   type DshAgentExecuteResponse,
   type SessionInfo,
   type ToolInfo,
-  type StreamEventType,
-  type StreamEventData,
   type StreamEventHandler,
 } from '@/api/ai/dshAgent';
 

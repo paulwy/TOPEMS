@@ -14,7 +14,6 @@ import {
   Switch,
   TextField,
   Typography,
-  useTheme,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Grid } from '@/components/common';
@@ -79,7 +78,6 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
   readOnly = false,
   showActions = true,
 }) => {
-  const theme = useTheme();
   const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, unknown>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});

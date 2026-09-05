@@ -120,12 +120,3 @@ export function writeAICopilotContext(input: AICopilotContextInput): AICopilotCo
 
   return context;
 }
-
-function readAICopilotContext(): AICopilotContext | null {
-  try {
-    const raw = window.localStorage.getItem(AI_COPILOT_CONTEXT_KEY);
-    return raw ? (JSON.parse(raw) as AICopilotContext) : null;
-  } catch {
-    return null;
-  }
-}

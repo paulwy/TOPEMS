@@ -211,7 +211,7 @@ const getStatusConfig = (status: AIModel['status']) => {
 };
 
 export const AiModelSettingsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['ai', 'modelSettings'],
     queryFn: async () => {
       try {

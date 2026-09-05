@@ -16,16 +16,6 @@ interface UseDashboardWebSocketOptions extends Omit<
   module?: 'mes' | 'bi' | 'gis';
 }
 
-interface DashboardMessage {
-  type?: string;
-  data?: {
-    alarms?: Record<string, unknown>[];
-    metrics?: Record<string, unknown>[];
-    updates?: Record<string, unknown>[];
-  };
-  message?: string;
-}
-
 const MODULE_WS_PATHS: Record<string, string> = {
   mes: '/ws/mes/dashboard',
   bi: '/ws/bi/dashboard',

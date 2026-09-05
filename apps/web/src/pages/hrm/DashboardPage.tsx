@@ -99,13 +99,6 @@ export const DashboardPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
-  const getGreeting = (): string => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('hrm.dashboard_page.text_cad057');
-    if (hour < 18) return t('hrm.dashboard_page.text_8c9bdf');
-    return t('hrm.dashboard_page.text_6ab1f1');
-  };
-
   const statsData = useMemo(() => {
     const empData = employeesQuery.data;
     const totalEmployees = empData?.total ?? 0;

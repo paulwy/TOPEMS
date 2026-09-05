@@ -157,7 +157,6 @@ export function ListPageTemplate<
   filtersValue,
   onFilterChange,
   actions,
-  renderRowActions,
   rowActions,
   onRefresh,
   showBatchActionBar = true,
@@ -192,7 +191,6 @@ export function ListPageTemplate<
   expandedKeys: expandedKeysProp,
   onExpandedKeysChange,
   treeIndentSize = 24,
-  loadTreeChildren,
   // 汇总行
   showSummary = false,
   summaryPosition = 'bottom',
@@ -215,7 +213,6 @@ export function ListPageTemplate<
   // 导出功能
   exportable,
   exportFileName,
-  exportFormat = 'csv',
   exportFormats,
   exportScopes,
   exportTransform,
@@ -637,7 +634,7 @@ export function ListPageTemplate<
         await onInlineEditSave?.(row, changes);
         setEditingData(null);
         setEditingRowId(null);
-      } catch (e) {
+      } catch {
         // 保存失败，保持编辑状态
       }
     },

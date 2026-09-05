@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import {
   BarChart3 as AnalyticsIcon,
-  TrendingUp as TrendingUpIcon,
   FlaskConical as ScienceIcon,
   Folder as FolderIcon,
 } from 'lucide-react';

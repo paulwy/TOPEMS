@@ -13,7 +13,7 @@ export const InventoryCyclePage: React.FC = () => {
       try {
         const res = await wmsApi.cycleCounts.listConfigs();
         return res?.data ?? {};
-      } catch (e) {
+      } catch {
         return {};
       }
     },

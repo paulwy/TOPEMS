@@ -178,7 +178,7 @@ class RuntimeProtector {
           },
           configurable: false,
         });
-      } catch (e) {
+      } catch {
         // 某些环境可能无法重新定义这些属性
       }
     });
@@ -226,7 +226,7 @@ class RuntimeProtector {
 
     try {
       new Proxy(window, handler);
-    } catch (e) {
+    } catch {
       // window 可能无法被代理
     }
   }
@@ -312,7 +312,7 @@ class RuntimeProtector {
             writable: true,
             configurable: true,
           });
-        } catch (e) {
+        } catch {
           // 忽略恢复失败
         }
       }

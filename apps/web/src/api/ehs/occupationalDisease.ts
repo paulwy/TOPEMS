@@ -9,7 +9,6 @@ import type {
   HazardDetectionRecordListQueryParams,
   HazardFactor,
   HazardFactorListQueryParams,
-  ListQueryParams,
   OccupationalDiseaseCase,
   OccupationalDiseaseCaseListQueryParams,
   PaginatedResponse,

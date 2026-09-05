@@ -115,10 +115,6 @@ export interface PaginationParams extends BasePaginationParams {
   is_public?: boolean;
 }
 
-interface RenderTemplateRequest {
-  variables: Record<string, unknown>;
-}
-
 export interface RenderTemplateResponse {
   content: string;
   missing_variables: string[];

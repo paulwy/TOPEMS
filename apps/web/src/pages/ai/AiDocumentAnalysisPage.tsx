@@ -115,7 +115,7 @@ const getKeyPoints = () => [
 ];
 
 export const AiDocumentAnalysisPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['ai', 'documentAnalysis'],
     queryFn: async () => {
       try {
@@ -126,7 +126,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
     },
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const { t } = useTranslation();
+  const {} = useTranslation();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('summary');
   const [selectedDocument, setSelectedDocument] = useState<string>('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);

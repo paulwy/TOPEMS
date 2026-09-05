@@ -239,16 +239,6 @@ export interface CreateLeaveRequest {
   reason: string;
 }
 
-interface PushNotification {
-  id: string;
-  title: string;
-  content: string;
-  type: 'system' | 'approval' | 'task' | 'alert' | 'message';
-  read: boolean;
-  created_at: string;
-  data?: Record<string, unknown>;
-}
-
 export interface PushConfig {
   enabled: boolean;
   sound_enabled: boolean;

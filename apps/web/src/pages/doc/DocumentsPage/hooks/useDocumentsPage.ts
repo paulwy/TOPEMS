@@ -554,5 +554,3 @@ export const useDocumentsPage = () => {
     openFileDetail,
   };
 };
-
-type UseDocumentsPageReturn = ReturnType<typeof useDocumentsPage>;

@@ -5,7 +5,6 @@ import type {
   CreateQualityIssueRequest,
   QualityIssueBackend,
   UpdateQualityIssueRequestBackend,
-  PaginatedResponse,
   QmsPaginatedResponse,
 } from './types';
 import { adaptIssueToFrontend, adaptIssueToBackend } from './adapters';

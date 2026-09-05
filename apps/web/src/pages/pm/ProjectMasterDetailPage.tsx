@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   MasterDetailPageTemplate,
   type MasterColumn,
@@ -7,7 +6,6 @@ import {
 import i18n from '@/i18n';
 import { Box, Typography, Chip, Divider } from '@mui/material';
 import { Calendar, User, DollarSign, Target, CheckCircle } from 'lucide-react';
-import { pmApi } from '@/api/pm';
 
 interface ProjectItem {
   id: string;
@@ -72,16 +70,6 @@ const initialProjects: ProjectItem[] = [
   },
 ];
 export const ProjectMasterDetailPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['pm-project-list'],
-    queryFn: async () => {
-      try {
-        return await pmApi.projects.listProjects();
-      } catch {
-        return {};
-      }
-    },
-  });
   const [projects] = useState<ProjectItem[]>(initialProjects);
   const columns: MasterColumn<ProjectItem>[] = [
     {

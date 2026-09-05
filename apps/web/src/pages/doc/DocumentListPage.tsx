@@ -64,19 +64,6 @@ export const DocumentListPage: React.FC = () => {
     },
   };
 
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.AD_HOC.DOCUMENT_BASE,
-      exact: false,
-      refetchType: 'active',
-    });
-    addNotification({
-      title: i18n.t('pages.document_list_page.k0'),
-      message: i18n.t('pages.document_list_page.k1'),
-      type: 'success',
-    });
-  }, [addNotification, queryClient]);
-
   const handleDownload = useCallback(
     async (row: Record<string, unknown>) => {
       try {

@@ -1,6 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V508 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V509 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
+>
+> **V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -30,6 +32,36 @@
 > **V287 4 轨并行推进中**：PM+AI Audit 调用接入 47+32 处真打日志 dead_code清零 / openapi regen+SafeSchema 命中+align alias / GROUP2 unified-core INFO降级+--strict接入CI / NODE_VERSION 20→22全局统一+mes sqlx-prepare.sh 2 bug修。
 > **V288 5 commit 推送完毕** (2026-08-24): monitor plugin.yaml补齐+port对齐 / mes schema预创建+sqlx脚本 / AI&PM audit注入 / CI Node-22+GROUP2-strict+openapi regen+Plan文档归档。10 commits 推送到 origin/feature/v287。
 > **V289 启动**：基于 Architecture Improvement Plan v1.0 与实际代码库差距评估后的真实验收缺口，4轨并行推进。
+
+---
+
+## V509 no-unused-vars 342→0 清零（2026-09-06）
+
+**目标**：no-unused-vars 342→0（V508 删 import 84 后剩 258，本版清零），顺带 prettier 479→0 保持。
+
+**策略**：no-unused-vars 无 autofix，自写 Python 分遍脚本——每遍基于最新 eslint 报告、逆序行处理、只做一类操作（不混 insert/del，避免行号错乱），每遍 tsc 0 验证后进入下一遍。
+
+**执行分遍**：
+- P1：catch 变量删除 45 + 多行 import 残留成员 46 → tsc 0
+- P2：解构成员删除 56（纯成员行 + 行内别名起点删除）→ tsc 1 → git rm design-system/components/index.tsx（V51 架构删除遗留死文件）→ tsc 0
+- P3a：typeof 类型位置引用 const 12 处插 `eslint-disable-next-line`（删除即断类型链，wms.ts INBOUND_ORDER_STATES 等）→ tsc 0
+- P3b/P3b-v2：interface/type/function/未用 const 名匹配块删除（数组字面量 `[` 计 depth 修正后）→ tsc 0
+- P4：真参数加 `_` 前缀 20（`prefix.rfind('(') > prefix.rfind('{')` 判真参数）→ tsc 0
+- P5/P5b：默认值解构成员 6 + 纯成员行 13 + 行内 import 5 + class 1；default import 误删修复（`import i18n from` 不能删名留行，须删整行）→ tsc 0
+- P6-v2：useQuery 空解构块删 16（须块删到 `});`，不能只删首行）→ tsc 0
+- P7/P8/P9/P10：连锁清理（useQuery 删除后 import 变未用、多行 import 成员行、别名成员 `Checkbox as MuiCheckbox` 取别名、数组解构参数 `_k`/`_timeRange`、props 解构成员含默认值）→ tsc 0
+- 收尾手修：ListPageTemplate 2 成员、NotificationCenter import 1 行
+
+**误删还原史（脚本迭代踩坑）**：import 成员行被当 type 声明整删（voucher.ts tsc 73 错）→ const 解构被整块删（BomVersionPolicyPage tsc 46）→ 别名 `{ data: backendData }` 只删名留 `data:`（tsc 27）→ 参数解构被加 `_`（TS2339）→ 混合 insert+del 行号错乱（cyberpunk.tokens.ts tsc 166）→ 数组字面量 `[` 不计 depth 误停（RsProjectCreatePage）→ useQuery 多行调用删首行（SystemSettingsPage tsc 64）→ default import 删名留行（dashboardAdapter）→ 泛型跨行 `Record<` 误停（dashboardAdapter iconMap）→ 过时报告处理还原文件（P5b/P6-v2 错位）。每次误删 git checkout 还原后基于新报告重做。
+
+**死文件清理**：
+- 43 个 gitignore 孤儿文件删除（历次清理遗留，tsc/eslint 仍扫描；按 tracked import 引用正则判定无引用者，`git ls-files --others -i --exclude-standard src/`）
+- design-system/ 目录清理（tracked components/index.tsx git rm + ignored theme-manager.tsx/tokens 等 rm -rf）
+- **lib/navigation/dashboardAdapter.ts git rm**（无导出、无任何文件引用——死文件，eslint 反复报未用）
+
+**验证**：eslint 全量 0（no-unused-vars 0 + prettier 0，v573/v574/v575/v576 逐步归零）；tsc --noEmit 0；scan-hardcoded-precise 0 拦截；pre-commit 14 gate 待跑（sandbox-launcher 环境故障中）。
+
+**提交链**：V509 主提交 + TODO 章节小提交（HEAD 由 V508 71bfb2a0b 推进）。
 
 ---
 

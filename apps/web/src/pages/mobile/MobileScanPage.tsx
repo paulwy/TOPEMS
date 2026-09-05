@@ -56,12 +56,12 @@ interface ScanHistoryItem {
   };
 }
 const MobileScanPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['mobile-scan-page'],
     queryFn: async () => {
       try {
         return (await mobileApi.inspection.listTasks()) ?? {};
-      } catch (e) {
+      } catch {
         return {};
       }
     },

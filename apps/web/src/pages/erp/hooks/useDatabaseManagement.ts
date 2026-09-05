@@ -7,7 +7,6 @@ import { extractErrorMessage } from '@/utils/errors';
 import i18n from '@/i18n';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 // Module-level t for use outside React components (shadowed by useTranslation inside components)
-const t = i18n.t;
 export interface BackupRecord {
   id: string;
   backup_name: string;
@@ -215,7 +214,7 @@ export function useDatabaseManagement() {
         message: i18n.t('erp.database.message.backup_deleted'),
         type: 'success',
       });
-    } catch (err: unknown) {
+    } catch {
       addNotification({
         title: i18n.t('erp.database.message.error'),
         message: i18n.t('erp.database.message.operation_failed'),

@@ -232,6 +232,4 @@ export const wmsApprovalApi = {
   },
 };
 
-type WmsApprovalApi = typeof wmsApprovalApi;
-
 export default wmsApi;

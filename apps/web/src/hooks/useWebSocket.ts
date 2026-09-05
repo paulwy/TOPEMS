@@ -351,7 +351,7 @@ export function useWebSocketSubscription(
         unsubscribe = webSocketService.subscribe(channel, (message) => {
           handlerRef.current(message);
         });
-      } catch (error) {
+      } catch {
         setIsConnected(false);
         setAuthStatus('failed');
       }

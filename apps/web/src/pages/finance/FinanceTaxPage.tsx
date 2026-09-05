@@ -179,10 +179,6 @@ const TaxHeader: React.FC = () => {
         .reduce((sum, item) => sum + item.owed_amount, 0),
     [taxData]
   );
-  const pendingCount = useMemo(
-    () => taxData.filter((item) => item.status === 'pending').length,
-    [taxData]
-  );
 
   const statCards: StatCard[] = [
     {

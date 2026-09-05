@@ -1,4 +1,4 @@
-import type { ApiResponse, PaginatedResponse } from '../client';
+import type { PaginatedResponse } from '../client';
 
 type ConsolidationMethod = 'full' | 'equity' | 'proportional';
 type ScopeStatus = 'active' | 'inactive' | 'draft';
@@ -346,5 +346,4 @@ export interface CompanyFinancialData {
   net_cash_flow: number;
 }
 
-type ConsolidationApiResponse<T> = ApiResponse<T>;
 export type ConsolidationPaginatedResponse<T> = PaginatedResponse<T>;

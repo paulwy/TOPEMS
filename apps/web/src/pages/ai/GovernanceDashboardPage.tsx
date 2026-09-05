@@ -72,7 +72,6 @@ const GovernanceDashboardPage: React.FC = () => {
     dashboard,
     isLoading,
     error,
-    timeRange,
     autoRefresh,
     lastRefreshed,
     loadDashboard,

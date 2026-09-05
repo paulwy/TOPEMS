@@ -30,7 +30,7 @@ const TmsDashboardPage: React.FC = () => {
           totalDrivers: dr?.data?.total ?? 0,
           totalCarriers: cr?.data?.total ?? 0,
         };
-      } catch (e) {
+      } catch {
         return {};
       }
     },

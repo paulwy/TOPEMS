@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Chip,
   Card,
   CardContent,
   CardHeader,
@@ -434,63 +433,6 @@ const LimsTaskDetailPage: React.FC = () => {
       </div>
     );
   }
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: {
-        bg: 'warning.100',
-        color: ct.yellow[600],
-        label: i18n.t('pages.lims_task_detail_page.k16'),
-      },
-      [i18n.t('pages.lims_task_detail_page.k5')]: {
-        bg: 'warning.100',
-        color: ct.yellow[600],
-        label: i18n.t('pages.lims_task_detail_page.k17'),
-      },
-      in_progress: {
-        bg: 'primary.100',
-        color: 'primary.dark',
-        label: i18n.t('pages.lims_task_detail_page.k18'),
-      },
-      [i18n.t('pages.lims_task_detail_page.k6')]: {
-        bg: 'primary.100',
-        color: 'primary.dark',
-        label: i18n.t('pages.lims_task_detail_page.k19'),
-      },
-      completed: {
-        bg: 'success.lighter',
-        color: 'success.dark',
-        label: i18n.t('pages.lims_task_detail_page.k20'),
-      },
-      [i18n.t('pages.lims_task_detail_page.k7')]: {
-        bg: 'success.lighter',
-        color: 'success.dark',
-        label: i18n.t('pages.lims_task_detail_page.k21'),
-      },
-      cancelled: {
-        bg: 'error.lighter',
-        color: 'error.dark',
-        label: i18n.t('pages.lims_task_detail_page.k22'),
-      },
-      [i18n.t('pages.lims_task_detail_page.k8')]: {
-        bg: 'error.lighter',
-        color: 'error.dark',
-        label: i18n.t('pages.lims_task_detail_page.k23'),
-      },
-    };
-    const item = statusMap[status] || {
-      bg: 'grey.100',
-      color: 'text.secondary',
-      label: status,
-    };
-    return (
-      <Chip
-        label={item.label}
-        size='small'
-        sx={{ backgroundColor: item.bg, color: item.color }}
-      />
-    );
-  };
 
   const isTaskCompleted =
     task.status === 'completed' || task.status === i18n.t('pages.lims_task_detail_page.k24');

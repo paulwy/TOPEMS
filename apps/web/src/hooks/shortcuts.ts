@@ -1,5 +1,4 @@
 import type React from 'react';
-import { useEffect, useCallback } from 'react';
 import i18n from '@/i18n';
 
 interface ShortcutConfig {
@@ -196,61 +195,6 @@ export function matchShortcut(
   }
 
   return true;
-}
-
-interface ShortcutHandler {
-  (event: KeyboardEvent): void;
-}
-
-interface ShortcutBinding {
-  key: string;
-  handler: ShortcutHandler;
-  config: ShortcutConfig;
-}
-
-function useKeyboardShortcuts(bindings: ShortcutBinding[], enabled = true) {
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (!enabled) return;
-
-      const target = event.target as HTMLElement;
-      const isInputField =
-        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-
-      for (const binding of bindings) {
-        if (matchShortcut(event, binding.config)) {
-          if (isInputField) {
-            const isModifierKey =
-              binding.config.ctrl || binding.config.meta || binding.config.shift;
-            const isAllowedInInput = [
-              'COPY',
-              'PASTE',
-              'CUT',
-              'SELECT_ALL',
-              'UNDO',
-              'REDO',
-            ].includes(binding.key);
-
-            if (!isModifierKey && !isAllowedInInput) {
-              continue;
-            }
-          }
-
-          event.preventDefault();
-          binding.handler(event);
-          break;
-        }
-      }
-    },
-    [bindings, enabled]
-  );
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleKeyDown]);
 }
 
 function isMacOS(): boolean {

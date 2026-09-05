@@ -94,7 +94,7 @@ export const getPriorityColor = (priority: ApprovalItem['priority']) => {
 };
 export const getPriorityLabel = (
   priority: ApprovalItem['priority'],
-  t: (key: string) => string
+  _t: (key: string) => string
 ) => {
   switch (priority) {
     case 'high':

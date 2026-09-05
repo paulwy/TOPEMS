@@ -15,7 +15,6 @@ import i18n from '@/i18n';
 import { alpha } from '@mui/material/styles';
 import NotificationItem from '@/components/notification/NotificationItem';
 import NotificationSettings from '@/components/notification/NotificationSettings';
-import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
@@ -37,8 +36,6 @@ const NotificationCenter: React.FC = () => {
   const [page, setPage] = useState(1);
   const [selectedNotifications, setSelectedNotifications] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-
-  const { settings, toggleSetting } = useNotificationSettings();
 
   const { data, isError, error, isPending } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.NOTIFICATIONS_BASE, activeFilter, page],

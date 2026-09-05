@@ -590,7 +590,7 @@ const GisContent: React.FC = () => {
           const lines = text.split('\n').filter((line) => line.trim());
           const preview = lines.slice(0, 10).map((line) => line.split(','));
           setImportPreview(preview);
-        } catch (err: unknown) {
+        } catch {
           showNotification('error', i18n.t('bi.index.k43'));
         }
       };

@@ -83,8 +83,4 @@ export function useThrottledCallback<T extends (...args: Parameters<T>) => Retur
   );
 }
 
-function useThrottledValue<T>(value: T, delay: number): T {
-  return useThrottle(value, delay);
-}
-
 export default useThrottle;

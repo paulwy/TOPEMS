@@ -22,13 +22,6 @@ const iconMap: Record<string, React.ReactNode> = {
   Globe: <Globe size={24} />,
 };
 
-const getGreeting = (): string => {
-  const hour = new Date().getHours();
-  if (hour < 12) return i18n.t('gis.dashboard_page.k0');
-  if (hour < 18) return i18n.t('gis.dashboard_page.k1');
-  return i18n.t('gis.dashboard_page.k2');
-};
-
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation('gis');
   const navigate = useNavigate();

@@ -4,7 +4,6 @@ import type {
   CreateTrainingCertificateRequest,
   CreateTrainingPlanRequest,
   CreateTrainingRecordRequest,
-  ListQueryParams,
   PaginatedResponse,
   TrainingCertificate,
   TrainingCertificateListQueryParams,

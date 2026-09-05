@@ -39,16 +39,6 @@ const RsProjectCreatePage: React.FC = () => {
     { label: i18n.t('rd.priority.urgent'), value: 4 },
     { label: i18n.t('rd.priority.strategic'), value: 5 },
   ];
-  const availableMembers = [
-    { id: '1', name: i18n.t('rd.rs_project_create_page.k0') },
-    { id: '2', name: i18n.t('rd.rs_project_create_page.k1') },
-    { id: '3', name: i18n.t('rd.rs_project_create_page.k2') },
-    { id: '4', name: i18n.t('rd.rs_project_create_page.k3') },
-    { id: '5', name: i18n.t('rd.rs_project_create_page.k4') },
-    { id: '6', name: i18n.t('rd.rs_project_create_page.k5') },
-    { id: '7', name: i18n.t('rd.rs_project_create_page.k6') },
-    { id: '8', name: i18n.t('rd.rs_project_create_page.k7') },
-  ];
   const projectQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECT(id || ''),
     queryFn: async () => {

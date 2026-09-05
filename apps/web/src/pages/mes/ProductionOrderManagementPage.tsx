@@ -50,7 +50,7 @@ const ProductionOrderManagementPage: React.FC = () => {
             refetchType: 'active',
           });
         }
-      } catch (error: unknown) {
+      } catch {
         addNotification({
           type: 'error',
           title: i18n.t('mes.production_order_management_page.update_3'),

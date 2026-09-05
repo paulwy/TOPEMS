@@ -26,15 +26,6 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
       resolve();
       return;
     }
-    const remotePorts: Record<string, number> = {
-      topems_core: 3001,
-      topems_hrm: 3002,
-      topems_crm: 3003,
-      topems_finance: 3004,
-      topems_pm: 3005,
-      topems_mes: 3006,
-      topems_scm: 3007,
-    };
     const getRemoteUrl = (name: string): string => {
       const envKey = `VITE_${name.toUpperCase()}_REMOTE_ENTRY`;
       const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.[envKey] : undefined;

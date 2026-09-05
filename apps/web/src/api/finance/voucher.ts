@@ -11,8 +11,6 @@ import type {
 import {
   toOpenApiParams,
   toOpenApiRequestBody,
-  type AdaptedQuery,
-  type AdaptedRequestBody,
   type TypedApiResponse,
   type TypedPaginatedResponse,
 } from '@topems/shared-types';

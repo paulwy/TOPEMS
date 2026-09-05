@@ -8,7 +8,6 @@ import type {
   CreateQualityImprovementRequest,
   CorrectiveActionBackend,
   UpdateCorrectiveActionRequestBackend,
-  PaginatedResponse,
   QmsPaginatedResponse,
 } from './types';
 

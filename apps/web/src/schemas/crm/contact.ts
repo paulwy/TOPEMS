@@ -34,6 +34,7 @@ const createContactSchema = contactZodSchema.omit({
 });
 export type CreateContactRequest = z.infer<typeof createContactSchema>;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const updateContactSchema = createContactSchema.partial();
 export type UpdateContactRequest = z.infer<typeof updateContactSchema>;
 

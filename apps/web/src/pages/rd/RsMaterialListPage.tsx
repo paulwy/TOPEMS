@@ -101,31 +101,6 @@ const RsMaterialListPage: React.FC = () => {
     },
     [importMaterialMutation]
   );
-  const handleExport = useCallback(async () => {
-    try {
-      const blob = await materialApi.exportMaterials();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `materials_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      addNotification({
-        type: 'success',
-        title: i18n.t('rd.material_list_page.notification.export_success_title'),
-        message: i18n.t('rd.material_list_page.notification.export_success_message'),
-      });
-    } catch (err: unknown) {
-      logger.error(i18n.t('pages.rs_material_list_page.k1'), err);
-      addNotification({
-        type: 'error',
-        title: i18n.t('rd.material_list_page.notification.export_failed_title'),
-        message: i18n.t('rd.material_list_page.notification.export_failed_message'),
-      });
-    }
-  }, [addNotification]);
   const stats = useMemo(() => {
     const materials = materialsResp?.data?.materials || [];
     const total = materialsResp?.data?.total || materials.length;

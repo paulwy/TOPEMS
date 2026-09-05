@@ -18,7 +18,6 @@ import {
   getArchivedNotifications,
   getArchiveConfig,
   updateArchiveConfig,
-  runAutoArchive,
 } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
 import { PageContainer } from '@/components/common';
@@ -65,30 +64,6 @@ const NotificationArchivePage: React.FC = () => {
     onError: (err: unknown) => {
       error(
         (err as { message?: string }).message || i18n.t('notification.notification_archive_page.k3')
-      );
-    },
-  });
-  const runAutoArchiveMutation = useMutation({
-    mutationFn: async () => {
-      const res = await runAutoArchive();
-      if (!res.success) {
-        throw new Error(res.message || i18n.t('notification.notification_archive_page.k4'));
-      }
-      return res;
-    },
-    onSuccess: (res) => {
-      success(
-        `${i18n.t('pages.notification_archive_page.k0')}${res.data?.archived_count || 0}${i18n.t('pages.notification_archive_page.k1')}`
-      );
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ARCHIVEDNOTIFICATION_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-    onError: (err: unknown) => {
-      error(
-        (err as { message?: string }).message || i18n.t('notification.notification_archive_page.k5')
       );
     },
   });

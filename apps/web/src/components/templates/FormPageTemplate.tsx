@@ -414,7 +414,6 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   showValidationHints = true,
   customValidationMessages = {},
   draftConfig,
-  versionConfig,
   showGroupTabs = false,
   showProgress = false,
   mode = 'edit',

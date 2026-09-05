@@ -28,7 +28,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
             message: t('hrm.hrm_salary_adjustment_page.text_c0b5ba'),
           });
         }
-      } catch (error) {
+      } catch {
         addNotification({
           type: 'error',
           title: t('hrm.hrm_salary_adjustment_page.fail'),

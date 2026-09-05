@@ -39,7 +39,6 @@ interface UsePluginMarketplaceReturn {
 export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
   const { t } = useTranslation();
   const {
-    marketplacePlugins,
     healthStatus,
     searchQuery,
     setSearchQuery,

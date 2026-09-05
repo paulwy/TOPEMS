@@ -1,24 +1,11 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { pdmApi } from '@/api/pdm';
 
 export const ChangeTemplatePage: React.FC = () => {
-  const { data: backendData, isLoading } = useQuery({
-    queryKey: ['pdm-change-template'],
-    queryFn: async () => {
-      try {
-        const res = await pdmApi.listChangeOrders();
-        return res.data ?? {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('pdm');
   return (
     <PageContainer

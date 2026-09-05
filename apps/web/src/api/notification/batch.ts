@@ -103,10 +103,6 @@ interface BulkMarkReadRequest {
   older_than_days?: number;
 }
 
-interface BulkMarkUnreadRequest {
-  ids: string[];
-}
-
 interface BulkDeleteRequest {
   ids?: string[];
   older_than_days?: number;

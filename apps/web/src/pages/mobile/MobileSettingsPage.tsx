@@ -50,12 +50,12 @@ const defaultMobileSettings: MobileSetting[] = [
   },
 ];
 const MobileSettingsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['mobile-settings-page'],
     queryFn: async () => {
       try {
         return (await mobileApi.user.getSettings()) ?? {};
-      } catch (e) {
+      } catch {
         return {};
       }
     },

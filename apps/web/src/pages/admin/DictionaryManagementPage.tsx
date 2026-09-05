@@ -55,7 +55,7 @@ const categoryLabels: Record<string, string> = {
   custom: i18n.t('pages.dictionary_management_page.k3'),
 };
 
-const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onNavigate }) => {
+const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({}) => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();

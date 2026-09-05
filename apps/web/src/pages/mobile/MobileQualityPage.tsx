@@ -27,12 +27,8 @@ import {
   ScanLine,
   CheckSquare,
   User,
-  ClipboardCheck,
   Search,
   AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Clock,
   Camera,
   Barcode,
 } from 'lucide-react';
@@ -245,18 +241,6 @@ const MobileQualityPage: React.FC = () => {
       critical: 'error',
     };
     return map[severity] || 'default';
-  };
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle style={{ width: 20, height: 20 }} />;
-      case 'failed':
-        return <XCircle style={{ width: 20, height: 20 }} />;
-      case 'pending':
-        return <Clock style={{ width: 20, height: 20 }} />;
-      default:
-        return <ClipboardCheck style={{ width: 20, height: 20 }} />;
-    }
   };
   const filteredTasks = qualityTasks.filter(
     (task) =>

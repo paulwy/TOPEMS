@@ -1,6 +1,6 @@
 // modules/shared/GisContext.tsx
 import type React from 'react';
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext } from 'react';
 import type { MapModuleConfig } from '../MapModule/types';
 import type { TrackRecord } from '../TrackModule/types';
 import type { EvidenceRecord } from '../EvidenceModule/types';
@@ -183,10 +183,6 @@ interface GisContextValue {
 const GisContext = createContext<GisContextValue | null>(null);
 
 // Provider
-interface GisProviderProps {
-  children: ReactNode;
-  initialState?: Partial<GisState>;
-}
 
 // Hook
 export function useGisContext() {

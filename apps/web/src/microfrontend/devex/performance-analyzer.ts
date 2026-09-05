@@ -125,15 +125,6 @@ const DEFAULT_BUDGET: PerformanceBudget = {
   budgetName: 'default',
 };
 
-const WEIGHTS = {
-  lcp: 0.25,
-  fid: 0.15,
-  cls: 0.15,
-  inp: 0.2,
-  fcp: 0.1,
-  ttfb: 0.15,
-};
-
 const MAX_MEMORY_SNAPSHOTS = 60;
 const MAX_RENDER_METRICS = 200;
 const MAX_MODULE_LOADS = 500;

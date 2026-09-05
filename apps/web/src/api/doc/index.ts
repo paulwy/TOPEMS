@@ -91,14 +91,6 @@ interface CreateFolderRequest {
   parentId?: string;
 }
 
-interface UploadFileResponse {
-  id: string;
-  name: string;
-  size: number;
-  content_type: string;
-  url: string;
-}
-
 export interface DocDashboardStats {
   total_documents: number;
   published_documents: number;

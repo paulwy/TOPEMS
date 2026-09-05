@@ -11,7 +11,6 @@
 import { useState, useCallback } from 'react';
 import {
   createSession,
-  getSession,
   deleteSession,
   sendMessage,
   recognizeIntent,

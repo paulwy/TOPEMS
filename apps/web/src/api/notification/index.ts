@@ -130,12 +130,6 @@ export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
   id: string;
 }
 
-interface NotificationListQuery {
-  page?: number;
-  pagesize?: number;
-  notification_type?: NotificationTypeEnum;
-}
-
 interface NotificationListResponse<T = Notification> {
   notifications: T[];
   total: number;

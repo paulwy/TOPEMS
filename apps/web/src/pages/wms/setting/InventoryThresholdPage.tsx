@@ -13,7 +13,7 @@ export const InventoryThresholdPage: React.FC = () => {
       try {
         const res = await wmsApi.inventoryAlert.listAlertRules();
         return res?.data ?? {};
-      } catch (e) {
+      } catch {
         return {};
       }
     },

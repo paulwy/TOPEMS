@@ -1,10 +1,5 @@
 import { apiClient } from '../client';
-import type {
-  Contract,
-  ContractMilestone,
-  ContractPaymentSchedule,
-  ContractTemplate,
-} from './types';
+import type {} from './types';
 
 export const contractApi = {
   list: async () => {

@@ -7,7 +7,6 @@ import type {
   SafetyStockSetting,
   ReplenishmentStatistics,
   CreateReplenishmentOrderRequest,
-  CreateReplenishmentOrderItemRequest,
   UpdateSafetyStockRequest,
   AlertPaginationParams,
   PaginationParams,

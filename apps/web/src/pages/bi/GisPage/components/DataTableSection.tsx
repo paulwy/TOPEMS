@@ -13,14 +13,7 @@ import { Search as SearchIcon, Download } from 'lucide-react';
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TabType, GisEntity } from '../types';
-import type {
-  DevicePoint,
-  Pipeline,
-  StorageLocation,
-  EvidenceRecord,
-  FactoryMap,
-  BusinessLocation,
-} from '@/api/gis';
+import type {} from '@/api/gis';
 import i18n from '@/i18n';
 import {
   getDevicePointColumns,

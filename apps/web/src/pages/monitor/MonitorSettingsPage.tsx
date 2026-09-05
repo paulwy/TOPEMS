@@ -11,7 +11,7 @@ import i18n from '@/i18n';
 import { monitorApi } from '@/api/monitor';
 
 export const MonitorSettingsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['monitor', 'settings'],
     queryFn: async () => {
       try {

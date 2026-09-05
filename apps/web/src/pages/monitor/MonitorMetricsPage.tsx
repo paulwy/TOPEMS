@@ -122,7 +122,7 @@ const generateMultiServiceTrendData = (labels: string[], services: string[]) => 
   });
 };
 export const MonitorMetricsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['monitor', 'metrics'],
     queryFn: async () => {
       try {

@@ -478,7 +478,7 @@ export async function listEntitiesGql<T = unknown>(
 ): Promise<{ items: T[]; total: number }> {
   const { page, pageSize, ...filters } = params;
   const filterStr = Object.entries(filters)
-    .map(([k, v]) => `${k}: $${k}`)
+    .map(([k, _v]) => `${k}: $${k}`)
     .join(', ');
   return bffGraphQL<{ listEntities: { items: T[]; total: number } }>(
     `

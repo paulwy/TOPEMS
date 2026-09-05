@@ -35,6 +35,7 @@ const createCustomerSchema = customerZodSchema.omit({
 });
 export type CreateCustomerRequest = z.infer<typeof createCustomerSchema>;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- typeof 类型位置引用（设计性保留）
 const updateCustomerSchema = createCustomerSchema.partial();
 export type UpdateCustomerRequest = z.infer<typeof updateCustomerSchema>;
 

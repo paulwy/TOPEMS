@@ -3,22 +3,9 @@
  * 包含资产负债表、利润表、现金流量表的展示组件
  */
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { reportApi } from '@/api/finance';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  Chip,
-  Box,
-  Tabs,
-  Tab,
-  Button,
-} from '@mui/material';
+import { Card, CardContent, CardHeader, Typography, Chip, Box } from '@mui/material';
 import i18n from '@/i18n';
-import { Download, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -33,9 +20,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/types/finance';
-import { logger } from '@/utils/logger';
-
-import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
 // ============================================
 // 一、通用组件
@@ -1376,134 +1360,3 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 // ============================================
 // 五、综合财务报表查看器
 // ============================================
-
-interface FinancialReportsViewerProps {
-  orgId: string;
-  period: string;
-}
-
-function FinancialReportsViewer({ orgId, period }: FinancialReportsViewerProps) {
-  const [activeReport, setActiveReport] = useState<'balance' | 'income' | 'cash'>('balance');
-
-  const { data: balanceSheet, isPending: balanceLoading } = useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.BALANCE_SHEET_BASE, orgId, period],
-    queryFn: () => reportApi.getBalanceSheet({ org_id: orgId, period }),
-    enabled: activeReport === 'balance',
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-
-  const { data: incomeStatement, isPending: incomeLoading } = useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.INCOME_STATEMENT_BASE, orgId, period],
-    queryFn: () => reportApi.getIncomeStatement({ org_id: orgId, period }),
-    enabled: activeReport === 'income',
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-
-  const { data: cashFlow, isPending: cashLoading } = useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.CASH_FLOW_BASE, orgId, period],
-    queryFn: () => reportApi.getCashFlowStatement({ org_id: orgId, period }),
-    enabled: activeReport === 'cash',
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-
-  const handleExport = async () => {
-    logger.info('Export report:', activeReport);
-    try {
-      const params = { org_id: orgId, period };
-      let blob: Blob;
-      let filename: string;
-
-      switch (activeReport) {
-        case 'balance':
-          blob = await reportApi.exportBalanceSheet(params);
-          filename = `${i18n.t('components.financial_reports.__21')}${period}.xlsx`;
-          break;
-        case 'income':
-          blob = await reportApi.exportIncomeStatement(params);
-          filename = `${i18n.t('components.financial_reports.__22')}${period}.xlsx`;
-          break;
-        case 'cash':
-          blob = await reportApi.exportCashFlowStatement(params);
-          filename = `${i18n.t('components.financial_reports.__23')}${period}.xlsx`;
-          break;
-        default:
-          return;
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      logger.error('Export failed:', err);
-    }
-  };
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <Tabs
-          value={activeReport}
-          onChange={(_, newValue) => setActiveReport(newValue)}
-        >
-          <Tab
-            label={i18n.t('components.financial_reports.k62')}
-            value='balance'
-          />
-          <Tab
-            label={i18n.t('components.financial_reports.k63')}
-            value='income'
-          />
-          <Tab
-            label={i18n.t('components.financial_reports.k64')}
-            value='cash'
-          />
-        </Tabs>
-
-        <Button
-          variant='outlined'
-          size='small'
-          onClick={handleExport}
-        >
-          <Download style={{ width: 16, height: 16, marginRight: 4 }} />
-          {i18n.t('components.financial_reports.k24')}
-        </Button>
-      </Box>
-
-      {activeReport === 'balance' && (
-        <BalanceSheetViewer
-          data={balanceSheet?.data}
-          loading={balanceLoading}
-        />
-      )}
-
-      {activeReport === 'income' && (
-        <IncomeStatementViewer
-          data={incomeStatement?.data}
-          loading={incomeLoading}
-          onExport={handleExport}
-        />
-      )}
-
-      {activeReport === 'cash' && (
-        <CashFlowStatementViewer
-          data={cashFlow?.data}
-          loading={cashLoading}
-        />
-      )}
-    </Box>
-  );
-}

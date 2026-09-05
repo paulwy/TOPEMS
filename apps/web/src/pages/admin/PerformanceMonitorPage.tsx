@@ -26,7 +26,7 @@ import { adminApi } from '@/api/admin';
 
 const ct = designTokens.colors;
 const PerformanceMonitorPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['admin', 'performanceMonitor'],
     queryFn: async () => {
       try {

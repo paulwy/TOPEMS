@@ -363,9 +363,7 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
   enableVersionHistory = false,
   versions = [],
   onSaveVersion,
-  enableFileUpload = true,
   enableImageUpload = true,
-  uploadConfig = {},
   toolbarActions = defaultToolbarActions,
   readOnly = false,
   showPreviewByDefault = false,
@@ -781,7 +779,7 @@ ${content
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code({ node, className, children, ...props }) {
+                      code({ className, children, ...props }) {
                         const match = /language-(\w+)/.exec(className || '');
                         const isInline = (props as unknown as Record<string, unknown>).inline;
                         return !isInline && match ? (

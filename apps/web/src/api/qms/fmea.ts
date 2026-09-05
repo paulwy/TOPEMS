@@ -7,7 +7,6 @@ import type {
   UpdateFmeaAnalysisRequestBackend,
   FmeaItem,
   FmeaItemBackend,
-  CreateFmeaItemRequestBackend,
   UpdateFmeaItemRequestBackend,
   FmeaStatistics,
   FmeaStatisticsBackend,

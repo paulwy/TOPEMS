@@ -124,7 +124,7 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
 };
 
 export const IntegrationConnectionsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['integration', 'connection'],
     queryFn: async () => {
       try {

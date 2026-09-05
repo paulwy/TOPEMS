@@ -15,22 +15,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   getGovernanceDashboard,
-  getGovernanceScore,
-  getRiskAssessment,
-  getComplianceStatus,
-  getCostAnalysis,
-  getPerformanceMetrics,
-  getKeyMetrics,
-  getSecurityEvents,
-  getAuditSummary,
-  getTrends,
-  getRecommendations,
   refreshDashboardCache,
   type GovernanceDashboardData,
   type TimeRange,
-  type RiskLevel,
-  type RecommendationPriority,
-  type SecurityEventSummary,
 } from '@/api/ai/governanceDashboard';
 
 // ============================================================================

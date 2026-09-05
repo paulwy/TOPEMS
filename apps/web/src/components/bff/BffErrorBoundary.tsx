@@ -377,7 +377,6 @@ const ERROR_META: Record<
 
 /** 默认错误回退组件 */
 export function DefaultBffErrorFallback({
-  error,
   classified,
   reset,
   showDetails = true,

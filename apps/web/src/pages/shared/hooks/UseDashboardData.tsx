@@ -391,5 +391,3 @@ export const useDashboardData = () => {
     activitiesQuery,
   };
 };
-
-type UseDashboardDataReturn = ReturnType<typeof useDashboardData>;

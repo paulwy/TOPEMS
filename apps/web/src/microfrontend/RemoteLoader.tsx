@@ -12,11 +12,6 @@ import i18n from '@/i18n';
 /**
  * 远程模块加载状态
  */
-interface RemoteLoaderState {
-  loading: boolean;
-  error: Error | null;
-  retryCount: number;
-}
 
 /**
  * 远程模块错误边界

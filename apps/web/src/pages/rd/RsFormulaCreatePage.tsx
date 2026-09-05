@@ -4,12 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormPageTemplate, type FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { formulaApi, rdApi } from '@/api/rd';
-import type {
-  Formula,
-  FormulaIngredient,
-  CreateFormulaRequest,
-  UpdateFormulaRequest,
-} from '@/api/rd';
+import type { FormulaIngredient, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rd';
 import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import { RD_PATHS } from '@/modules/rd/config';

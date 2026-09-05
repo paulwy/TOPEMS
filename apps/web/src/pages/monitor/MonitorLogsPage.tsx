@@ -62,7 +62,7 @@ interface SystemLog {
 const MOCK_LOGS: SystemLog[] = [];
 
 const MonitorLogsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['monitor', 'logs'],
     queryFn: async () => {
       try {

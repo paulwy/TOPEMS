@@ -266,7 +266,7 @@ export const ProjectCreateWizardPage: React.FC = () => {
           message: response.message || t('pm.project_create_wizard_page.k47'),
         });
       }
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: t('pm.project_create_wizard_page.k49'),

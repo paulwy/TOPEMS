@@ -73,12 +73,6 @@ const DepreciationPage: React.FC = () => {
     },
   });
 
-  const handleBatchDepreciate = useCallback((rows: Record<string, unknown>[]) => {
-    const ids = rows.map((row) => row.id as string);
-    setSelectedIds(ids);
-    setShowDepreciateDialog(true);
-  }, []);
-
   const handleSingleDepreciate = useCallback((row: Record<string, unknown>) => {
     setSelectedIds([row.id as string]);
     setShowDepreciateDialog(true);

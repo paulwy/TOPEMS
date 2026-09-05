@@ -188,7 +188,7 @@ const reviewIssueKeys = [
 ];
 
 export const AiCodeAssistantPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  const {} = useQuery({
     queryKey: ['ai', 'codeAssistant'],
     queryFn: async () => {
       try {

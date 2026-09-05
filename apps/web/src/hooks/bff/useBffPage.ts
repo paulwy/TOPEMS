@@ -126,7 +126,6 @@ export function useBffListPage<
   const {
     queryKey,
     searchFields = ['name', 'code'],
-    filterFields = [],
     batchActions = [],
     enableSharding = false,
     ...crudOptions

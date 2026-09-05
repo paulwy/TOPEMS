@@ -133,18 +133,6 @@ export interface CreateEvidenceRecordRequest {
   recorded_by: string;
 }
 
-interface WarehouseLocation {
-  id: string;
-  warehouse_name: string;
-  zone?: string;
-  position: { lat: number; lng: number };
-  capacity?: number;
-  usage_rate?: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface LocationPhoto {
   id: string;
   position: { lat: number; lng: number };

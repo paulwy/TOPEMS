@@ -5,16 +5,7 @@ import { designTokens } from '@topems/tokens';
  */
 import React from 'react';
 import { Box, Typography, Paper, Chip, List, Divider, Avatar, useTheme } from '@mui/material';
-import {
-  Play,
-  Pause,
-  Clock,
-  Wrench,
-  AlertCircle,
-  CheckCircle,
-  ClipboardList,
-  Monitor,
-} from 'lucide-react';
+import { Clock, ClipboardList, Monitor } from 'lucide-react';
 import i18n from '@/i18n';
 import { MobileCard } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
@@ -63,24 +54,6 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
       fault: 'error',
     };
     return map[status] || 'default';
-  };
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'running':
-      case 'in_progress':
-        return <Play style={{ width: 20, height: 20 }} />;
-      case 'paused':
-      case 'idle':
-        return <Pause style={{ width: 20, height: 20 }} />;
-      case 'completed':
-        return <CheckCircle style={{ width: 20, height: 20 }} />;
-      case 'maintenance':
-        return <Wrench style={{ width: 20, height: 20 }} />;
-      case 'fault':
-        return <AlertCircle style={{ width: 20, height: 20 }} />;
-      default:
-        return <Clock style={{ width: 20, height: 20 }} />;
-    }
   };
   return (
     <>

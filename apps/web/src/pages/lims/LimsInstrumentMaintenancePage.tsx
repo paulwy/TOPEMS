@@ -3,16 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Wrench, Calendar, DollarSign, Clock, AlertCircle } from 'lucide-react';
-import {
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
-  Box,
-  Typography,
-  Button,
-  useTheme,
-} from '@mui/material';
+import { Chip, Card, CardContent, CardHeader, Box, Typography, Button } from '@mui/material';
 import i18n from '@/i18n';
 import { limsApi } from '@/api/lims';
 import type { Instrument, MaintenanceRecord, CreateMaintenanceRecordRequest } from '@/api/lims';
@@ -26,7 +17,6 @@ import { getInstrumentMaintenanceSchema } from '@/schemas/lims';
 const ct = designTokens.colors;
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const theme = useTheme();
   const navigate = useNavigate();
   const { data: instrument, isPending: loadingInstrument } = useQuery({
     queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
