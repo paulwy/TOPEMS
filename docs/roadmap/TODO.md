@@ -21752,7 +21752,23 @@ git add $STAGED
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
 
-### V482
+### V483
+
+> 状态：**已完成**（提交 `168a6c469`）｜日期：2026-09-05
+> 主题：轨A 第四批——unnecessary 依赖清理 30 处
+
+### V483 完成内容
+
+1. **轨A 第四批（unnecessary 型，-30 处）**：exhaustive-deps 164（V482 后 194 → 164）
+   - 模式：依赖数组含未使用的依赖（i18n.language 12 / t 8 / apiLogger 3 / open·data·endpoints·selectedRecords·theme 等），删除不改行为（多余依赖只会引发多余重跑）
+   - 覆盖 21 文件（AppSidebar/navTree.ts/FinanceVoucherPage/GuidePage/HelpCenterPage 等）
+   - **回滚 5 文件**（删除后触发新警告，验证兜底生效）：useEdgeCompute/useIsr/ReturnDetailPage/FinanceVoucherPage 部分（依赖实际被 useMemo 内部使用，eslint "unnecessary" 判定与真实使用并存，属删除风险样本）；TenantDetailPage（删 usersLoading 后 137 行 users 由 logical 表达式变为被 useMemo 依赖的新警告）
+   - 剩余：missing 100、unnecessary 15、logical/cond 23、unstable-fn 17、complex 4
+2. **批量修改脚本教训**：逐文件 subprocess eslint 验证在 fd=256 环境触发 "Too many open files"（git 全仓操作 + 46 次子进程），改为**批量修改 + 快照回滚 + 单次全量验证**模式（快照 pickle 存 /tmp/v483_snapshot.pkl）
+3. **环境备注**：沙箱 /tmp 在会话中断后清空（基线 json 需重跑）；仓库 HEAD 自带 847 个预存 prettier 格式错误（历史格式债，留 i18n 专项轨道，不在门禁范围）
+
+
+## V482
 
 > 状态：**已完成**（提交 `{{COMMIT}}`）｜日期：2026-09-05
 > 主题：P1 磁盘瘦身——Rust 增量缓存 + 发布归档治理
