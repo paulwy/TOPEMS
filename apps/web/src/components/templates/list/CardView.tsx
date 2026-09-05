@@ -22,7 +22,7 @@ interface CardViewProps<T = Record<string, unknown>> {
   getRowId?: (row: T) => string | number;
 }
 
-export const CardView = React.memo(function CardView<T = any>({
+export const CardView = React.memo(function CardView<T = unknown>({
   data,
   config,
   columns = { xs: 1, sm: 1, md: 2, lg: 3, xl: 3 },

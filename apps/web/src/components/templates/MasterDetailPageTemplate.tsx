@@ -477,7 +477,7 @@ export function MasterDetailPageTemplate<T>({
                     // V64 防御：render(value, item) 空值兜底 + try/catch 失败回退显示原始值
                     (() => {
                       try {
-                        return col.render!(value, item ?? ({} as any), index);
+                        return col.render!(value, item ?? ({} as unknown as T), index);
                       } catch (e) {
                         logger.warn(
                           `[MasterDetailPageTemplate] render for column="${col.id}" failed, fallback:`,

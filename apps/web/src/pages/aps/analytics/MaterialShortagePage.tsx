@@ -13,6 +13,7 @@ import { Box, Paper, Typography, Chip } from '@mui/material';
 import { Package, AlertCircle, Boxes } from 'lucide-react';
 import i18n from '@/i18n';
 import { apsApi } from '@/api/aps';
+import type { MaterialPlan } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@topems/tokens';
@@ -51,7 +52,9 @@ export default function MaterialShortagePage() {
         const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
         return {
           materialPlans: items,
-          shortage: items.filter((x: any) => (x.shortageQty || 0) > 0),
+          shortage: items.filter(
+            (x: MaterialPlan & { shortageQty?: number }) => (x.shortageQty || 0) > 0
+          ),
         };
       } catch {
         return {};

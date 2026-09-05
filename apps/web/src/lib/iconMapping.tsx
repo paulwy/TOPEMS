@@ -182,7 +182,10 @@ import {
   RefreshCw as RefreshCwIcon,
 } from 'lucide-react';
 
-export const lucideIcons: Record<string, React.ComponentType<any> | null> = {
+export const lucideIcons: Record<
+  string,
+  React.ComponentType<{ size?: number; style?: React.CSSProperties }> | null
+> = {
   Home,
   Users,
   Building2,

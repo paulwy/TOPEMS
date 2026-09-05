@@ -75,7 +75,7 @@ export const contractRenewalApi = {
     });
   },
 
-  execute: async (id: string): Promise<ApiResponse<any>> => {
+  execute: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
     return apiClient.hrm.put(`/contract-renewals/${id}/execute`);
   },
 };

@@ -43,7 +43,7 @@ interface PriorityConfig {
 const iconSizeMap = { sm: 12, md: 14 };
 
 const makeIcon = (IconComp: React.ComponentType<{ size?: number }> | LucideIcon, size: number) =>
-  React.createElement(IconComp as React.ComponentType<any>, { size });
+  React.createElement(IconComp as React.ComponentType<{ size?: number }>, { size });
 
 const PRIORITY_CONFIG: Record<string, PriorityConfig> = {
   urgent: {

@@ -9,7 +9,9 @@ import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
 
 const BIReportPage: React.FC = () => {
-  const apiAdapter = createCrudPageAdapter(reportCrudApi as any);
+  const apiAdapter = createCrudPageAdapter(
+    reportCrudApi as unknown as Parameters<typeof createCrudPageAdapter>[0]
+  );
   const customRowActions = [
     {
       label: i18n.t('bi.bi_report_page.text_645dbc', i18n.t('pages.bi_report_page.k0')),

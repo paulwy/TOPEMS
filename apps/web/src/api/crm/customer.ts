@@ -127,7 +127,7 @@ export const tagApi = {
     return apiClient.crm.delete(`/tags/${id}`);
   },
 
-  getTaggedCustomers: async (id: string): Promise<ApiResponse<any[]>> => {
+  getTaggedCustomers: async (id: string): Promise<ApiResponse<unknown[]>> => {
     return apiClient.crm.get(`/tags/${id}/customers`);
   },
 };

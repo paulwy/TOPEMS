@@ -67,7 +67,7 @@ export const stockTakeSchema: EntitySchema = {
       sortable: true,
       listWidth: 100,
       hideInForm: true,
-      renderCell: (value: any) => (value ? `${value.toFixed(1)}%` : '-'),
+      renderCell: (value: unknown) => (value ? `${(value as number).toFixed(1)}%` : '-'),
     },
     {
       name: 'discrepancy_quantity',

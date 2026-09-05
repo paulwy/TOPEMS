@@ -217,7 +217,7 @@ function convertModuleCardToModuleItem(moduleCard: ModuleCardConfig): ModuleItem
 
   return {
     title: moduleCard.name,
-    icon: Icon as any,
+    icon: Icon,
     description: moduleCard.description || i18n.t('shared.dashboard_adapter.k0'),
     path: moduleCard.path,
     color: moduleColorMap[moduleCard.code] || defaultColor,

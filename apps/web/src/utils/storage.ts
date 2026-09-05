@@ -14,7 +14,7 @@ const PREFIX = 'topems_';
 /**
  * 存储接口
  */
-export interface StorageItem<T = any> {
+export interface StorageItem<T = unknown> {
   value: T;
   timestamp: number;
   expires?: number;

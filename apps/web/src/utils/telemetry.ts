@@ -1,4 +1,5 @@
 import { logger } from './logger';
+import type { SpanProcessor } from '@opentelemetry/sdk-trace-web';
 import {
   ConsoleSpanExporter,
   BatchSpanProcessor,
@@ -72,7 +73,7 @@ export function initTelemetry(config: Partial<TelemetryConfig> = {}) {
     return;
   }
 
-  const spanProcessors: any[] = [];
+  const spanProcessors: SpanProcessor[] = [];
 
   if (finalConfig.exporterType === 'console') {
     spanProcessors.push(new BatchSpanProcessor(new ConsoleSpanExporter()));

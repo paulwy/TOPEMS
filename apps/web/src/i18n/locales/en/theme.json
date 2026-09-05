@@ -55,5 +55,34 @@
         "k7": "Only effective under .cyberpunk-mode"
       }
     }
+  },
+  "module_themes": {
+    "admin": "Settings",
+    "ai": "AI Assistant",
+    "bi": "Business Intelligence",
+    "crm": "Customer Management",
+    "docs": "Document Center",
+    "ehs": "EHS",
+    "erp": "Enterprise Resources",
+    "finance": "Finance",
+    "gis": "GIS",
+    "hrm": "HR Management",
+    "iam": "System Management",
+    "im": "Instant Messaging",
+    "integration": "Integration",
+    "lims": "Laboratory",
+    "mes": "Manufacturing Execution",
+    "monitor": "System Monitor",
+    "notification": "Notifications",
+    "pdm": "Product Data",
+    "plugin": "Plugin Market",
+    "pm": "Project Management",
+    "qms": "Quality Management",
+    "report": "Reports",
+    "rs": "Requirements System",
+    "scm": "Supply Chain",
+    "srm": "Supplier",
+    "wms": "Warehouse Management",
+    "workflow": "Workflow"
   }
 }

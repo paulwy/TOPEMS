@@ -41,7 +41,7 @@ import { EmptyState } from '@topems/shared-components';
 /**
  * 树形节点类型
  */
-export interface TreeNode<T = any> {
+export interface TreeNode<T = unknown> {
   id: string;
   name: string;
   type: 'folder' | 'item';

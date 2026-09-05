@@ -113,8 +113,9 @@ export function normalizeTotalField(resp: Record<string, unknown>): Record<strin
  */
 export function shouldNormalize(): boolean {
   try {
-    const val = (import.meta as any).env?.V79_NORMALIZE_RESPONSE;
-    return val === 'true' || val === true;
+    const val = (import.meta as unknown as { env?: { V79_NORMALIZE_RESPONSE?: string } }).env
+      ?.V79_NORMALIZE_RESPONSE;
+    return val === 'true';
   } catch {
     return false;
   }

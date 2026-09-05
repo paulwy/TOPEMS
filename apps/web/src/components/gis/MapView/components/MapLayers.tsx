@@ -42,7 +42,7 @@ interface MapLayersProps {
   currentDrawing: DrawFeature | null;
   showHeatmap: boolean;
   heatmapMode: 'density' | 'status';
-  leafletMapRef: React.RefObject<any>;
+  leafletMapRef: React.RefObject<L.Map | null>;
   onMarkerClick: (item: DevicePoint | StorageLocation) => void;
 }
 

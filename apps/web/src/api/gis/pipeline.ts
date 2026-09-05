@@ -1,6 +1,12 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type { Pipeline, CreatePipelineRequest, ListQueryParams, PaginatedResponse } from './types';
+import type {
+  Pipeline,
+  CreatePipelineRequest,
+  ListQueryParams,
+  PaginatedResponse,
+  RawPaginatedResponse,
+} from './types';
 import { adaptResponse } from './utils';
 
 export const pipelineApi = {
@@ -13,11 +19,16 @@ export const pipelineApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(`/pipelines?${queryParams.toString()}`);
-    if (response.success && response.data) {
-      response.data = adaptResponse<Pipeline>(response.data, 'pipelines');
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
+      `/pipelines?${queryParams.toString()}`
+    );
+    if (rawResponse.success && rawResponse.data) {
+      return {
+        ...rawResponse,
+        data: adaptResponse<Pipeline>(rawResponse.data, 'pipelines'),
+      } as unknown as ApiResponse<PaginatedResponse<Pipeline>>;
     }
-    return response as ApiResponse<PaginatedResponse<Pipeline>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<Pipeline>>;
   },
 
   getPipeline: async (id: string): Promise<ApiResponse<Pipeline>> => {

@@ -32,7 +32,7 @@ import i18n from '@/i18n';
  * @template TUpdate 更新入参类型，默认 Partial<T>
  */
 export interface CrudApi<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
-  list: (params?: any) => Promise<ApiResponse<unknown>>;
+  list: (params?: any) => Promise<ApiResponse<unknown>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- 兼容各 API 客户端不同参数类型（函数参数逆变）
   create: (data: TCreate) => Promise<ApiResponse<T>>;
   update: (id: string, data: TUpdate) => Promise<ApiResponse<T>>;
   delete: (id: string) => Promise<ApiResponse<unknown>>;

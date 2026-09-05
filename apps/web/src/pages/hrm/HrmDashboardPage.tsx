@@ -24,7 +24,7 @@ import type { StatCardSchema, ChartSchema } from '@/schema';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
   Users,
   Clock,
   DollarSign,

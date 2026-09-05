@@ -2,11 +2,12 @@ import React, { useCallback } from 'react';
 import { IconButton } from '@mui/material';
 import { Maximize2 } from 'lucide-react';
 import { designTokens } from '@topems/tokens';
+import type L from 'leaflet';
 import i18n from '@/i18n';
 
 const FitBoundsControl: React.FC<{
   bounds: [number, number][] | undefined;
-  mapRef: React.RefObject<any>;
+  mapRef: React.RefObject<L.Map | null>;
 }> = ({ bounds, mapRef }) => {
   const fitBounds = useCallback(() => {
     const map = mapRef.current;

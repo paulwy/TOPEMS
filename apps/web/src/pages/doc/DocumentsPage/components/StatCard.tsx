@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Box, Typography } from '@mui/material';
 
 interface StatCardProps {
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ size?: number }>;
   title: string;
   value: string;
   color: string;

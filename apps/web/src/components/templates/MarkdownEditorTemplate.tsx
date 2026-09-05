@@ -794,7 +794,7 @@ ${content
                           </SyntaxHighlighter>
                         ) : (
                           <code
-                            {...(props as any)}
+                            {...(props as React.HTMLAttributes<HTMLElement>)}
                             className={className}
                             style={{
                               backgroundColor: 'var(--mui-palette-action-hover)',

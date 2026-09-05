@@ -871,7 +871,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             {i18n.t('microfrontend.observability_dashboard.k12')}
           </Typography>
           {(() => {
-            const paths = (userBehaviorAnalytics as any).getPopularPaths?.() || [];
+            const paths =
+              (
+                userBehaviorAnalytics as { getPopularPaths?: () => NavigationPath[] }
+              ).getPopularPaths?.() || [];
             if (paths.length === 0) {
               return (
                 <Typography color='text.secondary'>

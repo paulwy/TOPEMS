@@ -22,11 +22,16 @@ export const storageApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(`/warehouse-locations?${queryParams.toString()}`);
-    if (response.success && response.data) {
-      response.data = adaptResponse<StorageLocation>(response.data, 'warehouse_locations');
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
+      `/warehouse-locations?${queryParams.toString()}`
+    );
+    if (rawResponse.success && rawResponse.data) {
+      return {
+        ...rawResponse,
+        data: adaptResponse<StorageLocation>(rawResponse.data, 'warehouse_locations'),
+      } as unknown as ApiResponse<PaginatedResponse<StorageLocation>>;
     }
-    return response as ApiResponse<PaginatedResponse<StorageLocation>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<StorageLocation>>;
   },
 
   getStorageLocation: async (id: string): Promise<ApiResponse<StorageLocation>> => {

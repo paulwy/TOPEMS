@@ -92,7 +92,7 @@ export const reportApi = {
     start_period: string;
     end_period: string;
     org_id?: string;
-  }): Promise<ApiResponse<any>> => {
+  }): Promise<ApiResponse<unknown>> => {
     return apiClient.finance.get('/reports/dimension-detail', {
       params,
     });

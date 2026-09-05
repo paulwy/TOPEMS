@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import type { BatchAction } from './types';
 import i18n from '@/i18n';
 
-interface ListBatchActionsProps<T = any> {
+interface ListBatchActionsProps<T = unknown> {
   show: boolean;
   selectedCount: number;
   selectedRows: T[];

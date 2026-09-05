@@ -186,7 +186,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
     return;
   },
 
-  fetch: async (url: string, _init: RequestInit, remoteInfo?: any) => {
+  fetch: async (url: string, _init: RequestInit, remoteInfo?: { name?: string }) => {
     logger.debug(`[MF-Observability] fetch: ${remoteInfo?.name ?? 'unknown'} → ${url}`);
 
     // 拦截 MF 发起的 fetch 请求，检测 Content-Type 异常

@@ -1096,7 +1096,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.wip,
       element: lazyWithRetry(
-        () => import('@/pages/mes/WIPPage') as Promise<{ default: any }>,
+        () => import('@/pages/mes/WIPPage') as unknown as Promise<{ default: React.ComponentType }>,
         'WIPPage'
       ),
       module: 'mes',

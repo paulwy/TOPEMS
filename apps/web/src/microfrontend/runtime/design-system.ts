@@ -641,7 +641,7 @@ export class DesignSystemManager {
   /** CSS 变量根元素（默认 document.documentElement） */
   private rootElement: HTMLElement | null = null;
   /** 跨框架共享状态（用于无 DOM 环境同步） */
-  private sharedState: Map<string, any> = new Map();
+  private sharedState: Map<string, unknown> = new Map();
 
   constructor() {
     this.currentTheme = { ...LIGHT_THEME };

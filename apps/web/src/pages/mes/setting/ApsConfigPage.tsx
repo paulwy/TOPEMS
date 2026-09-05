@@ -11,7 +11,10 @@ export const ApsConfigPage: React.FC = () => {
     queryKey: ['mes-aps-config'],
     queryFn: async () => {
       try {
-        const m = mesApi as any;
+        const m = mesApi as {
+          aps?: { health?: () => Promise<unknown> };
+          health?: () => Promise<unknown>;
+        };
         const tryFn = async (fn?: () => Promise<unknown>) => {
           if (typeof fn !== 'function') return null;
           try {

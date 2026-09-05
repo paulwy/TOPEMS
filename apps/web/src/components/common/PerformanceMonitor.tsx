@@ -39,7 +39,7 @@ export const PerformanceMonitor: React.FC = () => {
     // "Deprecated API for given entry type"
     const supported =
       typeof PerformanceObserver !== 'undefined' && 'supportedEntryTypes' in PerformanceObserver
-        ? ((PerformanceObserver as any).supportedEntryTypes as string[])
+        ? (PerformanceObserver.supportedEntryTypes as string[])
         : [];
 
     const observeType = (type: string, buffered = true) => {

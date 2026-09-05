@@ -20,7 +20,7 @@ export interface ReportAssistantResponse {
   title: string;
   description?: string;
   sql?: string;
-  data: any[];
+  data: Array<Record<string, unknown>>;
   x_axis?: string;
   y_axis?: string | string[];
   metrics?: ReportMetric[];

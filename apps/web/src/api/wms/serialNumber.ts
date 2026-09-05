@@ -59,7 +59,7 @@ export const serialNumberApi = {
     return apiClient.wms.post(`/serial-numbers/${id}/transfer-location`, data);
   },
 
-  getTrace: async (id: string): Promise<ApiResponse<any[]>> => {
+  getTrace: async (id: string): Promise<ApiResponse<unknown[]>> => {
     return apiClient.wms.get(`/serial-numbers/${id}/trace`);
   },
 };

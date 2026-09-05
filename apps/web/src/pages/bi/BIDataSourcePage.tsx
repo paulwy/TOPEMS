@@ -34,7 +34,9 @@ const BIDataSourcePage: React.FC = () => {
       logger.info('Sync successful');
     },
   });
-  const apiAdapter = createCrudPageAdapter(dataSourceCrudApi as any);
+  const apiAdapter = createCrudPageAdapter(
+    dataSourceCrudApi as unknown as Parameters<typeof createCrudPageAdapter>[0]
+  );
   const customRowActions = [
     {
       label: i18n.t('bi.bi_data_source_page.text_6a620e', i18n.t('pages.bi_data_source_page.k0')),

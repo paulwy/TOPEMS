@@ -100,7 +100,7 @@ interface ServiceItem {
   service: string;
   port: number;
   key: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ style?: React.CSSProperties }>;
 }
 
 const generateInitialStatuses = (): Record<string, boolean> => {

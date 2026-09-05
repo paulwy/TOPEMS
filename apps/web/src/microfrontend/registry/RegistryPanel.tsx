@@ -88,7 +88,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
 
   const handleRegister = () => {
     try {
-      moduleRegistry.registerModule(newModule as any);
+      moduleRegistry.registerModule(newModule as ModuleRegistration);
       setShowRegisterDialog(false);
       setSnackbar({
         open: true,

@@ -27,6 +27,7 @@ import MeasureTooltip from './components/MeasureTooltip';
 import FitBoundsControl from './components/FitBoundsControl';
 import MapLayers from './components/MapLayers';
 import Toolbar from './components/Toolbar';
+import type L from 'leaflet';
 import LayerPanel from './components/LayerPanel';
 import DetailsPanel from './components/DetailsPanel';
 // C3 §5 P1-2: Map3DView 按需懒加载，将 three.js + @react-three/* 拆分为独立 chunk
@@ -63,7 +64,7 @@ const MapView: React.FC<MapViewProps> = ({
   const [mapType, setMapType] = useState<'osm' | 'amap'>('osm');
   const [show3DView, setShow3DView] = useState(false);
   const [offlineMode, _setOfflineMode] = useState(true);
-  const leafletMapRef = useRef<any>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapKey, setMapKey] = useState(0);
   const stableId = useId();

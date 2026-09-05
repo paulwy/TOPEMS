@@ -43,7 +43,7 @@ export const NODE_TYPE_COLOR: Record<
   error_hook: 'error',
 };
 
-export const NODE_TYPE_ICON: Record<AutomationNodeType, React.ComponentType<any>> = {
+export const NODE_TYPE_ICON: Record<AutomationNodeType, React.ComponentType<{ size?: number }>> = {
   trigger: ZapIcon,
   workflow_action: WorkflowIcon,
   integration_action: PlugIcon,

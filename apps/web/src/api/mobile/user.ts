@@ -52,7 +52,7 @@ export const userApi = {
     });
   },
 
-  getSettings: async (): Promise<ApiResponse<any>> => {
+  getSettings: async (): Promise<ApiResponse<unknown>> => {
     return apiClient.mobile.get('/user/settings');
   },
 };
