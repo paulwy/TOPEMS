@@ -21752,7 +21752,25 @@ git add $STAGED
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
 
-### V480 后续扩展（留给 V481+）
+### V481
+
+> 状态：**已完成**（提交 `3c90de302`）｜日期：2026-09-05
+> 主题：轨A 第三批——logical/conditional 型表达式 useMemo 稳定化 + prettier 格式基线统一
+
+### V481 完成内容
+
+1. **轨A 第三批（logical/conditional 型，净 -61 处）**：exhaustive-deps 194（V480 后 255 → 194）
+   - 模式：`const x = data?.list || []` / `cond ? a : b` 等声明被多个 useMemo/useCallback 依赖时，每次渲染重建 → 用 `useMemo(() => <expr>, [<deps>])` 包裹初始化
+   - 覆盖 ~35 文件（CrudPage/ListPageTemplate/MonitorDashboardPage/FinanceReportsPage/GuidePage 等）
+   - 剩余：logical/cond 22（多为含 `as` 类型断言的复杂 conditional，需人工）、missing 100、unstable-fn 17、unnecessary 46、complex 4
+2. **prettier 预存格式债（76 文件）——已探明，留独立轨道**：仓库存在大量预存 prettier 格式错误（门禁仅检查 staged 文件，历史从未批量修复）。本轮曾全量 `prettier --write` 统一，但发现 `hardcoded-precise` 门禁会随之拦截这些文件里的**预存硬编码中文（161 行，集中在 components/ai、pages/ai、modules/ai 等）**——属轨A i18n 债，不属本批范围。决定：**回退 prettier 全量格式化**，V481 仅提交 useMemo 修复文件；prettier 格式债 + AI 模块硬编码债留待 i18n 专项轨道一并处理（改到该文件时 eslint --fix 会自动格式化）。
+3. **自动修复脚本踩坑记录**（供后续批次复用）：
+   - Python `'' in '.?:'` 恒 True 导致首 token 依赖丢失（须 `prev and prev in ...`）
+   - `data?.list` 的 `list`、`config.fields` 的 `fields` 属性名被误提取为依赖 → 自引用保护（`varname in deps` 跳过）兜底
+   - 跨行声明压缩时 `(r): r is NonNullable<typeof r>` 类型断言标识符 `r`/`is`/`NonNullable` 混入依赖数组 → 依赖数组必须只含变量（tsc 校验兜底）
+
+
+## V480 后续扩展（留给 V481+）
 
 - [ ] **轨A 第三批（剩余 missing-dependencies ~110 处）**：非 t 类缺依赖（组件状态/回调），逐案行为分析后修复
 - [ ] **轨A unstable-reference 残余**：logical expression 型（departmentSummary 等）useMemo 包裹
