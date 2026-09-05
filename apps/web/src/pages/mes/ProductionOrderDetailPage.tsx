@@ -70,8 +70,8 @@ const ProductionOrderDetailPage: React.FC = () => {
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
-  const records = recordsData || [];
-  const qualityRecords = qualityRecordsData || [];
+  const records = useMemo(() => recordsData || [], [recordsData]);
+  const qualityRecords = useMemo(() => qualityRecordsData || [], [qualityRecordsData]);
   const loading = orderLoading;
   const errorMessage = orderError
     ? (orderError as Error).message || i18n.t('mes.production_order_detail_page.detail')

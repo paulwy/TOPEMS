@@ -57,7 +57,7 @@ const BudgetManagementPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const departments = departmentsQuery.data || [];
+  const departments = useMemo(() => departmentsQuery.data || [], [departmentsQuery]);
 
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({

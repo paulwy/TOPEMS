@@ -110,7 +110,7 @@ const PmContractCreatePage: React.FC = () => {
   const handleCancel = () => {
     navigate(PM_PATHS.contracts);
   };
-  const projects = projectsData ?? [];
+  const projects = useMemo(() => projectsData ?? [], [projectsData]);
   const projectOptions = useMemo(() => {
     return projects.map((project: Project) => ({
       label: project.name,

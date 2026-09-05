@@ -193,7 +193,7 @@ const NotificationCenter: React.FC = () => {
     },
   });
 
-  const notifications = data?.notifications || [];
+  const notifications = useMemo(() => data?.notifications || [], [data]);
   const total = data?.total || 0;
   const unreadCount = data?.unread_count || 0;
   const loading = isPending;

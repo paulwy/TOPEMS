@@ -127,7 +127,7 @@ const RsFormulaCreatePage: React.FC = () => {
       });
     },
   });
-  const projects = projectsQuery.data || [];
+  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery]);
   const loading = formulaQuery.isLoading;
   const submitting = submitMutation.isPending;
   const error = formulaQuery.error ? i18n.t('rd.rs_formula_create_page.k14') : undefined;

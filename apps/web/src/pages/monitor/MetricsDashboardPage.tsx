@@ -224,9 +224,9 @@ const MetricsDashboardPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const summary = summaryQuery.data;
-  const metrics = listQuery.data ?? [];
+  const metrics = useMemo(() => listQuery.data ?? [], [listQuery]);
   const kpis: BusinessMetricKpi[] = kpiQuery.data ?? [];
-  const trendPoints = trendQuery.data ?? [];
+  const trendPoints = useMemo(() => trendQuery.data ?? [], [trendQuery]);
   const stats: StatCard[] = useMemo(() => {
     const total = summary?.total_metrics ?? 0;
     const healthy = summary?.healthy_count ?? 0;

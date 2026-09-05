@@ -121,8 +121,8 @@ const RsExperimentCreatePage: React.FC = () => {
       });
     },
   });
-  const projects = projectsQuery.data || [];
-  const formulas = formulasQuery.data || [];
+  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery]);
+  const formulas = useMemo(() => formulasQuery.data || [], [formulasQuery]);
   const projectsLoading = projectsQuery.isLoading;
   const formulasLoading = formulasQuery.isLoading;
   const loading = experimentQuery.isLoading;

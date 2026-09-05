@@ -366,9 +366,18 @@ export const MonitorDashboardPage: React.FC = () => {
     apiPerformanceQuery.isFetching ||
     dbMetricsQuery.isFetching;
   const systemMetrics = (systemMetricsQuery.data || {}) as SystemMetrics;
-  const apiServices = Array.isArray(serviceHealthQuery.data) ? serviceHealthQuery.data : [];
-  const apiAlerts = Array.isArray(alertsQuery.data) ? alertsQuery.data : [];
-  const apiPerf = Array.isArray(apiPerformanceQuery.data) ? apiPerformanceQuery.data : [];
+  const apiServices = useMemo(
+    () => (Array.isArray(serviceHealthQuery.data) ? serviceHealthQuery.data : []),
+    [serviceHealthQuery]
+  );
+  const apiAlerts = useMemo(
+    () => (Array.isArray(alertsQuery.data) ? alertsQuery.data : []),
+    [alertsQuery]
+  );
+  const apiPerf = useMemo(
+    () => (Array.isArray(apiPerformanceQuery.data) ? apiPerformanceQuery.data : []),
+    [apiPerformanceQuery]
+  );
   const dbMetrics = (dbMetricsQuery.data || {}) as DatabaseMetrics;
   const services: ServiceHealth[] = useMemo(
     () =>

@@ -661,7 +661,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   // ── 渲染 ──
   const showCreate = actions.includes('create');
   const selectable = schema.list?.selectable || batchActions.length > 0;
-  const rows = data?.data || [];
+  const rows = useMemo(() => data?.data || [], [data]);
   const total = data?.total || 0;
   const filters = schema.list?.filters || [];
 

@@ -85,7 +85,7 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
   }, [healthQuery.isError, healthQuery.error, t]);
 
   const loading = pluginsQuery.isLoading;
-  const plugins = pluginsQuery.data || [];
+  const plugins = useMemo(() => pluginsQuery.data || [], [pluginsQuery]);
 
   const handleRefresh = () => {
     Promise.all([pluginsQuery.refetch(), healthQuery.refetch(), fetchInstalledPlugins(true)]);

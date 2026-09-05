@@ -895,7 +895,7 @@ const PluginMarketplacePage: React.FC = () => {
   }, [healthQuery.isError, healthQuery.error]);
 
   const loading = pluginsQuery.isLoading;
-  const plugins = pluginsQuery.data || [];
+  const plugins = useMemo(() => pluginsQuery.data || [], [pluginsQuery]);
   const suites = useMemo(() => SUITES(), [t]);
 
   const handleRefresh = useCallback(() => {

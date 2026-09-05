@@ -60,7 +60,7 @@ const FlowApprovalDetailPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const approval = detailsQuery.data?.approval ?? null;
-  const records = detailsQuery.data?.records ?? [];
+  const records = useMemo(() => detailsQuery.data?.records ?? [], [detailsQuery]);
   const loading = detailsQuery.isLoading;
   const error = detailsQuery.isError ? i18n.t('workflow.index.k0') : undefined;
   useEffect(() => {

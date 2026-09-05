@@ -117,7 +117,7 @@ const QmsStandardListPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const standards = allStandards || [];
+  const standards = useMemo(() => allStandards || [], [allStandards]);
   const stats = useMemo(() => {
     return {
       totalStandards: standards.length,

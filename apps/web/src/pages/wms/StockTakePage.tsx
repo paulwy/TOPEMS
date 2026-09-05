@@ -55,7 +55,7 @@ const StockTakePage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const warehouses = warehousesQuery.data || [];
+  const warehouses = useMemo(() => warehousesQuery.data || [], [warehousesQuery]);
 
   const getWarehouseName = useMemo(() => {
     return (warehouseId: string) => {

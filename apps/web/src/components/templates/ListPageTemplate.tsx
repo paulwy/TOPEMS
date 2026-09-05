@@ -315,9 +315,11 @@ export function ListPageTemplate<
   // V64 防御：过滤掉 data 中可能存在的 null / undefined 元素，避免 300+ 处
   // schema renderCell 因 "row is undefined" 抛错（典型：can't access property "isactive"）
   const rawData = propData ?? (crud ? crudResult.data : []);
-  const data = Array.isArray(rawData)
-    ? rawData.filter((r): r is NonNullable<typeof r> => r != null)
-    : [];
+  const data = useMemo(
+    () =>
+      Array.isArray(rawData) ? rawData.filter((r): r is NonNullable<typeof r> => r != null) : [],
+    [rawData]
+  );
   const loading = propLoading ?? (crud ? crudResult.loading : false);
   const error = propError ?? (crud && crudResult.error ? crudResult.error : null);
   const resolvedTotal = total ?? (crud ? crudResult.pagination.total : 0);

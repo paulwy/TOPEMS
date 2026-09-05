@@ -168,7 +168,7 @@ export default function ConsolidationReportsPage() {
     refetch();
   };
 
-  const reports = reportsData?.items || [];
+  const reports = useMemo(() => reportsData?.items || [], [reportsData]);
 
   const statCards = useMemo<StatCard[]>(
     () => [

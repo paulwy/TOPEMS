@@ -53,7 +53,7 @@ export function useDictionaryManagement() {
 
     staleTime: CACHE_DURATIONS.LONG,
   });
-  const dictTypes = dictTypesQuery.data || [];
+  const dictTypes = useMemo(() => dictTypesQuery.data || [], [dictTypesQuery]);
   const typesLoading = dictTypesQuery.isLoading;
   useEffect(() => {
     if (!selectedType && dictTypes.length > 0) {

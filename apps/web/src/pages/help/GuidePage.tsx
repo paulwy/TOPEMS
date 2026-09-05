@@ -70,7 +70,7 @@ export const GuidePage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const guides = guidesQuery.data || [];
+  const guides = useMemo(() => guidesQuery.data || [], [guidesQuery]);
   const loading = guidesQuery.isLoading;
 
   const categoriesQuery = useQuery<string[]>({
@@ -84,7 +84,7 @@ export const GuidePage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const categories = categoriesQuery.data || [];
+  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery]);
 
   useEffect(() => {
     if (guidesQuery.isError) {

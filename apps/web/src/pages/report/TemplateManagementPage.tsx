@@ -85,8 +85,8 @@ const TemplateManagementPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const templates = templatesQuery.data || [];
-  const categories = categoriesQuery.data || [];
+  const templates = useMemo(() => templatesQuery.data || [], [templatesQuery]);
+  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery]);
   const loading = templatesQuery.isLoading || categoriesQuery.isLoading;
 
   const { createMutation, updateMutation, deleteMutation } = useCrudMutations<

@@ -47,7 +47,7 @@ export function useTemplateManagement() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const templates = templatesQuery.data || [];
+  const templates = useMemo(() => templatesQuery.data || [], [templatesQuery]);
   const categories = categoriesQuery.data || [];
   const loading = templatesQuery.isLoading || categoriesQuery.isLoading;
 

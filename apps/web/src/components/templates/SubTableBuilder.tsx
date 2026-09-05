@@ -402,7 +402,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
   const isViewMode = mode === 'view';
 
   const columnDefs = config.columns;
-  const fields = config.fields || fieldSchema || [];
+  const fields = useMemo(() => config.fields || fieldSchema || [], [fieldSchema]);
 
   const displayRows = useMemo(() => {
     if (config.minRows && value.length < config.minRows) {

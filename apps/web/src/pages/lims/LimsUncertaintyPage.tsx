@@ -147,7 +147,7 @@ const LimsUncertaintyPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const projects = allProjects || [];
+  const projects = useMemo(() => allProjects || [], [allProjects]);
   const stats = useMemo(() => {
     return {
       total: projects.length,

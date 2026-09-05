@@ -87,7 +87,7 @@ const DictManagementPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const dictTypes = dictTypesQuery.data?.items || [];
+  const dictTypes = useMemo(() => dictTypesQuery.data?.items || [], [dictTypesQuery]);
   const typesLoading = dictTypesQuery.isLoading;
   const selectedType = dictTypes.find((t) => t.id === selectedTypeId) || null;
   // 选中第一个字典类型

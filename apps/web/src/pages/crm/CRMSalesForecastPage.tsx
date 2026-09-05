@@ -42,7 +42,7 @@ const CRMSalesForecastPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
-  const forecasts = forecastsQuery.data || [];
+  const forecasts = useMemo(() => forecastsQuery.data || [], [forecastsQuery]);
   const series = mockForecast?.series;
   const mockForecastRows = series
     ? series.actual.map((a, i) => ({

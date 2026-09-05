@@ -62,7 +62,7 @@ const TraceabilityDetailPage: React.FC = () => {
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
-  const qualityRecords = qualityRecordsData || [];
+  const qualityRecords = useMemo(() => qualityRecordsData || [], [qualityRecordsData]);
   const loading = chainLoading;
   const errorMessage = chainError
     ? (chainError as Error).message ||

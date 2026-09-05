@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
   Box,
@@ -161,7 +161,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
-  const allSections = tabs ? tabs[activeTab]?.sections : externalSections || [];
+  const allSections = useMemo(
+    () => (tabs ? tabs[activeTab]?.sections : externalSections) || [],
+    [tabs, activeTab, externalSections]
+  );
 
   useEffect(() => {
     const initialValues: Record<string, SettingValueType> = {};

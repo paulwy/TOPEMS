@@ -240,7 +240,7 @@ const FavoritesPage: React.FC = () => {
   }, []);
 
   const favorites = favoritesData ?? [];
-  const recentSearches = recentSearchesData ?? [];
+  const recentSearches = useMemo(() => recentSearchesData ?? [], [recentSearchesData]);
   const results = searchResults ?? [];
 
   const recentSearchRows: RecentSearch[] = useMemo(

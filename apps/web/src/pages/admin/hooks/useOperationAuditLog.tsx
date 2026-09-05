@@ -130,7 +130,7 @@ export const useOperationAuditLog = () => {
     },
     staleTime: 30 * 1000,
   });
-  const logs = logsData?.items || [];
+  const logs = useMemo(() => logsData?.items || [], [logsData]);
   const totalCount = logsData?.total || 0;
   if (error) {
     apiLogger.error(i18n.t('admin.operation_audit_log.failed_to_load_operation_audit_logs'), error);

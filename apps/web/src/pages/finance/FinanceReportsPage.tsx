@@ -68,9 +68,12 @@ const FinanceReportsPage: React.FC = () => {
   });
 
   const businessOverview = reportsQuery.data?.businessOverview ?? null;
-  const projectSummaries = reportsQuery.data?.projectSummaries ?? [];
-  const monthlyTrends = reportsQuery.data?.monthlyTrends ?? [];
-  const departmentSummaries = reportsQuery.data?.departmentSummaries ?? [];
+  const projectSummaries = useMemo(() => reportsQuery.data?.projectSummaries ?? [], [reportsQuery]);
+  const monthlyTrends = useMemo(() => reportsQuery.data?.monthlyTrends ?? [], [reportsQuery]);
+  const departmentSummaries = useMemo(
+    () => reportsQuery.data?.departmentSummaries ?? [],
+    [reportsQuery]
+  );
   const loading = reportsQuery.isLoading;
   const error = reportsQuery.error ? t('finance.finance_reports_page.fail') : null;
 
