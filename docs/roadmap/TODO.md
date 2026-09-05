@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V507 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V508 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21752,7 +21752,25 @@ git add $STAGED
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
 
+### V508
+
+> 状态：**已完成**（提交 `d4948c746`）｜日期：2026-09-06
+> 主题：no-unused-vars 清理第一批（342→258，删未使用 import 84）
+
+### V508 完成内容
+
+**no-unused-vars 342→258**（108 文件 +906/-526）：
+
+1. **自动删除未使用 import 84 处/63 文件**：按 eslint 报告行级处理——单行 `import { A, B }` 剔除标识符（仅剩 `{}` 时删整行）、多行 import 成员行删除（逆序防行号漂移）、default/namespace import 整行删除；**tsc 0 证实无误删**（eslint "never used" 即静态真未用）。
+2. **eslint --fix 全量清 prettier/prettier 479→0**：`@typescript-eslint/no-unused-vars` 无 autofix 故不受影响；prettier 全项目归零（staged/未 staged 均清）。
+3. **关联 i18n 15 处**：import 删除后文件进入 staged 被 scan 扫出历史中文——ABTestPanel 4（对照组/实验组，加 import i18n）、DshAgentPage 11（含 1 个插值模板 `available_tools`）——zh/en 新增 13 key（ai.ab_test_panel.* 2、ai.dsh_agent_page.* 11）。
+
+**验证**：tsc 0；eslint no-unused-vars 342→**258**、prettier 479→**0**；scan 0 lines；pre-commit 14 gate 全绿。
+
+**坑点**：① no-unused-vars 无 autofix——需自写脚本；② JSX 文本节点中文（缩进 + 文本）用字符串 replace 会因注释/其他出现次数 >1 失败——**按行号精确替换**；③ eslint --fix 同时修 prettier 是福利（不再有 500 处存量 prettier 违规）。
+
 ### V507
+
 
 > 状态：**已完成**（提交 `6fd7d2566`）｜日期：2026-09-06
 > 主题：check-file/filename-naming-convention 清零（50→0）
