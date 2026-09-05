@@ -905,7 +905,7 @@ export function useQmsMock<T = unknown>(
       'true';
   const demoEnable =
     typeof window !== 'undefined' &&
-    (window as unknown as { __TOPEMS_DEMO__?: boolean }).__TOPEMS_DEMO__ === true;
+    (window as unknown as { topemsDemo?: boolean }).topemsDemo === true;
   const envDisable =
     typeof import.meta !== 'undefined' &&
     (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_QMS_DISABLE_MOCK ===

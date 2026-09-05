@@ -67,7 +67,7 @@ const CrmDashboardPage: React.FC = () => {
     queryKey: ['crm-dashboard', period],
     queryFn: async () => {
       await schema.loader?.();
-      return (window as unknown as { __crmStats?: DashboardData | null }).__crmStats ?? null;
+      return (window as unknown as { crmStats?: DashboardData | null }).crmStats ?? null;
     },
     staleTime: 5 * 60 * 1000,
     initialData: mockEnabled ? mockData : undefined,

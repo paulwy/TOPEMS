@@ -20,28 +20,28 @@ interface BackButtonProps {
 const VARIANT_CONFIG: Record<
   BackButtonVariant,
   {
-    Icon: React.ComponentType<{ style?: React.CSSProperties }>;
+    icon: React.ComponentType<{ style?: React.CSSProperties }>;
     defaultLabel: string;
     defaultAriaLabel: string;
   }
 > = {
   back: {
-    Icon: ArrowLeft,
+    icon: ArrowLeft,
     defaultLabel: i18n.t('shared.back_button.k0'),
     defaultAriaLabel: i18n.t('shared.back_button.k1'),
   },
   home: {
-    Icon: Home,
+    icon: Home,
     defaultLabel: i18n.t('shared.back_button.k2'),
     defaultAriaLabel: i18n.t('shared.back_button.k3'),
   },
   close: {
-    Icon: X,
+    icon: X,
     defaultLabel: i18n.t('shared.back_button.k4'),
     defaultAriaLabel: i18n.t('shared.back_button.k5'),
   },
   text: {
-    Icon: ArrowLeft,
+    icon: ArrowLeft,
     defaultLabel: i18n.t('shared.back_button.k6'),
     defaultAriaLabel: i18n.t('shared.back_button.k7'),
   },
@@ -57,7 +57,7 @@ export const BackButton: React.FC<BackButtonProps> = ({
 }) => {
   const navigate = useNavigate();
   const resolvedVariant: 'back' | 'home' | 'close' = variant === 'text' ? 'back' : variant;
-  const { Icon, defaultLabel, defaultAriaLabel } = VARIANT_CONFIG[variant];
+  const { icon: Icon, defaultLabel, defaultAriaLabel } = VARIANT_CONFIG[variant];
 
   const handleClick = useCallback(() => {
     if (onClick) {

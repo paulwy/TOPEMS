@@ -66,10 +66,10 @@ export const difyApi = {
   listMessages: async (
     params: DifyListMessagesParams
   ): Promise<ApiResponse<DifyListMessagesResponse>> => {
-    const { conversation_id, ...rest } = params;
+    const { conversation_id: conversationId, ...rest } = params;
     const qs = buildQueryString(rest as Record<string, unknown>);
     return apiClient.ai.get<DifyListMessagesResponse>(`/dify/messages${qs}`, {
-      params: { conversation_id },
+      params: { conversation_id: conversationId },
     });
   },
 

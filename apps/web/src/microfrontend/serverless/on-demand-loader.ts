@@ -613,10 +613,9 @@ class OnDemandLoaderImpl {
       conditions.roles &&
       conditions.roles.length > 0 &&
       typeof window !== 'undefined' &&
-      (window as unknown as { __userRoles?: string[] }).__userRoles
+      (window as unknown as { userRoles?: string[] }).userRoles
     ) {
-      const userRoles: string[] =
-        (window as unknown as { __userRoles?: string[] }).__userRoles ?? [];
+      const userRoles: string[] = (window as unknown as { userRoles?: string[] }).userRoles ?? [];
       if (!conditions.roles.some((r) => userRoles.includes(r))) {
         return false;
       }

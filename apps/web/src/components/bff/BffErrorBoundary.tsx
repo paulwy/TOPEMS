@@ -13,16 +13,7 @@
  */
 
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  Stack,
-  Chip,
-  Alert,
-  AlertTitle,
-  Paper,
-} from '@mui/material';
+import { Box, Typography, Button, Stack, Chip, Alert, AlertTitle, Paper } from '@mui/material';
 import {
   WifiOff,
   Clock,
@@ -41,39 +32,39 @@ import { FallbackLevel } from '@/utils/bff/fallbackStrategy';
 /** BFF 错误类型枚举 */
 export enum BffErrorType {
   /** 网络请求失败 */
-  Network = 'network',
+  NETWORK = 'network',
   /** 请求超时 */
-  Timeout = 'timeout',
+  TIMEOUT = 'timeout',
   /** 客户端校验失败 */
-  Validation = 'validation',
+  VALIDATION = 'validation',
   /** 服务端错误（5xx） */
-  Server = 'server',
+  SERVER = 'server',
   /** 认证/授权失败 */
-  Auth = 'auth',
+  AUTH = 'auth',
   /** 资源不存在（404） */
-  NotFound = 'not_found',
+  NOTFOUND = 'not_found',
   /** 缓存相关 */
-  Cache = 'cache',
+  CACHE = 'cache',
   /** 离线 */
-  Offline = 'offline',
+  OFFLINE = 'offline',
   /** 未知错误 */
-  Unknown = 'unknown',
+  UNKNOWN = 'unknown',
 }
 
 /** 推荐的错误恢复策略 */
 export enum ErrorRecoveryStrategy {
   /** 自动重试 */
-  Retry = 'retry',
+  RETRY = 'retry',
   /** 降级到备用数据源 */
-  Fallback = 'fallback',
+  FALLBACK = 'fallback',
   /** 刷新页面/重新加载 */
-  Refresh = 'refresh',
+  REFRESH = 'refresh',
   /** 清除错误并重试 */
-  Clear = 'clear',
+  CLEAR = 'clear',
   /** 切换到离线模式 */
-  Offline = 'offline',
+  OFFLINE = 'offline',
   /** 无自动恢复，需人工介入 */
-  None = 'none',
+  NONE = 'none',
 }
 
 // ==================== 类型定义 ====================
@@ -170,41 +161,55 @@ export function classifyError(error: Error): ClassifiedError {
   let recovery: ErrorRecoveryStrategy;
 
   if (status === 401 || status === 403) {
-    type = BffErrorType.Auth;
+    type = BffErrorType.AUTH;
     retryable = false;
-    recovery = ErrorRecoveryStrategy.Refresh;
+    recovery = ErrorRecoveryStrategy.REFRESH;
   } else if (status === 404) {
-    type = BffErrorType.NotFound;
+    type = BffErrorType.NOTFOUND;
     retryable = false;
-    recovery = ErrorRecoveryStrategy.None;
+    recovery = ErrorRecoveryStrategy.NONE;
   } else if (status !== undefined && status >= 500) {
-    type = BffErrorType.Server;
+    type = BffErrorType.SERVER;
     retryable = true;
-    recovery = ErrorRecoveryStrategy.Retry;
+    recovery = ErrorRecoveryStrategy.RETRY;
   } else if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('abort')) {
-    type = BffErrorType.Timeout;
+    type = BffErrorType.TIMEOUT;
     retryable = true;
-    recovery = ErrorRecoveryStrategy.Retry;
-  } else if (lower.includes('network') || lower.includes('failed to fetch') || lower.includes('enotfound') || lower.includes('econnrefused')) {
-    type = BffErrorType.Network;
+    recovery = ErrorRecoveryStrategy.RETRY;
+  } else if (
+    lower.includes('network') ||
+    lower.includes('failed to fetch') ||
+    lower.includes('enotfound') ||
+    lower.includes('econnrefused')
+  ) {
+    type = BffErrorType.NETWORK;
     retryable = true;
-    recovery = ErrorRecoveryStrategy.Retry;
-  } else if (lower.includes('offline') || lower.includes('navigator.online') === false && typeof navigator !== 'undefined' && !navigator.onLine) {
-    type = BffErrorType.Offline;
+    recovery = ErrorRecoveryStrategy.RETRY;
+  } else if (
+    lower.includes('offline') ||
+    (lower.includes('navigator.online') === false &&
+      typeof navigator !== 'undefined' &&
+      !navigator.onLine)
+  ) {
+    type = BffErrorType.OFFLINE;
     retryable = false;
-    recovery = ErrorRecoveryStrategy.Offline;
-  } else if (lower.includes('validation') || lower.includes('validate') || lower.includes('invalid')) {
-    type = BffErrorType.Validation;
+    recovery = ErrorRecoveryStrategy.OFFLINE;
+  } else if (
+    lower.includes('validation') ||
+    lower.includes('validate') ||
+    lower.includes('invalid')
+  ) {
+    type = BffErrorType.VALIDATION;
     retryable = false;
-    recovery = ErrorRecoveryStrategy.Clear;
+    recovery = ErrorRecoveryStrategy.CLEAR;
   } else if (lower.includes('cache')) {
-    type = BffErrorType.Cache;
+    type = BffErrorType.CACHE;
     retryable = true;
-    recovery = ErrorRecoveryStrategy.Fallback;
+    recovery = ErrorRecoveryStrategy.FALLBACK;
   } else {
-    type = BffErrorType.Unknown;
+    type = BffErrorType.UNKNOWN;
     retryable = false;
-    recovery = ErrorRecoveryStrategy.None;
+    recovery = ErrorRecoveryStrategy.NONE;
   }
 
   return {
@@ -214,13 +219,13 @@ export function classifyError(error: Error): ClassifiedError {
     recovery,
     recommendedStrategy: recovery,
     fallbackLevel:
-      type === BffErrorType.Offline
+      type === BffErrorType.OFFLINE
         ? FallbackLevel.OFFLINE
-        : type === BffErrorType.Cache
+        : type === BffErrorType.CACHE
           ? FallbackLevel.TERTIARY
-          : type === BffErrorType.Network ||
-              type === BffErrorType.Timeout ||
-              type === BffErrorType.Server
+          : type === BffErrorType.NETWORK ||
+              type === BffErrorType.TIMEOUT ||
+              type === BffErrorType.SERVER
             ? FallbackLevel.SECONDARY
             : FallbackLevel.PRIMARY,
     status,
@@ -263,8 +268,7 @@ function persistReports(reports: ErrorReportRecord[]): void {
 
 /** 上报错误（接受 Error 或已分类的 ClassifiedError） */
 export function reportError(input: Error | ClassifiedError, retryCount = 0, source?: string): void {
-  const classified: ClassifiedError =
-    input instanceof Error ? classifyError(input) : input;
+  const classified: ClassifiedError = input instanceof Error ? classifyError(input) : input;
   const record: ErrorReportRecord = {
     id: makeId(),
     type: classified.type,
@@ -307,7 +311,7 @@ export function clearErrorReports(): void {
     try {
       fn({
         id: makeId(),
-        type: BffErrorType.Unknown,
+        type: BffErrorType.UNKNOWN,
         message: '__clear__',
         timestamp: new Date().toISOString(),
         retryCount: 0,
@@ -320,39 +324,109 @@ export function clearErrorReports(): void {
 
 // ==================== 错误回退 UI ====================
 
-const ERROR_META: Record<BffErrorType, { icon: ReactNode; color: 'error' | 'warning' | 'info'; label: string }> = {
-  [BffErrorType.Network]: { icon: <WifiOff size={18} />, color: 'error', label: i18n.t('bff.type_network', '网络错误') },
-  [BffErrorType.Timeout]: { icon: <Clock size={18} />, color: 'warning', label: i18n.t('bff.type_timeout', '请求超时') },
-  [BffErrorType.Validation]: { icon: <AlertTriangle size={18} />, color: 'warning', label: i18n.t('bff.type_validation', '校验失败') },
-  [BffErrorType.Server]: { icon: <Server size={18} />, color: 'error', label: i18n.t('bff.type_server', '服务端错误') },
-  [BffErrorType.Auth]: { icon: <ShieldAlert size={18} />, color: 'error', label: i18n.t('bff.type_auth', '权限不足') },
-  [BffErrorType.NotFound]: { icon: <Ban size={18} />, color: 'info', label: i18n.t('bff.type_not_found', '资源不存在') },
-  [BffErrorType.Cache]: { icon: <Database size={18} />, color: 'info', label: i18n.t('bff.type_cache', '缓存错误') },
-  [BffErrorType.Offline]: { icon: <WifiOff size={18} />, color: 'warning', label: i18n.t('bff.type_offline', '离线模式') },
-  [BffErrorType.Unknown]: { icon: <AlertTriangle size={18} />, color: 'warning', label: i18n.t('bff.type_unknown', '未知错误') },
+const ERROR_META: Record<
+  BffErrorType,
+  { icon: ReactNode; color: 'error' | 'warning' | 'info'; label: string }
+> = {
+  [BffErrorType.NETWORK]: {
+    icon: <WifiOff size={18} />,
+    color: 'error',
+    label: i18n.t('bff.type_network', '网络错误'),
+  },
+  [BffErrorType.TIMEOUT]: {
+    icon: <Clock size={18} />,
+    color: 'warning',
+    label: i18n.t('bff.type_timeout', '请求超时'),
+  },
+  [BffErrorType.VALIDATION]: {
+    icon: <AlertTriangle size={18} />,
+    color: 'warning',
+    label: i18n.t('bff.type_validation', '校验失败'),
+  },
+  [BffErrorType.SERVER]: {
+    icon: <Server size={18} />,
+    color: 'error',
+    label: i18n.t('bff.type_server', '服务端错误'),
+  },
+  [BffErrorType.AUTH]: {
+    icon: <ShieldAlert size={18} />,
+    color: 'error',
+    label: i18n.t('bff.type_auth', '权限不足'),
+  },
+  [BffErrorType.NOTFOUND]: {
+    icon: <Ban size={18} />,
+    color: 'info',
+    label: i18n.t('bff.type_not_found', '资源不存在'),
+  },
+  [BffErrorType.CACHE]: {
+    icon: <Database size={18} />,
+    color: 'info',
+    label: i18n.t('bff.type_cache', '缓存错误'),
+  },
+  [BffErrorType.OFFLINE]: {
+    icon: <WifiOff size={18} />,
+    color: 'warning',
+    label: i18n.t('bff.type_offline', '离线模式'),
+  },
+  [BffErrorType.UNKNOWN]: {
+    icon: <AlertTriangle size={18} />,
+    color: 'warning',
+    label: i18n.t('bff.type_unknown', '未知错误'),
+  },
 };
 
 /** 默认错误回退组件 */
-export function DefaultBffErrorFallback({ error, classified, reset, showDetails = true }: BffErrorBoundaryFallbackProps) {
-  const meta = ERROR_META[classified.type] ?? ERROR_META[BffErrorType.Unknown];
+export function DefaultBffErrorFallback({
+  error,
+  classified,
+  reset,
+  showDetails = true,
+}: BffErrorBoundaryFallbackProps) {
+  const meta = ERROR_META[classified.type] ?? ERROR_META[BffErrorType.UNKNOWN];
   return (
-    <Paper sx={{ p: 3, m: 2, maxWidth: 640, mx: 'auto' }} role="alert">
-      <Alert severity={meta.color} icon={meta.icon}>
+    <Paper
+      sx={{ p: 3, m: 2, maxWidth: 640, mx: 'auto' }}
+      role='alert'
+    >
+      <Alert
+        severity={meta.color}
+        icon={meta.icon}
+      >
         <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {meta.label}
-          <Chip label={classified.type} size="small" variant="outlined" color={meta.color} />
+          <Chip
+            label={classified.type}
+            size='small'
+            variant='outlined'
+            color={meta.color}
+          />
         </AlertTitle>
-        <Typography variant="body2" sx={{ mb: 1.5 }}>
+        <Typography
+          variant='body2'
+          sx={{ mb: 1.5 }}
+        >
           {classified.message}
         </Typography>
         {showDetails && classified.status !== undefined && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             HTTP {classified.status} · {classified.timestamp}
           </Typography>
         )}
-        <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+        <Stack
+          direction='row'
+          spacing={1}
+          sx={{ mt: 1.5 }}
+        >
           {classified.retryable && (
-            <Button size="small" startIcon={<RefreshCw size={14} />} variant="contained" onClick={reset}>
+            <Button
+              size='small'
+              startIcon={<RefreshCw size={14} />}
+              variant='contained'
+              onClick={reset}
+            >
               {i18n.t('bff.retry', '重试')}
             </Button>
           )}

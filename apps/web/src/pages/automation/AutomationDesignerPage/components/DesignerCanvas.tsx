@@ -50,8 +50,8 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
   selectedNodeId,
   canvasZoom,
   viewport,
-  ZOOM_MIN,
-  ZOOM_MAX,
+  ZOOM_MIN: zoomMin,
+  ZOOM_MAX: zoomMax,
   canvasViewportRef,
   canvasRef,
   onCanvasScroll,
@@ -243,7 +243,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
           <IconButton
             size='small'
             onClick={onZoomIn}
-            disabled={canvasZoom >= ZOOM_MAX}
+            disabled={canvasZoom >= zoomMax}
           >
             <ZoomInIcon size={18} />
           </IconButton>
@@ -252,7 +252,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
           <IconButton
             size='small'
             onClick={onZoomOut}
-            disabled={canvasZoom <= ZOOM_MIN}
+            disabled={canvasZoom <= zoomMin}
           >
             <ZoomOutIcon size={18} />
           </IconButton>

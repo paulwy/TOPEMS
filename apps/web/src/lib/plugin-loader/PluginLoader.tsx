@@ -127,7 +127,7 @@ export class PluginLoader {
       typeof window !== 'undefined' &&
       (
         window as unknown as {
-          System?: unknown;
+          System?: unknown; // eslint-disable-line @typescript-eslint/naming-convention -- SystemJS 全局约定名
         }
       ).System
     ) {
