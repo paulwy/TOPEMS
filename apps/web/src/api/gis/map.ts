@@ -1,14 +1,15 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type {
-  FactoryMap,
   CreateFactoryMapRequest,
-  MapMarker,
   CreateMapMarkerRequest,
-  GisStatistics,
+  FactoryMap,
   GeoJSON,
+  GisStatistics,
   ListQueryParams,
+  MapMarker,
   PaginatedResponse,
+  RawPaginatedResponse,
 } from './types';
 import { adaptResponse } from './utils';
 
@@ -25,11 +26,16 @@ export const mapApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.gis.get<any>(`/factory-maps?${queryParams.toString()}`);
-    if (response.success && response.data) {
-      response.data = adaptResponse<FactoryMap>(response.data, 'factory_maps');
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
+      `/factory-maps?${queryParams.toString()}`
+    );
+    if (rawResponse.success && rawResponse.data) {
+      return {
+        ...rawResponse,
+        data: adaptResponse<FactoryMap>(rawResponse.data, 'factory_maps'),
+      } as unknown as ApiResponse<PaginatedResponse<FactoryMap>>;
     }
-    return response as ApiResponse<PaginatedResponse<FactoryMap>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<FactoryMap>>;
   },
 
   getFactoryMap: async (id: string): Promise<ApiResponse<FactoryMap>> => {
@@ -59,11 +65,16 @@ export const mapApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.gis.get<any>(`/map-markers?${queryParams.toString()}`);
-    if (response.success && response.data) {
-      response.data = adaptResponse<MapMarker>(response.data, 'map_markers');
+    const rawResponse = await apiClient.gis.get<RawPaginatedResponse>(
+      `/map-markers?${queryParams.toString()}`
+    );
+    if (rawResponse.success && rawResponse.data) {
+      return {
+        ...rawResponse,
+        data: adaptResponse<MapMarker>(rawResponse.data, 'map_markers'),
+      } as unknown as ApiResponse<PaginatedResponse<MapMarker>>;
     }
-    return response as ApiResponse<PaginatedResponse<MapMarker>>;
+    return rawResponse as unknown as ApiResponse<PaginatedResponse<MapMarker>>;
   },
 
   createMapMarker: async (data: CreateMapMarkerRequest): Promise<ApiResponse<MapMarker>> => {
@@ -81,10 +92,10 @@ export const mapApi = {
     return apiClient.gis.delete<void>(`/map-markers/${id}`);
   },
 
-  search: async (query: string, type?: string): Promise<ApiResponse<any>> => {
+  search: async (query: string, type?: string): Promise<ApiResponse<unknown>> => {
     const params = new URLSearchParams({ q: query });
     if (type) params.append('type', type);
-    return apiClient.gis.get<any>(`/search?${params.toString()}`);
+    return apiClient.gis.get<unknown>(`/search?${params.toString()}`);
   },
 
   exportGeoJSON: async (): Promise<ApiResponse<GeoJSON>> => {
@@ -95,11 +106,11 @@ export const mapApi = {
     return apiClient.gis.get<string>('/health');
   },
 
-  importData: async (type: string, file: File): Promise<ApiResponse<any>> => {
+  importData: async (type: string, file: File): Promise<ApiResponse<unknown>> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
-    return apiClient.gis.post<any>('/import', formData, {
+    return apiClient.gis.post<unknown>('/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

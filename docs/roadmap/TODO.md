@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V501 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V502 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,21 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V502
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：no-explicit-any 治理（第三批——动态机制核心文件清零）
+
+### V502 完成内容
+
+1. **on-demand-loader 15 处清零**：instance?: any→unknown；全局断言内联化——window.__userRoles/performance.memory/navigator.connection 用  内联类型、navigator.hardwareConcurrency/requestIdleCallback 直接用 lib.dom（本有类型）、IntersectionObserver 用 globalThis；下游 4 个窄化修复（?? []/! 断言/includes 参数 as 联合）
+2. **function-as-module 13 处清零**：TInput/TOutput 泛型默认 any→unknown（9 处）+ callArgs any→unknown + null as any→null as unknown as TOutput + register handler 断言具体泛型
+3. **EventBus 5 处**：泛型默认 T=any disable 带理由（事件总线多类型负载为设计惯例，unknown 化会破坏 Set<EventHandler> 逆变）
+4. **gis/map 6 处**：get<any>/post<any> → 具体泛型（RawPaginatedResponse）+ adaptResponse 重建返回对象 +  双重断言
+5. **验证**：no-explicit-any 182→143；tsc 0 errors；scan 0 行
+6. **坑（已记）**：① 泛型默认 any 的 unknown 化会触发函数参数逆变错误（register 回调）——断言具体泛型或 disable；② get<any> 改为具体类型后 adaptResponse 赋值破坏——改为重建返回对象；③  断言类型不重叠需  双层
+7. **V503 待办**：剩余 143 处（BarChart 5 tooltip params、AIAnomalyAssistant 4、SmartFormRenderer 4 value:any、useRateLimitConfig 4、batchOperation 4、lazyImport 4、AmapLayer 3、模板 9、pages 12+ 等）
 
 ### V501
 

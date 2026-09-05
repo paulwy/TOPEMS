@@ -26,7 +26,7 @@ export type FunctionStatus = 'active' | 'deprecated' | 'disabled' | 'error';
 
 export type ExecStatus = 'success' | 'cached' | 'error' | 'timeout';
 
-export interface FunctionDefinition<TInput = any, TOutput = any> {
+export interface FunctionDefinition<TInput = unknown, TOutput = unknown> {
   id: string;
   name: string;
   version: string;
@@ -42,7 +42,7 @@ export interface FunctionDefinition<TInput = any, TOutput = any> {
   metadata: Record<string, unknown>;
 }
 
-export interface InvokeContext<TInput = any> {
+export interface InvokeContext<TInput = unknown> {
   params: TInput;
   headers: Record<string, string>;
   metadata: Record<string, unknown>;
@@ -62,7 +62,7 @@ export interface InvokeOptions {
   tenantId?: string;
 }
 
-export interface InvokeResult<TOutput = any> {
+export interface InvokeResult<TOutput = unknown> {
   data: TOutput;
   status: ExecStatus;
   execTime: number;
@@ -82,7 +82,7 @@ export interface ExecutionTrace {
   execTime: number;
   status: ExecStatus;
   depth: number;
-  callArgs: any;
+  callArgs: unknown;
   error?: string;
   children: ExecutionTrace[];
 }
@@ -112,7 +112,7 @@ export interface FaasConfig {
   enableRateLimiting: boolean;
 }
 
-export type FunctionMiddleware<TInput = any, TOutput = any> = (
+export type FunctionMiddleware<TInput = unknown, TOutput = unknown> = (
   context: InvokeContext<TInput>,
   next: () => Promise<InvokeResult<TOutput>>
 ) => Promise<InvokeResult<TOutput>>;
@@ -156,7 +156,7 @@ class FunctionAsModuleImpl {
 
   // -------------------- 函数注册 --------------------
 
-  register<TInput = any, TOutput = any>(
+  register<TInput = unknown, TOutput = unknown>(
     id: string,
     handler: (context: InvokeContext<TInput>) => Promise<TOutput> | TOutput,
     options?: Partial<
@@ -179,7 +179,7 @@ class FunctionAsModuleImpl {
       name: options?.name || id,
       version: options?.version || '1.0.0',
       description: options?.description || '',
-      handler: handler as FunctionDefinition['handler'],
+      handler: handler as FunctionDefinition<TInput, TOutput>['handler'],
       dependencies: options?.dependencies || [],
       status: options?.status || 'active',
       ttl: options?.ttl ?? this.config.defaultTtl,
@@ -217,7 +217,10 @@ class FunctionAsModuleImpl {
 
   // -------------------- 函数调用 --------------------
 
-  async invoke<TOutput = any>(id: string, options?: InvokeOptions): Promise<InvokeResult<TOutput>> {
+  async invoke<TOutput = unknown>(
+    id: string,
+    options?: InvokeOptions
+  ): Promise<InvokeResult<TOutput>> {
     const def = this.functions.get(id);
     if (!def) {
       throw new Error(
@@ -301,7 +304,7 @@ class FunctionAsModuleImpl {
           ? 'timeout'
           : 'error';
       const result: InvokeResult<TOutput> = {
-        data: null as any,
+        data: null as unknown as TOutput,
         status,
         execTime,
         fromCache: false,
@@ -368,7 +371,7 @@ class FunctionAsModuleImpl {
 
   // -------------------- 中间件 --------------------
 
-  use<TInput = any, TOutput = any>(middleware: FunctionMiddleware<TInput, TOutput>): void {
+  use<TInput = unknown, TOutput = unknown>(middleware: FunctionMiddleware<TInput, TOutput>): void {
     this.middlewareChain.push(middleware as FunctionMiddleware);
   }
 

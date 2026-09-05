@@ -51,7 +51,7 @@ export interface OnDemandModule {
   preloadStrategy: PreloadStrategy;
   conditions: LoadCondition;
   status: LoadStatus;
-  instance?: any;
+  instance?: unknown;
   loadTime?: number;
   loadError?: Error;
   retryCount: number;
@@ -75,7 +75,7 @@ export interface LoadRequest {
 export interface LoadResult {
   id: string;
   status: LoadStatus;
-  instance?: any;
+  instance?: unknown;
   loadTime: number;
   fromPreload: boolean;
   error?: Error;
@@ -613,9 +613,10 @@ class OnDemandLoaderImpl {
       conditions.roles &&
       conditions.roles.length > 0 &&
       typeof window !== 'undefined' &&
-      (window as any).__userRoles
+      (window as unknown as { __userRoles?: string[] }).__userRoles
     ) {
-      const userRoles: string[] = (window as any).__userRoles;
+      const userRoles: string[] =
+        (window as unknown as { __userRoles?: string[] }).__userRoles ?? [];
       if (!conditions.roles.some((r) => userRoles.includes(r))) {
         return false;
       }
@@ -624,9 +625,9 @@ class OnDemandLoaderImpl {
     if (
       conditions.minDeviceMemory &&
       typeof performance !== 'undefined' &&
-      (performance as any).memory
+      (performance as unknown as { memory?: { jsHeapSizeLimit: number } }).memory
     ) {
-      const mem = (performance as any).memory;
+      const mem = (performance as unknown as { memory?: { jsHeapSizeLimit: number } }).memory!;
       if (mem.jsHeapSizeLimit < conditions.minDeviceMemory * 1024 * 1024) {
         return false;
       }
@@ -635,8 +636,8 @@ class OnDemandLoaderImpl {
     if (
       conditions.minCores &&
       typeof navigator !== 'undefined' &&
-      (navigator as any).hardwareConcurrency &&
-      (navigator as any).hardwareConcurrency < conditions.minCores
+      navigator.hardwareConcurrency &&
+      navigator.hardwareConcurrency < conditions.minCores
     ) {
       return false;
     }
@@ -644,10 +645,18 @@ class OnDemandLoaderImpl {
     if (
       conditions.networkTypes &&
       typeof navigator !== 'undefined' &&
-      (navigator as any).connection
+      (navigator as unknown as { connection?: { effectiveType?: string; downlink?: number } })
+        .connection
     ) {
-      const conn = (navigator as any).connection;
-      if (conn.effectiveType && !conditions.networkTypes.includes(conn.effectiveType)) {
+      const conn = (
+        navigator as unknown as { connection?: { effectiveType?: string; downlink?: number } }
+      ).connection!;
+      if (
+        conn.effectiveType &&
+        !conditions.networkTypes.includes(
+          conn.effectiveType as (typeof conditions.networkTypes)[number]
+        )
+      ) {
         return false;
       }
     }
@@ -688,18 +697,15 @@ class OnDemandLoaderImpl {
       this.preload(id, 'medium').catch(() => {});
     };
 
-    if (typeof (window as any).requestIdleCallback === 'function') {
-      (window as any).requestIdleCallback(preloadFn, { timeout: this.config.idlePreloadDelay });
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(preloadFn, { timeout: this.config.idlePreloadDelay });
     } else {
       setTimeout(preloadFn, this.config.idlePreloadDelay);
     }
   }
 
   private setupVisiblePreload(id: string): void {
-    if (
-      typeof document === 'undefined' ||
-      typeof (document as any).IntersectionObserver !== 'function'
-    )
+    if (typeof document === 'undefined' || typeof globalThis.IntersectionObserver !== 'function')
       return;
 
     const observer = new IntersectionObserver((entries) => {
@@ -754,8 +760,8 @@ class OnDemandLoaderImpl {
       }
     };
 
-    if (typeof (window as any).requestIdleCallback === 'function') {
-      (window as any).requestIdleCallback(checkAndPreload);
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(checkAndPreload);
     } else {
       setTimeout(checkAndPreload, this.config.idlePreloadDelay);
     }
