@@ -1,81 +1,93 @@
 import React from 'react';
-import {
-  Box,
-  Chip,
-  Paper,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import type { Theme } from '@mui/material/styles';
+import { Box, Chip, Paper, Typography, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { Grid } from '@/components/common';
-import {
-  Building2,
-  Wallet,
-  Users,
-  Warehouse,
-  Briefcase,
-  FileText,
-  LayoutGrid,
-} from 'lucide-react';
+import { Building2, Wallet, Users, Warehouse, Briefcase, FileText, LayoutGrid } from 'lucide-react';
 
 export type BusinessModuleType = 'erp' | 'finance' | 'crm' | 'wms' | 'hr' | 'oa' | 'general';
 
+type ModuleColorKey = 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' | 'grey';
+
 interface BusinessModuleItem {
   id: BusinessModuleType;
-  name: string;
-  description: string;
+  nameKey: string;
+  descKey: string;
   icon: React.ReactNode;
-  color: string;
+  colorKey: ModuleColorKey;
 }
+
+const resolveModuleColor = (colorKey: ModuleColorKey, theme: Theme): string => {
+  const p = theme.palette;
+  switch (colorKey) {
+    case 'primary':
+      return p.primary.main;
+    case 'secondary':
+      return p.secondary.main;
+    case 'success':
+      return p.success.main;
+    case 'error':
+      return p.error.main;
+    case 'warning':
+      return p.warning.main;
+    case 'info':
+      return p.info.main;
+    case 'grey':
+      return p.grey[700];
+    default:
+      return p.primary.main;
+  }
+};
 
 const BUSINESS_MODULES: BusinessModuleItem[] = [
   {
     id: 'erp',
-    name: 'ERP',
-    description: '企业资源规划',
+    nameKey: 'ai.business_module_selector.erp.name',
+    descKey: 'ai.business_module_selector.erp.description',
     icon: <Building2 size={24} />,
-    color: '#1976d2',
+    colorKey: 'primary',
   },
   {
     id: 'finance',
-    name: '财务',
-    description: '财务管理',
+    nameKey: 'ai.business_module_selector.finance.name',
+    descKey: 'ai.business_module_selector.finance.description',
     icon: <Wallet size={24} />,
-    color: '#388e3c',
+    colorKey: 'success',
   },
   {
     id: 'crm',
-    name: 'CRM',
-    description: '客户关系管理',
+    nameKey: 'ai.business_module_selector.crm.name',
+    descKey: 'ai.business_module_selector.crm.description',
     icon: <Users size={24} />,
-    color: '#d32f2f',
+    colorKey: 'error',
   },
   {
     id: 'wms',
-    name: 'WMS',
-    description: '仓库管理',
+    nameKey: 'ai.business_module_selector.wms.name',
+    descKey: 'ai.business_module_selector.wms.description',
     icon: <Warehouse size={24} />,
-    color: '#f57c00',
+    colorKey: 'warning',
   },
   {
     id: 'hr',
-    name: 'HR',
-    description: '人力资源',
+    nameKey: 'ai.business_module_selector.hr.name',
+    descKey: 'ai.business_module_selector.hr.description',
     icon: <Briefcase size={24} />,
-    color: '#7b1fa2',
+    colorKey: 'secondary',
   },
   {
     id: 'oa',
-    name: 'OA',
-    description: '办公自动化',
+    nameKey: 'ai.business_module_selector.oa.name',
+    descKey: 'ai.business_module_selector.oa.description',
     icon: <FileText size={24} />,
-    color: '#0097a7',
+    colorKey: 'info',
   },
   {
     id: 'general',
-    name: '通用',
-    description: '通用助手',
+    nameKey: 'ai.business_module_selector.general.name',
+    descKey: 'ai.business_module_selector.general.description',
     icon: <LayoutGrid size={24} />,
-    color: '#616161',
+    colorKey: 'grey', // eslint-disable-line topems-design/no-hardcoded-colors -- palette 键名非颜色字面量
   },
 ];
 
@@ -91,6 +103,7 @@ export const BusinessModuleSelector: React.FC<BusinessModuleSelectorProps> = ({
   compact = false,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   if (compact) {
     return (
@@ -98,8 +111,8 @@ export const BusinessModuleSelector: React.FC<BusinessModuleSelectorProps> = ({
         {BUSINESS_MODULES.map((mod) => (
           <Chip
             key={mod.id}
-            label={mod.name}
-            size="small"
+            label={t(mod.nameKey)}
+            size='small'
             color={selectedModule === mod.id ? 'primary' : 'default'}
             variant={selectedModule === mod.id ? 'filled' : 'outlined'}
             onClick={() => onSelect?.(mod.id)}
@@ -112,12 +125,24 @@ export const BusinessModuleSelector: React.FC<BusinessModuleSelectorProps> = ({
 
   return (
     <Box>
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-        选择业务模块
+      <Typography
+        variant='subtitle2'
+        color='text.secondary'
+        sx={{ mb: 1.5 }}
+      >
+        {t('ai.business_module_selector.title')}
       </Typography>
-      <Grid container spacing={1.5}>
+      <Grid
+        container
+        spacing={1.5}
+      >
         {BUSINESS_MODULES.map((mod) => (
-          <Grid xs={6} sm={4} md={3} key={mod.id}>
+          <Grid
+            xs={6}
+            sm={4}
+            md={3}
+            key={mod.id}
+          >
             <Paper
               elevation={selectedModule === mod.id ? 3 : 1}
               onClick={() => onSelect?.(mod.id)}
@@ -125,24 +150,36 @@ export const BusinessModuleSelector: React.FC<BusinessModuleSelectorProps> = ({
                 p: 1.5,
                 cursor: 'pointer',
                 border: 2,
-                borderColor: selectedModule === mod.id ? mod.color : 'transparent',
-                bgcolor: selectedModule === mod.id ? `${mod.color}08` : 'background.paper',
+                borderColor:
+                  selectedModule === mod.id
+                    ? resolveModuleColor(mod.colorKey, theme)
+                    : 'transparent',
+                bgcolor:
+                  selectedModule === mod.id
+                    ? `${resolveModuleColor(mod.colorKey, theme)}08`
+                    : 'background.paper',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  borderColor: mod.color,
-                  bgcolor: `${mod.color}05`,
+                  borderColor: resolveModuleColor(mod.colorKey, theme),
+                  bgcolor: `${resolveModuleColor(mod.colorKey, theme)}05`,
                   transform: 'translateY(-2px)',
                 },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Box sx={{ color: mod.color }}>{mod.icon}</Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {mod.name}
+                <Box sx={{ color: resolveModuleColor(mod.colorKey, theme) }}>{mod.icon}</Box>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
+                >
+                  {t(mod.nameKey)}
                 </Typography>
               </Box>
-              <Typography variant="caption" color="text.secondary">
-                {mod.description}
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {t(mod.descKey)}
               </Typography>
             </Paper>
           </Grid>
@@ -152,7 +189,9 @@ export const BusinessModuleSelector: React.FC<BusinessModuleSelectorProps> = ({
   );
 };
 
-export const getBusinessModuleInfo = (moduleId: BusinessModuleType): BusinessModuleItem | undefined => {
+export const getBusinessModuleInfo = (
+  moduleId: BusinessModuleType
+): BusinessModuleItem | undefined => {
   return BUSINESS_MODULES.find((m) => m.id === moduleId);
 };
 

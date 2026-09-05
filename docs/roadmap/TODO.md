@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V498 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V499 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21751,6 +21751,23 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V499
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：no-hardcoded-colors 全类别清零（GD/BM/DI 63 行中文 i18n + 颜色 token 化收尾）
+
+### V499 完成内容
+
+1. **63 行硬编码中文 i18n 化**（scan gate 拦截项）：
+   - GovernanceDashboard 21 处（`ai.governance_dashboard.*` 21 key，含预算使用双插值）
+   - BusinessModuleSelector 10 处（`ai.business_module_selector.*` 15 key——模块数据重构 name/description → nameKey/descKey，接口与 4 处渲染同步，模块 7×name+7×desc+title）
+   - DocumentIntelligence 32 处（`ai.document_intelligence.*` 29 key，含文件类型数组、页数/字数插值、4 个 Alert 文案、4 个 `|| '未知'`）
+2. **颜色 token 化收尾**（V498 工作区留存的修复随本版提交）：GD 17 处 sx 回调、BM colorKey 重构 + resolveModuleColor、DI 2 处
+3. **prefer-template 5 处**：GD 的 `theme.palette.X + '20'/'50'` alpha 拼接 → 模板字符串 `` `${theme.palette.X}20` ``（prefer-template 全类别 0）
+4. **坑（已记）**：① python 脚本 assert 中途失败则整体不写盘（write 在最后）——BM 重构曾因此丢失需重跑；② 多行脚本重写时易漏条目（DI alert_no_meta 漏替换）；③ prettier 后行号漂移，定位用 grep 不用行号；④ `{t(...)}` 模板与 `str.format` 的 `{}` 冲突——用 `tpl.replace('{indent}', indent)` 不用 format；⑤ `{['PDF'...'文本'...]}` 数组内中文直接 `t()` 内联
+5. **验证**：no-hardcoded-colors **51→0 全类别清零**；prefer-template 0；exhaustive-deps/CTI/no-console 0 保持；no-unused-vars 350（基线无新增）；tsc 0 errors；scan 63→0 行
+6. **后续**：V500 起转 no-unused-vars 350（人工）或 no-explicit-any 311（机械优先）
 
 ### V498
 
