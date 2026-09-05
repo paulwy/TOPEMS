@@ -11,7 +11,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
 const ct = designTokens.colors;
@@ -91,62 +91,6 @@ const ReturnDetailPage: React.FC = () => {
   const inventoryStatus =
     inventoryQuery.data?.success && inventoryQuery.data.data ? inventoryQuery.data.data : null;
   const loading = returnQuery.isLoading;
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.CRM.RETURNS,
-      exact: false,
-      refetchType: 'active',
-    });
-    if (id) {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.CRM.RETURN(id),
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.CRM.RETURN_ITEMS(id),
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.CRM.RETURN_FINANCE_STATUS(id),
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.CRM.RETURN_INVENTORY_STATUS(id),
-        exact: false,
-        refetchType: 'active',
-      });
-    }
-  };
-
-  const actionMutation = useMutation({
-    mutationFn: async (fn: () => Promise<unknown>) => {
-      await fn();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.CRM.CUSTOMERS,
-        exact: false,
-        refetchType: 'active',
-      });
-      addNotification({
-        type: 'success',
-        title: t('crm.common.operation_success'),
-        message: t('crm.returnDetail.msg_status_updated'),
-      });
-      invalidate();
-    },
-    onError: () => {
-      addNotification({
-        type: 'error',
-        title: t('crm.common.operation_fail'),
-        message: t('crm.returnDetail.msg_action_fail'),
-      });
-    },
-  });
 
   const deleteMutation = useMutation({
     mutationFn: (returnId: string) => crmApi.returns.delete(returnId),

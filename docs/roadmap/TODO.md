@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V486 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V487 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V485 unnecessary 第五批（-5）**、**V486 第六批（-4）**（exhaustive-deps 164→154；V486 精确定位 V483 边界文件：useEdgeCompute/useIsr/ReturnDetailPage 可安全删，FinanceVoucherPage/TenantDetailPage 删除引发 logical 复现确认）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V486 unnecessary 第六批（-4）**（exhaustive-deps 164→154）、**V487 ReturnDetailPage 连带债务清理**（删除暴露的 queryClient import / actionMutation / invalidate 未使用代码）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21752,9 +21752,25 @@ git add $STAGED
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
 
-### V486
+### V487
 
 > 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：ReturnDetailPage 连带债务清理（V486 删除暴露的未使用代码）
+
+### V487 完成内容
+
+1. **ReturnDetailPage 未使用代码清理**（V486 删除 actionMutation 依赖后暴露的连带债务）：
+   - import 去 `queryClient`（14 行，文件实际用 `useQueryClient()` 的局部 queryClient，23 行）
+   - 删除整个 **actionMutation** useMutation 块（125 行起，从未使用——之前仅被依赖数组引用遮蔽）
+   - 删除 **invalidate** 函数（95 行起，actionMutation 块内唯一调用方）
+   - 遗留 3 条预存 exhaustive（87 conditional / 222 / 293 missing），与删除无关
+2. **验证**：文件 0 unused-vars / 0 error / 0 TS error；全量回归见提交后（tsc 0 errors）
+3. **教训**：删除依赖数组项后必须全量查 unused-vars（数组引用会遮蔽"从未使用"的变量/函数——actionMutation 与 invalidate 均属此类）
+
+
+### V486
+
+> 状态：**已完成**（提交 `3a17a4d84`）｜日期：2026-09-05
 > 主题：轨A 第六批——unnecessary 边界文件精确定位（-4）+ AiKnowledgeBasePage unused t 清理
 
 ### V486 完成内容
