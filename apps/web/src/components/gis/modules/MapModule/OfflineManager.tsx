@@ -115,6 +115,69 @@ export function useOfflineManager(options: UseOfflineManagerOptions): UseOffline
   }, []);
 
   // 监听网络状态
+  const syncPendingItems = useCallback(async (): Promise<void> => {
+    if (!isOnline || isSyncing) return;
+
+    setIsSyncing(true);
+
+    try {
+      const db = await initDB();
+
+      const tx = db.transaction(PENDING_STORE, 'readonly');
+      const request = tx.objectStore(PENDING_STORE).getAll();
+
+      const items = await new Promise<PendingItem[]>((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+
+      for (const item of items) {
+        try {
+          const endpoint =
+            item.type === 'evidence' ? '/gis/api/gis/evidence' : '/gis/api/gis/tracks/positions';
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(item.data),
+          });
+
+          if (response.ok) {
+            // 删除已同步的项
+            const deleteTx = db.transaction(PENDING_STORE, 'readwrite');
+            await deleteTx.objectStore(PENDING_STORE).delete(item.id);
+
+            setSyncStatus((prev) => ({
+              ...prev,
+              pendingUploads: Math.max(0, prev.pendingUploads - 1),
+              lastSyncTime: new Date().toISOString(),
+            }));
+          } else if (response.status >= 500) {
+            // 服务器错误，稍后重试
+            throw new Error(`Server error: ${response.status}`);
+          }
+        } catch {
+          // 更新重试计数
+          if (item.retryCount < 3) {
+            const updateTx = db.transaction(PENDING_STORE, 'readwrite');
+            await updateTx.objectStore(PENDING_STORE).put({
+              ...item,
+              retryCount: item.retryCount + 1,
+            });
+          }
+        }
+      }
+
+      onSyncComplete?.();
+    } catch (error: unknown) {
+      onSyncError?.(error as Error);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isOnline, isSyncing, initDB, onSyncComplete, onSyncError]);
+
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -131,7 +194,7 @@ export function useOfflineManager(options: UseOfflineManagerOptions): UseOffline
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [syncPendingItems]);
 
   // 计算瓦片数量
   const getTileCount = useCallback(
@@ -323,72 +386,10 @@ export function useOfflineManager(options: UseOfflineManagerOptions): UseOffline
       }
     },
 
-    [initDB, isOnline]
+    [initDB, isOnline, syncPendingItems]
   );
 
   // 同步待处理项
-  const syncPendingItems = useCallback(async (): Promise<void> => {
-    if (!isOnline || isSyncing) return;
-
-    setIsSyncing(true);
-
-    try {
-      const db = await initDB();
-
-      const tx = db.transaction(PENDING_STORE, 'readonly');
-      const request = tx.objectStore(PENDING_STORE).getAll();
-
-      const items = await new Promise<PendingItem[]>((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-
-      for (const item of items) {
-        try {
-          const endpoint =
-            item.type === 'evidence' ? '/gis/api/gis/evidence' : '/gis/api/gis/tracks/positions';
-
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(item.data),
-          });
-
-          if (response.ok) {
-            // 删除已同步的项
-            const deleteTx = db.transaction(PENDING_STORE, 'readwrite');
-            await deleteTx.objectStore(PENDING_STORE).delete(item.id);
-
-            setSyncStatus((prev) => ({
-              ...prev,
-              pendingUploads: Math.max(0, prev.pendingUploads - 1),
-              lastSyncTime: new Date().toISOString(),
-            }));
-          } else if (response.status >= 500) {
-            // 服务器错误，稍后重试
-            throw new Error(`Server error: ${response.status}`);
-          }
-        } catch {
-          // 更新重试计数
-          if (item.retryCount < 3) {
-            const updateTx = db.transaction(PENDING_STORE, 'readwrite');
-            await updateTx.objectStore(PENDING_STORE).put({
-              ...item,
-              retryCount: item.retryCount + 1,
-            });
-          }
-        }
-      }
-
-      onSyncComplete?.();
-    } catch (error: unknown) {
-      onSyncError?.(error as Error);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [isOnline, isSyncing, initDB, onSyncComplete, onSyncError]);
 
   // 获取存储信息
   const getStorageInfo = useCallback(async (): Promise<{

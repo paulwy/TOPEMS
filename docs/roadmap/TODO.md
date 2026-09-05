@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V491 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V492 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V491 missing 批量补入（-31）**（exhaustive-deps 109→78，missing 100→69；25 文件补入稳定引用依赖，回滚 unstable/TDZ 风险批）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V492 TDZ 清零（-9）**（exhaustive-deps 78→69，missing 69→60；5 文件上移 useCallback 定义，TDZ 9 处全清）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,24 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V492
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨D 二批——TDZ 5 文件 9 处清零（上移 useCallback 定义）
+
+### V492 完成内容
+
+1. **missing 69→60（-9，TDZ 组收官）**：5 文件把晚声明的 useCallback 定义**上移到依赖它的首个 hook 之前**：
+   - AudioCapture/VideoCapture：stopRecording → 移到 startRecording 之前（锚点＝**最早调用点所在 hook**，非第一个 useEffect——首版误插到 useEffect 前仍 TDZ，tsc 暴露后修正）
+   - OfflineManager：syncPendingItems → 移到网络监听 useEffect 前（initDB 保持原位 83 行在前；initDB 依赖数组被误替换为 [syncPendingItems] 已还原 `[]`）
+   - NotificationPanel：fetchNotifications/fetchUnreadCount → 移到初始加载 useEffect 前
+   - useAuth：logout → 移到首个引用 useEffect 前（tauriAuth 为模块级 import，移动安全）
+2. **依赖补入**：AudioCapture/VideoCapture `[maxDuration]`/`[isPaused, maxDuration]` +stopRecording；OfflineManager `[]` +syncPendingItems、addPendingItem `[initDB, isOnline]` +syncPendingItems；NotificationPanel `[]` +fetchNotifications/fetchUnreadCount；useAuth `[]` +logout、`[refreshToken]` +logout
+3. **块提取三版迭代（已记）**：① 正则 `}, [...]);` 形态匹配会**误截断嵌套块**（stopRecording/logout 块内有内嵌 IIFE/回调）→ 改**括号深度法**（从 useCallback( 起算到深度 0 的 `);`）；② 插入锚点误用"第一个 useEffect"→ 应用**最早调用点**向上回溯 hook 起点；③ replace 依赖数组要**带上下文锚点**（`}, []);` 首个命中是 initDB 而非目标 useEffect）
+4. **验证**：全量 exhaustive-deps 69（missing 60 / unstable 0 / unnecessary 0 / logical 0）；tsc 0 errors
+5. **剩余**：missing 60（unstable 11 文件 14 处 + plain-fn 44 组 + useMemo 型 state 等）
+
 
 ### V491
 

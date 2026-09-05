@@ -121,6 +121,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const tokenExpiryRef = useRef(tokenExpiry);
   const lastActivityRef = useRef(lastActivity);
 
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (err) {
+      authLogger.warn('Logout API call failed, continuing with local cleanup', err);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('roles');
+      localStorage.removeItem('permissions');
+      localStorage.removeItem('token_expiry');
+
+      // Clear token from Tauri backend storage (desktop app)
+      tauriAuth.clearToken();
+      tauriAuth.clearUserInfo();
+      tauriAuth.clearTokenExpiry();
+      tauriAuth.broadcastTokenChange(null);
+
+      setTokenExpiry(null);
+
+      setState({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+        roles: [],
+        permissions: [],
+      });
+    }
+  }, []);
+
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -240,7 +272,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return false;
     }
     return false;
-  }, []);
+  }, [logout]);
 
   useEffect(() => {
     let refreshInterval: NodeJS.Timeout;
@@ -368,7 +400,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clearInterval(refreshInterval);
       }
     };
-  }, [refreshToken]);
+  }, [refreshToken, logout]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
@@ -423,38 +455,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error: unknown) {
       authLogger.error('Login error:', error);
       throw error;
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    try {
-      await authApi.logout();
-    } catch (err) {
-      authLogger.warn('Logout API call failed, continuing with local cleanup', err);
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('roles');
-      localStorage.removeItem('permissions');
-      localStorage.removeItem('token_expiry');
-
-      // Clear token from Tauri backend storage (desktop app)
-      tauriAuth.clearToken();
-      tauriAuth.clearUserInfo();
-      tauriAuth.clearTokenExpiry();
-      tauriAuth.broadcastTokenChange(null);
-
-      setTokenExpiry(null);
-
-      setState({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-        roles: [],
-        permissions: [],
-      });
     }
   }, []);
 

@@ -39,6 +39,16 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
   };
 
   // Start recording
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setIsPaused(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+  }, [isRecording]);
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -83,7 +93,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
       setError(i18n.t('gis.audio_capture.k0'));
       logger.error('Audio capture error:', err);
     }
-  }, [maxDuration]);
+  }, [maxDuration, stopRecording]);
 
   // Pause/Resume recording
   const togglePause = useCallback(() => {
@@ -107,19 +117,9 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
       }
     }
     setIsPaused(!isPaused);
-  }, [isPaused, maxDuration]);
+  }, [isPaused, maxDuration, stopRecording]);
 
   // Stop recording
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsPaused(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    }
-  }, [isRecording]);
 
   // Save recording
   const saveRecording = useCallback(() => {

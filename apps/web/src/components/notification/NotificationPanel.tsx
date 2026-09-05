@@ -36,6 +36,34 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
   } = useNotificationWebSocket(userId, !!userId);
 
   // 合并 WebSocket 实时通知到本地状态
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getNotifications(1, 50);
+      if (response.success && response.data) {
+        setNotifications(response.data.notifications);
+        setTotalUnread(response.data.unread_count);
+        onUnreadCountChange(response.data.unread_count);
+      }
+    } catch (error: unknown) {
+      logger.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [onUnreadCountChange]);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await getUnreadCount();
+      if (response.success && response.data !== undefined) {
+        setTotalUnread(response.data);
+        onUnreadCountChange(response.data);
+      }
+    } catch (error: unknown) {
+      logger.error('Failed to fetch unread count:', error);
+    }
+  }, [onUnreadCountChange]);
+
   useEffect(() => {
     if (wsNotifications.length > 0) {
       const mapped = wsNotifications.map(
@@ -73,35 +101,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
-  }, []);
-
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getNotifications(1, 50);
-      if (response.success && response.data) {
-        setNotifications(response.data.notifications);
-        setTotalUnread(response.data.unread_count);
-        onUnreadCountChange(response.data.unread_count);
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to fetch notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [onUnreadCountChange]);
-
-  const fetchUnreadCount = useCallback(async () => {
-    try {
-      const response = await getUnreadCount();
-      if (response.success && response.data !== undefined) {
-        setTotalUnread(response.data);
-        onUnreadCountChange(response.data);
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to fetch unread count:', error);
-    }
-  }, [onUnreadCountChange]);
+  }, [fetchNotifications, fetchUnreadCount]);
 
   const handleMarkAllAsRead = async () => {
     try {

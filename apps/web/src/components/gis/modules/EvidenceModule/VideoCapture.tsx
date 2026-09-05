@@ -69,6 +69,16 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
   }, [facingMode]);
 
   // Start recording
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setIsPaused(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+  }, [isRecording]);
   const startRecording = useCallback(() => {
     if (!streamRef.current) return;
 
@@ -112,7 +122,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       setError(i18n.t('gis.video_capture.k1'));
       logger.error('Recording error:', err);
     }
-  }, [maxDuration]);
+  }, [maxDuration, stopRecording]);
 
   // Pause/Resume recording
   const togglePause = useCallback(() => {
@@ -136,19 +146,9 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       }
     }
     setIsPaused(!isPaused);
-  }, [isPaused, maxDuration]);
+  }, [isPaused, maxDuration, stopRecording]);
 
   // Stop recording
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsPaused(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    }
-  }, [isRecording]);
 
   // Switch camera
   const switchCamera = useCallback(() => {
