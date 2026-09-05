@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V506 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V507 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -21752,7 +21752,27 @@ git add $STAGED
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
 
+### V507
+
+> 状态：**已完成**（提交 `6fd7d2566`）｜日期：2026-09-06
+> 主题：check-file/filename-naming-convention 清零（50→0）
+
+### V507 完成内容
+
+**filename-naming-convention 50→0**（158 文件 +677/-13251）：
+
+1. **文件重命名 48 个**：api kebab-case 4（business-copilot→businessCopilot 等）、`_mock→mockData` 3（crm/qms/wms，避免与 mock.ts 冲突）、`EventBus/PluginManager→eventBus/pluginManager`、pages/**/hooks `useXxx→UseXxx` 9（**仅文件名，导出函数名不变**，hooks 惯例不破坏）、services 4→PascalCase（OfflineStorage 等）、utils kebab→camel 26。
+2. **删除 kebab 重复副本 28 个**：api/response-normalize.ts（与 responseNormalize.ts **逐字节相同**，V79 拦截器孤儿）、templates/list/hooks.tsx（仅剩注释的空文件）、utils kebab 26 个——**关键发现：utils 下 kebab/camel 是重复对**（camel 为 V63.5 export 修复正版，kebab 是历史旧副本；diff 证实差异仅为 export/enum 关键字与 1-3 行 import），import 全部改向 camel 后删 kebab。
+3. **import 路径同步 96+ 文件**：引号内路径 token 替换（`(['"])path` 正则），hooks 函数标识符（不在引号内）不动；**误伤与还原**：替换脚本把 `ai/enhancement/`、`microfrontend/devex/` 的相对 import 也改成了 camel——但这两目录的 kebab 文件**不在规则范围**（规则只覆盖 api/lib/utils/pages/components 等），还原为 kebab；utils 内部 index 的 kebab 还原回 camel。
+4. **关联 i18n 33 处**：改名文件进入 scan 范围（staged ACM 必扫）暴露历史硬编码中文——GovernanceDashboardPage 23、modules/ai/config 6、useDshAgent 4——zh/en 新增 29 key（ai.use_dsh_agent.* 2、ai.governance_dashboard.* 23 含 4 个插值模板、shared.config.* 4 补全 config.ts titleKey 缺失的 key）。
+5. **PluginLoader System 全局**：行尾 disable 注释被 prettier 吞（`{ // comment` 重排丢失）——改独立 `// eslint-disable-next-line` 注释行（prettier 不删）。
+
+**验证**：tsc 0；eslint filename-naming-convention 50→**0**、naming-convention 保持 0；scan 0 lines；pre-commit 14 gate 全绿。no-unused-vars 348→342（删副本连带）。
+
+**坑点**：① utils kebab/camel 是重复对——**改名必须先 diff 确认正版**（camel 有 export 修复），改 import 指向正版再删副本，不能盲目 mv；② 引号内路径替换是全局的——**规则未覆盖的目录（ai/**、microfrontend/**）会被误伤**，需按目录还原；③ 带扩展名 import（`'@/services/offlineStorage.ts'`）不匹配 `token(['"])` 正则，需单独替换；④ services PascalCase 在 macOS 大小写不敏感文件系统上旧名引用会触发 TS1149 casing 冲突；⑤ useDshAgent 实际无 i18n import（grep 误判），需补 import；⑥ PluginLoader 行尾 disable 注释被 prettier 吞——用独立注释行。
+
 ### V506
+
 
 > 状态：**已完成**（提交 `cb0656b92`）｜日期：2026-09-05
 > 主题：@typescript-eslint/naming-convention 清零（29→0）
