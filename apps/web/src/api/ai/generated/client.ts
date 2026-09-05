@@ -31,7 +31,10 @@ export const copilotApi = {
     apiClient.post('/copilot/chat', data),
 
   /** 识别意图 */
-  recognizeIntent: (data: { text: string; module?: Types.BusinessModuleType }): Promise<ApiResponse<Types.IntentRecognitionResult>> =>
+  recognizeIntent: (data: {
+    text: string;
+    module?: Types.BusinessModuleType;
+  }): Promise<ApiResponse<Types.IntentRecognitionResult>> =>
     apiClient.post('/copilot/intent', data),
 
   /** 获取所有业务模块配置 */
@@ -39,7 +42,9 @@ export const copilotApi = {
     apiClient.get('/copilot/modules'),
 
   /** 获取业务模块配置 */
-  getModuleConfig: (module: Types.BusinessModuleType): Promise<ApiResponse<Types.BusinessModuleConfig>> =>
+  getModuleConfig: (
+    module: Types.BusinessModuleType
+  ): Promise<ApiResponse<Types.BusinessModuleConfig>> =>
     apiClient.get(`/copilot/modules/${module}`),
 
   /** 搜索 FAQ */
@@ -58,15 +63,21 @@ export const documentsApi = {
     page_size?: number;
     document_type?: Types.DocumentType;
     status?: Types.DocumentProcessingStatus;
-  }): Promise<ApiResponse<{ items: Types.DocumentInfo[]; total: number; page: number; page_size: number }>> =>
-    apiClient.get('/documents', { params }),
+  }): Promise<
+    ApiResponse<{ items: Types.DocumentInfo[]; total: number; page: number; page_size: number }>
+  > => apiClient.get('/documents', { params }),
 
   /** 上传文档 */
-  uploadDocument: (file: File, metadata?: Record<string, unknown>): Promise<ApiResponse<Types.DocumentInfo>> => {
+  uploadDocument: (
+    file: File,
+    metadata?: Record<string, unknown>
+  ): Promise<ApiResponse<Types.DocumentInfo>> => {
     const formData = new FormData();
     formData.append('file', file);
     if (metadata) formData.append('metadata', JSON.stringify(metadata));
-    return apiClient.post('/documents', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return apiClient.post('/documents', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
 
   /** 获取文档信息 */
@@ -82,24 +93,36 @@ export const documentsApi = {
     apiClient.post(`/documents/${documentId}/parse`),
 
   /** 获取文档摘要 */
-  getDocumentSummary: (documentId: string, type?: Types.SummaryType): Promise<ApiResponse<Types.DocumentSummary>> =>
+  getDocumentSummary: (
+    documentId: string,
+    type?: Types.SummaryType
+  ): Promise<ApiResponse<Types.DocumentSummary>> =>
     apiClient.get(`/documents/${documentId}/summary`, { params: type ? { type } : undefined }),
 
   /** 生成文档摘要 */
-  generateDocumentSummary: (documentId: string, summaryType?: Types.SummaryType): Promise<ApiResponse<Types.DocumentSummary>> =>
+  generateDocumentSummary: (
+    documentId: string,
+    summaryType?: Types.SummaryType
+  ): Promise<ApiResponse<Types.DocumentSummary>> =>
     apiClient.post(`/documents/${documentId}/summary`, { summary_type: summaryType }),
 
   /** 搜索文档内容 */
-  searchDocument: (documentId: string, q: string): Promise<ApiResponse<Array<{ line_number: number; content: string; match_count: number }>>> =>
+  searchDocument: (
+    documentId: string,
+    q: string
+  ): Promise<ApiResponse<Array<{ line_number: number; content: string; match_count: number }>>> =>
     apiClient.get(`/documents/${documentId}/search`, { params: { q } }),
 
   /** 下载文档 */
   downloadDocument: (documentId: string): Promise<Blob> =>
-    apiClient.get(`/documents/${documentId}/download`, { responseType: 'blob' }).then(r => r.data as Blob),
+    apiClient
+      .get(`/documents/${documentId}/download`, { responseType: 'blob' })
+      .then((r) => r.data as Blob),
 
   /** 生成文档 */
-  generateDocument: (data: Types.DocumentGenerationRequest): Promise<ApiResponse<Types.DocumentInfo>> =>
-    apiClient.post('/documents/generate', data),
+  generateDocument: (
+    data: Types.DocumentGenerationRequest
+  ): Promise<ApiResponse<Types.DocumentInfo>> => apiClient.post('/documents/generate', data),
 };
 
 // ============================================================================
@@ -108,20 +131,38 @@ export const documentsApi = {
 
 export const governanceApi = {
   /** 获取治理仪表盘数据 */
-  getDashboard: (timeRange?: Types.TimeRange): Promise<ApiResponse<Types.GovernanceDashboardData>> =>
-    apiClient.get('/governance/dashboard', { params: timeRange ? { time_range: timeRange } : undefined }),
+  getDashboard: (
+    timeRange?: Types.TimeRange
+  ): Promise<ApiResponse<Types.GovernanceDashboardData>> =>
+    apiClient.get('/governance/dashboard', {
+      params: timeRange ? { time_range: timeRange } : undefined,
+    }),
 
   /** 获取治理评分 */
-  getScore: (timeRange?: Types.TimeRange): Promise<ApiResponse<{
-    overall_score: number;
-    governance_level: Types.GovernanceLevel;
-    breakdown: { security: number; compliance: number; cost: number; performance: number; reliability: number };
-  }>> =>
-    apiClient.get('/governance/score', { params: timeRange ? { time_range: timeRange } : undefined }),
+  getScore: (
+    timeRange?: Types.TimeRange
+  ): Promise<
+    ApiResponse<{
+      overall_score: number;
+      governance_level: Types.GovernanceLevel;
+      breakdown: {
+        security: number;
+        compliance: number;
+        cost: number;
+        performance: number;
+        reliability: number;
+      };
+    }>
+  > =>
+    apiClient.get('/governance/score', {
+      params: timeRange ? { time_range: timeRange } : undefined,
+    }),
 
   /** 获取风险评估 */
   getRiskAssessment: (timeRange?: Types.TimeRange): Promise<ApiResponse<Types.RiskAssessment>> =>
-    apiClient.get('/governance/risk', { params: timeRange ? { time_range: timeRange } : undefined }),
+    apiClient.get('/governance/risk', {
+      params: timeRange ? { time_range: timeRange } : undefined,
+    }),
 
   /** 获取合规状态 */
   getComplianceStatus: (framework?: string): Promise<ApiResponse<Types.ComplianceStatus>> =>
@@ -129,39 +170,66 @@ export const governanceApi = {
 
   /** 获取成本分析 */
   getCostAnalysis: (timeRange?: Types.TimeRange): Promise<ApiResponse<Types.CostAnalysis>> =>
-    apiClient.get('/governance/cost', { params: timeRange ? { time_range: timeRange } : undefined }),
+    apiClient.get('/governance/cost', {
+      params: timeRange ? { time_range: timeRange } : undefined,
+    }),
 
   /** 获取性能指标 */
-  getPerformanceMetrics: (timeRange?: Types.TimeRange): Promise<ApiResponse<Types.PerformanceMetrics>> =>
-    apiClient.get('/governance/performance', { params: timeRange ? { time_range: timeRange } : undefined }),
+  getPerformanceMetrics: (
+    timeRange?: Types.TimeRange
+  ): Promise<ApiResponse<Types.PerformanceMetrics>> =>
+    apiClient.get('/governance/performance', {
+      params: timeRange ? { time_range: timeRange } : undefined,
+    }),
 
   /** 获取安全事件 */
-  getSecurityEvents: (params?: { severity?: Types.RiskLevel; limit?: number; offset?: number }): Promise<ApiResponse<{ items: Types.SecurityEventSummary[]; total: number }>> =>
+  getSecurityEvents: (params?: {
+    severity?: Types.RiskLevel;
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse<{ items: Types.SecurityEventSummary[]; total: number }>> =>
     apiClient.get('/governance/security-events', { params }),
 
   /** 记录安全事件 */
-  recordSecurityEvent: (data: { event_type: string; severity: Types.RiskLevel; description: string; affected_resource?: string; status?: string }): Promise<ApiResponse<Types.SecurityEventSummary>> =>
+  recordSecurityEvent: (data: {
+    event_type: string;
+    severity: Types.RiskLevel;
+    description: string;
+    affected_resource?: string;
+    status?: string;
+  }): Promise<ApiResponse<Types.SecurityEventSummary>> =>
     apiClient.post('/governance/security-events', data),
 
   /** 获取审计日志摘要 */
   getAuditSummary: (timeRange?: Types.TimeRange): Promise<ApiResponse<Types.AuditSummary>> =>
-    apiClient.get('/governance/audit', { params: timeRange ? { time_range: timeRange } : undefined }),
+    apiClient.get('/governance/audit', {
+      params: timeRange ? { time_range: timeRange } : undefined,
+    }),
 
   /** 获取趋势数据 */
-  getTrends: (timeRange?: Types.TimeRange, metrics?: string): Promise<ApiResponse<Types.TrendDataPoint[]>> =>
+  getTrends: (
+    timeRange?: Types.TimeRange,
+    metrics?: string
+  ): Promise<ApiResponse<Types.TrendDataPoint[]>> =>
     apiClient.get('/governance/trends', { params: { time_range: timeRange, metrics } }),
 
   /** 获取建议和改进项 */
-  getRecommendations: (priority?: Types.RecommendationPriority): Promise<ApiResponse<Types.Recommendation[]>> =>
+  getRecommendations: (
+    priority?: Types.RecommendationPriority
+  ): Promise<ApiResponse<Types.Recommendation[]>> =>
     apiClient.get('/governance/recommendations', { params: priority ? { priority } : undefined }),
 
   /** 刷新仪表盘缓存 */
-  refreshCache: (): Promise<ApiResponse<void>> =>
-    apiClient.post('/governance/refresh'),
+  refreshCache: (): Promise<ApiResponse<void>> => apiClient.post('/governance/refresh'),
 
   /** 导出治理报告 */
   exportReport: (format: 'pdf' | 'excel' | 'json', timeRange?: Types.TimeRange): Promise<Blob> =>
-    apiClient.get('/governance/export', { params: { format, time_range: timeRange }, responseType: 'blob' }).then(r => r.data as Blob),
+    apiClient
+      .get('/governance/export', {
+        params: { format, time_range: timeRange },
+        responseType: 'blob',
+      })
+      .then((r) => r.data as Blob),
 };
 
 // ============================================================================

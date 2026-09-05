@@ -16,7 +16,6 @@ import {
   Settings,
   GitMerge,
 } from 'lucide-react';
-import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 import { PageContainer } from '@/components/common';

@@ -7,7 +7,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { dataSourceSchema } from '@/schemas/bi';
 import { dataSourceCrudApi, testDataSource, refreshDataSource } from '@/api/bi';
 import { logger } from '@/utils/logger';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
 const BIDataSourcePage: React.FC = () => {

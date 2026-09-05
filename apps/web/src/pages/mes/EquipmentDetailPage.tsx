@@ -1,4 +1,4 @@
-import { Typography, Box, InputLabel, Chip, type ChipProps } from '@mui/material';
+import { Typography, Box, InputLabel, Chip } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';

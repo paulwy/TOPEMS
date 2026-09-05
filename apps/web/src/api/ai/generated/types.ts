@@ -9,16 +9,66 @@
 export type BusinessModuleType = 'erp' | 'finance' | 'crm' | 'wms' | 'hr' | 'oa' | 'general';
 
 /** Copilot 意图类型 */
-export type CopilotIntentType = 'query' | 'create' | 'update' | 'delete' | 'analyze' | 'report' | 'approve' | 'reminder' | 'knowledge' | 'guidance' | 'other';
+export type CopilotIntentType =
+  | 'query'
+  | 'create'
+  | 'update'
+  | 'delete'
+  | 'analyze'
+  | 'report'
+  | 'approve'
+  | 'reminder'
+  | 'knowledge'
+  | 'guidance'
+  | 'other';
 
 /** 工具调用状态 */
 export type ToolCallStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
 
 /** 表单字段类型 */
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'integer' | 'decimal' | 'date' | 'time' | 'datetime' | 'boolean' | 'select' | 'multiselect' | 'radio' | 'checkbox' | 'file' | 'image' | 'email' | 'phone' | 'url' | 'password' | 'color' | 'range' | 'richtext' | 'tags' | 'reference' | 'subform' | 'calculated' | 'signature' | 'other';
+export type FormFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'integer'
+  | 'decimal'
+  | 'date'
+  | 'time'
+  | 'datetime'
+  | 'boolean'
+  | 'select'
+  | 'multiselect'
+  | 'radio'
+  | 'checkbox'
+  | 'file'
+  | 'image'
+  | 'email'
+  | 'phone'
+  | 'url'
+  | 'password'
+  | 'color'
+  | 'range'
+  | 'richtext'
+  | 'tags'
+  | 'reference'
+  | 'subform'
+  | 'calculated'
+  | 'signature'
+  | 'other';
 
 /** 文档类型 */
-export type DocumentType = 'pdf' | 'word' | 'excel' | 'powerpoint' | 'text' | 'markdown' | 'html' | 'json' | 'csv' | 'image' | 'other';
+export type DocumentType =
+  | 'pdf'
+  | 'word'
+  | 'excel'
+  | 'powerpoint'
+  | 'text'
+  | 'markdown'
+  | 'html'
+  | 'json'
+  | 'csv'
+  | 'image'
+  | 'other';
 
 /** 文档处理状态 */
 export type DocumentProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
@@ -42,7 +92,8 @@ export type PerformanceLevel = 'excellent' | 'good' | 'fair' | 'poor';
 export type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
 
 /** 合规框架状态 */
-export type ComplianceFrameworkStatus = 'compliant' | 'partially_compliant' | 'non_compliant' | 'under_assessment';
+export type ComplianceFrameworkStatus =
+  'compliant' | 'partially_compliant' | 'non_compliant' | 'under_assessment';
 
 /** ErrorResponse */
 export interface ErrorResponse {
@@ -236,7 +287,8 @@ export interface FormData {
   form_id: string;
   record_id?: string;
   values: Record<string, unknown>;
-  status: 'draft' | 'in_progress' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'archived';
+  status:
+    'draft' | 'in_progress' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'archived';
   created_at: string;
   updated_at: string;
 }

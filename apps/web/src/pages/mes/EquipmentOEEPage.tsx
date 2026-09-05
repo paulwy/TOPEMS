@@ -5,7 +5,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { equipmentOeeSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
-import type { OeeRecord, OeeStatistics } from '@/api/mes';
+import type { OeeRecord } from '@/api/mes';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Gauge, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';

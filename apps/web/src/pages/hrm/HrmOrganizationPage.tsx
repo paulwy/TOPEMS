@@ -3,7 +3,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { organizationSchema } from '@/schemas/hrm';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
-import { hrmApi, type Department } from '@/api/hrm';
+import { hrmApi } from '@/api/hrm';
 import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter(hrmApi.departments);

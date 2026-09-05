@@ -10,7 +10,6 @@ import {
   Chip,
 } from '@mui/material';
 import type { Employee } from '@/api/hrm';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 interface EmployeeDetailDialogProps {

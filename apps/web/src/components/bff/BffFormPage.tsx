@@ -100,12 +100,18 @@ function renderField(
   error: string | undefined,
   onChange: (name: string, value: unknown) => void
 ): React.ReactElement {
-  const { name, label, type, placeholder, disabled, options, helperText, required, autoComplete } = field;
+  const { name, label, type, placeholder, disabled, options, helperText, required, autoComplete } =
+    field;
 
   switch (type) {
     case 'select':
       return (
-        <FormControl fullWidth size="small" error={Boolean(error)} disabled={disabled}>
+        <FormControl
+          fullWidth
+          size='small'
+          error={Boolean(error)}
+          disabled={disabled}
+        >
           <InputLabel>{label}</InputLabel>
           <Select
             label={label}
@@ -113,7 +119,10 @@ function renderField(
             onChange={(e: SelectChangeEvent<unknown>) => onChange(name, e.target.value)}
           >
             {(options ?? []).map((opt) => (
-              <MenuItem key={String(opt.value)} value={opt.value}>
+              <MenuItem
+                key={String(opt.value)}
+                value={opt.value}
+              >
                 {opt.label}
               </MenuItem>
             ))}
@@ -150,7 +159,7 @@ function renderField(
       return (
         <TextField
           fullWidth
-          size="small"
+          size='small'
           multiline
           minRows={3}
           label={label}
@@ -166,7 +175,7 @@ function renderField(
       return (
         <TextField
           fullWidth
-          size="small"
+          size='small'
           type={type === 'number' ? 'number' : type === 'date' ? 'date' : type}
           label={label}
           value={(value as string | number) ?? ''}
@@ -219,10 +228,7 @@ export function BffFormPage<T extends Record<string, unknown>>({
   fullScreen = true,
   loading,
 }: BffFormPageProps<T>): React.ReactElement {
-  const flatFields = useMemo(
-    () => sections.flatMap((s) => s.fields),
-    [sections]
-  );
+  const flatFields = useMemo(() => sections.flatMap((s) => s.fields), [sections]);
 
   const { pageState, actions } = useBffFormPage<T>({
     entityType,
@@ -243,16 +249,20 @@ export function BffFormPage<T extends Record<string, unknown>>({
 
   return (
     <Paper sx={{ p: 3, maxWidth: fullScreen ? 960 : undefined, mx: 'auto', mt: 2 }}>
-      <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Typography
+        variant='h6'
+        sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+      >
         <Save size={18} />
         {entityName ??
-          (mode === 'create'
-            ? i18n.t('bff.create', '新建')
-            : i18n.t('bff.edit', '编辑'))}
+          (mode === 'create' ? i18n.t('bff.create', '新建') : i18n.t('bff.edit', '编辑'))}
       </Typography>
 
       {pageState.error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+        >
           {pageState.error}
         </Alert>
       )}
@@ -262,18 +272,34 @@ export function BffFormPage<T extends Record<string, unknown>>({
           <CircularProgress size={32} />
         </Box>
       ) : (
-        <Box component="form" noValidate onSubmit={(e) => { e.preventDefault(); actions.submit(); }}>
+        <Box
+          component='form'
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            actions.submit();
+          }}
+        >
           {sections.map((section, si) => (
-            <Box key={si} sx={{ mb: 3 }}>
+            <Box
+              key={si}
+              sx={{ mb: 3 }}
+            >
               {(section.title || section.description) && (
                 <Box sx={{ mb: 1.5 }}>
                   {section.title && (
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600 }}
+                    >
                       {section.title}
                     </Typography>
                   )}
                   {section.description && (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       {section.description}
                     </Typography>
                   )}
@@ -281,7 +307,10 @@ export function BffFormPage<T extends Record<string, unknown>>({
               )}
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
                 {section.fields.map((field) => (
-                  <Box key={field.name} sx={{ gridColumn: `span ${field.gridSpan ?? 12}` }}>
+                  <Box
+                    key={field.name}
+                    sx={{ gridColumn: `span ${field.gridSpan ?? 12}` }}
+                  >
                     {renderField(
                       field,
                       pageState.data?.[field.name],
@@ -295,22 +324,37 @@ export function BffFormPage<T extends Record<string, unknown>>({
             </Box>
           ))}
 
-          <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'flex-end' }}>
+          <Stack
+            direction='row'
+            spacing={2}
+            sx={{ mt: 2, justifyContent: 'flex-end' }}
+          >
             {onCancel && (
-              <Button startIcon={<X size={16} />} onClick={onCancel} disabled={isSubmitting}>
+              <Button
+                startIcon={<X size={16} />}
+                onClick={onCancel}
+                disabled={isSubmitting}
+              >
                 {cancelLabel ?? i18n.t('bff.cancel', '取消')}
               </Button>
             )}
             <Button
-              type="submit"
-              variant="contained"
-              startIcon={isSubmitting ? <Loader2 size={16} className="spin" /> : <Save size={16} />}
+              type='submit'
+              variant='contained'
+              startIcon={
+                isSubmitting ? (
+                  <Loader2
+                    size={16}
+                    className='spin'
+                  />
+                ) : (
+                  <Save size={16} />
+                )
+              }
               disabled={isSubmitting || !isValid || (mode === 'edit' && !isDirty)}
             >
               {submitLabel ??
-                (mode === 'create'
-                  ? i18n.t('bff.submit', '提交')
-                  : i18n.t('bff.save', '保存'))}
+                (mode === 'create' ? i18n.t('bff.submit', '提交') : i18n.t('bff.save', '保存'))}
             </Button>
           </Stack>
         </Box>

@@ -2,7 +2,6 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { accidentSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter({

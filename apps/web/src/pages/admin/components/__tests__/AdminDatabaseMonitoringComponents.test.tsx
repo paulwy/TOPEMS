@@ -224,9 +224,7 @@ describe('DatabaseStructureTable', () => {
       />
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '添加字段' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '添加字段' }));
     fireEvent.click(screen.getAllByRole('button', { name: '删除' })[1]);
 
     expect(onAddColumn).toHaveBeenCalledTimes(1);

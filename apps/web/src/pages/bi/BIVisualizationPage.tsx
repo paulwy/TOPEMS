@@ -39,7 +39,7 @@ import {
 } from '@mui/material';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
+import { fetchWidgets, createWidget, deleteWidget, type Widget } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

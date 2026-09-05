@@ -193,9 +193,7 @@ describe('EmployeeFormDialog', () => {
   it('renders create form values and updates avatar through upload control', () => {
     render(<EmployeeFormDialog {...defaultProps} />);
 
-    expect(
-      screen.getByText('新增员工')
-    ).toBeInTheDocument();
+    expect(screen.getByText('新增员工')).toBeInTheDocument();
     expect(screen.getByDisplayValue('张三')).toBeInTheDocument();
     expect(screen.getByDisplayValue('E001')).toBeInTheDocument();
     expect(screen.getByDisplayValue('zhangsan@example.com')).toBeInTheDocument();
@@ -246,9 +244,7 @@ describe('EmployeeFormDialog', () => {
       />
     );
 
-    expect(
-      screen.getByText('编辑员工')
-    ).toBeInTheDocument();
+    expect(screen.getByText('编辑员工')).toBeInTheDocument();
     expect(
       screen.getByRole('button', {
         name: '保存',

@@ -99,11 +99,16 @@ export const fixedAssetApi = {
     return apiClient.erp.get<FixedAsset>(`/fixed-assets/${id}`);
   },
 
-  async create(data: Partial<FixedAsset> | CreateFixedAssetRequest): Promise<ApiResponse<FixedAsset>> {
+  async create(
+    data: Partial<FixedAsset> | CreateFixedAssetRequest
+  ): Promise<ApiResponse<FixedAsset>> {
     return apiClient.erp.post<FixedAsset>('/fixed-assets', data);
   },
 
-  async update(id: string, data: Partial<FixedAsset> | UpdateFixedAssetRequest): Promise<ApiResponse<FixedAsset>> {
+  async update(
+    id: string,
+    data: Partial<FixedAsset> | UpdateFixedAssetRequest
+  ): Promise<ApiResponse<FixedAsset>> {
     return apiClient.erp.put<FixedAsset>(`/fixed-assets/${id}`, data);
   },
 

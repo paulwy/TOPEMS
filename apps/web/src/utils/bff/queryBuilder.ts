@@ -14,14 +14,7 @@
 
 /** 字段类型 */
 export type FieldType =
-  | 'string'
-  | 'number'
-  | 'boolean'
-  | 'date'
-  | 'datetime'
-  | 'enum'
-  | 'json'
-  | 'uuid';
+  'string' | 'number' | 'boolean' | 'date' | 'datetime' | 'enum' | 'json' | 'uuid';
 
 /** 字段选择（key → 是否选择；也可用 true 简化） */
 export type FieldSelection = Record<string, boolean>;
@@ -221,25 +214,24 @@ export class QueryBuilder {
     this.filters.forEach((f, i) => {
       const varName = `w${i}`;
       if (f.operator === 'isNull') {
-        whereArgs.push(`${f.field}: { ${opToGraphql(f.operator)}: ${f.operator === 'isNull' ? 'true' : 'false'} }`);
+        whereArgs.push(
+          `${f.field}: { ${opToGraphql(f.operator)}: ${f.operator === 'isNull' ? 'true' : 'false'} }`
+        );
         return;
       }
       const varPath = `${varName}_value`;
-      vars[varPath] = f.operator === 'contains'
-        ? `%${f.value}%`
-        : f.operator === 'startsWith'
-          ? `${f.value}%`
-          : f.value;
+      vars[varPath] =
+        f.operator === 'contains'
+          ? `%${f.value}%`
+          : f.operator === 'startsWith'
+            ? `${f.value}%`
+            : f.value;
       whereArgs.push(`${f.field}: { ${opToGraphql(f.operator)}: $${varPath} }`);
     });
 
-    const sortArgs = this.sorts
-      .map((s) => `${s.field}: ${s.direction.toUpperCase()}`)
-      .join(', ');
+    const sortArgs = this.sorts.map((s) => `${s.field}: ${s.direction.toUpperCase()}`).join(', ');
 
-    const paginationArgs = this.pagination
-      ? `limit: $limit, offset: $offset`
-      : '';
+    const paginationArgs = this.pagination ? `limit: $limit, offset: $offset` : '';
 
     const selectionStr = fieldSelectionToList(this.selection).join('\n      ');
     const relationStr = this.relations
@@ -282,7 +274,9 @@ export class QueryBuilder {
         params.push(`${key}=${f.operator === 'isNull' ? 'true' : 'false'}`);
         return;
       }
-      params.push(`${key}=${encodeURIComponent(String(f.operator === 'contains' ? `%${f.value}%` : f.value ?? ''))}`);
+      params.push(
+        `${key}=${encodeURIComponent(String(f.operator === 'contains' ? `%${f.value}%` : (f.value ?? '')))}`
+      );
     });
     this.sorts.forEach((s) => params.push(`sort=${s.field}:${s.direction}`));
     if (this.pagination) {
@@ -399,7 +393,9 @@ export const queryTemplates = {
 
   /** 关联查询（主表 + 关联） */
   related: (entity: string, fields: FieldSelection, relation: IncludeRelation): BuiltQuery =>
-    new QueryBuilder(entity, { operationName: `List${capitalize(entity)}With${capitalize(relation.relation)}` })
+    new QueryBuilder(entity, {
+      operationName: `List${capitalize(entity)}With${capitalize(relation.relation)}`,
+    })
       .select({ id: true, ...fields })
       .include(relation)
       .build(),

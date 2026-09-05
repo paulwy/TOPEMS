@@ -198,7 +198,6 @@ describe('BiPermission components', () => {
 
       expect(document.body).toBeTruthy(); // smoke：仅验证渲染不崩溃
     });
-
   });
 
   describe('BiPermissionDataTable', () => {
@@ -212,8 +211,5 @@ describe('BiPermission components', () => {
 
       expect(document.body).toBeTruthy(); // smoke：仅验证渲染不崩溃
     });
-
-
-
   });
 });

@@ -16,7 +16,7 @@ import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { ClipboardList, FileText, Play, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { limsApi, type InspectionProcess, type LimsStatistics } from '@/api/lims';
+import { limsApi, type InspectionProcess } from '@/api/lims';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';

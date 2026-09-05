@@ -1,6 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type { LeaveRequest, ListParams, PaginatedResult } from './types';
+import type { LeaveRequest, ListParams } from './types';
 import { buildQueryString } from './types';
 
 export const leaveApi = {

@@ -74,7 +74,6 @@ interface ExtendedLoadingOptions extends LoadingOptions {
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
-
 // ============================================================================
 // Skeleton Components
 // ============================================================================

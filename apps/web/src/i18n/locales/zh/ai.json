@@ -3522,5 +3522,18 @@
   "ai.governance_dashboard.throughput": "吞吐量",
   "ai.governance_dashboard.error_rate": "错误率",
   "ai.governance_dashboard.suggestions": "建议和改进项",
-  "ai.governance_dashboard.expected_benefit": "预期收益: {{benefit}} | 实施难度: {{effort}}"
+  "ai.governance_dashboard.expected_benefit": "预期收益: {{benefit}} | 实施难度: {{effort}}",
+  "ai.ab_test_panel.control_group": "对照组",
+  "ai.ab_test_panel.variant_group": "实验组",
+  "ai.dsh_agent_page.title": "DSH Agent 智能助手",
+  "ai.dsh_agent_page.subtitle": "基于 DSH AI 中间层的智能 Agent，支持工具调用、流式响应和多轮对话",
+  "ai.dsh_agent_page.features": "功能特性",
+  "ai.dsh_agent_page.available_tools": "可用工具 ({{count}})",
+  "ai.dsh_agent_page.loading": "加载中...",
+  "ai.dsh_agent_page.session_state": "会话状态",
+  "ai.dsh_agent_page.session_id": "会话 ID:",
+  "ai.dsh_agent_page.status": "状态:",
+  "ai.dsh_agent_page.usage_hint": "💡 使用提示",
+  "ai.dsh_agent_page.try_questions": "尝试输入以下问题：",
+  "ai.dsh_agent_page.footer": "DSH AI 中间层 v1.0 | Agent 编排器 | MCP 工具注册中心 | LLM Provider 抽象"
 }

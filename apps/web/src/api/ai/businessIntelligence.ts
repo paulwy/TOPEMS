@@ -88,7 +88,8 @@ export interface FormData {
   form_id: string;
   record_id?: string;
   values: Record<string, unknown>;
-  status: 'draft' | 'in_progress' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'archived';
+  status:
+    'draft' | 'in_progress' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'archived';
   created_at: string;
   updated_at: string;
 }
@@ -323,7 +324,9 @@ export async function getDocument(document_id: string): Promise<ApiResponse<Docu
 /**
  * 解析文档
  */
-export async function parseDocument(document_id: string): Promise<ApiResponse<DocumentParseResult>> {
+export async function parseDocument(
+  document_id: string
+): Promise<ApiResponse<DocumentParseResult>> {
   return apiClient.post(`${DOC_BASE_PATH}/${document_id}/parse`);
 }
 
@@ -355,11 +358,15 @@ export async function getDocumentSummary(
 export async function searchDocument(
   document_id: string,
   query: string
-): Promise<ApiResponse<Array<{
-  line_number: number;
-  content: string;
-  match_count: number;
-}>>> {
+): Promise<
+  ApiResponse<
+    Array<{
+      line_number: number;
+      content: string;
+      match_count: number;
+    }>
+  >
+> {
   return apiClient.get(`${DOC_BASE_PATH}/${document_id}/search`, {
     params: { q: query },
   });
@@ -394,18 +401,18 @@ export async function deleteDocument(document_id: string): Promise<ApiResponse<v
 /**
  * 获取文档列表
  */
-export async function listDocuments(
-  params?: {
-    page?: number;
-    page_size?: number;
-    document_type?: DocumentType;
-    status?: DocumentProcessingStatus;
-  }
-): Promise<ApiResponse<{
-  items: DocumentInfo[];
-  total: number;
-  page: number;
-  page_size: number;
-}>> {
+export async function listDocuments(params?: {
+  page?: number;
+  page_size?: number;
+  document_type?: DocumentType;
+  status?: DocumentProcessingStatus;
+}): Promise<
+  ApiResponse<{
+    items: DocumentInfo[];
+    total: number;
+    page: number;
+    page_size: number;
+  }>
+> {
   return apiClient.get(DOC_BASE_PATH, { params });
 }

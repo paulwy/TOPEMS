@@ -11,7 +11,12 @@ vi.mock('@topems/shared-components', async (importOriginal) => {
   return {
     ...actual,
     ConfirmDialog: ({ onConfirm }: any) => (
-      <button type='button' onClick={() => onConfirm?.()}>确认</button>
+      <button
+        type='button'
+        onClick={() => onConfirm?.()}
+      >
+        确认
+      </button>
     ),
   };
 });

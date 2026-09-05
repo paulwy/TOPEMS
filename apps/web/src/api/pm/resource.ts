@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { ProjectResource, ProjectExpense } from './types';
 
 export const resourceApi = {
   list: async (projectId: string) => {

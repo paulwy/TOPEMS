@@ -28,7 +28,7 @@ import { budgetApi } from '@/api/finance/budget';
 import { financeApi } from '@/api/finance';
 import type { AccountBalance } from '@/types/finance';
 import { useNotification } from '@/hooks/useNotification';
-import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';

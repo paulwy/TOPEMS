@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { WorkflowVariable, ListParams } from './types';
+import type { ListParams } from './types';
 
 export const variableApi = {
   list: (instanceId: string, params?: ListParams) => {

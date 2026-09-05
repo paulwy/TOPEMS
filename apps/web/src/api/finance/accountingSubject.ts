@@ -58,9 +58,7 @@ export interface UpdateAccountingSubjectRequest {
 }
 
 export const accountingSubjectApi = {
-  list: (
-    params?: AccountingSubjectQuery
-  ): Promise<ApiResponse<PaginatedAccountingSubjects>> => {
+  list: (params?: AccountingSubjectQuery): Promise<ApiResponse<PaginatedAccountingSubjects>> => {
     return apiClient.finance.get('/accounting-subjects', { params });
   },
 

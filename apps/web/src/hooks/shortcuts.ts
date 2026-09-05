@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback } from 'react';
 import i18n from '@/i18n';
 
 interface ShortcutConfig {

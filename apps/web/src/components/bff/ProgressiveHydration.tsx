@@ -95,7 +95,7 @@ function notifyChange(): void {
 export function startHydration(
   componentName: string,
   depth: number = 0,
-  isCritical: boolean = false,
+  isCritical: boolean = false
 ): number {
   if (hydrationStartTime === null) {
     hydrationStartTime = performance.now();
@@ -152,7 +152,9 @@ export function getHydrationStats(): HydrationStats {
   const failureRecords = hydrationRecords.filter((r) => !r.success && r.endTime > 0);
   const criticalRecords = hydrationRecords.filter((r) => r.isCritical);
   const hydratedRecords = hydrationRecords.filter((r) => r.status === 'hydrated');
-  const pendingRecords = hydrationRecords.filter((r) => r.status === 'pending' || r.status === 'hydrating');
+  const pendingRecords = hydrationRecords.filter(
+    (r) => r.status === 'pending' || r.status === 'hydrating'
+  );
   const durations = successRecords.map((r) => r.duration);
 
   return {
@@ -162,7 +164,8 @@ export function getHydrationStats(): HydrationStats {
     successCount: successRecords.length,
     failureCount: failureRecords.length,
     totalDuration: durations.reduce((sum, d) => sum + d, 0),
-    avgDuration: durations.length > 0 ? durations.reduce((sum, d) => sum + d, 0) / durations.length : 0,
+    avgDuration:
+      durations.length > 0 ? durations.reduce((sum, d) => sum + d, 0) / durations.length : 0,
     maxDuration: durations.length > 0 ? Math.max(...durations) : 0,
     minDuration: durations.length > 0 ? Math.min(...durations) : 0,
     records: [...hydrationRecords],

@@ -17,7 +17,6 @@ import i18n from '@/i18n';
 
 import { DetailPageTemplate } from '@/components/templates';
 import CrudPage from '@/components/templates/CrudPage';
-import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { standardRevisionSchema } from '@/schemas/qms';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';

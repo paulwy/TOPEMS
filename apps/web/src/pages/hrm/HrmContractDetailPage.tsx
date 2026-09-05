@@ -16,7 +16,7 @@ import { FileText, Calendar, User, AlertCircle, CheckCircle2, Clock } from 'luci
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Contract } from '@/api/hrm';
 import { HRM_PATHS } from '@/modules/hrm/config';
-import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 

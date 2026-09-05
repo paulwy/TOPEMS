@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { Settlement, SettlementItem, SettlementAdjustment } from './types';
 
 export const settlementApi = {
   list: async (projectId: string) => {

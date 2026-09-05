@@ -5,7 +5,7 @@ import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { z } from 'zod';
 import { User, Mail, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
-import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import type { FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import {
   employeeApi,

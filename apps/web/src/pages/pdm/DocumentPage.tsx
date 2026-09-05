@@ -31,7 +31,6 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import CrudPage from '@/components/templates/CrudPage';
-import type { CrudApiAdapter, CrudTab } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { documentSchema } from '@/schemas/pdm';
 import { documentApi } from '@/api/pdm/document';

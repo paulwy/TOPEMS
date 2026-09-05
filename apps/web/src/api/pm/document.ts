@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { ProjectDocument, DocumentVersion, DocumentFolder } from './types';
 
 export const documentApi = {
   list: async (projectId: string) => {

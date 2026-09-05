@@ -18,7 +18,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n';
 
 const FinanceBudgetStats: React.FC = () => {
   const { t } = useTranslation('finance');

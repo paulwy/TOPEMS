@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';

@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { ProjectBenefit, BenefitAnalysis } from './types';
 
 export const benefitApi = {
   list: async (projectId: string) => {

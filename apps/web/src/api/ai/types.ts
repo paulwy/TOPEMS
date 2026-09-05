@@ -1,4 +1,4 @@
-import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
+import type { PaginationParams as BasePaginationParams } from '../client';
 import type {
   ValidateRequest,
   ValidateResponse,

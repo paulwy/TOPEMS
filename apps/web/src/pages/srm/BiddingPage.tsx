@@ -21,7 +21,7 @@ import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { biddingSchema } from '@/schemas/srm';
 import { srmApi, type Bidding } from '@/api/srm';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
 interface BiddingSupplier {

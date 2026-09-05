@@ -31,7 +31,7 @@ import { apiLogger } from '@/utils/logger';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { designTokens } from '@/theme/tokens';
 
-import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 
 const ct = designTokens.colors;

@@ -7,7 +7,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { salaryAdjustmentSchema } from '@/schemas/hrm';
-import { salaryAdjustmentApi, type SalaryAdjustment } from '@/api/hrm';
+import { salaryAdjustmentApi } from '@/api/hrm';
 import i18n from '@/i18n';
 
 const salaryAdjustmentAdapter = createCrudPageAdapter(salaryAdjustmentApi);

@@ -34,13 +34,16 @@ function toSSEStream(chunks: string[]): ReadableStream<Uint8Array> {
 }
 
 function mockFetchOnce(body: ReadableStream<Uint8Array>, status = 200, statusText = 'OK') {
-  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
-    ok: status >= 200 && status < 300,
-    status,
-    statusText,
-    body,
-    headers: new Headers({ 'Content-Type': 'text/event-stream' }),
-  } as unknown as Response));
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+    async () =>
+      ({
+        ok: status >= 200 && status < 300,
+        status,
+        statusText,
+        body,
+        headers: new Headers({ 'Content-Type': 'text/event-stream' }),
+      }) as unknown as Response
+  );
   return fetchSpy;
 }
 
@@ -72,7 +75,7 @@ describe('SSEClient 单元测试', () => {
     expect(spy).toHaveBeenCalledTimes(1);
     const [, init] = spy.mock.calls[0]!;
     expect(init!.method).toBe('GET');
-    expect((init!.credentials as string)).toBe('same-origin');
+    expect(init!.credentials as string).toBe('same-origin');
   });
 
   // ---- SSE-UT-003 ----
@@ -163,7 +166,9 @@ describe('SSEClient 单元测试', () => {
     expect(event.data).toBe('line1\nline2');
     expect(event.retry).toBe(5000);
     // retry 字段更新客户端 reconnectInterval（内部 options 对象）
-    expect((client as unknown as { options: { reconnectInterval: number } }).options.reconnectInterval).toBe(5000);
+    expect(
+      (client as unknown as { options: { reconnectInterval: number } }).options.reconnectInterval
+    ).toBe(5000);
     // Last-Event-ID 设置
     expect(client.getLastEventId()).toBe('ev-42');
   });
@@ -201,16 +206,14 @@ describe('SSEClient 单元测试', () => {
     await Promise.resolve();
     pushToStream(
       'event: endpoint\n' +
-        'data: {"session_id":"sse-e2e-xyz","endpoint":"/api/sse/session/sse-e2e-xyz","expires_in":1800}\n\n',
+        'data: {"session_id":"sse-e2e-xyz","endpoint":"/api/sse/session/sse-e2e-xyz","expires_in":1800}\n\n'
     );
     await vi.runAllTimersAsync();
     expect(capturedSessionId).toBe('sse-e2e-xyz');
 
     // 模拟"客户端 POST 后，后端通过同一条 SSE 流推回消息"
     pushToStream(
-      'event: message\n' +
-        'id: r1\n' +
-        'data: {"ok":true,"result":"订单创建成功: ORD-1234"}\n\n',
+      'event: message\n' + 'id: r1\n' + 'data: {"ok":true,"result":"订单创建成功: ORD-1234"}\n\n'
     );
     await vi.runAllTimersAsync();
     expect(capturedMessage).not.toBeNull();
@@ -258,17 +261,16 @@ describe('SSEClient 单元测试', () => {
 
   // ---- SSE-UT-009 ----
   it('SSE-UT-009: 服务端 retry 字段动态调整重连间隔', async () => {
-    const sseBody = toSSEStream([
-      'retry: 12345\n',
-      'data: ping\n\n',
-    ]);
+    const sseBody = toSSEStream(['retry: 12345\n', 'data: ping\n\n']);
     mockFetchOnce(sseBody);
     const client = new SSEClient({ url: '/sse', reconnectInterval: 3000 });
     const p = client.connect();
     await Promise.resolve();
     await vi.runAllTimersAsync();
     await p.catch(() => {});
-    expect((client as unknown as { options: { reconnectInterval: number } }).options.reconnectInterval).toBe(12345);
+    expect(
+      (client as unknown as { options: { reconnectInterval: number } }).options.reconnectInterval
+    ).toBe(12345);
   });
 
   // ---- SSE-UT-010 ----
@@ -276,7 +278,9 @@ describe('SSEClient 单元测试', () => {
     // 第一个流：发送带 id 的事件然后断开，触发重连
     let firstClose!: () => void;
     const firstStream = new ReadableStream<Uint8Array>({
-      start(c) { firstClose = () => c.close(); },
+      start(c) {
+        firstClose = () => c.close();
+      },
     });
     const fetchSpy = mockFetchOnce(firstStream);
     const client = new SSEClient({
@@ -301,11 +305,16 @@ describe('SSEClient 单元测试', () => {
     (client as unknown as { reconnectAttempts: number }).reconnectAttempts = 0;
 
     const secondBody = toSSEStream(['data: ok\n\n']);
-    fetchSpy.mockImplementation(async () => ({
-      ok: true, status: 200, statusText: 'OK',
-      body: secondBody,
-      headers: new Headers({ 'Content-Type': 'text/event-stream' }),
-    } as unknown as Response));
+    fetchSpy.mockImplementation(
+      async () =>
+        ({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          body: secondBody,
+          headers: new Headers({ 'Content-Type': 'text/event-stream' }),
+        }) as unknown as Response
+    );
 
     const p2 = client.connect();
     await Promise.resolve();

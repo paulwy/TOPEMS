@@ -225,8 +225,6 @@ describe('GisPage components', () => {
       expect(screen.getByText('新建')).toBeInTheDocument();
       expect(screen.getByLabelText('刷新')).toBeInTheDocument();
     });
-
-
   });
 
   describe('StatsSection', () => {
@@ -243,8 +241,6 @@ describe('GisPage components', () => {
       expect(screen.getByText('启用: 7')).toBeInTheDocument();
       expect(screen.getByText('启用: 3')).toBeInTheDocument();
     });
-
-
   });
 
   describe('DataTableSection', () => {
@@ -269,9 +265,5 @@ describe('GisPage components', () => {
 
       expect(container).toBeEmptyDOMElement();
     });
-
-
-
-
   });
 });

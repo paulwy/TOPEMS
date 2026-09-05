@@ -19,7 +19,7 @@ import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
-import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter<

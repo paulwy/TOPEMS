@@ -1,4 +1,4 @@
-import type { ApiResponse, PaginationParams } from '../../client';
+import type { PaginationParams } from '../../client';
 import type { PaginatedResponse } from '@topems/shared-types';
 
 export { PaginatedResponse };

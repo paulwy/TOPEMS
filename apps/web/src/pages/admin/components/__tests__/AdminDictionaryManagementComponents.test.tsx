@@ -174,9 +174,7 @@ describe('DictionaryTypeModal', () => {
       target: { value: '客户分级字典' },
     });
     fireEvent.click(screen.getByRole('switch'));
-    fireEvent.click(
-      screen.getByRole('button', { name: '取消' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
     fireEvent.click(screen.getByRole('button', { name: '创建' }));
 
     expect(screen.getByText('新建字典类型')).toBeInTheDocument();
@@ -213,9 +211,7 @@ describe('DictionaryTypeModal', () => {
     fireEvent.click(screen.getByRole('switch'));
     fireEvent.click(screen.getByRole('button', { name: '+ 保存 +' }));
 
-    expect(
-      screen.getByText('+ 编辑字典类型 +')
-    ).toBeInTheDocument();
+    expect(screen.getByText('+ 编辑字典类型 +')).toBeInTheDocument();
     expect(setEditingType).toHaveBeenCalledWith({ ...editingType, name: '新名称' });
     expect(setEditingType).toHaveBeenCalledWith({ ...editingType, status: 'inactive' });
     expect(onSubmit).toHaveBeenCalledTimes(1);

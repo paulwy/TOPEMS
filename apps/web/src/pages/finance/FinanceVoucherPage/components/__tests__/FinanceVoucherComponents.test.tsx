@@ -248,7 +248,6 @@ describe('FinanceVoucher components', () => {
 
       expect(document.body).toBeTruthy(); // smoke：仅验证渲染不崩溃
     });
-
   });
 
   describe('VoucherImportModal', () => {
@@ -263,10 +262,6 @@ describe('FinanceVoucher components', () => {
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
-
-
-
-
   });
 
   describe('SubjectListPanel', () => {
@@ -285,7 +280,5 @@ describe('FinanceVoucher components', () => {
       expect(screen.getByText('6602')).toBeInTheDocument();
       expect(screen.getByText('管理费用')).toBeInTheDocument();
     });
-
-
   });
 });

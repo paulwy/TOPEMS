@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { Box, Typography, TextField, Checkbox, Button } from '@mui/material';
-import { PageContainer } from '@/components/common';
 import { DesignerTemplate } from '@/components/templates/DesignerTemplate';
 import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '@/api/report';
 import { logger } from '@/utils/logger';

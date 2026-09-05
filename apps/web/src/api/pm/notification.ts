@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { Notification, NotificationSetting, NotificationType } from './types';
 
 export const notificationApi = {
   list: async (projectId: string) => {

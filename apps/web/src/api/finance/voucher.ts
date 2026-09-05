@@ -50,10 +50,7 @@ export const voucherApi = {
   create: async (
     data: Record<string, unknown>
   ): Promise<TypedApiResponse<VoucherOperationResult>> => {
-    return apiClient.finance.post(
-      '/vouchers',
-      toOpenApiRequestBody(data)
-    );
+    return apiClient.finance.post('/vouchers', toOpenApiRequestBody(data));
   },
 
   batchCreate: (

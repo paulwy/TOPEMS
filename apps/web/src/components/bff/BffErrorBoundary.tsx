@@ -13,7 +13,7 @@
  */
 
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Box, Typography, Button, Stack, Chip, Alert, AlertTitle, Paper } from '@mui/material';
+import { Typography, Button, Stack, Chip, Alert, AlertTitle, Paper } from '@mui/material';
 import {
   WifiOff,
   Clock,

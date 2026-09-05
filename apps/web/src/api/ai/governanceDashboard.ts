@@ -37,7 +37,8 @@ export type PerformanceLevel = 'excellent' | 'good' | 'fair' | 'poor';
 export type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
 
 /** 合规框架状态 */
-export type ComplianceFrameworkStatus = 'compliant' | 'partially_compliant' | 'non_compliant' | 'under_assessment';
+export type ComplianceFrameworkStatus =
+  'compliant' | 'partially_compliant' | 'non_compliant' | 'under_assessment';
 
 /** 关键指标 */
 export interface KeyMetrics {
@@ -246,19 +247,19 @@ export async function getGovernanceDashboard(
 /**
  * 获取治理评分
  */
-export async function getGovernanceScore(
-  time_range?: TimeRange
-): Promise<ApiResponse<{
-  overall_score: number;
-  governance_level: GovernanceLevel;
-  breakdown: {
-    security: number;
-    compliance: number;
-    cost: number;
-    performance: number;
-    reliability: number;
-  };
-}>> {
+export async function getGovernanceScore(time_range?: TimeRange): Promise<
+  ApiResponse<{
+    overall_score: number;
+    governance_level: GovernanceLevel;
+    breakdown: {
+      security: number;
+      compliance: number;
+      cost: number;
+      performance: number;
+      reliability: number;
+    };
+  }>
+> {
   return apiClient.get(`${BASE_PATH}/score`, {
     params: time_range ? { time_range } : undefined,
   });
@@ -289,9 +290,7 @@ export async function getComplianceStatus(
 /**
  * 获取成本分析
  */
-export async function getCostAnalysis(
-  time_range?: TimeRange
-): Promise<ApiResponse<CostAnalysis>> {
+export async function getCostAnalysis(time_range?: TimeRange): Promise<ApiResponse<CostAnalysis>> {
   return apiClient.get(`${BASE_PATH}/cost`, {
     params: time_range ? { time_range } : undefined,
   });
@@ -311,9 +310,7 @@ export async function getPerformanceMetrics(
 /**
  * 获取关键指标
  */
-export async function getKeyMetrics(
-  time_range?: TimeRange
-): Promise<ApiResponse<KeyMetrics>> {
+export async function getKeyMetrics(time_range?: TimeRange): Promise<ApiResponse<KeyMetrics>> {
   return apiClient.get(`${BASE_PATH}/metrics`, {
     params: time_range ? { time_range } : undefined,
   });
@@ -322,25 +319,23 @@ export async function getKeyMetrics(
 /**
  * 获取安全事件
  */
-export async function getSecurityEvents(
-  params?: {
-    severity?: RiskLevel;
-    limit?: number;
-    offset?: number;
-  }
-): Promise<ApiResponse<{
-  items: SecurityEventSummary[];
-  total: number;
-}>> {
+export async function getSecurityEvents(params?: {
+  severity?: RiskLevel;
+  limit?: number;
+  offset?: number;
+}): Promise<
+  ApiResponse<{
+    items: SecurityEventSummary[];
+    total: number;
+  }>
+> {
   return apiClient.get(`${BASE_PATH}/security-events`, { params });
 }
 
 /**
  * 获取审计日志摘要
  */
-export async function getAuditSummary(
-  time_range?: TimeRange
-): Promise<ApiResponse<AuditSummary>> {
+export async function getAuditSummary(time_range?: TimeRange): Promise<ApiResponse<AuditSummary>> {
   return apiClient.get(`${BASE_PATH}/audit`, {
     params: time_range ? { time_range } : undefined,
   });

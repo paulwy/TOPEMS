@@ -198,8 +198,6 @@ describe('AutomationDesigner components', () => {
       expect(screen.getByText('API 动作')).toBeInTheDocument();
       expect(screen.getByText('条件分支')).toBeInTheDocument();
     });
-
-
   });
 
   describe('NodeEditDialog', () => {
@@ -214,10 +212,6 @@ describe('AutomationDesigner components', () => {
 
       expect(screen.queryByText('编辑节点')).not.toBeInTheDocument();
     });
-
-
-
-
   });
 
   describe('PropertiesPanel', () => {
@@ -231,12 +225,6 @@ describe('AutomationDesigner components', () => {
 
       expect(screen.getByText('点击画布中的节点查看并编辑属性')).toBeInTheDocument();
     });
-
-
-
-
-
-
   });
 
   describe('DesignerCanvas', () => {
@@ -263,7 +251,5 @@ describe('AutomationDesigner components', () => {
       expect(screen.getByText('画布为空，从左侧拖拽节点类型到此处')).toBeInTheDocument();
       expect(screen.getByText('100%')).toBeInTheDocument();
     });
-
-
   });
 });

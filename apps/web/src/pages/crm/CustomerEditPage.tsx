@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Building2, Mail } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
-import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import type { FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { customerApi, type UpdateCustomerRequest } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';

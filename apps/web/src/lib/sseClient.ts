@@ -1,6 +1,6 @@
 /**
  * SSE (Server-Sent Events) 客户端工具
- * 
+ *
  * 支持连接SSE端点、接收事件、解析数据、错误处理和自动重连
  * 使用 fetch + ReadableStream 实现，支持自定义请求头和POST请求
  */
@@ -64,7 +64,7 @@ export class SSEClient {
 
     try {
       const headers: Record<string, string> = {
-        'Accept': 'text/event-stream',
+        Accept: 'text/event-stream',
         'Cache-Control': 'no-cache',
         ...this.options.headers,
       };
@@ -92,7 +92,7 @@ export class SSEClient {
       this.reader = response.body.getReader();
       this.reconnectAttempts = 0;
 
-      this.openHandlers.forEach(handler => handler());
+      this.openHandlers.forEach((handler) => handler());
 
       await this.readStream();
     } catch (error) {
@@ -101,9 +101,12 @@ export class SSEClient {
       }
 
       const err = error instanceof Error ? error : new Error(String(error));
-      this.errorHandlers.forEach(handler => handler(err));
+      this.errorHandlers.forEach((handler) => handler(err));
 
-      if (this.options.reconnect && this.reconnectAttempts < (this.options.maxReconnectAttempts || 5)) {
+      if (
+        this.options.reconnect &&
+        this.reconnectAttempts < (this.options.maxReconnectAttempts || 5)
+      ) {
         this.reconnectAttempts++;
         setTimeout(() => {
           if (!this.closed) {
@@ -111,7 +114,7 @@ export class SSEClient {
           }
         }, this.options.reconnectInterval);
       } else {
-        this.closeHandlers.forEach(handler => handler());
+        this.closeHandlers.forEach((handler) => handler());
       }
     }
   }
@@ -198,9 +201,12 @@ export class SSEClient {
       }
 
       const err = error instanceof Error ? error : new Error(String(error));
-      this.errorHandlers.forEach(handler => handler(err));
+      this.errorHandlers.forEach((handler) => handler(err));
 
-      if (this.options.reconnect && this.reconnectAttempts < (this.options.maxReconnectAttempts || 5)) {
+      if (
+        this.options.reconnect &&
+        this.reconnectAttempts < (this.options.maxReconnectAttempts || 5)
+      ) {
         this.reconnectAttempts++;
         setTimeout(() => {
           if (!this.closed) {
@@ -208,7 +214,7 @@ export class SSEClient {
           }
         }, this.options.reconnectInterval);
       } else {
-        this.closeHandlers.forEach(handler => handler());
+        this.closeHandlers.forEach((handler) => handler());
       }
     }
   }
@@ -221,12 +227,12 @@ export class SSEClient {
     if (event.event) {
       const handlers = this.eventHandlers.get(event.event);
       if (handlers) {
-        handlers.forEach(handler => handler(event));
+        handlers.forEach((handler) => handler(event));
       }
     }
 
     // 触发通用消息处理器
-    this.messageHandlers.forEach(handler => handler(event));
+    this.messageHandlers.forEach((handler) => handler(event));
   }
 
   /**
@@ -306,7 +312,7 @@ export class SSEClient {
       this.controller = null;
     }
 
-    this.closeHandlers.forEach(handler => handler());
+    this.closeHandlers.forEach((handler) => handler());
   }
 
   /**

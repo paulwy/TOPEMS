@@ -201,9 +201,7 @@ describe('AttendanceLeaveTab', () => {
     expect(screen.getByText('年假')).toBeInTheDocument();
     expect(screen.getByText('待审批')).toBeInTheDocument();
     expect(screen.getByText('2天')).toBeInTheDocument();
-    expect(
-      screen.getByText('2026-08-20 至 2026-08-21')
-    ).toBeInTheDocument();
+    expect(screen.getByText('2026-08-20 至 2026-08-21')).toBeInTheDocument();
     expect(screen.getByText('家庭安排')).toBeInTheDocument();
   });
 });
@@ -290,9 +288,7 @@ describe('MobileQualityDefectDialog', () => {
     expect(screen.getByText('QC-001 · 批次 B-001')).toBeInTheDocument();
     expect(screen.getByLabelText('缺陷类型')).toHaveValue('外观划痕');
     expect(screen.getByLabelText('缺陷数量')).toHaveValue(1);
-    expect(screen.getByLabelText('缺陷描述')).toHaveValue(
-      '外壳存在划痕'
-    );
+    expect(screen.getByLabelText('缺陷描述')).toHaveValue('外壳存在划痕');
     expect(screen.getByText('拍照上传')).toBeInTheDocument();
   });
 

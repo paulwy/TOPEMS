@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { ProjectReport, ReportTemplate } from './types';
 
 export const reportApi = {
   list: async (projectId: string) => {

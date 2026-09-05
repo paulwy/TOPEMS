@@ -6082,5 +6082,18 @@
   "ai.governance_dashboard.throughput": "Throughput",
   "ai.governance_dashboard.error_rate": "Error Rate",
   "ai.governance_dashboard.suggestions": "Suggestions & Improvements",
-  "ai.governance_dashboard.expected_benefit": "Expected Benefit: {{benefit}} | Implementation Effort: {{effort}}"
+  "ai.governance_dashboard.expected_benefit": "Expected Benefit: {{benefit}} | Implementation Effort: {{effort}}",
+  "ai.ab_test_panel.control_group": "Control Group",
+  "ai.ab_test_panel.variant_group": "Variant Group",
+  "ai.dsh_agent_page.title": "DSH Agent Assistant",
+  "ai.dsh_agent_page.subtitle": "Intelligent Agent built on the DSH AI middleware, supporting tool calls, streaming responses and multi-turn conversations",
+  "ai.dsh_agent_page.features": "Features",
+  "ai.dsh_agent_page.available_tools": "Available Tools ({{count}})",
+  "ai.dsh_agent_page.loading": "Loading...",
+  "ai.dsh_agent_page.session_state": "Session State",
+  "ai.dsh_agent_page.session_id": "Session ID:",
+  "ai.dsh_agent_page.status": "Status:",
+  "ai.dsh_agent_page.usage_hint": "💡 Usage Tips",
+  "ai.dsh_agent_page.try_questions": "Try asking:",
+  "ai.dsh_agent_page.footer": "DSH AI Middleware v1.0 | Agent Orchestrator | MCP Tool Registry | LLM Provider Abstraction"
 }

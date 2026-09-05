@@ -27,7 +27,6 @@ import {
 import i18n from '@/i18n';
 import { LoadingSpinner } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
-import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import {
   Timeline,
   TimelineItem,

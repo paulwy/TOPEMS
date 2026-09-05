@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { AcceptancePlan, AcceptanceItem, AcceptanceRecord } from './types';
 
 export const acceptancePlanApi = {
   list: async (projectId: string) => {

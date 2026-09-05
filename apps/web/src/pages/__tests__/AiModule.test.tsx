@@ -215,7 +215,6 @@ describe('AI Module Pages', () => {
       );
       expect(container).toBeDefined();
     });
-
   });
 
   describe('AiCodeAssistantPage', () => {
@@ -227,7 +226,6 @@ describe('AI Module Pages', () => {
       );
       expect(container).toBeDefined();
     });
-
   });
 
   describe('AiDashboardPage', () => {
@@ -239,7 +237,6 @@ describe('AI Module Pages', () => {
       );
       expect(container).toBeDefined();
     });
-
   });
 
   describe('AiDocumentAnalysisPage', () => {
@@ -251,7 +248,6 @@ describe('AI Module Pages', () => {
       );
       expect(container).toBeDefined();
     });
-
   });
 
   describe('AiKnowledgeBasePage', () => {
@@ -263,7 +259,6 @@ describe('AI Module Pages', () => {
       );
       expect(container).toBeDefined();
     });
-
   });
 
   describe('AiModelSettingsPage', () => {
@@ -275,7 +270,6 @@ describe('AI Module Pages', () => {
       );
       expect(container).toBeDefined();
     });
-
   });
 
   describe('AiPromptLibraryPage', () => {
@@ -287,6 +281,5 @@ describe('AI Module Pages', () => {
       );
       expect(container).toBeDefined();
     });
-
   });
 });

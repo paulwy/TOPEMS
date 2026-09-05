@@ -39,7 +39,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { getAlertSchema, getSeverityLabels, getStatusLabels } from '@/schemas/monitor';
-import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';

@@ -64,9 +64,7 @@ describe('Admin dictionary components', () => {
     expect(screen.getByText('管理系统中的字典类型与字典项，供各业务模块引用')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'back' })).toHaveAttribute('href', '/dashboard');
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '新建字典' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '新建字典' }));
 
     expect(onCreateClick).toHaveBeenCalledTimes(1);
   });
@@ -82,17 +80,11 @@ describe('Admin dictionary components', () => {
       />
     );
 
-    expect(
-      screen.getByText('导出字典项')
-    ).toBeInTheDocument();
+    expect(screen.getByText('导出字典项')).toBeInTheDocument();
     expect(screen.getByText('将字典项导出为 JSON 文件，便于备份与迁移。')).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '取消' })
-    );
-    fireEvent.click(
-      screen.getByRole('button', { name: '导出' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    fireEvent.click(screen.getByRole('button', { name: '导出' }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onExport).toHaveBeenCalledTimes(1);
@@ -133,9 +125,7 @@ describe('Admin dictionary components', () => {
       />
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '导入' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '导入' }));
 
     expect(onImport).toHaveBeenCalledTimes(1);
   });

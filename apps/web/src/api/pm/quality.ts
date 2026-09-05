@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { QualityCheck, Defect } from './types';
 
 export const qualityCheckApi = {
   list: async (projectId: string) => {

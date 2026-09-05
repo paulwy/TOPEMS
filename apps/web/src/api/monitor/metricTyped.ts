@@ -78,9 +78,7 @@ export const metricTypedApi = {
   /**
    * delete_business_metric operation（openapi: DELETE /api/monitor/business-metrics/{id}）
    */
-  delete: async (
-    id: string
-  ): Promise<TypedApiResponse<{ id: string }>> => {
+  delete: async (id: string): Promise<TypedApiResponse<{ id: string }>> => {
     return apiClient.monitor.delete(`/business-metrics/${id}`);
   },
 };

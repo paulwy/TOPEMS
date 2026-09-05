@@ -133,7 +133,6 @@ describe('EhsHazard components', () => {
       fireEvent.click(screen.getByText('ehs.ehshazarddetailpage.text_676fd4'));
       expect(onAddControl).toHaveBeenCalledTimes(1);
     });
-
   });
 
   describe('EhsHazardAssessmentsSection', () => {
@@ -144,7 +143,6 @@ describe('EhsHazard components', () => {
       expect(screen.getByText('ehs.ehs_hazard_detail_page.total_records:0')).toBeInTheDocument();
       expect(screen.getByText('ehs.ehshazarddetailpage.text_df834d')).toBeInTheDocument();
     });
-
   });
 
   describe('EhsHazardBasicInfoSection', () => {
@@ -160,7 +158,6 @@ describe('EhsHazard components', () => {
       expect(screen.getByText('ehs.ehs_hazard_detail_page.text_aed1df')).toBeInTheDocument();
       expect(screen.getByText('ehs.ehs_hazard_detail_page.text_19ac67')).toBeInTheDocument();
     });
-
   });
 
   describe('EhsHazardControlDialog', () => {
@@ -177,8 +174,5 @@ describe('EhsHazard components', () => {
 
       expect(screen.queryByText('ehs.ehshazarddetailpage.text_676fd4')).not.toBeInTheDocument();
     });
-
-
-
   });
 });

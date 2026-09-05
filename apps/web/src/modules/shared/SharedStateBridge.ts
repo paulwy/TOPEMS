@@ -1,5 +1,3 @@
-import type { StoreApi, UseBoundStore } from 'zustand';
-
 const SHARED_STATE_KEY = '__TOPEMS_SHARED_STATE__';
 
 export interface SharedState {

@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { ProjectRisk, RiskEvent } from './types';
 
 export const riskApi = {
   list: async (projectId: string) => {

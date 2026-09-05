@@ -6,7 +6,16 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
+import {
+  Box,
+  Tabs,
+  Tab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
+} from '@mui/material';
 import type { Warehouse } from '@/api/wms';
 
 interface InventoryReportFiltersProps {

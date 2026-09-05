@@ -21,7 +21,7 @@ import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { inquirySchema } from '@/schemas/srm';
 import { srmApi, type Inquiry, type Quotation } from '@/api/srm';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
 const InquiryQuotationPage: React.FC = () => {

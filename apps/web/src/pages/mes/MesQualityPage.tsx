@@ -2,7 +2,6 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { qualitySchema } from '@/schemas/mes';
 import { qualityApi } from '@/api/mes';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter({

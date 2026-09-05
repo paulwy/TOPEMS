@@ -76,13 +76,33 @@ export interface DepartmentFinancialSummary {
   expense_count: number;
   [key: string]: unknown;
 }
-export interface KeyRatios { [key: string]: unknown; }
-export interface AgingAnalysis { [key: string]: unknown; }
-export interface CashFlowAnalysis { [key: string]: unknown; }
-export interface DepartmentExpense { [key: string]: unknown; }
-export interface CategoryExpense { [key: string]: unknown; }
-export interface MonthlyExpense { [key: string]: unknown; }
-export interface ExpenseAnalysis { [key: string]: unknown; }
-export interface MonthlyProfit { [key: string]: unknown; }
-export interface ProfitAnalysis { [key: string]: unknown; }
-export interface FinancialOverview { [key: string]: unknown; }
+export interface KeyRatios {
+  [key: string]: unknown;
+}
+export interface AgingAnalysis {
+  [key: string]: unknown;
+}
+export interface CashFlowAnalysis {
+  [key: string]: unknown;
+}
+export interface DepartmentExpense {
+  [key: string]: unknown;
+}
+export interface CategoryExpense {
+  [key: string]: unknown;
+}
+export interface MonthlyExpense {
+  [key: string]: unknown;
+}
+export interface ExpenseAnalysis {
+  [key: string]: unknown;
+}
+export interface MonthlyProfit {
+  [key: string]: unknown;
+}
+export interface ProfitAnalysis {
+  [key: string]: unknown;
+}
+export interface FinancialOverview {
+  [key: string]: unknown;
+}

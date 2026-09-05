@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { crmApi } from '@/api/crm';
-import type { Contact } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';

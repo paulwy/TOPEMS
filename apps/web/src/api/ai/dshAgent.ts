@@ -130,9 +130,7 @@ export const dshAgentApi = {
   /**
    * 同步执行 Agent
    */
-  execute: async (
-    data: DshAgentExecuteRequest,
-  ): Promise<ApiResponse<DshAgentExecuteResponse>> => {
+  execute: async (data: DshAgentExecuteRequest): Promise<ApiResponse<DshAgentExecuteResponse>> => {
     return apiClient.ai.post<DshAgentExecuteResponse>('/dsh/agent/execute', data);
   },
 
@@ -144,7 +142,7 @@ export const dshAgentApi = {
    */
   executeStream: async (
     request: DshAgentExecuteRequest,
-    onEvent: StreamEventHandler,
+    onEvent: StreamEventHandler
   ): Promise<void> => {
     // 使用相对路径，让浏览器处理 base URL
     const url = '/api/ai/dsh/agent/stream';
@@ -154,7 +152,7 @@ export const dshAgentApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
+        Accept: 'text/event-stream',
       },
       body: JSON.stringify(request),
     });

@@ -29,7 +29,7 @@ import { apiLogger } from '@/utils/logger';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertHistorySchema } from '@/schemas/monitor';
-import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const CRUD_QUERY_KEY = ['monitor_alert_history'];
 const METRIC_FILTER_OPTIONS = [

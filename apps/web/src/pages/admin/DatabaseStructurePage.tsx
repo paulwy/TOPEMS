@@ -59,7 +59,7 @@ import {
   type SqlPreview,
 } from '@/api/system';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const DatabaseStructurePage: React.FC = () => {
   const navigate = useNavigate();
