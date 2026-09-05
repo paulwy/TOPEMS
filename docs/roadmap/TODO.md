@@ -21754,13 +21754,13 @@ git add $STAGED
 
 ### V497
 
-> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 状态：**已完成**（提交 `3895fc370`）｜日期：2026-09-05
 > 主题：DshAgentChatPanel 收尾——prefer-template 3→0 / 硬编码中文 16 行清零
 
 ### V497 完成内容
 
 1. **DshAgentChatPanel i18n 化**：16 处硬编码中文（scan 命中）全部改 `t()`——新增 `ai.dsh_agent_panel.*` 15 key（zh/en 各 +15，含 tool_call/tool_done/tool_error 插值模板）；引入 useTranslation；title prop 默认值改组件内 `resolvedTitle` fallback
-2. **prefer-template 3→0**：L153/158/163 的 `msg.content + \`...\`` 拼接随 i18n 一起转为 `t()` 插值（`{{content}}\n\n🔧 调用工具: {{tool}}...`）
+2. **prefer-template 3→0**：L153/158/163 的 `msg.content + `...`` 拼接随 i18n 一起转为 `t()` 插值（`{{content}}\n\n🔧 调用工具: {{tool}}...`）
 3. **exhaustive-deps 无净新增**：t 引入后 handleStreamEvent/handleSend 依赖数组补 `t`（2 处，必修）；文件剩余 Divider/onResponseReceived/no-hardcoded-colors 均为 v528 基线预存
 4. **坑（已记）**：给组件引入 `t()` 后，凡 useCallback 内用到 t 必须补依赖数组，否则新增 exhaustive-deps 命中（本项目 V495 刚清零，不能回退）
 5. **验证**：scan 0 行；eslint 无新增；tsc 0 errors；prettier 通过
