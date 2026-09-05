@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V485 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V486 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V485 轨A 第五批 unnecessary 清理（-5 提交）**（exhaustive-deps 164→158，PmProjectDetailPage 触发 +2 logical 回滚；useMonitorSettings 为 .gitignore 未跟踪文件，本地修复不提交）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V485 unnecessary 第五批（-5）**、**V486 第六批（-4）**（exhaustive-deps 164→154；V486 精确定位 V483 边界文件：useEdgeCompute/useIsr/ReturnDetailPage 可安全删，FinanceVoucherPage/TenantDetailPage 删除引发 logical 复现确认）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,24 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V486
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨A 第六批——unnecessary 边界文件精确定位（-4）+ AiKnowledgeBasePage unused t 清理
+
+### V486 完成内容
+
+1. **unnecessary 剩余 9 处边界文件精确定位（-4，3 文件）**：exhaustive-deps 158 → 154
+   - **useEdgeCompute 2 处可安全删**（isStale 的 `[key, data]`→`[key]`、endpoint 的 `[region, endpoints]`→`[region]`）：96 行 missing 'options' 为**预存**（v493 基线即存在，与删除无关）——V483 回滚原因实为当时连带误删，非删除本身
+   - **useIsr 1 处可安全删**（`[cacheKey, data]`→`[cacheKey]`；94 行 missing options 预存）
+   - **ReturnDetailPage 1 处可安全删**（数组去 actionMutation；87/278/349 预存）
+   - **FinanceVoucherPage 3 处回滚（V483 原因确认）**：删 `[allVouchers, t]`/`[subjects, t]`/`[t, subjectStatCards]` 中 t 后，**127/141 行暴露新 logical 警告**（allVouchers/subjects 为 `data || []` logical 表达式，eslint 在数组含 unnecessary t 时抑制 logical 报告、删除后暴露）——stash 实验确认基线无 127/141 警告
+   - **TenantDetailPage 1 处回滚（V483 原因确认）**：删 usersLoading 后 137 行 users 变新 logical 警告（与 V483 记录完全一致）
+2. **AiKnowledgeBasePage unused t 清理**：V485 删除 t 依赖后暴露 `const { t } = useTranslation()` 未使用（98:11 warning）→ 删除解构 + useTranslation import（文件全用 i18n.t，0 lint / 0 TS）
+3. **验证**：4 提交文件 0 lint error / 0 TS error；全量 exhaustive-deps 154（unnecessary 9→5，logical 23 不变）；tsc 0 errors
+4. **遗留**：unnecessary 剩余 5（FinanceVoucherPage 3 / TenantDetailPage 1 / PmProjectDetailPage 2 减 2？——实际 FinanceVoucherPage 3 + TenantDetailPage 1 + PmProjectDetailPage 2 中的 getRiskLabels/getStatusLabels 1 条消息 2 dep）；**解决路径已明确**：FinanceVoucherPage/TenantDetailPage 需先 useMemo 包裹 logical 表达式（allVouchers/subjects/users）再删，属 V481 同类稳定化工作；PmProjectDetailPage 需先化解 78/82 logical
+
 
 ### V485
 

@@ -151,7 +151,7 @@ export function useEdgeCache<T = unknown>(
   const isStale = useMemo(() => {
     const cached = edgeComputeManager.getEdgeCache<T>(key);
     return cached === undefined;
-  }, [key, data]);
+  }, [key]);
 
   const refresh = useCallback(async (): Promise<T | undefined> => {
     setLoading(true);
@@ -211,7 +211,7 @@ export function useOptimalEndpoint(region?: string): UseOptimalEndpointResult {
 
   const endpoint = useMemo(() => {
     return edgeComputeManager.selectOptimalEndpoint(region);
-  }, [region, endpoints]);
+  }, [region]);
 
   const healthyEndpoints = useMemo(() => {
     return endpoints.filter((e) => e.healthy);

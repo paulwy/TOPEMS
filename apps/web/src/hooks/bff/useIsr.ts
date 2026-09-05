@@ -62,7 +62,7 @@ export function useIsrCache<T = unknown>(
 
   const isStale = useMemo(() => {
     return isrManager.isStale(cacheKey);
-  }, [cacheKey, data]);
+  }, [cacheKey]);
 
   const revalidate = useCallback(async (): Promise<T | undefined> => {
     setIsRevalidating(true);

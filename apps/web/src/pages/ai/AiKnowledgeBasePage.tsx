@@ -27,7 +27,6 @@ import {
   HelpCircle,
   FolderOpen,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
@@ -95,7 +94,6 @@ type ChatMessage = {
 
 export const AiKnowledgeBasePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [searching, setSearching] = useState(false);

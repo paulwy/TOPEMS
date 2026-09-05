@@ -666,7 +666,7 @@ const ReturnDetailPage: React.FC = () => {
     return buttons.length > 0 ? (
       <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>{buttons}</Box>
     ) : null;
-  }, [record, id, actionMutation, deleteMutation, handleAction, t]);
+  }, [record, id, deleteMutation, handleAction, t]);
 
   return (
     <PageContainer
