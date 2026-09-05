@@ -4,7 +4,7 @@ import {
   updateOfflineRecord,
   deleteOfflineRecord,
   type OfflineRecord,
-} from './offlineStorage';
+} from './OfflineStorage';
 import { logger } from '@/utils/logger';
 
 const MAX_RETRY_COUNT = 5;

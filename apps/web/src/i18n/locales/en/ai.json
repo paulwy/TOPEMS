@@ -1550,7 +1550,7 @@
       "k24": "CreateTemplate",
       "k25": "SaveModify"
     },
-    "ui-recommender": {
+    "uiRecommender": {
       "k29": "Actions",
       "k49": "Tip",
       "k75": "Actions",
@@ -2715,7 +2715,7 @@
       "k9": "Current File Has",
       "k10": "item Enableof Breakpoint"
     },
-    "code-completion": {
+    "codeCompletion": {
       "react_0": "CreateOneitem React FunctionComponent",
       "usestate_1": "Create useState StatusHook",
       "useeffect_2": "Create useEffect DeputyHook",
@@ -2769,7 +2769,7 @@
       "k4": "(Required)",
       "k5": "}${ep.response_type ? ` | Response: ${ep.response_type}` :"
     },
-    "test-generator": {
+    "testGenerator": {
       "null_0": "Null/null Input",
       "k1": "Character",
       "k2": "Empty Array",
@@ -5986,7 +5986,7 @@
   "ai.dsh_agent_panel.help_subtitle": "Ask a question and I will use tools to find the answer",
   "ai.dsh_agent_panel.input_placeholder": "Type your question...",
   "ai.governance_dashboard.title": "AI Governance Dashboard",
-  "ai.governance_dashboard.subtitle": "Real-time monitoring of AI system governance, risk and compliance",
+  "ai.governance_dashboard.subtitle": "Comprehensive monitoring of AI system security, compliance, cost and performance",
   "ai.governance_dashboard.score": "Governance Score",
   "ai.governance_dashboard.stat_total_requests": "Total Requests",
   "ai.governance_dashboard.stat_success_rate": "Success Rate",
@@ -5995,7 +5995,7 @@
   "ai.governance_dashboard.stat_active_users": "Active Users",
   "ai.governance_dashboard.stat_cache_hit": "Cache Hit",
   "ai.governance_dashboard.risk_title": "Risk Assessment",
-  "ai.governance_dashboard.risk_score": "Risk Score",
+  "ai.governance_dashboard.risk_score": "Risk Score: {{score}}/100",
   "ai.governance_dashboard.risk_high_items": "High-risk items ({{count}})",
   "ai.governance_dashboard.compliance_title": "Compliance Status",
   "ai.governance_dashboard.compliance_rate": "Overall Compliance Rate",
@@ -6060,5 +6060,27 @@
   "ai.smart_form_renderer.form_errors": "The form contains {{count}} errors. Please review and resubmit.",
   "ai.smart_form_renderer.form_success": "Form validation passed!",
   "ai.smart_form_renderer.save_draft": "Save Draft",
-  "ai.smart_form_renderer.submit": "Submit"
+  "ai.smart_form_renderer.submit": "Submit",
+  "ai.use_dsh_agent.execute_failed": "Execution failed",
+  "ai.use_dsh_agent.unknown_error": "Unknown error",
+  "ai.governance_dashboard.loading": "Loading governance dashboard data...",
+  "ai.governance_dashboard.clear_cache": "Clear cache",
+  "ai.governance_dashboard.last_updated": "Last updated: {{time}}",
+  "ai.governance_dashboard.risk_details": "Risk Assessment Details",
+  "ai.governance_dashboard.overall_risk_level": "Overall Risk Level",
+  "ai.governance_dashboard.compliance_details": "Compliance Status Details",
+  "ai.governance_dashboard.overall_compliance_rate": "Overall Compliance Rate",
+  "ai.governance_dashboard.passed": "Passed",
+  "ai.governance_dashboard.failed": "Failed",
+  "ai.governance_dashboard.pending": "Pending",
+  "ai.governance_dashboard.cost_details": "Cost Analysis Details",
+  "ai.governance_dashboard.total_cost": "Total Cost",
+  "ai.governance_dashboard.budget_usage": "Budget Usage: {{percent}}",
+  "ai.governance_dashboard.performance_details": "Performance Metrics Details",
+  "ai.governance_dashboard.avg_response_time": "Average Response Time",
+  "ai.governance_dashboard.p95_response_time": "P95 Response Time",
+  "ai.governance_dashboard.throughput": "Throughput",
+  "ai.governance_dashboard.error_rate": "Error Rate",
+  "ai.governance_dashboard.suggestions": "Suggestions & Improvements",
+  "ai.governance_dashboard.expected_benefit": "Expected Benefit: {{benefit}} | Implementation Effort: {{effort}}"
 }

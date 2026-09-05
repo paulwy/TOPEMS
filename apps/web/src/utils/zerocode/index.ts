@@ -16,7 +16,7 @@
 
 // ==================== API 可视化对接 ====================
 
-export { apiVisualIntegration } from './api-visual-integration';
+export { apiVisualIntegration } from './apiVisualIntegration';
 
 export type {
   SchemaField,
@@ -27,13 +27,13 @@ export type {
   DebugResponse,
   DebugSession,
   ConnectionHealth,
-} from './api-visual-integration';
+} from './apiVisualIntegration';
 
-export { HttpMethod, FieldType, ConnectionStatus } from './api-visual-integration';
+export { HttpMethod, FieldType, ConnectionStatus } from './apiVisualIntegration';
 
 // ==================== 数据流编排 ====================
 
-export { dataflowOrchestrator } from './dataflow-orchestrator';
+export { dataflowOrchestrator } from './dataflowOrchestrator';
 
 export type {
   FlowNode,
@@ -43,13 +43,13 @@ export type {
   FlowExecution,
   TransformRule,
   FlowValidation,
-} from './dataflow-orchestrator';
+} from './dataflowOrchestrator';
 
-export { FlowNodeType, NodeStatus } from './dataflow-orchestrator';
+export { FlowNodeType, NodeStatus } from './dataflowOrchestrator';
 
 // ==================== 自动化文档生成 ====================
 
-export { autoDocGenerator } from './auto-doc-generator';
+export { autoDocGenerator } from './autoDocGenerator';
 
 export type {
   DocSection,
@@ -58,12 +58,12 @@ export type {
   EndpointDocConfig,
   FlowDocConfig,
   ComponentDoc,
-} from './auto-doc-generator';
+} from './autoDocGenerator';
 
-export { DocFormat, ComponentType } from './auto-doc-generator';
+export { DocFormat, ComponentType } from './autoDocGenerator';
 
 // ==================== 默认导出 ====================
 
-export { default as defaultApiVisualIntegration } from './api-visual-integration';
-export { default as defaultDataflowOrchestrator } from './dataflow-orchestrator';
-export { default as defaultAutoDocGenerator } from './auto-doc-generator';
+export { default as defaultApiVisualIntegration } from './apiVisualIntegration';
+export { default as defaultDataflowOrchestrator } from './dataflowOrchestrator';
+export { default as defaultAutoDocGenerator } from './autoDocGenerator';

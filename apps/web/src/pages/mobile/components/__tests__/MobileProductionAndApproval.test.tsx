@@ -8,7 +8,7 @@ import { MobileProductionCard } from '../MobileProductionCard';
 import { MobileProductionFilters } from '../MobileProductionFilters';
 import { MobileQualitySearchBar } from '../MobileQualitySearchBar';
 import type { ProductionOrder, WorkReport, Equipment } from '@/api/mobile';
-import type { ApprovalItem } from '../../hooks/useMobileApproval';
+import type { ApprovalItem } from '../../hooks/UseMobileApproval';
 
 const mockAddNotification = vi.hoisted(() => vi.fn());
 
@@ -218,7 +218,7 @@ vi.mock('@/components/mobile', () => ({
   ),
 }));
 
-vi.mock('../../hooks/useMobileApproval', async () => {
+vi.mock('../../hooks/UseMobileApproval', async () => {
   const ReactModule = await import('react');
   return {
     getTypeIcon: () => ReactModule.createElement('span', null, 'type-icon'),

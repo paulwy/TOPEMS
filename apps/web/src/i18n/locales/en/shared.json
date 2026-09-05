@@ -4762,7 +4762,7 @@
       "k0": "No data",
       "k1": "More"
     },
-    "ui-recommender": {
+    "uiRecommender": {
       "k30": "Actions",
       "k40": "Tip",
       "k41": "Operation succeeded",
@@ -4991,7 +4991,7 @@
       "k17": "Error",
       "yyyymm_12": "YYYY Year MM Month"
     },
-    "auto-doc-generator": {
+    "autoDocGenerator": {
       "k16": "Created At",
       "k18": "Updated At",
       "k44": "Updated At",
@@ -7394,13 +7394,13 @@
       "ehs_4": "EHSCheck",
       "scm_5": "SCMDashboard"
     },
-    "ai-ui-generator": {
+    "aiUiGenerator": {
       "k0": "PositionGenerateResult, AI Generate API",
       "k1": "[a2ui] ollama CallFailed, DowngradeforPositionStructure:",
       "k2": "Based OnHint \"",
       "ai_3": "\" of AI GenerateResult"
     },
-    "smart-code-reviewer": {
+    "smartCodeReviewer": {
       "k0": "Exist Useof Variable",
       "k1": "Unused variables may be legacy code or errors",
       "k2": "Remove Useof Variable",
@@ -7476,7 +7476,7 @@
       "k29": "Fix",
       "k31": "Total Problem Count"
     },
-    "code-completion": {
+    "codeCompletion": {
       "react_0": "CreateOneitem React FunctionComponent",
       "usestate_1": "Create useState StatusHook",
       "useeffect_2": "Create useEffect DeputyHook",
@@ -7548,7 +7548,7 @@
       "id_26": "RemoteModule ID",
       "url_27": "RemoteEntry URL"
     },
-    "test-generator": {
+    "testGenerator": {
       "k0": "CoverageBelow 80%, Recommend adding more boundary value test cases",
       "k1": "Number of test cases is less than number of functions, Recommend adding at least one test for each function",
       "k2": "Empty Input",
@@ -7653,11 +7653,11 @@
       "k6": "Persistence Downgrade Record Failed:",
       "k7": "Degraded statistics listener execution failed:"
     },
-    "cdn-scheduler": {
+    "cdnScheduler": {
       "cdn_0": "Alibaba CloudCDN",
       "cdn_1": "Tencent CloudCDN"
     },
-    "edge-compute": {
+    "edgeCompute": {
       "k0": "East ChinaSideNode",
       "k1": "North ChinaSideNode",
       "k2": "South ChinaSideNode",
@@ -7684,7 +7684,7 @@
       "k16": "Please SelectOrderDate",
       "k17": "Please SelectStartDate"
     },
-    "performance-bottleneck": {
+    "performanceBottleneck": {
       "k0": "PerformanceExcellent, Detected",
       "k1": "Excellent",
       "k2": "Good",
@@ -7743,7 +7743,7 @@
       "k23": "Use React.memo / useMemo / useCallback ReduceofRender",
       "swapfoit_24": "UseFontShow: swap Avoid FOIT"
     },
-    "query-cost-analyzer": {
+    "queryCostAnalyzer": {
       "k0": "QueryCostHigher, Consider splitting queries or using caching",
       "k1": "QueryCostNormal, NoneNeedOptimization",
       "k2": "NoneMethodParseQuery, SkipCostAnalysis",
@@ -7754,7 +7754,7 @@
       "k7": "Critical",
       "k8": ") Exceed Limit("
     },
-    "query-sharding": {
+    "querySharding": {
       "k0": "Query cost is within acceptable range, NoneNeedShard",
       "k1": "Points), SuggestionShard",
       "k2": "Data VolumeLarge(",
@@ -7769,14 +7769,14 @@
       "k11": "ShardQueryComplete: Success",
       "k12": ", Failed"
     },
-    "smart-prefetch": {
+    "smartPrefetch": {
       "k0": "Cleared access history and preload queue",
       "k1": "PreloadTask:",
       "k2": "item, ColumnLength:",
       "k3": "Register Route Query:",
       "k4": "itemQuery)"
     },
-    "streaming-ssr": {
+    "streamingSsr": {
       "k0": "CurrentRuntimeNot SupportedStreaming SSR(renderToReadableStream / renderToPipeableStream AverageAvailable)",
       "k1": "Streaming Render Cancel",
       "ssr_0": "Hydration SSR Data:",
@@ -7786,7 +7786,7 @@
       "k5": "Streaming Render Error:",
       "k6": "Streaming Render Failed:"
     },
-    "auto-trigger": {
+    "autoTrigger": {
       "k0": "Trigger Disabled",
       "k1": "TriggerExist",
       "k2": "WorkflowInclude HTTP/DatabaseQueryNode, Pass Webhook Trigger",
@@ -7796,7 +7796,7 @@
       "k6": "NoTrigger, SuggestionTrigger",
       "webhook_0": "Webhook Trigger"
     },
-    "drag-orchestrator": {
+    "dragOrchestrator": {
       "k0": "The start node usually connects to the first execution node",
       "k1": "Recommend connecting end node at process end",
       "k2": "Decision Node Connection After Branch",
@@ -7804,7 +7804,7 @@
       "k4": "NodeType, SuggestionConnection",
       "http_0": "HTTP Request results usually need transformation"
     },
-    "workflow-editor": {
+    "workflowEditor": {
       "k0": "WorkflowNameIs Empty",
       "k1": "The workflow must contain at least one node",
       "k2": "The workflow must contain a start node",
@@ -8528,7 +8528,7 @@
       "k8": "Gray",
       "k9": "Black"
     },
-    "_mock": {
+    "mockData": {
       "k0": "Customer",
       "k1": "High ValueActive",
       "k2": "High Value",
@@ -9304,7 +9304,7 @@
       "api_0": "API Success Rate:",
       "k1": "MemoryUsage Rate:"
     },
-    "auto-test-generator": {
+    "autoTestGenerator": {
       "k0": "[a2ui] ollama ReturnObject payload, DowngradeforPositionStructure",
       "k1": "[a2ui] ollama CallFailed, DowngradeforPositionStructure:"
     },
@@ -9312,10 +9312,10 @@
       "k0": ", // workflow Is Alias, ActualServicefor",
       "k1": ", // master Is Alias, ActualServicefor"
     },
-    "e2e-tracing": {
+    "e2eTracing": {
       "k0": "[E2ETracer] End-to-EndInitialize"
     },
-    "session-replay": {
+    "sessionReplay": {
       "k0": "[SessionReplayer] MeetingPlaybackCollect",
       "k1": "[SessionReplayer] MeetingPlaybackStarted:",
       "k2": "[SessionReplayer] MeetingPlaybackStopped:"
@@ -9505,5 +9505,9 @@
     "v56-ops-panel": {
       "k0": "Cooldown"
     }
-  }
+  },
+  "shared.config.ai_business_copilot": "Business Copilot",
+  "shared.config.ai_governance_dashboard": "AI Governance Dashboard",
+  "shared.config.ai_business_copilot_desc": "One-stop AI assistant integrating business module selection, smart forms and document intelligence",
+  "shared.config.ai_governance_dashboard_desc": "Comprehensive monitoring of AI system security, compliance, cost and performance"
 }

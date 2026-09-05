@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { usePmReport, DEFAULT_STATS } from '../usePmReport';
+import { usePmReport, DEFAULT_STATS } from '../UsePmReport';
 
 vi.mock('@tanstack/react-query', () => ({
   QueryCache: vi.fn(),
@@ -69,7 +69,7 @@ vi.mock('lucide-react', () => ({
   DollarSign: () => null,
 }));
 
-describe('usePmReport', () => {
+describe('UsePmReport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     Object.defineProperty(globalThis.URL, 'createObjectURL', {

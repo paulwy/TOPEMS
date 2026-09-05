@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, LinearProgress, Typography } from '@mui/material';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import type { WavePickDto } from '@/types/wms';
 import type { ColumnDef } from '@tanstack/react-table';
 import { WmsStatusBadge } from '@/components/wms';
@@ -245,7 +245,7 @@ export default function WmsWavePickDetailPage() {
                 data={orders}
                 enablePagination={false}
                 showSearch={false}
-                                showExport={false}
+                showExport={false}
                 showCreate={false}
                 showSelection={false}
               />

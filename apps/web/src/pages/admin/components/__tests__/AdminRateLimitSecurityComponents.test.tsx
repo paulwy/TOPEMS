@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import RateLimitDimensionCard from '../RateLimitDimensionCard';
 import RateLimitPathRules from '../RateLimitPathRules';
 import AntiReplayConfigPanel from '../AntiReplayConfigPanel';
-import type { AntiReplayConfig, PathRule, RateLimitRule } from '../../hooks/useRateLimitConfig';
+import type { AntiReplayConfig, PathRule, RateLimitRule } from '../../hooks/UseRateLimitConfig';
 
 vi.mock('react-i18next', () => {
   const sources = [
@@ -204,9 +204,7 @@ describe('RateLimitPathRules', () => {
     fireEvent.change(screen.getByLabelText('窗口(秒)'), {
       target: { value: '' },
     });
-    fireEvent.click(
-      screen.getByRole('button', { name: '添加规则' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '添加规则' }));
 
     expect(screen.getByText('路径限流规则')).toBeInTheDocument();
     expect(screen.getByText('暂无路径规则')).toBeInTheDocument();
@@ -334,13 +332,9 @@ describe('AntiReplayConfigPanel', () => {
       />
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '添加强制路径' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '添加强制路径' }));
     fireEvent.click(container.querySelector('.MuiChip-deleteIcon') as Element);
-    fireEvent.click(
-      screen.getByRole('button', { name: '保存配置' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '保存配置' }));
 
     expect(onAddEnforcePath).toHaveBeenCalledTimes(1);
     expect(onRemoveEnforcePath).toHaveBeenCalledWith('/api/core/finance');
@@ -361,8 +355,6 @@ describe('AntiReplayConfigPanel', () => {
       />
     );
 
-    expect(
-      screen.getByRole('button', { name: '保存配置' })
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: '保存配置' })).toBeDisabled();
   });
 });

@@ -133,6 +133,7 @@ export class PluginLoader {
     ) {
       this.systemJS = (
         window as unknown as {
+          // eslint-disable-next-line @typescript-eslint/naming-convention -- SystemJS 全局约定名
           System: {
             import: (modulePath: string) => Promise<unknown>;
           };

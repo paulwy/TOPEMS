@@ -22,7 +22,7 @@ import {
   Alert,
 } from '@mui/material';
 import { designTokens } from '@topems/tokens';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { DetailPageTemplate } from '@/components/templates';

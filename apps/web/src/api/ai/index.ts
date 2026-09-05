@@ -18,18 +18,18 @@ import { vectorApi } from './vector';
 import { recommendationApi } from './recommendation';
 import { assistantApi } from './assistant';
 import { difyApi } from './dify';
-import { dshAgentApi } from './dsh-agent';
-import * as businessCopilotApi from './business-copilot';
-import * as businessIntelligenceApi from './business-intelligence';
-import * as governanceDashboardApi from './governance-dashboard';
+import { dshAgentApi } from './dshAgent';
+import * as businessCopilotApi from './businessCopilot';
+import * as businessIntelligenceApi from './businessIntelligence';
+import * as governanceDashboardApi from './governanceDashboard';
 
 export * from './types';
 export * from './assistant';
 export * from './dify';
-export * from './dsh-agent';
-export * from './business-copilot';
-export * from './business-intelligence';
-export * from './governance-dashboard';
+export * from './dshAgent';
+export * from './businessCopilot';
+export * from './businessIntelligence';
+export * from './governanceDashboard';
 
 export const aiApi = {
   ...documentApi,

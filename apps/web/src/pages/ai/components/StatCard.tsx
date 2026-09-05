@@ -1,6 +1,6 @@
 import React from 'react';
 import { Paper, Box, Typography, Chip } from '@mui/material';
-import type { StatCardData } from '../hooks/useAiDashboard';
+import type { StatCardData } from '../hooks/UseAiDashboard';
 
 export const StatCard: React.FC<StatCardData> = ({
   title,

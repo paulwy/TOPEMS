@@ -6,7 +6,7 @@ import { ApprovalDetail } from '../ApprovalDetail';
 import ManualInput from '../ManualInput';
 import { MobileProductionReportDialog } from '../MobileProductionReportDialog';
 import type { ProductionOrder } from '@/api/mobile';
-import type { ApprovalItem } from '../../hooks/useMobileApproval';
+import type { ApprovalItem } from '../../hooks/UseMobileApproval';
 import type { ReportForm } from '../../hooks/useMobileProduction';
 
 vi.mock('react-i18next', () => ({
@@ -38,7 +38,7 @@ vi.mock('@/components/mobile', () => ({
   ),
 }));
 
-vi.mock('../../hooks/useMobileApproval', async () => {
+vi.mock('../../hooks/UseMobileApproval', async () => {
   const ReactModule = await import('react');
   return {
     getTypeIcon: () => ReactModule.createElement('span', null, 'type-icon'),
@@ -46,11 +46,7 @@ vi.mock('../../hooks/useMobileApproval', async () => {
     getPriorityColor: (priority: ApprovalItem['priority']) =>
       priority === 'high' ? 'error' : priority === 'medium' ? 'warning' : 'success',
     getPriorityLabel: (priority: ApprovalItem['priority'], t: (key: string) => string) =>
-      priority === 'high'
-        ? t('紧急')
-        : priority === 'medium'
-          ? t('普通')
-          : t('低'),
+      priority === 'high' ? t('紧急') : priority === 'medium' ? t('普通') : t('低'),
   };
 });
 

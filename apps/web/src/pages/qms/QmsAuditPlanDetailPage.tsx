@@ -22,7 +22,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';

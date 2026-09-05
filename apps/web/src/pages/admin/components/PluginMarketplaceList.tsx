@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Calendar, Download, Package, Search } from 'lucide-react';
-import type { MarketplacePlugin } from '../hooks/usePluginManagement';
+import type { MarketplacePlugin } from '../hooks/UsePluginManagement';
 
 interface PluginMarketplaceListProps {
   search: string;

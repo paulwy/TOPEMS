@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import { Truck, ArrowLeftRight, MapPin, Package, CheckCircle2 } from 'lucide-react';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import type { TransferOrderDto } from '@/types/wms';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import { PageContainer } from '@/components/common';

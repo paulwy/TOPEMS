@@ -12,7 +12,7 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '../../../api/gis';
-import type { TabType } from '../hooks/useGisPage';
+import type { TabType } from '../hooks/UseGisPage';
 
 interface DataTableProps {
   data: unknown[];
@@ -263,7 +263,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
       data={data}
       enablePagination={false}
       showSearch={false}
-            showExport={false}
+      showExport={false}
       showSelection={false}
       showCreate={false}
       emptyMessage={t('gis.index.empty_no_data')}

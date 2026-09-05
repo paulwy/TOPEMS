@@ -1,6 +1,6 @@
 import type { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
 import { flattenRoutes, toFlatRouteConfig } from './types';
-import { pluginManager } from '../../lib/plugin-loader/PluginManager';
+import { pluginManager } from '../../lib/plugin-loader/pluginManager';
 import { apiLogger } from '../../utils/logger';
 import { ensureNamespacesLoaded } from '@/i18n';
 
@@ -175,7 +175,7 @@ export async function getActiveRoutes(): Promise<RouteConfigV2[]> {
       }
     }
   } catch (e) {
-    apiLogger.warn('Failed to get active routes from PluginManager', e);
+    apiLogger.warn('Failed to get active routes from pluginManager', e);
   }
 
   return allRoutes;

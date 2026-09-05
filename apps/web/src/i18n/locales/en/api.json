@@ -27,7 +27,7 @@
       "boolean_8": ": boolean; // include comparison data",
       "k9": "periods: string[]; // reporting periods, e.g. ["
     },
-    "_mock": {
+    "mockData": {
       "k0": "Interim measure: isolate inventory, tighten inspection",
       "k1": "Verification result: measure effective, qualification rate restored",
       "k2": "Team recognition: commend relevant personnel"

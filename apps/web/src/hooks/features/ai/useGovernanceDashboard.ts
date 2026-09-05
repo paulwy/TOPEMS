@@ -31,7 +31,7 @@ import {
   type RiskLevel,
   type RecommendationPriority,
   type SecurityEventSummary,
-} from '@/api/ai/governance-dashboard';
+} from '@/api/ai/governanceDashboard';
 
 // ============================================================================
 // Hook 状态
@@ -93,27 +93,30 @@ export function useGovernanceDashboard(
   });
 
   /** 加载仪表盘数据 */
-  const loadDashboard = useCallback(async (timeRange?: TimeRange) => {
-    const range = timeRange || state.timeRange;
-    setState((s) => ({ ...s, isLoading: true, error: null }));
-    try {
-      const response = await getGovernanceDashboard(range);
-      if (response.data) {
-        setState((s) => ({
-          ...s,
-          dashboard: response.data!,
-          isLoading: false,
-          lastRefreshed: new Date(),
-        }));
-        return response.data;
+  const loadDashboard = useCallback(
+    async (timeRange?: TimeRange) => {
+      const range = timeRange || state.timeRange;
+      setState((s) => ({ ...s, isLoading: true, error: null }));
+      try {
+        const response = await getGovernanceDashboard(range);
+        if (response.data) {
+          setState((s) => ({
+            ...s,
+            dashboard: response.data!,
+            isLoading: false,
+            lastRefreshed: new Date(),
+          }));
+          return response.data;
+        }
+        throw new Error('Failed to load dashboard');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setState((s) => ({ ...s, error: message, isLoading: false }));
+        return null;
       }
-      throw new Error('Failed to load dashboard');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setState((s) => ({ ...s, error: message, isLoading: false }));
-      return null;
-    }
-  }, [state.timeRange]);
+    },
+    [state.timeRange]
+  );
 
   /** 刷新数据 */
   const refresh = useCallback(async () => {

@@ -32,7 +32,7 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { QMS_PATHS } from '@/modules/qms/config';
 import { designTokens } from '@topems/tokens';

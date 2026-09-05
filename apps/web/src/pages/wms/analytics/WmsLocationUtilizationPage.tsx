@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 

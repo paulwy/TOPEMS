@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { RecentItem } from './RecentItem';
 import { AI_PATHS } from '@/modules/ai/config';
-import type { RecentItemData } from '../hooks/useAiDashboard';
+import type { RecentItemData } from '../hooks/UseAiDashboard';
 
 export const DashboardRecentActivity: React.FC<{ items: RecentItemData[] }> = ({ items }) => {
   const { t } = useTranslation();

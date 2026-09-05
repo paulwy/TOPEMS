@@ -1,7 +1,7 @@
 import React from 'react';
 import { Paper, Box, Typography, Button, Chip } from '@mui/material';
 import { ArrowRight } from 'lucide-react';
-import type { FeatureCardData } from '../hooks/useAiDashboard';
+import type { FeatureCardData } from '../hooks/UseAiDashboard';
 
 export const FeatureCard: React.FC<FeatureCardData> = ({
   title,

@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { FeatureCard } from './FeatureCard';
-import type { FeatureCardData } from '../hooks/useAiDashboard';
+import type { FeatureCardData } from '../hooks/UseAiDashboard';
 
 export const DashboardFeatures: React.FC<{ features: FeatureCardData[] }> = ({ features }) => {
   const { t } = useTranslation();

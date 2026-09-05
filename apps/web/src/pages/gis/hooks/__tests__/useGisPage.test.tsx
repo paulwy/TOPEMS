@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useGisPage } from '../useGisPage';
+import { useGisPage } from '../UseGisPage';
 
 const gisState = vi.hoisted(() => ({
   devicePoints: [{ id: 'dp-1', name: 'DP1' }],
@@ -37,7 +37,7 @@ vi.mock('lucide-react', () => ({
   Building2: () => null,
 }));
 
-describe('useGisPage', () => {
+describe('UseGisPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loadAllDataMock.fn.mockClear();

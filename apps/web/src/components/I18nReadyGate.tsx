@@ -6,7 +6,7 @@ import {
   hasPendingResourceUpdate,
   clearPendingResourceUpdate,
 } from '@/i18n';
-import { pluginManager } from '@/lib/plugin-loader/PluginManager';
+import { pluginManager } from '@/lib/plugin-loader/pluginManager';
 import { ensureShortcutsLoaded } from '@/store/shortcutsStore';
 
 interface I18nReadyGateProps {

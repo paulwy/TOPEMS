@@ -8,13 +8,13 @@ import { Box, Typography, Chip, Paper, Avatar, TextField, useTheme } from '@mui/
 import { Clock, User as UserIcon, Check, X } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
-import type { ApprovalItem } from '../hooks/useMobileApproval';
+import type { ApprovalItem } from '../hooks/UseMobileApproval';
 import {
   getTypeIcon,
   getTypeColor,
   getPriorityColor,
   getPriorityLabel,
-} from '../hooks/useMobileApproval';
+} from '../hooks/UseMobileApproval';
 import i18n from '@/i18n';
 
 interface ApprovalDetailProps {

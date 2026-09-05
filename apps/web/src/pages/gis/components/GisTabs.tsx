@@ -1,7 +1,7 @@
 import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Button } from '@mui/material';
-import type { TabType } from '../hooks/useGisPage';
+import type { TabType } from '../hooks/UseGisPage';
 
 interface TabConfig {
   id: TabType;

@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { coreModuleRoutes, getAllRoutes, coreModuleCodes } from '@/routes/v2';
 import { coreModuleNavConfigs } from '@/lib/navigation/modules';
 import { flattenRoutes } from '@/routes/v2/types';
-import { pluginManager } from '@/lib/plugin-loader/PluginManager';
+import { pluginManager } from '@/lib/plugin-loader/pluginManager';
 
-vi.mock('@/lib/plugin-loader/PluginManager', () => ({
+vi.mock('@/lib/plugin-loader/pluginManager', () => ({
   pluginManager: {
     initialize: vi.fn(),
     getActivePlugins: vi.fn(),

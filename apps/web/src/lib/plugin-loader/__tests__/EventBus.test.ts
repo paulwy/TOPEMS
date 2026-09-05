@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EventBus, eventBus, ModuleEvents } from '../EventBus';
+import { EventBus, eventBus, ModuleEvents } from '../eventBus';
 import { logger } from '@/utils/logger';
 
 vi.mock('@/utils/logger', () => ({
@@ -8,7 +8,7 @@ vi.mock('@/utils/logger', () => ({
   },
 }));
 
-describe('EventBus', () => {
+describe('eventBus', () => {
   let bus: EventBus;
 
   beforeEach(() => {

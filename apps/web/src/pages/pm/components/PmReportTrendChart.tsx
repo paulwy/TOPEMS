@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import i18n from '@/i18n';
-import type { TrendDatum } from '../hooks/usePmReport';
+import type { TrendDatum } from '../hooks/UsePmReport';
 
 interface PmReportTrendChartProps {
   data: TrendDatum[];

@@ -41,7 +41,7 @@ import {
   type ExecutionStep,
   type StreamEventType,
   type StreamEventData,
-} from '@/api/ai/dsh-agent';
+} from '@/api/ai/dshAgent';
 
 // ============================================================================
 // 类型定义

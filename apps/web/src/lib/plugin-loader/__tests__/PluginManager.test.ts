@@ -56,9 +56,9 @@ vi.mock('@/lib/navigation/NavigationRegistryV2', () => ({
 const fetchMock = vi.fn();
 vi.stubGlobal('fetch', fetchMock);
 
-let PluginManagerModule: typeof import('../PluginManager');
+let PluginManagerModule: typeof import('../pluginManager');
 
-async function freshModule(): Promise<typeof import('../PluginManager')> {
+async function freshModule(): Promise<typeof import('../pluginManager')> {
   // Use dynamic import to get a fresh module state (singleton lives in the module scope).
   // Reset singleton from previous round first.
   try {
@@ -68,7 +68,7 @@ async function freshModule(): Promise<typeof import('../PluginManager')> {
   }
   // vi.resetModules() + dynamic import is the canonical way. But since we used vi.mock
   // at top-level, the module itself still needs to be re-imported via importActual.
-  const mod = await vi.importActual<typeof import('../PluginManager')>('../PluginManager');
+  const mod = await vi.importActual<typeof import('../pluginManager')>('../pluginManager');
   PluginManagerModule = mod;
   return mod;
 }

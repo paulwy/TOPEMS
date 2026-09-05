@@ -55,7 +55,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { GovernanceDashboard } from '@/components/ai/business';
 import { useGovernanceDashboard } from '@/hooks/features/ai/useGovernanceDashboard';
 import { useTranslation } from 'react-i18next';
-import type { TimeRange } from '@/api/ai/governance-dashboard';
+import type { TimeRange } from '@/api/ai/governanceDashboard';
 
 // ============================================================================
 // 页面组件
@@ -101,11 +101,25 @@ const GovernanceDashboardPage: React.FC = () => {
   // 渲染加载状态
   if (isLoading && !dashboard) {
     return (
-      <Container maxWidth="xl" sx={{ py: 3 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <Container
+        maxWidth='xl'
+        sx={{ py: 3 }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '60vh',
+          }}
+        >
           <CircularProgress size={60} />
-          <Typography variant="h6" sx={{ mt: 2 }}>
-            正在加载治理仪表盘数据...
+          <Typography
+            variant='h6'
+            sx={{ mt: 2 }}
+          >
+            {t('ai.governance_dashboard.loading')}
           </Typography>
         </Box>
       </Container>
@@ -117,23 +131,53 @@ const GovernanceDashboardPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Container
+      maxWidth='xl'
+      sx={{ py: 3 }}
+    >
       {/* 页面标题和控制栏 */}
       <Box sx={{ mb: 3 }}>
-        <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-          <Grid xs={12} md={6}>
-            <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <DashboardIcon color="primary" sx={{ fontSize: 40 }} />
-              AI 治理仪表盘
+        <Grid
+          container
+          spacing={2}
+          sx={{ alignItems: 'center' }}
+        >
+          <Grid
+            xs={12}
+            md={6}
+          >
+            <Typography
+              variant='h4'
+              gutterBottom
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              <DashboardIcon
+                color='primary'
+                sx={{ fontSize: 40 }}
+              />
+              {t('ai.governance_dashboard.title')}
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              全面监控 AI 系统的安全、合规、成本和性能
+            <Typography
+              variant='body1'
+              color='text.secondary'
+            >
+              {t('ai.governance_dashboard.subtitle')}
             </Typography>
           </Grid>
-          <Grid xs={12} md={6}>
-            <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end', alignItems: 'center' }}>
+          <Grid
+            xs={12}
+            md={6}
+          >
+            <Stack
+              direction='row'
+              spacing={2}
+              sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
+            >
               {/* 时间范围选择 */}
-              <FormControl size="small" sx={{ minWidth: 150 }}>
+              <FormControl
+                size='small'
+                sx={{ minWidth: 150 }}
+              >
                 <InputLabel>{t('ai.governance_dashboard.time_range')}</InputLabel>
                 <Select
                   value={selectedTimeRange}
@@ -141,7 +185,10 @@ const GovernanceDashboardPage: React.FC = () => {
                   onChange={(e) => handleTimeRangeChange(e.target.value as TimeRange)}
                 >
                   {timeRangeOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
+                    <MenuItem
+                      key={option.value}
+                      value={option.value}
+                    >
                       {option.label}
                     </MenuItem>
                   ))}
@@ -151,31 +198,35 @@ const GovernanceDashboardPage: React.FC = () => {
               {/* 自动刷新开关 */}
               <Button
                 variant={autoRefresh ? 'contained' : 'outlined'}
-                size="small"
+                size='small'
                 onClick={() => setAutoRefresh(!autoRefresh)}
               >
-                {autoRefresh ? t('ai.governance_dashboard.auto_refreshing') : t('ai.governance_dashboard.enable_auto_refresh')}
+                {autoRefresh
+                  ? t('ai.governance_dashboard.auto_refreshing')
+                  : t('ai.governance_dashboard.enable_auto_refresh')}
               </Button>
 
               {/* 刷新按钮 */}
               <Button
-                variant="outlined"
-                size="small"
+                variant='outlined'
+                size='small'
                 startIcon={<RefreshIcon />}
                 onClick={refresh}
                 disabled={isLoading}
               >
-                {isLoading ? t('ai.governance_dashboard.refreshing') : t('ai.governance_dashboard.refresh')}
+                {isLoading
+                  ? t('ai.governance_dashboard.refreshing')
+                  : t('ai.governance_dashboard.refresh')}
               </Button>
 
               {/* 清除缓存按钮 */}
               <Button
-                variant="outlined"
-                size="small"
-                color="secondary"
+                variant='outlined'
+                size='small'
+                color='secondary'
                 onClick={clearCacheAndRefresh}
               >
-                清除缓存
+                {t('ai.governance_dashboard.clear_cache')}
               </Button>
             </Stack>
           </Grid>
@@ -183,8 +234,14 @@ const GovernanceDashboardPage: React.FC = () => {
 
         {/* 最后刷新时间 */}
         {lastRefreshed && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-            最后更新: {lastRefreshed.toLocaleString('zh-CN')}
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ mt: 1 }}
+          >
+            {t('ai.governance_dashboard.last_updated', {
+              time: lastRefreshed.toLocaleString('zh-CN'),
+            })}
           </Typography>
         )}
       </Box>
@@ -192,11 +249,14 @@ const GovernanceDashboardPage: React.FC = () => {
       {/* 错误提示 */}
       {error && (
         <Alert
-          severity="error"
+          severity='error'
           sx={{ mb: 2 }}
           action={
-            <IconButton size="small" onClick={clearError}>
-              <ErrorIcon fontSize="small" />
+            <IconButton
+              size='small'
+              onClick={clearError}
+            >
+              <ErrorIcon fontSize='small' />
             </IconButton>
           }
         >
@@ -211,20 +271,33 @@ const GovernanceDashboardPage: React.FC = () => {
 
       {/* 详细信息面板 */}
       {dashboard && (
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {/* 风险评估详情 */}
-          <Grid xs={12} md={6}>
+          <Grid
+            xs={12}
+            md={6}
+          >
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <SecurityIcon color="warning" />
-                  风险评估详情
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <SecurityIcon color='warning' />
+                  {t('ai.governance_dashboard.risk_details')}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <Stack spacing={2}>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      总体风险等级
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {t('ai.governance_dashboard.overall_risk_level')}
                     </Typography>
                     <Chip
                       label={dashboard.risk_assessment.overall_risk_level}
@@ -232,25 +305,30 @@ const GovernanceDashboardPage: React.FC = () => {
                         dashboard.risk_assessment.overall_risk_level === 'low'
                           ? 'success'
                           : dashboard.risk_assessment.overall_risk_level === 'medium'
-                          ? 'warning'
-                          : 'error'
+                            ? 'warning'
+                            : 'error'
                       }
                       sx={{ mt: 1 }}
                     />
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      风险评分: {dashboard.risk_assessment.risk_score}/100
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {t('ai.governance_dashboard.risk_score', {
+                        score: dashboard.risk_assessment.risk_score,
+                      })}
                     </Typography>
                     <LinearProgress
-                      variant="determinate"
+                      variant='determinate'
                       value={dashboard.risk_assessment.risk_score}
                       color={
                         dashboard.risk_assessment.risk_score < 30
                           ? 'success'
                           : dashboard.risk_assessment.risk_score < 60
-                          ? 'warning'
-                          : 'error'
+                            ? 'warning'
+                            : 'error'
                       }
                       sx={{ mt: 1, height: 8, borderRadius: 4 }}
                     />
@@ -261,54 +339,88 @@ const GovernanceDashboardPage: React.FC = () => {
           </Grid>
 
           {/* 合规状态详情 */}
-          <Grid xs={12} md={6}>
+          <Grid
+            xs={12}
+            md={6}
+          >
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <GavelIcon color="primary" />
-                  合规状态详情
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <GavelIcon color='primary' />
+                  {t('ai.governance_dashboard.compliance_details')}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <Stack spacing={2}>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      总体合规率
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {t('ai.governance_dashboard.overall_compliance_rate')}
                     </Typography>
-                    <Typography variant="h4" color="primary">
+                    <Typography
+                      variant='h4'
+                      color='primary'
+                    >
                       {dashboard.compliance_status.overall_compliance_rate.toFixed(1)}%
                     </Typography>
                   </Box>
-                  <Grid container spacing={2}>
+                  <Grid
+                    container
+                    spacing={2}
+                  >
                     <Grid xs={4}>
                       <Box sx={{ textAlign: 'center' }}>
-                        <CheckCircleIcon color="success" sx={{ fontSize: 32 }} />
-                        <Typography variant="h6">
+                        <CheckCircleIcon
+                          color='success'
+                          sx={{ fontSize: 32 }}
+                        />
+                        <Typography variant='h6'>
                           {dashboard.compliance_status.passed_checks}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          通过
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {t('ai.governance_dashboard.passed')}
                         </Typography>
                       </Box>
                     </Grid>
                     <Grid xs={4}>
                       <Box sx={{ textAlign: 'center' }}>
-                        <ErrorIcon color="error" sx={{ fontSize: 32 }} />
-                        <Typography variant="h6">
+                        <ErrorIcon
+                          color='error'
+                          sx={{ fontSize: 32 }}
+                        />
+                        <Typography variant='h6'>
                           {dashboard.compliance_status.failed_checks}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          失败
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {t('ai.governance_dashboard.failed')}
                         </Typography>
                       </Box>
                     </Grid>
                     <Grid xs={4}>
                       <Box sx={{ textAlign: 'center' }}>
-                        <InfoIcon color="info" sx={{ fontSize: 32 }} />
-                        <Typography variant="h6">
+                        <InfoIcon
+                          color='info'
+                          sx={{ fontSize: 32 }}
+                        />
+                        <Typography variant='h6'>
                           {dashboard.compliance_status.pending_checks}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          待处理
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {t('ai.governance_dashboard.pending')}
                         </Typography>
                       </Box>
                     </Grid>
@@ -319,42 +431,62 @@ const GovernanceDashboardPage: React.FC = () => {
           </Grid>
 
           {/* 成本分析详情 */}
-          <Grid xs={12} md={6}>
+          <Grid
+            xs={12}
+            md={6}
+          >
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AttachMoneyIcon color="success" />
-                  成本分析详情
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <AttachMoneyIcon color='success' />
+                  {t('ai.governance_dashboard.cost_details')}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <Stack spacing={2}>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      总成本
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {t('ai.governance_dashboard.total_cost')}
                     </Typography>
-                    <Typography variant="h4" color="success.main">
+                    <Typography
+                      variant='h4'
+                      color='success.main'
+                    >
                       ¥{dashboard.cost_analysis.total_cost.toFixed(2)}
                     </Typography>
                     <Chip
-                      label={t('ai.governance_dashboard.trend', { value: `${dashboard.cost_analysis.cost_trend_percent > 0 ? '+' : ''}${dashboard.cost_analysis.cost_trend_percent.toFixed(1)}%` })}
+                      label={t('ai.governance_dashboard.trend', {
+                        value: `${dashboard.cost_analysis.cost_trend_percent > 0 ? '+' : ''}${dashboard.cost_analysis.cost_trend_percent.toFixed(1)}%`,
+                      })}
                       color={dashboard.cost_analysis.cost_trend_percent > 0 ? 'error' : 'success'}
-                      size="small"
+                      size='small'
                       sx={{ mt: 1 }}
                     />
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      预算使用: {dashboard.cost_analysis.budget_usage.usage_percent.toFixed(1)}%
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {t('ai.governance_dashboard.budget_usage', {
+                        percent: dashboard.cost_analysis.budget_usage.usage_percent.toFixed(1),
+                      })}
                     </Typography>
                     <LinearProgress
-                      variant="determinate"
+                      variant='determinate'
                       value={Math.min(dashboard.cost_analysis.budget_usage.usage_percent, 100)}
                       color={
                         dashboard.cost_analysis.budget_usage.usage_percent < 70
                           ? 'success'
                           : dashboard.cost_analysis.budget_usage.usage_percent < 90
-                          ? 'warning'
-                          : 'error'
+                            ? 'warning'
+                            : 'error'
                       }
                       sx={{ mt: 1, height: 8, borderRadius: 4 }}
                     />
@@ -365,51 +497,76 @@ const GovernanceDashboardPage: React.FC = () => {
           </Grid>
 
           {/* 性能指标详情 */}
-          <Grid xs={12} md={6}>
+          <Grid
+            xs={12}
+            md={6}
+          >
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <SpeedIcon color="info" />
-                  性能指标详情
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <SpeedIcon color='info' />
+                  {t('ai.governance_dashboard.performance_details')}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
-                <Grid container spacing={2}>
+                <Grid
+                  container
+                  spacing={2}
+                >
                   <Grid xs={6}>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        平均响应时间
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {t('ai.governance_dashboard.avg_response_time')}
                       </Typography>
-                      <Typography variant="h6">
+                      <Typography variant='h6'>
                         {dashboard.performance_metrics.average_response_ms}ms
                       </Typography>
                     </Box>
                   </Grid>
                   <Grid xs={6}>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        P95 响应时间
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {t('ai.governance_dashboard.p95_response_time')}
                       </Typography>
-                      <Typography variant="h6">
+                      <Typography variant='h6'>
                         {dashboard.performance_metrics.p95_response_ms}ms
                       </Typography>
                     </Box>
                   </Grid>
                   <Grid xs={6}>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        吞吐量
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {t('ai.governance_dashboard.throughput')}
                       </Typography>
-                      <Typography variant="h6">
+                      <Typography variant='h6'>
                         {dashboard.performance_metrics.throughput}/s
                       </Typography>
                     </Box>
                   </Grid>
                   <Grid xs={6}>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        错误率
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {t('ai.governance_dashboard.error_rate')}
                       </Typography>
-                      <Typography variant="h6" color={dashboard.performance_metrics.error_rate > 1 ? 'error' : 'success'}>
+                      <Typography
+                        variant='h6'
+                        color={dashboard.performance_metrics.error_rate > 1 ? 'error' : 'success'}
+                      >
                         {dashboard.performance_metrics.error_rate.toFixed(2)}%
                       </Typography>
                     </Box>
@@ -424,14 +581,21 @@ const GovernanceDashboardPage: React.FC = () => {
       {/* 建议和改进项 */}
       {dashboard && dashboard.recommendations.length > 0 && (
         <Paper sx={{ p: 3, mt: 3 }}>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <LightbulbIcon color="warning" />
-            建议和改进项
+          <Typography
+            variant='h6'
+            gutterBottom
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
+            <LightbulbIcon color='warning' />
+            {t('ai.governance_dashboard.suggestions')}
           </Typography>
           <Divider sx={{ my: 2 }} />
           <List>
             {dashboard.recommendations.slice(0, 5).map((rec) => (
-              <ListItem key={rec.recommendation_id} alignItems="flex-start">
+              <ListItem
+                key={rec.recommendation_id}
+                alignItems='flex-start'
+              >
                 <ListItemIcon>
                   <Avatar
                     sx={{
@@ -439,10 +603,10 @@ const GovernanceDashboardPage: React.FC = () => {
                         rec.priority === 'critical'
                           ? 'error.main'
                           : rec.priority === 'high'
-                          ? 'warning.main'
-                          : rec.priority === 'medium'
-                          ? 'info.main'
-                          : 'success.main',
+                            ? 'warning.main'
+                            : rec.priority === 'medium'
+                              ? 'info.main'
+                              : 'success.main',
                     }}
                   >
                     {rec.priority === 'critical' ? (
@@ -457,18 +621,34 @@ const GovernanceDashboardPage: React.FC = () => {
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="subtitle1">{rec.title}</Typography>
-                      <Chip label={rec.priority} size="small" />
-                      <Chip label={rec.category} size="small" variant="outlined" />
+                      <Typography variant='subtitle1'>{rec.title}</Typography>
+                      <Chip
+                        label={rec.priority}
+                        size='small'
+                      />
+                      <Chip
+                        label={rec.category}
+                        size='small'
+                        variant='outlined'
+                      />
                     </Box>
                   }
                   secondary={
                     <Box>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         {rec.description}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        预期收益: {rec.expected_benefit} | 实施难度: {rec.implementation_effort}
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        {t('ai.governance_dashboard.expected_benefit', {
+                          benefit: rec.expected_benefit,
+                          effort: rec.implementation_effort,
+                        })}
                       </Typography>
                     </Box>
                   }

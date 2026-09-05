@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { logger } from '@/utils/logger';
-import { eventBus, ModuleEvents } from './EventBus';
+import { eventBus, ModuleEvents } from './eventBus';
 import { isDev, VITEDeploymentMode } from '@/config/env';
 import i18n from '@/i18n';
 

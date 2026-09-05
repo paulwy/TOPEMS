@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { getServiceClient } from '@/lib/apiClient';
-import { getOfflineRecords, updateOfflineRecord, deleteOfflineRecord } from '../offlineStorage';
-import { syncPendingRecords } from '../offlineSync';
+import { getOfflineRecords, updateOfflineRecord, deleteOfflineRecord } from '../OfflineStorage';
+import { syncPendingRecords } from '../OfflineSync';
 
 vi.mock('@/lib/apiClient');
-vi.mock('../offlineStorage');
+vi.mock('../OfflineStorage');
 
 describe('offlineSync service', () => {
   const mockGetServiceClient = getServiceClient as Mock;

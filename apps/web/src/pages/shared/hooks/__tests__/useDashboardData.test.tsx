@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useDashboardData } from '../useDashboardData';
+import { useDashboardData } from '../UseDashboardData';
 
 vi.mock('@tanstack/react-query', () => ({
   QueryCache: class QueryCache {
@@ -205,7 +205,7 @@ vi.mock('lucide-react', () => ({
   Folder: () => null,
 }));
 
-describe('useDashboardData', () => {
+describe('UseDashboardData', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

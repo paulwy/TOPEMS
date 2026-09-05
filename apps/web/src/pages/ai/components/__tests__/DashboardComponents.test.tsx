@@ -16,7 +16,7 @@ import type {
   QuickActionData,
   RecentItemData,
   StatCardData,
-} from '../../hooks/useAiDashboard';
+} from '../../hooks/UseAiDashboard';
 
 const shared = vi.hoisted(() => ({
   navigate: vi.fn(),

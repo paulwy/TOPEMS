@@ -30,9 +30,9 @@ export type {
   LayoutConfig,
   Viewport,
   LayoutSuggestion,
-} from './workflow-editor';
+} from './workflowEditor';
 
-export { NodeType, WorkflowStatus } from './workflow-editor';
+export { NodeType, WorkflowStatus } from './workflowEditor';
 
 // ==================== 拖拽编排引擎 ====================
 
@@ -42,7 +42,7 @@ export type {
   ConnectionSuggestion,
   NodeGroup,
   HistoryEntry,
-} from './drag-orchestrator';
+} from './dragOrchestrator';
 
 // ==================== 自动化触发引擎 ====================
 
@@ -59,12 +59,12 @@ export type {
   ThresholdConfig,
   CompoundConfig,
   TriggerConfig,
-} from './auto-trigger';
+} from './autoTrigger';
 
-export { TriggerType } from './auto-trigger';
+export { TriggerType } from './autoTrigger';
 
 // ==================== 默认导出 ====================
 
-export { default as defaultWorkflowEditor } from './workflow-editor';
-export { default as defaultDragOrchestrator } from './drag-orchestrator';
-export { default as defaultAutoTriggerEngine } from './auto-trigger';
+export { default as defaultWorkflowEditor } from './workflowEditor';
+export { default as defaultDragOrchestrator } from './dragOrchestrator';
+export { default as defaultAutoTriggerEngine } from './autoTrigger';

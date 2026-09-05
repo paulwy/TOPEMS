@@ -5,7 +5,7 @@ import {
   HeartbeatMonitor,
   getNextReconnectDelay,
   DEFAULT_RECONNECT_STRATEGY,
-} from '@/utils/websocket-optimizer';
+} from '@/utils/websocketOptimizer';
 import { useAuthToken } from '@/store/authStore';
 
 const WS_SIGNING_SECRET = import.meta.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret';

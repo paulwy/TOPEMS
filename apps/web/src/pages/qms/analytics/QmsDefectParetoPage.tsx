@@ -32,7 +32,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
 

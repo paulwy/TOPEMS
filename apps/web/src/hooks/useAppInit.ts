@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { logger } from '@/utils/logger';
-import { eventBus, ModuleEvents } from '@/lib/plugin-loader/EventBus';
+import { eventBus, ModuleEvents } from '@/lib/plugin-loader/eventBus';
 import i18n from '@/i18n';
 // V35.0 Phase 7: 微前端智能预加载
 import { prefetchOnIdle } from '@/microfrontend/RemoteLoader';

@@ -6,7 +6,7 @@ import {
   HeartbeatMonitor,
   getNextReconnectDelay,
   DEFAULT_RECONNECT_STRATEGY,
-} from '../utils/websocket-optimizer';
+} from '../utils/websocketOptimizer';
 
 describe('WebSocket Optimizer', () => {
   describe('calculateBackoffDelay', () => {
@@ -26,8 +26,16 @@ describe('WebSocket Optimizer', () => {
     it('uses exponential backoff with jitter', () => {
       // 多次重试时，平均延迟应该呈指数增长
       const samples = 100;
-      const avgAt0 = Array.from({ length: samples }, () => calculateBackoffDelay(0, 1000, 30000)).reduce((a, b) => a + b, 0) / samples;
-      const avgAt3 = Array.from({ length: samples }, () => calculateBackoffDelay(3, 1000, 30000)).reduce((a, b) => a + b, 0) / samples;
+      const avgAt0 =
+        Array.from({ length: samples }, () => calculateBackoffDelay(0, 1000, 30000)).reduce(
+          (a, b) => a + b,
+          0
+        ) / samples;
+      const avgAt3 =
+        Array.from({ length: samples }, () => calculateBackoffDelay(3, 1000, 30000)).reduce(
+          (a, b) => a + b,
+          0
+        ) / samples;
 
       // 第 3 次重试平均延迟应远大于第 0 次
       expect(avgAt3).toBeGreaterThan(avgAt0);

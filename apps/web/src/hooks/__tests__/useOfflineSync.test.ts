@@ -10,13 +10,13 @@ import {
   deleteOfflineRecord,
   getOfflineCount,
   clearAllOfflineRecords,
-} from '@/services/offlineStorage';
-import { syncPendingRecords } from '@/services/offlineSync';
+} from '@/services/OfflineStorage';
+import { syncPendingRecords } from '@/services/OfflineSync';
 
 vi.mock('../useNetworkStatus');
 vi.mock('@/lib/apiClient');
-vi.mock('@/services/offlineStorage');
-vi.mock('@/services/offlineSync');
+vi.mock('@/services/OfflineStorage');
+vi.mock('@/services/OfflineSync');
 
 describe('useOfflineSync', () => {
   const mockUseNetworkStatus = useNetworkStatus as Mock;

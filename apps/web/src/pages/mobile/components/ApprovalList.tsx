@@ -6,7 +6,7 @@ import React from 'react';
 import { Box, Typography, List, Divider, useTheme } from '@mui/material';
 import { CheckSquare } from 'lucide-react';
 import { PullToRefresh, MobileSkeleton } from '@/components/mobile';
-import type { ApprovalItem } from '../hooks/useMobileApproval';
+import type { ApprovalItem } from '../hooks/UseMobileApproval';
 import { ApprovalCard } from './ApprovalCard';
 import i18n from '@/i18n';
 

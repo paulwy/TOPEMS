@@ -5,8 +5,8 @@ import {
   usePluginManagement,
   getPluginDisplayNames,
   PLUGIN_CATEGORIES,
-} from '../usePluginManagement';
-import type { MarketplacePlugin, UninstallTier } from '../usePluginManagement';
+} from '../UsePluginManagement';
+import type { MarketplacePlugin, UninstallTier } from '../UsePluginManagement';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -138,7 +138,7 @@ describe('PLUGIN_CATEGORIES constants', () => {
   });
 });
 
-describe('usePluginManagement', () => {
+describe('UsePluginManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

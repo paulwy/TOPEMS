@@ -16,7 +16,7 @@ export {
   type AccessibilityReport,
   type GenerateOptions,
   type GeneratedComponent,
-} from './ai-ui-generator';
+} from './aiUiGenerator';
 
 // ==================== 自动测试生成 ====================
 export {
@@ -29,7 +29,7 @@ export {
   type CoverageEstimate,
   type TestGenerationOptions,
   type GeneratedTest,
-} from './auto-test-generator';
+} from './autoTestGenerator';
 
 // ==================== 智能代码审查 ====================
 export {
@@ -44,8 +44,8 @@ export {
   type ReviewIssue,
   type FixSuggestion,
   type CodeMetrics,
-} from './smart-code-reviewer';
+} from './smartCodeReviewer';
 
-export { default as defaultAiUiGenerator } from './ai-ui-generator';
-export { default as defaultAutoTestGenerator } from './auto-test-generator';
-export { default as defaultSmartCodeReviewer } from './smart-code-reviewer';
+export { default as defaultAiUiGenerator } from './aiUiGenerator';
+export { default as defaultAutoTestGenerator } from './autoTestGenerator';
+export { default as defaultSmartCodeReviewer } from './smartCodeReviewer';

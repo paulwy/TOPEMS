@@ -5,7 +5,7 @@ import TenantOverviewTab from '../TenantOverviewTab';
 import TenantBillingTab from '../TenantBillingTab';
 import TenantSettingsTab from '../TenantSettingsTab';
 import RateLimitDimensionCard from '../RateLimitDimensionCard';
-import type { RateLimitRule } from '../../hooks/useRateLimitConfig';
+import type { RateLimitRule } from '../../hooks/UseRateLimitConfig';
 import type { Tenant, TenantInvoice, TenantStats } from '@/api/tenant/types';
 
 const mockCrudPage = vi.hoisted(() => vi.fn());

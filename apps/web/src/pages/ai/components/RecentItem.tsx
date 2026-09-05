@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { MessageSquare, FileText, Code, Lightbulb, CircleDot } from 'lucide-react';
-import type { RecentItemData } from '../hooks/useAiDashboard';
+import type { RecentItemData } from '../hooks/UseAiDashboard';
 
 export const RecentItem: React.FC<RecentItemData> = ({
   title,

@@ -2446,7 +2446,7 @@
       "k0": "Platform",
       "k1": "DocumentManagement"
     },
-    "code-completion": {
+    "codeCompletion": {
       "k0": "Micro FrontendLazy LoadingModule",
       "k1": "Dynamic Import Remote Module",
       "k2": "UseDynamic import() ByNeedLoadRemoteModule",

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Chip, LinearProgress, Typography } from '@mui/material';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import type { OutboundOrderDto } from '@/types/wms';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import { PageContainer } from '@/components/common';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useOperationAuditLog } from '../useOperationAuditLog';
+import { useOperationAuditLog } from '../UseOperationAuditLog';
 import type { OperationLog } from '@/api/admin/operationAudit';
 
 vi.mock('@tanstack/react-query', () => ({
@@ -111,7 +111,7 @@ vi.mock('@mui/material', () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-describe('useOperationAuditLog', () => {
+describe('UseOperationAuditLog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

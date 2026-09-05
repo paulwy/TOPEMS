@@ -16,7 +16,7 @@ beforeEach(() => {
  * without needing to fight against IDB's close/deleteDatabase semantics.
  */
 async function wipeAllStores() {
-  const mod = await import('@/services/offlineStorage');
+  const mod = await import('@/services/OfflineStorage');
   await mod.clearAllOfflineRecords();
   // cache entries: delete them one-by-one since there is no bulk clear helper exported
   const allCached = await listAllCacheEntries(mod);
@@ -25,7 +25,7 @@ async function wipeAllStores() {
   }
 }
 
-async function listAllCacheEntries(mod: typeof import('@/services/offlineStorage')) {
+async function listAllCacheEntries(mod: typeof import('@/services/OfflineStorage')) {
   // There is no public "list all cache entries" API. We iterate via deleteCacheEntry patterns
   // by re-opening the DB directly.
   return new Promise<any[]>((resolve, reject) => {
@@ -60,7 +60,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
 
   describe('Offline Records (Queue)', () => {
     it('saveOfflineRecord returns generated id and stores with status pending', async () => {
-      const { saveOfflineRecord, getOfflineRecords } = await import('@/services/offlineStorage');
+      const { saveOfflineRecord, getOfflineRecords } = await import('@/services/OfflineStorage');
 
       const id = await saveOfflineRecord({
         service: SERVICE,
@@ -81,7 +81,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
 
     it('getOfflineRecords filters by status index', async () => {
       const { saveOfflineRecord, getOfflineRecords, updateOfflineRecord } =
-        await import('@/services/offlineStorage');
+        await import('@/services/OfflineStorage');
 
       const idA = await saveOfflineRecord({
         service: SERVICE,
@@ -109,7 +109,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
 
     it('updateOfflineRecord modifies fields of existing record', async () => {
       const { saveOfflineRecord, getOfflineRecords, updateOfflineRecord } =
-        await import('@/services/offlineStorage');
+        await import('@/services/OfflineStorage');
 
       const id = await saveOfflineRecord({
         service: SERVICE,
@@ -132,7 +132,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
     });
 
     it('updateOfflineRecord rejects for missing record', async () => {
-      const { updateOfflineRecord } = await import('@/services/offlineStorage');
+      const { updateOfflineRecord } = await import('@/services/OfflineStorage');
       await expect(updateOfflineRecord('non-existent', { status: 'synced' })).rejects.toThrow(
         /not found/i
       );
@@ -140,7 +140,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
 
     it('deleteOfflineRecord removes record by id', async () => {
       const { saveOfflineRecord, getOfflineRecords, deleteOfflineRecord } =
-        await import('@/services/offlineStorage');
+        await import('@/services/OfflineStorage');
 
       const id = await saveOfflineRecord({
         service: SERVICE,
@@ -157,7 +157,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
 
     it('clearAllOfflineRecords empties the queue', async () => {
       const { saveOfflineRecord, getOfflineRecords, clearAllOfflineRecords } =
-        await import('@/services/offlineStorage');
+        await import('@/services/OfflineStorage');
 
       await saveOfflineRecord({
         service: SERVICE,
@@ -181,7 +181,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
 
     it('getOfflineCount returns number of pending records via index.count', async () => {
       const { saveOfflineRecord, getOfflineCount, updateOfflineRecord } =
-        await import('@/services/offlineStorage');
+        await import('@/services/OfflineStorage');
 
       const idA = await saveOfflineRecord({
         service: SERVICE,
@@ -213,7 +213,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
     });
 
     it('saveCacheEntry + getCacheEntry roundtrip an entry before TTL', async () => {
-      const { saveCacheEntry, getCacheEntry } = await import('@/services/offlineStorage');
+      const { saveCacheEntry, getCacheEntry } = await import('@/services/OfflineStorage');
       vi.useFakeTimers();
       vi.setSystemTime(new Date(2024, 0, 1, 12, 0, 0));
 
@@ -235,7 +235,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
     });
 
     it('getCacheEntry returns null when TTL expired', async () => {
-      const { saveCacheEntry, getCacheEntry } = await import('@/services/offlineStorage');
+      const { saveCacheEntry, getCacheEntry } = await import('@/services/OfflineStorage');
       vi.useFakeTimers();
       vi.setSystemTime(new Date(2024, 0, 1, 12, 0, 0));
 
@@ -252,13 +252,13 @@ describe('offlineStorage (via fake-indexeddb)', () => {
     });
 
     it('getCacheEntry returns null when never cached', async () => {
-      const { getCacheEntry } = await import('@/services/offlineStorage');
+      const { getCacheEntry } = await import('@/services/OfflineStorage');
       expect(await getCacheEntry(service, '/nonexistent')).toBeNull();
     });
 
     it('deleteCacheEntry removes specific cache entry', async () => {
       const { saveCacheEntry, getCacheEntry, deleteCacheEntry } =
-        await import('@/services/offlineStorage');
+        await import('@/services/OfflineStorage');
 
       await saveCacheEntry({ service, endpoint, data: 'v', ttl: 60_000 });
       expect(await getCacheEntry(service, endpoint)).not.toBeNull();
@@ -269,7 +269,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
 
     it('clearExpiredCache removes entries past TTL but leaves valid ones', async () => {
       const { saveCacheEntry, getCacheEntry, clearExpiredCache } =
-        await import('@/services/offlineStorage');
+        await import('@/services/OfflineStorage');
       vi.useFakeTimers();
       vi.setSystemTime(new Date(2024, 0, 1, 12, 0, 0));
 
@@ -295,7 +295,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
     });
 
     it('clearExpiredCache works with empty store', async () => {
-      const { clearExpiredCache } = await import('@/services/offlineStorage');
+      const { clearExpiredCache } = await import('@/services/OfflineStorage');
       await expect(clearExpiredCache()).resolves.not.toThrow();
     });
   });

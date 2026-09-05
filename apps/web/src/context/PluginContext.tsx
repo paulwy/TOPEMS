@@ -5,7 +5,7 @@ import { checkAllPluginsHealth, pluginApi } from '@/api/plugin';
 import { useAuth } from '@/hooks/useAuth';
 import { deploymentConfig } from '@/config/deployment';
 import createLogger from '@/utils/logger';
-import { pluginManager } from '@/lib/plugin-loader/PluginManager';
+import { pluginManager } from '@/lib/plugin-loader/pluginManager';
 
 const logger = createLogger('PluginContext');
 

@@ -11,7 +11,7 @@
 
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
-import { performanceMark, performanceMeasure, parseQueryName } from '@/utils/graphql-performance';
+import { performanceMark, performanceMeasure, parseQueryName } from '@/utils/graphqlPerformance';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
 
@@ -483,7 +483,13 @@ export async function listEntitiesGql<T = unknown>(
   return bffGraphQL<{ listEntities: { items: T[]; total: number } }>(
     `
     query ListEntities($service: String!, $entityType: String!, $page: Int!, $pageSize: Int!${filterStr ? `, ${filterStr}` : ''}) {
-      listEntities(service: $service, entityType: $entityType, page: $page, pageSize: $pageSize${Object.keys(filters).length ? `, ${Object.keys(filters).map((k) => `${k}: $${k}`).join(', ')}` : ''}) {
+      listEntities(service: $service, entityType: $entityType, page: $page, pageSize: $pageSize${
+        Object.keys(filters).length
+          ? `, ${Object.keys(filters)
+              .map((k) => `${k}: $${k}`)
+              .join(', ')}`
+          : ''
+      }) {
         items
         total
       }
@@ -603,9 +609,7 @@ export async function getFederatedDashboard() {
 }
 
 /** 注册 BFF GraphQL 性能监控回调，返回取消注册函数 */
-export function onBffPerformance(
-  cb: PerformanceCallback
-): () => void {
+export function onBffPerformance(cb: PerformanceCallback): () => void {
   performanceCallbacks.add(cb);
   return () => {
     performanceCallbacks.delete(cb);

@@ -4532,5 +4532,9 @@
   "shared.performance-analyzer.k3": "首次使用延迟过高，考虑预加载策略",
   "shared.performance-analyzer.k4": "懒加载效果不佳，评估是否需要合并模块",
   "shared.performance-analyzer.k5": "内存使用",
-  "intelligent_ops.v56-ops-panel.k0": "冷却"
+  "intelligent_ops.v56-ops-panel.k0": "冷却",
+  "shared.config.ai_business_copilot": "业务 Copilot",
+  "shared.config.ai_governance_dashboard": "AI 治理仪表盘",
+  "shared.config.ai_business_copilot_desc": "集成业务模块选择、智能表单、文档智能的一站式 AI 助手",
+  "shared.config.ai_governance_dashboard_desc": "全面监控 AI 系统的安全、合规、成本和性能"
 }

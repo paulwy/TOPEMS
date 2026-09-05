@@ -14,15 +14,15 @@
 
 // ============ 智能代码补全 ============
 
-import { codeCompletionEngine } from './code-completion';
-import { testGenerator } from './test-generator';
-import { uiRecommender } from './ui-recommender';
+import { codeCompletionEngine } from './codeCompletion';
+import { testGenerator } from './testGenerator';
+import { uiRecommender } from './uiRecommender';
 
 export {
   CodeCompletionEngine,
   codeCompletionEngine,
   default as codeCompletionDefault,
-} from './code-completion';
+} from './codeCompletion';
 
 export type {
   CompletionContext,
@@ -31,13 +31,13 @@ export type {
   CodeSnippet,
   VariableInfo,
   ImportInfo,
-} from './code-completion';
+} from './codeCompletion';
 
-export { CompletionType, CompletionMode } from './code-completion';
+export { CompletionType, CompletionMode } from './codeCompletion';
 
 // ============ 自动化测试生成 ============
 
-export { TestGenerator, testGenerator, default as testGeneratorDefault } from './test-generator';
+export { TestGenerator, testGenerator, default as testGeneratorDefault } from './testGenerator';
 
 export type {
   TestGenerationRequest,
@@ -48,13 +48,13 @@ export type {
   CoverageAnalysis,
   EdgeCase,
   MockFunctionDef,
-} from './test-generator';
+} from './testGenerator';
 
-export { TestFramework, TestType, MockStrategy, TestCaseDesignMethod } from './test-generator';
+export { TestFramework, TestType, MockStrategy, TestCaseDesignMethod } from './testGenerator';
 
 // ============ UI 组件推荐 ============
 
-export { UIRecommender, uiRecommender, default as uiRecommenderDefault } from './ui-recommender';
+export { UIRecommender, uiRecommender, default as uiRecommenderDefault } from './uiRecommender';
 
 export type {
   ComponentRecommendation,
@@ -64,9 +64,9 @@ export type {
   ComponentComposition,
   AlternativeComponent,
   AccessibilitySuggestion,
-} from './ui-recommender';
+} from './uiRecommender';
 
-export { ComponentCategory, UILibrary, ResponsiveStrategy } from './ui-recommender';
+export { ComponentCategory, UILibrary, ResponsiveStrategy } from './uiRecommender';
 
 // ============ 统一 AI 工具集 ============
 

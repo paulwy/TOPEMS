@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Chip, Typography } from '@mui/material';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import type { InboundOrderDto } from '@/types/wms';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TimelineItem } from '@/components/common/StatusTimeline';
@@ -248,7 +248,7 @@ export default function WmsInboundDetailPage() {
                 data={items}
                 searchKey='material_name'
                 showSearch={false}
-                                showExport={false}
+                showExport={false}
                 enablePagination={false}
                 striped
               />

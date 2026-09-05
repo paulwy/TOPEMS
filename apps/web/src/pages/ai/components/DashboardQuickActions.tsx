@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { QuickAction } from './QuickAction';
-import type { QuickActionData } from '../hooks/useAiDashboard';
+import type { QuickActionData } from '../hooks/UseAiDashboard';
 
 export const DashboardQuickActions: React.FC<{
   actions: QuickActionData[];

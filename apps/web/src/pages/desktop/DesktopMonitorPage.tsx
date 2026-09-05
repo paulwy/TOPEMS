@@ -21,8 +21,8 @@ import {
 } from '@mui/material';
 import { Monitor, Gauge, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { StatsPageTemplate } from '@/components/templates';
-import { tauriApi } from '../../services/tauriApi';
-import { tauriAuth } from '../../services/tauriAuth';
+import { tauriApi } from '../../services/TauriApi';
+import { tauriAuth } from '../../services/TauriAuth';
 
 interface ApiMetrics {
   total_requests: number;

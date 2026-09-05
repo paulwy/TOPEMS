@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
-import type { ChartDatum, TrendDatum } from '../../hooks/usePmReport';
+import type { ChartDatum, TrendDatum } from '../../hooks/UsePmReport';
 import PmReportBenefitsTable from '../PmReportBenefitsTable';
 import PmReportBudgetCard from '../PmReportBudgetCard';
 import PmReportCustomToolbar from '../PmReportCustomToolbar';

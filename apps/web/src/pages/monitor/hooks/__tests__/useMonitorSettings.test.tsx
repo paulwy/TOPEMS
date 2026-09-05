@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useMonitorSettings } from '../useMonitorSettings';
+import { useMonitorSettings } from '../UseMonitorSettings';
 
 const storeMock = vi.hoisted(() => ({ addNotification: vi.fn() }));
 
@@ -26,7 +26,7 @@ vi.mock('lucide-react', () => ({
   Plug: () => null,
 }));
 
-describe('useMonitorSettings', () => {
+describe('UseMonitorSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     storeMock.addNotification.mockClear();

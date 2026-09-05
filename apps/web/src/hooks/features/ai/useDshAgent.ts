@@ -9,6 +9,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
+import i18n from '@/i18n';
 import {
   dshAgentApi,
   type DshAgentExecuteRequest,
@@ -18,7 +19,7 @@ import {
   type StreamEventType,
   type StreamEventData,
   type StreamEventHandler,
-} from '@/api/ai/dsh-agent';
+} from '@/api/ai/dshAgent';
 
 // ============================================================================
 // Hook 状态
@@ -51,10 +52,7 @@ interface UseDshAgentReturn extends UseDshAgentState {
   /** 同步执行 Agent */
   execute: (request: DshAgentExecuteRequest) => Promise<DshAgentExecuteResponse | null>;
   /** 流式执行 Agent */
-  executeStream: (
-    request: DshAgentExecuteRequest,
-    onEvent?: StreamEventHandler,
-  ) => Promise<void>;
+  executeStream: (request: DshAgentExecuteRequest, onEvent?: StreamEventHandler) => Promise<void>;
   /** 清除会话 */
   clearSession: () => Promise<boolean>;
   /** 刷新会话信息 */
@@ -106,15 +104,16 @@ export function useDshAgent(initialSessionId?: string): UseDshAgentReturn {
           });
           return response.data;
         } else {
-          throw new Error(response.message || '执行失败');
+          throw new Error(response.message || i18n.t('ai.use_dsh_agent.execute_failed'));
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : '未知错误';
+        const errorMessage =
+          err instanceof Error ? err.message : i18n.t('ai.use_dsh_agent.unknown_error');
         updateState({ isLoading: false, error: errorMessage });
         return null;
       }
     },
-    [updateState],
+    [updateState]
   );
 
   // 流式执行 Agent
@@ -154,7 +153,7 @@ export function useDshAgent(initialSessionId?: string): UseDshAgentReturn {
               break;
             case 'error':
               updateState({
-                error: data.error || '未知错误',
+                error: data.error || i18n.t('ai.use_dsh_agent.unknown_error'),
                 isStreaming: false,
                 isLoading: false,
               });
@@ -164,14 +163,15 @@ export function useDshAgent(initialSessionId?: string): UseDshAgentReturn {
 
         updateState({ isLoading: false, isStreaming: false });
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : '未知错误';
+        const errorMessage =
+          err instanceof Error ? err.message : i18n.t('ai.use_dsh_agent.unknown_error');
         updateState({ isLoading: false, isStreaming: false, error: errorMessage });
         throw err;
       } finally {
         abortControllerRef.current = null;
       }
     },
-    [updateState],
+    [updateState]
   );
 
   // 清除会话

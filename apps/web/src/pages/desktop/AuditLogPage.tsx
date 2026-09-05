@@ -23,8 +23,8 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import { useTranslation } from 'react-i18next';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates/list/types';
-import { tauriApi } from '../../services/tauriApi';
-import { tauriAuth } from '../../services/tauriAuth';
+import { tauriApi } from '../../services/TauriApi';
+import { tauriAuth } from '../../services/TauriAuth';
 
 interface AuditLog {
   id: string;

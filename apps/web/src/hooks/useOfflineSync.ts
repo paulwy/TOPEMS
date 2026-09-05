@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNetworkStatus } from './useNetworkStatus';
-import { syncPendingRecords } from '@/services/offlineSync';
-import { getOfflineCount, saveOfflineRecord } from '@/services/offlineStorage';
+import { syncPendingRecords } from '@/services/OfflineSync';
+import { getOfflineCount, saveOfflineRecord } from '@/services/OfflineStorage';
 import type { ServiceName } from '@/lib/apiClient';
 import { logger } from '@/utils/logger';
 

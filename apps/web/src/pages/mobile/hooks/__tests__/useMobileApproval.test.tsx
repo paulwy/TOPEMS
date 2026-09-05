@@ -7,7 +7,7 @@ import {
   getTypeColor,
   getPriorityColor,
   getPriorityLabel,
-} from '../useMobileApproval';
+} from '../UseMobileApproval';
 
 const shared = vi.hoisted(() => ({
   mutate: vi.fn(),
@@ -100,7 +100,7 @@ vi.mock('@/lib/reactQuery', () => ({
   },
 }));
 
-describe('useMobileApproval', () => {
+describe('UseMobileApproval', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     shared.mutate.mockClear();

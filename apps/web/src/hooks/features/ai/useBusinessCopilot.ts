@@ -27,7 +27,7 @@ import {
   type FAQItem,
   type ConversationMessage,
   type SelectedRecord,
-} from '@/api/ai/business-copilot';
+} from '@/api/ai/businessCopilot';
 
 // ============================================================================
 // Hook 状态

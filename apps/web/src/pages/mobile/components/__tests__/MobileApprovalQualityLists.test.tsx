@@ -7,7 +7,7 @@ import { ApprovalList } from '../ApprovalList';
 import { MobileQualityDefectList } from '../MobileQualityDefectList';
 import { MobileQualityTaskList } from '../MobileQualityTaskList';
 import type { DefectRecord, QualityTask } from '@/api/mobile';
-import type { ApprovalItem } from '../../hooks/useMobileApproval';
+import type { ApprovalItem } from '../../hooks/UseMobileApproval';
 
 const mockAddNotification = vi.hoisted(() => vi.fn());
 

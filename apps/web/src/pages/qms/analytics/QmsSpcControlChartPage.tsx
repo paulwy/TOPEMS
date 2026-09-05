@@ -19,7 +19,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { Box, Paper, Typography, FormControl, Select, MenuItem } from '@mui/material';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
+import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';

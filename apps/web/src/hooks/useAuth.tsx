@@ -12,7 +12,7 @@ import i18n from '@/i18n';
 import { authApi } from '@/api/iam';
 import { tenantApi } from '@/api/tenant';
 import apiClient, { type ApiResponse } from '../api/client';
-import { tauriAuth } from '@/services/tauriAuth';
+import { tauriAuth } from '@/services/TauriAuth';
 import type { User } from '@topems/shared-types';
 import { mapApiUserToUser } from '@topems/shared-types';
 import { authLogger } from '@/utils/logger';

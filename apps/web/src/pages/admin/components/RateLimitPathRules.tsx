@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Plus, Trash2 } from 'lucide-react';
-import type { PathRule } from '../hooks/useRateLimitConfig';
+import type { PathRule } from '../hooks/UseRateLimitConfig';
 
 interface RateLimitPathRulesProps {
   path_rules: PathRule[];

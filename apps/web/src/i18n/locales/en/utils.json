@@ -43,7 +43,7 @@
   "utils.status.k5": "Inspecting",
   "utils.status.k6": "Completed",
   "utils": {
-    "ui-recommender": {
+    "uiRecommender": {
       "k9": "Operation succeeded",
       "k40": "Operation succeeded",
       "k0": "Content",
@@ -76,7 +76,7 @@
       "k38": "Application name",
       "k39": "// Data display combination example"
     },
-    "test-generator": {
+    "testGenerator": {
       "k0": "Test cases based on decision table",
       "k1": "Test cases based on state transition",
       "k2": " * Auto-generated test file"

@@ -7,13 +7,13 @@ import React from 'react';
 import { Box, Typography, Chip, ListItem, ListItemText, useTheme } from '@mui/material';
 import { ChevronRight, Clock, User as UserIcon, Check, X } from 'lucide-react';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
-import type { ApprovalItem } from '../hooks/useMobileApproval';
+import type { ApprovalItem } from '../hooks/UseMobileApproval';
 import {
   getTypeIcon,
   getTypeColor,
   getPriorityColor,
   getPriorityLabel,
-} from '../hooks/useMobileApproval';
+} from '../hooks/UseMobileApproval';
 import i18n from '@/i18n';
 
 interface ApprovalCardProps {

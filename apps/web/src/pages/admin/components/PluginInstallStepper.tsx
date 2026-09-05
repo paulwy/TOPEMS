@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { CheckCircle, Download, GitBranch, Shield } from 'lucide-react';
-import type { MarketplacePlugin } from '../hooks/usePluginManagement';
+import type { MarketplacePlugin } from '../hooks/UsePluginManagement';
 
 interface PluginInstallStepperProps {
   plugin: MarketplacePlugin;

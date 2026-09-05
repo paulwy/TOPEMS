@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useRateLimitConfig, DEFAULT_CONFIG, DEFAULT_ANTI_REPLAY } from '../useRateLimitConfig';
+import { useRateLimitConfig, DEFAULT_CONFIG, DEFAULT_ANTI_REPLAY } from '../UseRateLimitConfig';
 
 const shared = vi.hoisted(() => ({
   mutate: vi.fn(),
@@ -96,7 +96,7 @@ vi.mock('@/lib/reactQuery', () => ({
   },
 }));
 
-describe('useRateLimitConfig', () => {
+describe('UseRateLimitConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     shared.mutate.mockClear();

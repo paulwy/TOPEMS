@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useAiDashboard } from '../useAiDashboard';
+import { useAiDashboard } from '../UseAiDashboard';
 
 const shared = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -59,7 +59,7 @@ vi.mock('lucide-react', () => ({
   Lightbulb: () => null,
 }));
 
-describe('useAiDashboard', () => {
+describe('UseAiDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     shared.navigate.mockClear();

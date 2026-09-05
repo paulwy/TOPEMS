@@ -8,7 +8,7 @@ import PmReportBudgetCard from './PmReportBudgetCard';
 import PmReportScheduleChart from './PmReportScheduleChart';
 import PmReportBenefitsTable from './PmReportBenefitsTable';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
-import type { ChartDatum, TrendDatum } from '../hooks/usePmReport';
+import type { ChartDatum, TrendDatum } from '../hooks/UsePmReport';
 import i18n from '@/i18n';
 
 interface PmReportCustomToolbarProps {

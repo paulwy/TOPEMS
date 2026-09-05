@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import PluginMarketplaceList from '../PluginMarketplaceList';
 import PluginInstallStepper from '../PluginInstallStepper';
 import PluginUninstallDialog from '../PluginUninstallDialog';
-import type { MarketplacePlugin, UninstallTarget } from '../../hooks/usePluginManagement';
+import type { MarketplacePlugin, UninstallTarget } from '../../hooks/UsePluginManagement';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -85,9 +85,7 @@ describe('PluginMarketplaceList', () => {
     expect(screen.getByText('BI 插件')).toBeInTheDocument();
     expect(screen.getByText('监控插件')).toBeInTheDocument();
     expect(screen.getByText('已安装')).toBeInTheDocument();
-    expect(
-      screen.getAllByRole('button', { name: '安装' })
-    ).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: '安装' })).toHaveLength(2);
   });
 });
 
@@ -156,9 +154,7 @@ describe('PluginInstallStepper', () => {
 
     expect(screen.getByText('安装完成')).toBeInTheDocument();
     expect(screen.getByText(/CRM 插件/)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '完成' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '完成' })).toBeInTheDocument();
   });
 
   it('supports back action on install step', () => {
@@ -174,9 +170,7 @@ describe('PluginInstallStepper', () => {
       />
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '上一步' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '上一步' }));
 
     expect(onBack).toHaveBeenCalledTimes(1);
   });
@@ -218,12 +212,8 @@ describe('PluginUninstallDialog', () => {
     expect(screen.getByText('卸载插件')).toBeInTheDocument();
     expect(screen.getByText('crm:uninstall')).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '停用' })
-    );
-    fireEvent.click(
-      screen.getByRole('button', { name: '删除' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: '停用' }));
+    fireEvent.click(screen.getByRole('button', { name: '删除' }));
     fireEvent.click(screen.getByRole('button', { name: '取消' }));
     fireEvent.click(screen.getByRole('button', { name: '确认' }));
 
@@ -245,12 +235,8 @@ describe('PluginUninstallDialog', () => {
       />
     );
 
-    expect(
-      screen.getByText('+ 永久删除插件')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '处理中...' })
-    ).toBeDisabled();
+    expect(screen.getByText('+ 永久删除插件')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '处理中...' })).toBeDisabled();
     expect(screen.getByText('永久删除插件及其所有数据，此操作不可恢复。')).toBeInTheDocument();
   });
 });

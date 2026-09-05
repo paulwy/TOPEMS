@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { Store } from 'lucide-react';
-import type { MarketplacePlugin } from '../hooks/usePluginManagement';
+import type { MarketplacePlugin } from '../hooks/UsePluginManagement';
 import PluginInstallStepper from './PluginInstallStepper';
 import PluginMarketplaceList from './PluginMarketplaceList';
 import i18n from '@/i18n';

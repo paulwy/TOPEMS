@@ -13,7 +13,7 @@ export {
   loadRemotePage,
   loadPluginFromManifest,
 } from './DynamicRouter';
-export { eventBus, ModuleEvents } from './EventBus';
+export { eventBus, ModuleEvents } from './eventBus';
 export { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 export type { ModuleStatus } from '@/store/moduleLoadingStore';
 export { MicroFrontendLoader, preloadRemoteModule } from './MicroFrontendLoader';

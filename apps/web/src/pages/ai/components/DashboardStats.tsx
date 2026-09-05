@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { StatCard } from './StatCard';
-import type { StatCardData } from '../hooks/useAiDashboard';
+import type { StatCardData } from '../hooks/UseAiDashboard';
 
 export const DashboardStats: React.FC<{ stats: StatCardData[]; isMobile: boolean }> = ({
   stats,

@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import i18n from '@/i18n';
-import type { UninstallTarget } from '../hooks/usePluginManagement';
+import type { UninstallTarget } from '../hooks/UsePluginManagement';
 
 interface PluginUninstallDialogProps {
   target: UninstallTarget | null;

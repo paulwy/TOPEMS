@@ -47,8 +47,8 @@ import {
 } from '@/components/ai/business';
 import { useBusinessCopilot } from '@/hooks/features/ai/useBusinessCopilot';
 import { useTranslation } from 'react-i18next';
-import type { BusinessModuleType } from '@/api/ai/business-copilot';
-import type { FormDefinition, DocumentInfo, DocumentSummary } from '@/api/ai/business-intelligence';
+import type { BusinessModuleType } from '@/api/ai/businessCopilot';
+import type { FormDefinition, DocumentInfo, DocumentSummary } from '@/api/ai/businessIntelligence';
 
 // ============================================================================
 // 标签页类型

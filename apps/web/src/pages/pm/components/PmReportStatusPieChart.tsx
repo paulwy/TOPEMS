@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Card, CardContent, CardHeader, Typography } from '@mui/material';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import type { ChartDatum } from '../hooks/usePmReport';
+import type { ChartDatum } from '../hooks/UsePmReport';
 import i18n from '@/i18n';
 
 interface PmReportStatusPieChartProps {

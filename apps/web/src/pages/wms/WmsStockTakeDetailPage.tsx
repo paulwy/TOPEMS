@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import { WmsFSMActionButtons, WmsStatusBadge } from '@/components/wms';
 import { DataTable, PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
@@ -227,7 +227,7 @@ export default function WmsStockTakeDetailPage() {
                 data={items}
                 enablePagination={false}
                 showSearch={false}
-                                showExport={false}
+                showExport={false}
                 showCreate={false}
                 showSelection={false}
               />

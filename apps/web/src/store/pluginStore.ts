@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Plugin, TenantPlugin } from '@/api/plugin';
 import { pluginApi, checkAllPluginsHealth, listPlugins } from '@/api/plugin';
 import { REMOTE_MODULES } from '@/config/plugins.config';
-import { pluginManager } from '@/lib/plugin-loader/PluginManager';
+import { pluginManager } from '@/lib/plugin-loader/pluginManager';
 import createLogger from '@/utils/logger';
 
 const logger = createLogger('pluginStore');

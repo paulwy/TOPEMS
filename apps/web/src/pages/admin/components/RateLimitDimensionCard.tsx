@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Card, CardContent, Grid, InputAdornment, TextField, Typography } from '@mui/material';
-import type { RateLimitRule } from '../hooks/useRateLimitConfig';
+import type { RateLimitRule } from '../hooks/UseRateLimitConfig';
 import i18n from '@/i18n';
 
 interface RateLimitDimensionCardProps {
