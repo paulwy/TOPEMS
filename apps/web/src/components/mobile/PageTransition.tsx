@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, useTheme } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
@@ -20,7 +20,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   const historyRef = useRef<string[]>([location.pathname]);
 
   // 计算过渡方向
-  const getDirection = (): 'left' | 'right' => {
+  const getDirection = useCallback((): 'left' | 'right' => {
     if (propDirection) {
       return propDirection === 'left' || propDirection === 'right' ? propDirection : 'right';
     }
@@ -45,7 +45,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
     if (currentDepth < prevDepth) return 'left';
 
     return 'right';
-  };
+  }, [propDirection, location]);
 
   const [direction, setDirection] = useState<'left' | 'right'>('right');
 
@@ -76,7 +76,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
     }, duration * 0.8);
 
     return () => clearTimeout(timer);
-  }, [location, duration]);
+  }, [location, duration, getDirection]);
 
   return (
     <Box

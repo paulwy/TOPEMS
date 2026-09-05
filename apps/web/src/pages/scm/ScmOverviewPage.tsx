@@ -16,6 +16,31 @@ import { scmApi } from '@/api/scm';
 
 const ct = designTokens.colors;
 
+const orderTrendData = [
+  { name: i18n.t('scm.scm_overview_page.m2'), value: 32 },
+  { name: i18n.t('scm.scm_overview_page.m3'), value: 28 },
+  { name: i18n.t('scm.scm_overview_page.m4'), value: 45 },
+  { name: i18n.t('scm.scm_overview_page.m5'), value: 38 },
+  { name: i18n.t('scm.scm_overview_page.m6'), value: 52 },
+  { name: i18n.t('scm.scm_overview_page.m7'), value: 56 },
+];
+
+const supplierRatingData = [
+  { name: i18n.t('scm.scm_overview_page.a_9'), value: 45 },
+  { name: i18n.t('scm.scm_overview_page.b_10'), value: 35 },
+  { name: i18n.t('scm.scm_overview_page.c_11'), value: 15 },
+  { name: i18n.t('scm.scm_overview_page.d_12'), value: 5 },
+];
+
+const mrpStatusData = [
+  { name: i18n.t('scm.scm_overview_page.1_13'), value: 5 },
+  { name: i18n.t('scm.scm_overview_page.2_14'), value: 8 },
+  { name: i18n.t('scm.scm_overview_page.3_15'), value: 6 },
+  { name: i18n.t('scm.scm_overview_page.4_16'), value: 10 },
+  { name: i18n.t('scm.scm_overview_page.5_17'), value: 7 },
+  { name: i18n.t('scm.scm_overview_page.6_18'), value: 12 },
+];
+
 const ScmOverviewPage: React.FC = () => {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
     queryKey: ['scm-overview-summary'],
@@ -88,31 +113,6 @@ const ScmOverviewPage: React.FC = () => {
     ],
     []
   );
-
-  const orderTrendData = [
-    { name: i18n.t('scm.scm_overview_page.m2'), value: 32 },
-    { name: i18n.t('scm.scm_overview_page.m3'), value: 28 },
-    { name: i18n.t('scm.scm_overview_page.m4'), value: 45 },
-    { name: i18n.t('scm.scm_overview_page.m5'), value: 38 },
-    { name: i18n.t('scm.scm_overview_page.m6'), value: 52 },
-    { name: i18n.t('scm.scm_overview_page.m7'), value: 56 },
-  ];
-
-  const supplierRatingData = [
-    { name: t('scm.scm_overview_page.a_9'), value: 45 },
-    { name: t('scm.scm_overview_page.b_10'), value: 35 },
-    { name: t('scm.scm_overview_page.c_11'), value: 15 },
-    { name: t('scm.scm_overview_page.d_12'), value: 5 },
-  ];
-
-  const mrpStatusData = [
-    { name: t('scm.scm_overview_page.1_13'), value: 5 },
-    { name: t('scm.scm_overview_page.2_14'), value: 8 },
-    { name: t('scm.scm_overview_page.3_15'), value: 6 },
-    { name: t('scm.scm_overview_page.4_16'), value: 10 },
-    { name: t('scm.scm_overview_page.5_17'), value: 7 },
-    { name: t('scm.scm_overview_page.6_18'), value: 12 },
-  ];
 
   const charts: ChartCard[] = useMemo(
     () => [

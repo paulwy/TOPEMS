@@ -219,17 +219,30 @@ function useBIAllAnalytics(options: { enabled?: boolean } = {}): UseBIAllAnalyti
     staleTime: 5 * 60 * 1000,
   });
 
-  const queries = [
-    summaryQuery,
-    developmentQuery,
-    qualityQuery,
-    productionQuery,
-    laboratoryQuery,
-    rsTimelineQuery,
-    rsSuccessRateQuery,
-    qmsTrendQuery,
-    pdmTrendQuery,
-  ];
+  const queries = useMemo(
+    () => [
+      summaryQuery,
+      developmentQuery,
+      qualityQuery,
+      productionQuery,
+      laboratoryQuery,
+      rsTimelineQuery,
+      rsSuccessRateQuery,
+      qmsTrendQuery,
+      pdmTrendQuery,
+    ],
+    [
+      summaryQuery,
+      developmentQuery,
+      qualityQuery,
+      productionQuery,
+      laboratoryQuery,
+      rsTimelineQuery,
+      rsSuccessRateQuery,
+      qmsTrendQuery,
+      pdmTrendQuery,
+    ]
+  );
 
   const loading = queries.some((q) => q.isLoading);
   const refreshing = queries.some((q) => q.isFetching && !q.isLoading);
@@ -240,14 +253,16 @@ function useBIAllAnalytics(options: { enabled?: boolean } = {}): UseBIAllAnalyti
   }, null);
 
   // 取所有查询中最新的 dataUpdatedAt 作为 lastUpdated
+  const dataUpdatedAtKey = useMemo(() => queries.map((q) => q.dataUpdatedAt).join('|'), [queries]);
+
   const lastUpdated = useMemo(() => {
-    const latest = Math.max(0, ...queries.map((q) => q.dataUpdatedAt));
+    const latest = Math.max(0, ...dataUpdatedAtKey.split('|').map(Number));
     return latest > 0 ? new Date(latest) : null;
-  }, [queries.map((q) => q.dataUpdatedAt).join('|')]);
+  }, [dataUpdatedAtKey]);
 
   const refetch = useCallback(async () => {
     await Promise.all(queries.map((q) => q.refetch()));
-  }, []);
+  }, [queries]);
 
   return {
     summary: summaryQuery.data ?? null,

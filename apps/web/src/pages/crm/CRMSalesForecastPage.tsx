@@ -21,6 +21,25 @@ import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+const tableColumns: TableColumn[] = [
+  { id: 'period', label: i18n.t('crm.salesForecast.col_period'), field: 'period' },
+  {
+    id: 'predicted',
+    label: i18n.t('crm.salesForecast.col_predicted'),
+    field: 'predicted',
+    align: 'right',
+  },
+  { id: 'actual', label: i18n.t('crm.salesForecast.col_actual'), field: 'actual', align: 'right' },
+  {
+    id: 'confidence',
+    label: i18n.t('crm.salesForecast.col_confidence'),
+    field: 'confidence',
+    align: 'center',
+  },
+  { id: 'trend', label: i18n.t('crm.salesForecast.col_trend'), field: 'trend', align: 'center' },
+  { id: 'status', label: i18n.t('crm.salesForecast.col_status'), field: 'status', align: 'center' },
+];
+
 const CRMSalesForecastPage: React.FC = () => {
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState('monthly');
@@ -206,25 +225,6 @@ const CRMSalesForecastPage: React.FC = () => {
       },
     ];
   }, [forecasts, t, mockEnabled, series]);
-
-  const tableColumns: TableColumn[] = [
-    { id: 'period', label: t('crm.salesForecast.col_period'), field: 'period' },
-    {
-      id: 'predicted',
-      label: t('crm.salesForecast.col_predicted'),
-      field: 'predicted',
-      align: 'right',
-    },
-    { id: 'actual', label: t('crm.salesForecast.col_actual'), field: 'actual', align: 'right' },
-    {
-      id: 'confidence',
-      label: t('crm.salesForecast.col_confidence'),
-      field: 'confidence',
-      align: 'center',
-    },
-    { id: 'trend', label: t('crm.salesForecast.col_trend'), field: 'trend', align: 'center' },
-    { id: 'status', label: t('crm.salesForecast.col_status'), field: 'status', align: 'center' },
-  ];
 
   const tables = useMemo<DataTable[]>(
     () => [

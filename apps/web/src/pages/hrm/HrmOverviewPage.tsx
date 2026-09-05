@@ -25,6 +25,32 @@ import i18n from '@/i18n';
 
 const ct = designTokens.colors;
 
+const departmentData = [
+  { name: i18n.t('hrm.hrm_overview_page.text_c6a757'), value: 85 },
+  { name: i18n.t('hrm.hrm_overview_page.product'), value: 42 },
+  { name: i18n.t('hrm.hrm_overview_page.text_73b111'), value: 35 },
+  { name: i18n.t('hrm.hrm_overview_page.text_b159e5'), value: 22 },
+  { name: i18n.t('hrm.hrm_overview_page.text_f802d1'), value: 18 },
+  { name: i18n.t('hrm.hrm_overview_page.text_b890b3'), value: 28 },
+  { name: i18n.t('hrm.hrm_overview_page.text_afdedb'), value: 26 },
+];
+
+const monthlyTrendData = [
+  { name: i18n.t('hrm.hrm_overview_page.text_fccc2b'), value: 5 },
+  { name: i18n.t('hrm.hrm_overview_page.text_c1d13f'), value: 3 },
+  { name: i18n.t('hrm.hrm_overview_page.text_c4767b'), value: 8 },
+  { name: i18n.t('hrm.hrm_overview_page.text_3eaf4b'), value: 6 },
+  { name: i18n.t('hrm.hrm_overview_page.text_0545f1'), value: 7 },
+  { name: i18n.t('hrm.hrm_overview_page.text_f2422a'), value: 8 },
+];
+
+const performanceData = [
+  { name: i18n.t('hrm.hrm_overview_page.text_c08ed9'), value: 25 },
+  { name: i18n.t('hrm.hrm_overview_page.text_c5c01c'), value: 40 },
+  { name: i18n.t('hrm.hrm_overview_page.qualified'), value: 28 },
+  { name: i18n.t('hrm.hrm_overview_page.text_e10613'), value: 7 },
+];
+
 const HrmOverviewPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -95,32 +121,6 @@ const HrmOverviewPage: React.FC = () => {
     ],
     [t]
   );
-
-  const departmentData = [
-    { name: t('hrm.hrm_overview_page.text_c6a757'), value: 85 },
-    { name: t('hrm.hrm_overview_page.product'), value: 42 },
-    { name: t('hrm.hrm_overview_page.text_73b111'), value: 35 },
-    { name: t('hrm.hrm_overview_page.text_b159e5'), value: 22 },
-    { name: t('hrm.hrm_overview_page.text_f802d1'), value: 18 },
-    { name: t('hrm.hrm_overview_page.text_b890b3'), value: 28 },
-    { name: t('hrm.hrm_overview_page.text_afdedb'), value: 26 },
-  ];
-
-  const monthlyTrendData = [
-    { name: t('hrm.hrm_overview_page.text_fccc2b'), value: 5 },
-    { name: t('hrm.hrm_overview_page.text_c1d13f'), value: 3 },
-    { name: t('hrm.hrm_overview_page.text_c4767b'), value: 8 },
-    { name: t('hrm.hrm_overview_page.text_3eaf4b'), value: 6 },
-    { name: t('hrm.hrm_overview_page.text_0545f1'), value: 7 },
-    { name: t('hrm.hrm_overview_page.text_f2422a'), value: 8 },
-  ];
-
-  const performanceData = [
-    { name: t('hrm.hrm_overview_page.text_c08ed9'), value: 25 },
-    { name: t('hrm.hrm_overview_page.text_c5c01c'), value: 40 },
-    { name: t('hrm.hrm_overview_page.qualified'), value: 28 },
-    { name: t('hrm.hrm_overview_page.text_e10613'), value: 7 },
-  ];
 
   const charts: ChartCard[] = useMemo(
     () => [

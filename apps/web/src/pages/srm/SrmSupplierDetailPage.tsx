@@ -13,6 +13,12 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
+const riskColors: Record<string, string> = {
+  low: 'success',
+  medium: 'warning',
+  high: 'error',
+};
+
 const SrmSupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -41,12 +47,6 @@ const SrmSupplierDetailPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.srm_supplier_detail_page.k3'), supplierQuery.error);
     }
   }, [supplierQuery.isError, supplierQuery.error]);
-
-  const riskColors: Record<string, string> = {
-    low: 'success',
-    medium: 'warning',
-    high: 'error',
-  };
 
   const infoCard = useMemo(
     () => ({

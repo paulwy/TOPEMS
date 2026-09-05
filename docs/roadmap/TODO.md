@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V492 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V493 | **更新日期**: 2026-09-05 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V492 TDZ 清零（-9）**（exhaustive-deps 78→69，missing 69→60；5 文件上移 useCallback 定义，TDZ 9 处全清）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
+> **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V493 unstable 11 文件收官（-14）**（exhaustive-deps 69→54，missing 60→46；9 文件字面量模块级提取 + 3 文件 useMemo/useCallback 化，16 处全清）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21751,6 +21751,24 @@ git add $STAGED
 **修复**：脚本精确匹配 eslint 报告行号的依赖数组，空数组 `[]`→`[t]`、非空数组追加 `, t`；多行数组（HrmReportsPage 等）手动补。逐文件 eslint 验证 + prettier 格式修正 + 失败回退。
 
 **验证**：42 文件 0 lint error / 0 TS error；全量 exhaustive-deps 323→**255**；typecheck 0 errors。
+
+### V493
+
+> 状态：**已完成**（提交 `待填`）｜日期：2026-09-05
+> 主题：轨D 三批——unstable 11 文件 16 处收官（字面量模块级提取 + useMemo/useCallback 链）
+
+### V493 完成内容
+
+1. **missing 60→46（-14，unstable 组收官）**：
+   - **9 文件字面量模块级提取**（组件内 const → 模块级 const，t 统一改 i18n.t）：CRMSalesForecast/Consolidation tableColumns、ReturnDetail statusLabelMap/statusColorMap/returnTypeLabelMap/timelineSteps/getStatusChip、EhsHazardDetail assessmentColumns（controlColumns 因引用 handleDeleteControl 保留组件内）、HrmOverview departmentData/monthlyTrendData/performanceData、RsOverview projectStatusData/monthlyBugTrendData/moduleCodeData、ScmOverview orderTrendData/supplierRatingData/mrpStatusData、SrmContract statusLabels、SrmSupplier riskColors
+   - **useBIQueries**：queries useMemo 化（9 query deps）、数组内联表达式 `queries.map(...).join('|')` 提取 dataUpdatedAtKey（连消 1 处 complex）、refetch 补 [queries]、lastUpdated body 改用 dataUpdatedAtKey
+   - **PageTransition**：getDirection useCallback 化（[propDirection, location]）+ useEffect 补入
+   - **EhsHazardDetailPage 链**：assessments/controls `|| []` logical 表达式 useMemo 化（消 2 处 logical）、handleDeleteControl useCallback 化、controlColumns useMemo 化（[handleDeleteControl, t]）、controlsContent 补 controlColumns、riskInfo 数组还原（脚本误补）
+2. **脚本坑（已记）**：① 模块级提取插入锚点 `'
+'+src` 前缀导致 m.start() 偏移 +1 → 吞首字符（`onst`/`xport`）；② 单行声明块（timelineSteps）深度 0 需首行检查，否则吞后续 useQuery；③ `split('[', 1)` 切到类型 `[]` 而非赋值 `[` → 生成 `([] = [` 解构坏段；④ prettier 拆行后锚点需容忍空白（`]\s*)?\s*;`）；⑤ 补依赖数组的 useMemo 匹配会**跨 useMemo 误补**（tabs 多行数组跳过 → 补到 riskInfo）→ 需按 useMemo 名精确定位数组
+3. **验证**：全量 exhaustive-deps 54（missing 46 / unstable 0 / unnecessary 0 / logical 0）；tsc 0 errors
+4. **剩余**：missing 46（plain-fn 44 组为主：handle*/get*/load* 需 useCallback 化 + 依赖链）
+
 
 ### V492
 

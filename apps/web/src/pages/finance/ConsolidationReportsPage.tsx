@@ -94,6 +94,64 @@ const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
   rejected: { label: i18n.t('finance.consolidation_reports_page.k11'), color: 'error' },
 };
 
+const tableColumns: TableColumn[] = [
+  {
+    id: 'report_no',
+    label: i18n.t('finance.consolidation_reports_page.text_634a94'),
+    field: 'report_no',
+  },
+  {
+    id: 'report_type',
+    label: i18n.t('finance.consolidation_reports_page.type'),
+    field: 'report_type',
+  },
+  {
+    id: 'scope_name',
+    label: i18n.t('finance.consolidation_reports_page.text_2ae758'),
+    field: 'scope_name',
+  },
+  {
+    id: 'period',
+    label: i18n.t('finance.consolidation_reports_page.text_2f4339'),
+    field: 'period',
+  },
+  {
+    id: 'company_count',
+    label: i18n.t('finance.consolidation_reports_page.text_ccb91d'),
+    field: 'company_count',
+  },
+  {
+    id: 'total_assets',
+    label: i18n.t('finance.consolidation_reports_page.text_f9dddf'),
+    field: 'total_assets',
+    align: 'right',
+  },
+  {
+    id: 'net_profit',
+    label: i18n.t('finance.consolidation_reports_page.text_80170f'),
+    field: 'net_profit',
+    align: 'right',
+  },
+  {
+    id: 'status',
+    label: i18n.t('finance.consolidation_reports_page.status_1'),
+    field: 'status',
+    align: 'center',
+  },
+  {
+    id: 'approval_status',
+    label: i18n.t('finance.consolidation_reports_page.text_0273ba'),
+    field: 'approval_status',
+    align: 'center',
+  },
+  {
+    id: 'actions',
+    label: i18n.t('finance.consolidation_reports_page.action'),
+    field: 'actions',
+    align: 'center',
+  },
+];
+
 export default function ConsolidationReportsPage() {
   const { t } = useTranslation();
   const { error: notifyError, success: notifySuccess } = useNotification();
@@ -245,60 +303,6 @@ export default function ConsolidationReportsPage() {
       },
     ];
   }, [reports, t]);
-
-  const tableColumns: TableColumn[] = [
-    {
-      id: 'report_no',
-      label: t('finance.consolidation_reports_page.text_634a94'),
-      field: 'report_no',
-    },
-    {
-      id: 'report_type',
-      label: t('finance.consolidation_reports_page.type'),
-      field: 'report_type',
-    },
-    {
-      id: 'scope_name',
-      label: t('finance.consolidation_reports_page.text_2ae758'),
-      field: 'scope_name',
-    },
-    { id: 'period', label: t('finance.consolidation_reports_page.text_2f4339'), field: 'period' },
-    {
-      id: 'company_count',
-      label: t('finance.consolidation_reports_page.text_ccb91d'),
-      field: 'company_count',
-    },
-    {
-      id: 'total_assets',
-      label: t('finance.consolidation_reports_page.text_f9dddf'),
-      field: 'total_assets',
-      align: 'right',
-    },
-    {
-      id: 'net_profit',
-      label: t('finance.consolidation_reports_page.text_80170f'),
-      field: 'net_profit',
-      align: 'right',
-    },
-    {
-      id: 'status',
-      label: t('finance.consolidation_reports_page.status_1'),
-      field: 'status',
-      align: 'center',
-    },
-    {
-      id: 'approval_status',
-      label: t('finance.consolidation_reports_page.text_0273ba'),
-      field: 'approval_status',
-      align: 'center',
-    },
-    {
-      id: 'actions',
-      label: t('finance.consolidation_reports_page.action'),
-      field: 'actions',
-      align: 'center',
-    },
-  ];
 
   const tables = useMemo<DataTable[]>(
     () => [

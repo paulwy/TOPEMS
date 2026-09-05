@@ -13,8 +13,45 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
+import i18n from '@/i18n';
 
 const ct = designTokens.colors;
+
+const statusLabelMap: Record<ReturnStatus, string> = {
+  pending: i18n.t('crm.returnDetail.status_pending'),
+  approved: i18n.t('crm.returnDetail.status_approved'),
+  rejected: i18n.t('crm.returnDetail.status_rejected'),
+  received: i18n.t('crm.returnDetail.status_received'),
+  completed: i18n.t('crm.returnDetail.status_completed'),
+  cancelled: i18n.t('crm.returnDetail.status_cancelled'),
+};
+
+const statusColorMap: Record<
+  ReturnStatus,
+  'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
+> = {
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'error',
+  received: 'info',
+  completed: 'success',
+  cancelled: 'primary',
+};
+
+const returnTypeLabelMap: Record<ReturnType, string> = {
+  return: i18n.t('crm.returnDetail.type_return'),
+  exchange: i18n.t('crm.returnDetail.type_exchange'),
+};
+
+const timelineSteps: ReturnStatus[] = ['pending', 'approved', 'received', 'completed'];
+
+const getStatusChip = (status: ReturnStatus) => (
+  <Chip
+    size='small'
+    color={statusColorMap[status] || 'primary'}
+    label={statusLabelMap[status] || status}
+  />
+);
 
 const ReturnDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -25,34 +62,6 @@ const ReturnDetailPage: React.FC = () => {
   const [confirmAction, setConfirmAction] = useState<{ label: string; fn: () => void } | null>(
     null
   );
-
-  const statusLabelMap: Record<ReturnStatus, string> = {
-    pending: t('crm.returnDetail.status_pending'),
-    approved: t('crm.returnDetail.status_approved'),
-    rejected: t('crm.returnDetail.status_rejected'),
-    received: t('crm.returnDetail.status_received'),
-    completed: t('crm.returnDetail.status_completed'),
-    cancelled: t('crm.returnDetail.status_cancelled'),
-  };
-
-  const statusColorMap: Record<
-    ReturnStatus,
-    'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
-  > = {
-    pending: 'warning',
-    approved: 'success',
-    rejected: 'error',
-    received: 'info',
-    completed: 'success',
-    cancelled: 'primary',
-  };
-
-  const returnTypeLabelMap: Record<ReturnType, string> = {
-    return: t('crm.returnDetail.type_return'),
-    exchange: t('crm.returnDetail.type_exchange'),
-  };
-
-  const timelineSteps: ReturnStatus[] = ['pending', 'approved', 'received', 'completed'];
 
   const returnQuery = useQuery({
     queryKey: QUERY_KEYS.CRM.RETURN(id || ''),
@@ -124,14 +133,6 @@ const ReturnDetailPage: React.FC = () => {
     if (!date) return '-';
     return new Date(date).toLocaleString('zh-CN');
   };
-
-  const getStatusChip = (status: ReturnStatus) => (
-    <Chip
-      size='small'
-      color={statusColorMap[status] || 'primary'}
-      label={statusLabelMap[status] || status}
-    />
-  );
 
   const basicInfoSection = useMemo(() => {
     if (!record) return null;

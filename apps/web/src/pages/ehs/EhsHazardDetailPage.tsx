@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -42,6 +42,65 @@ interface ControlFormData {
   responsible: string;
   deadline: string;
 }
+
+const assessmentColumns: ColumnDef<RiskAssessment>[] = [
+  {
+    accessorKey: 'assessment_date',
+    header: i18n.t('ehs.ehs_hazard_detail_page.date'),
+    cell: ({ row }) => (
+      <span>
+        {row.original.assessment_date
+          ? new Date(row.original.assessment_date).toLocaleDateString('zh-CN')
+          : '-'}
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'assessor',
+    header: i18n.t('ehs.ehs_hazard_detail_page.text_ab3d92'),
+    cell: ({ row }) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box
+          component={Users}
+          sx={{ fontSize: 16 }}
+        />
+        <span>{row.original.assessor || '-'}</span>
+      </Box>
+    ),
+  },
+  {
+    accessorKey: 'risklevel',
+    header: i18n.t('ehs.ehs_hazard_detail_page.text_25eb6b'),
+    cell: ({ row }) => {
+      const riskResult = calculateRiskLevel(
+        row.original.severity || 'medium',
+        row.original.likelihood || 'medium'
+      );
+      const colorMap: Record<string, { bg: string; color: string }> = {
+        [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
+        [i18n.t('pages.ehs_hazard_detail_page.k1')]: { bg: 'warning.100', color: ct.yellow[600] },
+        [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
+          bg: 'success.lighter',
+          color: 'success.dark',
+        },
+      };
+      const colors = colorMap[
+        `${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k0')}`
+      ] || {
+        bg: 'grey.100',
+        color: 'text.secondary',
+      };
+      return (
+        <Chip
+          label={`${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k1')}`}
+          size='small'
+          sx={{ backgroundColor: colors.bg, color: colors.color }}
+        />
+      );
+    },
+  },
+  { accessorKey: 'recommendations', header: i18n.t('ehs.ehs_hazard_detail_page.text_6dca6f') },
+];
 
 const EhsHazardDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -129,7 +188,7 @@ const EhsHazardDetailPage: React.FC = () => {
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
-  const assessments = (assessmentsData as RiskAssessment[]) || [];
+  const assessments = useMemo(() => (assessmentsData as RiskAssessment[]) || [], [assessmentsData]);
 
   const { data: controlsData } = useQuery({
     queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || ''),
@@ -145,7 +204,7 @@ const EhsHazardDetailPage: React.FC = () => {
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
-  const controls = (controlsData as ControlMeasure[]) || [];
+  const controls = useMemo(() => (controlsData as ControlMeasure[]) || [], [controlsData]);
 
   const loading = hazardLoading;
   const errorMessage = hazardQueryError ? t('ehs.ehs_hazard_detail_page.detail') : undefined;
@@ -260,10 +319,10 @@ const EhsHazardDetailPage: React.FC = () => {
     });
   };
 
-  const handleDeleteControl = (measureId: string) => {
+  const handleDeleteControl = useCallback((measureId: string) => {
     setDeletingMeasureId(measureId);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
   const deleteControlMutation = useMutation({
     mutationFn: (variables: { hazardId: string; measureId: string }) =>
@@ -291,129 +350,73 @@ const EhsHazardDetailPage: React.FC = () => {
     deleteControlMutation.mutate({ hazardId: hazard.id, measureId: deletingMeasureId });
   };
 
-  const assessmentColumns: ColumnDef<RiskAssessment>[] = [
-    {
-      accessorKey: 'assessment_date',
-      header: t('ehs.ehs_hazard_detail_page.date'),
-      cell: ({ row }) => (
-        <span>
-          {row.original.assessment_date
-            ? new Date(row.original.assessment_date).toLocaleDateString('zh-CN')
-            : '-'}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'assessor',
-      header: t('ehs.ehs_hazard_detail_page.text_ab3d92'),
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box
-            component={Users}
-            sx={{ fontSize: 16 }}
-          />
-          <span>{row.original.assessor || '-'}</span>
-        </Box>
-      ),
-    },
-    {
-      accessorKey: 'risklevel',
-      header: t('ehs.ehs_hazard_detail_page.text_25eb6b'),
-      cell: ({ row }) => {
-        const riskResult = calculateRiskLevel(
-          row.original.severity || 'medium',
-          row.original.likelihood || 'medium'
-        );
-        const colorMap: Record<string, { bg: string; color: string }> = {
-          [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
-          [i18n.t('pages.ehs_hazard_detail_page.k1')]: { bg: 'warning.100', color: ct.yellow[600] },
-          [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
-            bg: 'success.lighter',
-            color: 'success.dark',
-          },
-        };
-        const colors = colorMap[
-          `${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k0')}`
-        ] || {
-          bg: 'grey.100',
-          color: 'text.secondary',
-        };
-        return (
-          <Chip
-            label={`${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k1')}`}
-            size='small'
-            sx={{ backgroundColor: colors.bg, color: colors.color }}
-          />
-        );
+  const controlColumns = useMemo<ColumnDef<ControlMeasure>[]>(
+    () => [
+      {
+        accessorKey: 'measure_type',
+        header: t('ehs.ehs_hazard_detail_page.type'),
+        cell: ({ row }) => <EHSMeasureTypeBadge type={row.original.measure_type} />,
       },
-    },
-    { accessorKey: 'recommendations', header: t('ehs.ehs_hazard_detail_page.text_6dca6f') },
-  ];
-
-  const controlColumns: ColumnDef<ControlMeasure>[] = [
-    {
-      accessorKey: 'measure_type',
-      header: t('ehs.ehs_hazard_detail_page.type'),
-      cell: ({ row }) => <EHSMeasureTypeBadge type={row.original.measure_type} />,
-    },
-    { accessorKey: 'description', header: t('ehs.ehs_hazard_detail_page.description') },
-    {
-      accessorKey: 'responsible',
-      header: t('ehs.ehs_hazard_detail_page.manager'),
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box
-            component={Users}
-            sx={{ fontSize: 16 }}
-          />
-          <span>{row.original.responsible || '-'}</span>
-        </Box>
-      ),
-    },
-    {
-      accessorKey: 'deadline',
-      header: t('ehs.ehs_hazard_detail_page.completed'),
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box
-            component={Clock}
-            sx={{ fontSize: 16 }}
-          />
-          {row.original.deadline
-            ? new Date(row.original.deadline).toLocaleDateString('zh-CN')
-            : '-'}
-        </Box>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: t('ehs.ehs_hazard_detail_page.status'),
-      cell: ({ row }) => (
-        <EHSStatusBadge
-          status={row.original.status}
-          type='control'
-        />
-      ),
-    },
-    {
-      id: 'actions',
-      header: t('ehs.ehs_hazard_detail_page.action'),
-      cell: ({ row }) => (
-        <Button
-          variant='text'
-          size='small'
-          onClick={() => handleDeleteControl(row.original.id)}
-          sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
-          startIcon={
+      { accessorKey: 'description', header: t('ehs.ehs_hazard_detail_page.description') },
+      {
+        accessorKey: 'responsible',
+        header: t('ehs.ehs_hazard_detail_page.manager'),
+        cell: ({ row }) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Box
-              component={Trash2}
+              component={Users}
               sx={{ fontSize: 16 }}
             />
-          }
-        />
-      ),
-    },
-  ];
+            <span>{row.original.responsible || '-'}</span>
+          </Box>
+        ),
+      },
+      {
+        accessorKey: 'deadline',
+        header: t('ehs.ehs_hazard_detail_page.completed'),
+        cell: ({ row }) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box
+              component={Clock}
+              sx={{ fontSize: 16 }}
+            />
+            {row.original.deadline
+              ? new Date(row.original.deadline).toLocaleDateString('zh-CN')
+              : '-'}
+          </Box>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: t('ehs.ehs_hazard_detail_page.status'),
+        cell: ({ row }) => (
+          <EHSStatusBadge
+            status={row.original.status}
+            type='control'
+          />
+        ),
+      },
+      {
+        id: 'actions',
+        header: t('ehs.ehs_hazard_detail_page.action'),
+        cell: ({ row }) => (
+          <Button
+            variant='text'
+            size='small'
+            onClick={() => handleDeleteControl(row.original.id)}
+            sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
+            startIcon={
+              <Box
+                component={Trash2}
+                sx={{ fontSize: 16 }}
+              />
+            }
+          />
+        ),
+      },
+    ],
+    [handleDeleteControl, t]
+  );
 
   const basicInfoContent = useMemo(() => {
     if (!hazard) return null;
@@ -616,7 +619,7 @@ const EhsHazardDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [controls, t]);
+  }, [controls, t, controlColumns]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [

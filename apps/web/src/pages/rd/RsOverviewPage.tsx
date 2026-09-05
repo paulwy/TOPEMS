@@ -24,6 +24,31 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { rdApi } from '@/api/rd';
 
 const ct = designTokens.colors;
+
+const projectStatusData = [
+  { name: i18n.t('rd.rs_overview_page.k12'), value: 12 },
+  { name: i18n.t('rd.rs_overview_page.k13'), value: 8 },
+  { name: i18n.t('rd.rs_overview_page.k14'), value: 3 },
+  { name: i18n.t('rd.rs_overview_page.k15'), value: 1 },
+];
+
+const monthlyBugTrendData = [
+  { name: i18n.t('pages.rs_overview_page.1_0'), value: 45 },
+  { name: i18n.t('pages.rs_overview_page.2_1'), value: 52 },
+  { name: i18n.t('pages.rs_overview_page.3_2'), value: 38 },
+  { name: i18n.t('pages.rs_overview_page.4_3'), value: 41 },
+  { name: i18n.t('pages.rs_overview_page.5_4'), value: 29 },
+  { name: i18n.t('pages.rs_overview_page.6_5'), value: 67 },
+];
+
+const moduleCodeData = [
+  { name: i18n.t('rd.rs_overview_page.k16'), value: 85000 },
+  { name: i18n.t('rd.rs_overview_page.k17'), value: 120000 },
+  { name: i18n.t('rd.rs_overview_page.k18'), value: 45000 },
+  { name: i18n.t('rd.rs_overview_page.k19'), value: 32000 },
+  { name: i18n.t('rd.rs_overview_page.k20'), value: 18000 },
+];
+
 const RsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
@@ -102,27 +127,6 @@ const RsOverviewPage: React.FC = () => {
     ],
     []
   );
-  const projectStatusData = [
-    { name: i18n.t('rd.rs_overview_page.k12'), value: 12 },
-    { name: i18n.t('rd.rs_overview_page.k13'), value: 8 },
-    { name: i18n.t('rd.rs_overview_page.k14'), value: 3 },
-    { name: i18n.t('rd.rs_overview_page.k15'), value: 1 },
-  ];
-  const monthlyBugTrendData = [
-    { name: i18n.t('pages.rs_overview_page.1_0'), value: 45 },
-    { name: i18n.t('pages.rs_overview_page.2_1'), value: 52 },
-    { name: i18n.t('pages.rs_overview_page.3_2'), value: 38 },
-    { name: i18n.t('pages.rs_overview_page.4_3'), value: 41 },
-    { name: i18n.t('pages.rs_overview_page.5_4'), value: 29 },
-    { name: i18n.t('pages.rs_overview_page.6_5'), value: 67 },
-  ];
-  const moduleCodeData = [
-    { name: i18n.t('rd.rs_overview_page.k16'), value: 85000 },
-    { name: i18n.t('rd.rs_overview_page.k17'), value: 120000 },
-    { name: i18n.t('rd.rs_overview_page.k18'), value: 45000 },
-    { name: i18n.t('rd.rs_overview_page.k19'), value: 32000 },
-    { name: i18n.t('rd.rs_overview_page.k20'), value: 18000 },
-  ];
   const charts: ChartCard[] = useMemo(
     () => [
       {

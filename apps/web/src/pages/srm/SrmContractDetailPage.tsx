@@ -13,6 +13,14 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
+const statusLabels: Record<string, string> = {
+  pending: i18n.t('pages.srm_contract_detail_page.k4'),
+  signed: i18n.t('pages.srm_contract_detail_page.k5'),
+  expired: i18n.t('pages.srm_contract_detail_page.k6'),
+  terminated: i18n.t('pages.srm_contract_detail_page.k7'),
+  active: i18n.t('pages.srm_contract_detail_page.k8'),
+};
+
 const SrmContractDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -41,14 +49,6 @@ const SrmContractDetailPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.srm_contract_detail_page.k3'), contractQuery.error);
     }
   }, [contractQuery.isError, contractQuery.error]);
-
-  const statusLabels: Record<string, string> = {
-    pending: i18n.t('pages.srm_contract_detail_page.k4'),
-    signed: i18n.t('pages.srm_contract_detail_page.k5'),
-    expired: i18n.t('pages.srm_contract_detail_page.k6'),
-    terminated: i18n.t('pages.srm_contract_detail_page.k7'),
-    active: i18n.t('pages.srm_contract_detail_page.k8'),
-  };
 
   const infoCard = useMemo(
     () => ({
