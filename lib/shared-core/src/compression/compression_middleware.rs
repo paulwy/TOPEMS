@@ -57,6 +57,8 @@ impl Default for CompressionConfig {
         excluded.insert("application/gzip".to_string());
         excluded.insert("application/x-brotli".to_string());
         excluded.insert("application/x-7z-compressed".to_string());
+        // SSE 流式响应必须逐块即时推送，压缩缓冲会破坏事件时序
+        excluded.insert("text/event-stream".to_string());
 
         let mut supported = HashSet::new();
         supported.insert(CompressionAlgorithm::Gzip);
@@ -309,6 +311,8 @@ mod tests {
             .contains(&CompressionAlgorithm::Brotli));
         assert!(config.excluded_mime_types.contains("image/png"));
         assert!(config.excluded_mime_types.contains("video/mp4"));
+        // SSE 流式响应必须排除压缩（缓冲会破坏事件推送时序）
+        assert!(config.excluded_mime_types.contains("text/event-stream"));
     }
 
     #[test]

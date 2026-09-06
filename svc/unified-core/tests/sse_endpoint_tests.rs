@@ -346,3 +346,76 @@ async fn read_sse_event(
 
     None
 }
+
+// ===== SSE-005: 完整会话闭环（connect → 提取 session_id → POST 请求 → SSE 流接收响应） =====
+// V426 计划的核心链路：建立 SSE 连接 → 读取 endpoint 事件提取 session_id →
+// 通过 POST 发送请求 → 从同一 SSE 流中接收响应事件。
+
+#[tokio::test]
+async fn test_sse_full_session_roundtrip() {
+    if !service_available().await {
+        eprintln!("SKIP: unified-core 服务未运行（{}），跳过 SSE 完整会话闭环测试", API_URL);
+        return;
+    }
+    let client = create_client();
+
+    // 第一步：建立 SSE 连接（保持连接，不关闭 stream）
+    let connect_response = client
+        .get(format!("{}/api/sse/connect", API_URL))
+        .header("Accept", "text/event-stream")
+        .send()
+        .await
+        .expect("SSE连接请求失败");
+    assert_eq!(connect_response.status(), 200);
+
+    let mut stream = connect_response.bytes_stream();
+
+    // 第二步：读取 endpoint 事件，提取 session_id
+    let (event_type, event_data) = read_sse_event(&mut stream)
+        .await
+        .expect("应收到 endpoint 事件");
+    assert_eq!(event_type, "endpoint", "首个事件应为 endpoint");
+
+    let endpoint: Value = serde_json::from_str(&event_data).expect("endpoint 事件应为合法 JSON");
+    let session_id = endpoint["session_id"]
+        .as_str()
+        .expect("endpoint 事件应包含 session_id")
+        .to_string();
+    assert!(!session_id.is_empty(), "session_id 不应为空");
+
+    // 第三步：通过 POST 发送会话请求（echo 载荷）
+    let request_body = json!({
+        "event_type": "message",
+        "data": {
+            "type": "echo",
+            "content": "roundtrip-ok"
+        }
+    });
+
+    let response = client
+        .post(format!("{}/api/sse/session/{}", API_URL, session_id))
+        .json(&request_body)
+        .send()
+        .await
+        .expect("SSE会话请求失败");
+    assert_eq!(response.status(), 200, "会话请求应返回200");
+
+    let body: Value = response.json().await.expect("解析响应失败");
+    assert_eq!(body["success"], true, "请求应成功");
+    assert_eq!(body["session_id"], session_id, "session_id应匹配");
+
+    // 第四步：从同一 SSE 流中接收响应事件（闭环关键）
+    let (resp_event, resp_data) = read_sse_event(&mut stream)
+        .await
+        .expect("应通过 SSE 流收到响应事件");
+    assert_eq!(resp_event, "message", "响应事件类型应为 message");
+
+    let echoed: Value = serde_json::from_str(&resp_data).expect("响应事件应为合法 JSON");
+    assert_eq!(echoed["type"], "echo", "响应应回显请求 data.type");
+    assert_eq!(echoed["content"], "roundtrip-ok", "响应应回显请求 data.content");
+
+    println!(
+        "SSE 完整会话闭环通过: session_id={} → 响应事件 {}: {}",
+        session_id, resp_event, resp_data
+    );
+}
