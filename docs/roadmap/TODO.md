@@ -163,7 +163,7 @@
 - [x] C轨 3 评估项均已完成（ERP 审计 ✅ / unified-core INSERT ✅ / DocumentsPage ✅）
 
 ### V285 后续扩展（留给 V286+）
-- [ ] **mes integration_tests sqlx 缓存补全**：12 处 sqlx::query 缺 .sqlx 缓存（--all-targets 才暴露），需 DB 环境跑 `cargo sqlx prepare --workspace` 重建缓存
+- [ ] **mes integration_tests sqlx 缓存补全**：12 处 sqlx::query 缺 .sqlx 缓存（--all-targets 才暴露），需 DB 环境跑 `cargo sqlx prepare --workspace` 重建缓存。**V516 尝试**：DATABASE_URL=postgres://topems:topems@localhost:5432/topems（mes schema 39 表 + 85 migrations 均在）跑 prepare → **mes lib 在线 check 失败 82 处 chrono 类型错误**（expected DateTime&lt;Utc&gt; vs Option&lt;NaiveDateTime&gt;——DB 列类型/可空性与代码推断不一致）——**根因是 mes crate 在线编译不过**（非仅 integration tests 缺缓存），需先对齐 mes 代码类型（82 处）或改用离线缓存维护；sqlx-cli 0.9.0 vs workspace sqlx 0.8.6 版本差待确认影响
 - [ ] **Finance utoipa::path 补全**：settlement_center/{mod,models,routes,service}.rs 4 个非 handler 文件未覆盖（handlers.rs 已 18 注解）
 - [ ] **CI gate 脚本合并**：check-i18n + check-i18n-quality → `check-i18n --mode={hardcode|quality|all}`；check-api-audit + check-api-coverage + compare-api-modules → `check-api --mode={audit|coverage|align}`
 - [ ] **DocumentsPage 模板深度评估**：若未来简化为纯文件列表，可评估抽 DocumentTemplate 声明式模板
