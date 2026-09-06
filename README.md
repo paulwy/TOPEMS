@@ -461,7 +461,7 @@ JWT_SECRET=<生成的32字符以上随机密钥>
 JWT_REFRESH_SECRET=<生成的32字符以上随机密钥>
 
 # 数据库配置
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DATABASE_URL=postgres://topems_app:topems_app_secret@localhost:5433/topems
 DB_HOST=localhost
 DB_PORT=5432
 

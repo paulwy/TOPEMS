@@ -44,7 +44,7 @@ type: Opaque
 stringData:
   POSTGRES_USER: "topems"
   POSTGRES_PASSWORD: "topems_secret"
-  DATABASE_URL: "postgres://topems:topems_secret@postgres-service:5432/topems"
+  DATABASE_URL: "postgres://topems_app:topems_app_secret@postgres-service:5432/topems"
   REDIS_URL: "redis://redis-service:6379"
   # V13.0 Plugin Registration Token (CHANGE IN PRODUCTION!)
   # Generate with: openssl rand -hex 32

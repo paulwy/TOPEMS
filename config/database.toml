@@ -1,5 +1,5 @@
 [development]
-database_url = "postgres://topems:topems_secret@localhost:5432/topems"
+database_url = "postgres://topems_app:topems_app_secret@localhost:5433/topems"
 timezone = "UTC"
 max_connections = 10
 

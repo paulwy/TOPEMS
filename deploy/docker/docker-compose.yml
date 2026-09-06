@@ -62,7 +62,7 @@ services:
     image: edoburu/pgbouncer:latest
     container_name: topems-pgbouncer
     environment:
-      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/topems
       - PGBOUNCER_MAX_CLIENT_CONN=500
       - PGBOUNCER_DEFAULT_POOL_SIZE=25
       - PGBOUNCER_MAX_DB_CONNECTIONS=100
