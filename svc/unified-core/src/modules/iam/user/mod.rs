@@ -5,8 +5,8 @@ mod batch;
 pub(crate) mod crud;
 mod models;
 mod profile;
-mod profile_ext;
-mod roles;
+pub(crate) mod profile_ext;
+pub(crate) mod roles;
 mod status;
 mod validation;
 

@@ -8,6 +8,16 @@ use uuid::Uuid;
 use super::models::{is_valid_email, record_audit_log, UserResponse, UserRow};
 
 /// GET /users/me/permissions — 返回当前用户权限（与已有 /permissions/my-permissions 不同路径）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:permission:read"])),
+    path = "/iam/permissions/my-permissions",
+    tag = "IAM-Permissions",
+    responses(
+        (status = 200, description = "当前用户权限列表"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn get_my_permissions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

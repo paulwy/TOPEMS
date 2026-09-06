@@ -23,6 +23,16 @@ pub struct UpdatePositionRequest {
     pub role_ids: Option<Vec<Uuid>>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:position:read"])),
+    path = "/iam/positions",
+    tag = "IAM-Positions",
+    responses(
+        (status = 200, description = "岗位列表"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn list_positions(State(state): State<AppState>) -> Json<serde_json::Value> {
     let rows = sqlx::query(
         r#"SELECT id, code, name, department_id, description FROM iam.positions ORDER BY name"#,

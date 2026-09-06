@@ -27,6 +27,16 @@ struct RoleResponse {
     permission_count: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:role:read"])),
+    path = "/iam/roles",
+    tag = "IAM-Roles",
+    responses(
+        (status = 200, description = "角色列表（含权限数）"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn list_roles(State(state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("IAM role list_roles called");
 
@@ -181,6 +191,18 @@ pub async fn create_role(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:role:read"])),
+    path = "/iam/roles/{id}",
+    tag = "IAM-Roles",
+    params(("id" = String, Path, description = "角色 ID")),
+    responses(
+        (status = 200, description = "角色详情"),
+        (status = 400, description = "无效的角色ID格式"),
+        (status = 404, description = "角色不存在"),
+    )
+)]
 pub async fn get_role(
     State(state): State<AppState>,
     Path(id): Path<String>,

@@ -33,6 +33,18 @@ struct UserPermissionRow {
 }
 
 /// GET /users/{userId}/permissions — 返回指定用户权限（与已有 /user-permissions/{user_id} 不同路径）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:user:read"])),
+    path = "/iam/users/{user_id}/permissions",
+    tag = "IAM-Permissions",
+    params(("user_id" = String, Path, description = "用户 ID")),
+    responses(
+        (status = 200, description = "指定用户权限列表"),
+        (status = 400, description = "无效的用户ID格式"),
+        (status = 404, description = "用户不存在"),
+    )
+)]
 pub async fn get_user_permissions(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

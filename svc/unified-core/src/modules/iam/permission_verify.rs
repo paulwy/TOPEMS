@@ -18,6 +18,17 @@ pub struct VerifyPermissionResponse {
     pub message: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["unified-core:iam:permission:read"])),
+    path = "/iam/permissions/verify",
+    tag = "IAM-Permissions",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "权限校验结果（has_permission）"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn verify_permission(
     State(state): State<AppState>,
     Json(req): Json<VerifyPermissionRequest>,
@@ -48,6 +59,17 @@ pub struct VerifyMultiplePermissionsResponse {
     pub any_granted: bool,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["unified-core:iam:permission:read"])),
+    path = "/iam/permissions/verify-multiple",
+    tag = "IAM-Permissions",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "批量权限校验结果（results/all_granted/any_granted）"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn verify_multiple_permissions(
     State(state): State<AppState>,
     Json(req): Json<VerifyMultiplePermissionsRequest>,

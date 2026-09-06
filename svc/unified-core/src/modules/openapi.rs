@@ -90,6 +90,15 @@ pub struct Permission {
         crate::modules::iam::user::crud::create_user,
         crate::modules::iam::auth::login,
         crate::modules::iam::auth::register,
+        // ===== IAM 权限管理 =====
+        crate::modules::iam::role::list_roles,
+        crate::modules::iam::role::get_role,
+        crate::modules::iam::permission::list_permissions,
+        crate::modules::iam::position::list_positions,
+        crate::modules::iam::permission_verify::verify_permission,
+        crate::modules::iam::permission_verify::verify_multiple_permissions,
+        crate::modules::iam::user::profile_ext::get_my_permissions,
+        crate::modules::iam::user::roles::get_user_permissions,
         // ===== Flow module - task =====
         crate::modules::flow::task::list_tasks,
         crate::modules::flow::task::get_task,

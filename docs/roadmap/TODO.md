@@ -17517,7 +17517,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C shared-service-client Eureka服务发现**：集成Eureka服务发现
 - [ ] **轨D 业务工具权限审计日志**：实现审计日志记录和查询
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -17658,7 +17658,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -17830,7 +17830,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -17979,7 +17979,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -18157,7 +18157,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -18338,7 +18338,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -18514,7 +18514,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -18704,7 +18704,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -18877,7 +18877,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -19041,7 +19041,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
 - [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
 - [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
@@ -19246,7 +19246,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
 - [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
 - [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
@@ -19470,7 +19470,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -19645,7 +19645,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -19868,7 +19868,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -20056,7 +20056,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -20289,7 +20289,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -20516,7 +20516,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -20669,7 +20669,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -20875,7 +20875,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -21050,7 +21050,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -21192,7 +21192,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
 - [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
 - [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
-- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
 - [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
@@ -22521,7 +22521,7 @@ git add $STAGED
 | P1 | 业务工具完善（路由端点 / API 接口 / 调用示例） | 未做 | P1-API 稳定 | ⚠️ 同上 | ③ |
 | P2 | SSE 端到端测试实现（V426 仅计划） | 计划完成，实现未做 | SSE 双端 + 运行环境 | ❌ 需运行环境 | ④ |
 | P2 | 业务工具 SDK 发布（V476 仅设计草稿） | 草稿完成，发布未做 | P1 稳定 + 发布渠道 | ❌ 依赖发布 | ⑤ |
-| P3 | 权限管理 API 文档（21 条变体） | 未做 | 无 | ✅ | ⑥ |
+| P3 | 权限管理 API 文档（21 条变体） | ✅ V529b 已完成（8 权限端点 OpenAPI + 3 spec 守卫测试） | — | ✅ | ⑥ 完成 |
 
 ### 执行策略
 

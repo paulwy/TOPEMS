@@ -27,6 +27,16 @@ struct PermissionResponse {
     action: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:permission:read"])),
+    path = "/iam/permissions",
+    tag = "IAM-Permissions",
+    responses(
+        (status = 200, description = "权限列表（含 category/resource/action 提取）"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("IAM permission list_permissions called");
 
