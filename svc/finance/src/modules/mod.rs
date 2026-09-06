@@ -1559,7 +1559,7 @@ async fn submit_approval(
     let approver_id = claims.user_id().ok().unwrap_or_else(Uuid::nil);
 
     if let Some(record_id) = record_id {
-        let _ = topems_shared_db::approval::create_approval_and_log(
+        if let Err(e) = topems_shared_db::approval::create_approval_and_log(
             &state.pool,
             entity_type,
             record_id,
@@ -1567,7 +1567,10 @@ async fn submit_approval(
             to_status,
             approver_id,
         )
-        .await;
+        .await
+        {
+            tracing::warn!("create_approval_and_log failed: {}", e);
+        }
     }
 
     Json(ApiResponse::success(
@@ -1620,7 +1623,7 @@ async fn approve_approval(
         .unwrap_or("approved");
 
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
-        let _ = topems_shared_db::approval::execute_transition_and_log(
+        if let Err(e) = topems_shared_db::approval::execute_transition_and_log(
             &state.pool,
             None,
             entity_type,
@@ -1629,7 +1632,10 @@ async fn approve_approval(
             from_status,
             to_status,
         )
-        .await;
+        .await
+        {
+            tracing::warn!("execute_transition_and_log failed: {}", e);
+        }
     }
 
     Json(ApiResponse::success(
@@ -1675,14 +1681,17 @@ async fn reject_approval(
         .unwrap_or("");
 
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
-        let _ = topems_shared_db::approval::reject_and_log(
+        if let Err(e) = topems_shared_db::approval::reject_and_log(
             &state.pool,
             entity_type,
             record_id,
             approval_id,
             reason,
         )
-        .await;
+        .await
+        {
+            tracing::warn!("reject_and_log failed: {}", e);
+        }
     }
 
     Json(ApiResponse::success(
