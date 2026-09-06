@@ -8,11 +8,13 @@ pub mod base_client;
 pub mod circuit_breaker;
 pub mod error;
 pub mod generic;
+pub mod metrics;
 
 pub use base_client::BaseServiceClient;
 pub use error::ServiceClientResult;
 // ServiceClientError 已合并到 TopemsError，保留 re-export 以向后兼容
 pub use generic::GenericServiceClient;
+pub use metrics::{ClientMetrics, ClientMetricsSnapshot};
 pub use topems_shared_core::error::TopemsError as ServiceClientError;
 pub use trait_api::{ServiceApi, TypedServiceClient};
 

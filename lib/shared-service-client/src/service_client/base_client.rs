@@ -1,11 +1,12 @@
 use super::circuit_breaker::{is_failure, CircuitBreaker};
 use super::error::ServiceClientResult;
+use super::metrics::{ClientMetrics, ClientMetricsSnapshot};
 use opentelemetry::global;
 use reqwest::{Client, RequestBuilder};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use topems_shared_core::error::TopemsError;
 
 struct TraceHeaderInjector(HashMap<String, String>);
@@ -24,6 +25,8 @@ pub struct BaseServiceClient {
     custom_headers: HashMap<String, String>,
     /// 服务调用熔断器（clone 间共享，防下游故障雪崩）。
     breaker: Arc<CircuitBreaker>,
+    /// 客户端实时运行监控（clone 间共享，供 metrics/诊断消费）。
+    metrics: Arc<ClientMetrics>,
 }
 
 impl BaseServiceClient {
@@ -46,12 +49,18 @@ impl BaseServiceClient {
             auth_token: None,
             custom_headers: HashMap::new(),
             breaker: Arc::new(CircuitBreaker::from_env()),
+            metrics: Arc::new(ClientMetrics::new()),
         })
     }
 
     /// 当前是否处于熔断打开态（供诊断/metrics）。
     pub fn circuit_is_open(&self) -> bool {
         self.breaker.is_open()
+    }
+
+    /// 客户端实时运行监控快照（请求量 / 在途 / 成功率 / 平均耗时 / 熔断拦截）。
+    pub fn metrics(&self) -> ClientMetricsSnapshot {
+        self.metrics.snapshot(self.breaker.is_open(), &self.base_url)
     }
 
     fn build_url(&self, path: &str) -> String {
@@ -105,15 +114,23 @@ impl BaseServiceClient {
     ) -> ServiceClientResult<T> {
         // 熔断快速失败：OPEN 期间直接返回，不发请求
         if !self.breaker.allow_request() {
+            self.metrics.record_circuit_block();
             return Err(CircuitBreaker::circuit_open_error());
         }
+        let started = Instant::now();
+        let _guard = self.metrics.begin_request();
         let result = self.execute_request_inner(request).await;
+        let elapsed_ns = started.elapsed().as_nanos() as u64;
         match &result {
-            Ok(_) => self.breaker.record_success(),
+            Ok(_) => {
+                self.breaker.record_success();
+                self.metrics.record_success(elapsed_ns);
+            }
             Err(e) => {
                 if is_failure(e) {
                     self.breaker.record_failure();
                 }
+                self.metrics.record_failure(elapsed_ns);
             }
         }
         result
@@ -146,15 +163,23 @@ impl BaseServiceClient {
 
     pub async fn get_without_response(&self, path: &str) -> ServiceClientResult<()> {
         if !self.breaker.allow_request() {
+            self.metrics.record_circuit_block();
             return Err(CircuitBreaker::circuit_open_error());
         }
+        let started = Instant::now();
+        let _guard = self.metrics.begin_request();
         let result = self.get_without_response_inner(path).await;
+        let elapsed_ns = started.elapsed().as_nanos() as u64;
         match &result {
-            Ok(_) => self.breaker.record_success(),
+            Ok(_) => {
+                self.breaker.record_success();
+                self.metrics.record_success(elapsed_ns);
+            }
             Err(e) => {
                 if is_failure(e) {
                     self.breaker.record_failure();
                 }
+                self.metrics.record_failure(elapsed_ns);
             }
         }
         result
@@ -188,6 +213,8 @@ impl BaseServiceClient {
         query: Option<&[(&str, &str)]>,
         extra_headers: &[(&str, &str)],
     ) -> Result<reqwest::Response, reqwest::Error> {
+        let started = Instant::now();
+        let _guard = self.metrics.begin_request();
         let url = self.build_url(path);
         let mut request = self.client.get(&url);
         if let Some(q) = query {
@@ -197,7 +224,13 @@ impl BaseServiceClient {
         for &(key, value) in extra_headers {
             request = request.header(key, value);
         }
-        request.send().await
+        let result = request.send().await;
+        let elapsed_ns = started.elapsed().as_nanos() as u64;
+        match &result {
+            Ok(_) => self.metrics.record_success(elapsed_ns),
+            Err(_) => self.metrics.record_failure(elapsed_ns),
+        }
+        result
     }
 
     pub fn set_auth_token(&mut self, token: impl Into<String>) {
@@ -367,5 +400,28 @@ mod tests {
         let headers: &[(&str, &str)] = &[("x-tenant-id", "tenant-001")];
         let result = client.get_raw_response("/api/test", None, headers).await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn metrics_counts_failed_request() {
+        let client = BaseServiceClient::new("http://127.0.0.1:1").unwrap();
+        let _: ServiceClientResult<serde_json::Value> = client.get("/api/test").await;
+        let snap = client.metrics();
+        assert_eq!(snap.total_requests, 1);
+        assert_eq!(snap.failure_requests, 1);
+        assert_eq!(snap.success_requests, 0);
+        assert_eq!(snap.in_flight, 0);
+        assert!(snap.avg_duration_ms >= 0.0);
+        assert_eq!(snap.base_url, "http://127.0.0.1:1");
+    }
+
+    #[tokio::test]
+    async fn metrics_shared_across_clones() {
+        let client = BaseServiceClient::new("http://127.0.0.1:1").unwrap();
+        let clone = client.clone();
+        let _: ServiceClientResult<serde_json::Value> = clone.get("/api/test").await;
+        let snap = client.metrics();
+        assert_eq!(snap.total_requests, 1);
+        assert_eq!(snap.failure_requests, 1);
     }
 }

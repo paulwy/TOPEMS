@@ -16195,7 +16195,7 @@ record_failure(0) ──▶ 返回错误
 - [ ] **轨D 业务工具权限控制持久化**：将租户权限配置存储到数据库
 - [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
 - [ ] **轨C shared-service-client动态服务发现**：集成Consul、etcd、Zookeeper等动态服务发现
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
 - [ ] **四轨并行继续**：V333-V443连续一百一十一次交付验证成功，V444继续四轨合并交付模式
@@ -16367,7 +16367,7 @@ record_failure(0) ──▶ 返回错误
 ### V444后续扩展（留给V445+）
 
 - [ ] **轨C shared-service-client动态服务发现**：集成Consul、etcd、Zookeeper等动态服务发现
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 业务工具权限控制数据库持久化**：实现PostgreSQL/MySQL数据库权限存储
 - [ ] **轨D 业务工具权限管理API**：添加权限管理API端点（创建、更新、删除权限）
 - [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
@@ -16534,7 +16534,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 业务工具权限管理API**：添加权限管理API端点（创建、更新、删除权限）
 - [ ] **轨C shared-service-client Consul服务发现**：集成Consul服务发现
 - [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
@@ -16693,7 +16693,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 业务工具权限管理API**：实现权限管理API端点
 - [ ] **轨C shared-service-client Consul服务发现**：集成Consul服务发现
 - [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
@@ -16816,7 +16816,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 业务工具权限管理API**：实现权限管理API端点
 - [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现
 - [ ] **轨C shared-service-client Zookeeper服务发现**：集成Zookeeper服务发现
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨C Consul服务发现集成测试**：使用Docker Compose启动Consul进行集成测试
 - [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
@@ -16963,7 +16963,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 业务工具权限审计日志**：实现审计日志记录和查询
 - [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现
 - [ ] **轨C shared-service-client Zookeeper服务发现**：集成Zookeeper服务发现
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
 - [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
@@ -17093,7 +17093,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 业务工具权限审计日志**：实现审计日志记录和查询
 - [ ] **轨C shared-service-client Zookeeper服务发现**：集成Zookeeper服务发现
 - [ ] **轨C shared-service-client Nacos服务发现**：集成Nacos服务发现
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨C EtcdServiceDiscovery集成测试**：使用Docker Compose启动etcd进行集成测试
 - [ ] **轨C etcd租约keep-alive**：实现租约自动续期（lease keep-alive）
 - [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
@@ -17224,7 +17224,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标（缓存命中率、查询延迟等）
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨C ZookeeperServiceDiscovery集成测试**：使用Docker Compose启动Zookeeper进行集成测试
 - [ ] **轨D PermissionStoreFactory集成测试**：测试内存和数据库存储的切换
 - [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
@@ -17367,7 +17367,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端（zookeeper crate）
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
 - [ ] **轨C Zookeeper重连机制**：添加连接断开后的自动重连逻辑
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨C ZookeeperServiceDiscovery集成测试**：使用Docker Compose启动Zookeeper进行集成测试
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
@@ -17524,7 +17524,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
 - [ ] **轨C Zookeeper重连机制**：添加连接断开后的自动重连逻辑
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -17664,7 +17664,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -17836,7 +17836,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -17985,7 +17985,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -18163,7 +18163,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -18344,7 +18344,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -18520,7 +18520,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -18710,7 +18710,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -18883,7 +18883,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -19056,7 +19056,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -19260,7 +19260,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -19483,7 +19483,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -19658,7 +19658,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -19881,7 +19881,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -20069,7 +20069,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -20302,7 +20302,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -20529,7 +20529,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -20682,7 +20682,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -20888,7 +20888,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -21063,7 +21063,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -21205,7 +21205,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
 - [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
-- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
 - [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
 - [ ] **轨D 权限存储指标**：添加权限存储性能指标
@@ -22516,7 +22516,7 @@ git add $STAGED
 
 | # | 工作项 | 现状 | 依赖 | 可本地闭环 | 建议优先级 |
 |---|---|---|---|---|---|
-| P0 | shared-service-client 连接池实时状态监控 | 池已实现（base_client/generic），监控未做 | 无 | ✅ cargo 测试 | ① 先行 |
+| P0 | shared-service-client 连接池实时状态监控 | ✅ V529 已完成（metrics.rs + 全请求路径埋点 + 73 测试） | — | ✅ | ① 完成 |
 | P1 | 业务工具连接真实 API（shared-service-client→CRM/ERP/Finance/HR/MES/SCM） | 未做（mock 数据） | P0 + 后端服务运行 | ⚠️ 需运行环境 | ② |
 | P1 | 业务工具完善（路由端点 / API 接口 / 调用示例） | 未做 | P1-API 稳定 | ⚠️ 同上 | ③ |
 | P2 | SSE 端到端测试实现（V426 仅计划） | 计划完成，实现未做 | SSE 双端 + 运行环境 | ❌ 需运行环境 | ④ |
