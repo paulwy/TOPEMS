@@ -103,6 +103,7 @@ impl Default for AuditLoggerConfig {
             max_response_body_size: 1024 * 1024,
             skip_paths: vec![
                 "/health".to_string(),
+                "/api/sse/".to_string(),
                 "/api/core/iam/auth/login".to_string(),
                 "/api/core/iam/auth/refresh".to_string(),
                 "/api/core/iam/auth/register".to_string(),
@@ -428,8 +429,21 @@ pub async fn audit_logger_middleware(
 
     let (response_parts, response_body) = {
         let (parts, body) = response.into_parts();
-        let (body, bytes) = read_body_bytes(body, middleware.config.max_response_body_size).await;
-        (parts, (body, bytes))
+        // SSE 流式响应（text/event-stream）不能缓冲读取——无限流会被
+        // read_body_bytes 阻塞到连接关闭，导致客户端 0 字节。
+        // 通用保护：event-stream 一律透传（不做响应体审计）。
+        let is_sse_stream = parts
+            .headers
+            .get(axum::http::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .map_or(false, |ct| ct.to_lowercase().contains("text/event-stream"));
+        if is_sse_stream {
+            (parts, (body, Vec::new()))
+        } else {
+            let (body, bytes) =
+                read_body_bytes(body, middleware.config.max_response_body_size).await;
+            (parts, (body, bytes))
+        }
     };
 
     let (response_body, response_bytes) = response_body;

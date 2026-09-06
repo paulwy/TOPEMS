@@ -22519,7 +22519,7 @@ git add $STAGED
 | P0 | shared-service-client 连接池实时状态监控 | ✅ V529 已完成（metrics.rs + 全请求路径埋点 + 73 测试） | — | ✅ | ① 完成 |
 | P1 | 业务工具连接真实 API（shared-service-client→CRM/ERP/Finance/HR/MES/SCM） | ✅ V529c 核查完成（14 工具全接真实调用降级 mock） | — | ✅ | ② 完成 |
 | P1 | 业务工具完善（路由端点 / API 接口 / 调用示例） | ✅ V529c 核查完成（MCP 双端点 + 14 工具 + business_tools 族 + examples） | — | ✅ | ③ 完成 |
-| P2 | SSE 端到端测试实现（V426 仅计划） | SSE-005 完整会话闭环测试已实现（V529e）+ 发现并修复压缩中间件缓冲 SSE 根因（excluded 补 text/event-stream）；容器重建后终验 | 容器重建 | ⚠️ 代码完成/终验待容器 | ④ 部分完成 |
+| P2 | SSE 端到端测试实现（V426 仅计划） | ✅ SSE-005 完整会话闭环测试通过（5/5）；根因修复：audit_logger 缓冲流式响应阻塞 SSE（流式响应不读 body）+ compression 排除 text/event-stream；容器重建终验通过 | 无 | ✅ 完成 | ④ |
 | P2 | 业务工具 SDK 发布（V476 仅设计草稿） | V0.1 TS 代码完成（V529d：5 子客户端+鉴权+分页+NDJSON 流式，tsc 0 错 + 4 冒烟测试）；V1.0 npm/PyPI 发布待渠道 | 发布渠道 | ⚠️ V0.1 完成/发布待定 | ⑤ 部分完成 |
 | P3 | 权限管理 API 文档（21 条变体） | ✅ V529b 已完成（8 权限端点 OpenAPI + 3 spec 守卫测试） | — | ✅ | ⑥ 完成 |
 
