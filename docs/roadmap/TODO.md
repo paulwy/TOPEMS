@@ -4089,8 +4089,8 @@ let failed_count = 0;
 
 ### V282 后续扩展（留给 V283+）
 - [ ] **Finance 审批增强**：finance 的 `submit_approval`/`approve_approval`/`reject_approval` 目前是占位逻辑（仅 debug 日志），可集成 shared-db approval 做真实审计
-- [ ] **SupplierPortalPage 声明式 statCards**：需先扩展 `StatCard` 接口支持 `bgColor` + `format` 字段
-- [ ] **模板扩展**：4 个 children 透传页面评估是否抽象为专用声明式模板
+- [x] **SupplierPortalPage 声明式 statCards**：✅ V283 已完成 — StatCard 接口扩展 bgColor/format + statCards prop 声明式渲染（4 卡片），页面已迁移 StatsPageTemplate
+- [x] **模板扩展**：✅ V284 评估完成 — 4 页均维持现状（NotificationCenter/MailPage 已声明式插槽/回调接入，DocumentsPage CardListTemplate children 合理，SupplierPortalPage 已 StatsPageTemplate）——本旧条目清理标记
 
 ### 已完成：V281 后续任务（ApprovalTransition 提升 + AiToolPageTemplate 评估）
 
@@ -4113,7 +4113,7 @@ let failed_count = 0;
 
 ### V281 后续扩展（留给 V282+）
 - [ ] **ApprovalTransition 实际推广**：finance/erp/pm 中有审批流的模块实际导入 `topems_shared_db::approval` 替换各自的重复逻辑
-- [ ] **模板扩展**：SupplierPortal/NotificationCenter/DocumentsPage/MailPage 目前均为 children 透传，可评估是否抽象为专用声明式模板
+- [x] **模板扩展**：✅ V284 评估完成（不抽专用模板：4 页已声明式接入现有模板体系，新增模板与 V23.0 精简方向冲突）——本旧条目清理标记
 
 ### 已完成：V280 设计系统模板治理收闭（最后 4 例外清零 · 530/530 = 100%）
 
@@ -4146,7 +4146,7 @@ let failed_count = 0;
 ### V280 后续（治理完成后方向，留给 V281+）
 - [ ] **ApprovalTransition 推广**：shared-core 3 个审批流方法（MES 仅落地），评估推广到 finance/erp/pm 等模块
 - [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入
-- [ ] **模板扩展**：SupplierPortal/NotificationCenter/DocumentsPage/MailPage 目前均为 children 透传，可评估是否抽象为专用声明式模板（PortalPageTemplate、NotificationTemplate、DocumentTemplate、MailClientTemplate）
+- [x] **模板扩展**：✅ V284 评估完成（不抽专用模板：4 页已声明式接入现有模板体系，新增模板与 V23.0 精简方向冲突）——本旧条目清理标记（PortalPageTemplate、NotificationTemplate、DocumentTemplate、MailClientTemplate）
 
 ### 已完成：V279 工具/系统类模板化（3 页接入已有模板）
 
@@ -4167,8 +4167,8 @@ let failed_count = 0;
 ### V279 后续扩展（留给 V280+）
 - [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
 - [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
-- [ ] **门户/协作类模板化**：SupplierPortalPage / NotificationCenter 2 页评估专用模板可行性
-- [ ] **文档/邮件类模板化**：DocumentsPage / MailPage 2 页评估专用模板可行性
+- [x] **门户/协作类模板化**：✅ V283/V284 已完成 — SupplierPortalPage 已 StatsPageTemplate，NotificationCenter 已 ListPageTemplate 插槽声明式
+- [x] **文档/邮件类模板化**：✅ V284 已完成 — DocumentsPage CardListTemplate children（维持），MailPage MasterDetailPageTemplate renderDetail（已声明式）
 
 ### 已完成：V278 架构冗余治理（4 轨并行 · 架构冗余分析 P0→P1 治理）
 
@@ -4255,8 +4255,8 @@ let failed_count = 0;
 ### V277 后续扩展（留给 V278+）
 - [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
 - [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
-- [ ] **门户/协作类模板化**：SupplierPortalPage / NotificationCenter 2 页评估专用模板可行性
-- [ ] **文档/邮件类模板化**：DocumentsPage / MailPage 2 页评估专用模板可行性
+- [x] **门户/协作类模板化**：✅ V283/V284 已完成 — SupplierPortalPage 已 StatsPageTemplate，NotificationCenter 已 ListPageTemplate 插槽声明式
+- [x] **文档/邮件类模板化**：✅ V284 已完成 — DocumentsPage CardListTemplate children（维持），MailPage MasterDetailPageTemplate renderDetail（已声明式）
 - [ ] **工具/系统类模板化**：PerformanceTestPage / SystemManagementPage / PluginUploadPage 3 页评估接入
 
 ### 已完成：V276 GIS 模板接入（GisMapTemplate 落地）
@@ -4277,8 +4277,8 @@ let failed_count = 0;
 ### V276 后续扩展（留给 V277+）
 - [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
 - [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
-- [ ] **门户/协作类模板化**：SupplierPortalPage / NotificationCenter 2 页评估专用模板可行性
-- [ ] **文档/邮件类模板化**：DocumentsPage / MailPage 2 页评估专用模板可行性
+- [x] **门户/协作类模板化**：✅ V283/V284 已完成 — SupplierPortalPage 已 StatsPageTemplate，NotificationCenter 已 ListPageTemplate 插槽声明式
+- [x] **文档/邮件类模板化**：✅ V284 已完成 — DocumentsPage CardListTemplate children（维持），MailPage MasterDetailPageTemplate renderDetail（已声明式）
 
 ### 已完成：V275 报表类模板化（ReportViewerTemplate + DesignerTemplate 复用）
 
@@ -4301,7 +4301,7 @@ let failed_count = 0;
 ### V275 后续扩展（留给 V276+）
 - [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
 - [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
-- [ ] **门户/协作类模板化**：SupplierPortalPage / NotificationCenter 2 页评估专用模板可行性
+- [x] **门户/协作类模板化**：✅ V283/V284 已完成 — SupplierPortalPage 已 StatsPageTemplate，NotificationCenter 已 ListPageTemplate 插槽声明式
 - [ ] **GIS/地图类模板化**：GisMapTemplate 已建未接入，GisPage / gis/index 2 页评估接入
 
 ### 已完成：V273 四轨并行推进（MES 审批流 + AiToolPageTemplate + sqlx-cache CI check）
