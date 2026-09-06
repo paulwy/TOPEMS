@@ -3,12 +3,7 @@ import type { QualityOverview } from '@/api/qms/types';
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __qmsStats?: QualityOverview;
-  }
-}
+let qmsStats: QualityOverview | undefined;
 
 export function useQmsDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -16,7 +11,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
       id: 'pass-rate',
       title: i18n.t('qms.dashboard_schema.k0'),
       value: () => {
-        const stats = window.__qmsStats;
+        const stats = qmsStats;
         return stats ? `${stats.passRate.toFixed(1)}%` : '-';
       },
       icon: 'CheckCircle',
@@ -27,7 +22,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
       id: 'total-inspections',
       title: i18n.t('qms.dashboard_schema.k2'),
       value: () => {
-        const stats = window.__qmsStats;
+        const stats = qmsStats;
         return stats?.totalInspections.toLocaleString() ?? '-';
       },
       icon: 'ClipboardList',
@@ -38,7 +33,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
       id: 'open-issues',
       title: i18n.t('qms.dashboard_schema.k4'),
       value: () => {
-        const stats = window.__qmsStats;
+        const stats = qmsStats;
         return stats?.totalIssues.toLocaleString() ?? '-';
       },
       icon: 'AlertCircle',
@@ -49,7 +44,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
       id: 'customer-complaints',
       title: i18n.t('qms.dashboard_schema.k6'),
       value: () => {
-        const stats = window.__qmsStats;
+        const stats = qmsStats;
         return stats?.customerComplaintCount.toLocaleString() ?? '-';
       },
       icon: 'Users',
@@ -64,7 +59,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
       title: i18n.t('qms.dashboard_schema.k8'),
       type: 'line',
       data: () => {
-        const stats = window.__qmsStats;
+        const stats = qmsStats;
         if (!stats) return [];
         return stats.trendData.map((item) => ({
           name: item.date,
@@ -78,7 +73,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
       title: i18n.t('qms.dashboard_schema.k9'),
       type: 'pie',
       data: () => {
-        const stats = window.__qmsStats;
+        const stats = qmsStats;
         if (!stats) return [];
         return stats.topIssues.map((item) => ({
           name: item.category,
@@ -92,7 +87,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
       title: i18n.t('qms.dashboard_schema.k10'),
       type: 'bar',
       data: () => {
-        const stats = window.__qmsStats;
+        const stats = qmsStats;
         if (!stats) return [];
         return stats.departmentPerformance.map((item) => ({
           name: item.department,
@@ -108,7 +103,7 @@ export function useQmsDashboardSchema(): DashboardSchema {
     loader: async () => {
       const response = await qualityDashboardApi.getQualityOverview();
       if (response.success && response.data) {
-        window.__qmsStats = response.data;
+        qmsStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },

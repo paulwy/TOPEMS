@@ -2,12 +2,7 @@ import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { HrmDashboardStats } from '@/api/hrm/dashboard';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __hrmStats?: HrmDashboardStats;
-  }
-}
+let hrmStats: HrmDashboardStats | undefined;
 
 export function useHrmDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -15,7 +10,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       id: 'total-employees',
       title: i18n.t('hrm.dashboard_schema.k0'),
       value: () => {
-        const stats = window.__hrmStats;
+        const stats = hrmStats;
         return (stats?.total_employees as number)?.toLocaleString() ?? '-';
       },
       icon: 'Users',
@@ -26,7 +21,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       id: 'new-hires',
       title: i18n.t('hrm.dashboard_schema.k2'),
       value: () => {
-        const stats = window.__hrmStats;
+        const stats = hrmStats;
         return (stats?.new_hires as number)?.toLocaleString() ?? '-';
       },
       icon: 'Users',
@@ -37,7 +32,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       id: 'on-leave',
       title: i18n.t('hrm.dashboard_schema.k4'),
       value: () => {
-        const stats = window.__hrmStats;
+        const stats = hrmStats;
         return (stats?.on_leave as number)?.toLocaleString() ?? '-';
       },
       icon: 'Clock',
@@ -48,7 +43,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       id: 'avg-salary',
       title: i18n.t('hrm.dashboard_schema.k6'),
       value: () => {
-        const stats = window.__hrmStats;
+        const stats = hrmStats;
         return stats ? `¥${(stats?.avg_salary as number)?.toLocaleString() ?? 0}` : '-';
       },
       icon: 'DollarSign',
@@ -63,7 +58,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       title: i18n.t('hrm.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
-        const stats = window.__hrmStats;
+        const stats = hrmStats;
         if (!stats) return [];
         const distribution = stats.department_distribution as
           Array<{ name: string; value: number }> | undefined;
@@ -76,7 +71,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       title: i18n.t('hrm.dashboard_schema.k9'),
       type: 'line',
       data: () => {
-        const stats = window.__hrmStats;
+        const stats = hrmStats;
         if (!stats) return [];
         const trend = stats.hire_trend as Array<{ name: string; value: number }> | undefined;
         return trend ?? [];
@@ -88,7 +83,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       title: i18n.t('hrm.dashboard_schema.k10'),
       type: 'pie',
       data: () => {
-        const stats = window.__hrmStats;
+        const stats = hrmStats;
         if (!stats) return [];
         const distribution = stats.education_distribution as
           Array<{ name: string; value: number }> | undefined;
@@ -104,7 +99,7 @@ export function useHrmDashboardSchema(): DashboardSchema {
       const api = await import('@/api/hrm/dashboard');
       const response = await api.hrmDashboardApi.getOverview();
       if (response.success && response.data) {
-        window.__hrmStats = response.data;
+        hrmStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },

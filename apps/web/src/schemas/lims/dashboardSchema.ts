@@ -2,12 +2,7 @@ import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { LimsDashboardStats } from '@/api/lims/dashboard';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __limsStats?: LimsDashboardStats;
-  }
-}
+let limsStats: LimsDashboardStats | undefined;
 
 export function useLimsDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -15,7 +10,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       id: 'pending-samples',
       title: i18n.t('lims.dashboard_schema.k0'),
       value: () => {
-        const stats = window.__limsStats;
+        const stats = limsStats;
         return (stats?.pending_samples as number)?.toLocaleString() ?? '-';
       },
       icon: 'FileText',
@@ -26,7 +21,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       id: 'in-progress-tasks',
       title: i18n.t('lims.dashboard_schema.k2'),
       value: () => {
-        const stats = window.__limsStats;
+        const stats = limsStats;
         return (stats?.in_progress_tasks as number)?.toLocaleString() ?? '-';
       },
       icon: 'Clock',
@@ -37,7 +32,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       id: 'instrument-usage',
       title: i18n.t('lims.dashboard_schema.k4'),
       value: () => {
-        const stats = window.__limsStats;
+        const stats = limsStats;
         return stats ? `${stats?.instrument_usage ?? 0}%` : '-';
       },
       icon: 'BarChart3',
@@ -48,7 +43,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       id: 'pass-rate',
       title: i18n.t('lims.dashboard_schema.k6'),
       value: () => {
-        const stats = window.__limsStats;
+        const stats = limsStats;
         return stats ? `${stats?.pass_rate ?? 0}%` : '-';
       },
       icon: 'CheckCircle',
@@ -63,7 +58,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       title: i18n.t('lims.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
-        const stats = window.__limsStats;
+        const stats = limsStats;
         if (!stats) return [];
         const distribution = stats.test_items as Array<{ name: string; value: number }> | undefined;
         return distribution ?? [];
@@ -75,7 +70,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       title: i18n.t('lims.dashboard_schema.k9'),
       type: 'line',
       data: () => {
-        const stats = window.__limsStats;
+        const stats = limsStats;
         if (!stats) return [];
         const rate = stats.task_completion as Array<{ name: string; value: number }> | undefined;
         return rate ?? [];
@@ -87,7 +82,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       title: i18n.t('lims.dashboard_schema.k10'),
       type: 'pie',
       data: () => {
-        const stats = window.__limsStats;
+        const stats = limsStats;
         if (!stats) return [];
         const status = stats.instrument_status as
           Array<{ name: string; value: number }> | undefined;
@@ -103,7 +98,7 @@ export function useLimsDashboardSchema(): DashboardSchema {
       const api = await import('@/api/lims/dashboard');
       const response = await api.limsDashboardApi.getOverview();
       if (response.success && response.data) {
-        window.__limsStats = response.data;
+        limsStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },

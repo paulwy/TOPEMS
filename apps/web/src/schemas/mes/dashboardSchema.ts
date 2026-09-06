@@ -1,12 +1,7 @@
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __mesStats?: Record<string, unknown>;
-  }
-}
+let mesStats: Record<string, unknown> | undefined;
 
 export function useMesDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -14,7 +9,7 @@ export function useMesDashboardSchema(): DashboardSchema {
       id: 'today-output',
       title: i18n.t('mes.dashboard_schema.k0'),
       value: () => {
-        const stats = window.__mesStats;
+        const stats = mesStats;
         return (stats?.today_output as number)?.toLocaleString() ?? '-';
       },
       icon: 'Activity',
@@ -25,7 +20,7 @@ export function useMesDashboardSchema(): DashboardSchema {
       id: 'equipment-availability',
       title: i18n.t('mes.dashboard_schema.k2'),
       value: () => {
-        const stats = window.__mesStats;
+        const stats = mesStats;
         return stats ? `${stats?.equipment_availability ?? 0}%` : '-';
       },
       icon: 'BarChart3',
@@ -36,7 +31,7 @@ export function useMesDashboardSchema(): DashboardSchema {
       id: 'yield-rate',
       title: i18n.t('mes.dashboard_schema.k4'),
       value: () => {
-        const stats = window.__mesStats;
+        const stats = mesStats;
         return stats ? `${stats?.yield_rate ?? 0}%` : '-';
       },
       icon: 'CheckCircle',
@@ -47,7 +42,7 @@ export function useMesDashboardSchema(): DashboardSchema {
       id: 'pending-work-orders',
       title: i18n.t('mes.dashboard_schema.k6'),
       value: () => {
-        const stats = window.__mesStats;
+        const stats = mesStats;
         return (stats?.pending_work_orders as number)?.toLocaleString() ?? '-';
       },
       icon: 'Clock',
@@ -62,7 +57,7 @@ export function useMesDashboardSchema(): DashboardSchema {
       title: i18n.t('mes.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
-        const stats = window.__mesStats;
+        const stats = mesStats;
         if (!stats) return [];
         const trend = stats.production_trend as Array<{ name: string; value: number }> | undefined;
         return trend ?? [];
@@ -74,7 +69,7 @@ export function useMesDashboardSchema(): DashboardSchema {
       title: i18n.t('mes.dashboard_schema.k9'),
       type: 'pie',
       data: () => {
-        const stats = window.__mesStats;
+        const stats = mesStats;
         if (!stats) return [];
         const status = stats.equipment_status as Array<{ name: string; value: number }> | undefined;
         return status ?? [];
@@ -86,7 +81,7 @@ export function useMesDashboardSchema(): DashboardSchema {
       title: i18n.t('mes.dashboard_schema.k10'),
       type: 'line',
       data: () => {
-        const stats = window.__mesStats;
+        const stats = mesStats;
         if (!stats) return [];
         const trend = stats.yield_trend as Array<{ name: string; value: number }> | undefined;
         return trend ?? [];

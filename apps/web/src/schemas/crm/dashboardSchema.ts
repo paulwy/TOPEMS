@@ -2,11 +2,7 @@ import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { CrmDashboardStats } from '@/api/crm/dashboard';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    crmStats?: CrmDashboardStats;
-  }
-}
+let crmStats: CrmDashboardStats | undefined;
 
 export function useCrmDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -14,7 +10,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       id: 'total-opportunities',
       title: i18n.t('shared.dashboard_schema.k0'),
       value: () => {
-        const stats = window.crmStats;
+        const stats = crmStats;
         return (stats?.total_opportunities as number)?.toLocaleString() ?? '-';
       },
       icon: 'Target',
@@ -25,7 +21,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       id: 'won-amount',
       title: i18n.t('shared.dashboard_schema.k2'),
       value: () => {
-        const stats = window.crmStats;
+        const stats = crmStats;
         return stats ? `¥${(stats?.won_amount as number)?.toLocaleString() ?? 0}` : '-';
       },
       icon: 'TrendingUp',
@@ -36,7 +32,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       id: 'conversion-rate',
       title: i18n.t('shared.dashboard_schema.k4'),
       value: () => {
-        const stats = window.crmStats;
+        const stats = crmStats;
         return stats ? `${stats?.conversion_rate ?? 0}%` : '-';
       },
       icon: 'Users',
@@ -47,7 +43,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       id: 'average-cycle',
       title: i18n.t('shared.dashboard_schema.k6'),
       value: () => {
-        const stats = window.crmStats;
+        const stats = crmStats;
         return stats ? `${stats?.average_cycle ?? 0}${i18n.t('shared.dashboard_schema.k0')}` : '-';
       },
       icon: 'Clock',
@@ -62,7 +58,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       title: i18n.t('shared.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
-        const stats = window.crmStats;
+        const stats = crmStats;
         if (!stats) return [];
         const distribution = stats.opportunity_stages as
           Array<{ name: string; value: number }> | undefined;
@@ -75,7 +71,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       title: i18n.t('shared.dashboard_schema.k9'),
       type: 'line',
       data: () => {
-        const stats = window.crmStats;
+        const stats = crmStats;
         if (!stats) return [];
         const trend = stats.monthly_performance as
           Array<{ name: string; value: number }> | undefined;
@@ -88,7 +84,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       title: i18n.t('shared.dashboard_schema.k10'),
       type: 'pie',
       data: () => {
-        const stats = window.crmStats;
+        const stats = crmStats;
         if (!stats) return [];
         const distribution = stats.industries as Array<{ name: string; value: number }> | undefined;
         return distribution ?? [];
@@ -103,7 +99,7 @@ export function useCrmDashboardSchema(): DashboardSchema {
       const api = await import('@/api/crm/dashboard');
       const response = await api.crmDashboardApi.getOverview();
       if (response.success && response.data) {
-        window.__crmStats = response.data;
+        crmStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },

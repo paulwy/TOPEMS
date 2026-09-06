@@ -1215,7 +1215,7 @@ V285 B 轨根因 callout 已明确定位：
 
 - [x] **B2: Finance API 函数从 @/api/erp 迁移到 @/api/finance**：✅ V513 完成 — erp/index.ts 已 re-export finance 实现（B1 类型迁移）；6 页面 import 直连 @/api/finance（BudgetManagementPage: budgetApi/expenseApi+类型；VoucherPage/useVoucherManagement: voucherApi；useFinancialReport/FinancialReportPage/FinancialAnalysisPage: financeReportApi→@/api/finance/report）。tsc 0 / eslint 0。遗留：报告类型暂留 @/api/erp/types（dts IncomeStatement/CashFlowStatement 缺 total_revenue/net_cash_flow 等字段，与后端字段对齐待确认）
 - [x] **Architecture Plan 边界 B6（TMS 依赖 WMS 源码）盘点**：✅ V290 A 轨完成 — 全项目仅 TMS→WMS 一个跨 svc path dep（dev-dependency，用于 cross_module_integration_tests.rs 的 FSM 状态转换函数），非运行时耦合。其他 svc 仅依赖 lib/shared-* crates，crate 级耦合极小。
-- [ ] **Plan B7 SharedStateBridge 全局变量**：搜索 `window.topemsSharedState` 或类似全局变量，确认是否属于绕开 React Context 的 workaround 及去重
+- [x] **Plan B7 SharedStateBridge 全局变量**：✅ V514 完成 — 搜索到 10 个 dashboardSchema（pm/lims/wms/crm/ehs/hrm/qms/finance/pdm/mes）用 `window.__xxxStats` 全局变量在 loader 间共享数据（绕开 React 状态）。重构：删 declare global 扩展 → 模块级类型化 `let xxxStats: Type | undefined`（PmStatistics 等），修复 crm 写 `__crmStats` 读 `crmStats` 的不一致 bug。tsc 0 / eslint 0。
 - [ ] **事件总线 Redis Stream 升级（Plan M2）**：V289 只完成了跨Schema清零的本地快照落库，如果 publisher/subscriber 使用的是 Pub/Sub（非持久化），下一步评估 Redis Stream（持久化+ACK+DLQ）改造
 - [ ] **编译时边界检查（Plan v1.0 §4.4 only_own_schema_query! 宏）**：等跨 SQL 数 ≤3 清零完成后，可引入 clippy lint 禁止跨 schema SQL，防止未来回退
 

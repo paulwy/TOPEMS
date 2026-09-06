@@ -3,12 +3,7 @@ import type { PmStatistics } from '@/api/pm/types';
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __pmStats?: PmStatistics;
-  }
-}
+let pmStats: PmStatistics | undefined;
 
 export function usePmDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -16,7 +11,7 @@ export function usePmDashboardSchema(): DashboardSchema {
       id: 'total-projects',
       title: i18n.t('shared.dashboard_schema.k0'),
       value: () => {
-        const stats = window.__pmStats;
+        const stats = pmStats;
         return stats?.total_projects.toLocaleString() ?? '-';
       },
       icon: 'ClipboardList',
@@ -27,7 +22,7 @@ export function usePmDashboardSchema(): DashboardSchema {
       id: 'active-projects',
       title: i18n.t('shared.dashboard_schema.k2'),
       value: () => {
-        const stats = window.__pmStats;
+        const stats = pmStats;
         return stats?.active_projects.toLocaleString() ?? '-';
       },
       icon: 'Activity',
@@ -38,7 +33,7 @@ export function usePmDashboardSchema(): DashboardSchema {
       id: 'completed-projects',
       title: i18n.t('shared.dashboard_schema.k4'),
       value: () => {
-        const stats = window.__pmStats;
+        const stats = pmStats;
         return stats?.completed_projects.toLocaleString() ?? '-';
       },
       icon: 'CheckCircle',
@@ -49,7 +44,7 @@ export function usePmDashboardSchema(): DashboardSchema {
       id: 'delayed-projects',
       title: i18n.t('shared.dashboard_schema.k6'),
       value: () => {
-        const stats = window.__pmStats;
+        const stats = pmStats;
         return stats?.delayed_projects?.toLocaleString() ?? '-';
       },
       icon: 'AlertCircle',
@@ -64,7 +59,7 @@ export function usePmDashboardSchema(): DashboardSchema {
       title: i18n.t('shared.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
-        const stats = window.__pmStats;
+        const stats = pmStats;
         if (!stats) return [];
         return [
           { name: i18n.t('shared.dashboard_schema.k9'), value: stats.draft_projects },
@@ -81,7 +76,7 @@ export function usePmDashboardSchema(): DashboardSchema {
       title: i18n.t('shared.dashboard_schema.k14'),
       type: 'line',
       data: () => {
-        const stats = window.__pmStats;
+        const stats = pmStats;
         if (!stats) return [];
         return [
           { name: i18n.t('shared.dashboard_schema.k15'), value: stats.average_progress },
@@ -97,7 +92,7 @@ export function usePmDashboardSchema(): DashboardSchema {
     loader: async () => {
       const response = await dashboardApi.getStatistics();
       if (response.success && response.data) {
-        window.__pmStats = response.data;
+        pmStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },

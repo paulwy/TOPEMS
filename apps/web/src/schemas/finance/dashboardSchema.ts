@@ -3,12 +3,7 @@ import type { FinanceDashboardStats } from '@/api/finance';
 import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import { useTranslation } from 'react-i18next';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __financeStats?: FinanceDashboardStats;
-  }
-}
+let financeStats: FinanceDashboardStats | undefined;
 
 export function useFinanceDashboardSchema(): DashboardSchema {
   const { t } = useTranslation();
@@ -18,7 +13,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       id: 'voucher-total',
       title: t('finance.finance_dashboard_page.text_551f4c'),
       value: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         return stats?.total_vouchers.toLocaleString() ?? '-';
       },
       icon: 'FileText',
@@ -29,7 +24,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       id: 'voucher-draft',
       title: t('finance.finance_dashboard_page.text_5c5e91'),
       value: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         return stats?.draft_vouchers.toLocaleString() ?? '-';
       },
       icon: 'FileText',
@@ -40,7 +35,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       id: 'receivable',
       title: t('finance.finance_dashboard_page.text_c29613'),
       value: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         return stats ? `¥${stats.total_receivables.toLocaleString()}` : '-';
       },
       icon: 'TrendingUp',
@@ -51,7 +46,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       id: 'payable',
       title: t('finance.finance_dashboard_page.text_55c9eb'),
       value: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         return stats ? `¥${stats.total_payables.toLocaleString()}` : '-';
       },
       icon: 'TrendingDown',
@@ -62,7 +57,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       id: 'pending-approvals',
       title: t('finance.finance_dashboard_page.text_b0bf01'),
       value: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         return stats?.pending_approvals.toLocaleString() ?? '-';
       },
       icon: 'DollarSign',
@@ -73,7 +68,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       id: 'pending-payments',
       title: t('finance.finance_dashboard_page.text_9246fe'),
       value: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         return stats?.pending_payments.toLocaleString() ?? '-';
       },
       icon: 'BarChart3',
@@ -88,7 +83,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       title: t('finance.finance_dashboard_page.status'),
       type: 'bar',
       data: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         if (!stats) return [];
         return [
           { name: t('finance.finance_dashboard_page.text_22b433'), value: stats.draft_vouchers },
@@ -104,7 +99,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       title: t('finance.finance_dashboard_page.text_b1b956'),
       type: 'line',
       data: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         if (!stats) return [];
         return [
           { name: t('finance.finance_dashboard_page.text_fccab9'), value: stats.total_receivables },
@@ -123,7 +118,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
       title: t('finance.finance_dashboard_page.text_039481'),
       type: 'pie',
       data: () => {
-        const stats = window.__financeStats;
+        const stats = financeStats;
         if (!stats) return [];
         return [
           { name: t('finance.finance_dashboard_page.text_b0bf01'), value: stats.pending_approvals },
@@ -141,7 +136,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
     loader: async () => {
       const response = await financeApi.getDashboard();
       if (response.success && response.data) {
-        window.__financeStats = response.data;
+        financeStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },

@@ -2,12 +2,7 @@ import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { EhsDashboardStats } from '@/api/ehs/dashboard';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __ehsStats?: EhsDashboardStats;
-  }
-}
+let ehsStats: EhsDashboardStats | undefined;
 
 export function useEhsDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -15,7 +10,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       id: 'accident-total',
       title: i18n.t('ehs.dashboard_schema.k0'),
       value: () => {
-        const stats = window.__ehsStats;
+        const stats = ehsStats;
         return (stats?.total_accidents as number)?.toLocaleString() ?? '-';
       },
       icon: 'AlertCircle',
@@ -26,7 +21,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       id: 'pending-hazards',
       title: i18n.t('ehs.dashboard_schema.k2'),
       value: () => {
-        const stats = window.__ehsStats;
+        const stats = ehsStats;
         return (stats?.pending_hazards as number)?.toLocaleString() ?? '-';
       },
       icon: 'ClipboardList',
@@ -37,7 +32,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       id: 'training-rate',
       title: i18n.t('ehs.dashboard_schema.k4'),
       value: () => {
-        const stats = window.__ehsStats;
+        const stats = ehsStats;
         return stats ? `${stats?.training_rate ?? 0}%` : '-';
       },
       icon: 'CheckCircle',
@@ -48,7 +43,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       id: 'drill-count',
       title: i18n.t('ehs.dashboard_schema.k6'),
       value: () => {
-        const stats = window.__ehsStats;
+        const stats = ehsStats;
         return (stats?.drill_count as number)?.toLocaleString() ?? '-';
       },
       icon: 'Activity',
@@ -63,7 +58,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       title: i18n.t('ehs.dashboard_schema.k8'),
       type: 'bar',
       data: () => {
-        const stats = window.__ehsStats;
+        const stats = ehsStats;
         if (!stats) return [];
         const trend = stats.accident_trend as Array<{ name: string; value: number }> | undefined;
         return trend ?? [];
@@ -75,7 +70,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       title: i18n.t('ehs.dashboard_schema.k9'),
       type: 'pie',
       data: () => {
-        const stats = window.__ehsStats;
+        const stats = ehsStats;
         if (!stats) return [];
         const distribution = stats.hazard_types as
           Array<{ name: string; value: number }> | undefined;
@@ -88,7 +83,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       title: i18n.t('ehs.dashboard_schema.k10'),
       type: 'line',
       data: () => {
-        const stats = window.__ehsStats;
+        const stats = ehsStats;
         if (!stats) return [];
         const rate = stats.training_trend as Array<{ name: string; value: number }> | undefined;
         return rate ?? [];
@@ -103,7 +98,7 @@ export function useEhsDashboardSchema(): DashboardSchema {
       const api = await import('@/api/ehs/dashboard');
       const response = await api.ehsDashboardApi.getOverview();
       if (response.success && response.data) {
-        window.__ehsStats = response.data;
+        ehsStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },

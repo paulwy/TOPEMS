@@ -2,12 +2,7 @@ import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
 import type { PdmDashboardStats } from '@/api/pdm/dashboard';
 import i18n from '@/i18n';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __pdmStats?: PdmDashboardStats;
-  }
-}
+let pdmStats: PdmDashboardStats | undefined;
 
 export function usePdmDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
@@ -15,7 +10,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       id: 'ongoing-projects',
       title: i18n.t('pdm.dashboard_schema.k0'),
       value: () => {
-        const stats = window.__pdmStats;
+        const stats = pdmStats;
         return (stats?.ongoing_projects as number)?.toLocaleString() ?? '-';
       },
       icon: 'ClipboardList',
@@ -26,7 +21,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       id: 'pending-reviews',
       title: i18n.t('pdm.dashboard_schema.k2'),
       value: () => {
-        const stats = window.__pdmStats;
+        const stats = pdmStats;
         return (stats?.pending_reviews as number)?.toLocaleString() ?? '-';
       },
       icon: 'FileText',
@@ -37,7 +32,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       id: 'bom-changes',
       title: i18n.t('shared.dashboard_schema.bom_0'),
       value: () => {
-        const stats = window.__pdmStats;
+        const stats = pdmStats;
         return (stats?.bom_changes as number)?.toLocaleString() ?? '-';
       },
       icon: 'AlertCircle',
@@ -48,7 +43,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       id: 'completion-rate',
       title: i18n.t('pdm.dashboard_schema.k5'),
       value: () => {
-        const stats = window.__pdmStats;
+        const stats = pdmStats;
         return stats ? `${stats?.completion_rate ?? 0}%` : '-';
       },
       icon: 'Target',
@@ -63,7 +58,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       title: i18n.t('pdm.dashboard_schema.k7'),
       type: 'bar',
       data: () => {
-        const stats = window.__pdmStats;
+        const stats = pdmStats;
         if (!stats) return [];
         const distribution = stats.project_distribution as
           Array<{ name: string; value: number }> | undefined;
@@ -76,7 +71,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       title: i18n.t('pdm.dashboard_schema.k8'),
       type: 'pie',
       data: () => {
-        const stats = window.__pdmStats;
+        const stats = pdmStats;
         if (!stats) return [];
         const types = stats.document_types as Array<{ name: string; value: number }> | undefined;
         return types ?? [];
@@ -88,7 +83,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       title: i18n.t('pdm.dashboard_schema.k9'),
       type: 'line',
       data: () => {
-        const stats = window.__pdmStats;
+        const stats = pdmStats;
         if (!stats) return [];
         const trend = stats.change_trend as Array<{ name: string; value: number }> | undefined;
         return trend ?? [];
@@ -103,7 +98,7 @@ export function usePdmDashboardSchema(): DashboardSchema {
       const api = await import('@/api/pdm/dashboard');
       const response = await api.pdmDashboardApi.getOverview();
       if (response.success && response.data) {
-        window.__pdmStats = response.data;
+        pdmStats = response.data;
       }
       return { statCards: undefined, charts: undefined, table: undefined };
     },
