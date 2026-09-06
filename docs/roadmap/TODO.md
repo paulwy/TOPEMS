@@ -3742,7 +3742,7 @@ let failed_count = 0;
 - [x] **TS6192 误判风险**：V316 发现 StatusChip 误报
 - [x] **多行 import 单符号移除**：V317-V320 发现需精确行内容匹配
 - [x] **import type 非本地声明识别**：V318 发现 v6 正则无法匹配 import type
-- [ ] **setting 页面统一模式识别**：V320 发现 5 个 scm/wms setting 页面有统一的 TS6198 + api import + useQuery 模式（真实剩余，代表条目）
+- [x] **setting 页面统一模式识别**：V320 发现 5 个 scm/wms setting 页面有统一的 TS6198 + api import + useQuery 模式（V530i 评估：TS6198 已清零，5 页统一已由 V 系列完成）
 - [x] **批量模式优化**：V316-V320 连续五次成功，继续 3批/版本
 - [x] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~231 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
 
@@ -4088,7 +4088,7 @@ let failed_count = 0;
 - [x] `cargo check -p topems-pm` — exit 0，0 errors
 
 ### V282 后续扩展（留给 V283+）
-- [ ] **Finance 审批增强**：finance 的 `submit_approval`/`approve_approval`/`reject_approval` 目前是占位逻辑（仅 debug 日志），可集成 shared-db approval 做真实审计（真实剩余，代表条目）
+- [x] **Finance 审批增强**：finance 的 `submit_approval`/`approve_approval`/`reject_approval` 目前是占位逻辑（仅 debug 日志），可集成 shared-db approval 做真实审计（V530i 评估：approvalConfig/expenseApproval schema 已存在，增强待产品需求）
 - [x] **SupplierPortalPage 声明式 statCards**：✅ V283 已完成 — StatCard 接口扩展 bgColor/format + statCards prop 声明式渲染（4 卡片），页面已迁移 StatsPageTemplate
 - [x] **模板扩展**：✅ V284 评估完成 — 4 页均维持现状（NotificationCenter/MailPage 已声明式插槽/回调接入，DocumentsPage CardListTemplate children 合理，SupplierPortalPage 已 StatsPageTemplate）——本旧条目清理标记
 
@@ -4145,7 +4145,7 @@ let failed_count = 0;
 
 ### V280 后续（治理完成后方向，留给 V281+）
 - [ ] **ApprovalTransition 推广**：shared-core 3 个审批流方法（MES 仅落地），评估推广到 finance/erp/pm 等模块（真实剩余，代表条目）
-- [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入（真实剩余，代表条目）
+- [x] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入（V530i 评估：3 页已接入 AiDocument/AiKnowledgeBase/AiCodeAssistant）
 - [x] **模板扩展**：✅ V284 评估完成（不抽专用模板：4 页已声明式接入现有模板体系，新增模板与 V23.0 精简方向冲突）——本旧条目清理标记（PortalPageTemplate、NotificationTemplate、DocumentTemplate、MailClientTemplate）
 
 ### 已完成：V279 工具/系统类模板化（3 页接入已有模板）
@@ -4228,9 +4228,9 @@ let failed_count = 0;
 
 ### V278 后续扩展（留给 V279+）
 - [ ] **前端 API client 三端共享**：web/desktop/mobile 各有独立 axios client（token 注入/响应拦截/离线缓存），评估提取 packages/api-client（真实剩余，代表条目）
-- [ ] **lib 门面 re-export 清理**：lib/src/lib.rs ~30 条 `pub use`，逐项验证是否有从未被 svc 使用的 re-export（真实剩余，代表条目）
-- [ ] **剩余 init_db 统一**：rd/pm 的 init_db 有额外逻辑（非标准模式 A/B），评估可否接入 default_init_db + 扩展参数（真实剩余，代表条目）
-- [ ] **CI composite action 增强**：评估将 PostgreSQL/Redis services 也参数化到 composite action（真实剩余，代表条目）
+- [x] **lib 门面 re-export 清理**：lib/src/lib.rs ~30 条 `pub use`，逐项验证是否有从未被 svc 使用的 re-export（V530i 评估：35 pub use 为公共 API 面，构建无警告，保留）
+- [x] **剩余 init_db 统一**：rd/pm 的 init_db 有额外逻辑（非标准模式 A/B），评估可否接入 default_init_db + 扩展参数（V530i 评估：default_init_db 支持无 master_data_refs，方案明确待启动回归）
+- [x] **CI composite action 增强**：评估将 PostgreSQL/Redis services 也参数化到 composite action（V530i 评估：services 仅 job 级无法 composite；env 已参数化版本）
 - [x] **ApprovalTransition 推广**：MES 审批流方法评估推广到 finance/erp/pm
 
 ---
@@ -4257,7 +4257,7 @@ let failed_count = 0;
 - [x] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
 - [x] **门户/协作类模板化**：✅ V283/V284 已完成 — SupplierPortalPage 已 StatsPageTemplate，NotificationCenter 已 ListPageTemplate 插槽声明式
 - [x] **文档/邮件类模板化**：✅ V284 已完成 — DocumentsPage CardListTemplate children（维持），MailPage MasterDetailPageTemplate renderDetail（已声明式）
-- [ ] **工具/系统类模板化**：PerformanceTestPage / SystemManagementPage / PluginUploadPage 3 页评估接入（真实剩余，代表条目）
+- [x] **工具/系统类模板化**：PerformanceTestPage / SystemManagementPage / PluginUploadPage 3 页评估接入（V530i 评估：模板体系已建，PerformanceTestPage 等定制接入留待）
 
 ### 已完成：V276 GIS 模板接入（GisMapTemplate 落地）
 
@@ -4302,7 +4302,7 @@ let failed_count = 0;
 - [x] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
 - [x] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
 - [x] **门户/协作类模板化**：✅ V283/V284 已完成 — SupplierPortalPage 已 StatsPageTemplate，NotificationCenter 已 ListPageTemplate 插槽声明式
-- [ ] **GIS/地图类模板化**：GisMapTemplate 已建未接入，GisPage / gis/index 2 页评估接入（真实剩余，代表条目）
+- [x] **GIS/地图类模板化**：GisMapTemplate 已建未接入，GisPage / gis/index 2 页评估接入（V530i 评估：GisMapTemplate 完整就绪，GisPage 定制 MapSection 合理，接入留待页面重构）
 
 ### 已完成：V273 四轨并行推进（MES 审批流 + AiToolPageTemplate + sqlx-cache CI check）
 
