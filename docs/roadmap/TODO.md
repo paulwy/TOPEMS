@@ -1822,7 +1822,7 @@ let failed_count = 0;
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零 — 默认 eslint 配置（react-hooks/exhaustive-deps=warn）全 src 0 命中（V494-V509 批次已处理完，TODO 403 为过时数据）
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零 — 默认配置全 src 0 命中（V509+ 批次类型强化完成，TODO 307 为过时数据）
 - [x] **src/ 其他目录未使用项清理（第五批 types/）**：V298 清理 types/qms.ts + types/wms.ts 共 129 项（首轮 115 + 级联 14），tsc --noUnusedLocals types/ 0 errors，净删 1729 行
-- [ ] **src/ 其他目录未使用项清理（第六批）**：全 src/ 仍有 ~1459 个 tsc 未使用项（components/templates 48 / pages/admin 39 / api/qms 38 / hooks/useExternalErp.ts 29 等），可继续分批清理
+- [x] **src/ 其他目录未使用项清理（第六批）**：✅ V526 核查清零 — tsc 未使用项 0 命中（V509 分遍清理已覆盖全 src/，TODO ~1459 为过时数据）
 
 ## 🎯 V298 — 第五批未使用项清理（types/ 129项）+ 级联清理 + 迭代脚本方法论（✅ 完成）
 
@@ -2016,7 +2016,7 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动修复 8 项，V301 手动修复 33 项
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动修复 8 项，V301 手动修复 33 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第八批）**：V301 清理 pages/doc/DocumentsPage(22→级联) + components/templates/list/hooks(17→级联) + api/workflow(16) + store/pluginStore(15) = 136 项，tsc 目标 4 files 0 errors，净删 1990 行
 - [ ] **src/ 其他目录未使用项清理（第九批）**：全 src/ 仍有 ~1089 个 tsc 未使用项，推荐 utils/format(12) + pages/bi/GisPage(12) + lib/pwa(12) + docs/DesignTokens(11) + components/bi/ChartLibrary(11)
 
@@ -2082,7 +2082,7 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第九批）**：V302 清理 utils/format(12→级联) + pages/bi/GisPage(12) + lib/pwa(12→级联) + docs/DesignTokens(11) + components/bi/ChartLibrary(11→级联polar) = 72 项，tsc 目标 6 files 0 errors，净删 981 行
 - [ ] **src/ 其他目录未使用项清理（第十批）**：全 src/ 仍有 ~1017 个 tsc 未使用项，推荐 api/qms/adapters(10) + dev-platform/v53(9) + pages/admin/TenantDetailPage(8) + components/templates/DashboardTemplate(8) + store/biStore(7)
 
@@ -2154,7 +2154,7 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十批）**：V303 清理 api/qms/adapters(10→级联30) + dev-platform/v53(9) + TenantDetailPage(8) + DashboardTemplate(8) + biStore(7) = 70 项，tsc 目标 5 files 0 errors，净删 391 行
 - [ ] **src/ 其他目录未使用项清理（第十一批）**：全 src/ 仍有 ~947 个 tsc 未使用项，推荐 services/VoucherTemplateEngine(7) + microfrontend/runtime/RuntimeDashboard(7) + microfrontend/governance/DependencyGovernance(7) + hooks/useUiState(7) + hooks/useCode(7)
 
@@ -2224,8 +2224,8 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项
-- [ ] **v6 脚本 class 声明完整移除**：V304 移除 VoucherTemplateEngine class 时留下孤儿类体导致 TS1128 语法错误，需改进括号跟踪（class 体含 private 方法嵌套）
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class 声明完整移除**：V304 移除 VoucherTemplateEngine class 时留下孤儿类体导致 TS1128 语法错误，需改进括号跟踪（class 体含 private 方法嵌套） — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十一批）**：V304 清理 services/VoucherTemplateEngine(7→级联12) + RuntimeDashboard(7) + DependencyGovernance(7) + useUiState(7) + useCode(7) = 47 项，tsc 目标 5 files 0 errors，净删 1175 行
 - [ ] **src/ 其他目录未使用项清理（第十二批）**：全 src/ 仍有 ~900 个 tsc 未使用项，推荐 config/plugins.config(7) + config/deployment(7) + components/gis/utils/performance(7) + components/ehs/riskUtils(7) + components/PermissionGate(7)
 
@@ -2301,8 +2301,8 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项，V305 手动 6 项
-- [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 对象孤儿体（`> = { ... };`），需改进复杂类型注解的声明行识别
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项，V305 手动 6 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 对象孤儿体（`> = { ... };`），需改进复杂类型注解的声明行识别 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十二批）**：V305 清理 config/plugins.config(7) + config/deployment(7) + gis/performance(7→级联) + ehs/riskUtils(7) + PermissionGate(7→级联) = 52 项，tsc 目标 5 files 0 errors，净删 835 行
 - [ ] **src/ 其他目录未使用项清理（第十三批）**：全 src/ 仍有 ~848 个 tsc 未使用项，推荐 ErrorBoundary(7) + api/monitor/index(7) + api/iam/types(7) + api/admin/index(7) + utils/query-cost-analyzer(6)
 
@@ -2379,8 +2379,8 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V306 累计手动 117 项
-- [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 孤儿对象体 + V306 孤儿闭合括号，需从 `=` 后开始括号跟踪
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V306 累计手动 117 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 孤儿对象体 + V306 孤儿闭合括号，需从 `=` 后开始括号跟踪 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十三批）**：V306 清理 ErrorBoundary(7) + api/monitor/index(7) + api/iam/types(7) + api/admin/index(1→级联消解) + utils/query-cost-analyzer(6) = 28 项，tsc 目标 5 files 0 errors，净删 176 行
 - [ ] **src/ 其他目录未使用项清理（第十四批）**：全 src/ 仍有 ~820 个 tsc 未使用项，推荐 hooks/useTheme(7) + components/common/StatusBadge(7) + utils/formatters(7) + api/erp/index(7) + components/layout/Sidebar(6)
 
@@ -2455,8 +2455,8 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V307 累计手动 120 项
-- [ ] **v6 脚本 class/const/function 完整移除**：V304/V305/V306 三代孤儿代码问题，需从 `=`/`{` 后开始括号跟踪
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V307 累计手动 120 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class/const/function 完整移除**：V304/V305/V306 三代孤儿代码问题，需从 `=`/`{` 后开始括号跟踪 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十四批）**：V307 清理 formSchemas(6→级联) + uiStore(6) + useFinance(6) + permissionMapping(6→清空) + FormFields(6→清空) = 54 项，tsc 目标 5 files 0 errors，净删 555 行
 - [ ] **src/ 其他目录未使用项清理（第十五批）**：全 src/ 仍有 ~766 个 tsc 未使用项，推荐 ValidationError(6) + api/ai/index(6) + utils/resource-optimizer(5) + utils/pwa-cache-optimizer(5) + utils/performance(5)
 
@@ -2537,8 +2537,8 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V308 累计手动 128 项
-- [ ] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306 三代孤儿代码问题，V308 class 移除成功；需支持 let 声明和多行 import
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V308 累计手动 128 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306 三代孤儿代码问题，V308 class 移除成功；需支持 let 声明和多行 import — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十五批）**：V308 清理 ValidationError(6→级联) + api/ai/index(6 多行import) + resource-optimizer(5→级联) + pwa-cache-optimizer(5含class) + performance(5) = 43 项，tsc 目标 5 files 0 errors，净删 805 行
 - [ ] **src/ 其他目录未使用项清理（第十六批）**：全 src/ 仍有 ~723 个 tsc 未使用项，推荐 utils/listParamMapping(5) + store/moduleLoadingStore(5) + constants/routes(5) + config/permissions(5) + hooks/usePerformanceMonitor(5)
 
@@ -2622,8 +2622,8 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V309 累计手动 132 项
-- [ ] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306/V309 孤儿代码问题，需从 `=`/`{` 后开始括号跟踪
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V309 累计手动 132 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306/V309 孤儿代码问题，需从 `=`/`{` 后开始括号跟踪 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十六批）**：V309 清理 permissions(5→级联) + routes(5) + usePerformanceMonitor(5→级联) + moduleLoadingStore(5→孤儿体) + listParamMapping(5) = 34 项，tsc 目标 5 files 0 errors，净删 933 行
 - [ ] **src/ 其他目录未使用项清理（第十七批）**：全 src/ 仍有 ~689 个 tsc 未使用项，推荐 pages/rd/RsProjectDetailPage(5) + pages/pm/PmReportPage(5) + pages/hrm/HrmReportsPage(5) + microfrontend/marketplace/ModuleMarketplace(5) + config/permissionMapping(已清空占位)
 
@@ -2705,9 +2705,9 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V310 累计手动 146 项
-- [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量（isAnimated/children/getTouchStyles/target/index），sed 全局删除误删 used children 需恢复
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题，需从 `=>` 后 `{` 开始括号跟踪
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V310 累计手动 146 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量（isAnimated/children/getTouchStyles/target/index），sed 全局删除误删 used children 需恢复 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题，需从 `=>` 后 `{` 开始括号跟踪 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十七批）**：V310 清理 RsProjectDetailPage(5) + PmReportPage(5→级联) + HrmReportsPage(5) + ModuleMarketplace(5) + StatCard(5) = 25 项，tsc 目标 5 files 0 errors，净删 466 行
 - [ ] **src/ 其他目录未使用项清理（第十八批）**：全 src/ 仍有 ~664 个 tsc 未使用项，推荐 api/finance/riskV59(5) + utils/streaming-ssr(4) + utils/mobileDetector(4) + utils/importExport(4) + types/mes(4)
 
@@ -2799,10 +2799,10 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V311 累计手动 152 项
-- [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量，需精确定位行号
-- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 `private flushed = false` class field，脚本不支持
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V311 累计手动 152 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量，需精确定位行号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311 手动移除 `private flushed = false` class field，脚本不支持 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第十八批）**：V311 清理 api/admin/index(6 TS6192) + shortcutsStore(4) + importExport(4) + mobileDetector(4) + streaming-ssr(3函数+1 field+4级联) = 26 项，tsc 目标 5 files 0 errors，净删 200 行
 - [ ] **src/ 其他目录未使用项清理（第十九批）**：全 src/ 仍有 ~638 个 tsc 未使用项，推荐 store/notificationStore(4) + store/featureFlagStore(4) + pages/crm/CRMRecommendationPage(4) + pages/bi/BIVisualizationPage(4) + lib/moduleThemes(4)
 
@@ -2892,10 +2892,10 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V312 累计手动 158 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312 手动修复解构变量，需精确定位行号
-- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V312 累计手动 158 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312 手动修复解构变量，需精确定位行号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311 手动移除 class field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **macOS EPERM 权限问题**：V312 起 bash 无法写入 /Users/air/TOPEMS（Operation not permitted），需用 Write/Edit 工具修改文件；git/tsc/eslint 等只读命令仍可运行
 - [x] **src/ 其他目录未使用项清理（第十九批）**：V312 清理 useFeatureFlag(4+2级联) + useHrmFinance(4+1级联) + AlertCard(4) + EHSBadges(4 className) + retry(4) = 23 项，tsc 目标 5 files 0 errors，净删 190 行
 - [ ] **src/ 其他目录未使用项清理（第二十批）**：全 src/ 仍有 ~615 个 tsc 未使用项，推荐 intelligent-ops/v56-ops-panel(4) + hooks/useHrmFinance已清 + constants/pagination(4) + components/gis/Map3DView(4) + ai/review/performance-auditor(4)
@@ -2986,11 +2986,11 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V313 累计手动 164 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现 `const X: Array<{\n...\n}> = [...]` 多行类型注解导致脚本只移除声明行留下对象体，需恢复后手动移除
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V313 累计手动 164 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311 手动移除 class field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现 `const X: Array<{\n...\n}> = [...]` 多行类型注解导致脚本只移除声明行留下对象体，需恢复后手动移除 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **macOS EPERM 权限问题**：V312 发现 bash 无法写入项目目录，V313 已恢复（用户重新授权文件夹）
 - [x] **src/ 其他目录未使用项清理（第二十批）**：V313 清理 v56-ops-panel(4 import) + pagination(4) + Map3DView(2解构+2 useCallback) + performance-auditor(4 PATTERNS) + ux-monitor(4) = 20项+2级联，tsc 目标 5 files 0 errors，净删 204 行
 - [ ] **src/ 其他目录未使用项清理（第二十一批）**：全 src/ 仍有 ~593 个 tsc 未使用项，推荐 theme/presets(3) + store/authStore(3) + pages/workflow/WorkflowApprovalActions(3) + pages/wms/StockTakePage(3) + pages/wms/DashboardPage(3)
@@ -3080,11 +3080,11 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V314 累计手动 170 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V314 累计手动 170 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311 手动移除 class field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现 WorkflowApprovalActions.tsx 移除组件+hook后整个文件未被引用，需级联清空全部 import/type（298行）
 - [x] **src/ 其他目录未使用项清理（第二十一批）**：V314 清理 theme/presets(3) + authStore(3) + WorkflowApprovalActions(3+7级联=整文件清空) + StockTakePage(3) + DashboardPage(4+3级联) = 26项，tsc 目标 5 files 0 errors，净删 377 行
 - [ ] **src/ 其他目录未使用项清理（第二十二批）**：全 src/ 仍有 ~567 个 tsc 未使用项，推荐 pages/report/ReportPage(3) + pages/pm/PmContractDetailPage(3) + pages/notification/NotificationListPage(3) + pages/mobile/MobileNotificationPage(3) + pages/lims/InspectionTaskPage(3)
@@ -3167,11 +3167,11 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V315 累计手动 178 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V315 累计手动 178 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311 手动移除 class field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
 - [ ] **深层级联链自动跟踪**：V315 发现 4 层级联（函数→变量→useQuery→type import）和 3 层级联（函数→mutation→import），v6 脚本需迭代跟踪
 - [x] **src/ 其他目录未使用项清理（第二十二批）**：V315 清理 ReportPage(3) + PmContractDetailPage(4) + NotificationListPage(3+5级联) + MobileNotificationPage(3+3级联) + InspectionTaskPage(3+5级联) = 24项，tsc 目标 5 files 0 errors，净删 110 行
@@ -3256,11 +3256,11 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V316 累计手动 200+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V316 累计手动 200+ 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311 手动移除 class field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
 - [ ] **深层级联链自动跟踪**：V315 发现 4 层级联，V316 批量模式发现 2 层级联
 - [ ] **TS6192 误判风险**：V316 发现 alertHistory.tsx 的 StatusChip import 被 TS6192 误报为未使用，实际代码中仍引用，需人工确认
@@ -3371,11 +3371,11 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V317 累计手动 230+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field，V317 cross-framework 3 adapter class private field 未使用
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V317 累计手动 230+ 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311 手动移除 class field，V317 cross-framework 3 adapter class private field 未使用 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
 - [ ] **深层级联链自动跟踪**：V315 发现 4 层级联，V316 发现 2 层级联，V317 发现 2 层级联
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报，整行 import 删除前需 grep 确认
@@ -3480,11 +3480,11 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V318 累计手动 240+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V318 累计手动 240+ 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
 - [ ] **深层级联链自动跟踪**：V315/V316/V317/V318 连续发现多级联，V318 requestPriority/tracing 达 4 层
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
@@ -3599,12 +3599,12 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V319 累计手动 250+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field，V319 test-generator private method/field
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
-- [ ] **v6 脚本向前跳过空行误移除**：V319 mobile/notification 移除 PRIORITY_COLORS 时向前跳过空行误移除 getTypeLabels，需 git checkout 恢复后手动处理
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V319 累计手动 250+ 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field，V319 test-generator private method/field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本向前跳过空行误移除**：V319 mobile/notification 移除 PRIORITY_COLORS 时向前跳过空行误移除 getTypeLabels，需 git checkout 恢复后手动处理 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，V319 workflowStore.ts 移除所有 export 后变孤儿文件需删除
 - [ ] **顶层 hook 调用残留检测**：V319 notificationSettingsStore 移除函数声明后留下 2 行顶层 hook 调用，违反 react-hooks/rules-of-hooks
 - [ ] **深层级联链自动跟踪**：V315-V319 连续发现多级联，V319 storage.ts 达 10 项级联（2 class→6 functions→2 const/type）
@@ -3729,14 +3729,14 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量（DashboardPage fullLinkStats）
-- [ ] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
-- [ ] **v6 脚本向前跳过空行误移除修复**：V319 发现，需改进为只跳过紧邻注释和空行
-- [ ] **v6 脚本调用点残留检测**：V319 notificationSettingsStore 发现顶层 hook 调用残留
-- [ ] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 ReportDesignPage 删除 useQuery 后 isBackendLoading 仍被引用，需改为 false
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量（DashboardPage fullLinkStats） — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本向前跳过空行误移除修复**：V319 发现，需改进为只跳过紧邻注释和空行 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本调用点残留检测**：V319 notificationSettingsStore 发现顶层 hook 调用残留 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 ReportDesignPage 删除 useQuery 后 isBackendLoading 仍被引用，需改为 false — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314/V319/V320 发现，V320 useWorkflowApprovalDetail.ts 222 行孤儿文件
 - [ ] **深层级联链自动跟踪**：V315-V320 连续发现多级联
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
@@ -3858,14 +3858,14 @@ let failed_count = 0;
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量
-- [ ] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除
-- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
-- [ ] **v6 脚本向前跳过空行误移除修复**：V319 发现
-- [ ] **v6 脚本调用点残留检测**：V319 发现
-- [ ] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 发现
+- [x] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本向前跳过空行误移除修复**：V319 发现 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本调用点残留检测**：V319 发现 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
+- [x] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 发现 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314/V319/V320 发现
 - [ ] **深层级联链自动跟踪**：V315-V320 连续发现多级联
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
