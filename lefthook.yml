@@ -30,8 +30,8 @@ pre-commit:
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/.*\.(ts|tsx|js|jsx|cjs|mjs|json)$' || true)
         [ -z "$STAGED" ] && exit 0
-        if [ -f "scripts/ci/check-i18n-quality.cjs" ]; then
-          node scripts/ci/check-i18n-quality.cjs --strict
+        if [ -f "scripts/ci/check-i18n.cjs" ]; then
+          node scripts/ci/check-i18n.cjs --mode=quality --strict
         fi
 
     # [Gate D] Glossary TopN consistency
@@ -144,19 +144,18 @@ pre-commit:
 
     # [Gate P] API path duplicates check — migrated from husky #4
     # NOTE: scripts/check_api_duplicates_ci.py is known to require a live DB.
-    # If the script is not deployed locally we emit a WARN and proceed, instead
-    # of silently nooping (was ambiguous before P1-2 fix).
-    api-duplicates:
+    # [Gate P] API Gate（check-api 三合一审计：audit+coverage+compare，dry-run 报告不阻断）
+    api-gate:
       tags: api rust
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$' || true)
         if [ -z "$STAGED" ]; then
           exit 0
         fi
-        if [ -f "scripts/check_api_duplicates_ci.py" ]; then
-          python3 scripts/check_api_duplicates_ci.py --ci
+        if [ -f "scripts/ci/check-api.cjs" ]; then
+          node scripts/ci/check-api.cjs --mode=all --dry-run
         else
-          printf '\033[33m[Gate P] WARN\033[0m scripts/check_api_duplicates_ci.py not found, skipping api-duplicates check (deploy it if API duplicate enforcement is required)\n'
+          printf '\033[33m[Gate P] WARN\033[0m scripts/ci/check-api.cjs not found, skipping api-gate check\n'
           exit 0
         fi
 
@@ -167,7 +166,7 @@ pre-commit:
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
         [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/check-i18n.cjs" ]; then
-          node scripts/ci/check-i18n.cjs --strict
+          node scripts/ci/check-i18n.cjs --mode=hardcode --strict
         fi
 
 pre-push:
