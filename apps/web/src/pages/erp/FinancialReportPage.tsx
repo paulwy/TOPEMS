@@ -15,7 +15,7 @@ import i18n from '@/i18n';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { Box, Typography, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
-import { financeReportApi } from '@/api/finance/report';
+import { financeReportApi } from '@/api/finance';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';

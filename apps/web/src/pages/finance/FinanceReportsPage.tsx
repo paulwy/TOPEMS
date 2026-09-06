@@ -15,7 +15,7 @@ import {
   Activity,
   Download,
 } from 'lucide-react';
-import { reportApi } from '@/api/finance/report';
+import { reportApi } from '@/api/finance';
 import {
   Box,
   Button,

@@ -12048,9 +12048,9 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 ### V414后续扩展（留给V415+）
 
 - [ ] **轨B P0阶段实施**：删除@/api/erp/finance/中的accounting.ts、bank.ts、receivablePayable.ts、voucher.ts（4个无引用文件）
-- [ ] **轨B P1阶段实施**：合并report.ts的10个财务分析方法到@/api/finance/report.ts，然后删除@/api/erp/finance/report.ts
-- [ ] **轨B P1阶段实施**：合并budget.ts的expenseApi到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P1阶段实施**：✅ 已完成（V416-V417 区间）— @/api/erp/finance/ 目录已删除，report.ts 10 方法已并入 @/api/finance/report.ts
+- [x] **轨B P1阶段实施**：✅ 已完成（V416-V417 区间）— expenseApi 已并入 @/api/finance/budget.ts，erp/finance/budget.ts 已删
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V414连续八十二次交付验证成功，V415继续四轨合并交付模式
@@ -12101,7 +12101,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - receivablePayable.ts和voucher.ts在@/api/finance/中有更完整的版本，删除后不会影响功能
 - accounting.ts和bank.ts在@/api/finance/中没有对应文件，但由于没有被引用，删除后也不会影响功能
 - 删除后@/api/erp/finance/从8个文件减少到4个文件
-- 下一步需要合并report.ts和budget.ts的独有方法到@/api/finance/，然后删除这两个文件
+- **V525 完成（2026-09-06）**：report.ts/budget.ts 页面 import 统一走 @/api/finance index（9 处改路径：BudgetManagementPage/FinanceBudgetPage/FinanceReportsPage/FinanceBudgetDetailPage/useFinancialReport/FinancialReportPage/FinancialAnalysisPage）；index.ts 补 financeReportApi 导出 + Budget/BudgetItem 改从 budget.ts 导出（API 完整模型，types.ts 的 Budget 保留为展示模型——两版语义不同层，避免类型冲突）；**架构决策：保留 report.ts/budget.ts 文件**（index re-export 依赖 + 模块化优于 index 膨胀，不执行「删除文件」）。tsc 0 / eslint 0
 
 **验收结果**：
 - 确认4个文件都没有被引用
@@ -12130,7 +12130,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 - [ ] **轨B P1阶段实施（report.ts）**：将@/api/erp/finance/report.ts中的10个财务分析方法迁移到@/api/finance/report.ts，然后删除@/api/erp/finance/report.ts
 - [ ] **轨B P1阶段实施（budget.ts）**：将@/api/erp/finance/budget.ts中的expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V415连续八十三次交付验证成功，V416继续四轨合并交付模式
@@ -12294,7 +12294,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
 - [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
 - [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V416连续八十四次交付验证成功，V417继续四轨合并交付模式
@@ -12446,7 +12446,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
 - [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
 - [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V417连续八十五次交付验证成功，V418继续四轨合并交付模式
@@ -12562,7 +12562,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
 - [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
 - [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V418连续八十六次交付验证成功，V419继续四轨合并交付模式
@@ -12668,7 +12668,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
 - [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
 - [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V419连续八十七次交付验证成功，V420继续四轨合并交付模式
@@ -12770,7 +12770,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
 - [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
 - [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V420连续八十八次交付验证成功，V421继续四轨合并交付模式
@@ -12868,7 +12868,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
 - [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
 - [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V421连续八十九次交付验证成功，V422继续四轨合并交付模式
@@ -13015,7 +13015,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 - [ ] **轨B P1阶段实施（验证编译）**：运行TypeScript编译，确保没有类型错误
 - [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
-- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
 - [ ] **四轨并行继续**：V333-V422连续九十次交付验证成功，V423继续四轨合并交付模式

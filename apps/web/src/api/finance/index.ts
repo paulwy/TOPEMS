@@ -22,6 +22,7 @@ import { taxApi } from './tax';
 export { accountApi } from './account';
 export { voucherApi } from './voucher';
 export { reportApi } from './report';
+export { financeReportApi } from './report';
 export { counterpartyFinanceApi } from './counterparty';
 export { paymentApi } from './payment';
 export { expenseApprovalApi } from './expenseApproval';
@@ -38,14 +39,11 @@ export { accountingSubjectApi } from './accountingSubject';
 // 语义上属于财务模块的 Budget / AccountingSubject / FinancialVoucher 等类型
 // 已从 @/api/erp/types.ts 迁移至此，Finance 页面请使用此来源。ERP 侧同名
 // 类型已标记 @deprecated，后续将移除。
+// Budget 取 @/api/finance/budget 的 API 完整模型（可空字段 + 页面详情字段），
+// types.ts 的 Budget 为展示模型（id/status 必填），页面数据流以 API 模型为准。
 // ============================================================================
-export type {
-  Budget,
-  AccountingSubject,
-  FinancialVoucher,
-  VoucherItem,
-  VoucherItemRequest,
-} from './types';
+export type { Budget, BudgetItem } from './budget';
+export type { AccountingSubject, FinancialVoucher, VoucherItem, VoucherItemRequest } from './types';
 
 export interface FinanceDashboardStats {
   total_vouchers: number;
