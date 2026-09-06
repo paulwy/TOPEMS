@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,\n               quantity, completed_quantity, status\n        FROM production_orders\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "order_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "product_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "product_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "product_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "quantity",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "completed_quantity",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "status",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      false,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "1771ca0cf47bfc96dd4c219b166de100b85dddda2a59fc35e00724e6dac7ab39"
+}

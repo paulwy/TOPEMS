@@ -21,7 +21,7 @@
       {
         "ordinal": 3,
         "name": "total_output",
-        "type_info": "Numeric"
+        "type_info": "Int8"
       }
     ],
     "parameters": {

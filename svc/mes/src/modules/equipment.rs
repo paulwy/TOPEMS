@@ -794,16 +794,16 @@ pub async fn list_maintenances(
             equipment_name: Some(r.equipment_name),
             equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
-            description: Some(r.description),
+            description: r.description,
             maintainer: r.maintainer,
-            start_time: r.start_time,
-            end_time: r.end_time,
+            start_time: r.start_time.and_utc(),
+            end_time: r.end_time.map(|t| t.and_utc()),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
-            status: r.status,
+            status: r.status.unwrap_or_default(),
             remarks: r.remarks,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+            updated_at: r.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
         })
         .collect();
 
@@ -876,13 +876,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time,
-        end_time,
+        start_time.naive_utc(),
+        end_time.map(|t| t.naive_utc()),
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -895,9 +895,21 @@ pub async fn create_maintenance(
         }
     };
 
+    // sqlx INSERT/UPDATE..RETURNING 列推断为 Option（离线缓存此前掩盖），值必在——解构归一
+    let id = result.id;
+    let equipment_id = result.equipment_id;
+    let maintenance_type = result.maintenance_type;
+    let description = result.description;
+    let maintainer = result.maintainer;
+    let start_time = result.start_time.and_utc();
+    let end_time = result.end_time.map(|t| t.and_utc());
+    let status = result.status;
+    let created_at = result.created_at.map(|t| t.and_utc()).unwrap_or(now);
+    let updated_at = result.updated_at.map(|t| t.and_utc()).unwrap_or(now);
+
     let equipment_name = sqlx::query_scalar!(
         "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
-        result.equipment_id,
+        equipment_id,
     )
     .fetch_optional(&state.pool)
     .await
@@ -906,7 +918,7 @@ pub async fn create_maintenance(
 
     let equipment_no = sqlx::query_scalar!(
         "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
-        result.equipment_id,
+        equipment_id,
     )
     .fetch_optional(&state.pool)
     .await
@@ -915,21 +927,21 @@ pub async fn create_maintenance(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id: result.id,
-            equipment_id: result.equipment_id,
+            id,
+            equipment_id,
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
-            description: Some(result.description),
-            maintainer: result.maintainer,
-            start_time: result.start_time,
-            end_time: result.end_time,
+            maintenance_type,
+            description,
+            maintainer,
+            start_time,
+            end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: result.status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at: result.created_at,
-            updated_at: result.updated_at,
+            created_at,
+            updated_at,
         },
         "维护记录创建成功",
     ))
@@ -976,7 +988,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -990,9 +1002,21 @@ pub async fn update_maintenance_status(
         }
     };
 
+    // sqlx INSERT/UPDATE..RETURNING 列推断为 Option（离线缓存此前掩盖），值必在——解构归一
+    let id = result.id;
+    let equipment_id = result.equipment_id;
+    let maintenance_type = result.maintenance_type;
+    let description = result.description;
+    let maintainer = result.maintainer;
+    let start_time = result.start_time.and_utc();
+    let end_time = result.end_time.map(|t| t.and_utc());
+    let status = result.status;
+    let created_at = result.created_at.map(|t| t.and_utc()).unwrap_or(now);
+    let updated_at = result.updated_at.map(|t| t.and_utc()).unwrap_or(now);
+
     let equipment_name = sqlx::query_scalar!(
         "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
-        result.equipment_id,
+        equipment_id,
     )
     .fetch_optional(&state.pool)
     .await
@@ -1001,7 +1025,7 @@ pub async fn update_maintenance_status(
 
     let equipment_no = sqlx::query_scalar!(
         "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
-        result.equipment_id,
+        equipment_id,
     )
     .fetch_optional(&state.pool)
     .await
@@ -1010,21 +1034,21 @@ pub async fn update_maintenance_status(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id: result.id,
-            equipment_id: result.equipment_id,
+            id,
+            equipment_id,
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
-            description: Some(result.description),
-            maintainer: result.maintainer,
-            start_time: result.start_time,
-            end_time: result.end_time,
+            maintenance_type,
+            description,
+            maintainer,
+            start_time,
+            end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: result.status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at: result.created_at,
-            updated_at: result.updated_at,
+            created_at,
+            updated_at,
         },
         "维护状态更新成功",
     ))

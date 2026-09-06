@@ -39,7 +39,7 @@ BEGIN
             EXECUTE format(
                 'CREATE POLICY tenant_isolation_%I ON %I.%I
                  FOR ALL USING (
-                    tenant_id = NULLIF(current_setting(''app.tenant_id''), '''')::UUID
+                    tenant_id::TEXT = NULLIF(current_setting(''app.tenant_id''), '''')::TEXT
                     OR tenant_id IS NULL
                  )',
                 t.table_name, t.schema_name, t.table_name
@@ -48,7 +48,7 @@ BEGIN
             -- 已存在策略则更新为空安全表达式（修复旧策略的 ''::UUID 报错缺陷）
             EXECUTE format(
                 'ALTER POLICY tenant_isolation_%I ON %I.%I USING (
-                    tenant_id = NULLIF(current_setting(''app.tenant_id''), '''')::UUID
+                    tenant_id::TEXT = NULLIF(current_setting(''app.tenant_id''), '''')::TEXT
                     OR tenant_id IS NULL
                  )',
                 t.table_name, t.schema_name, t.table_name

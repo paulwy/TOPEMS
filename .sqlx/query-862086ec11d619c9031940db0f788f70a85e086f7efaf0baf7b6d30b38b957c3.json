@@ -91,7 +91,7 @@
       {
         "ordinal": 17,
         "name": "approved_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 18,
@@ -101,12 +101,12 @@
       {
         "ordinal": 19,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 20,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -125,7 +125,6 @@
       true,
       true,
       true,
-      true,
       false,
       true,
       true,
@@ -137,7 +136,8 @@
       true,
       true,
       true,
-      true
+      false,
+      false
     ]
   },
   "hash": "862086ec11d619c9031940db0f788f70a85e086f7efaf0baf7b6d30b38b957c3"

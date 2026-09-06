@@ -1,7 +1,7 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, Row};
+use sqlx::{types::{BigDecimal, Uuid}, Row};
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -239,17 +239,17 @@ pub async fn get_patrol(
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: datetime_to_string(r.created_at),
+                created_at: datetime_to_string(Some(r.created_at.naive_utc())),
                 updated_at: datetime_to_string(r.updated_at),
             },
             "获取巡检记录成功",
@@ -328,17 +328,17 @@ pub async fn create_patrol(
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: datetime_to_string(r.created_at),
+                created_at: datetime_to_string(Some(r.created_at.naive_utc())),
                 updated_at: datetime_to_string(r.updated_at),
             },
             "创建巡检记录成功",
@@ -425,17 +425,17 @@ pub async fn update_patrol(
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: datetime_to_string(r.created_at),
+                created_at: datetime_to_string(Some(r.created_at.naive_utc())),
                 updated_at: datetime_to_string(r.updated_at),
             },
             "更新巡检记录成功",
@@ -541,10 +541,10 @@ pub async fn list_patrol_items(
                 .into_iter()
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
-                    patrol_id: r.patrol_id.to_string(),
-                    item_name: r.item_name,
+                    patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
+                    item_name: r.item_name.unwrap_or_default(),
                     standard: r.standard,
-                    actual_value: r.actual_value,
+                    actual_value: r.actual_value.map(|b| b.to_string()),
                     status: r.status.unwrap_or_else(|| "pending".to_string()),
                     remark: r.remark,
                 })
@@ -592,7 +592,7 @@ pub async fn add_patrol_item(
         patrol_uuid,
         body.item_name,
         body.standard,
-        body.actual_value,
+        body.actual_value.as_deref().and_then(|s| s.parse::<BigDecimal>().ok()),
         body.status.clone().unwrap_or_else(|| "pending".to_string()),
         body.remark,
     )
@@ -603,10 +603,10 @@ pub async fn add_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
-                item_name: r.item_name,
+                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
+                item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
-                actual_value: r.actual_value,
+                actual_value: r.actual_value.map(|b| b.to_string()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 remark: r.remark,
             },
@@ -661,7 +661,7 @@ pub async fn update_patrol_item(
         "#,
         body.item_name,
         body.standard,
-        body.actual_value,
+        body.actual_value.as_deref().and_then(|s| s.parse::<BigDecimal>().ok()),
         body.status,
         body.remark,
         uuid,
@@ -673,10 +673,10 @@ pub async fn update_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
-                item_name: r.item_name,
+                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
+                item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
-                actual_value: r.actual_value,
+                actual_value: r.actual_value.map(|b| b.to_string()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 remark: r.remark,
             },

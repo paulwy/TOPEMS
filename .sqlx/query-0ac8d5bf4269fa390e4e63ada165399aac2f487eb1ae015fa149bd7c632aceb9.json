@@ -16,7 +16,7 @@
       {
         "ordinal": 2,
         "name": "employee_id",
-        "type_info": "Uuid"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 3,
@@ -47,7 +47,7 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Uuid",
+        "Varchar",
         "Varchar",
         "Varchar",
         "Varchar",
@@ -57,8 +57,8 @@
     "nullable": [
       false,
       false,
-      true,
-      true,
+      false,
+      false,
       true,
       true,
       true,

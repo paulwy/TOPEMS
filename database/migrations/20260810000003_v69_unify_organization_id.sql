@@ -162,7 +162,7 @@ END $$;
 -- This is a read-only check; it will show any remaining organization_id columns.
 DO $$
 DECLARE
-    remaining count;
+    remaining integer;
 BEGIN
     SELECT count(*) INTO remaining
     FROM information_schema.columns

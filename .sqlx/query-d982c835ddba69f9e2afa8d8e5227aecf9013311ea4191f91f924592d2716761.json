@@ -11,12 +11,12 @@
       {
         "ordinal": 1,
         "name": "code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
@@ -26,12 +26,12 @@
       {
         "ordinal": 4,
         "name": "version",
-        "type_info": "Varchar"
+        "type_info": "Int4"
       },
       {
         "ordinal": 5,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
@@ -41,7 +41,7 @@
       {
         "ordinal": 7,
         "name": "production_line",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
@@ -51,12 +51,12 @@
       {
         "ordinal": 9,
         "name": "unit",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 10,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 11,
@@ -66,28 +66,28 @@
     ],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Varchar",
         "Text",
-        "Varchar",
+        "Text",
+        "Text",
+        "Int4",
         "Uuid",
-        "Varchar",
+        "Text",
         "Numeric",
-        "Varchar"
+        "Text"
       ]
     },
     "nullable": [
       false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
       false,
-      false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
       true
     ]
   },

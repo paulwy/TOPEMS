@@ -11,42 +11,42 @@
       {
         "ordinal": 1,
         "name": "code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
         "name": "product_code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
         "name": "product_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
         "name": "inspection_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 7,
         "name": "version",
-        "type_info": "Varchar"
+        "type_info": "Int4"
       },
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Varchar"
+        "type_info": "Date"
       },
       {
         "ordinal": 9,
@@ -56,7 +56,7 @@
       {
         "ordinal": 10,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 11,
@@ -66,30 +66,30 @@
     ],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Varchar",
-        "Varchar",
-        "Varchar",
-        "Varchar",
-        "Varchar",
-        "Varchar",
-        "Varchar",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Date",
         "Text",
         "Uuid"
       ]
     },
     "nullable": [
       false,
-      false,
-      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
       true,
       true,
       false,
-      true,
-      true,
-      true,
-      true,
-      true,
       true
     ]
   },

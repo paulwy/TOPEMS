@@ -16,7 +16,7 @@
       {
         "ordinal": 2,
         "name": "item_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
@@ -31,12 +31,12 @@
       {
         "ordinal": 5,
         "name": "unit",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
         "name": "inspection_method",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 7,
@@ -51,8 +51,8 @@
     },
     "nullable": [
       false,
-      false,
-      false,
+      true,
+      true,
       true,
       true,
       true,

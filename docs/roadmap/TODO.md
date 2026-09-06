@@ -163,7 +163,7 @@
 - [x] C轨 3 评估项均已完成（ERP 审计 ✅ / unified-core INSERT ✅ / DocumentsPage ✅）
 
 ### V285 后续扩展（留给 V286+）
-- [ ] **mes integration_tests sqlx 缓存补全**：12 处 sqlx::query 缺 .sqlx 缓存（--all-targets 才暴露），需 DB 环境跑 `cargo sqlx prepare --workspace` 重建缓存。**V516 尝试**：DATABASE_URL=postgres://topems:topems@localhost:5432/topems（mes schema 39 表 + 85 migrations 均在）跑 prepare → **mes lib 在线 check 失败 82 处 chrono 类型错误**（expected DateTime&lt;Utc&gt; vs Option&lt;NaiveDateTime&gt;——DB 列类型/可空性与代码推断不一致）——**根因是 mes crate 在线编译不过**（非仅 integration tests 缺缓存），需先对齐 mes 代码类型（82 处）或改用离线缓存维护；sqlx-cli 0.9.0 vs workspace sqlx 0.8.6 版本差待确认影响
+- [x] **mes integration_tests sqlx 缓存补全**：**V517 已闭环（2026-09-06）**——① 在线 `cargo check`（5433 + search_path=mes,public）从 167 错误清零（equipment/work_order/team/work_report/process_flow/standard/patrol/inspection 8 文件类型对齐 + 容器库补列：quality_*/process_flow* 系列 MIN 表按代码 query 反推 ALTER ADD COLUMN 约 40 列（uuid/text/numeric/timestamp 等）；② `cargo sqlx prepare` 生成 168 缓存 → 按 scripts/dev/sqlx-prepare.sh 策略合并到根 `.sqlx/`（285 个，覆盖旧缓存）并删除子目录；③ macros-core 临时补丁（offline=false）恢复原版 `/tmp/qmod.orig` + `cargo clean -p sqlx-macros-core` 重编；④ 离线验证 `SQLX_OFFLINE=true cargo check` 与 `cargo check --tests` 均 0 错误。迁移文件变更：count 类型修复/RLS cast 修复/同版本迁移改名 3 文件（V288 遗留链 76 条全量 Applied）
 - [ ] **Finance utoipa::path 补全**：settlement_center/{mod,models,routes,service}.rs 4 个非 handler 文件未覆盖（handlers.rs 已 18 注解）
 - [ ] **CI gate 脚本合并**：check-i18n + check-i18n-quality → `check-i18n --mode={hardcode|quality|all}`；check-api-audit + check-api-coverage + compare-api-modules → `check-api --mode={audit|coverage|align}`
 - [ ] **DocumentsPage 模板深度评估**：若未来简化为纯文件列表，可评估抽 DocumentTemplate 声明式模板
