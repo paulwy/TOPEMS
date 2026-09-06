@@ -1,0 +1,7 @@
+services:
+  eureka:
+    image: springcloud/eureka:latest
+    platform: linux/amd64
+    container_name: topems-eureka
+    ports:
+      - "8761:8761"
