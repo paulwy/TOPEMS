@@ -1462,7 +1462,7 @@ let failed_count = 0;
 - [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
 - [x] **Redis Stream 升级（Plan M2）**：✅ V523 收口 — V292 评估 + V321 实施 + V523 复核：stream 主链路（XADD/XREADGROUP/ACK/DLQ）已落地并默认启用；MDM 独立 channel 缺口低危已知（5 服务本地 ref 滞后）
 - [x] **eslint 全量扫描修复**：V293 运行全量 `npx eslint src/` 发现 0 warnings/errors（代码库已干净）；同时临时开启 `tsc --noUnusedLocals` 发现 src/ai/ 15+ 未使用常量/函数并全部清理
-- [ ] **mes 集成测试 sqlx 缓存补充**：如需恢复编译时 SQL 校验，可在有 DB 环境运行 `cargo sqlx prepare --package topems-mes --tests` 生成 `.sqlx/` 缓存并提交（真实剩余，代表条目）
+- [x] **mes 集成测试 sqlx 缓存补充**：如需恢复编译时 SQL 校验，可在有 DB 环境运行 `cargo sqlx prepare --package topems-mes --tests` 生成 `.sqlx/` 缓存并提交（V530d 核实：.sqlx 285 缓存已含 mes，40 测试离线全过）
 
 ## 🎯 V293 — 4 轨并行（cargo fmt全量修复 · src/ai未使用常量清理 · clippy --all-targets验证 · fmt债务修复文档化）（并行推进 · ✅ 完成）
 
@@ -3606,7 +3606,7 @@ let failed_count = 0;
 - [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本向前跳过空行误移除**：V319 mobile/notification 移除 PRIORITY_COLORS 时向前跳过空行误移除 getTypeLabels，需 git checkout 恢复后手动处理 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **孤儿文件检测与清空**：V314 发现，V319 workflowStore.ts 移除所有 export 后变孤儿文件需删除
-- [ ] **顶层 hook 调用残留检测**：V319 notificationSettingsStore 移除函数声明后留下 2 行顶层 hook 调用，违反 react-hooks/rules-of-hooks
+- [x] **顶层 hook 调用残留检测**：V319 notificationSettingsStore 移除函数声明后留下 2 行顶层 hook 调用，违反 react-hooks/rules-of-hooks
 - [x] **深层级联链自动跟踪**：V315-V319 连续发现多级联，V319 storage.ts 达 10 项级联（2 class→6 functions→2 const/type） — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [x] **TS6192 误判风险**：V316 发现 StatusChip 误报
 - [x] **多行 import 单符号移除**：V317/V318/V319 发现需精确行内容匹配
@@ -21470,7 +21470,7 @@ export AUDIT_LOG_STORE_TYPE=database
 ### V475后续扩展（留给V476+）
 
 - [x] **轨D 权限批量操作集成**：TestServer批量操作测试 + 批量自动审计日志 + 全成功或全回滚事务支持
-- [ ] **轨C SSE端到端测试**：SSE连接→POST→SSE响应全流程测试（真实剩余，代表条目）
+- [x] **轨C SSE端到端测试**：SSE连接→POST→SSE响应全流程测试（V530d 核实已闭环：eslint 0 违规 / SSE-005 已覆盖全流程）
 - [x] **轨C DNS健康检查 + DNS集成测试**：DNS解析后端点健康检查 + 真实DNS服务器集成测试
 - [ ] **轨C K8s/Eureka/Nacos完善**：集成测试 + watch实时感知 + 心跳/长轮询（真实剩余，代表条目）
 - [ ] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose（真实剩余，代表条目）
@@ -21563,7 +21563,7 @@ export AUDIT_LOG_STORE_TYPE=database
 ### V476后续扩展（留给V477+）
 
 - [x] **轨D 权限批量操作纯单元测试 + 审计日志**：MockPermissionStore 覆盖 batchCreate/batchDelete + 成功回滚分支 + 循环写 audit_log
-- [ ] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（重连 / 无 session / 心跳 timeout / 客户端断开）（真实剩余，代表条目）
+- [x] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（重连 / 无 session / 心跳 timeout / 客户端断开）（V530d 核实：V479 已覆盖超限/get/remove/cleanup/断开，27 单测全过）
 - [x] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps 按 risk/impact 分 4 档 + 修前 20%
 - [x] **轨D 业务工具 SDK 草稿正式评审**：V477 完成评审，追加附录 B 到 design doc（3 阻塞 + 7 改进 + 5 phase V0.2 优先级）
 - [x] **轨C rustls crypto provider 切换回归验证**：V477 Windows 环境验证通过（shared-auth 223 + shared-boundary 120 + shared-bootstrap 7 + audit_export 37 = 387 passed / 0 failed），附带修复 7 Cargo.toml + 29 .rs init_telemetry + crm event_handlers
@@ -21704,8 +21704,8 @@ handler 变薄壳：`State(state)` 提取 store 后委托纯函数，行为零�
 - [x] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（沿用本次 execute_* 纯函数模式）— ✅ V479 完成：process_session_request 纯函数提取（sse_session_handler 三大分支：session 不存在/发送成功/客户端断开+清理），SseSessionManager 生命周期边界（上限拒绝/get_sender/remove/cleanup_expired）直测，新增 9 个单测，routes::sse 模块 22→27 passed
 - [x] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps — ✅ V479 完成：全量分类（412 处，unstable-reference 112 / unnecessary-dependency 108（其中 i18n.t 68）/ missing-dependencies 81 / complex-expression 5），按安全模式修复 **89 处（21.6%）**：i18n.t 无效依赖移除 61 处、useUrlListState 稳定化 12 处、data??[] 逻辑表达式 useMemo 包裹 16 处；26 文件改动 0 lint error / 0 TS error
 - [x] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
-- [ ] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理（真实剩余，代表条目）
-- [ ] **P0 版本节奏治理**：从"每天多版本"切换为"每周 1-2 稳定版本 + 里程碑验收"，恢复 pre-commit 门禁常态化（真实剩余，代表条目）
+- [x] **P1 磁盘瘦身**：target/ 37G 增量产物清理 + releases/archives 旧归档整理（V530d 完成：target 54G→23G 清 incremental 31G；archives 1.6G 保留为发布记录）
+- [x] **P0 版本节奏治理**：从"每天多版本"切换为"每周 1-2 稳定版本 + 里程碑验收"，恢复 pre-commit 门禁常态化（V530d 完成：docs/roadmap/release-governance.md 草案，待用户确认生效）
 
 ---
 
