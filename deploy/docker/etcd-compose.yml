@@ -1,0 +1,30 @@
+# etcd 集成测试环境（轨C 服务发现族）
+# 用法: docker compose -f deploy/docker/etcd-compose.yml up -d
+# 连接: http://localhost:2379
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.19
+    container_name: topems-etcd
+    command:
+      - etcd
+      - --name=etcd0
+      - --data-dir=/etcd-data
+      - --advertise-client-urls=http://0.0.0.0:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd0:2380
+      - --initial-cluster=etcd0=http://etcd0:2380
+      - --initial-cluster-state=new
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - topems-etcd-data:/etcd-data
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  topems-etcd-data:

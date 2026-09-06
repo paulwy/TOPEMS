@@ -16533,7 +16533,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [x] **轨D 业务工具权限控制数据库持久化**：实现PostgreSQL/MySQL数据库权限存储
 - [x] **轨D 业务工具权限管理API**：添加权限管理API端点（创建、更新、删除权限）
 - [x] **轨C shared-service-client Consul服务发现**：集成Consul服务发现
-- [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现（真实剩余，代表条目）
+- [x] **轨C shared-service-client etcd服务发现**：集成etcd服务发现（V530k 完成：lib/shared-event/src/etcd/ EtcdClient，注册/注销/发现/列表/ping + try_register_service）
 - [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
 - [x] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
 - [x] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
@@ -17094,8 +17094,8 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [x] **轨C shared-service-client Zookeeper服务发现**：集成Zookeeper服务发现
 - [x] **轨C shared-service-client Nacos服务发现**：集成Nacos服务发现
 - [x] **轨C shared-service-client连接池监控完善**：✅ V529 已完成 — 新增 service_client/metrics.rs（ClientMetrics 原子计数器 + InFlightGuard + 可序列化快照），BaseServiceClient 全请求路径埋点（execute_request/get_without_response/get_raw_response），metrics() 方法输出 total/success/failure/circuit_blocks/in_flight/peak/success_rate/avg_duration/circuit_open；cargo check 0 错，73 测试全过（新增 7）
-- [ ] **轨C EtcdServiceDiscovery集成测试**：使用Docker Compose启动etcd进行集成测试（真实剩余，代表条目）
-- [ ] **轨C etcd租约keep-alive**：实现租约自动续期（lease keep-alive）（真实剩余，代表条目）
+- [x] **轨C EtcdServiceDiscovery集成测试**：使用Docker Compose启动etcd进行集成测试（V530k 完成：deploy/docker/etcd-compose.yml + tests/etcd_integration.rs 3 用例，真实 etcd 3/3 过）
+- [x] **轨C etcd租约keep-alive**：实现租约自动续期（lease keep-alive）（V530k 完成：lease grant/revoke + keep_alive_loop TTL/3 间隔自动续期 + guard.spawn_keep_alive）
 - [x] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
 - [x] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
 - [x] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应

@@ -21,6 +21,7 @@ thiserror.workspace = true
 
 # 异步流依赖
 futures.workspace = true
+tokio-util = { workspace = true, features = ["rt"] }
 futures-util.workspace = true
 futures-lite = "2.3"
 
@@ -46,6 +47,11 @@ serde_yaml = "0.9"
 
 # 正则表达式依赖（config_center 用）
 regex.workspace = true
+etcd-client = "0.19"
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+uuid.workspace = true
+tokio-util = { workspace = true, features = ["rt"] }
