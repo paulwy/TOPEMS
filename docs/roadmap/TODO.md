@@ -993,7 +993,7 @@ SQLX_OFFLINE=true cargo check -p topems-mes --tests   # exit 0（当前报 12 pr
 - [x] **GROUP2 warnings=1（monitor allowlist）终局清理**：✅ V288-T1 完成 — 新建 [svc/monitor/plugin.yaml](file:///Users/air/TOPEMS/svc/monitor/plugin.yaml)（port 8095，category Infrastructure，permissions 4 条 read/write/manage/admin）；[monitor_plugin.rs L16+L30](file:///Users/air/TOPEMS/svc/monitor/src/modules/monitor/monitor_plugin.rs) port 8000→8095 与 plugin.yaml 对齐；GROUP2 checker warnings 归零验证通过。
 - [ ] **A 轨接入后真实 DB 写入验证**：启动 PM/AI 服务测试 1 次 `create_project`，然后 psql `SELECT * FROM public.audit_logs WHERE entity_type='project' ORDER BY created_at DESC LIMIT 1;` → status='success'，entity_id、user_id 非空（当前仅 cargo check 证明类型正确）。
 - [x] **DocumentsPage 声明式模板迁移评估**：✅ **已永久取消**（V283→V284→V286→V287 连续 4 版列入无简化计划）。防止悬而未决。
-- [ ] **openapi.d.ts regen 流程落 SOP**：V286 B轨补后端 + V287 B轨前端 regen 两步走已验证；下版本想新增 schemas 先「后端补 ToSchema → cargo run extract（或 aggregated）→ gen-types.mjs → tsc 0」，可把这条 SOP 写进 docs/ 或 scripts/openapi/README 作为标准化流程。
+- [x] **openapi.d.ts regen 流程落 SOP**：scripts/openapi/README.md（109 行）已含 Step 1-4 全流程 + 故障排查表——「后端补 ToSchema/utoipa::path → generate.sh --extract（或 --extract --with-types）→ aggregate.py → gen-types.mjs → tsc 0」
 - [x] **2 Typed 死代码删除后 apps/web 目录扫描**：✅ V288-T2 完成 — `grep -RIn "from.*Typed" apps/web/src/api` 扫后剩余 `ruleTyped` / `metricTyped` 两文件均有活跃引用（ruleTyped 被 3 个 MonitorAlert 页面 import / metricTyped 被 MetricsPage 使用），0 死代码，V287 清完后无需再删。
 
 ---
