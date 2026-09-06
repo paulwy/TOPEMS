@@ -200,6 +200,7 @@ pub mod cluster;
 pub mod config_center;
 pub mod etcd;
 pub mod consul;
+pub mod zookeeper;
 pub mod event;
 pub mod messaging;
 pub mod redis;

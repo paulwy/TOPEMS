@@ -1,0 +1,25 @@
+# ZooKeeper 集成测试环境（轨C 服务发现族）
+# 用法: docker compose -f deploy/docker/zookeeper-compose.yml up -d
+# 连接: 127.0.0.1:2181
+services:
+  zookeeper:
+    image: zookeeper:3.9
+    container_name: topems-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper:2888:3888;2181
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+    volumes:
+      - topems-zk-data:/data
+      - topems-zk-datalog:/datalog
+    healthcheck:
+      test: ["CMD", "zkServer.sh", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  topems-zk-data:
+  topems-zk-datalog:
