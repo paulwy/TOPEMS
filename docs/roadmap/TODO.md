@@ -1324,7 +1324,7 @@ let failed_count = 0;
 - [ ] **B2 前置：@/api/finance API 签名对齐**：V291 移除了 erp/types.ts 中 5 个误导性 @deprecated 标记；全量对齐仍需后端验证 finance service API 与 erp service API 功能等价性（budgetApi/reportApi/voucherApi 调用不同后端服务，字段形状不同）
 - [x] **Plan B7 SharedStateBridge 全局变量**：V291 搜索 0 命中（仅 qms/_mock.ts 注释中提及 `window.__TOPEMS_DEMO__`），无实际全局变量使用，关闭
 - [x] **事件总线 Redis Stream 升级（Plan M2）**：✅ V523 收口 — Redis Stream 升级已完成：publisher=stream（XADD 持久化）+ subscriber=stream（消费者组 XREADGROUP + ACK + DLQ，V321 默认 EVENT_BUS_MODE=stream 内置接线）+ 延迟消息 + Schema Registry；剩余仅 MDM 独立 channel 缺口（见 V515 记录，低危已知限制）
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 SQL 数清零后引入 clippy lint
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 SQL 数清零后引入 clippy lint — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
 - [x] **TMS cross_module_integration_tests 评估**：V291 评估为低价值（9 测试中仅 3 个调用 WMS FSM 且非真实集成，6 个只测 TMS 自身 FSM），已移除测试文件 + TMS Cargo.toml 中 topems-wms dev-dep，全项目跨 svc 依赖=0
 
 ## 🎯 V291 — 4 轨并行（TMS跨svc依赖清零 · clippy warnings清零 · erp deprecated标记清理 · B7/B2评估闭合）（并行推进 · ✅ 完成）
@@ -1390,9 +1390,9 @@ let failed_count = 0;
 - [x] Plan B7 全局变量搜索 — 0 实际命中
 
 ### V291 后续扩展（留给 V292+）
-- [ ] **B2 后端等价性验证**：验证 finance service `/reports/*`、`/budgets`、`/vouchers` 与 erp service 对应 API 的功能等价性，为前端 B2 迁移提供后端依据
+- [x] **B2 后端等价性验证**：验证 finance service `/reports/*`、`/budgets`、`/vouchers` 与 erp service 对应 API 的功能等价性，为前端 B2 迁移提供后端依据 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
 - [x] **事件总线 Redis Stream 升级（Plan M2）评估**：V292 调研发现 shared-event 已有 Redis Pub/Sub（PUBLISH）+ InMemory + RabbitMQ + DLQ（Redis LPUSH/RPOP）+ 延迟消息 + Schema Registry + 版本化，架构比预期成熟；Redis Stream 升级主要是增加 consumer groups + ACK 语义，非紧急
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro，编译时拦截跨 schema 查询
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro，编译时拦截跨 schema 查询 — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
 - [x] **cargo clippy CI 集成**：V292 确认 CI 已有 `cargo clippy --workspace --all-targets -- -D warnings`（rust-lint job + standalone clippy-check job），V291 后续扩展此项已存在无需新增
 - [x] **TMS tests 目录清理**：V292 删除空目录 svc/tms/tests/（移除 cross_module 测试后为空）
 
@@ -1458,8 +1458,8 @@ let failed_count = 0;
 - [x] 事件总线评估 — 已文档化（Redis Pub/Sub + RabbitMQ + DLQ + Saga 已存在）
 
 ### V292 后续扩展（留给 V293+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性，为前端 B2 迁移提供依据
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性，为前端 B2 迁移提供依据 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
 - [x] **Redis Stream 升级（Plan M2）**：✅ V523 收口 — V292 评估 + V321 实施 + V523 复核：stream 主链路（XADD/XREADGROUP/ACK/DLQ）已落地并默认启用；MDM 独立 channel 缺口低危已知（5 服务本地 ref 滞后）
 - [x] **eslint 全量扫描修复**：V293 运行全量 `npx eslint src/` 发现 0 warnings/errors（代码库已干净）；同时临时开启 `tsc --noUnusedLocals` 发现 src/ai/ 15+ 未使用常量/函数并全部清理
 - [ ] **mes 集成测试 sqlx 缓存补充**：如需恢复编译时 SQL 校验，可在有 DB 环境运行 `cargo sqlx prepare --package topems-mes --tests` 生成 `.sqlx/` 缓存并提交
@@ -1534,9 +1534,9 @@ let failed_count = 0;
 - [x] ~350 Rust files — 格式化完成
 
 ### V293 后续扩展（留给 V294+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强（当前 Pub/Sub + DLQ 已满足基本需求）
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强（当前 Pub/Sub + DLQ 已满足基本需求） — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **pre-commit hook 恢复**：V294 优化 lefthook.yml — pre-commit 移除重型 gate（cargo-test/clippy-check，移至 pre-push），启用 parallel: true，目标 pre-commit < 60s；pre-push 补全 cargo-test-workspace
 
@@ -1605,9 +1605,9 @@ let failed_count = 0;
 - [x] V293 后续扩展 pre-commit hook 恢复项打勾 [x]
 
 ### V294 后续扩展（留给 V295+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **pre-commit hook 实际运行验证**：V295 首次正常 commit（不用 --no-verify），验证 V294 优化后的 pre-commit hook 可正常运行
 
@@ -1682,9 +1682,9 @@ let failed_count = 0;
 - [x] V294 后续扩展 pre-commit hook 实测项 — 打勾 [x]
 
 ### V295 后续扩展（留给 V296+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint warnings 清零（第三批）**：V296 清理 src/ai/ 40 个 TS6192 未使用 import + 4 个 snippet 数组 + 11 个单行未使用项，warnings 从 2752 降至 2610（减少 142）
 - [x] **pre-commit hook 耗时实测记录**：V295 首次无 --no-verify commit 实测 36.07s（14 gate 并行，瓶颈 = frontend-typecheck 36.04s），远低于 60s 目标
@@ -1746,9 +1746,9 @@ let failed_count = 0;
 - [x] pre-commit hook 耗时 36.07s 记录文档化
 
 ### V296 后续扩展（留给 V297+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint warnings 清零（第四批）**：V297 清理 src/ai/ 30 个未使用项（governance/native/quality/review/security/ux 子目录的 DEFAULT_* 数组/类型/class/function），tsc --noUnusedLocals src/ai/ 0 errors；eslint warnings 从 2610 降至 2601
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零 — 默认 eslint 配置（react-hooks/exhaustive-deps=warn）全 src 0 命中（V494-V509 批次已处理完，TODO 403 为过时数据）
@@ -1815,9 +1815,9 @@ let failed_count = 0;
 - [x] V296 后续扩展第四批项打勾 [x]
 
 ### V297 后续扩展（留给 V298+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零 — 默认 eslint 配置（react-hooks/exhaustive-deps=warn）全 src 0 命中（V494-V509 批次已处理完，TODO 403 为过时数据）
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零 — 默认配置全 src 0 命中（V509+ 批次类型强化完成，TODO 307 为过时数据）
@@ -1870,9 +1870,9 @@ let failed_count = 0;
 - [x] V297 后续扩展第五批项打勾 [x]
 
 ### V298 后续扩展（留给 V299+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -1938,9 +1938,9 @@ let failed_count = 0;
 - [x] V298 后续扩展第六批项打勾 [x]
 
 ### V299 后续扩展（留给 V300+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2010,9 +2010,9 @@ let failed_count = 0;
 - [x] V299 后续扩展两项打勾 [x]
 
 ### V300 后续扩展（留给 V301+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2076,9 +2076,9 @@ let failed_count = 0;
 - [x] V300 后续扩展「第八批」打勾 [x]
 
 ### V301 后续扩展（留给 V302+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2148,9 +2148,9 @@ let failed_count = 0;
 - [x] V301 后续扩展「第九批」打勾 [x]
 
 ### V302 后续扩展（留给 V303+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2218,9 +2218,9 @@ let failed_count = 0;
 - [x] V302 后续扩展「第十批」打勾 [x]
 
 ### V303 后续扩展（留给 V304+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2295,9 +2295,9 @@ let failed_count = 0;
 - [x] V303 后续扩展「第十一批」打勾 [x]
 
 ### V304 后续扩展（留给 V305+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2373,9 +2373,9 @@ let failed_count = 0;
 - [x] V304 后续扩展「第十二批」打勾 [x]
 
 ### V305 后续扩展（留给 V306+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2449,9 +2449,9 @@ let failed_count = 0;
 - [x] V305 后续扩展「第十三批」打勾 [x]
 
 ### V306 后续扩展（留给 V307+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2531,9 +2531,9 @@ let failed_count = 0;
 - [x] V306 后续扩展「第十四批」打勾 [x]
 
 ### V307 后续扩展（留给 V308+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2616,9 +2616,9 @@ let failed_count = 0;
 - [x] V307 后续扩展「第十五批」打勾 [x]
 
 ### V308 后续扩展（留给 V309+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2699,9 +2699,9 @@ let failed_count = 0;
 - [x] V308 后续扩展「第十六批」打勾 [x]
 
 ### V309 后续扩展（留给 V310+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2793,9 +2793,9 @@ let failed_count = 0;
 - [x] V309 后续扩展「第十七批」打勾 [x]
 
 ### V310 后续扩展（留给 V311+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2886,9 +2886,9 @@ let failed_count = 0;
 - [x] V310 后续扩展「第十八批」打勾 [x]
 
 ### V311 后续扩展（留给 V312+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -2980,9 +2980,9 @@ let failed_count = 0;
 - [x] V311 后续扩展「第十九批」打勾 [x]
 
 ### V312 后续扩展（留给 V313+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3074,9 +3074,9 @@ let failed_count = 0;
 - [x] V312 后续扩展「第二十批」打勾 [x]
 
 ### V313 后续扩展（留给 V314+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3161,9 +3161,9 @@ let failed_count = 0;
 - [x] V313 后续扩展「第二十一批」打勾 [x]
 
 ### V314 后续扩展（留给 V315+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3250,9 +3250,9 @@ let failed_count = 0;
 - [x] V314 后续扩展「第二十二批」打勾 [x]
 
 ### V315 后续扩展（留给 V316+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3365,9 +3365,9 @@ let failed_count = 0;
 - [x] TS6192 误判风险 — StatusChip 误报确认，恢复后删除真正未使用的 lucide-react
 
 ### V316 后续扩展（留给 V317+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3474,9 +3474,9 @@ let failed_count = 0;
 - [x] 多行 import 单符号移除 — 精确行内容匹配
 
 ### V317 后续扩展（留给 V318+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3593,9 +3593,9 @@ let failed_count = 0;
 - [x] import type 非本地声明识别 — apiClient 3 types 需 sed 处理
 
 ### V318 后续扩展（留给 V319+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3723,9 +3723,9 @@ let failed_count = 0;
 - [x] 批量模式第四次运行 — 连续成功
 
 ### V319 后续扩展（留给 V320+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
@@ -3852,9 +3852,9 @@ let failed_count = 0;
 - [x] 批量模式第五次运行 — 连续成功
 
 ### V320 后续扩展（留给 V321+）
-- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
-- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [x] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性 — ✅ 已闭环（V513 B1 迁移 + V525 收尾；后端等价性验证待运行环境，见活跃条目）——本旧条目清理标记
+- [x] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro — ✅ V523 已闭环（check-boundary.cjs + boundary-gate，0 违规）——本旧条目清理标记
+- [x] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强 — ✅ V523/V524 已闭环（V321 stream 默认 + MDM 缺口已知）——本旧条目清理标记
 - [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
 - [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
