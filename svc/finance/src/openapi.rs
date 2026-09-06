@@ -348,6 +348,7 @@ use crate::modules::*;
         crate::modules::settlement_center::handlers::list_settlements,
         crate::modules::settlement_center::handlers::create_settlement,
         crate::modules::settlement_center::handlers::get_settlement,
+        crate::modules::settlement_center::handlers::approve_reconciliation,
         crate::modules::settlement_center::handlers::approve_settlement,
         crate::modules::settlement_center::handlers::create_link,
         crate::modules::settlement_center::handlers::delete_link,
