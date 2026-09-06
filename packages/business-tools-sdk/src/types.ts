@@ -77,3 +77,38 @@ export interface BatchResult {
   failed: number;
   errors: Array<{ index: number; message: string }>;
 }
+
+/** 批量操作结果（V530f） */
+export interface BulkPermissionResult {
+  total: number;
+  succeeded: number;
+  skipped: number;
+  events?: PermissionChangeEvent[];
+}
+
+/** 权限变更事件（V530f） */
+export interface PermissionChangeEvent {
+  action: 'create' | 'update' | 'delete' | 'bulk_create' | 'bulk_update' | 'bulk_delete';
+  tenant_id: string;
+  user_id: string;
+  at: string;
+}
+
+/** 权限批量请求体（V530f） */
+export interface BulkPermissionRequest {
+  permissions: Array<{
+    tenant_id: string;
+    user_id: string;
+    role: string;
+    active?: boolean;
+    tool_permissions?: Array<{
+      tool: string;
+      max_permission: string;
+      allowed_operations?: string[];
+      denied_operations?: string[];
+    }>;
+  }>;
+}
+
+/** 权限导出格式（V530f CSV 支持） */
+export type PermissionExportFormat = 'json' | 'csv';

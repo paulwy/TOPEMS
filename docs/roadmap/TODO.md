@@ -21625,7 +21625,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨D 权限批量操作纯单元测试 + 审计日志**：MockPermissionStore 覆盖 batchCreate/batchDelete — ✅ V478 完成：handler 逻辑提取为 execute_batch_create/update/delete 纯函数（依赖 PermissionStore trait，InMemoryPermissionStore 即测试 Mock），新增 8 个单测（全成功/部分失败/非法角色/空列表/update 混合/delete 混合），permission_batch_api 模块 18/18 passed
 - [x] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界
 - [x] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps
-- [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）（真实剩余，代表条目）
+- [x] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）（V530j 完成：端点核实/类型补全/分页确认，typecheck+4 冒烟过）
 
 ---
 

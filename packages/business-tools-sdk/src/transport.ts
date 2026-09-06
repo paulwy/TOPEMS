@@ -70,14 +70,18 @@ export class HttpTransport {
   }
 
   /** JSON 请求：非 2xx 抛错，2xx 反序列化为 T。 */
+  /** 原始请求（返回未解析的 Response，供导出/下载类端点使用）。 */
+  async fetchRaw(path: string, init?: RequestInit): Promise<Response> {
+    return this.raw(path, init);
+  }
+
   async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await this.raw(path, {
       method,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`BusinessTools API ${res.status} ${res.statusText}: ${text.slice(0, 200)}`);
+      const text = await res.text().catch(() => '');      throw new Error(`BusinessTools API ${res.status} ${res.statusText}: ${text.slice(0, 200)}`);
     }
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;

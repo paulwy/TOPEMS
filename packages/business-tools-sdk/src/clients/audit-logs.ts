@@ -34,10 +34,16 @@ export class AuditLogsClient {
     );
   }
 
-  /** NDJSON 流式导出审计日志（for-await 风格逐行回调） */
+  /** NDJSON 流式导出审计日志（后端 /export?stream=true，V530g；for-await 风格逐行回调） */
   stream(params: AuditLogQuery, onItem: (item: AuditLogEntry) => void, signal?: AbortSignal): Promise<void> {
-    const path = `/api/core/business-tools/permissions/audit-logs/stream${this.qs(params)}`;
+    const path = `/api/core/business-tools/permissions/audit-logs/export${this.qs({ ...params, stream: true })}`;
     return this.http.streamNdjson<AuditLogEntry>(path, onItem, signal);
+  }
+
+  /** 导出审计日志为 CSV/JSON（可选 gzip 压缩） */
+  export(params: AuditLogQuery & { compressed?: boolean }): Promise<Response> {
+    const path = `/api/core/business-tools/permissions/audit-logs/export${this.qs(params)}`;
+    return this.http.fetchRaw(path);
   }
 
   private qs(params?: object): string {
