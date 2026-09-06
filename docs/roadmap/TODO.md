@@ -4113,7 +4113,7 @@ let failed_count = 0;
 
 ### V281 后续扩展（留给 V282+）
 - [x] **ApprovalTransition 实际推广**：finance 3 处（create/execute/reject，V530n 强化错误日志）已实际导入 `topems_shared_db::approval`；pm project_approval.rs 已用；erp 无审批流模块（无载体，不适用）
-- [ ] **ApprovalTransition 复查**：finance 审批 handler 未覆盖的业务流（如 expense 报销）确认是否需接 shared-db approval（真实剩余，代表条目）
+- [x] **ApprovalTransition 复查**：finance expense_approval 系列为 stub handler（空实现，非真实审批流）；已接 shared-db 的 3 处为通用审批（submit/execute/reject），stub 等业务落地时再接入
 - [x] **模板扩展**：✅ V284 评估完成（不抽专用模板：4 页已声明式接入现有模板体系，新增模板与 V23.0 精简方向冲突）——本旧条目清理标记
 
 ### 已完成：V280 设计系统模板治理收闭（最后 4 例外清零 · 530/530 = 100%）
@@ -4229,7 +4229,8 @@ let failed_count = 0;
 
 ### V278 后续扩展（留给 V279+）
 - [x] **前端 API client 三端共享评估**：web（CSRF+telemetry+typed axios+i18n 错误）/ desktop（offlineCache+503 降级）/ mobile（cancel+LRU+NetworkService+Expo）差异大，共享核心仅 token 注入+响应解包；方案=packages/api-client 工厂 `createApiClient({baseURL, tokenStore, interceptors})`，Phase 1 提取 web/desktop 共同工厂、Phase 2 mobile 迁入（保留 cancel/cache 插件）
-- [ ] **前端 API client 共享落地**：按评估 Phase 1（web/desktop 提取 packages/api-client 工厂）实施（真实剩余，代表条目）
+- [x] **前端 API client 共享落地 Phase 1（desktop）**：packages/api-client 共享工厂 createApiClient（baseURL/timeout/token/401）+ desktop 改用（离线缓存拦截器保留端内），build+typecheck 过
+- [ ] **前端 API client 共享 Phase 1b/2**：web 侧评估保留（typed axios+CSRF+telemetry 深度定制，提取收益低）；mobile 迁入共享工厂（cancel/离线插件保留）（真实剩余，代表条目）
 - [x] **lib 门面 re-export 清理**：lib/src/lib.rs ~30 条 `pub use`，逐项验证是否有从未被 svc 使用的 re-export（V530i 评估：35 pub use 为公共 API 面，构建无警告，保留）
 - [x] **剩余 init_db 统一**：rd/pm 的 init_db 有额外逻辑（非标准模式 A/B），评估可否接入 default_init_db + 扩展参数（V530i 评估：default_init_db 支持无 master_data_refs，方案明确待启动回归）
 - [x] **CI composite action 增强**：评估将 PostgreSQL/Redis services 也参数化到 composite action（V530i 评估：services 仅 job 级无法 composite；env 已参数化版本）

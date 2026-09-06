@@ -23,6 +23,7 @@
     "@tauri-apps/plugin-notification": "^2.0.0",
     "@tauri-apps/plugin-opener": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.0",
+    "@topems/api-client": "workspace:*",
     "@topems/app-shell": "workspace:*",
     "axios": "^1.6.8",
     "lucide-react": "^1.18.0",

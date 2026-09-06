@@ -18,6 +18,7 @@
     "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["./apps/web/src/*", "./apps/desktop/src/*", "./apps/mobile/src/*"],
+      "@topems/api-client": ["./packages/api-client/src/index.ts"],
       "@topems/tokens": ["./packages/tokens/src"],
       "@topems/tokens/*": ["./packages/tokens/src/*"],
       "@topems/shared-types": ["./packages/shared-types/src/index.ts"],

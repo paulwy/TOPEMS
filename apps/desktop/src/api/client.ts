@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createApiClient } from '@topems/api-client';
 import { offlineCache } from '../utils/offlineCache';
 
 declare global {
@@ -10,20 +10,14 @@ declare global {
   }
 }
 
-const apiClient = axios.create({
+// 共享工厂：baseURL/timeout/JSON 头/token 注入/401 回调（见 packages/api-client）
+const apiClient = createApiClient({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  getToken: () => localStorage.getItem('token'),
 });
 
+// desktop 独有：GET 离线缓存 + 503 降级（保留在端内）
 apiClient.interceptors.request.use(async (config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
   if (config.method?.toUpperCase() === 'GET') {
     const cacheKey = config.url + (config.params ? JSON.stringify(config.params) : '');
     const cachedData = await offlineCache.get(cacheKey);

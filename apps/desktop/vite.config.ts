@@ -11,6 +11,7 @@ export default defineConfig({
       { find: "@topems/shared-utils", replacement: path.resolve(__dirname, "../../packages/shared-utils/src") },
       { find: "@topems/shared-components", replacement: path.resolve(__dirname, "../../packages/shared-components/src") },
       { find: "@topems/shared-hooks", replacement: path.resolve(__dirname, "../../packages/shared-hooks/src") },
+      { find: "@topems/api-client", replacement: path.resolve(__dirname, "../../packages/api-client/src") },
       { find: "@topems/tokens", replacement: path.resolve(__dirname, "../../packages/tokens/src") },
       { find: "@topems/app-shell", replacement: path.resolve(__dirname, "../../packages/app-shell/src") },
     ],
