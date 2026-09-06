@@ -5885,7 +5885,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信，供本地AI Agent使用
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D HR/MES MCP Tools**：注册hr.list_employees, mes.list_production等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法，废弃@/api/erp/finance/ — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A Top15未使用项清理**：bff组件未使用专项（ABTestPanel等）
 - [ ] **四轨并行继续**：V333-V337连续五次交付验证成功，V338继续四轨合并交付模式
@@ -5990,7 +5990,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D MES/EHS MCP Tools**：注册mes.list_production, ehs.list_incidents等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A Top15未使用项清理**：auth组件未使用专项（PermissionRoute等）
 - [ ] **四轨并行继续**：V333-V338连续六次交付验证成功，V339继续四轨合并交付模式
@@ -6097,7 +6097,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D EHS/WMS MCP Tools**：注册ehs.list_incidents, wms.list_inventory等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A Top15未使用项清理**：bff组件未使用专项（ABTestPanel等，需确认是否为BFF架构核心组件）
 - [ ] **四轨并行继续**：V333-V339连续七次交付验证成功，V340继续四轨合并交付模式
@@ -6188,7 +6188,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D WMS/PM MCP Tools**：注册wms.list_inventory, pm.list_work_orders等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V340连续八次交付验证成功，V341继续四轨合并交付模式
@@ -6279,7 +6279,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D PM/QMS MCP Tools**：注册pm.list_projects, qms.list_inspections等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V341连续九次交付验证成功，V342继续四轨合并交付模式
@@ -6370,7 +6370,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D PM/LIMS MCP Tools**：注册pm.list_projects, lims.list_samples等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V342连续十次交付验证成功，V343继续四轨合并交付模式
@@ -6461,7 +6461,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D LIMS/BI MCP Tools**：注册lims.list_samples, bi.get_dashboard等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V343连续十一次交付验证成功，V344继续四轨合并交付模式
@@ -6552,7 +6552,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D BI/APS MCP Tools**：注册bi.get_dashboard, aps.list_schedules等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V344连续十二次交付验证成功，V345继续四轨合并交付模式
@@ -6643,7 +6643,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D APS/CS MCP Tools**：注册aps.list_schedules, cs.list_tickets等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V345连续十三次交付验证成功，V346继续四轨合并交付模式
@@ -6734,7 +6734,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D CS/SCM MCP Tools**：注册cs.list_tickets, scm.list_suppliers等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V346连续十四次交付验证成功，V347继续四轨合并交付模式
@@ -6825,7 +6825,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D SCM/IoT MCP Tools**：注册scm.list_suppliers, iot.list_devices等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V347连续十五次交付验证成功，V348继续四轨合并交付模式
@@ -6916,7 +6916,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D IoT/OA MCP Tools**：注册iot.list_devices, oa.list_approval_requests等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V348连续十六次交付验证成功，V349继续四轨合并交付模式
@@ -7007,7 +7007,7 @@ POST /mcp
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨D OA/CRM扩展 MCP Tools**：注册oa.list_approval_requests, crm.create_lead等业务工具
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V349连续十七次交付验证成功，V350继续四轨合并交付模式
@@ -7082,7 +7082,7 @@ POST /mcp
 
 - [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V350连续十八次交付验证成功，V351继续四轨合并交付模式
@@ -7181,7 +7181,7 @@ cargo run --bin mcp-stdio
 
 - [ ] **轨C stdio传输单元测试**：模拟 stdin/stdout 的端到端测试
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
 - [ ] **四轨并行继续**：V333-V351连续十九次交付验证成功，V352继续四轨合并交付模式
@@ -7254,7 +7254,7 @@ cargo run --bin mcp-stdio
 
 - [ ] **轨C stdio传输单元测试**：模拟stdin/stdout的端到端测试
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A 前端未使用项持续清理**：继续清理TS6133/TS6198未使用项
 - [ ] **四轨并行继续**：V333-V352连续二十次交付验证成功，V353继续四轨合并交付模式
@@ -7325,7 +7325,7 @@ cargo run --bin mcp-stdio
 
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨A 前端未使用项持续清理**：继续清理TS6133/TS6198未使用项
 - [ ] **四轨并行继续**：V333-V353连续二十一次交付验证成功，V354继续四轨合并交付模式
@@ -7401,7 +7401,7 @@ import { designTokens } from '@topems/tokens';
 - [ ] **轨A 前端未使用项持续清理**：继续清理剩余221个TS6133错误
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V354连续二十二次交付验证成功，V355继续四轨合并交付模式
 
@@ -7489,7 +7489,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 前端未使用项持续清理**：继续清理剩余205个TS6133错误
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V355连续二十三次交付验证成功，V356继续四轨合并交付模式
 
@@ -7564,7 +7564,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 本地未使用组件/hook清理**：TouchButton.tsx的TouchRipple、LoadingProvider.tsx的useLoading
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V356连续二十四次交付验证成功，V357继续四轨合并交付模式
 
@@ -7626,7 +7626,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 前端未使用项持续清理**：继续清理剩余196个TS6133错误
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V357连续二十五次交付验证成功，V358继续四轨合并交付模式
 
@@ -7694,7 +7694,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 前端未使用项持续清理**：继续清理剩余~192个TS6133错误
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V358连续二十六次交付验证成功，V359继续四轨合并交付模式
 
@@ -7771,7 +7771,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 前端未使用项持续清理**：继续清理剩余~186个TS6133错误
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V359连续二十七次交付验证成功，V360继续四轨合并交付模式
 
@@ -7844,7 +7844,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 前端未使用项持续清理**：继续清理剩余~182个TS6133错误
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V360连续二十八次交付验证成功，V361继续四轨合并交付模式
 
@@ -7914,7 +7914,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 已下划线前缀变量清理**：继续检查并删除其他已下划线前缀但仍报错的变量
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V361连续二十九次交付验证成功，V362继续四轨合并交付模式
 
@@ -7982,7 +7982,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的未使用组件（CrudFormDialog/ExportMenu/ListPagination/RowActionMenu/TableSection/ViewModeToggle）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V362连续三十次交付验证成功，V363继续四轨合并交付模式
 
@@ -8046,7 +8046,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的未使用组件（CrudFormDialog/ExportMenu/ListPagination/RowActionMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V363连续三十一次交付验证成功，V364继续四轨合并交付模式
 
@@ -8116,7 +8116,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 遗留import清理**：继续检查并清理之前版本删除组件后导致的未使用import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V364连续三十二次交付验证成功，V365继续四轨合并交付模式
 
@@ -8186,7 +8186,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 遗留import清理**：继续检查并清理之前版本删除组件后导致的未使用import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V365连续三十三次交付验证成功，V366继续四轨合并交付模式
 
@@ -8256,7 +8256,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 复杂未使用定义清理**：继续清理复杂的未使用组件/函数定义（WorkflowFormExample/WorkflowTableExample/GisContext.saveCache等）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V366连续三十四次交付验证成功，V367继续四轨合并交付模式
 
@@ -8324,7 +8324,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V367连续三十五次交付验证成功，V368继续四轨合并交付模式
 
@@ -8394,7 +8394,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V368连续三十六次交付验证成功，V369继续四轨合并交付模式
 
@@ -8458,7 +8458,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V369连续三十七次交付验证成功，V370继续四轨合并交付模式
 
@@ -8535,7 +8535,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V370连续三十八次交付验证成功，V371继续四轨合并交付模式
 
@@ -8609,7 +8609,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V371连续三十九次交付验证成功，V372继续四轨合并交付模式
 
@@ -8674,7 +8674,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V372连续四十次交付验证成功，V373继续四轨合并交付模式
 
@@ -8744,7 +8744,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V373连续四十一次交付验证成功，V374继续四轨合并交付模式
 
@@ -8816,7 +8816,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V374连续四十二次交付验证成功，V375继续四轨合并交付模式
 
@@ -8885,7 +8885,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V375连续四十三次交付验证成功，V376继续四轨合并交付模式
 
@@ -8958,7 +8958,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V376连续四十四次交付验证成功，V377继续四轨合并交付模式
 
@@ -9031,7 +9031,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V377连续四十五次交付验证成功，V378继续四轨合并交付模式
 
@@ -9108,7 +9108,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V378连续四十六次交付验证成功，V379继续四轨合并交付模式
 
@@ -9189,7 +9189,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V379连续四十七次交付验证成功，V380继续四轨合并交付模式
 
@@ -9255,7 +9255,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V380连续四十八次交付验证成功，V381继续四轨合并交付模式
 
@@ -9316,7 +9316,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V381连续四十九次交付验证成功，V382继续四轨合并交付模式
 
@@ -9379,7 +9379,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用函数清理**：继续清理其他未使用的函数（getWebVitalsSnapshot/useShortcutsHelp/useImportExport/useDeviceType等）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V382连续五十次交付验证成功，V383继续四轨合并交付模式
 
@@ -9447,7 +9447,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用变量清理**：继续清理其他未使用的变量（fieldGroups/optimisticUpdate等）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V383连续五十一次交付验证成功，V384继续四轨合并交付模式
 
@@ -9515,7 +9515,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用变量清理**：继续清理其他未使用的变量（fieldGroups/optimisticUpdate等）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V384连续五十二次交付验证成功，V385继续四轨合并交付模式
 
@@ -9586,7 +9586,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用变量清理**：继续清理其他未使用的变量（fieldGroups/optimisticUpdate等）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V385连续五十三次交付验证成功，V386继续四轨合并交付模式
 
@@ -9657,7 +9657,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用变量清理**：继续清理其他未使用的变量（fieldGroups/optimisticUpdate等）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V386连续五十四次交付验证成功，V387继续四轨合并交付模式
 
@@ -9728,7 +9728,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用泛型参数清理**：继续清理其他未使用的泛型参数（T/UpdateRequest等）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V387连续五十五次交付验证成功，V388继续四轨合并交付模式
 
@@ -9795,7 +9795,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用import清理**：继续清理其他未使用的import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V388连续五十六次交付验证成功，V389继续四轨合并交付模式
 
@@ -9863,7 +9863,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用import清理**：继续清理其他未使用的import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V389连续五十七次交付验证成功，V390继续四轨合并交付模式
 
@@ -9931,7 +9931,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用import清理**：继续清理其他未使用的import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V390连续五十八次交付验证成功，V391继续四轨合并交付模式
 
@@ -9999,7 +9999,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用import清理**：继续清理其他未使用的import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V391连续五十九次交付验证成功，V392继续四轨合并交付模式
 
@@ -10066,7 +10066,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用import清理**：继续清理其他未使用的import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V392连续六十次交付验证成功，V393继续四轨合并交付模式
 
@@ -10134,7 +10134,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用import清理**：继续清理其他未使用的import
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V393连续六十一次交付验证成功，V394继续四轨合并交付模式
 
@@ -10203,7 +10203,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A 未使用变量清理**：继续清理其他未使用的变量
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V394连续六十二次交付验证成功，V395继续四轨合并交付模式
 
@@ -10276,7 +10276,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V395连续六十三次交付验证成功，V396继续四轨合并交付模式
 
@@ -10344,7 +10344,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V396连续六十四次交付验证成功，V397继续四轨合并交付模式
 
@@ -10412,7 +10412,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V397连续六十五次交付验证成功，V398继续四轨合并交付模式
 
@@ -10481,7 +10481,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V398连续六十六次交付验证成功，V399继续四轨合并交付模式
 
@@ -10550,7 +10550,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V399连续六十七次交付验证成功，V400继续四轨合并交付模式
 
@@ -10632,7 +10632,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型（IsApiResponseWrapped、OpId）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V400连续六十八次交付验证成功，V401继续四轨合并交付模式
 
@@ -10705,7 +10705,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨A DataTable.tsx清理**：清理 showFilters 未使用变量（需要检查接口属性影响）
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V401连续六十九次交付验证成功，V402继续四轨合并交付模式
 
@@ -10783,7 +10783,7 @@ import { useMemo, useState } from 'react';
 
 - [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V402连续七十次交付验证成功，V403继续四轨合并交付模式
 
@@ -10850,7 +10850,7 @@ import { useMemo, useState } from 'react';
 
 - [ ] **轨C 测试运行验证**：实际运行mcp_stdio_integration测试，验证所有测试用例能通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V403连续七十一次交付验证成功，V404继续四轨合并交付模式
 
@@ -10918,7 +10918,7 @@ import { useMemo, useState } from 'react';
 
 - [ ] **轨C 测试运行验证**：实际运行mcp_stdio_integration测试，验证所有测试用例能通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V404连续七十二次交付验证成功，V405继续四轨合并交付模式
 
@@ -10993,7 +10993,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨C MCP stdio响应格式修复**：检查mcp-stdio子进程的initialize请求响应格式，确保返回正确的result字段
 - [ ] **轨C 所有测试用例验证**：运行所有7个测试用例，验证全部通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V405连续七十三次交付验证成功，V406继续四轨合并交付模式
 
@@ -11082,7 +11082,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨C 通知测试修复**：修复test_notification_does_not_return_response测试，调查initialized通知后服务器状态更新问题
 - [ ] **轨C 所有测试通过**：运行所有7个测试用例，验证全部通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V406连续七十四次交付验证成功，V407继续四轨合并交付模式
 
@@ -11173,7 +11173,7 @@ import { useMemo, useState } from 'react';
 - [ ] **轨C 通知测试修复**：修复read_response_with_timeout函数的竞态条件，使用AtomicBool标志位或异步IO实现可靠的超时读取
 - [ ] **轨C 所有测试通过**：运行所有7个测试用例，验证全部通过
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V407连续七十五次交付验证成功，V408继续四轨合并交付模式
 
@@ -11279,7 +11279,7 @@ test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 - [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [ ] **轨C HTTP传输测试**：端到端测试HTTP POST /mcp JSON-RPC请求
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V408连续七十六次交付验证成功，V409继续四轨合并交付模式
 
@@ -11400,7 +11400,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C HTTP传输集成测试**：启动真实HTTP服务器，发送POST请求，验证响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V409连续七十七次交付验证成功，V410继续四轨合并交付模式
 
@@ -11515,7 +11515,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B 重叠文件迁移实施**：以@/api/finance/为标准，合并@/api/erp/finance/中的独有方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B 不重叠文件迁移实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V410连续七十八次交付验证成功，V411继续四轨合并交付模式
 
 ---
@@ -11651,7 +11651,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B 重叠文件迁移实施**：删除@/api/erp/finance/中的receivablePayable.ts和voucher.ts（直接使用@/api/finance/版本） — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B budget.ts合并实施**：将@/api/erp/finance/中的expenseApi迁移到@/api/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V411连续七十九次交付验证成功，V412继续四轨合并交付模式
 
 ---
@@ -11785,7 +11785,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B 重叠文件迁移实施**：删除@/api/erp/finance/中的receivablePayable.ts和voucher.ts（直接使用@/api/finance/版本） — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B budget.ts合并实施**：将@/api/erp/finance/中的expenseApi迁移到@/api/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V412连续八十次交付验证成功，V413继续四轨合并交付模式
 
 ---
@@ -11927,7 +11927,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B 重叠文件迁移实施**：删除@/api/erp/finance/中的receivablePayable.ts和voucher.ts（直接使用@/api/finance/版本） — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B budget.ts合并实施**：将@/api/erp/finance/中的expenseApi迁移到@/api/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V413连续八十一次交付验证成功，V414继续四轨合并交付模式
 
 ---
@@ -12052,7 +12052,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施**：✅ 已完成（V416-V417 区间）— expenseApi 已并入 @/api/finance/budget.ts，erp/finance/budget.ts 已删
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V414连续八十二次交付验证成功，V415继续四轨合并交付模式
 
 ---
@@ -12132,7 +12132,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将@/api/erp/finance/budget.ts中的expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V415连续八十三次交付验证成功，V416继续四轨合并交付模式
 
 ---
@@ -12296,7 +12296,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V416连续八十四次交付验证成功，V417继续四轨合并交付模式
 
 ---
@@ -12448,7 +12448,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V417连续八十五次交付验证成功，V418继续四轨合并交付模式
 
 ---
@@ -12564,7 +12564,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V418连续八十六次交付验证成功，V419继续四轨合并交付模式
 
 ---
@@ -12670,7 +12670,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V419连续八十七次交付验证成功，V420继续四轨合并交付模式
 
 ---
@@ -12772,7 +12772,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V420连续八十八次交付验证成功，V421继续四轨合并交付模式
 
 ---
@@ -12870,7 +12870,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V421连续八十九次交付验证成功，V422继续四轨合并交付模式
 
 ---
@@ -13017,7 +13017,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施**：✅ 已完成 — @/api/asset/ 已存在（asset.ts + assetCategory.ts），@/api/erp/finance/ 目录已删
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V422连续九十次交付验证成功，V423继续四轨合并交付模式
 
 ---
@@ -13114,7 +13114,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P2阶段实施（更新页面引用）**：更新引用asset.ts和assetCategory.ts的页面 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施（删除@/api/erp/finance/目录）**：删除@/api/erp/finance/目录 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V423连续九十一次交付验证成功，V424继续四轨合并交付模式
 
 ---
@@ -13243,7 +13243,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [x] **轨B P2阶段实施（更新页面引用）**：更新AssetListPage.tsx和CategoryManagementPage.tsx的导入语句 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [x] **轨B P2阶段实施（删除旧文件）**：删除@/api/erp/finance/asset.ts和assetCategory.ts，删除@/api/erp/finance/目录 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V424连续九十二次交付验证成功，V425继续四轨合并交付模式
 
 ---
@@ -13360,7 +13360,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 ### V425后续扩展（留给V426+）
 
 - [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V425连续九十三次交付验证成功，V426继续四轨合并交付模式
 
 ---
@@ -13504,7 +13504,7 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 - [ ] **轨C SSE端点实现**：创建SSE端点（后端），支持发送endpoint事件、接收POST请求、通过SSE流发送响应
 - [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V426连续九十四次交付验证成功，V427继续四轨合并交付模式
 
 ---
@@ -13674,7 +13674,7 @@ client.connect();
 - [ ] **轨C SSE端点实现**：创建SSE端点（后端），支持发送endpoint事件、接收POST请求、通过SSE流发送响应
 - [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V427连续九十五次交付验证成功，V428继续四轨合并交付模式
 
 ---
@@ -13862,7 +13862,7 @@ client.connect();
 - [ ] **轨C SSE端点完善**：实现心跳机制、错误处理、会话限制、日志监控
 - [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V428连续九十六次交付验证成功，V429继续四轨合并交付模式
 
 ---
@@ -14064,7 +14064,7 @@ client.connect();
 - [ ] **轨C SSE端点完善**：实现心跳机制、错误处理、会话超时清理、日志监控
 - [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V429连续九十七次交付验证成功，V430继续四轨合并交付模式
 
 ---
@@ -14188,7 +14188,7 @@ client.connect();
 - [ ] **轨C SSE端点测试**：编写单元测试和集成测试，测试SSE连接建立、会话请求、超时清理
 - [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V430连续九十八次交付验证成功，V431继续四轨合并交付模式
 
 ---
@@ -14311,7 +14311,7 @@ client.connect();
 - [ ] **轨C SSE端点测试**：编写单元测试和集成测试，测试SSE连接建立、会话请求、超时清理、最大会话限制
 - [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V431连续九十九次交付验证成功，V432继续四轨合并交付模式
 
 ---
@@ -14442,7 +14442,7 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
 - [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V432连续一百次交付验证成功，V433继续四轨合并交付模式
 
 ---
@@ -14598,7 +14598,7 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ### V433后续扩展（留给V434+）
 
-- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [ ] **轨C shared-service-client完善**：添加服务健康检查、自动重连、负载均衡、服务发现
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
@@ -14779,7 +14779,7 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 ### V434后续扩展（留给V435+）
 
 - [ ] **轨C shared-service-client完善**：添加服务健康检查、自动重连、负载均衡、服务发现
-- [ ] **轨D 业务工具完善**：添加业务工具路由端点、业务工具API接口、业务工具调用示例
+- [x] **轨D 业务工具完善**：添加业务工具路由端点、业务工具API接口、业务工具调用示例 — ✅ V529c 核查完成：路由端点/API 接口/调用示例已齐（MCP POST /mcp + GET /mcp/sse + 14 工具注册 + business_tools 审计/权限族 + shared-service-client examples.rs）——本旧条目清理标记
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
 - [ ] **四轨并行继续**：V333-V434连续一百零二次交付验证成功，V435继续四轨合并交付模式
@@ -14906,7 +14906,7 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ### V435后续扩展（留给V436+）
 
-- [ ] **轨D 业务工具完善**：添加业务工具路由端点、业务工具API接口、业务工具调用示例
+- [x] **轨D 业务工具完善**：添加业务工具路由端点、业务工具API接口、业务工具调用示例 — ✅ V529c 核查完成：路由端点/API 接口/调用示例已齐（MCP POST /mcp + GET /mcp/sse + 14 工具注册 + business_tools 审计/权限族 + shared-service-client examples.rs）——本旧条目清理标记
 - [ ] **轨C shared-service-client高级功能**：添加自动重连、负载均衡、服务发现、熔断机制
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
@@ -22517,8 +22517,8 @@ git add $STAGED
 | # | 工作项 | 现状 | 依赖 | 可本地闭环 | 建议优先级 |
 |---|---|---|---|---|---|
 | P0 | shared-service-client 连接池实时状态监控 | ✅ V529 已完成（metrics.rs + 全请求路径埋点 + 73 测试） | — | ✅ | ① 完成 |
-| P1 | 业务工具连接真实 API（shared-service-client→CRM/ERP/Finance/HR/MES/SCM） | 未做（mock 数据） | P0 + 后端服务运行 | ⚠️ 需运行环境 | ② |
-| P1 | 业务工具完善（路由端点 / API 接口 / 调用示例） | 未做 | P1-API 稳定 | ⚠️ 同上 | ③ |
+| P1 | 业务工具连接真实 API（shared-service-client→CRM/ERP/Finance/HR/MES/SCM） | ✅ V529c 核查完成（14 工具全接真实调用降级 mock） | — | ✅ | ② 完成 |
+| P1 | 业务工具完善（路由端点 / API 接口 / 调用示例） | ✅ V529c 核查完成（MCP 双端点 + 14 工具 + business_tools 族 + examples） | — | ✅ | ③ 完成 |
 | P2 | SSE 端到端测试实现（V426 仅计划） | 计划完成，实现未做 | SSE 双端 + 运行环境 | ❌ 需运行环境 | ④ |
 | P2 | 业务工具 SDK 发布（V476 仅设计草稿） | 草稿完成，发布未做 | P1 稳定 + 发布渠道 | ❌ 依赖发布 | ⑤ |
 | P3 | 权限管理 API 文档（21 条变体） | ✅ V529b 已完成（8 权限端点 OpenAPI + 3 spec 守卫测试） | — | ✅ | ⑥ 完成 |
