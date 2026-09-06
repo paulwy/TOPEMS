@@ -13,7 +13,9 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use super::service_client::{ServiceClientError, ServiceDiscovery, ServiceRegistration};
+use super::service_client::{
+    ServiceClientError, ServiceDiscovery, ServiceRegistration, ServiceWatchHandle,
+};
 
 // ===== Eureka Configuration =====
 
@@ -34,6 +36,9 @@ pub struct EurekaConfig {
     /// Heartbeat interval in seconds. Defaults to 30.
     #[serde(default = "default_heartbeat_interval")]
     pub heartbeat_interval_secs: u64,
+    /// Watch poll interval in seconds. Defaults to 30.
+    #[serde(default = "default_watch_interval")]
+    pub watch_interval_secs: u64,
     /// Whether to register as a VIP address. Defaults to false.
     #[serde(default)]
     pub use_vip_address: bool,
@@ -47,6 +52,10 @@ fn default_heartbeat_interval() -> u64 {
     30
 }
 
+fn default_watch_interval() -> u64 {
+    30
+}
+
 impl Default for EurekaConfig {
     fn default() -> Self {
         Self {
@@ -56,6 +65,7 @@ impl Default for EurekaConfig {
             timeout_secs: default_timeout(),
             heartbeat_interval_secs: default_heartbeat_interval(),
             use_vip_address: false,
+            watch_interval_secs: default_watch_interval(),
         }
     }
 }
@@ -192,6 +202,7 @@ struct EurekaApplications {
 /// # Ok(())
 /// # }
 /// ```
+#[derive(Clone)]
 pub struct EurekaServiceDiscovery {
     config: EurekaConfig,
     http_client: Client,
@@ -360,6 +371,57 @@ impl EurekaServiceDiscovery {
             enabled,
             registered_at: chrono::Utc::now().to_rfc3339(),
             last_heartbeat: chrono::Utc::now().to_rfc3339(),
+        }
+    }
+
+    /// 订阅服务变更（轮询感知，30 秒间隔）
+    ///
+    /// 每次轮询拉取服务快照，快照变化时回调 `on_event`。返回句柄；
+    /// 调用 `cancel()` 或 Drop 后停止。
+    pub fn spawn_service_watch<F>(&self, name: String, on_event: F) -> ServiceWatchHandle
+    where
+        F: Fn(Vec<ServiceRegistration>) + Send + Sync + 'static,
+    {
+        let client = self.clone();
+        let (cancel_tx, mut cancel_rx) = tokio::sync::mpsc::channel::<()>(1);
+        let task = tokio::spawn(async move {
+            let mut last: Vec<ServiceRegistration> = Vec::new();
+            let mut first = true;
+            loop {
+                tokio::select! {
+                    _ = cancel_rx.recv() => return,
+                    _ = async {
+                        match client.discover(&name).await {
+                            Ok(Some(reg)) => {
+                                let snap = vec![reg];
+                                if first || snap != last {
+                                    on_event(snap.clone());
+                                    last = snap;
+                                    first = false;
+                                }
+                            }
+                            Ok(None) => {
+                                if first {
+                                    on_event(Vec::new());
+                                    first = false;
+                                }
+                            }
+                            Err(e) => {
+                                tracing::warn!("Eureka watch 拉取失败: {}", e);
+                            }
+                        }
+                        tokio::time::sleep(Duration::from_secs(
+                            client.config.watch_interval_secs.max(1),
+                        ))
+                        .await;
+                    } => {}
+                }
+            }
+        });
+
+        ServiceWatchHandle {
+            task: Some(task),
+            cancel_tx,
         }
     }
 }

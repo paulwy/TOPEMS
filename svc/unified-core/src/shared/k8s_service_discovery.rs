@@ -15,7 +15,9 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use super::service_client::{ServiceClientError, ServiceDiscovery, ServiceRegistration};
+use super::service_client::{
+    ServiceClientError, ServiceDiscovery, ServiceRegistration, ServiceWatchHandle,
+};
 
 // ===== Kubernetes Configuration =====
 
@@ -36,6 +38,9 @@ pub struct K8sConfig {
     /// Request timeout in seconds. Defaults to 10.
     #[serde(default = "default_timeout")]
     pub timeout_secs: u64,
+    /// Watch poll interval in seconds. Defaults to 10.
+    #[serde(default = "default_watch_interval")]
+    pub watch_interval_secs: u64,
     /// Whether to skip TLS verification. Defaults to false.
     #[serde(default)]
     pub skip_tls_verify: bool,
@@ -52,6 +57,10 @@ fn default_timeout() -> u64 {
     10
 }
 
+fn default_watch_interval() -> u64 {
+    10
+}
+
 impl Default for K8sConfig {
     fn default() -> Self {
         Self {
@@ -62,6 +71,7 @@ impl Default for K8sConfig {
             timeout_secs: default_timeout(),
             skip_tls_verify: false,
             label_selector: None,
+            watch_interval_secs: default_watch_interval(),
         }
     }
 }
@@ -97,6 +107,7 @@ impl K8sConfig {
             timeout_secs: default_timeout(),
             skip_tls_verify: false,
             label_selector: None,
+            watch_interval_secs: default_watch_interval(),
         })
     }
 }
@@ -217,6 +228,7 @@ struct K8sServiceList {
 /// # Ok(())
 /// # }
 /// ```
+#[derive(Clone)]
 pub struct K8sServiceDiscovery {
     config: K8sConfig,
     http_client: Client,
@@ -394,6 +406,57 @@ impl K8sServiceDiscovery {
             registered_at: chrono::Utc::now().to_rfc3339(),
             last_heartbeat: chrono::Utc::now().to_rfc3339(),
         })
+    }
+
+    /// 订阅服务变更（轮询感知，10 秒间隔）
+    ///
+    /// 每次轮询拉取服务快照，快照变化时回调 `on_event`。返回句柄；
+    /// 调用 `cancel()` 或 Drop 后停止。
+    pub fn spawn_service_watch<F>(&self, name: String, on_event: F) -> ServiceWatchHandle
+    where
+        F: Fn(Vec<ServiceRegistration>) + Send + Sync + 'static,
+    {
+        let client = self.clone();
+        let (cancel_tx, mut cancel_rx) = tokio::sync::mpsc::channel::<()>(1);
+        let task = tokio::spawn(async move {
+            let mut last: Vec<ServiceRegistration> = Vec::new();
+            let mut first = true;
+            loop {
+                tokio::select! {
+                    _ = cancel_rx.recv() => return,
+                    _ = async {
+                        match client.discover(&name).await {
+                            Ok(Some(reg)) => {
+                                let snap = vec![reg];
+                                if first || snap != last {
+                                    on_event(snap.clone());
+                                    last = snap;
+                                    first = false;
+                                }
+                            }
+                            Ok(None) => {
+                                if first {
+                                    on_event(Vec::new());
+                                    first = false;
+                                }
+                            }
+                            Err(e) => {
+                                tracing::warn!("K8s watch 拉取失败: {}", e);
+                            }
+                        }
+                        tokio::time::sleep(Duration::from_secs(
+                            client.config.watch_interval_secs.max(1),
+                        ))
+                        .await;
+                    } => {}
+                }
+            }
+        });
+
+        ServiceWatchHandle {
+            task: Some(task),
+            cancel_tx,
+        }
     }
 }
 

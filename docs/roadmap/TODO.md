@@ -21472,7 +21472,8 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨D 权限批量操作集成**：TestServer批量操作测试 + 批量自动审计日志 + 全成功或全回滚事务支持
 - [x] **轨C SSE端到端测试**：SSE连接→POST→SSE响应全流程测试（V530d 核实已闭环：eslint 0 违规 / SSE-005 已覆盖全流程）
 - [x] **轨C DNS健康检查 + DNS集成测试**：DNS解析后端点健康检查 + 真实DNS服务器集成测试
-- [ ] **轨C K8s/Eureka/Nacos完善**：集成测试 + watch实时感知 + 心跳/长轮询（真实剩余，代表条目）
+- [x] **轨C K8s/Eureka/Nacos完善**：watch实时感知 + 心跳/长轮询（V530m 统一 spawn_service_watch 轮询感知 + ServiceWatchHandle；集成测试文件就绪：nacos/eureka/k8s_watch_integration，环境变量就绪自动真跑、未设自动 skip）
+- [ ] **轨C 服务发现集成测试真跑**：Nacos（docker nacos-server）+ Eureka（需 Eureka server）+ K8s（需集群）环境就绪后执行（真实剩余，代表条目）
 - [x] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose（V530h 核实：与权限存储健康检查/指标重复，V530e 已闭环）
 - [x] **四轨并行继续**：V333-V475连续一百四十三次交付验证成功，V476继续四轨合并交付模式
 

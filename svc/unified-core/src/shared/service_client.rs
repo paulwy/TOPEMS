@@ -9,6 +9,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
+use tokio::sync::mpsc;
+
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client, Method, Response};
 use serde::de::DeserializeOwned;
@@ -278,7 +280,7 @@ impl<T> ServiceResponse<T> {
 // ===== V441: Service Discovery Types =====
 
 /// Service registration information.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ServiceRegistration {
     /// Unique service identifier.
     pub name: String,
@@ -371,6 +373,30 @@ pub trait ServiceDiscovery: Send + Sync {
 
     /// Send a heartbeat for a service.
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError>;
+}
+
+/// 服务变更 watch 句柄
+///
+/// 由 `spawn_service_watch` 创建；调用 `cancel()` 或 Drop 后停止轮询感知。
+pub struct ServiceWatchHandle {
+    pub(crate) task: Option<tokio::task::JoinHandle<()>>,
+    pub(crate) cancel_tx: mpsc::Sender<()>,
+}
+
+impl ServiceWatchHandle {
+    /// 停止 watch 任务
+    pub async fn cancel(&mut self) {
+        let _ = self.cancel_tx.send(()).await;
+        if let Some(task) = self.task.take() {
+            let _ = task.await;
+        }
+    }
+}
+
+impl Drop for ServiceWatchHandle {
+    fn drop(&mut self) {
+        let _ = self.cancel_tx.try_send(());
+    }
 }
 
 /// Static service discovery based on in-memory configuration.
