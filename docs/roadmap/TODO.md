@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V511 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V512 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
+> **V512 settlement_center 统一结算模块接线 + OpenAPI 聚合**（详见 V510 章节）；**V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -246,7 +246,7 @@
 - [x] **ERP 审批审计日志本地化**：V285 已评估 — call_finance_core_approval 内部已调用 AuditLogService::log_operation 写本地 audit_logs，无需改动
 - [x] **tms/aps 端口三端对齐**：V285 已修复 — plugin.yaml + main.rs + ports.env + service_port.rs 全部对齐至 8073/8074，解除 srm 8042 冲突
 - [x] **unified-core/master/handlers.rs INSERT...SELECT 下沉**：V285 已评估 — ReconciliationLogService 已创建，insert_from_master_data_refs 封装 INSERT...SELECT，handlers.rs 已调用
-- [ ] **Finance utoipa::path 补全评估**：Finance 已有 494 个注解覆盖 24 文件，仅 settlement_center/{mod,models,routes,service}.rs 4 个非 handler 文件未覆盖（实际 handlers.rs 已 18 注解），可评估是否需要补 settlement_center 路径
+- [x] **Finance utoipa::path 补全评估**：V512 已完成 — 评估结论：settlement_center 已实现但**未接线**（路由未挂载 + OpenApi 未聚合，handlers 19 注解/models 25 ToSchema 成死代码）。V512 挂载 `settlement_center::create_routes()`（/api/core/settlement-center/*，与 v55 /finance-v55/* 不冲突）+ main.rs paths() 补 19 handlers + schemas() 补 25 models；regen openapi.d.ts 含 settlement-center 22 路径；tsc 0 / unit 3588/3588 / clippy 0
 - [x] **前端 Finance/Hrm TS 26 错误清零**：V285 已清零 — openapi.d.ts 568 schemas（+126），typecheck 9→0 errors
 - [ ] **CI gate 脚本合并**：check-i18n.cjs + check-i18n-quality.cjs 合并为 `check-i18n --mode={hardcode|quality|all}`；check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs 合并为 `check-api --mode={audit|coverage|align}`
 
