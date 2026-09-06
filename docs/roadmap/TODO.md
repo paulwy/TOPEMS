@@ -1213,7 +1213,7 @@ V285 B 轨根因 callout 已明确定位：
 
 ### V289 后续扩展（留给 V290+）
 
-- [ ] **B2: Finance API 函数从 @/api/erp 迁移到 @/api/finance**：B1 已完成类型迁移。V290 B 轨评估确认：@/api/finance 与 @/api/erp 的 budgetApi（返回 Budget[] vs PaginatedResult）、reportApi（方法集少 4 个：businessOverview/projectSummary/monthlyTrend/departmentSummary）、voucherApi（CreateVoucherRequest 类型为 Omit<never>）均签名不兼容。需先对齐 @/api/finance/* 签名，再迁移 6 个页面 import。
+- [x] **B2: Finance API 函数从 @/api/erp 迁移到 @/api/finance**：✅ V513 完成 — erp/index.ts 已 re-export finance 实现（B1 类型迁移）；6 页面 import 直连 @/api/finance（BudgetManagementPage: budgetApi/expenseApi+类型；VoucherPage/useVoucherManagement: voucherApi；useFinancialReport/FinancialReportPage/FinancialAnalysisPage: financeReportApi→@/api/finance/report）。tsc 0 / eslint 0。遗留：报告类型暂留 @/api/erp/types（dts IncomeStatement/CashFlowStatement 缺 total_revenue/net_cash_flow 等字段，与后端字段对齐待确认）
 - [x] **Architecture Plan 边界 B6（TMS 依赖 WMS 源码）盘点**：✅ V290 A 轨完成 — 全项目仅 TMS→WMS 一个跨 svc path dep（dev-dependency，用于 cross_module_integration_tests.rs 的 FSM 状态转换函数），非运行时耦合。其他 svc 仅依赖 lib/shared-* crates，crate 级耦合极小。
 - [ ] **Plan B7 SharedStateBridge 全局变量**：搜索 `window.topemsSharedState` 或类似全局变量，确认是否属于绕开 React Context 的 workaround 及去重
 - [ ] **事件总线 Redis Stream 升级（Plan M2）**：V289 只完成了跨Schema清零的本地快照落库，如果 publisher/subscriber 使用的是 Pub/Sub（非持久化），下一步评估 Redis Stream（持久化+ACK+DLQ）改造
