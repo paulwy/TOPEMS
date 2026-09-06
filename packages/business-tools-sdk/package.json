@@ -1,0 +1,20 @@
+{
+  "name": "@topems/business-tools-sdk",
+  "version": "0.1.0",
+  "description": "TOPEMS 业务工具 SDK V0.1 (TS)：权限 / 审计日志 / 保留策略 / 保留任务 / 导出任务",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "topems",
+    "business-tools",
+    "sdk"
+  ],
+  "author": "TOPEMS Team",
+  "license": "MIT",
+  "type": "module"
+}
