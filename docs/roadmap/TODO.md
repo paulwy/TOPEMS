@@ -3085,7 +3085,7 @@ let failed_count = 0;
 - [x] **v6 脚本 class field 自动处理**：V311 手动移除 class field — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
-- [ ] **孤儿文件检测与清空**：V314 发现 WorkflowApprovalActions.tsx 移除组件+hook后整个文件未被引用，需级联清空全部 import/type（298行）
+- [x] **孤儿文件检测与清空**：V314 发现 WorkflowApprovalActions.tsx 移除组件+hook后整个文件未被引用，需级联清空全部 import/type（298行） — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第二十一批）**：V314 清理 theme/presets(3) + authStore(3) + WorkflowApprovalActions(3+7级联=整文件清空) + StockTakePage(3) + DashboardPage(4+3级联) = 26项，tsc 目标 5 files 0 errors，净删 377 行
 - [ ] **src/ 其他目录未使用项清理（第二十二批）**：全 src/ 仍有 ~567 个 tsc 未使用项，推荐 pages/report/ReportPage(3) + pages/pm/PmContractDetailPage(3) + pages/notification/NotificationListPage(3) + pages/mobile/MobileNotificationPage(3) + pages/lims/InspectionTaskPage(3)
 
@@ -3173,7 +3173,7 @@ let failed_count = 0;
 - [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
-- [ ] **深层级联链自动跟踪**：V315 发现 4 层级联（函数→变量→useQuery→type import）和 3 层级联（函数→mutation→import），v6 脚本需迭代跟踪
+- [x] **深层级联链自动跟踪**：V315 发现 4 层级联（函数→变量→useQuery→type import）和 3 层级联（函数→mutation→import），v6 脚本需迭代跟踪 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第二十二批）**：V315 清理 ReportPage(3) + PmContractDetailPage(4) + NotificationListPage(3+5级联) + MobileNotificationPage(3+3级联) + InspectionTaskPage(3+5级联) = 24项，tsc 目标 5 files 0 errors，净删 110 行
 - [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~543 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
 
@@ -3262,7 +3262,7 @@ let failed_count = 0;
 - [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
-- [ ] **深层级联链自动跟踪**：V315 发现 4 层级联，V316 批量模式发现 2 层级联
+- [x] **深层级联链自动跟踪**：V315 发现 4 层级联，V316 批量模式发现 2 层级联 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **TS6192 误判风险**：V316 发现 alertHistory.tsx 的 StatusChip import 被 TS6192 误报为未使用，实际代码中仍引用，需人工确认
 - [ ] **批量模式优化**：V316 首次批量模式（3批15文件合并），pre-commit hook 只跑一次，节省 ~50% 时间
 - [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~467 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
@@ -3377,7 +3377,7 @@ let failed_count = 0;
 - [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
-- [ ] **深层级联链自动跟踪**：V315 发现 4 层级联，V316 发现 2 层级联，V317 发现 2 层级联
+- [x] **深层级联链自动跟踪**：V315 发现 4 层级联，V316 发现 2 层级联，V317 发现 2 层级联 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报，整行 import 删除前需 grep 确认
 - [ ] **多行 import 单符号移除**：V317 发现多行 import 中的单独符号需用 sed 精确匹配行内容（如 `  CheckCircle as CheckIcon,`），不能用 `^import { X }` 匹配整行
 - [ ] **批量模式优化**：V316/V317 批量模式连续成功，继续 3批/版本
@@ -3486,7 +3486,7 @@ let failed_count = 0;
 - [x] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
-- [ ] **深层级联链自动跟踪**：V315/V316/V317/V318 连续发现多级联，V318 requestPriority/tracing 达 4 层
+- [x] **深层级联链自动跟踪**：V315/V316/V317/V318 连续发现多级联，V318 requestPriority/tracing 达 4 层 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
 - [ ] **多行 import 单符号移除**：V317/V318 发现需精确行内容匹配
 - [ ] **import type 非本地声明识别**：V318 apiClient.ts 的 3 个 type 是 import type，v6 正则匹配本地声明无法处理
@@ -3607,7 +3607,7 @@ let failed_count = 0;
 - [x] **v6 脚本向前跳过空行误移除**：V319 mobile/notification 移除 PRIORITY_COLORS 时向前跳过空行误移除 getTypeLabels，需 git checkout 恢复后手动处理 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314 发现，V319 workflowStore.ts 移除所有 export 后变孤儿文件需删除
 - [ ] **顶层 hook 调用残留检测**：V319 notificationSettingsStore 移除函数声明后留下 2 行顶层 hook 调用，违反 react-hooks/rules-of-hooks
-- [ ] **深层级联链自动跟踪**：V315-V319 连续发现多级联，V319 storage.ts 达 10 项级联（2 class→6 functions→2 const/type）
+- [x] **深层级联链自动跟踪**：V315-V319 连续发现多级联，V319 storage.ts 达 10 项级联（2 class→6 functions→2 const/type） — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
 - [ ] **多行 import 单符号移除**：V317/V318/V319 发现需精确行内容匹配
 - [ ] **import type 非本地声明识别**：V318 发现 v6 正则无法匹配 import type
@@ -3738,7 +3738,7 @@ let failed_count = 0;
 - [x] **v6 脚本调用点残留检测**：V319 notificationSettingsStore 发现顶层 hook 调用残留 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 ReportDesignPage 删除 useQuery 后 isBackendLoading 仍被引用，需改为 false — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314/V319/V320 发现，V320 useWorkflowApprovalDetail.ts 222 行孤儿文件
-- [ ] **深层级联链自动跟踪**：V315-V320 连续发现多级联
+- [x] **深层级联链自动跟踪**：V315-V320 连续发现多级联 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
 - [ ] **多行 import 单符号移除**：V317-V320 发现需精确行内容匹配
 - [ ] **import type 非本地声明识别**：V318 发现 v6 正则无法匹配 import type
@@ -3867,7 +3867,7 @@ let failed_count = 0;
 - [x] **v6 脚本调用点残留检测**：V319 发现 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [x] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 发现 — ✅ V526 收口：目标已达成（tsc 未使用项 0 命中，V509 分遍清理覆盖全 src/），脚本自动处理增强不再需要——本旧条目清理标记
 - [ ] **孤儿文件检测与清空**：V314/V319/V320 发现
-- [ ] **深层级联链自动跟踪**：V315-V320 连续发现多级联
+- [x] **深层级联链自动跟踪**：V315-V320 连续发现多级联 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
 - [ ] **多行 import 单符号移除**：V317-V320 发现需精确行内容匹配
 - [ ] **import type 非本地声明识别**：V318 发现
@@ -4604,7 +4604,7 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 - [ ] **ehs统一模式批量检测**：4页面统一useTranslation+i18n.getFixedT模式，可写脚本自动检测
 - [ ] **多行import单符号移除自动化**：asset/Transfer和crm/Dashboard案例，sed需精确匹配
-- [ ] **iconMap类const删除后import级联**：crm/Dashboard案例，删除const后需检查相关import
+- [x] **iconMap类const删除后import级联**：crm/Dashboard案例，删除const后需检查相关import — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **批量模式继续**：V316-V323连续八次成功，全src/未使用项从~282降至~136
 
 ---
@@ -4675,7 +4675,7 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 ### V324后续扩展（留给V325+）
 
 - [ ] **admin/hooks孤儿文件批量检测**：4个hook文件3个变孤儿，可写脚本自动检测"移除主函数后无export"的文件
-- [ ] **modules/registry多级联跟踪**：删除2函数触发4项级联，需扩展v6脚本自动跟踪
+- [x] **modules/registry多级联跟踪**：删除2函数触发4项级联，需扩展v6脚本自动跟踪 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **sed单符号移除安全检查**：getCoreModules案例，sed移除后可能留下`import  from`语法错误
 - [ ] **plugin-loader props+interface同步移除**：errorFallback/moduleId案例，需同时检查interface和解构
 - [ ] **批量模式继续**：V316-V324连续九次成功，全src/未使用项从~282降至~105
@@ -4753,7 +4753,7 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 ### V325后续扩展（留给V326+）
 
 - [ ] **孤儿文件自动检测脚本**：15文件7个变孤儿（47%），可写脚本自动检测"移除主函数后无export且无引用"的文件
-- [ ] **多级联链跟踪**：navTree案例（删除2函数→useNavTree→7项→孤儿），需扩展v6脚本自动跟踪多级联
+- [x] **多级联链跟踪**：navTree案例（删除2函数→useNavTree→7项→孤儿），需扩展v6脚本自动跟踪多级联 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **函数参数同名误改防护**：ProjectReport两个index参数案例，需检查函数体内是否使用该参数
 - [ ] **sed路径不匹配检测**：useNotification相对路径案例，需统一import路径或用grep确认
 - [ ] **export有本地副本检测**：useOfflineTiles案例，export的函数/常量在其他文件有本地定义，实际未被引用
@@ -4837,7 +4837,7 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 - [ ] **v6脚本const函数调用防护**：`const warehouses = buildWarehouses(...)`被大量使用，v6不应删除，需检查引用
 - [ ] **解构参数重命名自动处理**：DataExport showSettingsDialog案例，需自动用`name: _name`语法
 - [ ] **CSS字符串designTokens检测**：模板字符串中无${}的designTokens是普通文本，需自动识别
-- [ ] **组件文件全文件级联检测**：4个组件文件案例，移除主组件后自动检测是否全文件变孤儿
+- [x] **组件文件全文件级联检测**：4个组件文件案例，移除主组件后自动检测是否全文件变孤儿 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **批量模式继续**：V316-V326连续十一次成功，全src/未使用项从~282降至~50
 
 ---
@@ -4975,7 +4975,7 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 - [ ] **utils/目录批量清理专项**：12/15文件在utils/，可写脚本专门扫描utils/*/未使用项
 - [ ] **TS6192精确识别**：code-completion案例，需区分"整行import全部未使用"和"部分符号未使用"
-- [ ] **函数级联链自动跟踪**：graphql-performance/i18n/smart-prefetch案例，移除一个函数后自动扫描同级其他未使用函数
+- [x] **函数级联链自动跟踪**：graphql-performance/i18n/smart-prefetch案例，移除一个函数后自动扫描同级其他未使用函数 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **批量模式继续**：V316-V328连续十三次成功，全src/未使用项从~282降至~15
 
 ---
@@ -5167,7 +5167,7 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 - [ ] **React import批量清理专项**：12/15文件是React import，占80%。可写脚本专门扫描所有`import React from 'react';`和`import type React from 'react';`未使用，一次性清理
 - [ ] **v6脚本type声明后无空行防护**：V329 ai-ui-generator（type后无空行误删class 164行）和V331 crm/contact（type后无空行误删const 10行）两次遇到。需检测type声明后是否紧跟const/class/function，避免深度跟踪误删
-- [ ] **admin/dictionary级联链模式**：dictTypeSchema→dictTypeFields→categoryLabels 3级级联链，可总结级联链检测模式
+- [x] **admin/dictionary级联链模式**：dictTypeSchema→dictTypeFields→categoryLabels 3级级联链，可总结级联链检测模式 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **批量模式继续**：V316-V331连续十六次成功，全src/未使用项从~282降至~2
 
 ---
@@ -5238,7 +5238,7 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 ### V332后续扩展（留给V333+）
 
 - [ ] **TS6198解构批量清理专项**：6/15文件是TS6198，占40%。可写脚本专门扫描`const { data: ..., isLoading } = useQuery({...})`全部未使用模式，一次性改为裸useQuery调用
-- [ ] **孤儿文件检测模式**：删除主函数后整个文件变孤儿（useInventoryReport 9项级联, WorkflowApprovalDetailTabs 7项级联）。可总结孤儿文件检测模式，删除主函数后自动检测是否整个文件变未使用
+- [x] **孤儿文件检测模式**：删除主函数后整个文件变孤儿（useInventoryReport 9项级联, WorkflowApprovalDetailTabs 7项级联）。可总结孤儿文件检测模式，删除主函数后自动检测是否整个文件变未使用 — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **测试文件同步删除**：useInventoryReport案例，删除源文件后需同步删除对应测试文件。可写脚本检测测试文件引用的源文件是否已删除
 - [ ] **批量模式继续**：V316-V332连续十七次成功，全src/未使用项从~282降至~0
 
@@ -5608,7 +5608,7 @@ POST /mcp
 - [ ] **轨D ERP MCP Tools(4个)**：注册erp.list_orders, erp.get_order, erp.create_order, erp.update_inventory
 - [ ] **轨D CRM工具连接真实API**：通过shared-service-client的crm_api连接真实CRM服务
 - [ ] **轨B B1 API签名对齐实施**：逐函数对比@/api/erp/finance/与@/api/finance/，决定迁移或对齐策略
-- [ ] **轨A 级联未使用清理**：删除_getStatusIcon后，AlertCircle和CheckCircle import变未使用（级联2项）
+- [x] **轨A 级联未使用清理**：删除_getStatusIcon后，AlertCircle和CheckCircle import变未使用（级联2项） — ✅ V526/V509 收口：目标已达成（tsc 未使用项 0 命中，级联清理完成），脚本自动跟踪增强不再需要——本旧条目清理标记
 - [ ] **四轨并行继续**：V333-V335连续三次交付验证成功，V336继续四轨合并交付模式
 
 ---
