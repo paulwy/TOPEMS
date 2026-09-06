@@ -568,6 +568,9 @@ async fn main() -> anyhow::Result<()> {
         audit_retention_policy,
         retention_manager,
         config_store,
+        permission_notifier: std::sync::Arc::new(
+            crate::routes::business_tools::permission_store::PermissionChangeNotifier::new(),
+        ),
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

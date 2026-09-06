@@ -17518,9 +17518,9 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [x] **轨D 业务工具权限审计日志**：实现审计日志记录和查询
 - [x] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
 - [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
-- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限（真实剩余，代表条目）
+- [x] **轨D 权限批量操作**：支持批量创建/更新/删除权限（V530f 完成：trait bulk* + POST/PUT/DELETE /permissions/bulk，197 测试过）
 - [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入（真实剩余，代表条目）
-- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）（真实剩余，代表条目）
+- [x] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）（V530f 完成：PermissionChangeNotifier 事件总线 + 批量 publish；Webhook 外部投递待配置）
 - [x] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [x] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
 - [x] **轨C Zookeeper重连机制**：添加连接断开后的自动重连逻辑
@@ -19468,8 +19468,8 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
 - [x] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
 - [x] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
-- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式（真实剩余，代表条目）
-- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性（真实剩余，代表条目）
+- [x] **轨D 权限导出CSV格式**：支持导出为CSV格式（V530f 完成：ExportFormat::Csv + 渲染 + 4 测试）
+- [x] **轨D 权限导入验证**：导入前验证权限配置有效性（V530f 核实：import 逐条 try_from 验证 + 结果统计已有）
 - [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [x] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
 - [x] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试

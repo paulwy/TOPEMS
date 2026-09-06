@@ -23,6 +23,8 @@ use crate::shared::AppState;
 pub enum ExportFormat {
     /// JSON format.
     Json,
+    /// CSV format (tenant_id,user_id,role,active,tool).
+    Csv,
 }
 
 impl std::str::FromStr for ExportFormat {
@@ -31,7 +33,11 @@ impl std::str::FromStr for ExportFormat {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "json" => Ok(Self::Json),
-            _ => Err(format!("Unknown export format: {}. Use 'json'.", s)),
+            "csv" => Ok(Self::Csv),
+            _ => Err(format!(
+                "Unknown export format: {}. Use 'json' or 'csv'.",
+                s
+            )),
         }
     }
 }
@@ -40,7 +46,39 @@ impl std::fmt::Display for ExportFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Json => write!(f, "json"),
+            Self::Csv => write!(f, "csv"),
         }
+    }
+}
+
+/// Render permission export items as CSV text.
+fn render_permissions_csv(items: &[PermissionExportItem]) -> String {
+    let mut out = String::from("tenant_id,user_id,role,active,tool_permissions\n");
+    for item in items {
+        let tools = item
+            .tool_permissions
+            .iter()
+            .map(|tp| format!("{}:{}", tp.tool, tp.max_permission))
+            .collect::<Vec<_>>()
+            .join("|");
+        out.push_str(&format!(
+            "{},{},{},{},{}\n",
+            csv_escape(&item.tenant_id),
+            csv_escape(&item.user_id),
+            csv_escape(&item.role),
+            item.active,
+            csv_escape(&tools),
+        ));
+    }
+    out
+}
+
+/// Escape a value for a CSV field (quote if it contains comma/quote/newline).
+fn csv_escape(value: &str) -> String {
+    if value.contains(',') || value.contains('"') || value.contains('\n') {
+        format!("\"{}\"", value.replace('"', "\"\""))
+    } else {
+        value.to_string()
     }
 }
 
@@ -272,7 +310,7 @@ pub async fn export_permissions(
         version: "1.0".to_string(),
         exported_at: chrono::Utc::now().to_rfc3339(),
         count: export_items.len(),
-        permissions: export_items,
+        permissions: export_items.clone(),
     };
 
     // Generate filename
@@ -282,7 +320,15 @@ pub async fn export_permissions(
         .as_ref()
         .map(|t| format!("_{}", t))
         .unwrap_or_default();
-    let filename = format!("permissions{}_{}.json", tenant_suffix, timestamp);
+    let filename = format!(
+        "permissions{}_{}.{}",
+        tenant_suffix,
+        timestamp,
+        match format {
+            ExportFormat::Json => "json",
+            ExportFormat::Csv => "csv",
+        }
+    );
 
     match format {
         ExportFormat::Json => {
@@ -306,6 +352,21 @@ pub async fn export_permissions(
                     ),
                 ],
                 json,
+            )
+                .into_response())
+        }
+        ExportFormat::Csv => {
+            let csv = render_permissions_csv(&export_items);
+            Ok((
+                StatusCode::OK,
+                [
+                    (header::CONTENT_TYPE, "text/csv; charset=utf-8".to_string()),
+                    (
+                        header::CONTENT_DISPOSITION,
+                        format!("attachment; filename=\"{}\"", filename),
+                    ),
+                ],
+                csv,
             )
                 .into_response())
         }
@@ -511,7 +572,9 @@ mod tests {
     fn test_export_format_from_str() {
         assert_eq!("json".parse::<ExportFormat>().unwrap(), ExportFormat::Json);
         assert_eq!("JSON".parse::<ExportFormat>().unwrap(), ExportFormat::Json);
-        assert!("csv".parse::<ExportFormat>().is_err());
+        assert_eq!("csv".parse::<ExportFormat>().unwrap(), ExportFormat::Csv);
+        assert_eq!("CSV".parse::<ExportFormat>().unwrap(), ExportFormat::Csv);
+        assert!("xml".parse::<ExportFormat>().is_err());
     }
 
     #[test]
@@ -674,3 +737,42 @@ mod tests {
         assert!(json.contains("\"max_permission\":\"write\""));
     }
 }
+
+    // ===== CSV rendering tests (V530f) =====
+
+    #[test]
+    fn test_csv_escape_plain() {
+        assert_eq!(csv_escape("plain"), "plain");
+    }
+
+    #[test]
+    fn test_csv_escape_quotes_and_commas() {
+        assert_eq!(csv_escape("a,b"), "\"a,b\"");
+        assert_eq!(csv_escape("say \"hi\""), "\"say \"\"hi\"\"\"");
+    }
+
+    #[test]
+    fn test_export_format_csv_parse() {
+        assert_eq!("csv".parse::<ExportFormat>().unwrap(), ExportFormat::Csv);
+        assert_eq!("JSON".parse::<ExportFormat>().unwrap(), ExportFormat::Json);
+        assert!("xml".parse::<ExportFormat>().is_err());
+    }
+
+    #[test]
+    fn test_render_permissions_csv_header_and_row() {
+        let item = PermissionExportItem {
+            tenant_id: "t1".to_string(),
+            user_id: "u1".to_string(),
+            role: "owner".to_string(),
+            active: true,
+            tool_permissions: vec![ToolPermissionExportItem {
+                tool: "query".to_string(),
+                max_permission: "all".to_string(),
+                allowed_operations: Vec::new(),
+                denied_operations: Vec::new(),
+            }],
+        };
+        let csv = render_permissions_csv(std::slice::from_ref(&item));
+        assert!(csv.starts_with("tenant_id,user_id,role,active,tool_permissions"));
+        assert!(csv.contains("t1,u1,owner,true,query:all"));
+    }

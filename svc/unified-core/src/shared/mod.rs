@@ -69,6 +69,9 @@ pub struct AppState {
     pub retention_manager: Arc<crate::routes::business_tools::audit_retention::RetentionManager<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore + Send + Sync>>,
     /// V465: Configuration store for persistent system configurations.
     pub config_store: ConfigStoreService,
+    /// V530f: Permission change event bus (bulk ops publish events to subscribers).
+    pub permission_notifier:
+        Arc<crate::routes::business_tools::permission_store::PermissionChangeNotifier>,
 }
 
 impl FromRef<AppState> for AuthState {

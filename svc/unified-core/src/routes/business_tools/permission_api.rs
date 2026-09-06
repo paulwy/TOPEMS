@@ -12,7 +12,9 @@ use serde::{Deserialize, Serialize};
 
 use super::audit_integration::ActorInfo;
 use super::permission_audit_log::AuditLogger;
-use super::permission_store::PermissionStoreError;
+use super::permission_store::{
+    PermissionChangeAction, PermissionChangeEvent, PermissionStoreError,
+};
 use super::{MaxPermission, TenantPermission, TenantRole, ToolPermission};
 use crate::shared::AppState;
 
@@ -503,6 +505,210 @@ pub async fn count_permissions(
     })))
 }
 
+// ===== Bulk Operations (V530f) =====
+
+/// Request body for bulk create / bulk update.
+#[derive(Debug, Deserialize)]
+pub struct BulkPermissionRequest {
+    pub permissions: Vec<PermissionRequest>,
+}
+
+/// A single delete key for bulk delete.
+#[derive(Debug, Deserialize)]
+pub struct BulkDeleteKey {
+    pub tenant_id: String,
+    pub user_id: String,
+}
+
+/// Request body for bulk delete.
+#[derive(Debug, Deserialize)]
+pub struct BulkDeleteRequest {
+    pub keys: Vec<BulkDeleteKey>,
+}
+
+/// Response for bulk operations.
+#[derive(Debug, Serialize)]
+pub struct BulkPermissionResponse {
+    pub total: usize,
+    pub succeeded: usize,
+    pub skipped: usize,
+    pub events: Vec<PermissionChangeEventView>,
+}
+
+/// Lightweight event view returned to clients.
+#[derive(Debug, Serialize)]
+pub struct PermissionChangeEventView {
+    pub action: String,
+    pub tenant_id: String,
+    pub user_id: String,
+}
+
+fn event_view(event: &PermissionChangeEvent) -> PermissionChangeEventView {
+    PermissionChangeEventView {
+        action: match event.action {
+            PermissionChangeAction::Create => "create".to_string(),
+            PermissionChangeAction::Update => "update".to_string(),
+            PermissionChangeAction::Delete => "delete".to_string(),
+            PermissionChangeAction::BulkCreate => "bulk_create".to_string(),
+            PermissionChangeAction::BulkUpdate => "bulk_update".to_string(),
+            PermissionChangeAction::BulkDelete => "bulk_delete".to_string(),
+        },
+        tenant_id: event.tenant_id.clone(),
+        user_id: event.user_id.clone(),
+    }
+}
+
+fn publish_events(state: &AppState, actions: &[PermissionChangeAction], keys: &[(String, String)]) {
+    let now = chrono::Utc::now();
+    for (idx, (tenant_id, user_id)) in keys.iter().enumerate() {
+        let action = actions
+            .get(idx)
+            .copied()
+            .unwrap_or(PermissionChangeAction::BulkCreate);
+        state.permission_notifier.publish(PermissionChangeEvent {
+            action,
+            tenant_id: tenant_id.clone(),
+            user_id: user_id.clone(),
+            at: now,
+        });
+    }
+}
+
+/// `POST /api/business-tools/permissions/bulk` — Bulk create permissions.
+pub async fn bulk_create_permissions(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(request): Json<BulkPermissionRequest>,
+) -> Result<(StatusCode, Json<BulkPermissionResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let mut permissions = Vec::with_capacity(request.permissions.len());
+    for req in &request.permissions {
+        let permission = TenantPermission::try_from(req)
+            .map_err(|msg| (StatusCode::BAD_REQUEST, Json(ErrorResponse {
+                error: msg,
+                code: Some("INVALID_REQUEST".to_string()),
+            })))?;
+        permissions.push(permission);
+    }
+
+    let result = state
+        .permission_store
+        .bulk_create_permissions(permissions.clone())
+        .await
+        .map_err(map_store_error)?;
+
+    let keys: Vec<(String, String)> = permissions
+        .iter()
+        .map(|p| (p.tenant_id.clone(), p.user_id.clone()))
+        .collect();
+    publish_events(
+        &state,
+        &[PermissionChangeAction::BulkCreate],
+        &keys,
+    );
+
+    let _ = ActorInfo::from_headers(&headers);
+    Ok((
+        StatusCode::OK,
+        Json(BulkPermissionResponse {
+            total: result.total,
+            succeeded: result.succeeded,
+            skipped: result.skipped,
+            events: keys
+                .iter()
+                .map(|(t, u)| PermissionChangeEventView {
+                    action: "bulk_create".to_string(),
+                    tenant_id: t.clone(),
+                    user_id: u.clone(),
+                })
+                .collect(),
+        }),
+    ))
+}
+
+/// `PUT /api/business-tools/permissions/bulk` — Bulk update permissions.
+pub async fn bulk_update_permissions(
+    State(state): State<AppState>,
+    Json(request): Json<BulkPermissionRequest>,
+) -> Result<Json<BulkPermissionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let mut permissions = Vec::with_capacity(request.permissions.len());
+    for req in &request.permissions {
+        let permission = TenantPermission::try_from(req)
+            .map_err(|msg| (StatusCode::BAD_REQUEST, Json(ErrorResponse {
+                error: msg,
+                code: Some("INVALID_REQUEST".to_string()),
+            })))?;
+        permissions.push(permission);
+    }
+
+    let result = state
+        .permission_store
+        .bulk_update_permissions(permissions.clone())
+        .await
+        .map_err(map_store_error)?;
+
+    let keys: Vec<(String, String)> = permissions
+        .iter()
+        .map(|p| (p.tenant_id.clone(), p.user_id.clone()))
+        .collect();
+    publish_events(
+        &state,
+        &[PermissionChangeAction::BulkUpdate],
+        &keys,
+    );
+
+    Ok(Json(BulkPermissionResponse {
+        total: result.total,
+        succeeded: result.succeeded,
+        skipped: result.skipped,
+        events: keys
+            .iter()
+            .map(|(t, u)| PermissionChangeEventView {
+                action: "bulk_update".to_string(),
+                tenant_id: t.clone(),
+                user_id: u.clone(),
+            })
+            .collect(),
+    }))
+}
+
+/// `DELETE /api/business-tools/permissions/bulk` — Bulk delete permissions.
+pub async fn bulk_delete_permissions(
+    State(state): State<AppState>,
+    Json(request): Json<BulkDeleteRequest>,
+) -> Result<Json<BulkPermissionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let keys: Vec<(String, String)> = request
+        .keys
+        .iter()
+        .map(|k| (k.tenant_id.clone(), k.user_id.clone()))
+        .collect();
+
+    let result = state
+        .permission_store
+        .bulk_delete_permissions(keys.clone())
+        .await
+        .map_err(map_store_error)?;
+
+    publish_events(
+        &state,
+        &[PermissionChangeAction::BulkDelete],
+        &keys,
+    );
+
+    Ok(Json(BulkPermissionResponse {
+        total: result.total,
+        succeeded: result.succeeded,
+        skipped: result.skipped,
+        events: keys
+            .iter()
+            .map(|(t, u)| PermissionChangeEventView {
+                action: "bulk_delete".to_string(),
+                tenant_id: t.clone(),
+                user_id: u.clone(),
+            })
+            .collect(),
+    }))
+}
+
 // ===== Route Registration =====
 
 /// Create permission management routes.
@@ -533,6 +739,12 @@ pub fn permission_routes() -> Router<AppState> {
         .route(
             "/business-tools/permissions/count",
             axum::routing::get(count_permissions),
+        )
+        .route(
+            "/business-tools/permissions/bulk",
+            axum::routing::post(bulk_create_permissions)
+                .put(bulk_update_permissions)
+                .delete(bulk_delete_permissions),
         )
 }
 

@@ -84,6 +84,80 @@ pub trait PermissionStore: Send + Sync {
 
     /// Get the number of stored permissions.
     async fn count(&self) -> Result<usize, PermissionStoreError>;
+
+    /// Bulk create multiple permissions. Default implementation loops per-item
+    /// and treats AlreadyExists as skipped; stores may override atomically.
+    async fn bulk_create_permissions(
+        &self,
+        permissions: Vec<TenantPermission>,
+    ) -> Result<BulkOpResult, PermissionStoreError> {
+        let mut succeeded = 0;
+        let mut skipped = 0;
+        for p in permissions {
+            match self.create_permission(p).await {
+                Ok(()) => succeeded += 1,
+                Err(PermissionStoreError::AlreadyExists(_, _)) => skipped += 1,
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(BulkOpResult {
+            total: succeeded + skipped,
+            succeeded,
+            skipped,
+        })
+    }
+
+    /// Bulk update multiple permissions. Default implementation loops per-item
+    /// and treats NotFound as skipped.
+    async fn bulk_update_permissions(
+        &self,
+        permissions: Vec<TenantPermission>,
+    ) -> Result<BulkOpResult, PermissionStoreError> {
+        let mut succeeded = 0;
+        let mut skipped = 0;
+        for p in permissions {
+            match self.update_permission(p).await {
+                Ok(()) => succeeded += 1,
+                Err(PermissionStoreError::NotFound(_, _)) => skipped += 1,
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(BulkOpResult {
+            total: succeeded + skipped,
+            succeeded,
+            skipped,
+        })
+    }
+
+    /// Bulk delete permissions. Default implementation loops per-item and
+    /// treats NotFound as skipped.
+    async fn bulk_delete_permissions(
+        &self,
+        keys: Vec<(String, String)>,
+    ) -> Result<BulkOpResult, PermissionStoreError> {
+        let mut succeeded = 0;
+        let mut skipped = 0;
+        for (tenant_id, user_id) in keys {
+            match self.delete_permission(&tenant_id, &user_id).await {
+                Ok(()) => succeeded += 1,
+                Err(PermissionStoreError::NotFound(_, _)) => skipped += 1,
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(BulkOpResult {
+            total: succeeded + skipped,
+            succeeded,
+            skipped,
+        })
+    }
+}
+
+/// Result of a bulk permission operation.
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BulkOpResult {
+    pub total: usize,
+    pub succeeded: usize,
+    pub skipped: usize,
 }
 
 // ===== In-Memory Permission Store =====
@@ -458,3 +532,128 @@ mod tests {
         assert_eq!(summary.inactive_users, 0);
     }
 }
+
+// ===== Permission Change Events (V530f) =====
+
+/// Action that triggered a permission change event.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PermissionChangeAction {
+    Create,
+    Update,
+    Delete,
+    BulkCreate,
+    BulkUpdate,
+    BulkDelete,
+}
+
+/// A permission change event published to notifier subscribers.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PermissionChangeEvent {
+    pub action: PermissionChangeAction,
+    pub tenant_id: String,
+    pub user_id: String,
+    pub at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Simple in-process event bus for permission changes.
+///
+/// Subscribers receive `PermissionChangeEvent`s via an unbounded channel.
+/// External delivery (e.g. Webhook) can be layered on top of `subscribe`.
+#[derive(Debug, Default)]
+pub struct PermissionChangeNotifier {
+    subscribers: std::sync::Mutex<Vec<tokio::sync::mpsc::UnboundedSender<PermissionChangeEvent>>>,
+}
+
+impl PermissionChangeNotifier {
+    /// Create a new empty notifier.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Subscribe to permission change events. Returns a receiver.
+    pub fn subscribe(&self) -> tokio::sync::mpsc::UnboundedReceiver<PermissionChangeEvent> {
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        self.subscribers.lock().unwrap().push(tx);
+        rx
+    }
+
+    /// Publish an event to all subscribers. Dropped subscribers are pruned.
+    pub fn publish(&self, event: PermissionChangeEvent) {
+        let mut subs = self.subscribers.lock().unwrap();
+        subs.retain(|tx| tx.send(event.clone()).is_ok());
+    }
+
+    /// Number of active subscribers.
+    pub fn subscriber_count(&self) -> usize {
+        self.subscribers.lock().unwrap().len()
+    }
+}
+
+    // ===== Permission Change Notifier tests (V530f) =====
+
+    #[tokio::test]
+    async fn test_notifier_publish_and_receive() {
+        let notifier = PermissionChangeNotifier::new();
+        let mut rx = notifier.subscribe();
+        assert_eq!(notifier.subscriber_count(), 1);
+
+        notifier.publish(PermissionChangeEvent {
+            action: PermissionChangeAction::BulkCreate,
+            tenant_id: "t1".to_string(),
+            user_id: "u1".to_string(),
+            at: chrono::Utc::now(),
+        });
+
+        let event = rx.recv().await.expect("event should be delivered");
+        assert_eq!(event.action, PermissionChangeAction::BulkCreate);
+        assert_eq!(event.tenant_id, "t1");
+        assert_eq!(event.user_id, "u1");
+    }
+
+    #[tokio::test]
+    async fn test_notifier_prunes_dropped_subscribers() {
+        let notifier = PermissionChangeNotifier::new();
+        {
+            let _rx = notifier.subscribe();
+            assert_eq!(notifier.subscriber_count(), 1);
+        }
+        // Subscriber dropped: publish prunes it.
+        notifier.publish(PermissionChangeEvent {
+            action: PermissionChangeAction::Delete,
+            tenant_id: "t2".to_string(),
+            user_id: "u2".to_string(),
+            at: chrono::Utc::now(),
+        });
+        assert_eq!(notifier.subscriber_count(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_bulk_create_skips_existing() {
+        let store = InMemoryPermissionStore::with_defaults();
+        // "default"/"admin" already exists via with_defaults.
+        let result = store
+            .bulk_create_permissions(vec![
+                TenantPermission::owner("default", "admin"),
+                TenantPermission::member("t1", "u1"),
+            ])
+            .await
+            .unwrap();
+        assert_eq!(result.total, 2);
+        assert_eq!(result.succeeded, 1);
+        assert_eq!(result.skipped, 1);
+    }
+
+    #[tokio::test]
+    async fn test_bulk_delete_skips_missing() {
+        let store = InMemoryPermissionStore::with_defaults();
+        let result = store
+            .bulk_delete_permissions(vec![
+                ("default".to_string(), "admin".to_string()),
+                ("missing".to_string(), "u9".to_string()),
+            ])
+            .await
+            .unwrap();
+        assert_eq!(result.succeeded, 1);
+        assert_eq!(result.skipped, 1);
+    }
