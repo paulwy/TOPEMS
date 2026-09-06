@@ -6,10 +6,12 @@
 //! where permissions need to be shared across instances.
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
+use serde::Serialize;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 
@@ -22,6 +24,34 @@ use super::{TenantPermission, TenantRole, ToolPermission};
 struct CachedPermission {
     permission: TenantPermission,
     cached_at: Instant,
+}
+
+/// Runtime metrics snapshot for the database permission store.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct PermissionStoreMetrics {
+    /// Total permission lookups (cache + database).
+    pub total_lookups: u64,
+    /// Cache hits.
+    pub cache_hits: u64,
+    /// Cache misses (database fetches).
+    pub cache_misses: u64,
+    /// Database errors encountered.
+    pub db_errors: u64,
+    /// Cache hit rate (0.0 - 1.0).
+    pub cache_hit_rate: f64,
+    /// Current number of cached entries.
+    pub cache_size: usize,
+    /// Configured cache TTL in seconds.
+    pub cache_ttl_secs: u64,
+}
+
+/// Health status of the permission store.
+#[derive(Debug, Clone, Serialize)]
+pub struct PermissionStoreHealth {
+    pub healthy: bool,
+    pub database_connected: bool,
+    pub cache_size: usize,
+    pub message: String,
 }
 
 // ===== Database Permission Store =====
@@ -67,6 +97,14 @@ pub struct DatabasePermissionStore {
     cache: Arc<RwLock<HashMap<(String, String), CachedPermission>>>,
     /// Cache TTL in seconds. Defaults to 300 (5 minutes).
     cache_ttl_secs: u64,
+    /// Total permission lookups.
+    total_lookups: AtomicU64,
+    /// Cache hits.
+    cache_hits: AtomicU64,
+    /// Cache misses (database fetches).
+    cache_misses: AtomicU64,
+    /// Database errors encountered.
+    db_errors: AtomicU64,
 }
 
 impl DatabasePermissionStore {
@@ -76,6 +114,10 @@ impl DatabasePermissionStore {
             pool: Arc::new(pool),
             cache: Arc::new(RwLock::new(HashMap::new())),
             cache_ttl_secs: 300,
+            total_lookups: AtomicU64::new(0),
+            cache_hits: AtomicU64::new(0),
+            cache_misses: AtomicU64::new(0),
+            db_errors: AtomicU64::new(0),
         }
     }
 
@@ -85,12 +127,56 @@ impl DatabasePermissionStore {
             pool: Arc::new(pool),
             cache: Arc::new(RwLock::new(HashMap::new())),
             cache_ttl_secs,
+            total_lookups: AtomicU64::new(0),
+            cache_hits: AtomicU64::new(0),
+            cache_misses: AtomicU64::new(0),
+            db_errors: AtomicU64::new(0),
         }
     }
 
     /// Get the cache TTL in seconds.
     pub fn cache_ttl_secs(&self) -> u64 {
         self.cache_ttl_secs
+    }
+
+    /// Return a snapshot of runtime metrics.
+    pub async fn metrics(&self) -> PermissionStoreMetrics {
+        let total = self.total_lookups.load(Ordering::Relaxed);
+        let hits = self.cache_hits.load(Ordering::Relaxed);
+        let misses = self.cache_misses.load(Ordering::Relaxed);
+        let hit_rate = if total > 0 {
+            hits as f64 / total as f64
+        } else {
+            0.0
+        };
+        PermissionStoreMetrics {
+            total_lookups: total,
+            cache_hits: hits,
+            cache_misses: misses,
+            db_errors: self.db_errors.load(Ordering::Relaxed),
+            cache_hit_rate: hit_rate,
+            cache_size: self.cache_size().await,
+            cache_ttl_secs: self.cache_ttl_secs,
+        }
+    }
+
+    /// Perform a lightweight health check: database connectivity + cache state.
+    pub async fn health_check(&self) -> PermissionStoreHealth {
+        let db_ok = sqlx::query_scalar::<_, i32>("SELECT 1")
+            .fetch_one(self.pool.as_ref())
+            .await
+            .is_ok();
+        let cache_size = self.cache_size().await;
+        PermissionStoreHealth {
+            healthy: db_ok,
+            database_connected: db_ok,
+            cache_size,
+            message: if db_ok {
+                format!("database connected, cache entries: {}", cache_size)
+            } else {
+                "database unreachable".to_string()
+            },
+        }
     }
 
     /// Invalidate the cache for a specific tenant/user pair.
@@ -445,13 +531,23 @@ impl PermissionStore for DatabasePermissionStore {
         tenant_id: &str,
         user_id: &str,
     ) -> Result<Option<TenantPermission>, PermissionStoreError> {
+        self.total_lookups.fetch_add(1, Ordering::Relaxed);
+
         // Check cache first
         if let Some(cached) = self.get_from_cache(tenant_id, user_id).await {
+            self.cache_hits.fetch_add(1, Ordering::Relaxed);
             return Ok(Some(cached));
         }
+        self.cache_misses.fetch_add(1, Ordering::Relaxed);
 
         // Fetch from database
-        let permission = self.fetch_tenant_permission(tenant_id, user_id).await?;
+        let permission = match self.fetch_tenant_permission(tenant_id, user_id).await {
+            Ok(p) => p,
+            Err(e) => {
+                self.db_errors.fetch_add(1, Ordering::Relaxed);
+                return Err(e);
+            }
+        };
 
         // Update cache if found
         if let Some(ref perm) = permission {
@@ -652,5 +748,49 @@ mod tests {
         };
         // Just-created cache entry should not be expired
         assert!(cached.cached_at.elapsed() < Duration::from_secs(300));
+}
+
+    // ===== Metrics & Health tests (V530e) =====
+
+    async fn test_metrics_initial_state() {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://placeholder:placeholder@localhost:5432/placeholder")
+            .expect("lazy pool should construct without connecting");
+        let store = DatabasePermissionStore::new(pool);
+        let m = store.metrics().await;
+        assert_eq!(m.total_lookups, 0);
+        assert_eq!(m.cache_hits, 0);
+        assert_eq!(m.cache_misses, 0);
+        assert_eq!(m.db_errors, 0);
+        assert_eq!(m.cache_hit_rate, 0.0);
+        assert_eq!(m.cache_size, 0);
+        assert_eq!(m.cache_ttl_secs, 300);
+    }
+
+    #[tokio::test]
+    async fn test_metrics_with_cache_ttl() {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://placeholder:placeholder@localhost:5432/placeholder")
+            .expect("lazy pool should construct without connecting");
+        let store = DatabasePermissionStore::with_cache_ttl(pool, 60);
+        let m = store.metrics().await;
+        assert_eq!(m.cache_ttl_secs, 60);
+    }
+
+    #[test]
+    fn test_metrics_serialization() {
+        let m = PermissionStoreMetrics {
+            total_lookups: 10,
+            cache_hits: 8,
+            cache_misses: 2,
+            db_errors: 0,
+            cache_hit_rate: 0.8,
+            cache_size: 5,
+            cache_ttl_secs: 300,
+        };
+        let json = serde_json::to_string(&m).unwrap();
+        assert!(json.contains("\"total_lookups\":10"));
+        assert!(json.contains("\"cache_hit_rate\":0.8"));
+        assert!(json.contains("\"cache_size\":5"));
     }
 }
