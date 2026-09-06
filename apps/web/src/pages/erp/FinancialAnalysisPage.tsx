@@ -10,7 +10,7 @@ import type {
   TimeRangeOption,
 } from '@/components/templates/StatsPageTemplate';
 import { useNotificationStore } from '@/store';
-import { financeReportApi } from '@/api/erp';
+import { financeReportApi } from '@/api/finance/report';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';

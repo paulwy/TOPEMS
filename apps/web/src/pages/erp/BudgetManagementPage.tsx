@@ -4,8 +4,9 @@ import { Wallet, Receipt, AlertTriangle, Clock, CheckCircle } from 'lucide-react
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import { budgetSchema, expenseSchema } from '@/schemas/erp';
-import { budgetApi, expenseApi } from '@/api/erp';
-import type { Budget, Expense } from '@/api/erp';
+import { budgetApi, expenseApi } from '@/api/finance';
+import type { Budget } from '@/api/finance';
+import type { Expense } from '@/api/finance/expense';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 

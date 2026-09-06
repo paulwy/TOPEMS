@@ -1,9 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { SyntheticEvent } from 'react';
-import { voucherApi } from '@/api/erp';
-import { accountingSubjectApi } from '@/api/finance';
-import type { AccountingSubject } from '@/api/finance';
-import type { VoucherItemRequest } from '@/api/erp/types';
+import { voucherApi, accountingSubjectApi } from '@/api/finance';
+import type { AccountingSubject, VoucherItemRequest } from '@/api/finance';
 import type { Voucher, VoucherEntry } from '@/types/finance';
 import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { financeReportApi } from '@/api/erp';
+import { financeReportApi } from '@/api/finance/report';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';

@@ -15,7 +15,7 @@ import { FileText } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { voucherSchema } from '@/schemas/erp/voucher';
-import { voucherApi } from '@/api/erp';
+import { voucherApi } from '@/api/finance';
 import type { EntitySchema } from '@/schema';
 import type { SchemaExtensions } from '@/schema/schemaExtensions';
 import { QUERY_KEYS } from '@/lib/reactQuery';
