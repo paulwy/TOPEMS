@@ -1216,8 +1216,8 @@ V285 B 轨根因 callout 已明确定位：
 - [x] **B2: Finance API 函数从 @/api/erp 迁移到 @/api/finance**：✅ V513 完成 — erp/index.ts 已 re-export finance 实现（B1 类型迁移）；6 页面 import 直连 @/api/finance（BudgetManagementPage: budgetApi/expenseApi+类型；VoucherPage/useVoucherManagement: voucherApi；useFinancialReport/FinancialReportPage/FinancialAnalysisPage: financeReportApi→@/api/finance/report）。tsc 0 / eslint 0。遗留：报告类型暂留 @/api/erp/types（dts IncomeStatement/CashFlowStatement 缺 total_revenue/net_cash_flow 等字段，与后端字段对齐待确认）
 - [x] **Architecture Plan 边界 B6（TMS 依赖 WMS 源码）盘点**：✅ V290 A 轨完成 — 全项目仅 TMS→WMS 一个跨 svc path dep（dev-dependency，用于 cross_module_integration_tests.rs 的 FSM 状态转换函数），非运行时耦合。其他 svc 仅依赖 lib/shared-* crates，crate 级耦合极小。
 - [x] **Plan B7 SharedStateBridge 全局变量**：✅ V514 完成 — 搜索到 10 个 dashboardSchema（pm/lims/wms/crm/ehs/hrm/qms/finance/pdm/mes）用 `window.__xxxStats` 全局变量在 loader 间共享数据（绕开 React 状态）。重构：删 declare global 扩展 → 模块级类型化 `let xxxStats: Type | undefined`（PmStatistics 等），修复 crm 写 `__crmStats` 读 `crmStats` 的不一致 bug。tsc 0 / eslint 0。
-- [x] **事件总线 Redis Stream 升级（Plan M2）**：✅ V515 评估完成 — shared-event 已实现 StreamEventPublisher/StreamSubscriber/DLQ（dead_letter_queue.rs）+ 延迟消息 + Schema Registry；V321 已把 EventPublisher 默认模式切为 stream（EVENT_BUS_MODE=stream，持久化 XADD + 消费者组，初始化失败自动降级 pubsub）。**剩余**：EventSubscriber（subscriber.rs）仍为 pub/sub 流式订阅，StreamSubscriber（消费者组 + ACK）已实现但服务侧未接线——publisher stream / subscriber pubsub 不对称，消息在订阅端可能丢失；改造需多服务换 StreamSubscriber，V292 判定非紧急，待排期
-- [x] **编译时边界检查（Plan v1.0 §4.4 only_own_schema_query! 宏）**：✅ **V523 完成（2026-09-06）**——① 全量核查：新建 `scripts/check-boundary.cjs`（30 服务全扫裸 sqlx 查询的 schema.table 引用；语义对齐宏：跳过 only_own_schema_query! 宏内 SQL（编译期权威）、FROM/JOIN 别名识别（bi.=bom_items 等）、SELECT 位别名不判、系统 schema 加白）→ **0 跨 schema 违规**（hrm mobile_attendance 仅在注释中的迁移方案）；② CI 强制：lefthook 新增 `boundary-gate` 钩子（svc/lib .rs 变更触发全量核查，违规阻断）实测 PASS；③ 宏已铺开 3106 处使用（communication/pm 等）
+- [x] **事件总线 Redis Stream 升级（Plan M2）**：✅ V515 评估完成 — shared-event 已实现 StreamEventPublisher/StreamSubscriber/DLQ（dead_letter_queue.rs）+ 延迟消息 + Schema Registry；V321 已把 EventPublisher 默认模式切为 stream（EVENT_BUS_MODE=stream，持久化 XADD + 消费者组，初始化失败自动降级 pubsub）。**V523 复核（2026-09-06）**：订阅端接线其实已由 V321 内置——subscriber.rs start_listening 默认 stream 模式（EVENT_BUS_MODE 默认 stream）：内部将 handlers 逐个转发 StreamEventSubscriber（消费者组 + ACK + with_dlq()），失败自动降级 pubsub——「publisher stream / subscriber pubsub 不对称」已解决；**唯一已知缺口**：MDM 主数据事件走独立 pubsub channel（master_data.rs `topems:master_data:*`，发布侧无持久化），stream 模式订阅端忽略 → 影响 5 服务（portal/crm/scm/erp/pdm 的 master_data ref 本地刷新滞后，无自愈，低危——V292 非紧急判定维持，未来可排期 master_data publish 加 stream 双写）
+- [x] **编译时边界检查（Plan v1.0 §4.4 only_own_schema_query! 宏）**：✅ **V523 完成（2026-09-06）**——① 全量核查：新建 `scripts/check-boundary.cjs`（30 服务全扫裸 sqlx 查询的 schema.table 引用；语义对齐宏：跳过 only_own_schema_query! 宏内 SQL（编译期权威）、FROM/JOIN 别名识别（bi.=bom_items 等）、SELECT 位别名不判、系统 schema 加白）→ **0 跨 schema 违规**（hrm mobile_attendance 仅在注释中的迁移方案）；② CI 强制：lefthook 新增 `boundary-gate` 钩子（svc/lib .rs 变更触发全量核查，违规阻断）实测 PASS；③ 宏已铺开 3106 处使用（communication/pm 等）；**环境注记**：macOS 默认 ulimit -n 256 不足，cargo 编译需 `ulimit -n 10240` 前缀（sqlx-macros 链接 100+ 库文件 fd 耗尽，sccache hashing 同样受影响）
 
 ---
 
@@ -1323,7 +1323,7 @@ let failed_count = 0;
 
 - [ ] **B2 前置：@/api/finance API 签名对齐**：V291 移除了 erp/types.ts 中 5 个误导性 @deprecated 标记；全量对齐仍需后端验证 finance service API 与 erp service API 功能等价性（budgetApi/reportApi/voucherApi 调用不同后端服务，字段形状不同）
 - [x] **Plan B7 SharedStateBridge 全局变量**：V291 搜索 0 命中（仅 qms/_mock.ts 注释中提及 `window.__TOPEMS_DEMO__`），无实际全局变量使用，关闭
-- [ ] **事件总线 Redis Stream 升级（Plan M2）**：评估 publisher/subscriber 是否使用 Pub/Sub，改造为 Redis Stream（持久化+ACK+DLQ）
+- [x] **事件总线 Redis Stream 升级（Plan M2）**：✅ V523 收口 — Redis Stream 升级已完成：publisher=stream（XADD 持久化）+ subscriber=stream（消费者组 XREADGROUP + ACK + DLQ，V321 默认 EVENT_BUS_MODE=stream 内置接线）+ 延迟消息 + Schema Registry；剩余仅 MDM 独立 channel 缺口（见 V515 记录，低危已知限制）
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 SQL 数清零后引入 clippy lint
 - [x] **TMS cross_module_integration_tests 评估**：V291 评估为低价值（9 测试中仅 3 个调用 WMS FSM 且非真实集成，6 个只测 TMS 自身 FSM），已移除测试文件 + TMS Cargo.toml 中 topems-wms dev-dep，全项目跨 svc 依赖=0
 
@@ -1460,7 +1460,7 @@ let failed_count = 0;
 ### V292 后续扩展（留给 V293+）
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性，为前端 B2 迁移提供依据
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
-- [ ] **Redis Stream 升级（Plan M2）**：V292 评估确认当前 Redis Pub/Sub + DLQ 已满足基本需求，Stream 升级（consumer groups + ACK）列为可选增强
+- [x] **Redis Stream 升级（Plan M2）**：✅ V523 收口 — V292 评估 + V321 实施 + V523 复核：stream 主链路（XADD/XREADGROUP/ACK/DLQ）已落地并默认启用；MDM 独立 channel 缺口低危已知（5 服务本地 ref 滞后）
 - [x] **eslint 全量扫描修复**：V293 运行全量 `npx eslint src/` 发现 0 warnings/errors（代码库已干净）；同时临时开启 `tsc --noUnusedLocals` 发现 src/ai/ 15+ 未使用常量/函数并全部清理
 - [ ] **mes 集成测试 sqlx 缓存补充**：如需恢复编译时 SQL 校验，可在有 DB 环境运行 `cargo sqlx prepare --package topems-mes --tests` 生成 `.sqlx/` 缓存并提交
 
