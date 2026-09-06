@@ -159,6 +159,22 @@ pre-commit:
           exit 0
         fi
 
+    # [Gate P2] Schema boundary check（Plan v1.0 §4.4 编译时边界 CI 侧强制：
+    # 全量扫描 svc 裸 sqlx 查询的 schema.table 引用，跨 schema 违规阻断提交）
+    boundary-gate:
+      tags: boundary rust
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$' || true)
+        if [ -z "$STAGED" ]; then
+          exit 0
+        fi
+        if [ -f "scripts/check-boundary.cjs" ]; then
+          node scripts/check-boundary.cjs
+        else
+          printf '\033[33m[Gate P2] WARN\033[0m scripts/check-boundary.cjs not found, skipping boundary-gate\n'
+          exit 0
+        fi
+
     # [Gate Q] Hardcoded CJK in admin module (strict) — migrated from husky #8b
     i18n-hardcode-admin:
       tags: frontend i18n hardcoded

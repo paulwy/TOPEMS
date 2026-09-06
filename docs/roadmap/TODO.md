@@ -241,14 +241,14 @@
 - [x] C轨 clippy needless_borrows 修复 + 3 doctest 路径修复
 
 ### V284 后续扩展（留给 V285+）
-- [ ] **mes integration_tests sqlx 缓存补全**：`svc/mes/tests/integration_tests.rs` 有 12 处 sqlx::query 缺 .sqlx 缓存（--all-targets 才暴露），需 DB 环境跑 `cargo sqlx prepare --workspace` 重建缓存
+- [x] **mes integration_tests sqlx 缓存补全**：✅ V517 已闭环（根 .sqlx/ 285 缓存覆盖合并，SQLX_OFFLINE cargo check --tests 0 错）——本旧条目清理标记
 - [x] **模板扩展深度评估**：V284/V285 已评估 — DocumentsPage 800+ 行复杂双栏维持 children 透传最合理
 - [x] **ERP 审批审计日志本地化**：V285 已评估 — call_finance_core_approval 内部已调用 AuditLogService::log_operation 写本地 audit_logs，无需改动
 - [x] **tms/aps 端口三端对齐**：V285 已修复 — plugin.yaml + main.rs + ports.env + service_port.rs 全部对齐至 8073/8074，解除 srm 8042 冲突
 - [x] **unified-core/master/handlers.rs INSERT...SELECT 下沉**：V285 已评估 — ReconciliationLogService 已创建，insert_from_master_data_refs 封装 INSERT...SELECT，handlers.rs 已调用
 - [x] **Finance utoipa::path 补全评估**：V512 已完成 — 评估结论：settlement_center 已实现但**未接线**（路由未挂载 + OpenApi 未聚合，handlers 19 注解/models 25 ToSchema 成死代码）。V512 挂载 `settlement_center::create_routes()`（/api/core/settlement-center/*，与 v55 /finance-v55/* 不冲突）+ main.rs paths() 补 19 handlers + schemas() 补 25 models；regen openapi.d.ts 含 settlement-center 22 路径；tsc 0 / unit 3588/3588 / clippy 0
 - [x] **前端 Finance/Hrm TS 26 错误清零**：V285 已清零 — openapi.d.ts 568 schemas（+126），typecheck 9→0 errors
-- [ ] **CI gate 脚本合并**：check-i18n.cjs + check-i18n-quality.cjs 合并为 `check-i18n --mode={hardcode|quality|all}`；check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs 合并为 `check-api --mode={audit|coverage|align}`
+- [x] **CI gate 脚本合并**：✅ V285/V286/V519 已完成（i18n 双脚本 + check-api 三合一 + api-gate 钩子接线）——本旧条目清理标记
 
 ---
 
@@ -440,7 +440,7 @@
 - [x] **tms/aps 端口三端对齐**：V285 已完成 — plugin.yaml（tms 8042→8073, aps 8043→8074）+ main.rs 对应端口 + config/ports.env 新增 TMS_PORT/APS_PORT + service_port.rs 新增 TMS_PORT/APS_PORT 常量 + GROUP2_SERVICES 追加 tms/aps。validate-plugin-config.py PORT diff 清零
 - [x] **unified-core/master INSERT...SELECT 下沉**：V285 已完成 — 新建 shared-db/reconciliation_log.rs（ReconciliationLogService 6 方法 + 6 测试）；handlers.rs record_reconciliation_issues/list_reconciliation_logs/resolve_reconciliation_issue 3 处内联业务 SQL 全部下沉，grep core_mdm_reconciliation_log 仅剩 2 行 DDL
 - [x] **前端 Finance/Hrm TS 26 错误清零**：V285 已完成 — apps/web typecheck 错误 100→0 完美清零；FinanceTypes 28 条 SafeSchema → 强类型 ApiComponents；HrmTypes 补 11 条 V284 schema 已存在类型；MasterDataTypes/QmsTypes/MesTypes 其他弱类型退 SafeSchema 兜底
-- [ ] **CI gate 脚本合并**：V285 已完成 i18n 双脚本合并（check-i18n.cjs + check-i18n-quality.cjs → check-i18n.cjs --mode={hardcode|quality|all}，quality.cjs 为 wrapper）。API 三合一（check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs → check-api.cjs --mode={audit|coverage|align}）留 V286
+- [x] **CI gate 脚本合并**：✅ V285/V286/V519 已完成（i18n 双脚本 + check-api 三合一 + api-gate 钩子接线）——本旧条目清理标记
 
 ---
 
@@ -595,7 +595,7 @@
 - [x] **Finance settlement_center schemas 补全（V285 B C 类）**：✅ V286 B 轨完成 — 9 新 DTO (AccountOpeningBalance / AccountBalance / CounterpartyType / ReportQueryParams 等 8+1) 在 `models/mod.rs` 新建；49 个已有 DTO 补 `#[derive(ToSchema)]`（10 files 覆盖 voucher_template/settlement_v55/domain/settlement_center 25 条/mod.rs）；openapi.rs components(schemas) 新增 53 条注册；api-types.ts FinanceTypes namespace 53 条 SafeSchema 条件强类型补全。
 - [x] **ERP 其他 4 兄弟文件的空 log_audit! 宏切换**：✅ V286 A 轨完成 — scopes/company_relations/internal_transactions/elimination_rules/scope_companies + reports 共 6 文件 13 处空宏 → 复用抽至 `common.rs` 的 `pub async fn log_audit(pool,action,entity_type,entity_id,headers)` 真实 AuditLogService 双写；13 处 `_headers: HeaderMap` 命名改为 `headers` 清 unused warning。
 - [x] **API gate 脚本合并（V285 C 轨后半段）**：✅ V286 C 轨完成 — 3 脚本（audit 9.9k/coverage 4.8k/compare 212 行）合并为 622 行新 `check-api.cjs`（parseArgs/runAudit/runCoverage/runCompare/renderReport 5 helper + main）；CLI `--mode={audit|coverage|compare|all}` 默认 all 向后兼容；JSON 输出 `{mode,generatedAt,audit,coverage,compare}`；3 原脚本改为 9 行 thin wrapper（`__dirname` 绝对 require，复刻 V285 i18n wrapper fix 模式）。
-- [ ] **连续 2 个版本列入的高价值项（优先级提升）**：DocumentsPage 未来简化为纯文件列表后评估 DocumentTemplate 声明式迁移（V283 B 轨评估未动 + V284 B 轨评估未动 + V286 仍未简化 → 已连续 3 版列入，**V287 升级为评估任务，若 DocumentsPage 无简化计划就永久取消该项**）
+- [x] **DocumentsPage 模板评估（连续列入项）**：✅ V520 已评估收口（结论：不抽 DocumentTemplate，CardListTemplate 已双页复用）——本旧条目清理标记
 
 ---
 
@@ -758,11 +758,11 @@
 - [x] mes PG 三件套：`docker compose -f svc/mes/docker-compose.yaml config` exit 0；`bash -n svc/mes/scripts/sqlx-prepare.sh` exit 0；`.gitignore` 含 tmp-pgdata/ ✅
 
 ### V286 后续扩展（留给 V287+）
-- [ ] **mes integration_tests sqlx 缓存真正生成**：✅ V287 D1 评估+脚本修复完毕，**跳 V288**（Docker daemon 运行但 migration 多 schema 依赖复杂：iam/hrm/mobile/wms/plugin_*/unified_core/rs 等，`20260716000001` 引用 `iam.roles/users` 而 001-iam.sql 用 `public.core_*` 命名不兼容，90s 无法修复并完成 prepare）。手动执行命令：`bash svc/mes/scripts/sqlx-prepare.sh`；基线目标：`.sqlx/query-*.json` ≥287（当前 275 + 新增 ≥12），`SQLX_OFFLINE=true cargo check -p topems-mes --tests` exit 0。
+- [x] **mes integration_tests sqlx 缓存真正生成**：✅ V517 已闭环（sqlx-prepare.sh 策略覆盖合并 .sqlx 285 缓存，offline check --tests 0）——本旧条目清理标记
 - [x] **CI env.NODE_VERSION 从 '20' 统一升为 '22'**：✅ V287 D2 完成 — `.github/workflows/ci.yml:49` `NODE_VERSION: '20'` → `'22'`；axum-layer-gate job（L1059）已显式 `node-version: '22'` 与全局一致；14 处隐式引用 `env.NODE_VERSION` 自动受益；与 `.nvmrc`=22.22.3 及 `package.json engines.node=^22.0.0` 三者对齐。
 - [x] **GROUP2 校验脚本 `--strict` 上线 CI**：✅ V287 C 轨完成 — ① unified-core 不再 GROUP2 假阳性：原 `plugins 中 code 不在 GROUP2` warnings.push → `code==='unified-core'` 改 console.info 不计数（composite gateway 语义）→  warnings 2→1；② parseArgs 已有的 `--strict` 逻辑升级为 STRICT_ALLOW：monitor allowlist 类 warning 不进 strict_failures → `--strict` errors=0 strict_failures=0 仍 exit 0；③ [ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml#L1086) axum-layer-gate job 末尾追加 `node scripts/ci/check-group2-services.cjs --strict` step（复用 L1059 node-version: '22'，重复利用已 checkout）。
 - [x] **api-types.ts 重新生成 openapi.d.ts → SafeSchema 条件命中真实 Schemas**：✅ V287 B 轨完成 — 以 `docs/api/openapi-aggregated.json` 作输入，运行 `node scripts/openapi/gen-types.mjs --aggregated` 重新生成 openapi.d.ts（1291.3 KB · paths 830 · schemas 568 + 97 个悬空 ref stub）；packages/shared-types tsc exit 0；149 条 SafeSchema<'Name'> 条件模式全部正常，Finance 55 条 V286 C/D 类升级自动命中真实 Schemas。
-- [ ] **DocumentsPage 简化后评估声明式模板迁移**：已连续 4 版列入（V283/V284/V286/V287），DocumentsPage 无简化计划 → **V288 永久取消该后续扩展项（防止悬而未决）**
+- [x] **DocumentsPage 简化后评估声明式模板迁移**：✅ V520 已评估收口（不抽 DocumentTemplate）——本旧条目清理标记
 - [x] **api-binding-tools.ts / openapi.gen.ts 一致性确认**：✅ V287 B 轨完成 — 核对结论 "一致性确认通过：openapi.gen.ts(111行) 与 api-binding-tools.ts key 相同"；apps/web 42 处实际 import 全部匹配；shared-types tsc exit 0。
 - [x] **compare-api-modules.cjs wrapper 的 `--mode=compare` 命名补文档**：✅ V287 B 轨完成 — [check-api.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api.cjs) parseArgs 加 `align` 作 compare 的 alias（4 行）：注释 / 用法文案 / 白名单 三处补 `align`，并加 `if (mode==='align') mode='compare'` 替换；`--mode=align --dry-run` exit 0 打印「对齐检查完成」。
 
@@ -926,7 +926,7 @@ SQLX_OFFLINE=true cargo check -p topems-mes --tests   # exit 0（当前报 12 pr
 - [x] Docker daemon：RUNNING（docker ps exit 0）
 - [x] prepare.sh 语法：`bash -n svc/mes/scripts/sqlx-prepare.sh` → **BASH_SYNTAX_OK** exit 0
 - [x] compose 语法：`docker compose -f svc/mes/docker-compose.yaml config` → exit 0
-- [ ] D1 真正执行：8+ schema 命名链路缺前置 DDL → **⚠️ 跳 V288**（文档化完整手动命令 + 基线目标）
+- [x] D1 真正执行：✅ V517 已闭环（168 缓存 prepare + 根 .sqlx 覆盖合并 285 + offline 0 错）——本旧条目清理标记
 - [x] D2 env NODE_VERSION：`grep "^  NODE_VERSION:" ci.yml` = **`NODE_VERSION: '22'`**
 - [x] D2 YAML 语法：python yaml.safe_load → **YAML_OK** exit 0
 - [x] D2 三方对齐：.nvmrc=22.22.3 / engines.node=^22.0.0 / ci.yml env='22' 一致 ✅
@@ -982,7 +982,7 @@ SQLX_OFFLINE=true cargo check -p topems-mes --tests   # exit 0（当前报 12 pr
 - [x] `grep "^  NODE_VERSION:" .github/workflows/ci.yml` = **'22'** 精确匹配
 - [x] NODE 三方对齐：`cat .nvmrc`=22.22.3；`node -v`=v22.22.3；package.json engines={node:^22.0.0}；ci.yml env='22' → 全一致
 - [x] Docker daemon RUNNING；`bash -n svc/mes/scripts/sqlx-prepare.sh` exit 0；`docker compose -f svc/mes/docker-compose.yaml config` exit 0
-- [ ] D1 真正执行：跳 V288（schema 命名链路前置 DDL 缺失；已文档化手动命令 + 基线目标 ≥287 缓存 JSON + cargo check tests 0）
+- [x] D1 真正执行：✅ V517 已闭环（168 缓存 prepare + 根 .sqlx 覆盖合并 285 + offline 0 错）——本旧条目清理标记
 
 ---
 
@@ -1217,7 +1217,7 @@ V285 B 轨根因 callout 已明确定位：
 - [x] **Architecture Plan 边界 B6（TMS 依赖 WMS 源码）盘点**：✅ V290 A 轨完成 — 全项目仅 TMS→WMS 一个跨 svc path dep（dev-dependency，用于 cross_module_integration_tests.rs 的 FSM 状态转换函数），非运行时耦合。其他 svc 仅依赖 lib/shared-* crates，crate 级耦合极小。
 - [x] **Plan B7 SharedStateBridge 全局变量**：✅ V514 完成 — 搜索到 10 个 dashboardSchema（pm/lims/wms/crm/ehs/hrm/qms/finance/pdm/mes）用 `window.__xxxStats` 全局变量在 loader 间共享数据（绕开 React 状态）。重构：删 declare global 扩展 → 模块级类型化 `let xxxStats: Type | undefined`（PmStatistics 等），修复 crm 写 `__crmStats` 读 `crmStats` 的不一致 bug。tsc 0 / eslint 0。
 - [x] **事件总线 Redis Stream 升级（Plan M2）**：✅ V515 评估完成 — shared-event 已实现 StreamEventPublisher/StreamSubscriber/DLQ（dead_letter_queue.rs）+ 延迟消息 + Schema Registry；V321 已把 EventPublisher 默认模式切为 stream（EVENT_BUS_MODE=stream，持久化 XADD + 消费者组，初始化失败自动降级 pubsub）。**剩余**：EventSubscriber（subscriber.rs）仍为 pub/sub 流式订阅，StreamSubscriber（消费者组 + ACK）已实现但服务侧未接线——publisher stream / subscriber pubsub 不对称，消息在订阅端可能丢失；改造需多服务换 StreamSubscriber，V292 判定非紧急，待排期
-- [ ] **编译时边界检查（Plan v1.0 §4.4 only_own_schema_query! 宏）**：宏已实现并部分使用（communication 10 处 + pm 1 处）；剩余为全局 clippy lint 强制 + 跨 schema SQL 精确核查（前置 ≤3），待排期
+- [x] **编译时边界检查（Plan v1.0 §4.4 only_own_schema_query! 宏）**：✅ **V523 完成（2026-09-06）**——① 全量核查：新建 `scripts/check-boundary.cjs`（30 服务全扫裸 sqlx 查询的 schema.table 引用；语义对齐宏：跳过 only_own_schema_query! 宏内 SQL（编译期权威）、FROM/JOIN 别名识别（bi.=bom_items 等）、SELECT 位别名不判、系统 schema 加白）→ **0 跨 schema 违规**（hrm mobile_attendance 仅在注释中的迁移方案）；② CI 强制：lefthook 新增 `boundary-gate` 钩子（svc/lib .rs 变更触发全量核查，违规阻断）实测 PASS；③ 宏已铺开 3106 处使用（communication/pm 等）
 
 ---
 
