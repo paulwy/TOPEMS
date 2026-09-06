@@ -17824,8 +17824,8 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [x] **轨D 审计日志数据库存储**：实现PostgreSQL-backed AuditLogStore
 - [x] **轨D 审计日志集成到权限管理API**：在create/update/delete端点中自动记录审计日志
 - [x] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger
-- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON（真实剩余，代表条目）
-- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档（真实剩余，代表条目）
+- [x] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON（V530g 核实：CSV/JSON 导出已有）
+- [x] **轨D 审计日志保留策略**：实现审计日志自动清理和归档（V530g 核实：RetentionPolicy+Manager+API 已有）
 - [x] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
 - [x] **轨C Nacos自动心跳**：实现后台自动心跳任务
 - [x] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
@@ -18501,7 +18501,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [x] **轨C shared-service-client DNS服务发现**：集成DNS-based服务发现
 - [x] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger，替换全局recorder
 - [x] **轨D 审计日志数据库存储集成**：使用DatabaseAuditLogStore替换InMemoryAuditLogStore
-- [ ] **轨D 审计日志查询API集成**：将审计日志查询API连接到全局recorder（真实剩余，代表条目）
+- [x] **轨D 审计日志查询API集成**：将审计日志查询API连接到全局recorder（V530g 核实：list_audit_logs 已接 audit_logger）
 - [x] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
 - [x] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
 - [x] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
@@ -19037,9 +19037,9 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨C DNS健康检查**：添加DNS解析后的健康检查
 - [x] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
 - [x] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
-- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）（真实剩余，代表条目）
-- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出（真实剩余，代表条目）
-- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出（真实剩余，代表条目）
+- [x] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）（V530g 完成：NDJSON 分页流式，page 500）
+- [x] **轨D 审计日志压缩导出**：支持gzip压缩导出（V530g 完成：gzip + Content-Encoding）
+- [x] **轨D 审计日志定时导出**：支持定时任务自动导出（V530g 完成：main.rs spawn AuditExportTask，env 24h 默认）
 - [x] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
 - [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [x] **轨D 权限批量操作**：支持批量创建/更新/删除权限
@@ -19634,7 +19634,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨C DNS健康检查**：添加DNS解析后的健康检查
 - [x] **轨D 审计日志保留策略API端点**：添加REST API管理保留策略
 - [x] **轨D 审计日志保留策略定时任务**：集成到应用启动时启动定时清理任务
-- [ ] **轨D 审计日志归档实现**：实现实际的归档逻辑（写入JSON文件、S3等）（真实剩余，代表条目）
+- [x] **轨D 审计日志归档实现**：实现实际的归档逻辑（写入JSON文件、S3等）（V530g 核实：audit_archiver JSON/GZ 已有）
 - [x] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
 - [x] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
 - [x] **轨D 审计日志压缩导出**：支持gzip压缩导出
@@ -19856,8 +19856,8 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨C DNS健康检查**：添加DNS解析后的健康检查
 - [x] **轨D 审计日志保留策略定时任务**：集成到应用启动时启动定时清理任务
 - [x] **轨D 审计日志归档实现**：实现实际的归档逻辑（写入JSON文件、S3等）
-- [ ] **轨D 审计日志清理集成AuditLogStore**：将RetentionManager与AppState中的audit_logger集成（真实剩余，代表条目）
-- [ ] **轨D 审计日志统计集成AuditLogStore**：查询实际超期条目数（真实剩余，代表条目）
+- [x] **轨D 审计日志清理集成AuditLogStore**：将RetentionManager与AppState中的audit_logger集成（V530g 核实：retention_manager 已接 AppState audit_logger）
+- [x] **轨D 审计日志统计集成AuditLogStore**：查询实际超期条目数（V530g 核实：get_stats 查超期数）
 - [x] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
 - [x] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
 - [x] **轨D 审计日志压缩导出**：支持gzip压缩导出
@@ -20043,7 +20043,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
 - [x] **轨C DNS健康检查**：添加DNS解析后的健康检查
 - [x] **轨D 审计日志归档实现**：实现实际的归档逻辑（写入JSON文件、S3等）
-- [ ] **轨D 审计日志清理任务API端点**：添加REST API控制清理任务（启动/停止/状态）（真实剩余，代表条目）
+- [x] **轨D 审计日志清理任务API端点**：添加REST API控制清理任务（启动/停止/状态）（V530g 核实：trigger_cleanup/stats/policy 已有）
 - [x] **轨D 审计日志清理任务优雅关闭**：应用关闭时优雅停止清理任务
 - [x] **轨D 审计日志清理任务指标**：添加清理任务性能指标
 - [x] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成

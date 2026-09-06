@@ -87,6 +87,17 @@ impl AuditLogStore for MockAuditLogStore {
                         return false;
                     }
                 }
+                // V530g: time-window filters (RFC3339 strings compare lexicographically)
+                if let Some(start) = &query.start_time {
+                    if e.changed_at < *start {
+                        return false;
+                    }
+                }
+                if let Some(end) = &query.end_time {
+                    if e.changed_at > *end {
+                        return false;
+                    }
+                }
                 true
             })
             .cloned()

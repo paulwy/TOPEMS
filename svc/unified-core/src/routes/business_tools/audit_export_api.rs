@@ -77,6 +77,12 @@ pub struct ExportQuery {
     /// Maximum number of records to export. Defaults to 10000.
     #[serde(default = "default_limit")]
     pub limit: usize,
+    /// Stream export as NDJSON lines (paged). Defaults to false.
+    #[serde(default)]
+    pub stream: bool,
+    /// Gzip-compress the exported payload. Defaults to false.
+    #[serde(default)]
+    pub compressed: bool,
 }
 
 fn default_format() -> String {
@@ -98,6 +104,8 @@ impl Default for ExportQuery {
             start_time: None,
             end_time: None,
             limit: default_limit(),
+            stream: false,
+            compressed: false,
         }
     }
 }
@@ -207,39 +215,130 @@ pub async fn export_audit_logs(
 
     // Generate filename with timestamp
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let filename = format!("audit_logs_{}.{}", timestamp, format);
 
-    match format {
-        ExportFormat::Csv => {
-            let csv = entries_to_csv(&response.entries);
-            Ok((
-                StatusCode::OK,
-                [
-                    (header::CONTENT_TYPE, "text/csv; charset=utf-8".to_string()),
-                    (
-                        header::CONTENT_DISPOSITION,
-                        format!("attachment; filename=\"{}\"", filename),
+    // ===== Streaming export (V530g): paged NDJSON lines =====
+    if query.stream {
+        const PAGE_SIZE: usize = 500;
+        let logger = state.audit_logger.clone();
+        let mut page_query = audit_query.clone();
+        page_query.limit = PAGE_SIZE;
+
+        let stream = async_stream::stream! {
+            let mut offset = 0usize;
+            loop {
+                page_query.offset = offset;
+                match logger.query(&page_query).await {
+                    Ok(resp) => {
+                        if resp.entries.is_empty() {
+                            break;
+                        }
+                        for entry in resp.entries {
+                            if let Ok(json) = serde_json::to_string(&entry) {
+                                yield Ok::<axum::body::Bytes, std::io::Error>(
+                                    axum::body::Bytes::from(format!("{}\n", json)),
+                                );
+                            }
+                        }
+                        offset += PAGE_SIZE;
+                    }
+                    Err(e) => {
+                        yield Err(std::io::Error::other(format!(
+                            "audit log query failed: {}",
+                            e
+                        )));
+                        break;
+                    }
+                }
+            }
+        };
+        let body = axum::body::Body::from_stream(stream);
+        return Ok((
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, "application/x-ndjson".to_string()),
+                (
+                    header::CONTENT_DISPOSITION,
+                    format!(
+                        "attachment; filename=\"audit_logs_{}.ndjson\"",
+                        timestamp
                     ),
-                ],
-                csv,
-            )
-                .into_response())
+                ),
+            ],
+            body,
+        )
+            .into_response());
+    }
+
+    // ===== Buffered export with optional gzip =====
+    let (payload, content_type, ext): (String, &str, &str) = match format {
+        ExportFormat::Csv => (
+            entries_to_csv(&response.entries),
+            "text/csv; charset=utf-8",
+            "csv",
+        ),
+        ExportFormat::Json => (
+            entries_to_json(&response.entries),
+            "application/json",
+            "json",
+        ),
+    };
+
+    let filename = format!(
+        "audit_logs_{}.{}{}",
+        timestamp,
+        ext,
+        if query.compressed { ".gz" } else { "" }
+    );
+
+    if query.compressed {
+        use std::io::Write;
+        let mut encoder =
+            flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        if let Err(e) = encoder.write_all(payload.as_bytes()) {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error": format!("Failed to compress audit logs: {}", e),
+                })),
+            ));
         }
-        ExportFormat::Json => {
-            let json = entries_to_json(&response.entries);
-            Ok((
-                StatusCode::OK,
-                [
-                    (header::CONTENT_TYPE, "application/json".to_string()),
-                    (
-                        header::CONTENT_DISPOSITION,
-                        format!("attachment; filename=\"{}\"", filename),
-                    ),
-                ],
-                json,
-            )
-                .into_response())
-        }
+        let gz = match encoder.finish() {
+            Ok(gz) => gz,
+            Err(e) => {
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "error": format!("Failed to finish compression: {}", e),
+                    })),
+                ))
+            }
+        };
+        Ok((
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, content_type.to_string()),
+                (header::CONTENT_ENCODING, "gzip".to_string()),
+                (
+                    header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"{}\"", filename),
+                ),
+            ],
+            gz,
+        )
+            .into_response())
+    } else {
+        Ok((
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, content_type.to_string()),
+                (
+                    header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"{}\"", filename),
+                ),
+            ],
+            payload,
+        )
+            .into_response())
     }
 }
 
@@ -293,6 +392,8 @@ mod tests {
             start_time: Some("2026-01-01T00:00:00Z".to_string()),
             end_time: Some("2026-12-31T23:59:59Z".to_string()),
             limit: 100,
+            stream: false,
+            compressed: false,
         };
 
         let audit_query = AuditLogQuery::from(&export_query);
@@ -381,5 +482,37 @@ mod tests {
     fn test_entries_to_json_empty() {
         let json = entries_to_json(&[]);
         assert_eq!(json, "[]");
+    }
+
+    // ===== V530g: stream / compression query tests =====
+
+    #[test]
+    fn test_export_query_stream_default_false() {
+        let q: ExportQuery = serde_urlencoded::from_str("format=csv").unwrap();
+        assert!(!q.stream);
+        assert!(!q.compressed);
+    }
+
+    #[test]
+    fn test_export_query_stream_and_compressed() {
+        let q: ExportQuery =
+            serde_urlencoded::from_str("format=json&stream=true&compressed=true").unwrap();
+        assert!(q.stream);
+        assert!(q.compressed);
+    }
+
+    #[test]
+    fn test_gzip_roundtrip() {
+        use std::io::Read;
+        let payload = "tenant_id,user_id,role\n";
+        let mut encoder =
+            flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        std::io::Write::write_all(&mut encoder, payload.as_bytes()).unwrap();
+        let gz = encoder.finish().unwrap();
+
+        let mut decoder = flate2::read::GzDecoder::new(gz.as_slice());
+        let mut out = String::new();
+        decoder.read_to_string(&mut out).unwrap();
+        assert_eq!(out, payload);
     }
 }

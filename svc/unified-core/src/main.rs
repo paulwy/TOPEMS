@@ -600,6 +600,36 @@ async fn main() -> anyhow::Result<()> {
         std::future::pending::<()>().await;
     });
 
+    // V530g: Spawn background task for periodic audit log export
+    {
+        use crate::routes::business_tools::audit_archiver::{ArchiveConfig, AuditLogArchiver};
+        use crate::routes::business_tools::audit_export_task::{AuditExportTask, ExportTaskConfig};
+
+        let export_interval_hours: u64 = std::env::var("AUDIT_EXPORT_INTERVAL_HOURS")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(24);
+        let export_config = std::sync::Arc::new(tokio::sync::Mutex::new(
+            ExportTaskConfig::new(export_interval_hours * 3600),
+        ));
+        let archive_config = ArchiveConfig {
+            archive_dir: std::path::PathBuf::from("data/audit-export"),
+            ..Default::default()
+        };
+        let archiver =
+            std::sync::Arc::new(AuditLogArchiver::new(archive_config));
+        let mut export_task = AuditExportTask::new(
+            export_config,
+            state.audit_logger.clone(),
+            archiver,
+        );
+        export_task.start();
+        tracing::info!(
+            interval_hours = export_interval_hours,
+            "Audit log export task started"
+        );
+    }
+
     // Spawn WebSocket event bridge (Redis -> WebSocket)
     let ws_state_bridge = state.ws_state.clone();
     tokio::spawn(async move {

@@ -31,6 +31,9 @@ pub mod audit_integration;
 // V461: Audit log export API
 pub mod audit_export_api;
 
+// V461b: Audit log background export task
+pub mod audit_export_task;
+
 // V462: Permission batch operations API
 pub mod permission_batch_api;
 
