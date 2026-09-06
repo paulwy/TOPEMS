@@ -22,6 +22,7 @@ pub mod handler;
 pub mod resources;
 pub mod security;
 pub mod server;
+pub mod stdio;
 pub mod tools;
 
 pub use handler::create_mcp_routes;

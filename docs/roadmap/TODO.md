@@ -5604,7 +5604,7 @@ POST /mcp
 ### V335后续扩展（留给V336+）
 
 - [x] **轨C MCP SSE传输实现**：实现GET /mcp/sse，支持服务端推送通知和流式响应
-- [ ] **轨C MCP stdio传输**：支持本地AI Agent（如Cursor Local）通过stdio通信（真实剩余，代表条目）
+- [x] **轨C MCP stdio传输**：支持本地AI Agent（如Cursor Local）通过stdio通信（V530h 完成：run_stdio stdin/stdout JSON-RPC 行协议）
 - [x] **轨D ERP MCP Tools(4个)**：注册erp.list_orders, erp.get_order, erp.create_order, erp.update_inventory
 - [x] **轨D CRM工具连接真实API**：通过shared-service-client的crm_api连接真实CRM服务
 - [x] **轨B B1 API签名对齐实施**：逐函数对比@/api/erp/finance/与@/api/finance/，决定迁移或对齐策略 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
@@ -7179,7 +7179,7 @@ cargo run --bin mcp-stdio
 
 ### V351后续扩展（留给V352+）
 
-- [ ] **轨C stdio传输单元测试**：模拟 stdin/stdout 的端到端测试（真实剩余，代表条目）
+- [x] **轨C stdio传输单元测试**：模拟 stdin/stdout 的端到端测试（V530h 完成：duplex 模拟 5 测试含 initialize 字段/full session）
 - [x] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
 - [x] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法 — ✅ V513/V416-V417/V525 已闭环（6 页面直连 @/api/finance，erp/finance 目录已删，10 方法+expenseApi 已并入，tsc 0）——本旧条目清理标记
@@ -10990,7 +10990,7 @@ import { useMemo, useState } from 'react';
 
 ### V405后续扩展（留给V406+）
 
-- [ ] **轨C MCP stdio响应格式修复**：检查mcp-stdio子进程的initialize请求响应格式，确保返回正确的result字段（真实剩余，代表条目）
+- [x] **轨C MCP stdio响应格式修复**：检查mcp-stdio子进程的initialize请求响应格式，确保返回正确的result字段（V530h 完成：initialize result 字段测试验证正确）
 - [x] **轨C 所有测试用例验证**：运行所有7个测试用例，验证全部通过
 - [x] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
 - [x] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务 — ✅ V529c 核查完成：全部 14 工具（crm/erp/finance/hr/mes/ehs/wms/qms/pm/lims/bi/aps/cs/scm）均已接真实调用降级 mock（service_base_url + http_call，MES 8030/EHS 8052/LIMS 等端口），cargo check 0 错 · ai 1151 测试全过——本旧条目清理标记
@@ -17519,7 +17519,7 @@ TOPEMS_SERVICE_ERP_TAGS=production
 - [x] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
 - [x] **轨D 权限管理API文档**：✅ V529b 已完成 — unified-core IAM 权限管理核心端点补 #[utoipa::path]（roles×2/permissions×1/positions×1/verify×2/my-permissions×1/user-permissions×1）并注册 IamApiDoc；新增 tests/openapi_spec_tests.rs 3 个 spec 守卫（8 权限端点 + auth/users + 无重复路径）；cargo check 0 错 · 511 库测试 + 3 spec 测试全过
 - [x] **轨D 权限批量操作**：支持批量创建/更新/删除权限（V530f 完成：trait bulk* + POST/PUT/DELETE /permissions/bulk，197 测试过）
-- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入（真实剩余，代表条目）
+- [x] **轨D 权限导出/导入**：支持权限配置的导出和导入（V530h 核实：与权限导出导入重复，V530f 已闭环）
 - [x] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）（V530f 完成：PermissionChangeNotifier 事件总线 + 批量 publish；Webhook 外部投递待配置）
 - [x] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
 - [x] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
@@ -21473,7 +21473,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨C SSE端到端测试**：SSE连接→POST→SSE响应全流程测试（V530d 核实已闭环：eslint 0 违规 / SSE-005 已覆盖全流程）
 - [x] **轨C DNS健康检查 + DNS集成测试**：DNS解析后端点健康检查 + 真实DNS服务器集成测试
 - [ ] **轨C K8s/Eureka/Nacos完善**：集成测试 + watch实时感知 + 心跳/长轮询（真实剩余，代表条目）
-- [ ] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose（真实剩余，代表条目）
+- [x] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose（V530h 核实：与权限存储健康检查/指标重复，V530e 已闭环）
 - [x] **四轨并行继续**：V333-V475连续一百四十三次交付验证成功，V476继续四轨合并交付模式
 
 ---
