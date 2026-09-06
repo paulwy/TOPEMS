@@ -13,6 +13,7 @@ use utoipa::OpenApi;
 
 use crate::models::*;
 use crate::modules::*;
+use crate::modules::settlement_center::{handlers as settlement_handlers, models as settlement_models};
 use crate::shared::AppState;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
@@ -62,6 +63,32 @@ use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowA
             CreateApprovalNodeRequest,
             ApprovalConfigResponse,
             FinanceDashboardStats,
+            // ---- settlement_center ----
+            settlement_models::UnifiedReconciliation,
+            settlement_models::ReconciliationDetail,
+            settlement_models::LinkedSettlementSummary,
+            settlement_models::CreateReconciliationRequest,
+            settlement_models::ReconcileRequest,
+            settlement_models::AutoReconcileRequest,
+            settlement_models::ReconciliationListQuery,
+            settlement_models::UnifiedSettlement,
+            settlement_models::SettlementDetail,
+            settlement_models::LinkedReconciliationSummary,
+            settlement_models::CreateSettlementRequest,
+            settlement_models::SettlementListQuery,
+            settlement_models::ReconciliationSettlementLink,
+            settlement_models::CreateLinkRequest,
+            settlement_models::LinkListQuery,
+            settlement_models::DifferenceAdjustment,
+            settlement_models::CreateDifferenceRequest,
+            settlement_models::DifferenceListQuery,
+            settlement_models::SettlementCenterDashboard,
+            settlement_models::CenterStatistics,
+            settlement_models::ReconciliationStatistics,
+            settlement_models::SettlementStatistics,
+            settlement_models::DifferenceStatistics,
+            settlement_models::LinkStatistics,
+            settlement_models::DashboardSummary,
         ),
     ),
     paths(
@@ -154,6 +181,26 @@ use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowA
         crate::modules::financial_reports::delete_report_subscription,
         crate::modules::financial_reports::send_report_now,
         crate::modules::financial_reports::get_subscription_history,
+        // ---- settlement_center ----
+        settlement_handlers::list_reconciliations,
+        settlement_handlers::create_reconciliation,
+        settlement_handlers::get_reconciliation,
+        settlement_handlers::reconcile,
+        settlement_handlers::auto_reconcile,
+        settlement_handlers::list_settlements,
+        settlement_handlers::create_settlement,
+        settlement_handlers::get_settlement,
+        settlement_handlers::approve_reconciliation,
+        settlement_handlers::approve_settlement,
+        settlement_handlers::create_link,
+        settlement_handlers::delete_link,
+        settlement_handlers::list_links,
+        settlement_handlers::list_differences,
+        settlement_handlers::create_difference,
+        settlement_handlers::approve_difference,
+        settlement_handlers::reject_difference,
+        settlement_handlers::get_dashboard,
+        settlement_handlers::get_statistics,
     ),
     tags(
         (name = "Finance", description = "财务管理"),

@@ -5299,6 +5299,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(forecast_v53::create_routes())
         .merge(risk_v54::create_routes())
         .merge(settlement_v55::create_routes())
+        .merge(settlement_center::create_routes())
         .merge(tax_v56::create_routes())
         .merge(reports_v57::create_routes())
         .merge(treasury_v58::create_routes())
