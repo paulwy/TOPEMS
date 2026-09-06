@@ -1537,7 +1537,7 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强（当前 Pub/Sub + DLQ 已满足基本需求）
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **pre-commit hook 恢复**：V294 优化 lefthook.yml — pre-commit 移除重型 gate（cargo-test/clippy-check，移至 pre-push），启用 parallel: true，目标 pre-commit < 60s；pre-push 补全 cargo-test-workspace
 
 ## 🎯 V294 — 4 轨并行（lefthook pre-commit优化 · hook耗时验证 · pre-push补全 · hook分工文档化）（并行推进 · ✅ 完成）
@@ -1608,7 +1608,7 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **pre-commit hook 实际运行验证**：V295 首次正常 commit（不用 --no-verify），验证 V294 优化后的 pre-commit hook 可正常运行
 
 ## 🎯 V295 — 4 轨并行（eslint --fix全量格式化 · src/ai第二批未使用常量清理 · 全量门禁验证 · pre-commit hook实测）（并行推进 · ✅ 完成）
@@ -1685,7 +1685,7 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint warnings 清零（第三批）**：V296 清理 src/ai/ 40 个 TS6192 未使用 import + 4 个 snippet 数组 + 11 个单行未使用项，warnings 从 2752 降至 2610（减少 142）
 - [x] **pre-commit hook 耗时实测记录**：V295 首次无 --no-verify commit 实测 36.07s（14 gate 并行，瓶颈 = frontend-typecheck 36.04s），远低于 60s 目标
 
@@ -1749,9 +1749,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
 - [x] **eslint warnings 清零（第四批）**：V297 清理 src/ai/ 30 个未使用项（governance/native/quality/review/security/ux 子目录的 DEFAULT_* 数组/类型/class/function），tsc --noUnusedLocals src/ai/ 0 errors；eslint warnings 从 2610 降至 2601
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings，需逐个评估依赖数组完整性
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零 — 默认 eslint 配置（react-hooks/exhaustive-deps=warn）全 src 0 命中（V494-V509 批次已处理完，TODO 403 为过时数据）
 
 ## 🎯 V297 — 4 轨并行（eslint warnings第四批清理 · 孤儿代码修复 · 全量验证 · 文档化）（并行推进 · ✅ 完成）
 
@@ -1818,9 +1818,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings，需逐个评估依赖数组完整性
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings，需逐个替换为具体类型或 `unknown`
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零 — 默认 eslint 配置（react-hooks/exhaustive-deps=warn）全 src 0 命中（V494-V509 批次已处理完，TODO 403 为过时数据）
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零 — 默认配置全 src 0 命中（V509+ 批次类型强化完成，TODO 307 为过时数据）
 - [x] **src/ 其他目录未使用项清理（第五批 types/）**：V298 清理 types/qms.ts + types/wms.ts 共 129 项（首轮 115 + 级联 14），tsc --noUnusedLocals types/ 0 errors，净删 1729 行
 - [ ] **src/ 其他目录未使用项清理（第六批）**：全 src/ 仍有 ~1459 个 tsc 未使用项（components/templates 48 / pages/admin 39 / api/qms 38 / hooks/useExternalErp.ts 29 等），可继续分批清理
 
@@ -1873,9 +1873,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [x] **src/ 其他目录未使用项清理（第六批 api/）**：V299 清理 api/qms/types.ts + api/mes/types.ts + api/workflow/types.ts + api/erp/masterData.ts 共 152 项（5 轮迭代，级联效应显著），tsc --noUnusedLocals 目标 4 files 0 errors，净删 1405 行
 - [x] **src/ 其他目录未使用项清理（第七批）**：V300 已做 hooks/ 96 项，V476 再清级联死代码 3 项（useVoucherTemplate.ts 死文件 + api/index.ts / hooks/features/finance/index.ts 两处零消费 re-export 移除），级联效应显著
 
@@ -1941,9 +1941,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [x] **v6 脚本 import 处理改进**：V300 实现单符号移除（removeImportSymbol 函数），支持 named import / default import / namespace import 三种模式；多行 import 和 TS6192 仍需手动处理
 - [x] **src/ 其他目录未使用项清理（第七批 hooks/）**：V300 清理 hooks/useExternalErp.ts + useVoucherTemplate.ts + useErp.ts + useConsolidation.ts + 级联 useConsolidationScope.ts 共 96 项，tsc --noUnusedLocals 目标 5 files 0 errors，净删 2014 行
 - [ ] **src/ 其他目录未使用项清理（第八批）**：全 src/ 仍有 ~1225 个 tsc 未使用项（pages/doc/DocumentsPage 22 / components/templates 17 / api/qms 16 / store/pluginStore 15 等），可继续用 v6 迭代脚本分批清理
@@ -2013,9 +2013,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动修复 8 项，V301 手动修复 33 项
 - [x] **src/ 其他目录未使用项清理（第八批）**：V301 清理 pages/doc/DocumentsPage(22→级联) + components/templates/list/hooks(17→级联) + api/workflow(16) + store/pluginStore(15) = 136 项，tsc 目标 4 files 0 errors，净删 1990 行
 - [ ] **src/ 其他目录未使用项清理（第九批）**：全 src/ 仍有 ~1089 个 tsc 未使用项，推荐 utils/format(12) + pages/bi/GisPage(12) + lib/pwa(12) + docs/DesignTokens(11) + components/bi/ChartLibrary(11)
@@ -2079,9 +2079,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项
 - [x] **src/ 其他目录未使用项清理（第九批）**：V302 清理 utils/format(12→级联) + pages/bi/GisPage(12) + lib/pwa(12→级联) + docs/DesignTokens(11) + components/bi/ChartLibrary(11→级联polar) = 72 项，tsc 目标 6 files 0 errors，净删 981 行
 - [ ] **src/ 其他目录未使用项清理（第十批）**：全 src/ 仍有 ~1017 个 tsc 未使用项，推荐 api/qms/adapters(10) + dev-platform/v53(9) + pages/admin/TenantDetailPage(8) + components/templates/DashboardTemplate(8) + store/biStore(7)
@@ -2151,9 +2151,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项
 - [x] **src/ 其他目录未使用项清理（第十批）**：V303 清理 api/qms/adapters(10→级联30) + dev-platform/v53(9) + TenantDetailPage(8) + DashboardTemplate(8) + biStore(7) = 70 项，tsc 目标 5 files 0 errors，净删 391 行
 - [ ] **src/ 其他目录未使用项清理（第十一批）**：全 src/ 仍有 ~947 个 tsc 未使用项，推荐 services/VoucherTemplateEngine(7) + microfrontend/runtime/RuntimeDashboard(7) + microfrontend/governance/DependencyGovernance(7) + hooks/useUiState(7) + hooks/useCode(7)
@@ -2221,9 +2221,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项
 - [ ] **v6 脚本 class 声明完整移除**：V304 移除 VoucherTemplateEngine class 时留下孤儿类体导致 TS1128 语法错误，需改进括号跟踪（class 体含 private 方法嵌套）
 - [x] **src/ 其他目录未使用项清理（第十一批）**：V304 清理 services/VoucherTemplateEngine(7→级联12) + RuntimeDashboard(7) + DependencyGovernance(7) + useUiState(7) + useCode(7) = 47 项，tsc 目标 5 files 0 errors，净删 1175 行
@@ -2298,9 +2298,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项，V305 手动 6 项
 - [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 对象孤儿体（`> = { ... };`），需改进复杂类型注解的声明行识别
 - [x] **src/ 其他目录未使用项清理（第十二批）**：V305 清理 config/plugins.config(7) + config/deployment(7) + gis/performance(7→级联) + ehs/riskUtils(7) + PermissionGate(7→级联) = 52 项，tsc 目标 5 files 0 errors，净删 835 行
@@ -2376,9 +2376,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V306 累计手动 117 项
 - [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 孤儿对象体 + V306 孤儿闭合括号，需从 `=` 后开始括号跟踪
 - [x] **src/ 其他目录未使用项清理（第十三批）**：V306 清理 ErrorBoundary(7) + api/monitor/index(7) + api/iam/types(7) + api/admin/index(1→级联消解) + utils/query-cost-analyzer(6) = 28 项，tsc 目标 5 files 0 errors，净删 176 行
@@ -2452,9 +2452,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V307 累计手动 120 项
 - [ ] **v6 脚本 class/const/function 完整移除**：V304/V305/V306 三代孤儿代码问题，需从 `=`/`{` 后开始括号跟踪
 - [x] **src/ 其他目录未使用项清理（第十四批）**：V307 清理 formSchemas(6→级联) + uiStore(6) + useFinance(6) + permissionMapping(6→清空) + FormFields(6→清空) = 54 项，tsc 目标 5 files 0 errors，净删 555 行
@@ -2534,9 +2534,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V308 累计手动 128 项
 - [ ] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306 三代孤儿代码问题，V308 class 移除成功；需支持 let 声明和多行 import
 - [x] **src/ 其他目录未使用项清理（第十五批）**：V308 清理 ValidationError(6→级联) + api/ai/index(6 多行import) + resource-optimizer(5→级联) + pwa-cache-optimizer(5含class) + performance(5) = 43 项，tsc 目标 5 files 0 errors，净删 805 行
@@ -2619,9 +2619,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V309 累计手动 132 项
 - [ ] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306/V309 孤儿代码问题，需从 `=`/`{` 后开始括号跟踪
 - [x] **src/ 其他目录未使用项清理（第十六批）**：V309 清理 permissions(5→级联) + routes(5) + usePerformanceMonitor(5→级联) + moduleLoadingStore(5→孤儿体) + listParamMapping(5) = 34 项，tsc 目标 5 files 0 errors，净删 933 行
@@ -2702,9 +2702,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V310 累计手动 146 项
 - [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量（isAnimated/children/getTouchStyles/target/index），sed 全局删除误删 used children 需恢复
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题，需从 `=>` 后 `{` 开始括号跟踪
@@ -2796,9 +2796,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V311 累计手动 152 项
 - [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量，需精确定位行号
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 `private flushed = false` class field，脚本不支持
@@ -2889,9 +2889,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V312 累计手动 158 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312 手动修复解构变量，需精确定位行号
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
@@ -2983,9 +2983,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V313 累计手动 164 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
@@ -3077,9 +3077,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V314 累计手动 170 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
@@ -3164,9 +3164,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V315 累计手动 178 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
@@ -3253,9 +3253,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V316 累计手动 200+ 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
@@ -3368,9 +3368,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V317 累计手动 230+ 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field，V317 cross-framework 3 adapter class private field 未使用
@@ -3477,9 +3477,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V318 累计手动 240+ 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field
@@ -3596,9 +3596,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V319 累计手动 250+ 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field，V319 test-generator private method/field
@@ -3726,9 +3726,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量（DashboardPage fullLinkStats）
 - [ ] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除
@@ -3855,9 +3855,9 @@ let failed_count = 0;
 - [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
-- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
-- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [x] **mes 集成测试 sqlx 缓存补充**：✅ V517 已闭环（根 .sqlx 285 缓存 + offline 0 错）——本旧条目清理标记
+- [x] **eslint exhaustive-deps 修复**：✅ V525 核查清零（同 V494-V509 批次处理，0 命中）——本旧条目清理标记
+- [x] **eslint no-explicit-any 修复**：✅ V525 核查清零（同 V509+ 批次）——本旧条目清理标记
 - [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量
 - [ ] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除
