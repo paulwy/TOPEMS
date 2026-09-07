@@ -126,8 +126,10 @@
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;box-sizing:border-box;font-size:13px;line-height:1.8;">
     <b>第一批（低投入高收益）· 已闭环（提交 19cc25630）</b>：
     ① lowcode dead config——已核实为注释残留（V2026.08 移除），无消费者，无需动作；② README 迁移数量——database/README.md 时间戳制 31→75（实测 75+14 序号制=89）；③ 前端 API 统一——vehicle/announcement 三份合并：删除 erp/admin/vehicle.ts、admin/announcement.ts（core 为超集），index.ts 导出改指 core，补 vehicleRequestApi（闭包转发），修正 listVehicleRequests 返回类型对齐后端 Vec，publish/unpublish 移除空 body。验证：erp-api 97/97、web tsc 0、eslint 0。<br>
-    <b>第二批（结构性）</b>：
-    ④ 静态 DDL 收敛：administration_tables.sql 等业务表 DDL 纳入迁移流程（或迁移生成基准快照，消除双轨）；⑤ unified-core 三 schema 访问审计：按服务拆分或明确共享只读边界。<br>
+    <b>第二批（结构性）· 已闭环（提交 6b4d421a1）</b>：
+    ④ 静态 DDL 收敛——新建迁移 20260907000001（erp.* 7 表 + public 5 孤儿表 + 23 索引 + updated_at 触发器，幂等），administration_tables.sql / init.sql 收敛为说明文件，消除生产/升级路径缺失业务表风险；⑤ unified-core schema 访问审计——修正原判断（iam.* 属 unified-core 自身模块，非越权），真问题为 public.audit_logs 在 analytics/erp/wms 共 6 处无前缀引用，已全部显式化。验证：迁移 SQL 静态校验通过，erp/analytics/wms cargo check 通过。<br>
+    <b>新增遗留（需业务决策）</b>：
+    ⑨ notifications / patrol_records / scan_records 同名不同结构冲突（database/init 移动端版 vs 历史 postgres 桌面版，CREATE TABLE IF NOT EXISTS 先到先得），需确认移动端/桌面端建模口径后统一。<br>
     <b>第三批（治理性）</b>：
     ⑥ only_own_schema_query 增强（编译期 schema 校验或 lint 规则）；⑦ 多职责迁移拆分规范（每迁移单一职责）；⑧ 服务前缀命名对齐（svc 目录 ↔ 路由前缀统一命名空间）。
   </div>
