@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS 全项目评估报告 · 2026-09-07</title>
+<style>
+  :root{
+    --text:#1A1B1C; --text2:#6B7280; --bg:#F4F3EE; --card:#FFFFFF;
+    --border:#E4E3DD; --accent:#8BC8EA; --ok:#52C41A; --warn:#FAAD14; --err:#EA6668; --crit:#B91C1C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Roboto','PingFang SC','Segoe UI',Arial,sans-serif;padding:24px;line-height:1.6;}
+  .wrap{max-width:980px;margin:0 auto;}
+  h1{font-size:24px;font-weight:600;}
+  .meta{color:var(--text2);font-size:13px;margin:4px 0 20px;}
+  h2{font-size:17px;font-weight:600;margin:28px 0 12px;padding-left:10px;border-left:4px solid var(--accent);}
+  h3{font-size:15px;font-weight:600;margin:18px 0 10px;}
+  .cards{display:flex;flex-wrap:wrap;gap:12px;}
+  .card{flex:1 1 200px;min-width:0;background:var(--card);border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;padding:14px 16px;}
+  .card .num{font-size:26px;font-weight:700;}
+  .card .lbl{color:var(--text2);font-size:12px;margin-top:2px;}
+  .c-ok{color:var(--ok);} .c-warn{color:var(--warn);} .c-err{color:var(--err);} .c-crit{color:var(--crit);}
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13px;background:var(--card);border-radius:12px;overflow:hidden;}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  th{background:#F0EFEA;font-weight:600;color:var(--text2);white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  code{background:#EFEEEA;padding:1px 6px;border-radius:4px;font-size:12px;color:#0F4C81;}
+  .sev{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;}
+  .sev.p0{background:var(--crit);} .sev.p1{background:var(--err);} .sev.p2{background:#B45309;} .sev.p3{background:#3B82F6;}
+  .box{border-radius:12px;padding:12px 16px;font-size:13px;margin:10px 0;}
+  .box-ok{background:rgba(82,196,26,0.10);border-left:4px solid var(--ok);}
+  .box-warn{background:rgba(250,173,20,0.12);border-left:4px solid var(--warn);}
+  .box-err{background:rgba(234,102,104,0.10);border-left:4px solid var(--err);}
+  ul{padding-left:20px;} li{margin:4px 0;font-size:13.5px;}
+  .chart{background:var(--card);border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;padding:14px;margin:10px 0;}
+  .chart div{width:100%;min-width:0;box-sizing:border-box;}
+  .note{color:var(--text2);font-size:12px;margin:6px 0 0;}
+  .footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);color:var(--text2);font-size:12.5px;}
+  @media(max-width:600px){ body{padding:14px;} h1{font-size:20px;} .card{flex:1 1 140px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>TOPEMS 全项目评估报告</h1>
+<div class="meta">评估日期 2026-09-07 · 仓库 /Users/air/TOPEMS · 1765 提交 · HEAD 379d0af39 · main 与 origin 同步 · 工作区干净 · 数据来源：本地实测（测试/构建/门禁/审计全量执行）</div>
+
+<h2>一、健康总览（已验证项）</h2>
+<div class="cards">
+  <div class="card"><div class="num c-ok">7056</div><div class="lbl">全前端测试通过（web 6956 + desktop 32 + mobile 11 + hooks 31 + types 26）</div></div>
+  <div class="card"><div class="num c-ok">0</div><div class="lbl">全 workspace tsc 错误（TS 6.0.3 统一）</div></div>
+  <div class="card"><div class="num c-ok">0</div><div class="lbl">eslint / 硬编码 / i18n 门禁全量错误</div></div>
+  <div class="card"><div class="num c-ok">✓</div><div class="lbl">web 构建 + 4 库包 dist + frozen-lockfile 一致性</div></div>
+  <div class="card"><div class="num c-ok">10</div><div class="lbl">生产代码 any 泄漏（373 处中 363 在测试）</div></div>
+  <div class="card"><div class="num c-ok">0</div><div class="lbl">生产代码 ts-ignore（15 处全在测试文件）· 无 &gt;400KB 大文件</div></div>
+</div>
+<div class="box box-ok">✅ <b>工程卫生基线健康</b>：vitest 4.1.10 统一、TS5090/TS5103 修复、库包 dist 产出、component flaky 根治、mobile 类型链修复、i18n/eslint 门禁全量清零、V513 文档闭环（21 提交已推送）。测试 / 类型 / 构建 / 门禁四维全绿。</div>
+
+<h2>二、问题清单（按严重度）</h2>
+
+<h3>P0 · 依赖安全 Critical（3 项 / 共 82 漏洞：3 critical · 40 high · 28 moderate · 4 low）</h3>
+<table>
+<tr><th>包</th><th>受影响版本</th><th>漏洞</th><th>修复</th><th>影响面</th></tr>
+<tr><td><code>decompress</code></td><td>≤4.2.1</td><td>解压路径穿越可创建任意文件</td><td class="c-err">无官方修复</td><td>工具链传递依赖</td></tr>
+<tr><td><code>tar</code></td><td>≤7.5.18</td><td>解压解析 DoS（无限循环/内存耗尽）</td><td>≥7.5.19</td><td>构建/发布链多版本残留</td></tr>
+<tr><td><code>vitest</code></td><td>&lt;3.2.6</td><td>UI server 监听时任意代码执行（RCE）</td><td>≥3.2.6</td><td>web 实际 4.1.10 ✅；lock 其他链（storybook 等）残留旧版</td></tr>
+</table>
+
+<h3>P1 · 运行时高危（High 中代表性项）</h3>
+<table>
+<tr><th>包</th><th>实际版本</th><th>漏洞</th><th>修复</th><th>风险面</th></tr>
+<tr><td><code>react-router</code></td><td class="c-err">7.18.1</td><td>RSC 模式 CSRF Bypass（CVE-2025-53846）</td><td>≥7.18.2</td><td><b>运行时直接依赖</b>，差 1 个补丁版</td></tr>
+<tr><td><code>xlsx</code></td><td class="c-err">0.18.5</td><td>Prototype Pollution + ReDoS ×2</td><td class="c-err">官方无修复</td><td>运行时导出功能依赖（SheetJS 已停维护）</td></tr>
+<tr><td><code>nanoid</code></td><td class="c-warn">3.3.16</td><td>custom generators 可无限循环</td><td>≥3.3.18</td><td>运行时/工具链</td></tr>
+<tr><td><code>@xmldom/xmldom</code></td><td>&lt;0.8.13</td><td>XML 注入 ×5</td><td>≥0.8.13</td><td>工具链传递依赖</td></tr>
+<tr><td><code>semver / cross-spawn / js-yaml / brace-expansion / tar 系列</code></td><td>—</td><td>ReDoS / 二次 CPU 消耗 / 路径穿越</td><td>升级</td><td>构建与发布链传递依赖</td></tr>
+<tr><td><code>vite / postcss</code></td><td class="c-ok">8.1.5</td><td>fs.deny 绕过（≤6.4.2）/ 路径穿越（≤8.5.17）</td><td class="c-ok">已满足</td><td>构建链（lock 中旧版本需清理）</td></tr>
+</table>
+<div class="box box-err">⚠️ <b>合计 82 个已知漏洞</b>（pnpm audit，官方 registry）。多数为构建/工具链传递依赖，但 <b>react-router（CSRF）与 xlsx（原型污染）为运行时直接依赖</b>，建议优先处理。</div>
+
+<h3>P2 · 配置与流程</h3>
+<ul>
+  <li><b>pnpm audit 本地静默失效</b>：registry 配置为 npmmirror，其 <code>/-/npm/v1/security/audits</code> 端点缺失 → 本地 audit 需 <code>--registry https://registry.npmjs.org</code> 才能运行</li>
+  <li><b>audit 未集成 CI 门禁</b>：.github/workflows/ci.yml 无依赖审计环节 → 新漏洞引入无拦截</li>
+  <li><b>版本节奏治理草案待确认</b>：release-governance.md 标注"待用户确认生效"（V530d）</li>
+  <li><b>本地分支 analyze-project-z09ZSl 未清理</b>：纯本地、相对 main 无未合并提交（可选删除）</li>
+  <li><b>eslint-disable 99 处</b>：需抽查是否过度豁免（含导航/路由等已知白名单）</li>
+</ul>
+
+<h3>P3 · 低风险观测</h3>
+<ul>
+  <li><b>console.log 11 处</b>：集中于 bff 模块（api/bff、hooks/bff、useWebVitals、code-completion）——疑似调试残留，建议收敛为 logger</li>
+  <li><b>TODO/FIXME 15 文件</b>：待人工巡检后归档清理</li>
+  <li><b>releases/ 归档 1.6G</b>：保留为发布记录（V530d 已清理 target 31G，属既定策略）</li>
+</ul>
+
+<h2>三、可视化</h2>
+<div class="chart"><div id="pie" style="height:300px;"></div><div class="note">图 1：依赖漏洞严重度分布（pnpm audit 实测，82 项）。健康项为工程验证通过指标计数。</div></div>
+<div class="chart"><div id="bar" style="height:300px;"></div><div class="note">图 2：代码质量关键计数（前端 2929 个源码文件；any/ts-ignore 区分生产与测试）。</div></div>
+
+<h2>四、建议优先级</h2>
+<table>
+<tr><th>优先级</th><th>动作</th><th>预期效果</th></tr>
+<tr><td><span class="sev p0">P0</span></td><td><code>pnpm audit fix</code> 干跑评估 + 手动升级 <code>tar</code>/<code>decompress</code> 链；清理 lock 中 vitest&lt;3.2.6 残留（storybook 链隔离或升级）</td><td>消除 3 个 critical</td></tr>
+<tr><td><span class="sev p1">P1</span></td><td>升级 <code>react-router</code>→7.18.2（web 运行时）；<code>nanoid</code>→3.3.18；评估 <code>xlsx</code> 替换（exceljs）或明确风险接受</td><td>运行时高危清零</td></tr>
+<tr><td><span class="sev p2">P2</span></td><td>audit 集成 CI（官方 registry 端点）；确认 release-governance 生效；清理 analyze-project-z09ZSl；抽查 eslint-disable</td><td>漏洞引入可拦截、流程闭环</td></tr>
+<tr><td><span class="sev p3">P3</span></td><td>bff console.log 收敛为 logger；TODO 巡检归档</td><td>观测噪声清零</td></tr>
+</table>
+
+<div class="box box-ok"><b>结论</b>：工程卫生基线健康（测试 / 类型 / 构建 / 门禁四维全绿，类型安全良好：生产 any 10 / ts-ignore 0），主要风险集中在<b>依赖安全</b>（82 漏洞、3 critical、2 个运行时直接依赖：react-router CSRF、xlsx 原型污染）与<b> audit 门禁缺失</b>。建议按 P0→P1 顺序处理依赖升级，其余为低风险收尾项。</div>
+
+<div class="footer">数据口径：测试/类型/构建/门禁数据为 2026-09-07 全量实测；漏洞数据来自 <code>pnpm audit --registry https://registry.npmjs.org</code>（npmmirror 端点缺失，官方源可查）；代码质量计数为 grep 实测（apps/web/src）。评估期间沙箱间歇故障未影响上述数据完整性。</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+(function(){
+  try {
+    if (typeof echarts === 'undefined') { return; }
+    var p = document.getElementById('pie');
+    var b = document.getElementById('bar');
+    if (p) {
+      var c1 = echarts.init(p);
+      c1.setOption({
+        backgroundColor:'transparent',
+        tooltip:{trigger:'item',triggerOn:'click',renderMode:'richText',confine:true,textStyle:{fontSize:11}},
+        legend:{bottom:0,itemWidth:14,itemHeight:8,textStyle:{color:'#6B7280',fontSize:11}},
+        series:[{
+          name:'漏洞',type:'pie',radius:['42%','68%'],center:['50%','48%'],avoidLabelOverlap:true,
+          label:{formatter:'{b}: {c} ({d}%)',color:'#555',fontSize:11},
+          data:[
+            {value:3,name:'Critical',itemStyle:{color:'#B91C1C'}},
+            {value:40,name:'High',itemStyle:{color:'#EA6668'}},
+            {value:28,name:'Moderate',itemStyle:{color:'#FAAD14'}},
+            {value:4,name:'Low',itemStyle:{color:'#A3D5E8'}}
+          ]
+        }]
+      });
+      window.addEventListener('resize',function(){c1.resize();});
+    }
+    if (b) {
+      var c2 = echarts.init(b);
+      c2.setOption({
+        backgroundColor:'transparent',
+        tooltip:{trigger:'axis',triggerOn:'click',renderMode:'richText',confine:true,textStyle:{fontSize:11}},
+        grid:{left:120,right:24,top:20,bottom:30,containLabel:true},
+        xAxis:{type:'value',axisLabel:{color:'#555',fontSize:11}},
+        yAxis:{type:'category',data:['TODO/FIXME 文件','console.log','eslint-disable','ts-ignore(全测试)','any(测试)','any(生产)'],axisLabel:{color:'#555',fontSize:11}},
+        series:[{
+          type:'bar',data:[
+            {value:15,itemStyle:{color:'#FAAD14'}},
+            {value:11,itemStyle:{color:'#FAAD14'}},
+            {value:99,itemStyle:{color:'#8BC8EA'}},
+            {value:15,itemStyle:{color:'#A3D5E8'}},
+            {value:363,itemStyle:{color:'#A3D5E8'}},
+            {value:10,itemStyle:{color:'#52C41A'}}
+          ],
+          label:{show:true,position:'right',fontSize:10,color:'#555'},
+          barWidth:16
+        }]
+      });
+      window.addEventListener('resize',function(){c2.resize();});
+    }
+  } catch(e){ /* 图表失败保留静态表格 */ }
+})();
+</script>
+</body>
+</html>
