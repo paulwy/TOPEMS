@@ -122,15 +122,27 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const kbIdRef = useRef<string | null>(null);
 
-  // 上传文档：取默认知识库 id（懒加载），multipart 上传后刷新列表
+  // 上传文档：取默认知识库 id（懒加载），无知识库时自动创建默认知识库，multipart 上传后刷新列表
   const ensureKbId = useCallback(async (): Promise<string | null> => {
     if (kbIdRef.current) return kbIdRef.current;
     try {
       const res = await knowledgeApi.listKnowledgeBases({ page_size: 1 });
       const kb = res?.data?.[0];
-      if (!kb) return null;
-      kbIdRef.current = kb.id;
-      return kb.id;
+      if (kb) {
+        kbIdRef.current = kb.id;
+        return kb.id;
+      }
+    } catch {
+      // 列表查询失败则继续尝试自动创建
+    }
+    try {
+      const created = await knowledgeApi.createKnowledgeBase({
+        name: i18n.t('ai.knowledge_base.label.default_kb_name'),
+        kb_type: 'general',
+      });
+      if (!created?.data?.id) return null;
+      kbIdRef.current = created.data.id;
+      return created.data.id;
     } catch {
       return null;
     }

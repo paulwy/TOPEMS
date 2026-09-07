@@ -560,7 +560,8 @@
         "selected_docs": "已选择{{count}}个文档",
         "knowledge_document": "知识文档",
         "smart_qa": "智能问答",
-        "updated_at": "更新于"
+        "updated_at": "更新于",
+        "default_kb_name": "默认知识库"
       },
       "message": {
         "copied": "已复制",

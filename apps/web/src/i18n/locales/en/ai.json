@@ -560,7 +560,8 @@
         "selected_docs": "{{count}} documents selected",
         "knowledge_document": "Knowledge Document",
         "smart_qa": "SmartQ&A",
-        "updated_at": "Updated at"
+        "updated_at": "Updated at",
+        "default_kb_name": "Default Knowledge Base"
       },
       "message": {
         "copied": "Copied",
