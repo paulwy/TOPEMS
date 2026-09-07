@@ -556,6 +556,7 @@
         "related_questions": "Related Questions",
         "search_document": "Search Documents",
         "selected_docs": "{{count}} documents selected",
+        "knowledge_document": "Knowledge Document",
         "smart_qa": "SmartQ&A",
         "updated_at": "Updated at"
       },

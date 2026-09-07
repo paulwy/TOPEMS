@@ -556,6 +556,7 @@
         "related_questions": "相关问题",
         "search_document": "搜索文档",
         "selected_docs": "已选择{{count}}个文档",
+        "knowledge_document": "知识文档",
         "smart_qa": "智能问答",
         "updated_at": "更新于"
       },

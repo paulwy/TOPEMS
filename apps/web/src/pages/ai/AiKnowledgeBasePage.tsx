@@ -95,7 +95,12 @@ type ChatMessage = {
   type: 'user' | 'ai';
   content: string;
   timestamp: Date;
-  sources?: Array<{ title: string; similarity: number }>;
+  sources?: Array<{
+    title: string;
+    similarity: number;
+    document_id?: string;
+    score?: number;
+  }>;
   confidence?: number;
 };
 
@@ -157,17 +162,39 @@ export const AiKnowledgeBasePage: React.FC = () => {
     };
     setChatHistory((prev) => [...prev, userMessage]);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const aiMessage: ChatMessage = {
-      id: `msg-${Date.now()}-ai`,
-      type: 'ai',
-      content: sampleAnswers[0].answer,
-      timestamp: new Date(),
-      sources: sampleAnswers[0].sources,
-      confidence: sampleAnswers[0].confidence,
-    };
-    setChatHistory((prev) => [...prev, aiMessage]);
+    // 遗留⑩闭环（2026-09-08）：问答接真实知识库 RAG 接口；失败回退示例答案
+    try {
+      const res = await knowledgeApi.askQuestion({ question: query, top_k: 5 });
+      const data = res?.data;
+      if (data?.answer) {
+        const aiMessage: ChatMessage = {
+          id: `msg-${Date.now()}-ai`,
+          type: 'ai',
+          content: data.answer,
+          timestamp: new Date(),
+          sources: (data.sources ?? []).map((s) => ({
+            title: s.document_title ?? i18n.t('ai.knowledge_base.label.knowledge_document'),
+            similarity: s.score ?? 0,
+            document_id: s.document_id,
+            score: s.score,
+          })),
+          confidence: data.confidence,
+        };
+        setChatHistory((prev) => [...prev, aiMessage]);
+      } else {
+        throw new Error('empty answer');
+      }
+    } catch {
+      const aiMessage: ChatMessage = {
+        id: `msg-${Date.now()}-ai`,
+        type: 'ai',
+        content: sampleAnswers[0].answer,
+        timestamp: new Date(),
+        sources: sampleAnswers[0].sources,
+        confidence: sampleAnswers[0].confidence,
+      };
+      setChatHistory((prev) => [...prev, aiMessage]);
+    }
     setSearching(false);
     setQuery('');
   }, [query, addNotification]);
