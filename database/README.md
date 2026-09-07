@@ -8,7 +8,7 @@ database/
 ├── checksums.txt             # 迁移校验和
 ├── migrations/               # 增量迁移（生产环境升级）
 │   ├── 000_create_schemas.sql ~ 013_login-log.sql  # 早期序号制迁移（14个）
-│   ├── 20260716000001_*.sql ~ 20260827000002_*.sql  # 时间戳制迁移（31个）
+│   ├── 20260716000001_*.sql ~ 20260905000003_*.sql  # 时间戳制迁移（75个，持续新增）
 │   └── .snippets/            # 迁移代码片段模板
 ├── init/                     # 全新环境一键初始化（开发环境）
 │   ├── 01_rebuild_database.sql

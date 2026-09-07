@@ -13,8 +13,8 @@ import { bankTransactionApi } from '../bankTransaction';
 import { financeReportApi } from '../../finance/report';
 import { officeSupplyApi } from '../admin/officeSupplies';
 import { meetingRoomApi, meetingBookingApi } from '../admin/meeting';
-import { vehicleApi, vehicleRequestApi } from '../admin/vehicle';
-import { announcementApi } from '../admin/announcement';
+import { vehicleApi, vehicleRequestApi } from '../core/vehicle';
+import { announcementApi } from '../core/announcement';
 import { documentApi } from '../core/document';
 import apiClient from '../../client';
 
@@ -733,9 +733,9 @@ describe('ERP vehicleApi', () => {
     expect(mockApiClient.delete).toHaveBeenCalledWith('/vehicles/V001');
   });
 
-  it('should call GET /vehicles/:id/requests for getRequests', async () => {
+  it('should call GET /vehicles/:id/requests for listVehicleRequests', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
-    await vehicleApi.getRequests('V001');
+    await vehicleApi.listVehicleRequests('V001');
     expect(mockApiClient.get).toHaveBeenCalledWith('/vehicles/V001/requests');
   });
 });

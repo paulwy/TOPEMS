@@ -168,15 +168,28 @@ export const vehicleApi = {
   async listVehicleRequests(
     vehicleId: string,
     params?: PaginationParams
-  ): Promise<ApiResponse<VehicleRequestListResponse>> {
+  ): Promise<ApiResponse<VehicleRequest[]>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
     if (ps) searchParams.set('pagesize', ps);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get<VehicleRequestListResponse>(
+    return apiClient.erp.get<VehicleRequest[]>(
       `/vehicles/${vehicleId}/requests${queryString ? `?${queryString}` : ''}`
     );
   },
+};
+
+/**
+ * 车辆申请（vehicle-request）独立客户端。
+ * 与 vehicleApi 内 request 方法共用同一组后端路由，供管理端页面独立引用。
+ * 使用闭包转发避免 this 绑定丢失。
+ */
+export const vehicleRequestApi = {
+  list: (params?: PaginationParams & { status?: string }) => vehicleApi.listRequests(params),
+  get: (id: string) => vehicleApi.getRequest(id),
+  create: (data: CreateVehicleRequestPayload) => vehicleApi.createRequest(data),
+  update: (id: string, data: UpdateVehicleRequestPayload) => vehicleApi.updateRequest(id, data),
+  delete: (id: string) => vehicleApi.deleteRequest(id),
 };

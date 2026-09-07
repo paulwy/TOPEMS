@@ -82,10 +82,10 @@ export const announcementApi = {
   },
 
   async publish(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post<Announcement>(`/announcements/${id}/publish`, {});
+    return apiClient.erp.post<Announcement>(`/announcements/${id}/publish`);
   },
 
   async unpublish(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post<Announcement>(`/announcements/${id}/unpublish`, {});
+    return apiClient.erp.post<Announcement>(`/announcements/${id}/unpublish`);
   },
 };

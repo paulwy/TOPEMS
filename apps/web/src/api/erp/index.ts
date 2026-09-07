@@ -45,8 +45,8 @@ export { bankAccountApi } from './bankAccount';
 
 export { officeSupplyApi } from './admin/officeSupplies';
 export { meetingRoomApi, meetingBookingApi } from './admin/meeting';
-export { vehicleApi, vehicleRequestApi } from './admin/vehicle';
-export { announcementApi } from './admin/announcement';
+export { vehicleApi, vehicleRequestApi } from './core/vehicle';
+export { announcementApi } from './core/announcement';
 
 export { auditApi } from './audit';
 export { databaseApi } from './database';
