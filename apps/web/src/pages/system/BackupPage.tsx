@@ -89,7 +89,7 @@ const BackupPage: React.FC = () => {
 
   const createBackupMutation = useMutation({
     mutationFn: async () => {
-      return {};
+      throw new Error(t('system.backup_page.k57'));
     },
     onSuccess: () => {
       addNotification({
@@ -116,7 +116,7 @@ const BackupPage: React.FC = () => {
 
   const restoreBackupMutation = useMutation({
     mutationFn: async (_backupId: string) => {
-      return {};
+      throw new Error(t('system.backup_page.k57'));
     },
     onSuccess: () => {
       addNotification({
@@ -143,7 +143,7 @@ const BackupPage: React.FC = () => {
 
   const deleteBackupMutation = useMutation({
     mutationFn: async (_backupId: string) => {
-      return {};
+      throw new Error(t('system.backup_page.k57'));
     },
     onSuccess: () => {
       addNotification({
@@ -349,7 +349,11 @@ const BackupPage: React.FC = () => {
         label: t('system.backup_page.k39'),
         icon: <Download size={16} />,
         onClick: () => {
-          // TODO: implement download
+          addNotification({
+            title: t('system.backup_page.k55'),
+            message: t('system.backup_page.k57'),
+            type: 'error',
+          });
         },
         color: 'primary',
         disabled: (row: BackupRecord) => row.status !== 'completed',
@@ -398,6 +402,15 @@ const BackupPage: React.FC = () => {
 
   return (
     <>
+      <Alert
+        severity='warning'
+        sx={{ mb: 2 }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AlertCircle size={16} />
+          <Typography variant='body2'>{t('system.backup_page.k56')}</Typography>
+        </Box>
+      </Alert>
       <ListPageTemplate<BackupRecord>
         title={t('system.backup_page.k24')}
         columns={columns}

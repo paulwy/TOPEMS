@@ -60,9 +60,6 @@
   "system.backup_page.k39": "Download",
   "system.backup_page.k40": "Delete Backup",
   "system.backup_page.k41": "Delete",
-  "system.backup_page.k42": "Create Backup",
-  "system.backup_page.k43": "Backup Name",
-  "system.backup_page.k44": "e.g. weekly-backup-20240115",
   "system.backup_page.k45": "Backup Type",
   "system.backup_page.k46": "Backup Type",
   "system.backup_page.k47": "Full Backup - backup all data",
@@ -559,5 +556,11 @@
   "system.auditPage.export_logs": "Label",
   "system.action.refresh": "Refresh",
   "system.auditPage.total_operations": "Label",
-  "system.cache_config_panel.k12": "Memcached Cache"
+  "system.cache_config_panel.k12": "Memcached Cache",
+  "system.backup_page.k55": "Backend backup service not connected",
+  "system.backup_page.k56": "UI preview only: create/restore/delete/download require the backend backup service",
+  "system.backup_page.k57": "Backend backup service not connected, action not executed",
+  "system.backup_page.k42": "Create Backup",
+  "system.backup_page.k43": "Backup Name",
+  "system.backup_page.k44": "e.g. weekly-backup-20240115"
 }

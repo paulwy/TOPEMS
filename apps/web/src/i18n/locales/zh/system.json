@@ -60,9 +60,6 @@
   "system.backup_page.k39": "下载",
   "system.backup_page.k40": "删除备份",
   "system.backup_page.k41": "删除",
-  "system.backup_page.k42": "创建备份",
-  "system.backup_page.k43": "备份名称",
-  "system.backup_page.k44": "例如：weekly-backup-20240115",
   "system.backup_page.k45": "备份类型",
   "system.backup_page.k46": "备份类型",
   "system.backup_page.k47": "完整备份 - 备份所有数据",
@@ -268,5 +265,11 @@
   "system.auditPage.export_logs": "标签",
   "system.action.refresh": "刷新",
   "system.auditPage.total_operations": "标签",
-  "system.cache_config_panel.k12": "Memcached缓存"
+  "system.cache_config_panel.k12": "Memcached缓存",
+  "system.backup_page.k55": "后端备份服务未接入",
+  "system.backup_page.k56": "当前为界面预览：创建/恢复/删除/下载均需接入后端备份服务后可用",
+  "system.backup_page.k57": "后端备份服务未接入，操作未执行",
+  "system.backup_page.k42": "创建备份",
+  "system.backup_page.k43": "备份名称",
+  "system.backup_page.k44": "例如：weekly-backup-20240115"
 }

@@ -69,11 +69,10 @@ impl CrmRealModule {
             tracing::warn!("CRM 数据库初始化警告（不阻塞）: {}", e);
         }
 
-        // 2.1 事件订阅者（消费业务事件写 interactions 等，失败不阻塞）
-        // TODO: CRM event_handlers 模块尚未实现，待 CRM 服务补齐后恢复
-        // if let Err(e) = topems_crm::event_handlers::start_event_subscribers(ctx.db.clone()).await {
-        //     tracing::warn!("CRM 事件订阅者启动失败（不阻塞）: {}", e);
-        // }
+        // 2.1 事件订阅者（消费业务事件写 interactions 等，失败不阻塞；与独立部署 main.rs 一致）
+        if let Err(e) = topems_crm::event_handlers::start_event_subscribers(ctx.db.clone()).await {
+            tracing::warn!("CRM 事件订阅者启动失败（不阻塞）: {}", e);
+        }
 
         // 3. 字段加密服务
         let encryption_service = topems_shared::init_encryption_from_env();
