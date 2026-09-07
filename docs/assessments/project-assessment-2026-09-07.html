@@ -85,15 +85,15 @@
 <ul>
   <li class="c-ok">✅ <b>依赖审计门禁已集成 CI</b>（V515）：frontend-lint 步骤 <code>check-dependency-audit.cjs</code>，官方 registry + critical 拦截 + 白名单</li>
   <li><b>pnpm audit 本地静默失效</b>：registry 配置为 npmmirror，其 audit 端点缺失 → 本地 audit 需 <code>--registry https://registry.npmjs.org</code>（门禁脚本已强制官方源）</li>
-  <li><b>版本节奏治理草案待确认</b>：release-governance.md 标注"待用户确认生效"（V530d）</li>
-  <li><b>本地分支 analyze-project-z09ZSl 未清理</b>：纯本地、相对 main 无未合并提交（可选删除）</li>
+  <li><b>版本节奏治理草案待确认</b>：docs/roadmap/release-governance.md（V530d 草案）待确认项 2 条：每周版本日安排（建议周五收口/周一验收）、里程碑验收清单模板</li>
+  <li><b>本地分支 analyze-project-z09ZSl</b>：含 1 个未合并提交（bc309de73 早期部署实验，platform/topems-doc 旧配置）——<b>需用户决策删除或保留</b></li>
   <li><b>eslint-disable 99 处</b>：需抽查是否过度豁免（含导航/路由等已知白名单）</li>
 </ul>
 
-<h3>P3 · 低风险观测</h3>
+<h3>P3 · 低风险观测（2026-09-07 核查澄清）</h3>
 <ul>
-  <li><b>console.log 11 处</b>：集中于 bff 模块（api/bff、hooks/bff、useWebVitals、code-completion）——疑似调试残留，建议收敛为 logger</li>
-  <li><b>TODO/FIXME 15 文件</b>：待人工巡检后归档清理</li>
+  <li class="c-ok">✅ <b>console.log 11 处已核查：全部为注释/示例代码/安全白名单</b>（logger.ts 注释示例 9 处、code-completion.ts 展示用代码片段、runtime-protection.ts 沙箱 API 白名单）——无实际调试残留，无需处理</li>
+  <li><b>TODO/FIXME 15 文件</b>：经核查均为"等待后端接口就绪"占位（OA/lims 页面）与计划性 TODO（V72 A4-5 schema、B2 阶段对齐）——需后端配套后处理，非独立可清项</li>
   <li><b>releases/ 归档 1.6G</b>：保留为发布记录（V530d 已清理 target 31G，属既定策略）</li>
 </ul>
 
