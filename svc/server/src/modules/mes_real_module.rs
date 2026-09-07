@@ -17,6 +17,9 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_event::event::EventPublisher;
+use topems_shared_service_client::service_client::{
+    api::erp_api::ErpApi, TypedServiceClient,
+};
 
 /// 真实 MES 模块：持有数据库连接池 + 完整业务路由
 pub struct MesRealModule {
@@ -76,6 +79,17 @@ impl MesRealModule {
             pool: ctx.db.clone(),
             health_config,
             event_publisher: ctx.event_publisher.clone(),
+            // 生产执行闭环：ERP 服务客户端（报工后回传生产进度，service token erp:admin；失败优雅降级）
+            erp_client: TypedServiceClient::<ErpApi>::from_env_default()
+                .and_then(|c| {
+                    c.with_service_token(
+                        &ctx.auth_state.jwt_secret,
+                        "mes-module",
+                        &["erp:admin"],
+                    )
+                })
+                .map(Arc::new)
+                .ok(),
         };
 
         // 6. 业务路由（权限中间件 + 开发验证模拟认证）

@@ -200,12 +200,20 @@ impl MasterDataEvent {
         )
     }
 
-    /// 频道名（Redis channel）
+    /// 频道名（Redis Pub/Sub channel，仅降级模式使用）
     pub fn channel(&self) -> String {
         format!("topems:master_data:{}", self.domain.prefix())
     }
 
-    /// 发布事件到 Redis
+    /// Stream 键（Redis Stream，V321+ 默认总线，每域一个 Stream）
+    ///
+    /// 与主事件总线 `topems:stream:events:*` 同构：XADD 持久化 + 消费者组 ACK + 重试。
+    /// Pub/Sub 频道 `topems:master_data:*` 无持久化（无订阅者即丢），仅保留给降级模式。
+    pub fn stream_key(&self) -> String {
+        format!("topems:stream:master_data:{}", self.domain.prefix())
+    }
+
+    /// 发布事件到 Redis Stream（持久化 + ACK + DLQ 就绪）
     pub async fn publish(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let redis_url =
             std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
@@ -213,13 +221,27 @@ impl MasterDataEvent {
         let mut con = client.get_multiplexed_async_connection().await?;
 
         let event_json = serde_json::to_string(self)?;
-        let channel = self.channel();
+        let stream_key = self.stream_key();
 
-        let _: () = redis::cmd("PUBLISH")
-            .arg(&channel)
+        let mut cmd = redis::cmd("XADD");
+        cmd.arg(&stream_key)
+            .arg("*")
+            .arg("event_id")
+            .arg(self.event_id.to_string())
+            .arg("payload")
             .arg(&event_json)
-            .query_async(&mut con)
-            .await?;
+            .arg("timestamp")
+            .arg(self.timestamp.to_rfc3339())
+            .arg("source")
+            .arg(&self.source_service);
+        let _: String = cmd.query_async(&mut con).await?;
+
+        tracing::debug!(
+            "MasterDataEvent published to Stream - domain: {:?}, action: {:?}, stream: {}",
+            self.domain,
+            self.action,
+            stream_key
+        );
 
         Ok(())
     }
@@ -304,25 +326,32 @@ pub struct MasterDataPublisher {
 }
 
 impl MasterDataPublisher {
-    /// 发布单个事件
+    /// 发布单个事件到 Redis Stream（持久化）
     pub async fn publish(
         &self,
         event: &MasterDataEvent,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut con = self.client.get_multiplexed_async_connection().await?;
         let event_json = serde_json::to_string(event)?;
-        let channel = event.channel();
+        let stream_key = event.stream_key();
 
-        let _: () = redis::cmd("PUBLISH")
-            .arg(&channel)
+        let mut cmd = redis::cmd("XADD");
+        cmd.arg(&stream_key)
+            .arg("*")
+            .arg("event_id")
+            .arg(event.event_id.to_string())
+            .arg("payload")
             .arg(&event_json)
-            .query_async(&mut con)
-            .await?;
+            .arg("timestamp")
+            .arg(event.timestamp.to_rfc3339())
+            .arg("source")
+            .arg(&event.source_service);
+        let _: String = cmd.query_async(&mut con).await?;
 
         Ok(())
     }
 
-    /// 批量发布事件
+    /// 批量发布事件到 Redis Stream（持久化）
     pub async fn publish_batch(
         &self,
         events: &[MasterDataEvent],
@@ -331,13 +360,20 @@ impl MasterDataPublisher {
 
         for event in events {
             let event_json = serde_json::to_string(event)?;
-            let channel = event.channel();
+            let stream_key = event.stream_key();
 
-            let _: () = redis::cmd("PUBLISH")
-                .arg(&channel)
+            let mut cmd = redis::cmd("XADD");
+            cmd.arg(&stream_key)
+                .arg("*")
+                .arg("event_id")
+                .arg(event.event_id.to_string())
+                .arg("payload")
                 .arg(&event_json)
-                .query_async(&mut con)
-                .await?;
+                .arg("timestamp")
+                .arg(event.timestamp.to_rfc3339())
+                .arg("source")
+                .arg(&event.source_service);
+            let _: String = cmd.query_async(&mut con).await?;
         }
 
         Ok(())
@@ -593,10 +629,11 @@ mod tests {
             json!({"id": "cust-001", "name": "测试客户"}),
         );
         assert_eq!(event.channel(), "topems:master_data:cust");
+        assert_eq!(event.stream_key(), "topems:stream:master_data:cust");
     }
 
     #[tokio::test]
-    #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
+    #[ignore = "requires live Redis stream; skip in pure function test runs"]
     async fn test_event_publish_and_subscribe() {
         let Some(client) = redis_pubsub::skip_without_redis().await else {
             return;
@@ -613,35 +650,75 @@ mod tests {
             json!({"id": "cust-test-001", "name": "测试客户", "email": "test@example.com"}),
         );
         let expected_event_id = event.event_id;
-        let channel_name = event.channel();
+        let stream_key = event.stream_key();
+        let group_name = "mdm-test-group";
+        let consumer_name = "mdm-test-consumer";
 
-        // ——— 阶段一：先 await 订阅完全就绪（SUBSCRIBE + PUBSUB NUMSUB 确认）———
-        // 此 await 返回前，Redis 服务端已经把订阅者登记到订阅列表，
-        // 之后立即 PUBLISH 也不会丢失消息。
-        let subscription: ActiveSubscription<MasterDataEvent> = redis_pubsub::prepare_subscription(
-            &client,
-            &channel_name,
-            move |e: &MasterDataEvent| e.event_id == expected_event_id,
-        )
-        .await;
+        // 清理旧数据 + 创建消费者组（MKSTREAM 惰性建流）
+        let mut con = client.get_multiplexed_async_connection().await.unwrap();
+        let _: () = redis::cmd("DEL")
+            .arg(&stream_key)
+            .query_async(&mut con)
+            .await
+            .unwrap();
+        let _: Result<String, _> = redis::cmd("XGROUP")
+            .arg("CREATE")
+            .arg(&stream_key)
+            .arg(group_name)
+            .arg("0")
+            .arg("MKSTREAM")
+            .query_async(&mut con)
+            .await;
 
-        // ——— 阶段二：订阅就绪后，再 spawn 发布任务 ———
-        let publish_task = tokio::spawn(async move { event.publish().await });
+        // 发布到 Stream（XADD，持久化）
+        event.publish().await.expect("publish 失败");
 
-        // ——— 阶段三：并发等待 publish 完成 + 匹配事件到达 ———
-        let (received_event, publish_result) =
-            tokio::join!(subscription.wait_for_match(), publish_task,);
-        assert!(publish_result.is_ok(), "publish 失败: {publish_result:?}");
-        let publish_inner = publish_result.unwrap();
-        assert!(publish_inner.is_ok(), "publish 内部错误: {publish_inner:?}");
+        // XREADGROUP 读回并校验（模拟订阅端消费）
+        let result: Result<redis::streams::StreamReadReply, _> = redis::cmd("XREADGROUP")
+            .arg("GROUP")
+            .arg(group_name)
+            .arg(consumer_name)
+            .arg("COUNT")
+            .arg(10)
+            .arg("BLOCK")
+            .arg(100)
+            .arg("STREAMS")
+            .arg(&stream_key)
+            .arg(">")
+            .query_async(&mut con)
+            .await;
+        assert!(result.is_ok(), "XREADGROUP 失败: {:?}", result);
 
-        assert_eq!(received_event.event_id, expected_event_id);
-        assert_eq!(received_event.domain, MasterDataDomain::Customer);
-        assert_eq!(received_event.action, MasterDataAction::Created);
-        assert_eq!(received_event.master_data_id, "cust-test-001");
-        assert_eq!(received_event.code, "CUSTTEST001");
-        assert_eq!(received_event.source_service, "crm");
-        assert_eq!(received_event.tenant_id, tenant_id);
+        let reply = result.unwrap();
+        let mut found: Option<MasterDataEvent> = None;
+        for stream in reply.keys {
+            for message in stream.ids {
+                let payload_json: String = message
+                    .map
+                    .get("payload")
+                    .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
+                    .unwrap_or_default();
+                if let Ok(e) = serde_json::from_str::<MasterDataEvent>(&payload_json) {
+                    found = Some(e);
+                }
+            }
+        }
+        let received = found.expect("应从 Stream 读到 MasterDataEvent");
+
+        assert_eq!(received.event_id, expected_event_id);
+        assert_eq!(received.domain, MasterDataDomain::Customer);
+        assert_eq!(received.action, MasterDataAction::Created);
+        assert_eq!(received.master_data_id, "cust-test-001");
+        assert_eq!(received.code, "CUSTTEST001");
+        assert_eq!(received.source_service, "crm");
+        assert_eq!(received.tenant_id, tenant_id);
+
+        // 清理
+        let _: () = redis::cmd("DEL")
+            .arg(&stream_key)
+            .query_async(&mut con)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -752,12 +829,9 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
-    async fn test_event_deserialize_from_channel() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else {
-            return;
-        };
-
+    async fn test_event_deserialize_roundtrip() {
+        // Stream 总线：payload 字段直接承载 MasterDataEvent JSON。
+        // 无 Redis 时验证序列化/反序列化 roundtrip 完整覆盖字段。
         let tenant_id = Uuid::new_v4();
         let original_event = MasterDataEvent::new(
             tenant_id,
@@ -770,32 +844,19 @@ mod tests {
         )
         .with_operator("admin".to_string())
         .with_version(2);
-        let expected_event_id = original_event.event_id;
-        let channel_name = original_event.channel();
 
-        // ——— 阶段一：await 订阅在 Redis 服务端完全登记 ———
-        let subscription: ActiveSubscription<MasterDataEvent> = redis_pubsub::prepare_subscription(
-            &client,
-            &channel_name,
-            move |e: &MasterDataEvent| e.event_id == expected_event_id,
-        )
-        .await;
+        let json = serde_json::to_string(&original_event).unwrap();
+        let received: MasterDataEvent = serde_json::from_str(&json).unwrap();
 
-        // ——— 阶段二：确定订阅就绪后再发布 ———
-        let publish_task = tokio::spawn(async move { original_event.publish().await });
-
-        // ——— 阶段三：等待结果 ———
-        let (received_event, _) = tokio::join!(subscription.wait_for_match(), publish_task,);
-
-        assert_eq!(received_event.event_id, expected_event_id);
-        assert_eq!(received_event.domain, MasterDataDomain::Supplier);
-        assert_eq!(received_event.action, MasterDataAction::Updated);
-        assert_eq!(received_event.master_data_id, "supp-001");
-        assert_eq!(received_event.code, "SUPP001");
-        assert_eq!(received_event.version, 2);
-        assert_eq!(received_event.source_service, "srm");
-        assert_eq!(received_event.operator.as_deref(), Some("admin"));
-        assert_eq!(received_event.tenant_id, tenant_id);
+        assert_eq!(received.event_id, original_event.event_id);
+        assert_eq!(received.domain, MasterDataDomain::Supplier);
+        assert_eq!(received.action, MasterDataAction::Updated);
+        assert_eq!(received.master_data_id, "supp-001");
+        assert_eq!(received.code, "SUPP001");
+        assert_eq!(received.version, 2);
+        assert_eq!(received.source_service, "srm");
+        assert_eq!(received.operator.as_deref(), Some("admin"));
+        assert_eq!(received.tenant_id, tenant_id);
     }
 
     /// 并发压力测试：N 个订阅-发布对共享 **同一个** channel（topems:master_data:cust），

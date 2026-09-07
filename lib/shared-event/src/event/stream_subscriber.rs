@@ -9,6 +9,7 @@
 use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
+use super::master_data::{MasterDataDomain, MasterDataEvent};
 use redis::Client;
 use std::collections::HashMap;
 use std::env;
@@ -21,6 +22,12 @@ use tracing::{debug, error, info, warn};
 /// 事件处理器回调类型（返回 Result，失败时会触发重试/DLQ）
 pub type StreamEventHandler =
     Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync>;
+
+/// MDM 主数据事件处理器回调类型（返回 Result，失败时会触发重试）
+pub type StreamMdmEventHandler = Arc<
+    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send
+        + Sync,
+>;
 
 /// 消费者配置
 #[derive(Debug, Clone)]
@@ -60,6 +67,8 @@ pub struct StreamEventSubscriber {
     stream_prefix: String,
     /// 事件处理器映射（事件类型 -> 处理器列表）
     handlers: HashMap<EventType, Vec<StreamEventHandler>>,
+    /// MDM 主数据事件处理器映射（主数据域 -> 处理器列表）
+    mdm_handlers: HashMap<MasterDataDomain, Vec<StreamMdmEventHandler>>,
     /// 消费者配置
     config: ConsumerConfig,
     /// 死信队列
@@ -91,6 +100,7 @@ impl StreamEventSubscriber {
             service_name: service_name.to_string(),
             stream_prefix: "topems:stream:events".to_string(),
             handlers: HashMap::new(),
+            mdm_handlers: HashMap::new(),
             config,
             dlq: None,
         })
@@ -113,6 +123,14 @@ impl StreamEventSubscriber {
         format!("{}:{}", self.stream_prefix, event_type)
     }
 
+    /// 获取 MDM 主数据域对应的 Stream 键
+    ///
+    /// 与主事件总线 `topems:stream:events:*` 同构：每域一个 Stream（`topems:stream:master_data:{prefix}`），
+    /// XADD 持久化 + 消费者组 ACK + 重试，不再使用无持久化的 Pub/Sub 频道 `topems:master_data:*`。
+    fn mdm_stream_key(&self, domain: &MasterDataDomain) -> String {
+        format!("topems:stream:master_data:{}", domain.prefix())
+    }
+
     /// 订阅特定事件类型
     pub fn subscribe<F, Fut>(mut self, event_type: EventType, handler: F) -> Self
     where
@@ -123,6 +141,23 @@ impl StreamEventSubscriber {
 
         self.handlers
             .entry(event_type)
+            .or_insert_with(Vec::new)
+            .push(handler_arc);
+
+        self
+    }
+
+    /// 订阅 MDM 主数据域事件
+    pub fn subscribe_master_data<F, Fut>(mut self, domain: MasterDataDomain, handler: F) -> Self
+    where
+        F: Fn(MasterDataEvent) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Result<(), String>> + Send + 'static,
+    {
+        let handler_arc: StreamMdmEventHandler =
+            Arc::new(move |event| Box::pin(handler(event)));
+
+        self.mdm_handlers
+            .entry(domain)
             .or_insert_with(Vec::new)
             .push(handler_arc);
 
@@ -257,6 +292,88 @@ impl StreamEventSubscriber {
         Ok(())
     }
 
+    /// 处理单条 MDM 主数据消息（Redis Stream，持久化 + 重试）
+    ///
+    /// 与标准事件共用同一套重试机制：成功 ACK；失败不 ACK 触发重新投递；
+    /// 超过 `max_retries` 后记录错误并 ACK 放弃（MDM DLQ 化为已知增强项，
+    /// Stream 持久化已保证消息在订阅端短暂故障期间不丢失）。
+    async fn process_mdm_message(
+        &self,
+        event: MasterDataEvent,
+        message_id: &str,
+        stream_key: &str,
+    ) -> EventResult<()> {
+        let domain = event.domain;
+        let handlers = self.mdm_handlers.get(&domain);
+
+        if handlers.is_none() {
+            // 没有处理器，直接 ACK
+            self.ack_message(stream_key, message_id).await?;
+            return Ok(());
+        }
+
+        let handlers = handlers.unwrap();
+        let mut all_succeeded = true;
+
+        for handler in handlers {
+            let event_clone = event.clone();
+            let handler_clone = handler.clone();
+
+            let result = tokio::time::timeout(
+                Duration::from_secs(self.config.process_timeout_secs),
+                handler_clone(event_clone),
+            )
+            .await;
+
+            match result {
+                Ok(Ok(())) => {
+                    debug!(
+                        "MDM 事件处理成功 - domain: {:?}, 消息ID: {}",
+                        domain, message_id
+                    );
+                }
+                Ok(Err(e)) => {
+                    error!(
+                        "MDM 事件处理失败 - domain: {:?}, 消息ID: {}, 错误: {}",
+                        domain, message_id, e
+                    );
+                    all_succeeded = false;
+                }
+                Err(_) => {
+                    error!(
+                        "MDM 事件处理超时 - domain: {:?}, 消息ID: {}",
+                        domain, message_id
+                    );
+                    all_succeeded = false;
+                }
+            }
+        }
+
+        if all_succeeded {
+            self.ack_message(stream_key, message_id).await?;
+        } else {
+            let retry_count = self.get_retry_count(stream_key, message_id).await?;
+
+            if retry_count >= self.config.max_retries {
+                error!(
+                    "MDM 事件超过最大重试次数，ACK 放弃 - domain: {:?}, 消息ID: {}, 重试次数: {}",
+                    domain, message_id, retry_count
+                );
+                self.ack_message(stream_key, message_id).await?;
+            } else {
+                self.increment_retry_count(stream_key, message_id).await?;
+                warn!(
+                    "MDM 事件将被重试 - domain: {:?}, 消息ID: {}, 当前重试次数: {}",
+                    domain,
+                    message_id,
+                    retry_count + 1
+                );
+            }
+        }
+
+        Ok(())
+    }
+
     /// ACK 消息
     async fn ack_message(&self, stream_key: &str, message_id: &str) -> EventResult<()> {
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
@@ -316,9 +433,13 @@ impl StreamEventSubscriber {
             self.service_name, self.config.group_name, self.config.consumer_name
         );
 
-        // 确保所有 Stream 的消费者组都存在
+        // 确保所有 Stream 的消费者组都存在（标准事件 + MDM 主数据）
         for event_type in self.handlers.keys() {
             let stream_key = self.stream_key(event_type);
+            self.ensure_consumer_group(&stream_key).await?;
+        }
+        for domain in self.mdm_handlers.keys() {
+            let stream_key = self.mdm_stream_key(domain);
             self.ensure_consumer_group(&stream_key).await?;
         }
 
@@ -337,9 +458,14 @@ impl StreamEventSubscriber {
                 .arg(self.config.block_ms)
                 .arg("STREAMS");
 
-            // 添加所有要监听的 Stream
-            let stream_keys: Vec<String> =
+            // 添加所有要监听的 Stream（标准事件 + MDM 主数据）
+            let mut stream_keys: Vec<String> =
                 self.handlers.keys().map(|et| self.stream_key(et)).collect();
+            stream_keys.extend(
+                self.mdm_handlers
+                    .keys()
+                    .map(|domain| self.mdm_stream_key(domain)),
+            );
 
             for key in &stream_keys {
                 cmd.arg(key);
@@ -357,6 +483,7 @@ impl StreamEventSubscriber {
                 Ok(reply) => {
                     for stream in reply.keys {
                         let stream_key = stream.key;
+                        let is_mdm = stream_key.starts_with("topems:stream:master_data:");
                         for message in stream.ids {
                             let message_id = message.id;
                             // 从字段中解析事件（Value 转为字符串）
@@ -366,18 +493,44 @@ impl StreamEventSubscriber {
                                 .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
                                 .unwrap_or_default();
 
-                            match serde_json::from_str::<Event>(&payload_json) {
-                                Ok(event) => {
-                                    if let Err(e) =
-                                        self.process_message(event, &message_id, &stream_key).await
-                                    {
-                                        error!("处理消息时出错: {}", e);
+                            if is_mdm {
+                                match serde_json::from_str::<MasterDataEvent>(&payload_json) {
+                                    Ok(mdm_event) => {
+                                        if let Err(e) = self
+                                            .process_mdm_message(
+                                                mdm_event,
+                                                &message_id,
+                                                &stream_key,
+                                            )
+                                            .await
+                                        {
+                                            error!("处理 MDM 消息时出错: {}", e);
+                                        }
+                                    }
+                                    Err(e) => {
+                                        error!(
+                                            "解析 MDM 事件 JSON 错误: {:?}, 消息ID: {}",
+                                            e, message_id
+                                        );
+                                        // 解析失败，直接 ACK，避免重复处理
+                                        let _ =
+                                            self.ack_message(&stream_key, &message_id).await;
                                     }
                                 }
-                                Err(e) => {
-                                    error!("解析事件 JSON 错误: {:?}, 消息ID: {}", e, message_id);
-                                    // 解析失败，直接 ACK，避免重复处理
-                                    let _ = self.ack_message(&stream_key, &message_id).await;
+                            } else {
+                                match serde_json::from_str::<Event>(&payload_json) {
+                                    Ok(event) => {
+                                        if let Err(e) =
+                                            self.process_message(event, &message_id, &stream_key).await
+                                        {
+                                            error!("处理消息时出错: {}", e);
+                                        }
+                                    }
+                                    Err(e) => {
+                                        error!("解析事件 JSON 错误: {:?}, 消息ID: {}", e, message_id);
+                                        // 解析失败，直接 ACK，避免重复处理
+                                        let _ = self.ack_message(&stream_key, &message_id).await;
+                                    }
                                 }
                             }
                         }
@@ -616,6 +769,126 @@ mod tests {
         // 清理
         let _: () = redis::cmd("DEL")
             .arg(stream_key)
+            .query_async(&mut cleanup_con)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_stream_mdm_publish_subscribe_roundtrip() {
+        let Some(client) = crate::test_helpers::redis_pubsub::skip_without_redis().await else {
+            return;
+        };
+
+        use crate::event::master_data::{
+            MasterDataAction, MasterDataDomain, MasterDataEvent,
+        };
+        use serde_json::json;
+        use uuid::Uuid;
+
+        let tenant_id = Uuid::new_v4();
+        let event = MasterDataEvent::new(
+            tenant_id,
+            MasterDataDomain::Customer,
+            MasterDataAction::Created,
+            "cust-stream-mdm-001".to_string(),
+            "CUSTSTREAMMDM001".to_string(),
+            "crm",
+            json!({"id": "cust-stream-mdm-001", "name": "Stream MDM 客户"}),
+        );
+        let expected_event_id = event.event_id;
+        let stream_key = event.stream_key();
+        let group_name = "mdm-test-group";
+        let consumer_name = "mdm-test-consumer-1";
+
+        // 清理旧数据 + 创建消费者组
+        let mut cleanup_con = client.get_multiplexed_async_connection().await.unwrap();
+        let _: () = redis::cmd("DEL")
+            .arg(&stream_key)
+            .query_async(&mut cleanup_con)
+            .await
+            .unwrap();
+        let _: Result<String, _> = redis::cmd("XGROUP")
+            .arg("CREATE")
+            .arg(&stream_key)
+            .arg(group_name)
+            .arg("0")
+            .arg("MKSTREAM")
+            .query_async(&mut cleanup_con)
+            .await;
+
+        // 创建订阅者并注册 MDM handler
+        let received = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let received_clone = received.clone();
+
+        let subscriber = StreamEventSubscriber::new("test-mdm-integration")
+            .unwrap()
+            .with_config(ConsumerConfig {
+                group_name: group_name.to_string(),
+                consumer_name: consumer_name.to_string(),
+                block_ms: 100,
+                count: 10,
+                max_retries: 3,
+                process_timeout_secs: 5,
+            })
+            .subscribe_master_data(MasterDataDomain::Customer, move |mdm_event| {
+                let received_clone = received_clone.clone();
+                async move {
+                    received_clone
+                        .lock()
+                        .unwrap()
+                        .push(mdm_event.event_id.to_string());
+                    Ok(())
+                }
+            });
+
+        // 发布 MDM 事件到 Stream（XADD）
+        event.publish().await.expect("发布 MDM 事件失败");
+
+        // XREADGROUP 读回并分发到 MDM handler
+        let mut con = client.get_multiplexed_async_connection().await.unwrap();
+        let result: Result<redis::streams::StreamReadReply, _> = redis::cmd("XREADGROUP")
+            .arg("GROUP")
+            .arg(group_name)
+            .arg(consumer_name)
+            .arg("COUNT")
+            .arg(10)
+            .arg("BLOCK")
+            .arg(100)
+            .arg("STREAMS")
+            .arg(&stream_key)
+            .arg(">")
+            .query_async(&mut con)
+            .await;
+        assert!(result.is_ok(), "XREADGROUP 失败: {:?}", result);
+
+        if let Ok(reply) = result {
+            for stream in reply.keys {
+                for message in stream.ids {
+                    let payload_json: String = message
+                        .map
+                        .get("payload")
+                        .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
+                        .unwrap_or_default();
+                    if let Ok(mdm_event) =
+                        serde_json::from_str::<MasterDataEvent>(&payload_json)
+                    {
+                        let _ = subscriber
+                            .process_mdm_message(mdm_event, &message.id, &stream.key)
+                            .await;
+                    }
+                }
+            }
+        }
+
+        // 验证 MDM handler 已消费消息
+        let count = received.lock().unwrap().len();
+        assert_eq!(count, 1, "MDM handler 应收到 1 条消息，实际 {} 条", count);
+        assert_eq!(received.lock().unwrap()[0], expected_event_id.to_string());
+
+        // 清理
+        let _: () = redis::cmd("DEL")
+            .arg(&stream_key)
             .query_async(&mut cleanup_con)
             .await
             .unwrap();

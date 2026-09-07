@@ -116,12 +116,24 @@ impl EventSubscriber {
                         }
                     }
 
-                    // Stream 模式不支持 MDM 事件（MasterDataEvent），记录警告
-                    if !self.mdm_handlers.is_empty() {
-                        warn!(
-                            "Stream 模式暂不支持 MDM 事件订阅（{} 个 MDM handler 将被忽略）",
-                            self.mdm_handlers.len()
-                        );
+                    // 将 MDM 主数据事件 handlers 转发到 StreamEventSubscriber
+                    // （MDM Stream 键 topems:stream:master_data:{prefix}，与主总线同构：
+                    //   XADD 持久化 + 消费者组 ACK + 重试，替代无持久化的 Pub/Sub 频道）
+                    for (domains, handler) in &self.mdm_handlers {
+                        for domain in domains {
+                            // 适配：将返回 () 的 MDM handler 包装为返回 Result<(), String>
+                            let handler_clone = handler.clone();
+                            stream_sub = stream_sub.subscribe_master_data(
+                                *domain,
+                                move |mdm_event| {
+                                    let handler_clone = handler_clone.clone();
+                                    async move {
+                                        handler_clone(mdm_event).await;
+                                        Ok(())
+                                    }
+                                },
+                            );
+                        }
                     }
 
                     // 启用死信队列

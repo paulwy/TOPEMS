@@ -76,7 +76,9 @@ pub use publisher::EventPublisher;
 pub use rabbitmq::{RabbitMqPublisher, RabbitMqSubscriber};
 pub use schema_registry::{EventSchema, SchemaRegistry, ValidationResult};
 pub use stream_publisher::StreamEventPublisher;
-pub use stream_subscriber::{ConsumerConfig, StreamEventHandler, StreamEventSubscriber};
+pub use stream_subscriber::{
+    ConsumerConfig, StreamEventHandler, StreamEventSubscriber, StreamMdmEventHandler,
+};
 pub use subscriber::EventSubscriber;
 pub use versioning::{
     EventVersion, EventVersionEntry, EventVersionRegistry, EventVersionRegistryStats,

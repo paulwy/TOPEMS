@@ -21,7 +21,8 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
-    api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
+    api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi,
+    TypedServiceClient,
 };
 
 /// 真实 ERP 模块：持有数据库连接池 + 完整业务路由
@@ -115,6 +116,20 @@ impl ErpRealModule {
             encryption: Arc::new(encryption_service),
             event_publisher: ctx.event_publisher.clone(),
             finance_client,
+            // 生产执行闭环：MES 服务客户端（erp 审核通过后下达生产工单，service token mes:admin）
+            mes_client: TypedServiceClient::<MesApi>::from_env_default()
+                .and_then(|c| c.with_service_token(&jwt_secret, "erp-module", &["mes:admin"]))
+                .map(Arc::new)
+                .unwrap_or_else(|e| {
+                    tracing::warn!("MES服务客户端初始化失败: {}, 将使用mock模式", e);
+                    Arc::new(
+                        TypedServiceClient::new(MesApi, "http://localhost:8030".to_string())
+                            .unwrap_or_else(|e| {
+                                tracing::error!("默认MES客户端创建失败: {}", e);
+                                panic!("MES客户端创建失败，请检查MES服务配置")
+                            }),
+                    )
+                }),
         };
 
         // 5. 构建完整业务路由（应用 api_prefix + 权限中间件 + 开发验证模拟认证）
