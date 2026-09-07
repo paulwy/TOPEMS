@@ -19,10 +19,10 @@ database/
 │   ├── 06_create_shared_schema.sql
 │   └── README.md             # 详细重建指南
 ├── postgres/                 # 运维/性能优化脚本（不纳入迁移流程）
-│   ├── init.sql
+│   ├── init.sql              # [已收敛] 说明文件——业务表已迁入 20260907000001
 │   ├── 02_create_performance_indexes.sql
 │   ├── 03_api_performance_indexes.sql
-│   ├── administration_tables.sql
+│   ├── administration_tables.sql  # [已收敛] 说明文件——业务表已迁入 20260907000001
 │   ├── rls_remaining_tables.sql
 │   └── partitions/           # 表分区脚本
 └── test/                     # 测试数据
@@ -40,7 +40,7 @@ database/
 **关键原则**：
 - **生产环境**：只用 `migrations/`，禁止直接执行 `init/`（会删数据）
 - **开发环境**：可用 `init/` 快速重建，也可用 `migrations/` 增量升级
-- **postgres/**：不纳入迁移流程，由 DBA 或运维按需手动执行
+- **postgres/**：不纳入迁移流程，由 DBA 或运维按需手动执行；其中业务表 DDL（曾存于 init.sql / administration_tables.sql）已于 2026-09-07 收敛至迁移 `20260907000001`，此两文件仅保留说明
 
 ## 迁移命名规范
 

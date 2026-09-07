@@ -199,7 +199,7 @@ async fn update_business_metrics(pool: &sqlx::PgPool) {
     }
 
     match sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM audit_logs 
+        "SELECT COUNT(*) FROM public.audit_logs 
          WHERE created_at >= NOW() - INTERVAL '1 hour'",
     )
     .fetch_one(pool)

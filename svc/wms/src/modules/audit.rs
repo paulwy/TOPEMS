@@ -57,7 +57,7 @@ pub async fn list_audit_logs(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM audit_logs
+        FROM public.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id = $3)
@@ -84,7 +84,7 @@ pub async fn list_audit_logs(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "wms",
                 r#"
-                SELECT COUNT(*) FROM audit_logs
+                SELECT COUNT(*) FROM public.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
@@ -138,7 +138,7 @@ pub async fn get_audit_log(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM audit_logs WHERE id = $1
+        FROM public.audit_logs WHERE id = $1
         "#
     ))
     .bind(id)
