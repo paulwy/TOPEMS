@@ -1,14 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import {
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  BarChart3,
-  Activity,
-  Building2,
-} from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import i18n from '@/i18n';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 
@@ -99,7 +91,7 @@ export const FinancialReportSummaryCards: React.FC<FinancialReportSummaryCardsPr
   if (activeTab === 'income-statement' && incomeStatement) {
     const totalRevenue = incomeStatement.revenues.reduce((sum, r) => sum + r.amount, 0);
     const totalCost = incomeStatement.expenses.reduce((sum, e) => sum + e.amount, 0);
-    const netProfitPositive = incomeStatement.net_profit >= 0;
+    const netIncomePositive = incomeStatement.net_income >= 0;
     const cards: SummaryCardConfig[] = [
       {
         label: i18n.t('erp.financial_report.label.total_revenue'),
@@ -116,19 +108,12 @@ export const FinancialReportSummaryCards: React.FC<FinancialReportSummaryCardsPr
         iconColor: 'error.main',
       },
       {
-        label: i18n.t('erp.financial_report.label.operating_profit'),
-        value: formatCurrency(incomeStatement.operating_profit),
-        icon: <BarChart3 size={24} />,
-        iconBg: 'primary.100',
-        iconColor: 'primary.main',
-      },
-      {
         label: i18n.t('erp.financial_report.label.net_profit'),
-        value: formatCurrency(incomeStatement.net_profit),
+        value: formatCurrency(incomeStatement.net_income),
         icon: <DollarSign size={24} />,
-        iconBg: netProfitPositive ? 'success.100' : 'error.100',
-        iconColor: netProfitPositive ? 'success.main' : 'error.main',
-        valueColor: netProfitPositive ? 'success.main' : 'error.main',
+        iconBg: netIncomePositive ? 'success.100' : 'error.100',
+        iconColor: netIncomePositive ? 'success.main' : 'error.main',
+        valueColor: netIncomePositive ? 'success.main' : 'error.main',
       },
     ];
     return (
@@ -143,35 +128,25 @@ export const FinancialReportSummaryCards: React.FC<FinancialReportSummaryCardsPr
     );
   }
   if (activeTab === 'cash-flow' && cashFlowStatement) {
-    const operating = cashFlowStatement.operating_activities.reduce((sum, i) => sum + i.amount, 0);
-    const investing = cashFlowStatement.investing_activities.reduce((sum, i) => sum + i.amount, 0);
-    const financing = cashFlowStatement.financing_activities.reduce((sum, i) => sum + i.amount, 0);
-    const netPositive = cashFlowStatement.net_cash_flow >= 0;
+    const netPositive = cashFlowStatement.net_change >= 0;
     const cards: SummaryCardConfig[] = [
       {
-        label: i18n.t('erp.financial_report.label.operating_cash_flow'),
-        value: formatCurrency(operating),
-        icon: <Activity size={24} />,
+        label: i18n.t('erp.financial_report.label.total_inflow'),
+        value: formatCurrency(cashFlowStatement.total_inflow),
+        icon: <TrendingUp size={24} />,
         iconBg: 'success.100',
         iconColor: 'success.main',
       },
       {
-        label: i18n.t('erp.financial_report.label.investing_cash_flow'),
-        value: formatCurrency(investing),
-        icon: <Building2 size={24} />,
+        label: i18n.t('erp.financial_report.label.total_outflow'),
+        value: formatCurrency(cashFlowStatement.total_outflow),
+        icon: <TrendingDown size={24} />,
         iconBg: 'warning.100',
         iconColor: 'warning.main',
       },
       {
-        label: i18n.t('erp.financial_report.label.financing_cash_flow'),
-        value: formatCurrency(financing),
-        icon: <DollarSign size={24} />,
-        iconBg: 'primary.100',
-        iconColor: 'primary.main',
-      },
-      {
-        label: i18n.t('erp.financial_report.label.net_cash_flow'),
-        value: formatCurrency(cashFlowStatement.net_cash_flow),
+        label: i18n.t('erp.financial_report.label.net_increase_in_cash'),
+        value: formatCurrency(cashFlowStatement.net_change),
         icon: <Wallet size={24} />,
         iconBg: netPositive ? 'success.100' : 'error.100',
         iconColor: netPositive ? 'success.main' : 'error.main',

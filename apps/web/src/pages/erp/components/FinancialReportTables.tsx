@@ -169,18 +169,22 @@ const IncomeStatementTable: React.FC<{
           />
           {data.revenues.map((item: IncomeItem) => (
             <TableRow
-              key={`revenue-${item.code}`}
+              key={`revenue-${item.account_code}`}
               hover
             >
-              <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-              <TableCell>{item.name}</TableCell>
+              <TableCell sx={{ pl: 4 }}>{item.account_code}</TableCell>
+              <TableCell>{item.account_name}</TableCell>
               <TableCell
                 align='right'
                 sx={{ color: 'success.main' }}
               >
                 {formatCurrency(item.amount)}
               </TableCell>
-              <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
+              <TableCell align='right'>
+                {data.total_revenue > 0
+                  ? ((item.amount / data.total_revenue) * 100).toFixed(2)
+                  : '0.00'}
+              </TableCell>
             </TableRow>
           ))}
           <SectionHeader
@@ -190,50 +194,24 @@ const IncomeStatementTable: React.FC<{
           />
           {data.expenses.map((item: IncomeItem) => (
             <TableRow
-              key={`expense-${item.code}`}
+              key={`expense-${item.account_code}`}
               hover
             >
-              <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-              <TableCell>{item.name}</TableCell>
+              <TableCell sx={{ pl: 4 }}>{item.account_code}</TableCell>
+              <TableCell>{item.account_name}</TableCell>
               <TableCell
                 align='right'
                 sx={{ color: 'error.main' }}
               >
                 {formatCurrency(item.amount)}
               </TableCell>
-              <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
+              <TableCell align='right'>
+                {data.total_revenue > 0
+                  ? ((item.amount / data.total_revenue) * 100).toFixed(2)
+                  : '0.00'}
+              </TableCell>
             </TableRow>
           ))}
-          <TableRow sx={{ bgcolor: 'grey.100' }}>
-            <TableCell
-              colSpan={2}
-              sx={{ fontWeight: 'bold' }}
-            >
-              {i18n.t('erp.financial_report.label.operating_profit')}
-            </TableCell>
-            <TableCell
-              align='right'
-              sx={{ fontWeight: 'bold' }}
-            >
-              {formatCurrency(data.operating_profit)}
-            </TableCell>
-            <TableCell />
-          </TableRow>
-          <TableRow sx={{ bgcolor: 'grey.100' }}>
-            <TableCell
-              colSpan={2}
-              sx={{ fontWeight: 'bold' }}
-            >
-              {i18n.t('erp.financial_report.label.gross_profit')}
-            </TableCell>
-            <TableCell
-              align='right'
-              sx={{ fontWeight: 'bold' }}
-            >
-              {formatCurrency(data.gross_profit)}
-            </TableCell>
-            <TableCell />
-          </TableRow>
           <TableRow sx={{ bgcolor: 'primary.50' }}>
             <TableCell
               colSpan={2}
@@ -245,10 +223,10 @@ const IncomeStatementTable: React.FC<{
               align='right'
               sx={{
                 fontWeight: 'bold',
-                color: data.net_profit >= 0 ? 'success.main' : 'error.main',
+                color: data.net_income >= 0 ? 'success.main' : 'error.main',
               }}
             >
-              {formatCurrency(data.net_profit)}
+              {formatCurrency(data.net_income)}
             </TableCell>
             <TableCell />
           </TableRow>
@@ -261,25 +239,15 @@ const CashFlowTable: React.FC<{
   data: CashFlowStatement;
   formatCurrency: (amount: number) => string;
 }> = ({ data, formatCurrency }) => {
-  const renderActivities = (
-    items: CashFlowItem[],
-    prefix: string,
-    sectionLabel: string,
-    sectionBg: string
-  ) => (
+  const renderItems = (items: CashFlowItem[], depth = 0) => (
     <>
-      <SectionHeader
-        label={sectionLabel}
-        bgColor={sectionBg}
-        colSpan={3}
-      />
       {items.map((item) => (
         <TableRow
-          key={`${prefix}-${item.code}`}
+          key={`cf-${item.item_code}`}
           hover
         >
-          <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-          <TableCell>{item.name}</TableCell>
+          <TableCell sx={{ pl: 4 + depth * 2 }}>{item.item_code}</TableCell>
+          <TableCell>{item.item_name}</TableCell>
           <TableCell
             align='right'
             sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}
@@ -313,25 +281,36 @@ const CashFlowTable: React.FC<{
           </TableRow>
         </TableHead>
         <TableBody>
-          {renderActivities(
-            data.operating_activities,
-            'op',
-            i18n.t('erp.financial_report.label.operating_activities'),
-            'success.50'
-          )}
-          {renderActivities(
-            data.investing_activities,
-            'inv',
-            i18n.t('erp.financial_report.label.investing_activities'),
-            'warning.50'
-          )}
-          {renderActivities(
-            data.financing_activities,
-            'fin',
-            i18n.t('erp.financial_report.label.financing_activities'),
-            'primary.50'
-          )}
+          {renderItems(data.items)}
           <TableRow sx={{ bgcolor: 'grey.100' }}>
+            <TableCell
+              colSpan={2}
+              sx={{ fontWeight: 'bold' }}
+            >
+              {i18n.t('erp.financial_report.label.total_inflow')}
+            </TableCell>
+            <TableCell
+              align='right'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {formatCurrency(data.total_inflow)}
+            </TableCell>
+          </TableRow>
+          <TableRow sx={{ bgcolor: 'grey.100' }}>
+            <TableCell
+              colSpan={2}
+              sx={{ fontWeight: 'bold' }}
+            >
+              {i18n.t('erp.financial_report.label.total_outflow')}
+            </TableCell>
+            <TableCell
+              align='right'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {formatCurrency(data.total_outflow)}
+            </TableCell>
+          </TableRow>
+          <TableRow sx={{ bgcolor: 'primary.50' }}>
             <TableCell
               colSpan={2}
               sx={{ fontWeight: 'bold' }}
@@ -342,10 +321,38 @@ const CashFlowTable: React.FC<{
               align='right'
               sx={{
                 fontWeight: 'bold',
-                color: data.net_cash_flow >= 0 ? 'success.main' : 'error.main',
+                color: data.net_change >= 0 ? 'success.main' : 'error.main',
               }}
             >
-              {formatCurrency(data.net_cash_flow)}
+              {formatCurrency(data.net_change)}
+            </TableCell>
+          </TableRow>
+          <TableRow sx={{ bgcolor: 'grey.50' }}>
+            <TableCell
+              colSpan={2}
+              sx={{ fontWeight: 'bold' }}
+            >
+              {i18n.t('erp.financial_report.label.opening_balance')}
+            </TableCell>
+            <TableCell
+              align='right'
+              sx={{ color: 'text.secondary' }}
+            >
+              {formatCurrency(data.opening_balance)}
+            </TableCell>
+          </TableRow>
+          <TableRow sx={{ bgcolor: 'grey.50' }}>
+            <TableCell
+              colSpan={2}
+              sx={{ fontWeight: 'bold' }}
+            >
+              {i18n.t('erp.financial_report.label.closing_balance')}
+            </TableCell>
+            <TableCell
+              align='right'
+              sx={{ color: 'text.secondary' }}
+            >
+              {formatCurrency(data.closing_balance)}
             </TableCell>
           </TableRow>
         </TableBody>

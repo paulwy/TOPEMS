@@ -66,29 +66,36 @@ const balanceSheet: BalanceSheet = {
 const incomeStatement: IncomeStatement = {
   period: '2026-08',
   revenues: [
-    { code: '6001', name: '主营业务收入', amount: 1800000, percentage: 100 },
-    { code: '6051', name: '其他业务收入', amount: 200000, percentage: 11.11 },
+    { account_code: '6001', account_name: '主营业务收入', amount: 1800000 },
+    { account_code: '6051', account_name: '其他业务收入', amount: 200000 },
   ],
   expenses: [
-    { code: '6401', name: '主营业务成本', amount: 900000, percentage: 50 },
-    { code: '6602', name: '管理费用', amount: 300000, percentage: 16.67 },
+    { account_code: '6401', account_name: '主营业务成本', amount: 900000 },
+    { account_code: '6602', account_name: '管理费用', amount: 300000 },
   ],
   total_revenue: 2000000,
-  total_cost: 1200000,
-  gross_profit: 1100000,
-  operating_profit: 800000,
-  net_profit: 650000,
+  total_expense: 1200000,
+  net_income: 800000,
 };
 
 const cashFlowStatement: CashFlowStatement = {
   period: '2026-08',
-  operating_activities: [{ code: 'C01', name: '销售收现', amount: 1500000 }],
-  investing_activities: [{ code: 'C11', name: '购建固定资产', amount: -350000 }],
-  financing_activities: [{ code: 'C21', name: '取得借款', amount: 500000 }],
-  operating_cash_flow: 1500000,
-  investing_cash_flow: -350000,
-  financing_cash_flow: 500000,
-  net_cash_flow: 1650000,
+  items: [
+    { item_code: 'C01', item_name: '销售收现', item_type: 'inflow', amount: 1500000, children: [] },
+    {
+      item_code: 'C11',
+      item_name: '购建固定资产',
+      item_type: 'outflow',
+      amount: -350000,
+      children: [],
+    },
+    { item_code: 'C21', item_name: '取得借款', item_type: 'inflow', amount: 500000, children: [] },
+  ],
+  total_inflow: 2000000,
+  total_outflow: 350000,
+  net_change: 1650000,
+  opening_balance: 575000,
+  closing_balance: 2225000,
 };
 
 describe('ERP 财务报表拆分组件渲染测试', () => {

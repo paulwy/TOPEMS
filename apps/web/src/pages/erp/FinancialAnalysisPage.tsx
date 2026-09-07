@@ -345,7 +345,7 @@ const FinancialAnalysisPage: React.FC = () => {
             id: 'total-cost',
             title: i18n.t('erp.financial_analysis_page.k28'),
             value: i18n.t('erp:financial_analysis_page.v0_13', {
-              v0: (incomeStatementData.total_cost / 10000).toFixed(1),
+              v0: (incomeStatementData.total_expense / 10000).toFixed(1),
             }),
             color: 'error',
           },
@@ -353,7 +353,7 @@ const FinancialAnalysisPage: React.FC = () => {
             id: 'net-profit',
             title: i18n.t('erp.financial_analysis_page.k29'),
             value: i18n.t('erp:financial_analysis_page.v0_12', {
-              v0: (incomeStatementData.net_profit / 10000).toFixed(1),
+              v0: (incomeStatementData.net_income / 10000).toFixed(1),
             }),
             color: 'primary',
           },
@@ -367,23 +367,23 @@ const FinancialAnalysisPage: React.FC = () => {
             id: 'net-cash-flow',
             title: i18n.t('erp.financial_analysis_page.k30'),
             value: i18n.t('erp:financial_analysis_page.v0_11', {
-              v0: (cashFlowData.net_cash_flow / 10000).toFixed(1),
+              v0: (cashFlowData.net_change / 10000).toFixed(1),
             }),
             color: 'success',
           },
           {
             id: 'operating-cash-flow',
-            title: i18n.t('erp.financial_analysis_page.k31'),
+            title: i18n.t('erp.financial_report.label.total_inflow'),
             value: i18n.t('erp:financial_analysis_page.v0_10', {
-              v0: (cashFlowData.net_cash_flow / 10000).toFixed(1),
+              v0: (cashFlowData.total_inflow / 10000).toFixed(1),
             }),
             color: 'warning',
           },
           {
             id: 'financing-cash-flow',
-            title: i18n.t('erp.financial_analysis_page.k32'),
+            title: i18n.t('erp.financial_report.label.total_outflow'),
             value: i18n.t('erp:financial_analysis_page.v0_9', {
-              v0: (cashFlowData.net_cash_flow / 10000).toFixed(1),
+              v0: (cashFlowData.total_outflow / 10000).toFixed(1),
             }),
             color: 'info',
           },
@@ -509,17 +509,12 @@ const FinancialAnalysisPage: React.FC = () => {
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k4'),
-                value: incomeStatementData.total_cost || 0,
+                value: incomeStatementData.total_expense || 0,
                 color: ct.error.main,
               },
               {
-                name: i18n.t('erp.financial_analysis_page.k5'),
-                value: incomeStatementData.operating_profit || 0,
-                color: ct.primary.main,
-              },
-              {
                 name: i18n.t('erp.financial_analysis_page.k6'),
-                value: incomeStatementData.net_profit || 0,
+                value: incomeStatementData.net_income || 0,
                 color: ct.secondary.main,
               },
             ],
@@ -537,23 +532,18 @@ const FinancialAnalysisPage: React.FC = () => {
             nameKey: 'name',
             data: [
               {
-                name: i18n.t('erp.financial_analysis_page.k7'),
-                value: cashFlowData.operating_cash_flow || 0,
+                name: i18n.t('erp.financial_report.label.total_inflow'),
+                value: cashFlowData.total_inflow || 0,
                 color: ct.success.main,
               },
               {
-                name: i18n.t('erp.financial_analysis_page.k8'),
-                value: cashFlowData.investing_cash_flow || 0,
+                name: i18n.t('erp.financial_report.label.total_outflow'),
+                value: cashFlowData.total_outflow || 0,
                 color: ct.warning.main,
               },
               {
-                name: i18n.t('erp.financial_analysis_page.k9'),
-                value: cashFlowData.financing_cash_flow || 0,
-                color: ct.info.main,
-              },
-              {
                 name: i18n.t('erp.financial_analysis_page.k10'),
-                value: cashFlowData.net_cash_flow || 0,
+                value: cashFlowData.net_change || 0,
                 color: ct.primary.main,
               },
             ],
@@ -678,15 +668,11 @@ const FinancialAnalysisPage: React.FC = () => {
               },
               {
                 metric: i18n.t('erp.financial_analysis_page.k4'),
-                amount: incomeStatementData.total_cost || 0,
-              },
-              {
-                metric: i18n.t('erp.financial_analysis_page.k5'),
-                amount: incomeStatementData.operating_profit || 0,
+                amount: incomeStatementData.total_expense || 0,
               },
               {
                 metric: i18n.t('erp.financial_analysis_page.k6'),
-                amount: incomeStatementData.net_profit || 0,
+                amount: incomeStatementData.net_income || 0,
               },
             ],
           },
@@ -701,20 +687,16 @@ const FinancialAnalysisPage: React.FC = () => {
             columns: tableColumns,
             data: [
               {
-                metric: i18n.t('erp.financial_analysis_page.k7'),
-                amount: cashFlowData.operating_cash_flow || 0,
+                metric: i18n.t('erp.financial_report.label.total_inflow'),
+                amount: cashFlowData.total_inflow || 0,
               },
               {
-                metric: i18n.t('erp.financial_analysis_page.k8'),
-                amount: cashFlowData.investing_cash_flow || 0,
-              },
-              {
-                metric: i18n.t('erp.financial_analysis_page.k9'),
-                amount: cashFlowData.financing_cash_flow || 0,
+                metric: i18n.t('erp.financial_report.label.total_outflow'),
+                amount: cashFlowData.total_outflow || 0,
               },
               {
                 metric: i18n.t('erp.financial_analysis_page.k10'),
-                amount: cashFlowData.net_cash_flow || 0,
+                amount: cashFlowData.net_change || 0,
               },
             ],
           },

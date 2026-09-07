@@ -5,9 +5,8 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
-  BarChart3,
-  Activity,
   Wallet,
+  Activity,
   Building2,
   FileText,
 } from 'lucide-react';
@@ -216,56 +215,36 @@ const FinancialReportPage: React.FC = () => {
           color: 'error',
         },
         {
-          id: 'operating-profit',
-          title: i18n.t('pages.financial_report_page.k5'),
-          value: formatCurrency(incomeStatement.operating_profit),
-          icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
-          color: 'primary',
-        },
-        {
           id: 'net-profit',
           title: i18n.t('pages.financial_report_page.k6'),
-          value: formatCurrency(incomeStatement.net_profit),
+          value: formatCurrency(incomeStatement.net_income),
           icon: <DollarSign sx={{ width: 24, height: 24 }} />,
-          color: incomeStatement.net_profit >= 0 ? 'success' : 'error',
+          color: incomeStatement.net_income >= 0 ? 'success' : 'error',
         },
       ];
     }
     if (activeTab === 'cash-flow' && cashFlowStatement) {
       return [
         {
-          id: 'operating',
-          title: i18n.t('pages.financial_report_page.k7'),
-          value: formatCurrency(
-            cashFlowStatement.operating_activities.reduce((sum, i) => sum + i.amount, 0)
-          ),
-          icon: <Activity sx={{ width: 24, height: 24 }} />,
+          id: 'total-inflow',
+          title: i18n.t('erp.financial_report.label.total_inflow'),
+          value: formatCurrency(cashFlowStatement.total_inflow),
+          icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
           color: 'success',
         },
         {
-          id: 'investing',
-          title: i18n.t('pages.financial_report_page.k8'),
-          value: formatCurrency(
-            cashFlowStatement.investing_activities.reduce((sum, i) => sum + i.amount, 0)
-          ),
-          icon: <Building2 sx={{ width: 24, height: 24 }} />,
+          id: 'total-outflow',
+          title: i18n.t('erp.financial_report.label.total_outflow'),
+          value: formatCurrency(cashFlowStatement.total_outflow),
+          icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
           color: 'warning',
-        },
-        {
-          id: 'financing',
-          title: i18n.t('pages.financial_report_page.k9'),
-          value: formatCurrency(
-            cashFlowStatement.financing_activities.reduce((sum, i) => sum + i.amount, 0)
-          ),
-          icon: <DollarSign sx={{ width: 24, height: 24 }} />,
-          color: 'primary',
         },
         {
           id: 'net-cash-flow',
           title: i18n.t('pages.financial_report_page.k10'),
-          value: formatCurrency(cashFlowStatement.net_cash_flow),
+          value: formatCurrency(cashFlowStatement.net_change),
           icon: <Wallet sx={{ width: 24, height: 24 }} />,
-          color: cashFlowStatement.net_cash_flow >= 0 ? 'success' : 'error',
+          color: cashFlowStatement.net_change >= 0 ? 'success' : 'error',
         },
       ];
     }
@@ -394,10 +373,13 @@ const FinancialReportPage: React.FC = () => {
           percentage: '',
         },
         ...incomeStatement.revenues.map((item) => ({
-          code: item.code,
-          name: item.name,
+          code: item.account_code,
+          name: item.account_name,
           amount: formatCurrency(item.amount),
-          percentage: item.percentage.toFixed(2),
+          percentage:
+            incomeStatement.total_revenue > 0
+              ? ((item.amount / incomeStatement.total_revenue) * 100).toFixed(2)
+              : '0.00',
         })),
         {
           _isSection: true,
@@ -407,30 +389,26 @@ const FinancialReportPage: React.FC = () => {
           percentage: '',
         },
         ...incomeStatement.expenses.map((item) => ({
-          code: item.code,
-          name: item.name,
+          code: item.account_code,
+          name: item.account_name,
           amount: formatCurrency(item.amount),
-          percentage: item.percentage.toFixed(2),
+          percentage:
+            incomeStatement.total_revenue > 0
+              ? ((item.amount / incomeStatement.total_revenue) * 100).toFixed(2)
+              : '0.00',
         })),
         {
           _isTotal: true,
           code: '',
-          name: i18n.t('pages.financial_report_page.k20'),
-          amount: formatCurrency(incomeStatement.operating_profit),
-          percentage: '',
-        },
-        {
-          _isTotal: true,
-          code: '',
-          name: i18n.t('pages.financial_report_page.k21'),
-          amount: formatCurrency(incomeStatement.gross_profit),
+          name: i18n.t('erp.financial_report.label.total_expense'),
+          amount: formatCurrency(incomeStatement.total_expense),
           percentage: '',
         },
         {
           _isTotal: true,
           code: '',
           name: i18n.t('pages.financial_report_page.k22'),
-          amount: formatCurrency(incomeStatement.net_profit),
+          amount: formatCurrency(incomeStatement.net_income),
           percentage: '',
         },
       ];
@@ -469,44 +447,28 @@ const FinancialReportPage: React.FC = () => {
         },
       ];
       const data: Record<string, unknown>[] = [
-        {
-          _isSection: true,
-          code: '',
-          name: i18n.t('pages.financial_report_page.k24'),
-          amount: '',
-        },
-        ...cashFlowStatement.operating_activities.map((item) => ({
-          code: item.code,
-          name: item.name,
-          amount: formatCurrency(item.amount),
-        })),
-        {
-          _isSection: true,
-          code: '',
-          name: i18n.t('pages.financial_report_page.k25'),
-          amount: '',
-        },
-        ...cashFlowStatement.investing_activities.map((item) => ({
-          code: item.code,
-          name: item.name,
-          amount: formatCurrency(item.amount),
-        })),
-        {
-          _isSection: true,
-          code: '',
-          name: i18n.t('pages.financial_report_page.k26'),
-          amount: '',
-        },
-        ...cashFlowStatement.financing_activities.map((item) => ({
-          code: item.code,
-          name: item.name,
+        ...cashFlowStatement.items.map((item) => ({
+          code: item.item_code,
+          name: item.item_name,
           amount: formatCurrency(item.amount),
         })),
         {
           _isTotal: true,
           code: '',
+          name: i18n.t('erp.financial_report.label.total_inflow'),
+          amount: formatCurrency(cashFlowStatement.total_inflow),
+        },
+        {
+          _isTotal: true,
+          code: '',
+          name: i18n.t('erp.financial_report.label.total_outflow'),
+          amount: formatCurrency(cashFlowStatement.total_outflow),
+        },
+        {
+          _isTotal: true,
+          code: '',
           name: i18n.t('pages.financial_report_page.k27'),
-          amount: formatCurrency(cashFlowStatement.net_cash_flow),
+          amount: formatCurrency(cashFlowStatement.net_change),
         },
       ];
       return [{ id: 'cash-flow-table', columns, data }];

@@ -207,38 +207,36 @@ export interface BalanceSheet {
 }
 
 export interface IncomeItem {
-  code: string;
-  name: string;
+  account_code: string;
+  account_name: string;
   amount: number;
-  percentage: number;
 }
 
 export interface IncomeStatement {
+  period: string;
   revenues: IncomeItem[];
   expenses: IncomeItem[];
   total_revenue: number;
-  total_cost: number;
-  gross_profit: number;
-  operating_profit: number;
-  net_profit: number;
-  period: string;
+  total_expense: number;
+  net_income: number;
 }
 
 export interface CashFlowItem {
-  code: string;
-  name: string;
+  item_code: string;
+  item_name: string;
+  item_type: string;
   amount: number;
+  children: CashFlowItem[];
 }
 
 export interface CashFlowStatement {
-  operating_activities: CashFlowItem[];
-  investing_activities: CashFlowItem[];
-  financing_activities: CashFlowItem[];
-  operating_cash_flow: number;
-  investing_cash_flow: number;
-  financing_cash_flow: number;
-  net_cash_flow: number;
   period: string;
+  items: CashFlowItem[];
+  total_inflow: number;
+  total_outflow: number;
+  net_change: number;
+  opening_balance: number;
+  closing_balance: number;
 }
 
 export interface OfficeSupply {
