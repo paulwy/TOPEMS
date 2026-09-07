@@ -191,7 +191,7 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const exportToExcel = useCallback(
     async (exportData: Record<string, unknown>[], name: string) => {
-      const XLSX = await import('xlsx');
+      const ExcelJS = await import('exceljs');
       const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
@@ -201,17 +201,26 @@ const DataExport: React.FC<DataExportProps> = ({
         return newRow;
       });
 
-      const worksheet = XLSX.utils.json_to_sheet(filteredData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Sheet1');
+      worksheet.addRows(filteredData);
 
       // 设置列宽
-      const colWidths = selectedFields
+      worksheet.columns = selectedFields
         .filter((f) => f.selected)
-        .map((f) => ({ wch: f.width || 20 }));
-      worksheet['!cols'] = colWidths;
+        .map((f) => ({ width: f.width || 20 }));
 
-      XLSX.writeFile(workbook, `${name}.xlsx`);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${name}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
     },
     [selectedFields]
   );
@@ -221,7 +230,6 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const exportToCsv = useCallback(
     async (exportData: Record<string, unknown>[], name: string) => {
-      const XLSX = await import('xlsx');
       const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
@@ -231,10 +239,23 @@ const DataExport: React.FC<DataExportProps> = ({
         return newRow;
       });
 
-      const worksheet = XLSX.utils.json_to_sheet(filteredData);
-      const csv = XLSX.utils.sheet_to_csv(worksheet);
+      const csvLines = [
+        selectedKeys.join(','),
+        ...filteredData.map((row) =>
+          selectedKeys
+            .map((key) => {
+              const value = row[key];
+              const str = value === null || value === undefined ? '' : String(value);
+              if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
+            })
+            .join(',')
+        ),
+      ];
 
-      const blob = new Blob([`\uFEFF${csv}`], {
+      const blob = new Blob([`\uFEFF${csvLines.join('\n')}`], {
         type: 'text/csv;charset=utf-8;',
       });
       const link = document.createElement('a');

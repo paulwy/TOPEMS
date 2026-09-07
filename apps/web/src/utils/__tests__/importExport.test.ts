@@ -68,18 +68,6 @@ vi.mock('i18next', () => {
   };
 });
 
-// Mock xlsx to avoid heavy dependency in tests
-vi.mock('xlsx', () => ({
-  utils: {
-    aoa_to_sheet: vi.fn(() => ({})),
-    book_new: vi.fn(() => ({})),
-    book_append_sheet: vi.fn(),
-    sheet_to_json: vi.fn(() => []),
-  },
-  read: vi.fn(() => ({ SheetNames: ['Sheet1'], Sheets: { Sheet1: {} } })),
-  writeFile: vi.fn(),
-}));
-
 describe('utils/importExport - parseFileExtension', () => {
   it('returns "xlsx" for .xlsx files', () => {
     expect(parseFileExtension('data.xlsx')).toBe('xlsx');

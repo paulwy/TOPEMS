@@ -67,7 +67,7 @@ const QualityInspectionPage: React.FC = () => {
         return;
       }
       try {
-        const XLSX = await import('xlsx');
+        const ExcelJS = await import('exceljs');
         const typeLabelMap: Record<string, string> = {
           incoming: i18n.t('mes.quality_inspection_page.inspection'),
           process: i18n.t('mes.quality_inspection_page.type_process'),
@@ -103,13 +103,20 @@ const QualityInspectionPage: React.FC = () => {
           [i18n.t('pages.quality_inspection_page.k12')]: item.result || '',
           [i18n.t('pages.quality_inspection_page.k13')]: statusLabelMap[item.status] || item.status,
         }));
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, i18n.t('mes.quality_inspection_page.k4'));
-        XLSX.writeFile(
-          workbook,
-          `${i18n.t('pages.quality_inspection_page.__0')}${new Date().toISOString().split('T')[0]}.xlsx`
-        );
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet(i18n.t('mes.quality_inspection_page.k4'));
+        worksheet.addRows(exportData);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${i18n.t('pages.quality_inspection_page.__0')}${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
         addNotification({
           type: 'success',
           title: i18n.t('mes.quality_inspection_page.export'),

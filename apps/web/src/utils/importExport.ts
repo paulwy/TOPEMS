@@ -44,7 +44,7 @@ export const exportToExcel = async <T>(
   columns: ExportColumn<T>[],
   fileName: string = 'export'
 ): Promise<void> => {
-  const XLSX = await import('xlsx');
+  const ExcelJS = await import('exceljs');
   const headers = columns.map((col) => col.label);
 
   const rows = data.map((item) =>
@@ -68,12 +68,22 @@ export const exportToExcel = async <T>(
     })
   );
 
-  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Sheet1');
+  worksheet.addRow(headers);
+  rows.forEach((row) => worksheet.addRow(row));
 
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-
-  XLSX.writeFile(workbook, `${fileName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${fileName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 };
 
 export interface ImportResult<T> {
@@ -87,19 +97,52 @@ export const importFromExcel = async <T>(
   columns: ExportColumn<T>[],
   transform?: (raw: Record<string, unknown>) => T
 ): Promise<ImportResult<T>> => {
-  const XLSX = await import('xlsx');
+  const ExcelJS = await import('exceljs');
   return new Promise((resolve) => {
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const data = e.target?.result as ArrayBuffer;
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(data);
 
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) {
+          resolve({
+            success: false,
+            data: [],
+            errors: [{ row: 0, message: i18n.t('shared.import_export.k4') }],
+          });
+          return;
+        }
 
-        const rawData = XLSX.utils.sheet_to_json(worksheet) as unknown as Record<string, unknown>[];
+        const headerRow = worksheet.getRow(1);
+        const headers: string[] = [];
+        headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+          headers[colNumber - 1] = String(cell.text || '');
+        });
+
+        const rawData: Record<string, unknown>[] = [];
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) return;
+          const item: Record<string, unknown> = {};
+          headers.forEach((header, index) => {
+            if (!header) return;
+            const cell = row.getCell(index + 1);
+            let value: unknown = cell.value;
+            if (value && typeof value === 'object') {
+              const v = value as { text?: unknown; result?: unknown; richText?: unknown };
+              if (typeof v.text === 'string') {
+                value = v.text;
+              } else if (typeof v.result === 'string' || typeof v.result === 'number') {
+                value = v.result;
+              }
+            }
+            item[header] = value;
+          });
+          rawData.push(item);
+        });
 
         const errors: { row: number; message: string }[] = [];
         const result: T[] = [];

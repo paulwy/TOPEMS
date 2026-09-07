@@ -5,17 +5,20 @@ import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import DataExport, { ExportField } from '../DataExport';
 
-import * as XLSX from 'xlsx';
-
-vi.mock('xlsx', () => ({
-  utils: {
-    json_to_sheet: vi.fn(() => ({})),
-    sheet_to_csv: vi.fn(() => 'csv-content'),
-    book_new: vi.fn(() => ({})),
-    book_append_sheet: vi.fn(),
-  },
-  writeFile: vi.fn(),
+const excelMocks = vi.hoisted(() => ({
+  writeBuffer: vi.fn(() => Promise.resolve(new ArrayBuffer(8))),
+  addRows: vi.fn(),
 }));
+
+vi.mock('exceljs', () => {
+  class MockWorkbook {
+    xlsx = { writeBuffer: excelMocks.writeBuffer };
+    addWorksheet() {
+      return { addRows: excelMocks.addRows, columns: [] };
+    }
+  }
+  return { Workbook: MockWorkbook };
+});
 
 const sampleData: Record<string, unknown>[] = [
   { name: '张三', department: '技术部' },
@@ -73,12 +76,15 @@ describe('DataExport', () => {
         fields={sampleFields}
       />
     );
+    const appendSpy = vi.spyOn(document.body, 'appendChild');
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
     fireEvent.click(screen.getByText('导出 Excel'));
 
-    await waitFor(() => expect(XLSX.writeFile).toHaveBeenCalledTimes(1), { timeout: 2000 });
-    const args = (XLSX.writeFile as unknown as vi.Mock).mock.calls[0];
-    expect(args[1]).toBe('export.xlsx');
+    await waitFor(() => expect(excelMocks.writeBuffer).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    const links = appendSpy.mock.calls.map((c) => c[0] as HTMLAnchorElement);
+    const anchor = links[links.length - 1];
+    expect(anchor.download).toBe('export.xlsx');
+    appendSpy.mockRestore();
   });
 
   it('disables the export button when disabled prop is true', () => {
@@ -143,11 +149,14 @@ describe('DataExport', () => {
         defaultFileName='员工列表'
       />
     );
+    const appendSpy = vi.spyOn(document.body, 'appendChild');
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
     fireEvent.click(screen.getByText('导出 Excel'));
 
-    await waitFor(() => expect(XLSX.writeFile).toHaveBeenCalledTimes(1), { timeout: 2000 });
-    const args = (XLSX.writeFile as unknown as vi.Mock).mock.calls[0];
-    expect(args[1]).toBe('员工列表.xlsx');
+    await waitFor(() => expect(excelMocks.writeBuffer).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    const links = appendSpy.mock.calls.map((c) => c[0] as HTMLAnchorElement);
+    const anchor = links[links.length - 1];
+    expect(anchor.download).toBe('员工列表.xlsx');
+    appendSpy.mockRestore();
   });
 });
