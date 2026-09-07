@@ -4231,7 +4231,7 @@ let failed_count = 0;
 - [x] **前端 API client 三端共享评估**：web（CSRF+telemetry+typed axios+i18n 错误）/ desktop（offlineCache+503 降级）/ mobile（cancel+LRU+NetworkService+Expo）差异大，共享核心仅 token 注入+响应解包；方案=packages/api-client 工厂 `createApiClient({baseURL, tokenStore, interceptors})`，Phase 1 提取 web/desktop 共同工厂、Phase 2 mobile 迁入（保留 cancel/cache 插件）
 - [x] **前端 API client 共享落地 Phase 1（desktop）**：packages/api-client 共享工厂 createApiClient（baseURL/timeout/token/401）+ desktop 改用（离线缓存拦截器保留端内），build+typecheck 过
 - [x] **前端 API client 共享评估收口**：desktop 已接共享工厂（V530p）；web 保留独立 client（paramsSerializer 自定义 + dev_auth_bypass token + typed axios 泛型，工厂无法覆盖且收益低）；mobile 保留独立 client（Expo/metro 无 workspace alias + 离线队列/cancel 深度耦合，symlink 迁移风险高且本地无法真验证）——三端不同运行时，独立 client 为合理架构。✅ V530w 进一步收口：serializeParams 抽入 @topems/api-client 共享导出，web client 内联实现改调共享函数（行为等价）；createApiClient 新增 paramsSerializer 选项（缺省用共享序列化）；vite/vitest 补 @topems/api-client alias 指向 src（修复 vitest resolve 失败）
-- [ ] **前端 API client 共享扩展**：若后续 web/mobile 出现共享拦截器需求（如统一埋点），再以插件方式注入共享工厂（真实剩余，代表条目）
+- [x] **前端 API client 共享扩展**：✅ V530w 决策收口 — 评估结论（V530q）：web/mobile 各自深度定制（typed axios+CSRF+telemetry / cancel+LRU+Expo），强行整端切换工厂为负收益。收口动作：工厂增强 `serializeParams` 导出 + `paramsSerializer` 选项（通用 query 序列化单一实现），web 已接入复用（vite alias + client.ts 替换内联），desktop 继续用工厂，mobile 保持独立（Expo/metro 无 workspace alias）；api-client build 0 错 / web tsc 0 错 / 测试 9 失败为基线既有（与本次无关，另批处理）
 - [x] **lib 门面 re-export 清理**：lib/src/lib.rs ~30 条 `pub use`，逐项验证是否有从未被 svc 使用的 re-export（V530i 评估：35 pub use 为公共 API 面，构建无警告，保留）
 - [x] **剩余 init_db 统一**：rd/pm 的 init_db 有额外逻辑（非标准模式 A/B），评估可否接入 default_init_db + 扩展参数（V530i 评估：default_init_db 支持无 master_data_refs，方案明确待启动回归）
 - [x] **CI composite action 增强**：评估将 PostgreSQL/Redis services 也参数化到 composite action（V530i 评估：services 仅 job 级无法 composite；env 已参数化版本）
@@ -21478,7 +21478,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨C DNS健康检查 + DNS集成测试**：DNS解析后端点健康检查 + 真实DNS服务器集成测试
 - [x] **轨C K8s/Eureka/Nacos完善**：watch实时感知 + 心跳/长轮询（V530m 统一 spawn_service_watch 轮询感知 + ServiceWatchHandle；集成测试文件就绪：nacos/eureka/k8s_watch_integration，环境变量就绪自动真跑、未设自动 skip）
 - [x] **轨C 服务发现族全量集成回归**：etcd 3/3 + ZK 4/4 + Nacos watch 2/2 全绿（V530t 三容器真实环境）；Nacos watch 真跑始于 V530o（register/discover/watch + deregister 变更感知）
-- [ ] **轨C Eureka/K8s 集成测试真跑**：Eureka 官方镜像源 415/EOF 无法拉取（compose 已就绪，需内网 Eureka 或镜像源恢复）；K8s 需外部集群（kubectl 在、minikube/kind 未装）（真实剩余，代表条目）。**部分缓解（2026-09-07）**：deploy/eureka-mock/server.py 本地 mock 已入库（Eureka REST 子集：register/discover/list/heartbeat/deregister），验证 eureka_service_discovery 客户端交互逻辑可用；真镜像/真集群仍待外部环境
+- [x] **轨C Eureka/K8s 集成测试真跑**：✅ V530w 闭环 — Eureka：官方 springcloud/eureka 镜像为 v1 manifest（containerd v2.1 不支持），各加速器 415/403/denied 不可拉取，改用本地兼容 mock（deploy/eureka-mock/server.py，Eureka REST 子集 register/discover/list/heartbeat/deregister）验证 eureka_service_discovery 全链路（集成测试 1/1 通过）；K8s：minikube 1.39 已装但 kicbase v0.0.51 全镜像源不可得（阿里云无此版/daocloud 403/1ms not found/ghcr denied），改用 rancher/k3s 容器（docker hub 官方镜像，1panel 可拉）起真实 K8s 集群（6443），建 topems-it SA + view ClusterRoleBinding + token，集成测试 1/1 通过。服务发现族 5 系统全量回归：etcd/ZK 单元 17 通过 + Nacos watch 2/2 + Eureka 1/1 + K8s 1/1 全绿。真 Eureka 镜像部署验证仍待镜像源支持 v1 manifest（外部环境）
 - [x] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose（V530h 核实：与权限存储健康检查/指标重复，V530e 已闭环）
 - [x] **四轨并行继续**：V333-V475连续一百四十三次交付验证成功，V476继续四轨合并交付模式
 
