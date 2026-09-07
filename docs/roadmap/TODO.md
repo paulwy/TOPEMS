@@ -21478,7 +21478,7 @@ export AUDIT_LOG_STORE_TYPE=database
 - [x] **轨C DNS健康检查 + DNS集成测试**：DNS解析后端点健康检查 + 真实DNS服务器集成测试
 - [x] **轨C K8s/Eureka/Nacos完善**：watch实时感知 + 心跳/长轮询（V530m 统一 spawn_service_watch 轮询感知 + ServiceWatchHandle；集成测试文件就绪：nacos/eureka/k8s_watch_integration，环境变量就绪自动真跑、未设自动 skip）
 - [x] **轨C 服务发现族全量集成回归**：etcd 3/3 + ZK 4/4 + Nacos watch 2/2 全绿（V530t 三容器真实环境）；Nacos watch 真跑始于 V530o（register/discover/watch + deregister 变更感知）
-- [ ] **轨C Eureka/K8s 集成测试真跑**：Eureka 官方镜像源 415/EOF 无法拉取（compose 已就绪，需内网 Eureka 或镜像源恢复）；K8s 需外部集群（kubectl 在、minikube/kind 未装）（真实剩余，代表条目）
+- [ ] **轨C Eureka/K8s 集成测试真跑**：Eureka 官方镜像源 415/EOF 无法拉取（compose 已就绪，需内网 Eureka 或镜像源恢复）；K8s 需外部集群（kubectl 在、minikube/kind 未装）（真实剩余，代表条目）。**部分缓解（2026-09-07）**：deploy/eureka-mock/server.py 本地 mock 已入库（Eureka REST 子集：register/discover/list/heartbeat/deregister），验证 eureka_service_discovery 客户端交互逻辑可用；真镜像/真集群仍待外部环境
 - [x] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose（V530h 核实：与权限存储健康检查/指标重复，V530e 已闭环）
 - [x] **四轨并行继续**：V333-V475连续一百四十三次交付验证成功，V476继续四轨合并交付模式
 
