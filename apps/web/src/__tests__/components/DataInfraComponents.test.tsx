@@ -1179,7 +1179,7 @@ describe('SettingsPageTemplate · Portal 配置设置页', () => {
     { id: 'tab-perm', label: '权限设置', sections: [permSection] },
   ];
 
-  it('状态：loading skeleton × 3；error Alert 文本；success Alert 文本', () => {
+  it('状态：loading skeleton ≥ 3', () => {
     const { unmount, container } = renderWithProviders(
       <SettingsPageTemplate
         title='BI · 数据源设置'
@@ -1189,10 +1189,12 @@ describe('SettingsPageTemplate · Portal 配置设置页', () => {
       />
     );
     const skel = container.querySelectorAll('span.MuiSkeleton-root');
-    // Settings L503：loading → 3 个 Skeleton rect
+    // Settings L503：loading → 每个 section 3 个 Skeleton rect（sections 2 个 → ≥ 3）
     expect(skel.length).toBeGreaterThanOrEqual(3);
     unmount();
+  });
 
+  it('状态：error Alert 文本', () => {
     renderWithProviders(
       <SettingsPageTemplate
         title='BI · 数据源设置'
@@ -1202,8 +1204,10 @@ describe('SettingsPageTemplate · Portal 配置设置页', () => {
     );
     // MUI Alert 里会渲染 error 文本
     expect(screen.getByText('保存失败：HIVE 连接超时')).toBeInTheDocument();
+  });
 
-    const { unmount: un } = renderWithProviders(
+  it('状态：success Alert 文本', () => {
+    renderWithProviders(
       <SettingsPageTemplate
         title='BI · 数据源设置'
         sections={sections}
@@ -1211,7 +1215,6 @@ describe('SettingsPageTemplate · Portal 配置设置页', () => {
       />
     );
     expect(screen.getByText('已保存并生效')).toBeInTheDocument();
-    un();
   });
 
   it('基础态：tabs 2 项（基础设置/权限设置）+ 基础设置 section 字段；保存按钮/重置按钮文本默认值', () => {
