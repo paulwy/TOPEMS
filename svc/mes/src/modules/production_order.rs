@@ -421,6 +421,32 @@ pub async fn create_production_order(
         rand::random::<u16>() % 10000
     );
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for create_production_order: {}", e);
+            return Json(ApiResponse::error(500, "创建生产工单失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!(
+            "Failed to set RLS context for create_production_order: {}",
+            e
+        );
+        return Json(ApiResponse::error(500, "创建生产工单失败"));
+    }
+
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
@@ -447,11 +473,17 @@ pub async fn create_production_order(
         req.notes,
         now,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("Failed to commit tx for create_production_order: {}", e);
+                return Json(ApiResponse::error(500, "创建生产工单失败"));
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to create production order: {}", e);
             return Json(ApiResponse::error(500, "创建生产工单失败"));
