@@ -2,6 +2,16 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'tests/integration'
+# 依赖安全 overrides（2026-09-07 audit：82 漏洞，3 critical/40 high）
+# 仅做补丁/minor 内升级（API 兼容）；major 跳跃链（js-yaml 3.x、brace-expansion 5.x）
+# 与无修复项（decompress、xlsx）及 dev-only 工具（esbuild、storybook 链 vitest）单独评估
+overrides:
+  semver: ^7.6.3
+  cross-spawn: ^7.0.6
+  nanoid: ^3.3.18
+  '@xmldom/xmldom': ^0.8.13
+  tar: ^7.5.21
+  postcss: ^8.5.18
 allowBuilds:
   canvas: true
   core-js-pure: true
