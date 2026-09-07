@@ -96,6 +96,26 @@ check_idempotency() {
   return 1
 }
 
+# Check single-responsibility: a migration should not mix many DDL statements
+# across multiple schemas. Flags over-broad "rehome" style migrations for audit.
+check_single_responsibility() {
+  local file="$1"
+  local ddl_count schema_count line scopes raw
+  ddl_count=$(grep -c -E '^[[:space:]]*(ALTER TABLE|CREATE TABLE|DROP TABLE|ALTER TABLE.*SET SCHEMA|COMMENT ON)' "$file" 2>/dev/null || true)
+  # Distinct schemas touched by SET SCHEMA / schema-qualified table refs
+  scopes=$(grep -o -E 'SET SCHEMA [a-zA-Z_]+|(ALTER|CREATE|DROP) TABLE [a-zA-Z_]+\.' "$file" 2>/dev/null     | sed -E 's/SET SCHEMA //; s/(ALTER|CREATE|DROP) TABLE //; s/\.$//' | sort -u)
+  schema_count=$(printf '%s\n' "$scopes" | grep -c -E '[a-zA-Z_]+' 2>/dev/null || true)
+  if (( ddl_count > 40 )); then
+    echo "HIGH"
+  elif (( ddl_count > 15 )); then
+    echo "MEDIUM"
+  elif (( schema_count >= 3 )); then
+    echo "MULTI-SCHEMA"
+  else
+    echo "OK"
+  fi
+}
+
 # Compute sha256 of a file
 sha256_file() {
   if command -v sha256sum >/dev/null 2>&1; then
@@ -109,7 +129,7 @@ sha256_file() {
 get_prev_checksum() {
   local rel="$1"
   if [[ -f "$CHECKSUM_PATH" ]]; then
-    grep -F "  $rel" "$CHECKSUM_PATH" 2>/dev/null | awk '{print $1}' | tail -n 1
+    grep -F "  $rel" "$CHECKSUM_PATH" 2>/dev/null | awk '{print $1}' | tail -n 1 || true
   fi
 }
 
@@ -177,7 +197,7 @@ for dir in "${MIGRATION_DIRS[@]}"; do
       done < <(git -C "$REPO_ROOT" diff-tree --no-commit-id --name-only -r "$commit" -- "$dir/*.sql" 2>/dev/null)
 
       # Sort versions within the commit numerically
-      if [[ ${#commit_versions[@]} -gt 0 ]]; then
+      if (( ${#commit_versions[@]:-0} > 0 )); then
         while IFS= read -r v; do
           ordered_versions+=("$v")
         done < <(printf '%s\n' "${commit_versions[@]}" | sort -n)
@@ -186,7 +206,7 @@ for dir in "${MIGRATION_DIRS[@]}"; do
   fi
 
   # Fallback to filesystem order if git is unavailable or no tracked files
-  if [[ ${#ordered_versions[@]} -eq 0 ]]; then
+  if (( ${#ordered_versions[@]:-0} == 0 )); then
     while IFS= read -r -d '' file; do
       version="$(extract_version "$(basename "$file")")"
       [[ -z "$version" ]] && continue
@@ -195,13 +215,15 @@ for dir in "${MIGRATION_DIRS[@]}"; do
   fi
 
   prev_version=""
-  for version in "${ordered_versions[@]}"; do
-    if [[ -n "$prev_version" ]] && (( 10#$version <= 10#$prev_version )); then
-      ORDER_ISSUES+=("$dir: $version <= previous ($prev_version)")
-      ORDER_OK=false
-    fi
-    prev_version="$version"
-  done
+  if (( ${#ordered_versions[@]:-0} > 0 )); then
+    for version in "${ordered_versions[@]}"; do
+      if [[ -n "$prev_version" ]] && (( 10#$version <= 10#$prev_version )); then
+        ORDER_ISSUES+=("$dir: $version <= previous ($prev_version)")
+        ORDER_OK=false
+      fi
+      prev_version="$version"
+    done
+  fi
 done
 
 if $ORDER_OK; then
@@ -266,6 +288,29 @@ else
   log_warn "${#DOWN_MIGRATION_WARNINGS[@]} up migration(s) missing down migrations"
   for f in "${DOWN_MIGRATION_WARNINGS[@]}"; do
     echo "  - $f"
+  done
+fi
+
+# Single-responsibility check (audit over-broad migrations, non-blocking)
+log_info "Checking migration single-responsibility..."
+SINGLE_RESPONSIBILITY_WARNINGS=()
+for dir in "${MIGRATION_DIRS[@]}"; do
+  full_dir="$REPO_ROOT/$dir"
+  [[ -d "$full_dir" ]] || continue
+  while IFS= read -r -d '' file; do
+    res="$(check_single_responsibility "$file")"
+    if [[ "$res" != "OK" ]]; then
+      rel="$(rel_path "$file")"
+      SINGLE_RESPONSIBILITY_WARNINGS+=("$rel ($res: $(grep -c -E '^[[:space:]]*(ALTER TABLE|CREATE TABLE|DROP TABLE)' "$file") DDL)")
+    fi
+  done < <(find "$full_dir" -maxdepth 1 -type f \( -name '*.sql' \) ! -name '*.backup' ! -name '*.sql.backup' -print0 | sort -z)
+done
+if [[ ${#SINGLE_RESPONSIBILITY_WARNINGS[@]} -eq 0 ]]; then
+  log_ok "All migrations are single-responsibility"
+else
+  log_warn "${#SINGLE_RESPONSIBILITY_WARNINGS[@]} migration(s) flagged as multi-responsibility (audit; not blocking)"
+  for w in "${SINGLE_RESPONSIBILITY_WARNINGS[@]}"; do
+    echo "  - $w"
   done
 fi
 
@@ -379,6 +424,7 @@ echo "Total migration files checked: $TOTAL_FILES"
 echo "Invalid filenames:             ${#INVALID_FILES[@]}"
 echo "Version ordering issues:       ${#ORDER_ISSUES[@]}"
 echo "Idempotency warnings:          ${#IDEMPOTENCY_WARNINGS[@]}"
+echo "Multi-responsibility flags:    ${#SINGLE_RESPONSIBILITY_WARNINGS[@]}"
 echo "Missing down migrations:       ${#DOWN_MIGRATION_WARNINGS[@]}"
 echo "Checksum errors:               ${#CHECKSUM_ERRORS[@]}"
 echo "Schema drift issues:           ${#SCHEMA_DRIFT[@]}"
@@ -397,6 +443,7 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
     echo "| Invalid filenames | ${#INVALID_FILES[@]} | $([ ${#INVALID_FILES[@]} -eq 0 ] && echo '✅' || echo '❌') |"
     echo "| Version ordering issues | ${#ORDER_ISSUES[@]} | $([ ${#ORDER_ISSUES[@]} -eq 0 ] && echo '✅' || echo '❌') |"
     echo "| Idempotency warnings | ${#IDEMPOTENCY_WARNINGS[@]} | $([ ${#IDEMPOTENCY_WARNINGS[@]} -eq 0 ] && echo '✅' || echo '⚠️') |"
+    echo "| Multi-responsibility flags | ${#SINGLE_RESPONSIBILITY_WARNINGS[@]} | $([ ${#SINGLE_RESPONSIBILITY_WARNINGS[@]} -eq 0 ] && echo '✅' || echo '⚠️') |"
     echo "| Missing down migrations | ${#DOWN_MIGRATION_WARNINGS[@]} | $([ ${#DOWN_MIGRATION_WARNINGS[@]} -eq 0 ] && echo '✅' || echo '⚠️') |"
     echo "| Checksum errors | ${#CHECKSUM_ERRORS[@]} | $([ ${#CHECKSUM_ERRORS[@]} -eq 0 ] && echo '✅' || echo '❌') |"
     echo "| Schema drift issues | ${#SCHEMA_DRIFT[@]} | $([ ${#SCHEMA_DRIFT[@]} -eq 0 ] && echo '✅' || echo '❌') |"

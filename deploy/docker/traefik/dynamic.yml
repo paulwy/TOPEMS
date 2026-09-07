@@ -179,32 +179,13 @@ http:
       priority: 100
 
     # ===== 数据分析/门户 =====
+    # /api/bi → topems-analytics（容器名 bi:8060，原 bi + report 服务已整合为 analytics，2026-06/07）
     router-bi:
       rule: "PathPrefix(`/api/bi`)"
       entryPoints:
         - web
         - api  # API 网关入口（8080）
       service: svc-bi
-      middlewares:
-        - default-chain
-      priority: 100
-
-    router-analytics:
-      rule: "PathPrefix(`/api/bi`)"
-      entryPoints:
-        - web
-        - api  # API 网关入口（8080）
-      service: svc-analytics
-      middlewares:
-        - default-chain
-      priority: 100
-
-    router-report:
-      rule: "PathPrefix(`/api/report`)"
-      entryPoints:
-        - web
-        - api  # API 网关入口（8080）
-      service: svc-report
       middlewares:
         - default-chain
       priority: 100
@@ -341,6 +322,7 @@ http:
         - default-chain
       priority: 100
 
+    # /api/aps → mes aps_compat 兼容层（原 aps 服务已归档，2026-09-02）
     router-aps:
       rule: "PathPrefix(`/api/aps`)"
       entryPoints:
@@ -606,26 +588,6 @@ http:
           timeout: "3s"
 
     # analytics 与 bi 指向同一后端
-    svc-analytics:
-      loadBalancer:
-        passHostHeader: true
-        servers:
-          - url: "http://bi:8060"
-        healthCheck:
-          path: "/health"
-          interval: "10s"
-          timeout: "3s"
-
-    svc-report:
-      loadBalancer:
-        passHostHeader: true
-        servers:
-          - url: "http://bi:8060"
-        healthCheck:
-          path: "/health"
-          interval: "10s"
-          timeout: "3s"
-
     svc-portal:
       loadBalancer:
         passHostHeader: true
