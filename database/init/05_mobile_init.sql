@@ -25,16 +25,9 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 );
 
 -- Notifications Table
-CREATE TABLE IF NOT EXISTS notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    notification_type VARCHAR(100) NOT NULL DEFAULT 'info',
-    is_read BOOLEAN NOT NULL DEFAULT false,
-    data JSONB,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
+-- [2026-09-08 遗留⑨闭环] public.notifications 已判死：通知域以 unified_core.notifications 为准
+-- （database/init/01_rebuild_database.sql:528），mobile 端通知走 HTTP API 代理（svc/mobile/modules/notifications.rs），
+-- 不直连本表。历史定义已删除，索引见 database/postgres/02_create_performance_indexes.sql 同批清理。
 
 -- Devices Table
 CREATE TABLE IF NOT EXISTS devices (
@@ -107,31 +100,10 @@ CREATE TABLE IF NOT EXISTS user_settings (
 );
 
 -- Legacy Tables (existing)
-CREATE TABLE IF NOT EXISTS patrol_records (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    location_lat DOUBLE PRECISION NOT NULL,
-    location_lng DOUBLE PRECISION NOT NULL,
-    address VARCHAR(500),
-    patrol_type VARCHAR(100) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'completed',
-    checked_by VARCHAR(255) NOT NULL,
-    checked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS scan_records (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    barcode VARCHAR(255) NOT NULL,
-    location_lat DOUBLE PRECISION NOT NULL,
-    location_lng DOUBLE PRECISION NOT NULL,
-    item_type VARCHAR(100) NOT NULL,
-    quantity DOUBLE PRECISION,
-    operator VARCHAR(255) NOT NULL,
-    scanned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
+-- [2026-09-08 遗留⑨闭环] public.patrol_records / public.scan_records 已判死：
+-- 活版本为 svc/mobile 的 mobile schema 版（schema_defense.rs TABLE_DEFS，V69.3 单一事实源，代码全量读写）。
+-- 本 public 版结构与 mobile 版不同（DOUBLE PRECISION vs DECIMAL、无 tenant_id 等），且已被迁移
+-- database/migrations/20260901000010_drop_public_iot_shadow.sql DROP，历史定义已删除。
 
 CREATE TABLE IF NOT EXISTS photo_evidences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -489,8 +461,8 @@ CREATE TABLE IF NOT EXISTS equipment (
 CREATE INDEX IF NOT EXISTS idx_mobile_users_username ON mobile_users(username);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(refresh_token);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+-- [2026-09-08 遗留⑨闭环] idx_notifications_user_id / idx_notifications_is_read 已删除：
+-- public.notifications 已判死（活版本 unified_core.notifications，索引见 01_rebuild_database.sql:776-778）
 CREATE INDEX IF NOT EXISTS idx_devices_user_id ON devices(user_id);
 CREATE INDEX IF NOT EXISTS idx_devices_device_id ON devices(device_id);
 CREATE INDEX IF NOT EXISTS idx_mobile_scan_records_user_id ON mobile_scan_records(user_id);
@@ -500,8 +472,8 @@ CREATE INDEX IF NOT EXISTS idx_shortcuts_user_id ON shortcuts(user_id);
 CREATE INDEX IF NOT EXISTS idx_shortcuts_sort_order ON shortcuts(sort_order);
 CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
 
-CREATE INDEX IF NOT EXISTS idx_patrol_records_created_at ON patrol_records(created_at);
-CREATE INDEX IF NOT EXISTS idx_scan_records_created_at ON scan_records(created_at);
+-- [2026-09-08 遗留⑨闭环] idx_patrol_records_created_at / idx_scan_records_created_at 已删除：
+-- public 版 patrol_records / scan_records 已判死（活版本 mobile schema，索引由 svc/mobile schema_defense 维护）
 CREATE INDEX IF NOT EXISTS idx_photo_evidences_created_at ON photo_evidences(created_at);
 CREATE INDEX IF NOT EXISTS idx_audio_recordings_created_at ON audio_recordings(created_at);
 CREATE INDEX IF NOT EXISTS idx_video_recordings_created_at ON video_recordings(created_at);

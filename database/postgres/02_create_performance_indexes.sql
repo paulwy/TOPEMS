@@ -194,24 +194,16 @@ CREATE INDEX IF NOT EXISTS idx_documents_title_trgm ON doc.documents USING gin (
 -- 通知模块索引优化
 -- =============================================================
 
--- 通知表：用户+未读+时间复合索引（用于查询未读通知）
-CREATE INDEX IF NOT EXISTS idx_notifications_user_unread_date ON notifications(user_id, is_read, created_at DESC);
+-- [2026-09-08 遗留⑨闭环] idx_notifications_user_unread_date 已删除：public.notifications 已判死
+-- （活版本 unified_core.notifications，索引见 database/init/01_rebuild_database.sql:776-778）
 
 -- =============================================================
 -- Mobile 模块索引优化
 -- =============================================================
 
--- 巡检记录表：位置+状态复合索引
-CREATE INDEX IF NOT EXISTS idx_patrol_records_location_status ON patrol_records(location, status);
-
--- 巡检记录表：巡检时间索引
-CREATE INDEX IF NOT EXISTS idx_patrol_records_patrol_time ON patrol_records(patrol_time DESC);
-
--- 扫描记录表：编码索引（用于快速查找）
-CREATE INDEX IF NOT EXISTS idx_scan_records_code ON scan_records(code);
-
--- 扫描记录表：扫描时间索引
-CREATE INDEX IF NOT EXISTS idx_scan_records_scan_time ON scan_records(scan_time DESC);
+-- [2026-09-08 遗留⑨闭环] Mobile 悬空索引已删除：public.patrol_records / public.scan_records 已判死
+-- （活版本 mobile schema；且下列索引引用的 location/patrol_time/code/scan_time 列在 public 版定义中本就不存在，
+--  属历史桌面版结构残留，建表即失败）
 
 -- 检验记录表：分类+状态复合索引
 CREATE INDEX IF NOT EXISTS idx_inspection_records_category_status ON inspection_records(category, status);

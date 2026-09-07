@@ -557,37 +557,9 @@ CREATE INDEX idx_wms_outbound_tenant_id ON plugin_wms.outbound_orders(tenant_id)
 -- 6. Mobile 插件（移动端）
 -- ================================================================================
 
--- 巡检记录表
-CREATE TABLE plugin_mobile.patrol_records (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-    title VARCHAR(200) NOT NULL,
-    description TEXT,
-    location_lat NUMERIC(10,6) NOT NULL,
-    location_lng NUMERIC(10,6) NOT NULL,
-    address VARCHAR(500),
-    patrol_type VARCHAR(50) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending',
-    checked_by VARCHAR(100) NOT NULL,
-    checked_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-COMMENT ON TABLE plugin_mobile.patrol_records IS '巡检记录表';
-
--- 扫码记录表
-CREATE TABLE plugin_mobile.scan_records (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-    barcode VARCHAR(100) NOT NULL,
-    location_lat NUMERIC(10,6) NOT NULL,
-    location_lng NUMERIC(10,6) NOT NULL,
-    operator VARCHAR(100) NOT NULL,
-    scanned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-COMMENT ON TABLE plugin_mobile.scan_records IS '扫码记录表';
+-- [2026-09-08 遗留⑨闭环] plugin_mobile.patrol_records / scan_records 已删除：
+-- plugin_mobile schema 在 svc/ 代码中 0 引用（grep 实测）；活版本为 svc/mobile 的 mobile schema 版
+-- （schema_defense.rs TABLE_DEFS，V69.3 单一事实源）。
 
 -- 移动端任务表
 CREATE TABLE plugin_mobile.mobile_tasks (
@@ -608,10 +580,7 @@ CREATE TABLE plugin_mobile.mobile_tasks (
 COMMENT ON TABLE plugin_mobile.mobile_tasks IS '移动端任务表';
 
 -- 创建索引
-CREATE INDEX idx_mobile_patrol_tenant_id ON plugin_mobile.patrol_records(tenant_id);
-CREATE INDEX idx_mobile_patrol_checked_by ON plugin_mobile.patrol_records(checked_by);
-CREATE INDEX idx_mobile_scan_tenant_id ON plugin_mobile.scan_records(tenant_id);
-CREATE INDEX idx_mobile_scan_operator ON plugin_mobile.scan_records(operator);
+-- [2026-09-08 遗留⑨闭环] idx_mobile_patrol_* / idx_mobile_scan_* 已随表删除（plugin_mobile schema 判死）
 CREATE INDEX idx_mobile_tasks_tenant_id ON plugin_mobile.mobile_tasks(tenant_id);
 CREATE INDEX idx_mobile_tasks_assignee ON plugin_mobile.mobile_tasks(assignee);
 
