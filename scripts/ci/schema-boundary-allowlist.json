@@ -1,0 +1,12 @@
+{
+  "_comment": "Schema boundary allowlist (V531). Entries are EXISTING bare cross-schema references that predate the gate; each must state why it is allowed. New violations outside this list block CI. Format: \"svc/file:line\" -> reason.",
+  "entries": {
+    "svc/plugin-registry/src/modules/plugin/handlers/marketplace.rs": "core schema 插件表归属待确认（003-plugin.sql 无前缀建表 vs core schema 引用）；plugin-registry 语义上管理插件表，待 schema 所有权决策后统一包裹宏",
+    "svc/plugin-registry/src/modules/plugin/handlers/runtime.rs": "同 marketplace.rs：core schema 插件表归属待确认",
+    "svc/plugin-registry/src/modules/plugin/handlers/simple_api.rs": "同 marketplace.rs：core schema 插件表归属待确认",
+    "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs": "同 marketplace.rs：core schema 插件表归属待确认",
+    "svc/plugin-registry/src/modules/plugin/mod.rs": "同 marketplace.rs：core schema 插件表归属待确认",
+    "svc/ai/src/modules/ai_knowledge/service.rs": "ai_knowledge 模块未在 svc/ai/src/modules/mod.rs 挂载（死代码，26 处宏调用引用 core.* 白名单 plugin_ai——若激活将编译失败）；待决策：删除或挂载并修复白名单",
+    "svc/ai/src/modules/ai_knowledge/rag.rs": "同 service.rs：ai_knowledge 未挂载死代码"
+  }
+}

@@ -91,6 +91,7 @@ const config: RuntimeConfig = {
     wms: getEnv('VITE_WMS_SERVICE_URL', '/api/wms'),
     tms: getEnv('VITE_TMS_SERVICE_URL', '/api/tms'),
     aps: getEnv('VITE_APS_SERVICE_URL', '/api/aps'),
+    /** aps 无独立服务：由 svc/mes 的 aps_compat 兼容层提供（nest /api/aps → 内部重写为 /api/mes） */
     srm: getEnv('VITE_SRM_SERVICE_URL', '/api/srm'),
     qms: getEnv('VITE_QMS_SERVICE_URL', '/api/qms'),
     lims: getEnv('VITE_LIMS_SERVICE_URL', '/api/lims'),
@@ -99,6 +100,7 @@ const config: RuntimeConfig = {
     bi: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
     /** 别名：历史上 svc 目录名为 analytics，路径与 bi 完全一致 */
     analytics: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
+    /** bi 无独立 svc 目录：由 svc/analytics 服务提供（api_prefix /api/bi），目录名与路由前缀不一致（架构评估 P2，V531 记录） */
     monitor: getEnv('VITE_MONITOR_SERVICE_URL', '/api/monitor'),
     portal: getEnv('VITE_PORTAL_SERVICE_URL', '/api/portal'),
     mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/api/mobile'),
