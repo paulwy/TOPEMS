@@ -124,8 +124,8 @@
   <!-- 建议优先级 -->
   <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">修复建议（按投入产出排序）</h2>
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;box-sizing:border-box;font-size:13px;line-height:1.8;">
-    <b>第一批（低投入高收益）</b>：
-    ① 删除 lowcode dead config；② 更新 README 迁移数量；③ 前端 API 统一：vehicle 三份合并为一份（按 service 目录归位，core 为准），announcement 同理。<br>
+    <b>第一批（低投入高收益）· 已闭环（提交 19cc25630）</b>：
+    ① lowcode dead config——已核实为注释残留（V2026.08 移除），无消费者，无需动作；② README 迁移数量——database/README.md 时间戳制 31→75（实测 75+14 序号制=89）；③ 前端 API 统一——vehicle/announcement 三份合并：删除 erp/admin/vehicle.ts、admin/announcement.ts（core 为超集），index.ts 导出改指 core，补 vehicleRequestApi（闭包转发），修正 listVehicleRequests 返回类型对齐后端 Vec，publish/unpublish 移除空 body。验证：erp-api 97/97、web tsc 0、eslint 0。<br>
     <b>第二批（结构性）</b>：
     ④ 静态 DDL 收敛：administration_tables.sql 等业务表 DDL 纳入迁移流程（或迁移生成基准快照，消除双轨）；⑤ unified-core 三 schema 访问审计：按服务拆分或明确共享只读边界。<br>
     <b>第三批（治理性）</b>：
