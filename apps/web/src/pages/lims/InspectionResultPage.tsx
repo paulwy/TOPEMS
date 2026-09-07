@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Typography } from '@mui/material';
 import { Calendar, User, FileCheck, AlertCircle } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { useTranslation } from 'react-i18next';
+import { recordApi } from '@/api/lims';
 
 type InspectionResult = {
   id: string;
@@ -19,10 +20,42 @@ export default function InspectionResultPage() {
   const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [data, setData] = useState<InspectionResult[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // TODO: replace with real API integration when backend is ready（当前 svc 无对应服务，等待后端配套）
-  const data: InspectionResult[] = [];
-  const isLoading = false;
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const r = await recordApi.list({ page: page + 1, pageSize });
+      if (r.success && r.data) {
+        setData(
+          r.data.items.map((rec) => ({
+            id: rec.id,
+            sample_no: rec.task_id,
+            item_name: rec.step_name,
+            result: rec.result,
+            status: rec.conclusion,
+            inspector: rec.inspector,
+            inspection_date: rec.recorded_at,
+          }))
+        );
+        setTotal(r.data.total);
+      } else {
+        setData([]);
+        setTotal(0);
+      }
+    } catch {
+      setData([]);
+      setTotal(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, pageSize]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const columns: ColumnDef<InspectionResult>[] = useMemo(
     () => [
@@ -89,7 +122,7 @@ export default function InspectionResultPage() {
       pagination={{
         page,
         pageSize,
-        total: data.length,
+        total,
         onPageChange: setPage,
         onPageSizeChange: setPageSize,
       }}

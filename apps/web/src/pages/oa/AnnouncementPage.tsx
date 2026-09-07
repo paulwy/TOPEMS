@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Typography } from '@mui/material';
 import { Calendar, User, Tag } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { useTranslation } from 'react-i18next';
+import { announcementApi } from '@/api/erp/core';
 
 type Announcement = {
   id: string;
@@ -19,10 +20,42 @@ export const AnnouncementPage: React.FC = () => {
   const { t } = useTranslation('oa');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [data, setData] = useState<Announcement[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // TODO: replace with real API integration when backend OA service is ready（svc 无 oa 模块，mobile 仅有 announcements 3 接口）
-  const data: Announcement[] = [];
-  const isLoading = false;
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const r = await announcementApi.list({ page: page + 1, pageSize });
+      if (r.success && r.data) {
+        setData(
+          r.data.items.map((a) => ({
+            id: a.id,
+            title: a.title,
+            content: a.content,
+            author: a.author ?? '-',
+            created_at: a.created_at,
+            category: a.priority ?? 'normal',
+            status: a.status,
+          }))
+        );
+        setTotal(r.data.total);
+      } else {
+        setData([]);
+        setTotal(0);
+      }
+    } catch {
+      setData([]);
+      setTotal(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, pageSize]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const columns: ColumnDef<Announcement>[] = useMemo(
     () => [
@@ -79,7 +112,7 @@ export const AnnouncementPage: React.FC = () => {
       pagination={{
         page,
         pageSize,
-        total: data.length,
+        total,
         onPageChange: setPage,
         onPageSizeChange: setPageSize,
       }}

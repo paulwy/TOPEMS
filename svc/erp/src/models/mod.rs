@@ -5,6 +5,7 @@ pub mod asset;
 pub mod audit_log;
 pub mod consolidation;
 pub mod dict;
+pub mod document;
 pub mod finance;
 pub mod leave_request;
 pub mod material;
@@ -22,6 +23,7 @@ pub use dict::{
     CreateDictItemRequest, CreateDictTypeRequest, DictItem, DictType, UpdateDictItemRequest,
     UpdateDictTypeRequest,
 };
+pub use document::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 pub use leave_request::{
     ApproveLeaveRequestRequest, CreateLeaveRequestRequest, LeaveRequest, RejectLeaveRequestRequest,
     UpdateLeaveRequestRequest,

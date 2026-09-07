@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates';
 import type { CrudOperations } from '@/hooks';
+import { documentApi } from '@/api/erp/core';
+import type { PaginationParams } from '@/api/erp/core/types';
 
 interface DocumentRecord {
   id: string;
@@ -15,18 +17,82 @@ interface DocumentRecord {
 export const DocumentManagementPage: React.FC = () => {
   const { t } = useTranslation('oa');
 
-  // TODO: oaApi.document.list 方法不存在，当前使用空数组占位；等待后端 OA 服务（svc 无 oa 模块）就绪后替换为真实 API 调用
   const crudApi: CrudOperations<DocumentRecord> = {
-    list: async () => ({
-      success: true,
-      code: 0,
-      message: '',
-      data: { items: [], total: 0 },
-    }),
-    get: async () => ({ success: true, code: 0, message: '', data: undefined }),
-    create: async () => ({ success: true, code: 0, message: '', data: undefined }),
-    update: async () => ({ success: true, code: 0, message: '', data: undefined }),
-    delete: async () => ({ success: true, code: 0, message: '', data: '' }),
+    list: async (params) => {
+      const r = await documentApi.list(params as PaginationParams);
+      return {
+        success: r.success,
+        code: r.code,
+        message: r.message,
+        data: r.data && {
+          items: r.data.items.map((d) => ({
+            id: d.id,
+            title: d.title,
+            type: d.doc_type,
+            status: d.status,
+            created_at: d.created_at,
+          })),
+          total: r.data.total,
+        },
+      };
+    },
+    get: async (id) => {
+      const r = await documentApi.get(id);
+      return {
+        success: r.success,
+        code: r.code,
+        message: r.message,
+        data: r.data && {
+          id: r.data.id,
+          title: r.data.title,
+          type: r.data.doc_type,
+          status: r.data.status,
+          created_at: r.data.created_at,
+        },
+      };
+    },
+    create: async (data) => {
+      const r = await documentApi.create({
+        title: (data as { title?: string })?.title ?? '',
+        doc_type: (data as { type?: string })?.type,
+        status: (data as { status?: string })?.status,
+      });
+      return {
+        success: r.success,
+        code: r.code,
+        message: r.message,
+        data: r.data && {
+          id: r.data.id,
+          title: r.data.title,
+          type: r.data.doc_type,
+          status: r.data.status,
+          created_at: r.data.created_at,
+        },
+      };
+    },
+    update: async (id, data) => {
+      const r = await documentApi.update(id, {
+        title: (data as { title?: string })?.title,
+        doc_type: (data as { type?: string })?.type,
+        status: (data as { status?: string })?.status,
+      });
+      return {
+        success: r.success,
+        code: r.code,
+        message: r.message,
+        data: r.data && {
+          id: r.data.id,
+          title: r.data.title,
+          type: r.data.doc_type,
+          status: r.data.status,
+          created_at: r.data.created_at,
+        },
+      };
+    },
+    delete: async (id) => {
+      const r = await documentApi.delete(id);
+      return { success: r.success, code: r.code, message: r.message, data: r.data };
+    },
   };
 
   const columns: ColumnDef<DocumentRecord>[] = [

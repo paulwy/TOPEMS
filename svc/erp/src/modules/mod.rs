@@ -27,6 +27,7 @@ pub mod dashboard;
 pub mod db_structure;
 pub mod demo_data;
 pub mod dict;
+pub mod documents;
 pub mod erp_plugin;
 pub mod fixed_asset;
 pub mod finance;
@@ -127,6 +128,7 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(opening_balance::create_routes())
         .merge(meeting_room::create_routes())
         .merge(vehicles::create_routes())
+        .merge(documents::create_routes())
         .merge(announcement::create_routes())
         .merge(hrm_integration_example::create_routes())
         .merge(production_order::create_routes())

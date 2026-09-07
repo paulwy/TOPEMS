@@ -15,6 +15,7 @@ import { officeSupplyApi } from '../admin/officeSupplies';
 import { meetingRoomApi, meetingBookingApi } from '../admin/meeting';
 import { vehicleApi, vehicleRequestApi } from '../admin/vehicle';
 import { announcementApi } from '../admin/announcement';
+import { documentApi } from '../core/document';
 import apiClient from '../../client';
 
 vi.mock('../../client', () => {
@@ -838,5 +839,52 @@ describe('ERP announcementApi', () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: {} });
     await announcementApi.unpublish('ANN001');
     expect(mockApiClient.post).toHaveBeenCalledWith('/announcements/ANN001/unpublish');
+  });
+});
+
+describe('ERP documentApi (core)', () => {
+  const mockApiClient = apiClient.erp as {
+    get: vi.Mock;
+    post: vi.Mock;
+    put: vi.Mock;
+    delete: vi.Mock;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should call GET /documents for list with query params', async () => {
+    mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
+    await documentApi.list({ page: 2, pageSize: 10, doc_type: 'contract' });
+    expect(mockApiClient.get).toHaveBeenCalledWith(
+      '/documents?page=2&pagesize=10&doc_type=contract'
+    );
+  });
+
+  it('should call GET /documents/:id for get', async () => {
+    mockApiClient.get.mockResolvedValue({ success: true, data: { id: 'DOC001' } });
+    await documentApi.get('DOC001');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/documents/DOC001');
+  });
+
+  it('should call POST /documents for create', async () => {
+    const data = { title: '采购合同', doc_type: 'contract' };
+    mockApiClient.post.mockResolvedValue({ success: true, data });
+    await documentApi.create(data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/documents', data);
+  });
+
+  it('should call PUT /documents/:id for update', async () => {
+    const data = { status: 'archived' };
+    mockApiClient.put.mockResolvedValue({ success: true, data });
+    await documentApi.update('DOC001', data);
+    expect(mockApiClient.put).toHaveBeenCalledWith('/documents/DOC001', data);
+  });
+
+  it('should call DELETE /documents/:id for delete', async () => {
+    mockApiClient.delete.mockResolvedValue({ success: true, data: 'deleted' });
+    await documentApi.delete('DOC001');
+    expect(mockApiClient.delete).toHaveBeenCalledWith('/documents/DOC001');
   });
 });

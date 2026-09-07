@@ -338,6 +338,12 @@ pub struct VehicleRequest {
         crate::modules::vehicles::update_vehicle_request,
         crate::modules::vehicles::delete_vehicle_request,
         crate::modules::vehicles::get_vehicle_requests,
+        // Documents
+        crate::modules::documents::list_documents,
+        crate::modules::documents::create_document,
+        crate::modules::documents::get_document,
+        crate::modules::documents::update_document,
+        crate::modules::documents::delete_document,
         // Addressbook
         crate::modules::addressbook::get_contacts,
         crate::modules::addressbook::get_contact_detail,

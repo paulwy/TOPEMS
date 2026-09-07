@@ -3,31 +3,42 @@ import { useTranslation } from 'react-i18next';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates';
 import type { CrudOperations } from '@/hooks';
+import { vehicleApi } from '@/api/erp/core';
+import type { PaginationParams } from '@/api/erp/core/types';
 
 interface VehicleRecord {
   id: string;
   plate_number: string;
-  brand: string;
-  model: string;
+  brand?: string;
+  model?: string;
   status: string;
-  driver: string;
+  driver?: string;
 }
 
 export const VehicleManagementPage: React.FC = () => {
   const { t } = useTranslation('oa');
 
-  // TODO: oaApi.vehicle.list 方法不存在，当前使用空数组占位；等待后端 OA 服务（svc 无 oa 模块，mobile 仅有 announcements 接口）就绪后替换为真实 API 调用
   const crudApi: CrudOperations<VehicleRecord> = {
-    list: async () => ({
-      success: true,
-      code: 0,
-      message: '',
-      data: { items: [], total: 0 },
-    }),
-    get: async () => ({ success: true, code: 0, message: '', data: undefined }),
-    create: async () => ({ success: true, code: 0, message: '', data: undefined }),
-    update: async () => ({ success: true, code: 0, message: '', data: undefined }),
-    delete: async () => ({ success: true, code: 0, message: '', data: '' }),
+    list: async (params) => {
+      const r = await vehicleApi.list(params as PaginationParams);
+      return { success: r.success, code: r.code, message: r.message, data: r.data };
+    },
+    get: async (id) => {
+      const r = await vehicleApi.get(id);
+      return { success: r.success, code: r.code, message: r.message, data: r.data };
+    },
+    create: async (data) => {
+      const r = await vehicleApi.create(data as Parameters<typeof vehicleApi.create>[0]);
+      return { success: r.success, code: r.code, message: r.message, data: r.data };
+    },
+    update: async (id, data) => {
+      const r = await vehicleApi.update(id, data as Parameters<typeof vehicleApi.update>[1]);
+      return { success: r.success, code: r.code, message: r.message, data: r.data };
+    },
+    delete: async (id) => {
+      const r = await vehicleApi.delete(id);
+      return { success: r.success, code: r.code, message: r.message, data: r.data };
+    },
   };
 
   const columns: ColumnDef<VehicleRecord>[] = [

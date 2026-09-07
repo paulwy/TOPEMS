@@ -89,6 +89,23 @@ CREATE TABLE IF NOT EXISTS erp.vehicle_requests (
 CREATE INDEX IF NOT EXISTS idx_vehicle_requests_vehicle_id ON erp.vehicle_requests(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_vehicle_requests_status ON erp.vehicle_requests(status);
 
+-- 文档管理表
+CREATE TABLE IF NOT EXISTS erp.documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(500) NOT NULL,
+    doc_type VARCHAR(100) NOT NULL DEFAULT 'general',
+    status VARCHAR(50) NOT NULL DEFAULT 'active',
+    file_url TEXT,
+    file_size BIGINT DEFAULT 0,
+    uploader VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_documents_title ON erp.documents(title);
+CREATE INDEX IF NOT EXISTS idx_documents_status ON erp.documents(status);
+CREATE INDEX IF NOT EXISTS idx_documents_doc_type ON erp.documents(doc_type);
+
 -- 公告表
 CREATE TABLE IF NOT EXISTS erp.announcements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
