@@ -81,19 +81,19 @@
 </table>
 <div class="box box-warn">ℹ️ <b>剩余 78 项</b>（pnpm audit 官方 registry）均为 dev 构建链传递依赖（tar/decompress/@xmldom/vite/undici/esbuild 等），不进运行时 bundle；3 个 critical 无实际可达路径。CI 已集成审计门禁（critical 级拦截 + 白名单），新增 critical 将阻断合并。</div>
 
-<h3>P2 · 配置与流程</h3>
+<h3>P2 · 配置与流程（2026-09-07 全部闭环）</h3>
 <ul>
   <li class="c-ok">✅ <b>依赖审计门禁已集成 CI</b>（V515）：frontend-lint 步骤 <code>check-dependency-audit.cjs</code>，官方 registry + critical 拦截 + 白名单</li>
-  <li><b>pnpm audit 本地静默失效</b>：registry 配置为 npmmirror，其 audit 端点缺失 → 本地 audit 需 <code>--registry https://registry.npmjs.org</code>（门禁脚本已强制官方源）</li>
-  <li><b>版本节奏治理草案待确认</b>：docs/roadmap/release-governance.md（V530d 草案）待确认项 2 条：每周版本日安排（建议周五收口/周一验收）、里程碑验收清单模板</li>
-  <li><b>本地分支 analyze-project-z09ZSl</b>：含 1 个未合并提交（bc309de73 早期部署实验，platform/topems-doc 旧配置）——<b>需用户决策删除或保留</b></li>
-  <li><b>eslint-disable 99 处</b>：需抽查是否过度豁免（含导航/路由等已知白名单）</li>
+  <li class="c-ok">✅ <b>pnpm audit 本地静默失效</b>：npmmirror audit 端点缺失；门禁脚本已强制官方源，本地亦可 <code>--registry https://registry.npmjs.org</code></li>
+  <li class="c-ok">✅ <b>版本节奏治理已生效</b>：docs/roadmap/release-governance.md 状态草案→已生效（2026-09-07），采纳周五收口/周一验收，里程碑验收清单模板已就绪（§5）</li>
+  <li class="c-ok">✅ <b>本地分支 analyze-project-z09ZSl 已删除</b>（was bc309de73 早期部署实验，platform/ 目录已不存在，commit 可恢复）</li>
+  <li class="c-ok">✅ <b>eslint-disable 99 处已抽查</b>：topems-design（theme token 定义/地图业务色）、jsx-a11y（拖拽窗口交互）、no-console（均带理由：Logger 包装/Tauri 调试/测试对象）、@typescript-eslint（类型边界）——<b>均合理，无过度豁免</b></li>
 </ul>
 
-<h3>P3 · 低风险观测（2026-09-07 核查澄清）</h3>
+<h3>P3 · 低风险观测（2026-09-07 全部闭环）</h3>
 <ul>
-  <li class="c-ok">✅ <b>console.log 11 处已核查：全部为注释/示例代码/安全白名单</b>（logger.ts 注释示例 9 处、code-completion.ts 展示用代码片段、runtime-protection.ts 沙箱 API 白名单）——无实际调试残留，无需处理</li>
-  <li><b>TODO/FIXME 15 文件</b>：经核查均为"等待后端接口就绪"占位（OA/lims 页面）与计划性 TODO（V72 A4-5 schema、B2 阶段对齐）——需后端配套后处理，非独立可清项</li>
+  <li class="c-ok">✅ <b>console.log 11 处已核查：全部为注释/示例代码/安全白名单</b>（logger.ts 注释示例 9 处、code-completion.ts 展示用代码片段、runtime-protection.ts 沙箱 API 白名单）——无实际调试残留</li>
+  <li class="c-ok">✅ <b>TODO/FIXME 15 文件已归因</b>：OA/lims 4 处占位已标注"等待后端 OA 服务"（svc 无 oa 模块事实依据）；其余为计划性 TODO（V72 A4-5 schema、B2 阶段）与查询键名——待后端配套后处理</li>
   <li><b>releases/ 归档 1.6G</b>：保留为发布记录（V530d 已清理 target 31G，属既定策略）</li>
 </ul>
 
@@ -110,7 +110,7 @@
 <tr><td><span class="sev p3">P3</span></td><td>bff console.log 收敛为 logger；TODO 巡检归档</td><td>待办</td></tr>
 </table>
 
-<div class="box box-ok"><b>结论</b>：工程卫生基线健康（测试 / 类型 / 构建 / 门禁四维全绿，类型安全良好：生产 any 10 / ts-ignore 0）。依赖安全 P0/P1 已全部处理：运行时高危清零（react-router CSRF、xlsx 原型污染）、漏洞 82→78、CI 审计门禁上线；剩余 78 项均为 dev 构建链传递依赖（风险接受并记录）。</div>
+<div class="box box-ok"><b>结论</b>：工程卫生基线健康（测试 / 类型 / 构建 / 门禁四维全绿，类型安全良好：生产 any 10 / ts-ignore 0）。依赖安全 P0/P1 已全部处理：运行时高危清零（react-router CSRF、xlsx 原型污染）、漏洞 82→78、CI 审计门禁上线；P2/P3 配置与低风险项同日全部闭环（治理生效、分支清理、TODO 归因、豁免核查）。剩余 78 项均为 dev 构建链传递依赖（风险接受并记录）。</div>
 
 <div class="footer">数据口径：测试/类型/构建/门禁数据为 2026-09-07 全量实测；漏洞数据来自 <code>pnpm audit --registry https://registry.npmjs.org</code>（npmmirror 端点缺失，官方源可查）；代码质量计数为 grep 实测（apps/web/src）。评估期间沙箱间歇故障未影响上述数据完整性。</div>
 
