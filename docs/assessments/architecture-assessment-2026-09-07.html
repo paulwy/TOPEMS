@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="margin:0;padding:0;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS 架构评估报告 · 2026-09-07</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F3EE;font-family:'Roboto','PingFang SC','Segoe UI',Arial,sans-serif;color:#1A1B1C;">
+<div style="max-width:980px;margin:0 auto;padding:24px 20px 48px;box-sizing:border-box;">
+
+  <h1 style="font-size:22px;font-weight:600;margin:0 0 4px;">TOPEMS 架构评估报告</h1>
+  <div style="font-size:13px;color:#6B7280;margin-bottom:20px;">2026-09-07 · 数据层深度审查 + 后端服务审查 + 跨切面审查（前端架构 / 包结构 / 配置 / 契约一致性）</div>
+
+  <!-- 健康概览卡片 -->
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+    <div style="flex:1 1 140px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">问题总数</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;">9</div>
+      <div style="font-size:11px;color:#6B7280;">P1×4 · P2×2 · P3×3</div>
+    </div>
+    <div style="flex:1 1 140px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">阻断级 (P0)</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;color:#52C41A;">0</div>
+      <div style="font-size:11px;color:#6B7280;">无阻断项</div>
+    </div>
+    <div style="flex:1 1 140px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">服务数量</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;">31</div>
+      <div style="font-size:11px;color:#6B7280;">svc/ 目录（含工具型）</div>
+    </div>
+    <div style="flex:1 1 140px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">数据库迁移</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;">89</div>
+      <div style="font-size:11px;color:#6B7280;">database/migrations/ 实际</div>
+    </div>
+  </div>
+
+  <!-- 问题分布图 -->
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:16px;margin-bottom:20px;box-sizing:border-box;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:4px;">问题级别分布</div>
+    <div style="font-size:12px;color:#6B7280;margin-bottom:12px;">维度：数据层 / 后端服务 / 前端架构 / 包结构 / 配置 / 契约 / 文档</div>
+    <div id="chart-dist" style="width:100%;height:260px;min-width:0;box-sizing:border-box;"></div>
+    <noscript><div style="padding:10px;font-size:13px;color:#6B7280;">图表需 JavaScript 渲染（ECharts CDN），下方表格已含全部结论。</div></noscript>
+  </div>
+
+  <!-- P1 发现 -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P1 · 高优先级（4 项）</h2>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow:hidden;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:10px 12px;font-weight:600;width:120px;">维度</th>
+        <th style="padding:10px 12px;font-weight:600;">发现</th>
+        <th style="padding:10px 12px;font-weight:600;width:200px;">证据</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">数据层</td>
+          <td style="padding:10px 12px;"><b>unified-core 跨 3 schema 直接访问</b>：public / iam / unified_core 同时读写，违反服务单一 schema 所有权原则，schema 边界可被服务内任意 SQL 突破。</td>
+          <td style="padding:10px 12px;color:#6B7280;">svc/unified-core 数据访问层（子代理已核）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">数据层</td>
+          <td style="padding:10px 12px;"><b>静态 DDL 与迁移双轨制</b>：init.sql / administration_tables.sql 直接含业务表 DDL（erp.vehicles、erp.documents、erp.announcements 等），未纳入 database/migrations/ 时间戳迁移流程——同一 schema 存在两套建表来源，环境初始化与迁移执行结果可能漂移。</td>
+          <td style="padding:10px 12px;color:#6B7280;">database/postgres/administration_tables.sql:53 起（vehicles 等）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">数据层</td>
+          <td style="padding:10px 12px;"><b>only_own_schema_query 宏可被编译期绕过</b>：宏仅约束经宏展开的查询，服务内可直接写完整 SQL（如本任务新增 erp.documents 模块即用 "SELECT * FROM erp.documents" 字面量），schema 隔离依赖开发者自觉。</td>
+          <td style="padding:10px 12px;color:#6B7280;">svc/erp/src/modules/documents.rs（字面量 SQL）；宏定义 lib/shared-boundary</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">前端架构</td>
+          <td style="padding:10px 12px;"><b>前端 API 客户端重复实现 + 方法漂移</b>：vehicle/announcement 在 erp/core、erp/admin、tms 三份独立实现，方法名分叉（core: listRequests / listVehicleRequests；admin: getRequests），admin 文件内存在重复键——同一实体契约多头维护，改一处漏一处。</td>
+          <td style="padding:10px 12px;color:#6B7280;">apps/web/src/api/erp/core/vehicle.ts（12 方法）vs erp/admin/vehicle.ts（11 方法）vs api/tms/vehicle.ts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- P2 发现 -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P2 · 中优先级（2 项）</h2>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow:hidden;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:10px 12px;font-weight:600;width:120px;">维度</th>
+        <th style="padding:10px 12px;font-weight:600;">发现</th>
+        <th style="padding:10px 12px;font-weight:600;width:200px;">证据</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">数据层</td>
+          <td style="padding:10px 12px;"><b>多职责迁移</b>：单个迁移文件移动 140+ 表（rehome 类迁移），迁移边界过粗，审计与回滚困难。</td>
+          <td style="padding:10px 12px;color:#6B7280;">database/migrations/20260901000013_rehome_remaining.sql 等</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">配置</td>
+          <td style="padding:10px 12px;"><b>服务路由前缀与 svc 目录名漂移</b>：/api/bi 由 analytics 服务提供、/api/aps 由 mes 的 aps_compat 兼容层提供，前端配置的服务名与后端目录不直接对应，靠注释/约定维系。</td>
+          <td style="padding:10px 12px;color:#6B7280;">svc/analytics/src/main.rs:46（/api/bi）；svc/mes/src/main.rs:94（/api/aps nest）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- P3 发现 -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P3 · 低优先级（3 项）</h2>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow:hidden;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:10px 12px;font-weight:600;width:120px;">维度</th>
+        <th style="padding:10px 12px;font-weight:600;">发现</th>
+        <th style="padding:10px 12px;font-weight:600;width:200px;">证据</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">配置</td>
+          <td style="padding:10px 12px;"><b>dead config</b>：VITE_LOWCODE_SERVICE_URL 无任何消费者（无前端 API 模块、无页面引用），残留配置。</td>
+          <td style="padding:10px 12px;color:#6B7280;">apps/web/src/config/runtime.ts（lowcode 键）；grep 无调用</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">文档</td>
+          <td style="padding:10px 12px;"><b>迁移文档与实际数量不符</b>：README 声称 31 个迁移，实际 database/migrations/ 89 个。</td>
+          <td style="padding:10px 12px;color:#6B7280;">README（31）vs ls database/migrations/（89）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:10px 12px;vertical-align:top;">契约</td>
+          <td style="padding:10px 12px;"><b>OpenAPI 声明偏差（已修复 1 处，扫描未见其他）</b>：hrm list_employees 曾声明 body=[Employee] 与实际分页不符，本次已修为 ListResponse&lt;Employee&gt;；全仓扫描未见其他明显不符。</td>
+          <td style="padding:10px 12px;color:#6B7280;">svc/hrm/src/modules/employee.rs:83（已修，提交 2455e7ec5）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 健康维度 -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">健康维度（核查通过）</h2>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;font-size:13px;line-height:1.7;">
+    <li style="margin-left:16px;"><b>包依赖无循环</b>：packages 依赖方向清晰（shared-types → shared-utils → shared-hooks → shared-components），无反向引用。</li>
+    <li style="margin-left:16px;"><b>服务边界整体清晰</b>：31 个服务目录职责基本单一（erp 核心业务 / lims 实验室 / mes 制造 等），portal BFF 代理模式一致（JWT+RLS+限流）。</li>
+    <li style="margin-left:16px;"><b>契约一致性总体良好</b>：utoipa 声明抽样未见其他 body/返回类型明显不符（hrm 为特例，已修）。</li>
+    <li style="margin-left:16px;"><b>前端分层可用</b>：ListPageTemplate + useCrudQueries CRUD 体系统一（覆盖率 100%），api-client 子客户端模式一致。</li>
+  </div>
+
+  <!-- 建议优先级 -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">修复建议（按投入产出排序）</h2>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;box-sizing:border-box;font-size:13px;line-height:1.8;">
+    <b>第一批（低投入高收益）</b>：
+    ① 删除 lowcode dead config；② 更新 README 迁移数量；③ 前端 API 统一：vehicle 三份合并为一份（按 service 目录归位，core 为准），announcement 同理。<br>
+    <b>第二批（结构性）</b>：
+    ④ 静态 DDL 收敛：administration_tables.sql 等业务表 DDL 纳入迁移流程（或迁移生成基准快照，消除双轨）；⑤ unified-core 三 schema 访问审计：按服务拆分或明确共享只读边界。<br>
+    <b>第三批（治理性）</b>：
+    ⑥ only_own_schema_query 增强（编译期 schema 校验或 lint 规则）；⑦ 多职责迁移拆分规范（每迁移单一职责）；⑧ 服务前缀命名对齐（svc 目录 ↔ 路由前缀统一命名空间）。
+  </div>
+
+  <div style="background:#FFF8E6;border:1px solid #E4D48F;border-radius:12px;padding:12px 14px;margin-top:16px;font-size:13px;box-sizing:border-box;">
+    <b>口径说明</b>：数据层与后端服务审查由分片审查代理完成（证据已核）；跨切面审查（前端/包/配置/契约）由主代理实测完成。全部发现区分"已核实"与推断；无 P0 阻断项。本报告与 project-assessment-2026-09-07.html 衔接，不含该报告中已闭环的依赖安全/门禁/治理项。
+  </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+(function(){
+  try {
+    var el = document.getElementById('chart-dist');
+    if (!el || typeof echarts === 'undefined') return;
+    var m = echarts.init(el);
+    m.setOption({
+      backgroundColor: 'transparent',
+      tooltip: { trigger: 'item', triggerOn: 'click', renderMode: 'richText', confine: true, textStyle: { fontSize: 11 }, padding: [6, 8] },
+      legend: { bottom: 0, itemWidth: 14, itemHeight: 8, textStyle: { color: '#6B7280', fontSize: 11 } },
+      series: [{
+        name: '问题级别',
+        type: 'pie',
+        radius: ['42%', '68%'],
+        center: ['50%', '48%'],
+        avoidLabelOverlap: true,
+        label: { formatter: '{b}: {c}', color: '#555', fontSize: 11 },
+        data: [
+          { value: 0, name: 'P0 阻断', itemStyle: { color: '#EA6668' } },
+          { value: 4, name: 'P1 高', itemStyle: { color: '#FAAD14' } },
+          { value: 2, name: 'P2 中', itemStyle: { color: '#8BC8EA' } },
+          { value: 3, name: 'P3 低', itemStyle: { color: '#94D8C3' } }
+        ]
+      }]
+    });
+    window.addEventListener('resize', function() { m.resize(); });
+  } catch (e) { console.error(e); }
+})();
+</script>
+</body>
+</html>
