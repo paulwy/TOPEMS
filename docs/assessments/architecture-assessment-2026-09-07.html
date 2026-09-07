@@ -130,8 +130,12 @@
     ④ 静态 DDL 收敛——新建迁移 20260907000001（erp.* 7 表 + public 5 孤儿表 + 23 索引 + updated_at 触发器，幂等），administration_tables.sql / init.sql 收敛为说明文件，消除生产/升级路径缺失业务表风险；⑤ unified-core schema 访问审计——修正原判断（iam.* 属 unified-core 自身模块，非越权），真问题为 public.audit_logs 在 analytics/erp/wms 共 6 处无前缀引用，已全部显式化。验证：迁移 SQL 静态校验通过，erp/analytics/wms cargo check 通过。<br>
     <b>新增遗留（需业务决策）</b>：
     ⑨ notifications / patrol_records / scan_records 同名不同结构冲突（database/init 移动端版 vs 历史 postgres 桌面版，CREATE TABLE IF NOT EXISTS 先到先得），需确认移动端/桌面端建模口径后统一。<br>
-    <b>第三批（治理性）</b>：
-    ⑥ only_own_schema_query 增强（编译期 schema 校验或 lint 规则）；⑦ 多职责迁移拆分规范（每迁移单一职责）；⑧ 服务前缀命名对齐（svc 目录 ↔ 路由前缀统一命名空间）。
+    <b>第三批（治理性）· 已闭环（提交 124d1b2dd）</b>：
+    ⑥ schema 边界增强——实证宏工作正常（最小复现拦截 core 引用）；新增 CI 门禁 check-schema-boundary.cjs（扫描 30 服务 2486 处裸 sqlx 调用，关键词上下文匹配防误报，allowlist 记录既有引用）；⑦ 迁移拆分规范——database/README.md 强化单一职责（表数≤5/幂等/唯一来源）+ 修正 52 行遗漏数字；⑧ 服务前缀对齐——runtime.ts 补 aps/bi 后端实现来源权威注释。<br>
+    <b>新增遗留（需业务决策）</b>：
+    ⑩ ai_knowledge 模块未挂载死代码：svc/ai/src/modules/ai_knowledge/ 26 处宏引用 core.*（白名单 plugin_ai，激活即编译失败）——待决策删除或挂载修复；⑪ core schema 插件表归属冲突：003-plugin.sql 无前缀建表 vs plugin-registry 裸 SQL 写 core.* vs unified-core 读 core.*——需确认 core schema 归 plugin-registry 还是 unified-core。<br>
+    <b>遗留（需业务决策，第二批已列）</b>：
+    ⑨ notifications / patrol_records / scan_records 同名不同结构冲突（init 移动端版 vs 历史 postgres 桌面版）。
   </div>
 
   <div style="background:#FFF8E6;border:1px solid #E4D48F;border-radius:12px;padding:12px 14px;margin-top:16px;font-size:13px;box-sizing:border-box;">
