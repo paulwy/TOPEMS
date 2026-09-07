@@ -147,7 +147,7 @@ module-ai = []
 | ✅ 已接入（可选） | tms / subscription | `module-tms` / `module-subscription`，默认不启用，按客户裁剪 |
 | 🔄 待接入 | — | master-data 已接入（module-advanced 挂载）；analytics/ai 评估保持独立（见下表）；module-ai 幽灵 feature 保留待评估 |
 | 🚫 明确不嵌入 | gis | WebSocket/事件订阅/插件体系，保持独立微服务部署（`module-gis` 仅编译依赖） |
-| 🚫 明确不嵌入 | portal | 含 GraphQL/WebSocket/service_aggregator 复杂依赖，用户中心适合独立部署（`module-portal` 仅编译依赖占位，2026-08-31） |
+| ✅ 已接入（09-08） | portal | embedded::build_router 统一组装链（GraphQL/WebSocket/事件订阅者/430 业务路由全下沉 lib），server 新增 `module-portal` 默认启用 + PortalRealModule（Core 组）；独立部署 main.rs 瘦身 3289→150 行共用同一实现，双轨漂移消除（提交 `22aa79e61`） |
 | 🚫 明确不嵌入 | analytics | protected_routes 逐行组装于 main.rs（非 lib create_routes 汇总）+ ReportScheduler 定时调度任务；BI 服务独立部署（2026-08-31 评估） |
 | 🚫 明确不嵌入 | ai | MCP/Agent/DSH 复杂服务 + ai_service 独立 schema，保持独立部署（与 gis 同类，2026-08-31 评估） |
 
@@ -158,7 +158,7 @@ module-ai = []
 
 **边界规则**（决定"何时接入 server vs 保持独立微服务"）：
 1. 无 WebSocket 长连接、无独立后台任务/插件体系、可复用 Shared Bootstrap 的纯 REST 业务服务 → 优先接入 server（real_module 模式）。
-2. 含 WebSocket / 事件订阅者 / 自定义 Prometheus / 插件注册体系的服务（gis / mobile / integration / monitor / plugin-registry / unified-core）以及含 GraphQL/用户中心定位的 portal → 保持独立微服务部署，server 通过 HTTP 网关访问。
+2. 含 WebSocket / 事件订阅者 / 自定义 Prometheus / 插件注册体系的服务（gis / mobile / integration / monitor / plugin-registry / unified-core）→ 保持独立微服务部署，server 通过 HTTP 网关访问。portal 已于 2026-09-08 接入（embedded::build_router 全链路下沉 lib，含 GraphQL/WebSocket/事件订阅者），规则 1 适用；erp 的 master-data GraphQL 端点（/api/erp/master-data/graphql）与 portal BFF GraphQL 聚合层服务对象不同（数据域能力 vs 前端聚合），非重复实现。
 3. 接入前必须存在可编译的 lib 目标（`create_routes` 可实例化），否则先完成 lib+bin 化。
 4. 每个接入模块必须注册真实业务路由 + 健康检查依赖，禁止空壳模块进入 default。
 

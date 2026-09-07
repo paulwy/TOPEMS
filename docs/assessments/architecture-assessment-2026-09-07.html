@@ -144,6 +144,15 @@
     <b>口径说明</b>：数据层与后端服务审查由分片审查代理完成（证据已核）；跨切面审查（前端/包/配置/契约）由主代理实测完成。全部发现区分"已核实"与推断；无 P0 阻断项。本报告与 project-assessment-2026-09-07.html 衔接，不含该报告中已闭环的依赖安全/门禁/治理项。
   </div>
 
+  <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:13px;box-sizing:border-box;">
+    <b>二次复查 · 剩余缺陷与冗余（2026-09-08）</b>：portal 嵌入（22aa79e61）与三项 backlog 闭环后，全仓复查既有 9 项 + 新发现问题：
+    <br><b>① 既有 9 项基线复核</b>——P1-1 unified-core 跨 3 schema：✅ 已决策接受（core_* 平台共享层留 public，schema 门禁 24 认可）；P1-2 静态 DDL 双轨：✅ 已闭环（administration_tables.sql 现 0 个 CREATE TABLE，erp 业务表已迁移 20260907000001）；P1-3 宏绕过：✅ 门禁兜底（check-schema-boundary + allowlist 35，PASS 0 新增）；P3-1 dead config：✅ 判定无需动作；P3-2 README 迁移数：✅ 已修（89）；P3-3 OpenAPI 偏差：✅ 已修。仅剩 2 项存量：P2-1 多职责迁移（6 个 rehome 迁移，审计性技术债，建议后续按业务域拆分）+ P2-2 路由前缀漂移（/api/bi→analytics、/api/aps→mes aps_compat，注释约定维系，建议改网关统一路由映射表）。
+    <br><b>② 新发现缺陷（2 项，均 P2）</b>——<b>D1 设计文档矛盾（已修）</b>：modular-monolith-design.md:150/:161 仍标 portal"🚫 明确不嵌入"，与 09-08 嵌入实现矛盾（portal 已随 22aa79e61 接入 server，module-portal 默认启用）→ 本轮已更新为"✅ 已接入"并修订边界规则 2（移除 portal、注明 erp master-data GraphQL 与 portal BFF GraphQL 服务对象不同非重复）。<b>D2 CRM 嵌入版事件订阅者缺口（待修）</b>：svc/server/src/modules/crm_real_module.rs:73 TODO 注释声称"event_handlers 模块尚未实现"，但 svc/crm/src/event_handlers/ 已存在且独立部署 main.rs:55 已接线 start_event_subscribers（lib.rs:191 已 pub 暴露）——嵌入版行为与独立部署漂移，修复方向：crm_real_module 照独立部署补接线 + 删过时注释。
+    <br><b>③ 新发现缺陷（1 项，P3 功能缺口）</b>——<b>D3 BackupPage 下载未实现</b>：apps/web/src/pages/system/BackupPage.tsx:352 onClick 为 TODO 空实现（download 按钮无动作），修复方向：接备份下载端点（若有）或标注不可用。
+    <br><b>④ 冗余（3 项）</b>——<b>R1 前端 12 个 api 死文件（零引用，建议删）</b>：admin/apiKeys、admin/smtpSettings、bi/dataAnalysis、crm/customerProfile、ehs/emergencyPlan、erp/bankTransaction、erp/masterData、monitor/metricsSnapshot、monitor/performanceExtended、monitor/ruleAdvanced、requestPriority、responseNormalize（全 src 无任何 import）；<b>R2 重复依赖（低危）</b>：base64 v0.22/v0.23 双版本 + bytes v0.5.6 旧链（cargo tree -d，传递依赖，建议统一主链版本）；<b>R3 双 GraphQL 端点（备注非缺陷）</b>：erp /api/erp/master-data/graphql（数据域能力）vs portal BFF GraphQL 聚合层（前端聚合），服务对象不同。
+    <br><b>⑤ 非缺陷备注</b>：mobile/gis/ai/integration/pdm 5 服务按设计不嵌入（边界规则 2，与文档一致）；8 个 extension 服务按需部署未启动（网关路由已就绪）；门禁既有 baseline 不阻断（i18n zh 缺 key 1064、api-gate RED 1、perm-matrix WARN、boundary allowlist 35）。
+  </div>
+
 </div>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>
