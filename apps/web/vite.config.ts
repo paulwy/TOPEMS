@@ -1623,6 +1623,10 @@ export default defineConfig({
       { find: '@topems/shared-hooks',
         replacement: path.resolve(__dirname, '../../packages/shared-hooks/src'),
       },
+      {
+        find: '@topems/api-client',
+        replacement: path.resolve(__dirname, '../../packages/api-client/src'),
+      },
       // hoist-non-react-statics: package.json main 指向 .cjs.js（含裸 require('react-is')），
       // Vite @fs 直读时 CJS→ESM 转换失败。指向自包含 UMD 版本（内联 react-is），
       // fix-cjs-named-exports-general 插件会正确补 default + named exports。

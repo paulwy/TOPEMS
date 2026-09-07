@@ -127,6 +127,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@topems/api-client': path.resolve(__dirname, '../../packages/api-client/src'),
       '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
       '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),

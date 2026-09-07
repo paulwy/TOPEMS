@@ -19,6 +19,7 @@ import {
   initCsrfProtection,
 } from '@/components/security';
 import { injectTraceContext } from '@/utils/telemetry';
+import { serializeParams } from '@topems/api-client';
 import { getCurrentTraceId, getCurrentSpanId, startTrace } from '@/utils/tracing';
 
 import { handleApiError, type AppError } from '../utils/errors';
@@ -270,21 +271,7 @@ export const createAxiosClient = ({
       Accept: 'application/json',
     },
     paramsSerializer: {
-      serialize: (params) => {
-        const searchParams = new URLSearchParams();
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            if (typeof value === 'number') {
-              searchParams.set(key, value.toString());
-            } else if (typeof value === 'boolean') {
-              searchParams.set(key, value ? 'true' : 'false');
-            } else {
-              searchParams.set(key, String(value));
-            }
-          }
-        });
-        return searchParams.toString();
-      },
+      serialize: (params: Record<string, unknown>) => serializeParams(params),
     },
   });
 

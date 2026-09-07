@@ -1,2 +1,2 @@
-export { createApiClient, default } from './factory';
+export { createApiClient, default, serializeParams } from './factory';
 export type { ApiClientOptions } from './factory';

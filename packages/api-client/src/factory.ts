@@ -2,15 +2,34 @@
  * @topems/api-client — shared axios client factory.
  *
  * 三端（web/desktop/mobile）共有的 client 基础层：
- * baseURL / timeout / JSON 头 / token 注入 / 401 回调。
+ * baseURL / timeout / JSON 头 / token 注入 / 401 回调 / paramsSerializer。
  * 各端独有的拦截器（离线缓存、CSRF、telemetry、cancel）保留在各自
  * apps 下 client.ts 中，通过返回的 AxiosInstance 追加注册。
  */
 import axios, {
   AxiosInstance,
   AxiosError,
+  AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from 'axios';
+
+/**
+ * 通用 query 参数序列化：跳过 null/undefined，number/boolean 转字符串。
+ * web 端原内联实现，抽到共享包供各端复用。
+ */
+export function serializeParams(params: Record<string, unknown>): string {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (typeof value === 'number' || typeof value === 'boolean') {
+        searchParams.set(key, value.toString());
+      } else {
+        searchParams.set(key, String(value));
+      }
+    }
+  });
+  return searchParams.toString();
+}
 
 export interface ApiClientOptions {
   /** 后端 baseURL（各端从环境变量解析后传入）。 */
@@ -23,6 +42,8 @@ export interface ApiClientOptions {
   onUnauthorized?: (error: AxiosError) => void;
   /** 额外默认请求头。 */
   headers?: Record<string, string>;
+  /** 自定义 params 序列化；缺省用共享 serializeParams。 */
+  paramsSerializer?: AxiosRequestConfig['paramsSerializer'];
 }
 
 /**
@@ -38,6 +59,8 @@ export function createApiClient(options: ApiClientOptions): AxiosInstance {
       'Content-Type': 'application/json',
       ...options.headers,
     },
+    paramsSerializer:
+      options.paramsSerializer ?? { serialize: (params) => serializeParams(params) },
   });
 
   client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
