@@ -44,6 +44,8 @@ vi.mock('@/store', () => ({
 
 vi.mock('@/utils/logger', () => ({
   apiLogger: { error: vi.fn(), debug: vi.fn() },
+  createLogger: vi.fn(() => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
+  default: vi.fn(() => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
 }));
 
 vi.mock('@/api/erp', () => ({
