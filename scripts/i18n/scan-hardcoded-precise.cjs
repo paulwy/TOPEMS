@@ -19,7 +19,7 @@ const SKIP_DIRS = ['node_modules', 'dist', 'build', '.git', '__tests__', '__mock
 const SKIP_EXT = ['.test.ts', '.test.tsx', '.spec.ts', '.spec.tsx', '.stories.tsx', '.d.ts'];
 
 const WHITELIST_FILES = [
-  'utils/ai/ui-recommender.ts',
+  'utils/ai/uiRecommender.ts',
   'utils/apiPath.ts',
   'config/ai-templates.ts',
   'components/ehs/EHSBadges.tsx',
@@ -27,7 +27,7 @@ const WHITELIST_FILES = [
   'i18n/index.ts',
   'services/ExternalErpAdapters.ts',
   'utils/bff/codegen.ts',
-  'utils/observability/performance-bottleneck.ts',
+  'utils/observability/performanceBottleneck.ts',
 ];
 
 const WHITELIST_DIRS = ['api/', 'tmp/', 'context-engine/'];
