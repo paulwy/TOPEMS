@@ -315,6 +315,23 @@ async fn main() -> Result<()> {
         }
     }
 
+    // 21. 真实 portal 服务接入（Core 组，feature `module-portal` 门控，默认启用）
+    // [2026-09-08] portal 嵌入模块化单体：业务组装链由 lib 侧 embedded::build_router 统一提供，
+    // 独立部署 main.rs 与 server 嵌入共用同一实现，消除双轨漂移
+    #[cfg(feature = "module-portal")]
+    {
+        use topems_server::modules::portal_real_module::PortalRealModule;
+        match PortalRealModule::build().await {
+            Ok(real_portal) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_portal));
+                tracing::info!("✅ 真实 portal 服务已注册（portal-real，含数据库/GraphQL 聚合层/事件总线）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 portal 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
     // 17. 订阅管理模块（P5 商业化支撑，feature `module-subscription` 门控）
     #[cfg(feature = "module-subscription")]
     {

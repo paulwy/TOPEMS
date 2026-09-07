@@ -48,5 +48,8 @@ pub mod srm_real_module;
 pub mod analytics_real_module;
 #[cfg(feature = "module-advanced")]
 pub mod master_data_real_module;
+#[cfg(feature = "module-portal")]
+pub mod portal_real_module;
+
 #[cfg(feature = "module-wms")]
 pub mod wms_real_module;

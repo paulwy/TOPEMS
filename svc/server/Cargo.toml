@@ -75,6 +75,8 @@ default = [
     "module-srm",
     # [2026-08-31] module-advanced 已挂真实 master-data，加回 default；analytics 同组后续接入
     "module-advanced",
+    # [2026-09-08] portal 嵌入模块化单体（embedded::build_router 统一组装链）
+    "module-portal",
     # [边界治理] module-ai 仍为幽灵 feature（无 real_module），从 default 移除；待 ai 真实接入后再启用
 ]
 module-core = []
@@ -111,8 +113,8 @@ module-rd = ["dep:topems-rd"]
 module-srm = ["dep:topems-srm"]
 # 真实业务服务接入：gis 模块（P3 feature flag，默认不启用，按客户需求裁剪）
 module-gis = ["dep:topems-gis"]
-# 真实业务服务接入：portal 模块（占位，默认不启用——portal 含 GraphQL/WebSocket/service_aggregator，
-# 用户中心适合独立部署，与 gis 决策一致；未来如需单进程接入需重构 lib 导出 portal_routes）
+# 真实业务服务接入：portal 模块（[2026-09-08] 已实现嵌入——lib 侧 embedded::build_router
+# 统一组装链，独立部署 main.rs 与 server 嵌入共用同一实现，默认启用）
 module-portal = ["dep:topems-portal"]
 # 订阅管理模块（P5 商业化支撑，默认不启用，按客户需求启用）
 module-subscription = []
