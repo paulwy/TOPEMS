@@ -41,8 +41,7 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 export const employeeApi: CrudOperations<Employee> = {
   /**
    * A4 绑定样板：list_employees operation（openapi: GET /hrm/employees）
-   * 注意：openapi schema 当前声明返回 Employee[]（非 Paginated），但实际后端返回
-   * PaginatedResult。TODO: V72 A4-5 重生成 schema 后再切换为 TypedPaginatedResponse<Employee>。
+   * openapi schema 已修正为 ListResponse<Employee>（2026-09-07），与实际分页返回一致。
    */
   list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<Employee>>> => {
     const queryString = buildQueryString(params);
@@ -59,8 +58,8 @@ export const employeeApi: CrudOperations<Employee> = {
 
   /**
    * A4 绑定样板：create_employee operation（openapi: POST /hrm/employees）
-   * 注意：openapi schema 当前 requestBody?: never（后端 utoipa 缺失），
-   * 保留 Partial<Employee> 并 TODO: V72 A4-5 后补 schema。
+   * 后端 utoipa 已声明 request_body = CreateEmployeeRequest（字段完整）；
+   * 保留 Partial<Employee> 以兼容可选字段输入。
    */
   create: (data: Partial<Employee>): Promise<ApiResponse<Employee>> => {
     return apiClient.hrm.post('/employees', toOpenApiRequestBody(data as Record<string, unknown>));

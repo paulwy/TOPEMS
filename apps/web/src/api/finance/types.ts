@@ -1,13 +1,12 @@
 // ============================================================================
-// ERP → Finance 类型迁移（B1 阶段：仅迁移类型，API 函数保留在 @/api/erp）
+// ERP → Finance 类型迁移（B1 阶段：仅迁移类型；B2 阶段：API 函数迁移）
 // ============================================================================
 // 背景：以下类型历史上定义在 @/api/erp/types.ts 中，但语义上属于财务模块，
 // 且 Finance 页面大量引用导致依赖反链。B1 阶段先在此 re-declare 并更新
-// Finance 页面的 type-only import，API 函数（budgetApi/voucherApi 等）由于
-// 签名与 @/api/finance/* 不兼容，暂保留在 ERP。
+// Finance 页面的 type-only import。
 //
-// 后续 TODO（B2 阶段）：对齐 API 函数签名（PaginatedResult vs Budget[] /
-// financeReportApi 命名差异等）后，再整体迁移函数引用。
+// B2 阶段已于 V513 完成（2026-09-07）：budgetApi/voucherApi/financeReportApi
+// 已迁移至 @/api/finance，6 个 Finance 页面直连 @/api/finance 不再引用 @/api/erp。
 // ============================================================================
 
 export interface Budget {

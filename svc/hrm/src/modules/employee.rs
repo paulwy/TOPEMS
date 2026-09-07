@@ -80,7 +80,7 @@ pub struct ExportRequest {
     path = "/employees",
     tag = "employees",
     responses(
-        (status = 200, description = "获取员工列表成功", body = [Employee]),
+        (status = 200, description = "获取员工列表成功", body = ListResponse<Employee>),
         (status = 401, description = "未授权"),
         (status = 403, description = "权限不足")
     )
