@@ -23,6 +23,8 @@ export default [
       'setupTests.ts',
       'playwright.config.*.ts',
       'src/schemas/admin/tenantInvoice.tsx',
+      '_archive/**',
+      'coverage/**',
     ],
   },
   {
