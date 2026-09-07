@@ -17,6 +17,7 @@ import { qaApi } from './qa';
 import { vectorApi } from './vector';
 import { recommendationApi } from './recommendation';
 import { assistantApi } from './assistant';
+import { knowledgeApi } from './knowledge';
 import { difyApi } from './dify';
 import { dshAgentApi } from './dshAgent';
 import * as businessCopilotApi from './businessCopilot';
@@ -25,6 +26,7 @@ import * as governanceDashboardApi from './governanceDashboard';
 
 export * from './types';
 export * from './assistant';
+export * from './knowledge';
 export * from './dify';
 export * from './dshAgent';
 export * from './businessCopilot';
@@ -40,6 +42,7 @@ export const aiApi = {
   ...vectorApi,
   ...recommendationApi,
   ...assistantApi,
+  ...knowledgeApi,
   ...difyApi,
   ...dshAgentApi,
   ...businessCopilotApi,

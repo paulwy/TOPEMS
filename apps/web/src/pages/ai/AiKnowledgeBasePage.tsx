@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -30,9 +30,16 @@ import {
 import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { knowledgeApi } from '@/api/ai/knowledge';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const sampleDocuments = [
   {
@@ -98,8 +105,38 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [searching, setSearching] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [documentList] = useState(sampleDocuments);
+  const [documentList, setDocumentList] = useState(sampleDocuments);
+  const [docsLoading, setDocsLoading] = useState(false);
   const [filterType, setFilterType] = useState<string>('all');
+
+  // 遗留⑩闭环（2026-09-08）：知识库后端已挂载（svc/ai ai_knowledge 模块），
+  // 列表改为真实数据；接口不可用时回退本地示例，保证页面可用
+  useEffect(() => {
+    let cancelled = false;
+    setDocsLoading(true);
+    knowledgeApi
+      .listDocuments()
+      .then((res) => {
+        if (cancelled) return;
+        const items = (res?.data ?? []).map((d) => ({
+          id: d.id,
+          title: d.title,
+          type: d.doc_type || 'manual',
+          size: d.file_size != null ? formatFileSize(d.file_size) : '-',
+          updatedAt: (d.updated_at ?? '').slice(0, 10),
+        }));
+        setDocumentList(items.length > 0 ? items : sampleDocuments);
+      })
+      .catch(() => {
+        if (!cancelled) setDocumentList(sampleDocuments);
+      })
+      .finally(() => {
+        if (!cancelled) setDocsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSendQuery = useCallback(async () => {
     if (!query.trim()) {
@@ -243,24 +280,30 @@ export const AiKnowledgeBasePage: React.FC = () => {
           <Divider sx={{ mb: 2 }} />
 
           <List>
-            {documentList.map((doc) => (
-              <ListItemButton
-                key={doc.id}
-                onClick={() => handleSelectDocument(doc.id)}
-                sx={{
-                  borderRadius: 2,
-                  mb: 1,
-                  bgcolor: selectedDocs.includes(doc.id) ? 'primary.light' : undefined,
-                  '&:hover': { bgcolor: 'grey.100' },
-                }}
-              >
-                <ListItemIcon>{getTypeIcon(doc.type)}</ListItemIcon>
-                <ListItemText
-                  primary={doc.title}
-                  secondary={`${doc.size} · ${i18n.t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
-                />
-              </ListItemButton>
-            ))}
+            {docsLoading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                <CircularProgress size={24} />
+              </Box>
+            )}
+            {!docsLoading &&
+              documentList.map((doc) => (
+                <ListItemButton
+                  key={doc.id}
+                  onClick={() => handleSelectDocument(doc.id)}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 1,
+                    bgcolor: selectedDocs.includes(doc.id) ? 'primary.light' : undefined,
+                    '&:hover': { bgcolor: 'grey.100' },
+                  }}
+                >
+                  <ListItemIcon>{getTypeIcon(doc.type)}</ListItemIcon>
+                  <ListItemText
+                    primary={doc.title}
+                    secondary={`${doc.size} · ${i18n.t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
+                  />
+                </ListItemButton>
+              ))}
           </List>
 
           {selectedDocs.length > 0 && (

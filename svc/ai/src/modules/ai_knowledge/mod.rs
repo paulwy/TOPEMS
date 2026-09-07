@@ -54,7 +54,7 @@ use topems_shared_auth::middleware::require_permission;
 /// 同时启用 pgvector 扩展并创建索引。
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // 1. 启用 pgvector 扩展（若未安装则需先在 PostgreSQL 中安装）
-    sqlx::query(only_own_schema_query!("ai", "CREATE EXTENSION IF NOT EXISTS vector", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE EXTENSION IF NOT EXISTS vector", "core"))
         .execute(pool)
         .await?;
 
@@ -72,21 +72,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMP
-        )"#, "plugin_ai"),
+        )"#, "core"),
     )
     .execute(pool)
     .await?;
 
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_tenant_id ON core.knowledge_bases(tenant_id)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_tenant_id ON core.knowledge_bases(tenant_id)", "core"))
         .execute(pool)
         .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_status ON core.knowledge_bases(status)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_status ON core.knowledge_bases(status)", "core"))
         .execute(pool)
         .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_created_by ON core.knowledge_bases(created_by)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_created_by ON core.knowledge_bases(created_by)", "core"))
         .execute(pool)
         .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_kb_type ON core.knowledge_bases(kb_type)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kb_kb_type ON core.knowledge_bases(kb_type)", "core"))
         .execute(pool)
         .await?;
 
@@ -108,27 +108,27 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMP
-        )"#, "plugin_ai"),
+        )"#, "core"),
     )
     .execute(pool)
     .await?;
 
     sqlx::query(
-        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_tenant_id ON core.knowledge_documents(tenant_id)", "plugin_ai"),
+        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_tenant_id ON core.knowledge_documents(tenant_id)", "core"),
     )
     .execute(pool)
     .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_kb_id ON core.knowledge_documents(kb_id)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_kb_id ON core.knowledge_documents(kb_id)", "core"))
         .execute(pool)
         .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_status ON core.knowledge_documents(status)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_status ON core.knowledge_documents(status)", "core"))
         .execute(pool)
         .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_doc_type ON core.knowledge_documents(doc_type)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_doc_type ON core.knowledge_documents(doc_type)", "core"))
         .execute(pool)
         .await?;
     sqlx::query(
-        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_created_by ON core.knowledge_documents(created_by)", "plugin_ai"),
+        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kd_created_by ON core.knowledge_documents(created_by)", "core"),
     )
     .execute(pool)
     .await?;
@@ -148,20 +148,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMP
-        )"#, "plugin_ai"),
+        )"#, "core"),
     )
     .execute(pool)
     .await?;
 
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kc_tenant_id ON core.knowledge_chunks(tenant_id)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kc_tenant_id ON core.knowledge_chunks(tenant_id)", "core"))
         .execute(pool)
         .await?;
     sqlx::query(
-        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kc_document_id ON core.knowledge_chunks(document_id)", "plugin_ai"),
+        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kc_document_id ON core.knowledge_chunks(document_id)", "core"),
     )
     .execute(pool)
     .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kc_kb_id ON core.knowledge_chunks(kb_id)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_kc_kb_id ON core.knowledge_chunks(kb_id)", "core"))
         .execute(pool)
         .await?;
 
@@ -170,7 +170,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_kc_embedding
            ON core.knowledge_chunks USING ivfflat (embedding vector_cosine_ops)
-           WITH (lists = 100)"#, "plugin_ai"),
+           WITH (lists = 100)"#, "core"),
     )
     .execute(pool)
     .await?;
@@ -187,24 +187,24 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             feedback INTEGER,
             user_id UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )"#, "plugin_ai"),
+        )"#, "core"),
     )
     .execute(pool)
     .await?;
 
     sqlx::query(
-        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_tenant_id ON core.knowledge_qa_history(tenant_id)", "plugin_ai"),
+        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_tenant_id ON core.knowledge_qa_history(tenant_id)", "core"),
     )
     .execute(pool)
     .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_kb_id ON core.knowledge_qa_history(kb_id)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_kb_id ON core.knowledge_qa_history(kb_id)", "core"))
         .execute(pool)
         .await?;
-    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_user_id ON core.knowledge_qa_history(user_id)", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_user_id ON core.knowledge_qa_history(user_id)", "core"))
         .execute(pool)
         .await?;
     sqlx::query(
-        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_created_at ON core.knowledge_qa_history(created_at)", "plugin_ai"),
+        only_own_schema_query!("ai", "CREATE INDEX IF NOT EXISTS idx_qa_created_at ON core.knowledge_qa_history(created_at)", "core"),
     )
     .execute(pool)
     .await?;
@@ -216,27 +216,27 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             NEW.updated_at := NOW();
             RETURN NEW;
         END;
-        $$ LANGUAGE plpgsql"#, "plugin_ai"),
+        $$ LANGUAGE plpgsql"#, "core"),
     )
     .execute(pool)
     .await?;
 
-    sqlx::query(only_own_schema_query!("ai", "DROP TRIGGER IF EXISTS trg_kb_updated_at ON core.knowledge_bases", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "DROP TRIGGER IF EXISTS trg_kb_updated_at ON core.knowledge_bases", "core"))
         .execute(pool)
         .await?;
     sqlx::query(
         only_own_schema_query!("ai", r#"CREATE TRIGGER trg_kb_updated_at BEFORE UPDATE ON core.knowledge_bases
-           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#, "plugin_ai"),
+           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#, "core"),
     )
     .execute(pool)
     .await?;
 
-    sqlx::query(only_own_schema_query!("ai", "DROP TRIGGER IF EXISTS trg_kd_updated_at ON core.knowledge_documents", "plugin_ai"))
+    sqlx::query(only_own_schema_query!("ai", "DROP TRIGGER IF EXISTS trg_kd_updated_at ON core.knowledge_documents", "core"))
         .execute(pool)
         .await?;
     sqlx::query(
         only_own_schema_query!("ai", r#"CREATE TRIGGER trg_kd_updated_at BEFORE UPDATE ON core.knowledge_documents
-           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#, "plugin_ai"),
+           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#, "core"),
     )
     .execute(pool)
     .await?;
@@ -255,28 +255,28 @@ pub fn create_routes() -> Router<AppState> {
     // ===== 读取类路由（需要 knowledge:read 权限）=====
     let read_routes = Router::new()
         .route(
-            "/api/core/ai-knowledge/bases",
+            "/knowledge/bases",
             get(handlers::list_knowledge_bases),
         )
         .route(
-            "/api/core/ai-knowledge/bases/{id}",
+            "/knowledge/bases/{id}",
             get(handlers::get_knowledge_base),
         )
         .route(
-            "/api/core/ai-knowledge/documents",
+            "/knowledge/documents",
             get(handlers::list_documents),
         )
         .route(
-            "/api/core/ai-knowledge/documents/{id}",
+            "/knowledge/documents/{id}",
             get(handlers::get_document),
         )
         .route(
-            "/api/core/ai-knowledge/qa-history",
+            "/knowledge/qa-history",
             get(handlers::list_qa_history),
         )
-        .route("/api/core/ai-knowledge/ask", post(handlers::ask_question))
+        .route("/knowledge/ask", post(handlers::ask_question))
         .route(
-            "/api/core/ai-knowledge/search",
+            "/knowledge/search",
             post(handlers::semantic_search),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -286,27 +286,27 @@ pub fn create_routes() -> Router<AppState> {
     // ===== 写入类路由（需要 ai:dashboard:write 权限）=====
     let write_routes = Router::new()
         .route(
-            "/api/core/ai-knowledge/bases",
+            "/knowledge/bases",
             post(handlers::create_knowledge_base),
         )
         .route(
-            "/api/core/ai-knowledge/bases/{id}",
+            "/knowledge/bases/{id}",
             put(handlers::update_knowledge_base),
         )
         .route(
-            "/api/core/ai-knowledge/documents",
+            "/knowledge/documents",
             post(handlers::upload_document),
         )
         .route(
-            "/api/core/ai-knowledge/documents/{id}",
+            "/knowledge/documents/{id}",
             put(handlers::update_document),
         )
         .route(
-            "/api/core/ai-knowledge/documents/{id}/reprocess",
+            "/knowledge/documents/{id}/reprocess",
             post(handlers::reprocess_document),
         )
         .route(
-            "/api/core/ai-knowledge/qa/{id}/feedback",
+            "/knowledge/qa/{id}/feedback",
             post(handlers::submit_feedback),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -316,11 +316,11 @@ pub fn create_routes() -> Router<AppState> {
     // ===== 删除类路由（需要 ai:dashboard:admin 权限）=====
     let admin_routes = Router::new()
         .route(
-            "/api/core/ai-knowledge/bases/{id}",
+            "/knowledge/bases/{id}",
             delete(handlers::delete_knowledge_base),
         )
         .route(
-            "/api/core/ai-knowledge/documents/{id}",
+            "/knowledge/documents/{id}",
             delete(handlers::delete_document),
         )
         .layer(axum::middleware::from_fn(require_permission(

@@ -1,9 +1,8 @@
 //! AI 知识库 - API handlers
 //!
-//! 所有接口在 `/api/core/ai-knowledge/` 路径下。
+//! 所有接口在 `/knowledge/` 路径下（经 web 网关 /api/ai/knowledge/... 访问）。
 //! 按业务域分组：知识库管理 / 文档管理 / 问答 / 检索
 
-use std::path::Path;
 use std::sync::Arc;
 
 use axum::{
@@ -267,23 +266,10 @@ pub async fn upload_document(
         }
     };
 
-    // 上传文件到存储服务
+    // 文件原件存储：ai 服务无外部存储服务（storage_service 属旧架构引用，已移除），
+    // 文档内容以 parsed_content 落库（检索/问答用），storage_path 记引用路径供后续扩展
     let file_id = Uuid::new_v4();
     let storage_path = format!("ai_knowledge/{}/{:x}", claims.sub, file_id);
-    if let Err(e) = state
-        .storage_service
-        .upload(
-            Path::new(&storage_path),
-            &file_data,
-            content_type
-                .as_deref()
-                .unwrap_or("application/octet-stream"),
-        )
-        .await
-    {
-        tracing::error!("[AiKnowledge] 文件存储失败: {}", e);
-        return Json(api_error(500, "文件存储失败"));
-    }
 
     let file_size = file_data.len() as i64;
 

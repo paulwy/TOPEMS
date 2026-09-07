@@ -632,6 +632,12 @@ pub fn create_routes(
         }
     });
 
+    // 遗留⑩闭环（2026-09-08）：ai_knowledge 模块路由（自带 require_permission 中间件，
+    // with_state 注入 AppState 后以 Router<()> 形态并入受保护路由链）
+    let ai_knowledge_router = Router::new()
+        .merge(crate::modules::ai_knowledge::create_routes())
+        .with_state(app_state.clone());
+
     let all_protected_routes = Router::new()
         .merge(protected_routes)
         .merge(analysis_router)
@@ -646,6 +652,7 @@ pub fn create_routes(
         .merge(multimodal_router)
         .merge(dify_router)
         .merge(workflow_router)
+        .merge(ai_knowledge_router)
         .layer(rate_limit_layer);
 
     let app = register_routes_with_legacy_alias(

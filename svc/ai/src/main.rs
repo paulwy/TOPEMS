@@ -101,6 +101,12 @@ async fn main() -> anyhow::Result<()> {
         tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
     }
 
+    // 遗留⑩闭环（2026-09-08）：挂载 ai_knowledge 模块——初始化 core.knowledge_bases / documents /
+    // chunks / qa_history 表与 pgvector 扩展（幂等；知识库功能此前因模块未挂载而断裂，现接线上线）
+    if let Err(e) = crate::modules::ai_knowledge::init_database(db.ddl_pool()).await {
+        tracing::error!("[ai] ai_knowledge 初始化失败（知识库表未就绪）: {:?}", e);
+    }
+
     // 读取 AI 配置
     let api_key = std::env::var("OLLAMA_API_KEY")
         .ok()
@@ -279,6 +285,7 @@ async fn main() -> anyhow::Result<()> {
     // 创建应用状态
     let app_state = crate::shared::AppState {
         auth_state: ctx.auth_state.clone(),
+        pool: pool.clone(),
         document_service,
         vector_service,
         qa_service,

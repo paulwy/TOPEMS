@@ -164,10 +164,13 @@ fn parse_html(content: &[u8]) -> Result<String, ProcessorError> {
 
 /// 去除 HTML 标签，提取纯文本
 fn strip_html_tags(html: &str) -> String {
-    // 移除 script/style 块及其内容
-    let script_re = Regex::new(r"(?is)<(script|style)[^>]*>.*?</\1>")
+    // 移除 script/style 块及其内容（Rust regex 不支持反向引用 \1，改为两次独立替换）
+    let script_re = Regex::new(r"(?is)<script[^>]*>.*?</script>")
         .expect("hardcoded regex should always compile");
     let html = script_re.replace_all(html, "");
+    let style_re = Regex::new(r"(?is)<style[^>]*>.*?</style>")
+        .expect("hardcoded regex should always compile");
+    let html = style_re.replace_all(&html, "");
 
     // 移除 HTML 注释
     let comment_re = Regex::new(r"(?s)<!--.*?-->").expect("hardcoded regex should always compile");

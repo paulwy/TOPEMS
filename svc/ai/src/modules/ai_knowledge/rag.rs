@@ -68,7 +68,7 @@ pub async fn retrieve_relevant_chunks(
              AND c.embedding IS NOT NULL
              AND d.status = 'ready'
            ORDER BY c.embedding <=> $1::vector
-           LIMIT $4"#, "plugin_ai"),
+           LIMIT $4"#, "core"),
     )
     .bind(&vector_str)
     .bind(tenant_id)
@@ -216,7 +216,7 @@ pub async fn ask_question(
         only_own_schema_query!("ai", r#"INSERT INTO core.knowledge_qa_history
             (tenant_id, kb_id, question, answer, sources, user_id, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, NOW())
-           RETURNING id"#, "plugin_ai"),
+           RETURNING id"#, "core"),
     )
     .bind(tenant_id)
     .bind(kb_id)

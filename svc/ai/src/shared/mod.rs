@@ -14,6 +14,8 @@ use crate::services::audit::AiAuditService;
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
+    /// 常规读写连接池（遗留⑩：ai_knowledge 模块直查库使用，2026-09-08 补充）
+    pub pool: sqlx::PgPool,
     pub document_service: crate::services::DocumentService,
     pub vector_service: crate::services::VectorService,
     pub qa_service: crate::services::QAService,
