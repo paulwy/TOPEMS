@@ -317,7 +317,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Plugin registry (available plugins)
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_plugins (
+        CREATE TABLE IF NOT EXISTS core.core_plugins (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             code VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(128) NOT NULL,
@@ -378,9 +378,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Plugin versions (for version management)
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_plugin_versions (
+        CREATE TABLE IF NOT EXISTS core.core_plugin_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            plugin_id UUID NOT NULL REFERENCES core.core_plugins(id) ON DELETE CASCADE,
             version VARCHAR(32) NOT NULL,
             
             -- Release info
@@ -408,9 +408,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Plugin reviews
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_plugin_reviews (
+        CREATE TABLE IF NOT EXISTS core.core_plugin_reviews (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            plugin_id UUID NOT NULL REFERENCES core.core_plugins(id) ON DELETE CASCADE,
             user_id UUID NOT NULL,
             user_name VARCHAR(128),
             
@@ -434,10 +434,10 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Tenant plugin installations
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tenant_plugins (
+        CREATE TABLE IF NOT EXISTS core.core_tenant_plugins (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID NOT NULL REFERENCES core_tenants(id) ON DELETE CASCADE,
-            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            tenant_id UUID NOT NULL REFERENCES core.core_tenants(id) ON DELETE CASCADE,
+            plugin_id UUID NOT NULL REFERENCES core.core_plugins(id) ON DELETE CASCADE,
             
             -- Installation info
             installed_version VARCHAR(32),
@@ -466,7 +466,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Plugin categories
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_plugin_categories (
+        CREATE TABLE IF NOT EXISTS core.core_plugin_categories (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(64) NOT NULL,
             code VARCHAR(64) NOT NULL UNIQUE,
@@ -487,21 +487,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create indexes
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_code ON core_plugins(code)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_code ON core.core_plugins(code)")
         .execute(pool)
         .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_core_plugins_installed ON core_plugins(is_installed)",
+        "CREATE INDEX IF NOT EXISTS idx_core_plugins_installed ON core.core_plugins(is_installed)",
     )
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_category ON core_plugins(category)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_category ON core.core_plugins(category)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_tenant ON core_tenant_plugins(tenant_id)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_tenant ON core.core_tenant_plugins(tenant_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_reviews_plugin ON core_plugin_reviews(plugin_id)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_reviews_plugin ON core.core_plugin_reviews(plugin_id)")
         .execute(pool)
         .await?;
 
@@ -528,9 +528,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Plugin instances (runtime state for each plugin)
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_plugin_instances (
+        CREATE TABLE IF NOT EXISTS core.core_plugin_instances (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            plugin_id UUID NOT NULL REFERENCES core.core_plugins(id) ON DELETE CASCADE,
             runtime_url VARCHAR(512),
             runtime_status VARCHAR(32) DEFAULT 'stopped',  -- stopped | starting | running | error
             base_path VARCHAR(128) DEFAULT '/api/plugins/{code}',
@@ -548,7 +548,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Plugin permissions (permissions registered by plugins)
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_plugin_permissions (
+        CREATE TABLE IF NOT EXISTS core.core_plugin_permissions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             plugin_code VARCHAR(64) NOT NULL,
             permission_code VARCHAR(100) NOT NULL,
@@ -564,17 +564,17 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create indexes for new tables
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_instances_status ON core_plugin_instances(runtime_status)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_instances_status ON core.core_plugin_instances(runtime_status)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_permissions_code ON core_plugin_permissions(plugin_code)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_permissions_code ON core.core_plugin_permissions(plugin_code)")
         .execute(pool)
         .await?;
 
     // Plugin navigation config (navigation items registered by plugins for frontend)
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_plugin_navigation (
+        CREATE TABLE IF NOT EXISTS core.core_plugin_navigation (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             plugin_code VARCHAR(64) NOT NULL UNIQUE,
             nav_config JSONB NOT NULL DEFAULT '[]',
@@ -586,7 +586,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_navigation_code ON core_plugin_navigation(plugin_code)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_navigation_code ON core.core_plugin_navigation(plugin_code)")
         .execute(pool)
         .await?;
 
