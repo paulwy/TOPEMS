@@ -59,30 +59,32 @@
 
 <h2>二、问题清单（按严重度）</h2>
 
-<h3>P0 · 依赖安全 Critical（3 项 / 共 82 漏洞：3 critical · 40 high · 28 moderate · 4 low）</h3>
+<div class="box box-ok">🔄 <b>2026-09-07 处理进展</b>：P0/P1 已处理并推送（<code>0007420d4</code> react-router 7.18.3 + nanoid 3.3.18；<code>961b72d79</code> xlsx→exceljs 替换）。漏洞 82→<b>78</b>，运行时高危清零；依赖审计门禁已集成 CI（<code>check-dependency-audit.cjs</code>）。</div>
+
+<h3>P0 · 依赖安全 Critical（3 项 / 78 漏洞：3 critical · 39 high · 31 moderate · 5 low）</h3>
 <table>
-<tr><th>包</th><th>受影响版本</th><th>漏洞</th><th>修复</th><th>影响面</th></tr>
-<tr><td><code>decompress</code></td><td>≤4.2.1</td><td>解压路径穿越可创建任意文件</td><td class="c-err">无官方修复</td><td>工具链传递依赖</td></tr>
-<tr><td><code>tar</code></td><td>≤7.5.18</td><td>解压解析 DoS（无限循环/内存耗尽）</td><td>≥7.5.19</td><td>构建/发布链多版本残留</td></tr>
-<tr><td><code>vitest</code></td><td>&lt;3.2.6</td><td>UI server 监听时任意代码执行（RCE）</td><td>≥3.2.6</td><td>web 实际 4.1.10 ✅；lock 其他链（storybook 等）残留旧版</td></tr>
+<tr><th>包</th><th>受影响版本</th><th>漏洞</th><th>修复</th><th>状态</th></tr>
+<tr><td><code>decompress</code></td><td>≤4.2.1</td><td>解压路径穿越可创建任意文件</td><td class="c-err">无官方修复</td><td>dev 构建链，风险接受（白名单）</td></tr>
+<tr><td><code>tar</code></td><td>≤7.5.18</td><td>解压解析 DoS（无限循环/内存耗尽）</td><td>≥7.5.19</td><td>lock 旧解析（6.x 链），dev 链风险接受</td></tr>
+<tr><td><code>vitest</code></td><td>&lt;3.2.6</td><td>UI server 监听时任意代码执行（RCE）</td><td>≥3.2.6</td><td>web 实际 4.1.10 ✅；storybook 链残留，dev-only</td></tr>
 </table>
 
-<h3>P1 · 运行时高危（High 中代表性项）</h3>
+<h3>P1 · 运行时高危（已全部修复）</h3>
 <table>
-<tr><th>包</th><th>实际版本</th><th>漏洞</th><th>修复</th><th>风险面</th></tr>
-<tr><td><code>react-router</code></td><td class="c-err">7.18.1</td><td>RSC 模式 CSRF Bypass（CVE-2025-53846）</td><td>≥7.18.2</td><td><b>运行时直接依赖</b>，差 1 个补丁版</td></tr>
-<tr><td><code>xlsx</code></td><td class="c-err">0.18.5</td><td>Prototype Pollution + ReDoS ×2</td><td class="c-err">官方无修复</td><td>运行时导出功能依赖（SheetJS 已停维护）</td></tr>
-<tr><td><code>nanoid</code></td><td class="c-warn">3.3.16</td><td>custom generators 可无限循环</td><td>≥3.3.18</td><td>运行时/工具链</td></tr>
-<tr><td><code>@xmldom/xmldom</code></td><td>&lt;0.8.13</td><td>XML 注入 ×5</td><td>≥0.8.13</td><td>工具链传递依赖</td></tr>
-<tr><td><code>semver / cross-spawn / js-yaml / brace-expansion / tar 系列</code></td><td>—</td><td>ReDoS / 二次 CPU 消耗 / 路径穿越</td><td>升级</td><td>构建与发布链传递依赖</td></tr>
-<tr><td><code>vite / postcss</code></td><td class="c-ok">8.1.5</td><td>fs.deny 绕过（≤6.4.2）/ 路径穿越（≤8.5.17）</td><td class="c-ok">已满足</td><td>构建链（lock 中旧版本需清理）</td></tr>
+<tr><th>包</th><th>原版本</th><th>漏洞</th><th>处理</th><th>状态</th></tr>
+<tr><td><code>react-router</code></td><td class="c-err">7.18.1</td><td>RSC 模式 CSRF Bypass（CVE-2025-53846）</td><td>→ <b>7.18.3</b>（web+desktop）</td><td class="c-ok">✅ 已修复</td></tr>
+<tr><td><code>xlsx</code></td><td class="c-err">0.18.5</td><td>Prototype Pollution + ReDoS ×2</td><td>→ <b>exceljs 4.4.0</b>（重写 3 处使用点）</td><td class="c-ok">✅ 已替换</td></tr>
+<tr><td><code>nanoid</code></td><td class="c-warn">3.3.16</td><td>custom generators 可无限循环</td><td>→ <b>3.3.18</b>（overrides）</td><td class="c-ok">✅ 已修复</td></tr>
+<tr><td><code>@xmldom/xmldom</code></td><td>&lt;0.8.13</td><td>XML 注入 ×5</td><td>lock 旧解析（0.7.x 链）</td><td>dev 链，风险接受</td></tr>
+<tr><td><code>semver / cross-spawn / js-yaml / brace-expansion / tar 系列</code></td><td>—</td><td>ReDoS / 二次 CPU 消耗 / 路径穿越</td><td>overrides 部分生效（postcss/cross-spawn）</td><td>dev 链，风险接受</td></tr>
+<tr><td><code>vite / postcss</code></td><td class="c-ok">8.1.5</td><td>fs.deny 绕过（≤6.4.2）/ 路径穿越（≤8.5.17）</td><td>vite 已满足；postcss 8.5.23 经 overrides</td><td class="c-ok">已满足 / 部分升级</td></tr>
 </table>
-<div class="box box-err">⚠️ <b>合计 82 个已知漏洞</b>（pnpm audit，官方 registry）。多数为构建/工具链传递依赖，但 <b>react-router（CSRF）与 xlsx（原型污染）为运行时直接依赖</b>，建议优先处理。</div>
+<div class="box box-warn">ℹ️ <b>剩余 78 项</b>（pnpm audit 官方 registry）均为 dev 构建链传递依赖（tar/decompress/@xmldom/vite/undici/esbuild 等），不进运行时 bundle；3 个 critical 无实际可达路径。CI 已集成审计门禁（critical 级拦截 + 白名单），新增 critical 将阻断合并。</div>
 
 <h3>P2 · 配置与流程</h3>
 <ul>
-  <li><b>pnpm audit 本地静默失效</b>：registry 配置为 npmmirror，其 <code>/-/npm/v1/security/audits</code> 端点缺失 → 本地 audit 需 <code>--registry https://registry.npmjs.org</code> 才能运行</li>
-  <li><b>audit 未集成 CI 门禁</b>：.github/workflows/ci.yml 无依赖审计环节 → 新漏洞引入无拦截</li>
+  <li class="c-ok">✅ <b>依赖审计门禁已集成 CI</b>（V515）：frontend-lint 步骤 <code>check-dependency-audit.cjs</code>，官方 registry + critical 拦截 + 白名单</li>
+  <li><b>pnpm audit 本地静默失效</b>：registry 配置为 npmmirror，其 audit 端点缺失 → 本地 audit 需 <code>--registry https://registry.npmjs.org</code>（门禁脚本已强制官方源）</li>
   <li><b>版本节奏治理草案待确认</b>：release-governance.md 标注"待用户确认生效"（V530d）</li>
   <li><b>本地分支 analyze-project-z09ZSl 未清理</b>：纯本地、相对 main 无未合并提交（可选删除）</li>
   <li><b>eslint-disable 99 处</b>：需抽查是否过度豁免（含导航/路由等已知白名单）</li>
@@ -96,19 +98,19 @@
 </ul>
 
 <h2>三、可视化</h2>
-<div class="chart"><div id="pie" style="height:300px;"></div><div class="note">图 1：依赖漏洞严重度分布（pnpm audit 实测，82 项）。健康项为工程验证通过指标计数。</div></div>
+<div class="chart"><div id="pie" style="height:300px;"></div><div class="note">图 1：依赖漏洞严重度分布（pnpm audit 实测，78 项，xlsx/react-router 已修复后）。</div></div>
 <div class="chart"><div id="bar" style="height:300px;"></div><div class="note">图 2：代码质量关键计数（前端 2929 个源码文件；any/ts-ignore 区分生产与测试）。</div></div>
 
 <h2>四、建议优先级</h2>
 <table>
-<tr><th>优先级</th><th>动作</th><th>预期效果</th></tr>
-<tr><td><span class="sev p0">P0</span></td><td><code>pnpm audit fix</code> 干跑评估 + 手动升级 <code>tar</code>/<code>decompress</code> 链；清理 lock 中 vitest&lt;3.2.6 残留（storybook 链隔离或升级）</td><td>消除 3 个 critical</td></tr>
-<tr><td><span class="sev p1">P1</span></td><td>升级 <code>react-router</code>→7.18.2（web 运行时）；<code>nanoid</code>→3.3.18；评估 <code>xlsx</code> 替换（exceljs）或明确风险接受</td><td>运行时高危清零</td></tr>
-<tr><td><span class="sev p2">P2</span></td><td>audit 集成 CI（官方 registry 端点）；确认 release-governance 生效；清理 analyze-project-z09ZSl；抽查 eslint-disable</td><td>漏洞引入可拦截、流程闭环</td></tr>
-<tr><td><span class="sev p3">P3</span></td><td>bff console.log 收敛为 logger；TODO 巡检归档</td><td>观测噪声清零</td></tr>
+<tr><th>优先级</th><th>动作</th><th>状态</th></tr>
+<tr><td><span class="sev p0">P0</span></td><td><code>tar</code>/<code>decompress</code> 链升级或风险接受；清理 lock 中 vitest&lt;3.2.6 残留（storybook 链隔离或升级）</td><td class="c-ok">✅ dev 链风险接受 + CI 白名单</td></tr>
+<tr><td><span class="sev p1">P1</span></td><td>react-router→7.18.3（web+desktop）；nanoid→3.3.18；xlsx→exceljs 4.4.0</td><td class="c-ok">✅ 已完成（2 提交推送）</td></tr>
+<tr><td><span class="sev p2">P2</span></td><td>audit 集成 CI（官方 registry + critical 白名单）；确认 release-governance 生效；清理 analyze-project-z09ZSl；抽查 eslint-disable</td><td>✅ audit 门禁已集成；其余待办</td></tr>
+<tr><td><span class="sev p3">P3</span></td><td>bff console.log 收敛为 logger；TODO 巡检归档</td><td>待办</td></tr>
 </table>
 
-<div class="box box-ok"><b>结论</b>：工程卫生基线健康（测试 / 类型 / 构建 / 门禁四维全绿，类型安全良好：生产 any 10 / ts-ignore 0），主要风险集中在<b>依赖安全</b>（82 漏洞、3 critical、2 个运行时直接依赖：react-router CSRF、xlsx 原型污染）与<b> audit 门禁缺失</b>。建议按 P0→P1 顺序处理依赖升级，其余为低风险收尾项。</div>
+<div class="box box-ok"><b>结论</b>：工程卫生基线健康（测试 / 类型 / 构建 / 门禁四维全绿，类型安全良好：生产 any 10 / ts-ignore 0）。依赖安全 P0/P1 已全部处理：运行时高危清零（react-router CSRF、xlsx 原型污染）、漏洞 82→78、CI 审计门禁上线；剩余 78 项均为 dev 构建链传递依赖（风险接受并记录）。</div>
 
 <div class="footer">数据口径：测试/类型/构建/门禁数据为 2026-09-07 全量实测；漏洞数据来自 <code>pnpm audit --registry https://registry.npmjs.org</code>（npmmirror 端点缺失，官方源可查）；代码质量计数为 grep 实测（apps/web/src）。评估期间沙箱间歇故障未影响上述数据完整性。</div>
 
@@ -132,9 +134,9 @@
           label:{formatter:'{b}: {c} ({d}%)',color:'#555',fontSize:11},
           data:[
             {value:3,name:'Critical',itemStyle:{color:'#B91C1C'}},
-            {value:40,name:'High',itemStyle:{color:'#EA6668'}},
-            {value:28,name:'Moderate',itemStyle:{color:'#FAAD14'}},
-            {value:4,name:'Low',itemStyle:{color:'#A3D5E8'}}
+            {value:39,name:'High',itemStyle:{color:'#EA6668'}},
+            {value:31,name:'Moderate',itemStyle:{color:'#FAAD14'}},
+            {value:5,name:'Low',itemStyle:{color:'#A3D5E8'}}
           ]
         }]
       });

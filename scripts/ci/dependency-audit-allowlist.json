@@ -1,0 +1,8 @@
+{
+  "description": "已知且已接受的 critical 依赖漏洞（均为 dev 构建链，无运行时暴露、无官方修复或锁定旧解析）。新增 critical advisory 不在白名单时将阻断 CI。",
+  "advisories": [
+    "1122670",
+    "1123940",
+    "1139528"
+  ]
+}

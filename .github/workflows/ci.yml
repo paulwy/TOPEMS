@@ -628,6 +628,9 @@ jobs:
       - name: Run a11y lint (V65)
         run: pnpm --filter topems-portal lint:a11y
 
+      - name: Run dependency security audit (V515)
+        run: node scripts/ci/check-dependency-audit.cjs
+
   design-system-check:
     name: Design System Token Check
     needs: changes
