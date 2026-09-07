@@ -686,8 +686,8 @@ importers:
         version: link:../shared-types
     devDependencies:
       typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/business-tools-sdk: {}
 

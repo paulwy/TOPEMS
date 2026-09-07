@@ -16,6 +16,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./apps/web/src/*", "./apps/desktop/src/*", "./apps/mobile/src/*"],
       "@topems/api-client": ["./packages/api-client/src/index.ts"],
