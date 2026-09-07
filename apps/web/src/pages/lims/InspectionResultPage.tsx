@@ -20,7 +20,7 @@ export default function InspectionResultPage() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  // TODO: replace with real API integration when backend is ready
+  // TODO: replace with real API integration when backend is ready（当前 svc 无对应服务，等待后端配套）
   const data: InspectionResult[] = [];
   const isLoading = false;
 

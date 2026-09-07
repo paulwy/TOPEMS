@@ -16,7 +16,7 @@ interface VehicleRecord {
 export const VehicleManagementPage: React.FC = () => {
   const { t } = useTranslation('oa');
 
-  // TODO: oaApi.vehicle.list 方法不存在，当前使用空数组占位；后端接口就绪后替换为真实 API 调用
+  // TODO: oaApi.vehicle.list 方法不存在，当前使用空数组占位；等待后端 OA 服务（svc 无 oa 模块，mobile 仅有 announcements 接口）就绪后替换为真实 API 调用
   const crudApi: CrudOperations<VehicleRecord> = {
     list: async () => ({
       success: true,

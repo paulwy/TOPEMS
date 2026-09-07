@@ -20,7 +20,7 @@ export const AnnouncementPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  // TODO: replace with real API integration when backend is ready
+  // TODO: replace with real API integration when backend OA service is ready（svc 无 oa 模块，mobile 仅有 announcements 3 接口）
   const data: Announcement[] = [];
   const isLoading = false;
 
