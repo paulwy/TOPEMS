@@ -315,19 +315,6 @@ export const clearCache = (): void => {
   cache.clear();
 };
 
-const clearCacheByKey = (
-  url: string,
-  method: string = 'GET',
-  params?: Record<string, unknown>,
-): void => {
-  const key = `${method.toUpperCase()}:${url}:${JSON.stringify(params || {})}`;
-  cache.delete(key);
-};
-
-const getCacheSize = (): number => {
-  return cache.size;
-};
-
 export const getCacheStats = () => {
   let totalAccessCount = 0;
   let oldestTimestamp = Date.now();

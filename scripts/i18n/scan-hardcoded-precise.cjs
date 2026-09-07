@@ -122,8 +122,12 @@ function walk(dir) {
 
 function scanFile(filePath) {
   let rel = path.relative(WEB_SRC, filePath);
-  // Fall back to basename if file is outside WEB_SRC (e.g. diff mode with absolute paths outside project)
-  if (rel.startsWith('..') || path.isAbsolute(rel)) rel = path.basename(filePath);
+  // Fall back to repo-root-relative path when file is outside WEB_SRC (mobile/desktop/packages),
+  // so whitelist dirs like 'api/' keep matching; basename only as last resort.
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    rel = path.relative(process.cwd(), filePath);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) rel = path.basename(filePath);
+  }
   if (isWhitelisted(rel) || isMockFile(rel)) return;
   if (/\/(locales|i18n)\//.test(rel)) return;
 
