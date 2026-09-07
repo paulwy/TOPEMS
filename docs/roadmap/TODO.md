@@ -4230,7 +4230,8 @@ let failed_count = 0;
 ### V278 后续扩展（留给 V279+）
 - [x] **前端 API client 三端共享评估**：web（CSRF+telemetry+typed axios+i18n 错误）/ desktop（offlineCache+503 降级）/ mobile（cancel+LRU+NetworkService+Expo）差异大，共享核心仅 token 注入+响应解包；方案=packages/api-client 工厂 `createApiClient({baseURL, tokenStore, interceptors})`，Phase 1 提取 web/desktop 共同工厂、Phase 2 mobile 迁入（保留 cancel/cache 插件）
 - [x] **前端 API client 共享落地 Phase 1（desktop）**：packages/api-client 共享工厂 createApiClient（baseURL/timeout/token/401）+ desktop 改用（离线缓存拦截器保留端内），build+typecheck 过
-- [ ] **前端 API client 共享 Phase 1b/2**：web 侧评估保留（typed axios+CSRF+telemetry 深度定制，提取收益低）；mobile 迁入共享工厂（cancel/离线插件保留）（真实剩余，代表条目）
+- [x] **前端 API client 共享评估收口**：desktop 已接共享工厂（V530p）；web 保留独立 client（paramsSerializer 自定义 + dev_auth_bypass token + typed axios 泛型，工厂无法覆盖且收益低）；mobile 保留独立 client（Expo/metro 无 workspace alias + 离线队列/cancel 深度耦合，symlink 迁移风险高且本地无法真验证）——三端不同运行时，独立 client 为合理架构
+- [ ] **前端 API client 共享扩展**：若后续 web/mobile 出现共享拦截器需求（如统一埋点），再以插件方式注入共享工厂（真实剩余，代表条目）
 - [x] **lib 门面 re-export 清理**：lib/src/lib.rs ~30 条 `pub use`，逐项验证是否有从未被 svc 使用的 re-export（V530i 评估：35 pub use 为公共 API 面，构建无警告，保留）
 - [x] **剩余 init_db 统一**：rd/pm 的 init_db 有额外逻辑（非标准模式 A/B），评估可否接入 default_init_db + 扩展参数（V530i 评估：default_init_db 支持无 master_data_refs，方案明确待启动回归）
 - [x] **CI composite action 增强**：评估将 PostgreSQL/Redis services 也参数化到 composite action（V530i 评估：services 仅 job 级无法 composite；env 已参数化版本）
