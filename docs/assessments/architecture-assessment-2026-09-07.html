@@ -132,8 +132,9 @@
     ⑨ notifications / patrol_records / scan_records 同名不同结构——判定：patrol_records / scan_records 以 <b>mobile schema 版</b>为准（svc/mobile schema_defense.rs TABLE_DEFS，V69.3 单一事实源，代码全量读写）；notifications 以 <b>unified_core schema 版</b>为准（01_rebuild_database.sql:528，mobile 端通知走 HTTP API 代理不直连）。public 版（05_mobile_init.sql，无前缀，且已被迁移 20260901000010 DROP）与 plugin_mobile 版（02_create_plugin_tables.sql，代码 0 引用）判死清理：删除 3 张死表定义 + 5 处悬空索引（02_create_performance_indexes.sql 引用了 public 版不存在的 location/patrol_time/code/scan_time 列，属历史桌面版残留）。lefthook 15 项门禁全 PASS。<br>
     <b>第三批（治理性）· 已闭环（提交 124d1b2dd）</b>：
     ⑥ schema 边界增强——实证宏工作正常（最小复现拦截 core 引用）；新增 CI 门禁 check-schema-boundary.cjs（扫描 30 服务 2486 处裸 sqlx 调用，关键词上下文匹配防误报，allowlist 记录既有引用）；⑦ 迁移拆分规范——database/README.md 强化单一职责（表数≤5/幂等/唯一来源）+ 修正 52 行遗漏数字；⑧ 服务前缀对齐——runtime.ts 补 aps/bi 后端实现来源权威注释。<br>
-    <b>新增遗留（需业务决策）</b>：
-    ⑩ ai_knowledge 模块未挂载死代码：svc/ai/src/modules/ai_knowledge/ 26 处宏引用 core.*（白名单 plugin_ai，激活即编译失败）——待决策删除或挂载修复；⑪ core schema 插件表归属冲突：003-plugin.sql 无前缀建表 vs plugin-registry 裸 SQL 写 core.* vs unified-core 读 core.*——需确认 core schema 归 plugin-registry 还是 unified-core。<br>
+    <b>遗留⑩ · 已闭环（2026-09-08 提交 0013a17f6）</b>：
+    ⑩ ai_knowledge 模块未挂载死代码——经用户决策采用<b>挂载修复（方案 A）</b>：modules/mod.rs 挂载 ai_knowledge；main.rs 启动调用 init_database（幂等建 core.knowledge_bases / knowledge_documents / knowledge_chunks / knowledge_qa_history 表 + pgvector 扩展）；routes.rs 以 with_state 方式接入 create_routes（模块自带 require_permission 中间件）；55 处宏 extra 白名单修正 plugin_ai→core（schema_defense 已声明 ai 服务跨 ai/core/plugin_ai 三 schema，core 读授权成立）；AppState 补 pool 字段；handlers 移除旧架构 storage_service 依赖（文档内容落库）；document_processor 修复 Rust regex 不支持反向引用（挂载后暴露 2 测试失败）；前端新增 knowledge.ts API 客户端（知识库/文档 CRUD + 上传 + 问答 + 语义检索 + QA 反馈），AiKnowledgeBasePage 列表接真实数据（失败回退示例）。验证：cargo check ✓、svc/ai lib 1168 tests 0 fail ✓、schema-boundary PASS（0 新增）、web tsc 0 ✓、eslint 0 ✓、lefthook 15 项门禁全 PASS。<br>
+    <b>遗留⑪ · 待决策</b>：core schema 插件表归属冲突——003-plugin.sql 无前缀建表 vs plugin-registry 裸 SQL 写 core.* vs unified-core 读 core.*——需确认 core schema 归 plugin-registry 还是 unified-core（ai 服务现经白名单只读 core.knowledge_bases，不参与写）。<br>
     <b>遗留⑨ · 已闭环（2026-09-08 提交 c47f0df9a）</b>：
     ⑨ notifications / patrol_records / scan_records 同名不同结构——patrol/scan_records 以 mobile schema 为准、notifications 以 unified_core 为准；public/plugin_mobile 死版已清理（详见第二批段）。
   </div>
