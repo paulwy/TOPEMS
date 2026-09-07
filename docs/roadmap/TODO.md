@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V512 | **更新日期**: 2026-09-06 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V513 | **更新日期**: 2026-09-07 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V512 settlement_center 统一结算模块接线 + OpenAPI 聚合**（详见 V510 章节）；**V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
+> **V513 工程卫生全链路收尾：vitest 4.1.10 统一（4 个 rejects 失败根因：@vitest/expect 4.1.9/4.1.10 双版本 chai.use 覆盖）+ TS5090 baseUrl + app-shell TS6 + 库包 dist 产出 + component 高并发 flaky + shared-hooks dist 剔除测试 + mobile 类型链（TS5103/别名抢跑）+ i18n/eslint 门禁全量修复**（详见 V513 章节）；**V512 settlement_center 统一结算模块接线 + OpenAPI 聚合**（详见 V510 章节）；**V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -34,6 +34,48 @@
 > **V289 启动**：基于 Architecture Improvement Plan v1.0 与实际代码库差距评估后的真实验收缺口，4轨并行推进。
 
 ---
+
+## V513 工程卫生全链路收尾（2026-09-07）
+
+> 状态：✅ 全部完成并推送 origin/main（HEAD e8ff297e8，20 个提交）。
+
+**1. vitest 4.1.10 统一升级（方案 B）**
+- 现象：4 个 `rejects.toThrow` 用例失败（request/search-api/index），报 `TypeError: Cannot read properties of undefined (reading 'indexOf')`。
+- 根因（实验坐实）：`@vitest/expect` 4.1.9 与 4.1.10 双版本并存同一 worker——jest-dom 的 `vitest.mjs` 经 pnpm 公共层解析到 4.1.10 树，其 chunk 对 chai 二次 `chai.use(JestChaiExpect)` 覆盖 `rejects`，`throws` 被链式双 overwrite，reject 值被包成"抛该 Error 的函数"，4.1.9 的 throws 包装拿到函数后 message undefined 崩溃。
+- 修复：web/desktop/shared-hooks/shared-types 四端 vitest + @vitest/* 统一 ^4.1.10（shared-types 2→4 大版本跳跃，26 测试兼容）。
+- 已排除死路：根 vitest symlink 指向（无效，公共层才是命中点）、@vitest+expect@4.1.10 物理改名（破坏启动）、清 .vite 缓存（无效）。
+
+**2. 孤儿测试 + mock 修复**
+- 删除 7 个引用 V324 已删源码的孤儿测试（git 可恢复）；`useFinancialReport.test.ts` logger mock 补齐 `default`/`createLogger` 导出（10/10）。
+
+**3. TS5090 baseUrl + app-shell TS6 + 库包 dist（方案 A）**
+- TS5090（TS≥5.7 引入）：tsconfig.base.json 补 `"baseUrl": "."`；app-shell 实际 TS 5.9.3 报 TS5103 → 全仓库 typescript 对齐 6.0.3。
+- 库包 build 空 dist：base config `noEmit: true` 压制子 config declaration/outDir → shared-hooks/app-shell 覆盖 `noEmit: false` + 关闭无用 allowImportingTsExtensions。
+- 产出：shared-hooks dist 21 文件（含 d.ts）、app-shell 4 文件、tokens 17 文件。
+
+**4. component 高并发 flaky（DataInfraComponents）**
+- 原测试单 it 内连续 3 次 render（loading/error/success）仅首/末 unmount，残留 DOM + screen 跨渲染查询，全量高并发偶发 1 文件 2 测试失败（单跑/复跑稳定全绿）。
+- 拆为 3 个独立 it 各自 cleanup；全量连续 2 次 273 文件 3280 测试全绿。
+
+**5. shared-hooks dist 剔除 __tests__**
+- include src/**/* 将测试编译进 dist（9 文件）→ exclude 补 `src/**/__tests__`；dist 21→12 文件，vitest 31/31 不受影响。
+
+**6. mobile 类型检查链路（此前从未工作）**
+- TS5103：mobile 实际 TS 5.9.3 不认 base `ignoreDeprecations: "6.0"` → 子 config 覆盖 "5.0"（Expo 链保持 TS 5.x）。
+- TS2305 海量：base paths `@/*` 按序先命中 web/src/types，mobile 的 @/types 错解析到 web → 覆盖 paths `@/* → ./apps/mobile/src/*`。
+- TS6133：client.ts 删孤立未使用 clearCacheByKey/getCacheSize。
+- 验证：mobile tsc 0 错误、jest 11/11。
+
+**7. i18n 门禁全量缺陷 ×2**
+- scan-hardcoded-precise：web 外文件相对 WEB_SRC 退化 basename 丢失 api/ 豁免上下文（mobile 误报 2 行）→ 改仓库根相对路径。
+- WHITELIST_FILES 文件名与实际不符（ui-recommender→uiRecommender、performance-bottleneck→performanceBottleneck）→ 全量误报 107 行修正为 0。
+- i18n-hardcode-admin 全量 0 命中。
+
+**8. web eslint 全量（_archive/coverage ignores）**
+- eslint . 扫到归档/覆盖率目录（不在 tsconfig include）报 48 个 parserOptions.project 解析错误 → ignores 补齐后全量 exit 0。
+
+**最终验证矩阵**：测试 web 6956 / desktop 32 / mobile 11 / shared-hooks 31 / shared-types 26 全绿；全 workspace tsc 0 错误；web 完整构建（tsc+vite+brotli 277 文件）；库包 dist 全部产出；pnpm install --frozen-lockfile 通过；hardcoded-precise 0 / i18n-hardcode-admin 0 / eslint 全量 0。
+
 
 ## V509 no-unused-vars 342→0 清零（2026-09-06）
 
