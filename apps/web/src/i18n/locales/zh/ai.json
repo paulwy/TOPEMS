@@ -539,7 +539,9 @@
     "knowledge_base": {
       "button": {
         "ask": "提问",
-        "searching": "搜索中"
+        "searching": "搜索中",
+        "upload": "上传文档",
+        "uploading": "上传中"
       },
       "example": {
         "q_2": "员工入职流程是什么？",
@@ -566,7 +568,13 @@
         "input_question": "请输入您的问题",
         "notice": "提示",
         "welcome": "欢迎使用知识库问答助手",
-        "welcome_desc": "选择文档后输入问题，AI将基于文档内容为您解答"
+        "welcome_desc": "选择文档后输入问题，AI将基于文档内容为您解答",
+        "upload_success": "文档上传成功",
+        "upload_fail": "文档上传失败",
+        "delete_success": "文档已删除",
+        "delete_fail": "删除失败",
+        "confirm_delete": "确定删除该文档？",
+        "no_knowledge_base": "暂无知识库，请先在后台创建知识库"
       },
       "mock": {
         "a_1": "创建财务凭证的步骤如下：\n\n1. 登录ERP系统，进入财务模块\n2. 点击凭证管理→新建凭证\n3. 选择凭证类型（记账凭证、收款凭证、付款凭证等）\n4. 填写凭证日期和凭证号\n5. 添加会计分录（包括科目、借方金额、贷方金额）\n6. 录入凭证摘要\n7. 保存并审核凭证\n8. 审核通过后进行记账操作\n\n注意：凭证借贷必须平衡，且需要有对应的原始单据",

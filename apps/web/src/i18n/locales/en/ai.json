@@ -539,7 +539,9 @@
     "knowledge_base": {
       "button": {
         "ask": "Ask",
-        "searching": "Searching"
+        "searching": "Searching",
+        "upload": "Upload",
+        "uploading": "Uploading"
       },
       "example": {
         "q_2": "What is the employee onboarding process?",
@@ -566,7 +568,13 @@
         "input_question": "Enter your question...",
         "notice": "Tip",
         "welcome": "Welcome to Knowledge Base Q&A Assistant",
-        "welcome_desc": "Select a document and enter your question, AI will answer based on document content"
+        "welcome_desc": "Select a document and enter your question, AI will answer based on document content",
+        "upload_success": "Document uploaded",
+        "upload_fail": "Upload failed",
+        "delete_success": "Document deleted",
+        "delete_fail": "Delete failed",
+        "confirm_delete": "Delete this document?",
+        "no_knowledge_base": "No knowledge base found. Please create one in the admin console."
       },
       "mock": {
         "a_1": "The steps to create a financial voucher are as follows:\n\n1. Log in to the ERP system, enter the financial module\n2. Click Voucher Management, then New Voucher\n3. Select voucher type (accounting voucher, receipt voucher, payment voucher, etc.)\n4. Fill in voucher date and voucher number\n5. Add accounting entries (including account, debit amount, credit amount)\n6. Enter voucher summary\n7. Save and review voucher\n8. After approval, perform accounting operations\n\nNote: Voucher debits and credits must be balanced, and corresponding source documents are required",

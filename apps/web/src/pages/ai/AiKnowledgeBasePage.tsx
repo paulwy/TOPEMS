@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -15,6 +15,9 @@ import {
   ListItemText,
   Avatar,
   InputAdornment,
+  IconButton,
+  ListItemSecondaryAction,
+  Tooltip,
 } from '@mui/material';
 import {
   Search,
@@ -26,6 +29,8 @@ import {
   MessageSquare,
   HelpCircle,
   FolderOpen,
+  Upload,
+  Trash2,
 } from 'lucide-react';
 import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
@@ -113,16 +118,88 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const [documentList, setDocumentList] = useState(sampleDocuments);
   const [docsLoading, setDocsLoading] = useState(false);
   const [filterType, setFilterType] = useState<string>('all');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const kbIdRef = useRef<string | null>(null);
+
+  // 上传文档：取默认知识库 id（懒加载），multipart 上传后刷新列表
+  const ensureKbId = useCallback(async (): Promise<string | null> => {
+    if (kbIdRef.current) return kbIdRef.current;
+    try {
+      const res = await knowledgeApi.listKnowledgeBases({ page_size: 1 });
+      const kb = res?.data?.[0];
+      if (!kb) return null;
+      kbIdRef.current = kb.id;
+      return kb.id;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const kbId = await ensureKbId();
+    if (!kbId) {
+      addNotification({
+        title: i18n.t('ai.knowledge_base.message.notice'),
+        message: i18n.t('ai.knowledge_base.message.no_knowledge_base'),
+        type: 'warning',
+      });
+      return;
+    }
+    setUploading(true);
+    try {
+      await knowledgeApi.uploadDocument(kbId, file);
+      addNotification({
+        title: i18n.t('ai.knowledge_base.message.notice'),
+        message: i18n.t('ai.knowledge_base.message.upload_success'),
+        type: 'success',
+      });
+      refreshDocuments();
+    } catch {
+      addNotification({
+        title: i18n.t('ai.knowledge_base.message.notice'),
+        message: i18n.t('ai.knowledge_base.message.upload_fail'),
+        type: 'error',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    if (!window.confirm(i18n.t('ai.knowledge_base.message.confirm_delete'))) return;
+    try {
+      await knowledgeApi.deleteDocument(docId);
+      setDocumentList((prev) => prev.filter((d) => d.id !== docId));
+      setSelectedDocs((prev) => prev.filter((id) => id !== docId));
+      addNotification({
+        title: i18n.t('ai.knowledge_base.message.notice'),
+        message: i18n.t('ai.knowledge_base.message.delete_success'),
+        type: 'success',
+      });
+    } catch {
+      addNotification({
+        title: i18n.t('ai.knowledge_base.message.notice'),
+        message: i18n.t('ai.knowledge_base.message.delete_fail'),
+        type: 'error',
+      });
+    }
+  };
 
   // 遗留⑩闭环（2026-09-08）：知识库后端已挂载（svc/ai ai_knowledge 模块），
   // 列表改为真实数据；接口不可用时回退本地示例，保证页面可用
-  useEffect(() => {
-    let cancelled = false;
+  const refreshDocuments = useCallback(() => {
     setDocsLoading(true);
     knowledgeApi
       .listDocuments()
       .then((res) => {
-        if (cancelled) return;
         const items = (res?.data ?? []).map((d) => ({
           id: d.id,
           title: d.title,
@@ -133,15 +210,16 @@ export const AiKnowledgeBasePage: React.FC = () => {
         setDocumentList(items.length > 0 ? items : sampleDocuments);
       })
       .catch(() => {
-        if (!cancelled) setDocumentList(sampleDocuments);
+        setDocumentList(sampleDocuments);
       })
       .finally(() => {
-        if (!cancelled) setDocsLoading(false);
+        setDocsLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    refreshDocuments();
+  }, [refreshDocuments]);
 
   const handleSendQuery = useCallback(async () => {
     if (!query.trim()) {
@@ -265,12 +343,34 @@ export const AiKnowledgeBasePage: React.FC = () => {
       }}
       leftPanel={
         <Paper sx={{ borderRadius: 3, p: 3, height: '100%' }}>
-          <Typography
-            variant='subtitle1'
-            sx={{ fontWeight: 600, mb: 2 }}
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
           >
-            {i18n.t('ai.knowledge_base.label.document_library')}
-          </Typography>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              {i18n.t('ai.knowledge_base.label.document_library')}
+            </Typography>
+            <Button
+              size='small'
+              variant='outlined'
+              startIcon={<Upload size={14} />}
+              onClick={handleUploadClick}
+              disabled={uploading}
+            >
+              {uploading
+                ? i18n.t('ai.knowledge_base.button.uploading')
+                : i18n.t('ai.knowledge_base.button.upload')}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type='file'
+              hidden
+              onChange={handleFileChange}
+              accept='.md,.txt,.pdf,.docx,.csv'
+            />
+          </Box>
 
           <Box sx={{ mb: 2 }}>
             <TextField
@@ -329,6 +429,21 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     primary={doc.title}
                     secondary={`${doc.size} · ${i18n.t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
                   />
+                  <ListItemSecondaryAction>
+                    <Tooltip title={i18n.t('ai.knowledge_base.message.confirm_delete')}>
+                      <IconButton
+                        edge='end'
+                        size='small'
+                        aria-label='delete'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDocument(doc.id);
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </IconButton>
+                    </Tooltip>
+                  </ListItemSecondaryAction>
                 </ListItemButton>
               ))}
           </List>
