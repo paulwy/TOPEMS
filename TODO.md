@@ -1315,6 +1315,20 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：7 张确认无真实 SQL 引用后删；finance 编译 0 error；门禁全 PASS。
 - **后续批次**：public 遗留双写 ~110 组（改代码引用→业务 schema）、iam 遗留 132 组（归位，联动待办④）、跨服务读改造 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）；详见 `docs/architecture/duplicate-table-consolidation.md`。
 
+## 2026-09-08 init/02 插件遗留脚本删除 + wms inter_module_sync 缺表修复 ✅
+
+- **02 删除**：`02_create_plugin_tables.sql`（26 张早期 plugin_* 表）与已删 06 同性质——全仓代码零引用、5432 零表、03/05 零联动 → git rm + README 方式一/方式二引用同步清理。
+- **wms inter_module_sync 缺表修复**：`data_sync.rs` 活跃读写 `unified_core.inter_module_sync`（同步日志功能）但表从未建过（迁移侧 core_ 版已于 09-02 归档删除）→ 新迁移 `20260908000008` 正式建表（04 定义，覆盖 wms INSERT 16 列）+ 5432 实建。
+- **04 瘦身**：删 plugin_scm 5 张 + plugin_wms 3 张死段（178 行）+ 完成提示清理；保留 inter_module_sync 定义（wms 依赖）与 srm 6 张（幂等冗余）。
+- **门禁补基线**：erp→finance.accounting_subjects 低频跨读加入 `schema_boundary.json` erp.allow（改真实 finance 后门禁 FAIL 暴露）→ 全 PASS。
+- **验证**：wms 542 tests 全绿；门禁全 PASS（erp 291/srm 248/wms 281）。
+
+## 2026-09-08 init/01 早期全库重建脚本删除 ✅（init 档案链收口）
+
+- **01 判定**：`01_rebuild_database.sql`（v2.0.0，2026-06-18）为**早期 plugin 架构全库重建脚本**——建 public + unified_core + **21 个 plugin_* schema**（均已废弃删除）；33 张表（public 6 早期版 + unified_core 21 张当前库全 0 + plugin_ai 6 张）全部与当前架构脱节（当前由 public.core_* 共享层 + 迁移体系承担）；且 `CREATE SCHEMA public;` 无 IF NOT EXISTS——**现在跑必报错**（public 已存在），脚本已不可用。
+- **执行**：git rm 01 + README 三处引用清理（方式一命令、方式二 \i、Q1 权限方案改为引导迁移体系）。
+- **init 目录终态**：03（权限初始化，35 INSERT 活跃数据）/ 04（inter_module_sync 定义 + srm 6 张幂等）/ 05（mobile 23 表服务活跃）/ 07（qms 27 表幂等副本）保留为"重建/初始化档案"；01/02/06 三个早期架构脚本已删除。README 顶部注记（以迁移体系为准）继续有效。
+
 ## 2026-09-08 plugin_* 错位修复 + 空壳清理 ✅（记录待办收尾）
 
 - **背景**：1384 记录"plugin_* schema 常量业务零使用"仅指 shared-db 常量层；实测**服务代码仍有大量真实 plugin_* SQL 硬编码**——srm 445 处（模块主体，`only_own_schema_query!` 宏无替换逻辑、原样执行 → 运行时必 500）、wms 8 处（data_sync）、erp 11 处（holidays/opening_balance 跨读）、mes 63 行死建表段（建 plugin_mes.audit_logs 但查询读 mes.audit_logs）；20 个 plugin_* schema 全部空壳（0 表）。
