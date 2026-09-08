@@ -297,7 +297,8 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = create_standard_health_routes(health_state).route("/", get(home));
 
     // 业务路由
-    let protected_routes = modules::create_routes().with_state(state);
+    let protected_routes = modules::create_routes().with_state(state)
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     // OpenAPI 文档
     let openapi_json = Some(

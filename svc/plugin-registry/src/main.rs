@@ -70,7 +70,8 @@ async fn main() -> anyhow::Result<()> {
             app_state.auth_state.clone(),
             shared::middleware::jwt_auth_middleware,
         ))
-        .with_state(app_state.clone());
+        .with_state(app_state.clone())
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     // plugin-registry 暂未独立生成 OpenAPI 文档
     let openapi_json = None::<String>;

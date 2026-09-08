@@ -55,7 +55,8 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(require_permission(
             "monitor:admin",
         )))
-        .with_state(app_state.clone());
+        .with_state(app_state.clone())
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     // monitor 暂未独立生成 OpenAPI 文档
     let openapi_json = None::<String>;

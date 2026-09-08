@@ -112,7 +112,8 @@ async fn main() -> anyhow::Result<()> {
     // auth / rls / rate_limit 中间件由 build_application 在 protected 层自动叠加
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn(require_permission("rd:admin")))
-        .with_state(api_state.clone());
+        .with_state(api_state.clone())
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────
     let openapi_json = Some(

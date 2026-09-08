@@ -64,7 +64,8 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(require_permission(
             "master-data:admin",
         )))
-        .with_state(app_state.clone());
+        .with_state(app_state.clone())
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     let openapi_json = Some(
         serde_json::to_string(&openapi::MasterDataApiDoc::openapi())

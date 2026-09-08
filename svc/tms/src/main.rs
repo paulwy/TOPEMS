@@ -66,7 +66,8 @@ async fn main() -> Result<()> {
     // 业务路由
     let protected_routes = modules::create_routes::<AppState>()
         .layer(axum::middleware::from_fn(require_permission("tms:admin")))
-        .with_state(app_state);
+        .with_state(app_state)
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     // OpenAPI 文档
     let openapi_json = Some(

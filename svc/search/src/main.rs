@@ -45,7 +45,8 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(require_permission(
             "search:admin",
         )))
-        .with_state(ctx.db.clone());
+        .with_state(ctx.db.clone())
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     // ── 组装 Application ─────────────────────────────────────────────
     let app = build_application(&ctx, &config, public_routes, protected_routes, None);

@@ -97,7 +97,8 @@ async fn main() -> anyhow::Result<()> {
         .merge(modules::create_routes())
         .route("/api/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn(require_permission("qms:admin")))
-        .with_state(api_state.clone());
+        .with_state(api_state.clone())
+        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
 
     let openapi_json =
         serde_json::to_string_pretty(&openapi::QmsApiDoc::openapi()).unwrap_or_default();
