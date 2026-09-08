@@ -129,6 +129,7 @@ WITH CHECK (同 USING)
 **当前进度（全量推广，服务试点 = crm）**：
 - **批 1a**（commit `df88b08c1`）：`contact.rs` + `tag.rs` 全量 handler txn 注入 + 8 处写操作 commit。
 - **批 1b**（commit `1c2214d82`）：`opportunity.rs` / `aftersales.rs` / `customer.rs` / `interaction.rs`——4 模块全部 handler 注入 + **26 个写 handler 成功路径补 commit**；aftersales 4 个辅助函数穿透 txn 参数（generate_return_no / recalculate_refund_amount / sync_return_to_finance / sync_return_to_inventory）；`customer_isolated_by_tenant` DB 集成测试随 5432 在线恢复通过。crm lib 测试 **501 passed 0 failed**（含 rls 隔离测试）。
+- **批 1c**（commit `03612826d`）：`billing.rs` / `dashboard.rs` / `sales_forecast.rs` / `customer_profile.rs` / `customer_segmentation.rs` / `sales_funnel.rs` / `customer_recommendation.rs` / `rfm.rs` / `customer_scoring.rs` / `audit.rs` / `crm_plugin.rs`——**crm 剩余 11 模块全部 handler txn 注入** + 14 处写操作 commit（四形态自动判定：tuple 块后 `if result.is_ok()`、branch Ok 分支、single `Ok(x) => {` 包 commit、无条件成功 Json 前 guard.take）；辅助函数穿透：customer_profile 4 个 fetch_*、customer_segmentation count_matching_customers/fetch_segment_customers、customer_recommendation generate_recommendations→recommend_opportunities 链；crm_plugin.plugin_health_check 单参数 handler 手动补 Extension+lock（健康检查 SELECT 1 亦走 txn）。**crm 17 模块全清**；编译 0 error + fmt + crm 测试 1037 passed 0 failed（lib 501 含 2 个 RLS 隔离测试）。
 - **commit 放置模式（批 1b 确立，3 种形态）**：
   1. 直接 execute（`match ...execute().await {` 结构）→ commit 插 Ok 成功分支开头；
   2. `let result = ...execute().await;` → commit 无条件插于 `.await;` 后（Err 时语句级回滚，commit 空事务无害）；
