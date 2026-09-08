@@ -89,9 +89,6 @@ cd /Users/xingzhai/TOPEMS
 # 执行核心重建脚本
 psql -h localhost -U topems -d topems -f database/init/01_rebuild_database.sql
 
-# 执行插件表结构脚本
-psql -h localhost -U topems -d topems -f database/init/02_create_plugin_tables.sql
-
 # 初始化权限数据
 psql -h localhost -U topems -d topems -f database/init/03_init_permissions.sql
 
@@ -109,7 +106,6 @@ psql -h localhost -U topems -d topems -f database/init/05_mobile_init.sql
 ```sql
 -- 连接数据库后执行
 \i database/init/01_rebuild_database.sql
-\i database/init/02_create_plugin_tables.sql
 \i database/init/03_init_permissions.sql
 \i database/init/04_create_scm_wms_srm_tables.sql
 \i database/init/05_mobile_init.sql
