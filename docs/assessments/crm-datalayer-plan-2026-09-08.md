@@ -38,7 +38,7 @@
 
 | 表 | 使用模块 | 核心字段 | 优先级 |
 |---|---|---|---|
-| `crm.billing_records` | billing（已挂载） | **✅ 已闭环（2026-09-08 写入方专项）**：handle_opportunity_won 追加写入（invoice_no=OPP-{opportunity_id} 幂等，tenant 经 customers 反查，due=+30d）；未覆盖应收回款状态流转（erp/finance 侧待接通） | P2 ✅ |
+| `crm.billing_records` | billing（已挂载） | **✅ 全闭环（2026-09-08）**：生成=handle_opportunity_won（OPP-{opportunity_id} 幂等）；**核销=PaymentReceived 事件**（finance create_collection 发布，customer_name/金额匹配置 paid+paid_at，41d65f433） | P2 ✅ |
 | `crm.returns` | aftersales（已挂载） | id, tenant_id, return_no, customer_id, order_id, ticket_id, warehouse_id, return_type, status, reason, reason_detail, refund_amount, exchange_product_id, received, created_by, updated_by, created_at, updated_at | P2 |
 | `crm.return_items` | aftersales（已挂载） | id, tenant_id, return_id, product_id, quantity, unit_price, total_amount, created_at | P2 |
 | ~~`crm.audit_logs`~~ | audit（已挂载） | **核对结论：不建表**。全仓库无 INSERT INTO crm.audit_logs；审计写入统一走 public.audit_logs（unified-core 3 处）。audit.rs SELECT 含 user_name/entity_ids/error_message（public 无此列）→ 列入专项附项：audit.rs 改指 public.audit_logs + 列适配 | 附项 |
@@ -62,6 +62,7 @@
 
 1. ✅ 核对写入方（已完成 2026-09-08）：interactions 有写入方（event_handlers）；customer_orders/billing_records 原判无写入方 → 已接通（见下）；audit_logs 不建（改指 public，附项）
 6. ✅ 写入方接通（已完成 2026-09-08，bd3c288b7）：补建 crm.sales_orders（第 16 张）；rfm 改读 sales_orders（status='completed'，wms 出库事件写入）；OpportunityWon → billing_records（幂等 OPP-{opportunity_id}）；customer_orders 废弃标注
+7. ✅ 回款状态流转闭环（已完成 2026-09-08，41d65f433）：**发现 PaymentReceived 全仓库无发布方**（erp/crm/finance 订阅空转）→ finance create_collection 补发 PaymentReceived（payload 加 customer_name）；crm 订阅核销 billing_records（status='paid'+paid_at）；erp 核销加 customer_name 匹配分支
 2. ✅ DDL 定稿 + 落地（迁移 20260908000006_crm_datalayer.sql，15 表；customers 补 13 档案列——customer_profile 旧代码引用 model 精简前字段，一并补回）
 3. ✅ audit.rs 附项（用户确认纳入）：3 处查询改指 public.audit_logs（15 列标准与 AuditLog 模型一致）+ user_id::text cast + SELECT 补 tenant_id
 4. ✅ 重挂 6 模块（mod.rs 取消注释 + merge）：customer_profile/customer_scoring/customer_segmentation/customer_recommendation/sales_forecast/sales_funnel；路由经核对与已挂载 forecast/rfm/scoring_logic/sales_funnel_logic 无冲突；修复 36 个编译错误（模型同步：Customer +13 字段、models/mod.rs re-export、customer.rs SELECT/RETURNING 列补全、customer_profile 类型修正）
