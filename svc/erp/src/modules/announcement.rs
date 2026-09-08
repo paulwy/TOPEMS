@@ -1,21 +1,19 @@
+use super::ApiState;
+use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
+use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::utils::validate_required_field;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
-use topems_shared_boundary::only_own_schema_query;
-use uuid::Uuid;
-
-use super::ApiState;
-use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
-use crate::modules::audit::{log_audit_event, AuditEventParams};
-use crate::utils::validate_required_field;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::{api_error, PaginatedResponse};
-
+use uuid::Uuid;
 #[derive(Debug, Deserialize)]
 pub struct AnnouncementQueryParams {
     pub page: Option<i64>,
@@ -24,7 +22,6 @@ pub struct AnnouncementQueryParams {
     pub status: Option<String>,
     pub priority: Option<String>,
 }
-
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
@@ -43,7 +40,6 @@ pub fn create_routes() -> Router<ApiState> {
             post(unpublish_announcement),
         )
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
@@ -56,15 +52,18 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_announcements(
     State(state): State<ApiState>,
     Query(params): Query<AnnouncementQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<Announcement>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let priority_filter = params.priority.clone();
-
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
@@ -81,9 +80,8 @@ pub async fn list_announcements(
     .bind(&priority_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
-
     match result {
         Ok(announcements) => {
             let count_result = sqlx::query_scalar::<_, i64>(
@@ -97,11 +95,9 @@ pub async fn list_announcements(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&priority_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
-
             let total = count_result.unwrap_or(0);
-
             Json(ApiResponse::success(
                 PaginatedResponse::new(announcements, total, page, page_size),
                 "获取公告列表成功",
@@ -113,7 +109,6 @@ pub async fn list_announcements(
         }
     }
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:master-data:write"])),
@@ -127,19 +122,21 @@ pub async fn list_announcements(
 pub async fn create_announcement(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("公告标题", &req.title) {
         return Json(api_error(400, &e));
     }
-
     if let Err(e) = validate_required_field("作者", &req.author) {
         return Json(api_error(400, &e));
     }
-
     let id = Uuid::new_v4();
     let now = Utc::now();
-
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at)
@@ -155,9 +152,8 @@ pub async fn create_announcement(
     .bind(req.expire_at)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
-
     let (response, status, error_msg) = match &result {
         Ok(announcement) => (
             Json(ApiResponse::success(announcement.clone(), "公告创建成功")),
@@ -173,14 +169,12 @@ pub async fn create_announcement(
             )
         }
     };
-
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(announcement) = &result {
         serde_json::to_value(announcement).ok()
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -198,10 +192,8 @@ pub async fn create_announcement(
         &headers,
     )
     .await;
-
     response
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
@@ -217,7 +209,12 @@ pub async fn create_announcement(
 pub async fn get_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Announcement>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
@@ -225,9 +222,8 @@ pub async fn get_announcement(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
-
     match result {
         Ok(Some(announcement)) => Json(ApiResponse::success(announcement, "获取公告成功")),
         Ok(None) => Json(api_error(404, "公告不存在")),
@@ -237,7 +233,6 @@ pub async fn get_announcement(
         }
     }
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
@@ -255,23 +250,25 @@ pub async fn update_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
-
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => return Json(api_error(404, "公告不存在")),
         Err(e) => return Json(api_error(500, &format!("查询公告失败: {}", e))),
     };
-
     let request_data = serde_json::to_value(&req).ok();
-
     let title = req.title.unwrap_or(existing.title);
     let content = req.content.or(existing.content);
     let author = req.author.or(Some(existing.author));
@@ -279,7 +276,6 @@ pub async fn update_announcement(
     let priority = req.priority.or(existing.priority);
     let expire_at = req.expire_at.or(existing.expire_at);
     let now = Utc::now();
-
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
@@ -296,9 +292,8 @@ pub async fn update_announcement(
     .bind(&priority)
     .bind(expire_at)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
-
     let (response, status_str, error_msg) = match &result {
         Ok(announcement) => (
             Json(ApiResponse::success(announcement.clone(), "公告更新成功")),
@@ -314,13 +309,11 @@ pub async fn update_announcement(
             )
         }
     };
-
     let response_data = if let Ok(announcement) = &result {
         serde_json::to_value(announcement).ok()
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -338,10 +331,8 @@ pub async fn update_announcement(
         &headers,
     )
     .await;
-
     response
 }
-
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["erp:delete"])),
@@ -358,21 +349,33 @@ pub async fn delete_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE announcements SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
-
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "公告删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "公告删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "公告不存在")),
             "error".to_string(),
@@ -387,13 +390,11 @@ pub async fn delete_announcement(
             )
         }
     };
-
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -411,10 +412,8 @@ pub async fn delete_announcement(
         &headers,
     )
     .await;
-
     response
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
@@ -431,9 +430,13 @@ pub async fn publish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Announcement>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
-
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
@@ -445,9 +448,8 @@ pub async fn publish_announcement(
     .bind(id)
     .bind(now)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
-
     let (response, status_str, error_msg) = match &result {
         Ok(Some(announcement)) => (
             Json(ApiResponse::success(announcement.clone(), "公告发布成功")),
@@ -468,13 +470,11 @@ pub async fn publish_announcement(
             )
         }
     };
-
     let response_data = if let Ok(Some(announcement)) = &result {
         serde_json::to_value(announcement).ok()
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -492,10 +492,8 @@ pub async fn publish_announcement(
         &headers,
     )
     .await;
-
     response
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
@@ -512,9 +510,13 @@ pub async fn unpublish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Announcement>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
-
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
@@ -525,9 +527,8 @@ pub async fn unpublish_announcement(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
-
     let (response, status_str, error_msg) = match &result {
         Ok(Some(announcement)) => (
             Json(ApiResponse::success(announcement.clone(), "公告已取消发布")),
@@ -548,13 +549,11 @@ pub async fn unpublish_announcement(
             )
         }
     };
-
     let response_data = if let Ok(Some(announcement)) = &result {
         serde_json::to_value(announcement).ok()
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -572,14 +571,11 @@ pub async fn unpublish_announcement(
         &headers,
     )
     .await;
-
     response
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn test_announcement_query_params_deserialize() {
         let query = "page=1&page_size=20&search=test&status=published&priority=high";
@@ -590,7 +586,6 @@ mod tests {
         assert_eq!(params.status.as_deref(), Some("published"));
         assert_eq!(params.priority.as_deref(), Some("high"));
     }
-
     #[test]
     fn test_announcement_query_params_default() {
         let query = "";

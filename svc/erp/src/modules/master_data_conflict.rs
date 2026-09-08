@@ -3,7 +3,7 @@
 //! 提供主数据冲突检测、冲突列表查询、冲突详情、手动解决冲突和自动合并功能。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -104,8 +104,13 @@ pub struct AutoMergeRequest {
 )]
 pub async fn detect_conflicts(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<DetectConflictsRequest>,
 ) -> Json<ApiResponse<ConflictDetectionResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let strategy = req.merge_strategy.unwrap_or_default();
     let strategy_str = match strategy {
         MergeStrategy::LastWriteWins => "last_write_wins",
@@ -120,7 +125,7 @@ pub async fn detect_conflicts(
            FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&req.master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (domain, local_name, local_status, local_code, _updated_at) = match local_row {
@@ -261,12 +266,12 @@ pub async fn detect_conflicts(
             .bind(now)
             .bind(now)
             .bind(&conflict.resolved_by)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             // 应用解决值到本地主数据引用
             let _ = apply_resolved_value(
-                &state.db,
+                txn,
                 &conflict.master_data_id,
                 &conflict.field_name,
                 &conflict.remote_value,
@@ -296,7 +301,7 @@ pub async fn detect_conflicts(
             .bind(&conflict.status)
             .bind(&conflict.merge_strategy)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
         }
     }
@@ -310,10 +315,16 @@ pub async fn detect_conflicts(
         ))
         .bind(now)
         .bind(&req.master_data_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     let conflicts_detected = conflicts.len();
     Json(ApiResponse::success(
         ConflictDetectionResult {
@@ -342,8 +353,13 @@ pub async fn detect_conflicts(
 )]
 pub async fn list_conflicts(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Query(params): Query<ConflictQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataConflict>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -363,7 +379,7 @@ pub async fn list_conflicts(
             .bind(status)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         } else {
             sqlx::query(only_own_schema_query!(
@@ -378,7 +394,7 @@ pub async fn list_conflicts(
             .bind(mid)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
     } else if let Some(ref status) = params.status {
@@ -394,7 +410,7 @@ pub async fn list_conflicts(
         .bind(status)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query(only_own_schema_query!(
@@ -407,7 +423,7 @@ pub async fn list_conflicts(
         ))
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -477,7 +493,12 @@ pub async fn list_conflicts(
 pub async fn get_conflict(
     State(state): State<ApiState>,
     Path(conflict_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MasterDataConflict>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
@@ -491,7 +512,7 @@ pub async fn get_conflict(
            FROM erp_master_data_conflicts WHERE id = $1"#
     ))
     .bind(cid)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match row {
@@ -553,8 +574,13 @@ pub async fn get_conflict(
 pub async fn resolve_conflict(
     State(state): State<ApiState>,
     Path(conflict_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ResolveConflictRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
@@ -567,7 +593,7 @@ pub async fn resolve_conflict(
         r#"SELECT master_data_id, field_name FROM erp_master_data_conflicts WHERE id = $1"#
     ))
     .bind(cid)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (master_data_id, field_name) = match row {
@@ -589,7 +615,7 @@ pub async fn resolve_conflict(
     .bind(now)
     .bind(&req.resolved_by)
     .bind(cid)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     if let Err(e) = result {
@@ -598,9 +624,14 @@ pub async fn resolve_conflict(
     }
 
     // 3. 应用解决值到本地主数据引用
-    let _ =
-        apply_resolved_value(&state.db, &master_data_id, &field_name, &req.resolved_value).await;
+    let _ = apply_resolved_value(txn, &master_data_id, &field_name, &req.resolved_value).await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({
             "conflict_id": conflict_id,
@@ -628,8 +659,13 @@ pub async fn resolve_conflict(
 pub async fn auto_merge_conflict(
     State(state): State<ApiState>,
     Path(conflict_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<AutoMergeRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
@@ -643,7 +679,7 @@ pub async fn auto_merge_conflict(
            FROM erp_master_data_conflicts WHERE id = $1 AND status IN ('pending_review', 'detected')"#),
     )
     .bind(cid)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (master_data_id, field_name, local_value, remote_value, remote_service) = match row {
@@ -693,7 +729,7 @@ pub async fn auto_merge_conflict(
     .bind(format!("auto:{}", strategy_label))
     .bind(strategy_label)
     .bind(cid)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     if let Err(e) = result {
@@ -702,8 +738,14 @@ pub async fn auto_merge_conflict(
     }
 
     // 4. 应用解决值
-    let _ = apply_resolved_value(&state.db, &master_data_id, &field_name, &resolved_value).await;
+    let _ = apply_resolved_value(txn, &master_data_id, &field_name, &resolved_value).await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({
             "conflict_id": conflict_id,
@@ -719,7 +761,7 @@ pub async fn auto_merge_conflict(
 
 /// 将解决值应用到本地主数据引用表
 async fn apply_resolved_value(
-    db: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     master_data_id: &str,
     field_name: &str,
     value: &serde_json::Value,
@@ -734,7 +776,7 @@ async fn apply_resolved_value(
                 .bind(s)
                 .bind(now)
                 .bind(master_data_id)
-                .execute(db)
+                .execute(&mut **txn)
                 .await?;
             }
         }
@@ -746,7 +788,7 @@ async fn apply_resolved_value(
                 .bind(s)
                 .bind(now)
                 .bind(master_data_id)
-                .execute(db)
+                .execute(&mut **txn)
                 .await?;
             }
         }
@@ -758,7 +800,7 @@ async fn apply_resolved_value(
                 .bind(s)
                 .bind(now)
                 .bind(master_data_id)
-                .execute(db)
+                .execute(&mut **txn)
                 .await?;
             }
         }

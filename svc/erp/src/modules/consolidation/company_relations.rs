@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
@@ -22,7 +22,12 @@ use super::ApiState;
 pub async fn list_company_relations(
     State(state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<CompanyRelation>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
         SELECT * FROM erp.company_relations
@@ -34,7 +39,7 @@ pub async fn list_company_relations(
     )
     .bind(params.scope_id)
     .bind(params.report_type)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -55,11 +60,16 @@ pub async fn list_company_relations(
 )]
 pub async fn get_company_tree(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let relations: Vec<CompanyRelation> = sqlx::query_as::<_, CompanyRelation>(
         "SELECT * FROM erp.company_relations WHERE deleted_at IS NULL AND status = 'active'",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -100,8 +110,13 @@ pub async fn get_company_tree(
 pub async fn create_company_relation(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateCompanyRelationRequest>,
 ) -> Json<ApiResponse<CompanyRelation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let effective_date = chrono::NaiveDate::parse_from_str(&req.effective_date, "%Y-%m-%d")
         .unwrap_or_else(|_| chrono::Utc::now().date_naive());
@@ -122,7 +137,7 @@ pub async fn create_company_relation(
     .bind(req.control_percentage.unwrap_or(req.ownership_percentage))
     .bind(effective_date)
     .bind(req.expiry_date.as_ref().and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -149,8 +164,13 @@ pub async fn update_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateCompanyRelationRequest>,
 ) -> Json<ApiResponse<CompanyRelation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
         UPDATE erp.company_relations
@@ -172,7 +192,7 @@ pub async fn update_company_relation(
             .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()),
     )
     .bind(&req.status)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -206,10 +226,15 @@ pub async fn delete_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query("UPDATE erp.company_relations SET deleted_at = NOW() WHERE id = $1")
         .bind(relation_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await
     {
         Ok(result) => {
@@ -224,6 +249,12 @@ pub async fn delete_company_relation(
                     &headers,
                 )
                 .await;
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("事务提交失败: {}", e);
+                        return Json(ApiResponse::error(500, "事务提交失败"));
+                    }
+                }
                 Json(ApiResponse::success((), "删除公司关系成功"))
             }
         }
@@ -246,7 +277,12 @@ pub async fn get_company_financial_data(
     State(_state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     Query(params): Query<ConsolidationListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<CompanyFinancialData>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     Json(ApiResponse::success(
         CompanyFinancialData {
             company_id,

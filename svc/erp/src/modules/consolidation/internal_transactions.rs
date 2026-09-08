@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
@@ -22,7 +22,12 @@ use super::ApiState;
 pub async fn list_internal_transactions(
     State(state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<InternalTransaction>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -40,7 +45,7 @@ pub async fn list_internal_transactions(
     .bind(&params.period_to)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -54,7 +59,7 @@ pub async fn list_internal_transactions(
             )
             .bind(&params.period_from)
             .bind(&params.period_to)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -81,12 +86,17 @@ pub async fn list_internal_transactions(
 pub async fn get_internal_transaction(
     State(state): State<ApiState>,
     Path(transaction_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<InternalTransaction>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, InternalTransaction>(
         "SELECT * FROM erp.internal_transactions WHERE id = $1",
     )
     .bind(transaction_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(transaction)) => Json(ApiResponse::success(transaction, "获取内部交易详情成功")),
@@ -108,15 +118,20 @@ pub async fn get_internal_transaction(
 pub async fn execute_elimination(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ExecuteEliminationRequest>,
 ) -> Json<ApiResponse<EliminationResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let rules: Vec<EliminationRule> = if let Some(rule_ids) = req.rule_ids {
         sqlx::query_as::<_, EliminationRule>(
             "SELECT * FROM erp.elimination_rules WHERE id = ANY($1) AND scope_id = $2 AND status = 'active' ORDER BY priority ASC",
         )
         .bind(&rule_ids)
         .bind(req.scope_id)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
         .unwrap_or_default()
     } else {
@@ -124,7 +139,7 @@ pub async fn execute_elimination(
             "SELECT * FROM erp.elimination_rules WHERE scope_id = $1 AND status = 'active' ORDER BY priority ASC",
         )
         .bind(req.scope_id)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
         .unwrap_or_default()
     };
@@ -142,7 +157,7 @@ pub async fn execute_elimination(
             "#,
         )
         .bind(&req.period)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
         .unwrap_or_default();
 
@@ -163,7 +178,7 @@ pub async fn execute_elimination(
                 "#,
             )
             .bind(tx.id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await
             .ok();
         }
@@ -188,6 +203,12 @@ pub async fn execute_elimination(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         EliminationResult {
             eliminated_count,

@@ -38,7 +38,7 @@ pub struct ErpDashboardStats {
     pub pending_vouchers: i64,
 }
 
-async fn count_table(pool: &sqlx::PgPool, table: &str) -> i64 {
+async fn count_table(txn: &mut sqlx::Transaction<'static, sqlx::Postgres>, table: &str) -> i64 {
     let Some(table) = validate_table(table) else {
         return 0;
     };
@@ -46,13 +46,13 @@ async fn count_table(pool: &sqlx::PgPool, table: &str) -> i64 {
         "SELECT COUNT(*) FROM {} WHERE deleted_at IS NULL",
         table
     ))
-    .fetch_one(pool)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(v) => v,
         Err(_) => {
             match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {}", table))
-                .fetch_one(pool)
+                .fetch_one(&mut **txn)
                 .await
             {
                 Ok(v) => v,
@@ -62,7 +62,11 @@ async fn count_table(pool: &sqlx::PgPool, table: &str) -> i64 {
     }
 }
 
-async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str) -> i64 {
+async fn count_table_with_status(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    table: &str,
+    status: &str,
+) -> i64 {
     let Some(table) = validate_table(table) else {
         return 0;
     };
@@ -71,14 +75,14 @@ async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str)
         table
     ))
     .bind(status)
-    .fetch_one(pool)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(v) => v,
         Err(_) => {
             match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {} WHERE status = $1", table))
                 .bind(status)
-                .fetch_one(pool)
+                .fetch_one(&mut **txn)
                 .await
             {
                 Ok(v) => v,
@@ -98,18 +102,23 @@ async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str)
 pub async fn get_dashboard(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ErpDashboardStats>> {
-    let total_assets = count_table(&state.db, "assets").await;
-    let active_assets = count_table_with_status(&state.db, "assets", "active").await;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let total_assets = count_table(txn, "assets").await;
+    let active_assets = count_table_with_status(txn, "assets", "active").await;
 
-    let total_orders = count_table(&state.db, "production_orders").await;
-    let pending_orders = count_table_with_status(&state.db, "production_orders", "pending").await;
+    let total_orders = count_table(txn, "production_orders").await;
+    let pending_orders = count_table_with_status(txn, "production_orders", "pending").await;
 
     let total_inventory = sqlx::query_scalar(only_own_schema_query!(
         "erp",
         "SELECT COALESCE(SUM(quantity), 0) FROM inventory_items"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -117,18 +126,18 @@ pub async fn get_dashboard(
         "erp",
         "SELECT COUNT(*) FROM inventory_items WHERE quantity < COALESCE(reorder_point, 10)"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let total_suppliers = count_table(&state.db, "suppliers").await;
-    let active_suppliers = count_table_with_status(&state.db, "suppliers", "active").await;
+    let total_suppliers = count_table(txn, "suppliers").await;
+    let active_suppliers = count_table_with_status(txn, "suppliers", "active").await;
 
-    let total_customers = count_table(&state.db, "customers").await;
-    let active_customers = count_table_with_status(&state.db, "customers", "active").await;
+    let total_customers = count_table(txn, "customers").await;
+    let active_customers = count_table_with_status(txn, "customers", "active").await;
 
-    let total_vouchers = count_table(&state.db, "vouchers").await;
-    let pending_vouchers = count_table_with_status(&state.db, "vouchers", "draft").await;
+    let total_vouchers = count_table(txn, "vouchers").await;
+    let pending_vouchers = count_table_with_status(txn, "vouchers", "draft").await;
 
     let stats = ErpDashboardStats {
         total_assets,

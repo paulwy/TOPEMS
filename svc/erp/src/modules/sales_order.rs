@@ -58,7 +58,12 @@ pub async fn list_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<SalesOrder>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -85,7 +90,7 @@ pub async fn list_sales_orders(
         .bind(status.unwrap_or_default())
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, SalesOrder>(
@@ -93,7 +98,7 @@ pub async fn list_sales_orders(
         )
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -110,7 +115,7 @@ pub async fn list_sales_orders(
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(t) => t,
@@ -143,7 +148,12 @@ pub async fn get_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SalesOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -152,7 +162,7 @@ pub async fn get_sales_order(
         only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.sales_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -178,8 +188,13 @@ pub async fn get_sales_order(
 pub async fn create_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(body): Json<CreateSalesOrderRequest>,
 ) -> Json<ApiResponse<SalesOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -189,7 +204,7 @@ pub async fn create_sales_order(
         "SELECT name FROM erp.customers WHERE id = $1"
     ))
     .bind(body.customer_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let customer_name = match customer_result {
@@ -223,7 +238,7 @@ pub async fn create_sales_order(
     .bind(dec_owned(payable_amount))
     .bind(default_sales_order_status(body.status))
     .bind(body.remark)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -278,8 +293,13 @@ pub async fn update_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(body): Json<UpdateSalesOrderRequest>,
 ) -> Json<ApiResponse<SalesOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -296,7 +316,7 @@ pub async fn update_sales_order(
     .bind(body.status)
     .bind(body.remark)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -326,7 +346,12 @@ pub async fn delete_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -336,7 +361,7 @@ pub async fn delete_sales_order(
         "UPDATE erp.sales_orders SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -359,6 +384,7 @@ async fn update_sales_order_status(
     status: &'static str,
     success_message: &'static str,
     error_message: &'static str,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> Json<ApiResponse<SalesOrder>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
@@ -369,7 +395,7 @@ async fn update_sales_order_status(
     )
     .bind(status)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -420,7 +446,12 @@ pub async fn approve_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SalesOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     update_sales_order_status(
         state,
         claims,
@@ -428,6 +459,7 @@ pub async fn approve_sales_order(
         "approved",
         "销售订单审批成功",
         "审批销售订单失败",
+        txn,
     )
     .await
 }
@@ -444,7 +476,12 @@ pub async fn ship_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SalesOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     update_sales_order_status(
         state,
         claims,
@@ -452,6 +489,7 @@ pub async fn ship_sales_order(
         "shipped",
         "销售订单发货成功",
         "销售订单发货失败",
+        txn,
     )
     .await
 }
@@ -468,7 +506,12 @@ pub async fn complete_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SalesOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     update_sales_order_status(
         state,
         claims,
@@ -476,6 +519,7 @@ pub async fn complete_sales_order(
         "completed",
         "销售订单完成成功",
         "完成销售订单失败",
+        txn,
     )
     .await
 }
@@ -492,7 +536,12 @@ pub async fn cancel_sales_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SalesOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     update_sales_order_status(
         state,
         claims,
@@ -500,6 +549,7 @@ pub async fn cancel_sales_order(
         "cancelled",
         "销售订单取消成功",
         "取消销售订单失败",
+        txn,
     )
     .await
 }

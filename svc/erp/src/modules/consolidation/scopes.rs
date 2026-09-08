@@ -25,7 +25,12 @@ pub async fn list_scopes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ConsolidationListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<ConsolidationScope>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -47,7 +52,7 @@ pub async fn list_scopes(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -61,7 +66,7 @@ pub async fn list_scopes(
             )
             .bind(params.keyword.as_ref().map(|s| format!("%{}%", s)))
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -88,12 +93,17 @@ pub async fn list_scopes(
 pub async fn get_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ConsolidationScope>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, ConsolidationScope>(
         "SELECT * FROM erp.consolidation_scopes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(scope_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(scope)) => Json(ApiResponse::success(scope, "获取合并范围成功")),
@@ -115,8 +125,13 @@ pub async fn get_scope(
 pub async fn create_scope(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateConsolidationScopeRequest>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
@@ -130,7 +145,7 @@ pub async fn create_scope(
     .bind(&req.name)
     .bind(&req.description)
     .bind(req.consolidation_method.as_deref().unwrap_or("full"))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -164,8 +179,13 @@ pub async fn update_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateConsolidationScopeRequest>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
         UPDATE erp.consolidation_scopes
@@ -183,7 +203,7 @@ pub async fn update_scope(
     .bind(&req.description)
     .bind(&req.consolidation_method)
     .bind(&req.status)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -217,10 +237,15 @@ pub async fn delete_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query("UPDATE erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1")
         .bind(scope_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await
     {
         Ok(result) => {
@@ -235,6 +260,12 @@ pub async fn delete_scope(
                     &headers,
                 )
                 .await;
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("事务提交失败: {}", e);
+                        return Json(ApiResponse::error(500, "事务提交失败"));
+                    }
+                }
                 Json(ApiResponse::success((), "删除合并范围成功"))
             }
         }

@@ -1,3 +1,7 @@
+use super::ApiState;
+use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
+use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::shared::permission::{check_permission, ModulePermission};
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -5,17 +9,11 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use topems_shared_boundary::only_own_schema_query;
-use uuid::Uuid;
-
-use super::ApiState;
-use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
-use crate::modules::audit::{log_audit_event, AuditEventParams};
-use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
-
+use uuid::Uuid;
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/assets", get(list_assets).post(create_asset))
@@ -24,7 +22,6 @@ pub fn create_routes() -> Router<ApiState> {
             get(get_asset).put(update_asset).delete(delete_asset),
         )
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
@@ -45,18 +42,20 @@ pub async fn list_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<Asset>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
         return e;
     }
-
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
@@ -72,9 +71,8 @@ pub async fn list_assets(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
-
     match result {
         Ok(assets) => {
             let count_result = sqlx::query_scalar::<_, i64>(
@@ -86,11 +84,9 @@ pub async fn list_assets(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
-
             let total = count_result.unwrap_or(0);
-
             Json(ApiResponse::success(
                 PaginatedResponse::new(assets, total, page, page_size),
                 "获取资产列表成功",
@@ -102,7 +98,6 @@ pub async fn list_assets(
         }
     }
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:master-data:write"])),
@@ -119,23 +114,24 @@ pub async fn create_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
-
     if req.name.is_empty() {
         return Json(api_error(400, "资产名称不能为空"));
     }
-
     if req.asset_number.is_empty() {
         return Json(api_error(400, "资产编号不能为空"));
     }
-
     let id = Uuid::new_v4();
     let now = Utc::now();
-
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
         INSERT INTO erp.assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
@@ -165,9 +161,8 @@ pub async fn create_asset(
     .bind(&req.specifications)
     .bind(&req.image_url)
     .bind(&req.department)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
-
     let (response, status, error_msg) = match &result {
         Ok(asset) => (
             Json(ApiResponse::success(asset.clone(), "资产创建成功")),
@@ -183,14 +178,12 @@ pub async fn create_asset(
             )
         }
     };
-
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(asset) = &result {
         serde_json::to_value(asset).ok()
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -208,10 +201,8 @@ pub async fn create_asset(
         &headers,
     )
     .await;
-
     response
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
@@ -230,11 +221,15 @@ pub async fn get_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Asset>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
         return e;
     }
-
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
@@ -243,9 +238,8 @@ pub async fn get_asset(
         "),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
-
     match result {
         Ok(Some(asset)) => Json(ApiResponse::success(asset, "获取资产成功")),
         Ok(None) => Json(api_error(404, "资产不存在")),
@@ -255,7 +249,6 @@ pub async fn get_asset(
         }
     }
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
@@ -276,29 +269,30 @@ pub async fn update_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
-
     let existing = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
            FROM erp.assets WHERE id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
-
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => return Json(api_error(404, "资产不存在")),
         Err(e) => return Json(api_error(500, &format!("查询资产失败: {}", e))),
     };
-
     let request_data = serde_json::to_value(&req).ok();
-
     let name = req.name.unwrap_or(existing.name);
     let category = req.category.or(existing.category);
     let brand = req.brand.or(existing.brand);
@@ -317,7 +311,6 @@ pub async fn update_asset(
     let image_url = req.image_url.or(existing.image_url);
     let department = req.department.or(existing.department);
     let now = Utc::now();
-
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
         UPDATE erp.assets SET
@@ -347,9 +340,8 @@ pub async fn update_asset(
     .bind(&specifications)
     .bind(&image_url)
     .bind(&department)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
-
     let (response, status_str, error_msg) = match &result {
         Ok(asset) => (
             Json(ApiResponse::success(asset.clone(), "资产更新成功")),
@@ -365,13 +357,11 @@ pub async fn update_asset(
             )
         }
     };
-
     let response_data = if let Ok(asset) = &result {
         serde_json::to_value(asset).ok()
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -389,10 +379,8 @@ pub async fn update_asset(
         &headers,
     )
     .await;
-
     response
 }
-
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["erp:delete"])),
@@ -412,25 +400,36 @@ pub async fn delete_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
-
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE erp.assets SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
-
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "资产删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "资产删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "资产不存在")),
             "error".to_string(),
@@ -445,13 +444,11 @@ pub async fn delete_asset(
             )
         }
     };
-
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
     } else {
         None
     };
-
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -469,6 +466,5 @@ pub async fn delete_asset(
         &headers,
     )
     .await;
-
     response
 }

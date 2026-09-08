@@ -42,7 +42,12 @@ pub async fn list_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<Inventory>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -70,7 +75,7 @@ pub async fn list_inventory(
         .bind(status.unwrap_or_default())
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, Inventory>(
@@ -78,7 +83,7 @@ pub async fn list_inventory(
         )
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -95,7 +100,7 @@ pub async fn list_inventory(
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(t) => t,
@@ -128,7 +133,12 @@ pub async fn get_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Inventory>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -137,7 +147,7 @@ pub async fn get_inventory(
         only_own_schema_query!("erp", "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM erp.inventory WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -163,8 +173,13 @@ pub async fn get_inventory(
 pub async fn create_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(body): Json<CreateInventoryRequest>,
 ) -> Json<ApiResponse<Inventory>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -174,7 +189,7 @@ pub async fn create_inventory(
         "SELECT code, name, unit FROM erp.materials WHERE id = $1"
     ))
     .bind(body.material_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (material_code, material_name, unit) =
@@ -201,7 +216,7 @@ pub async fn create_inventory(
     .bind(body.batch_no)
     .bind(body.expire_date)
     .bind(default_inventory_status(body.status))
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -232,8 +247,13 @@ pub async fn update_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(body): Json<UpdateInventoryRequest>,
 ) -> Json<ApiResponse<Inventory>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -249,7 +269,7 @@ pub async fn update_inventory(
     .bind(body.expire_date)
     .bind(body.status)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -279,7 +299,12 @@ pub async fn delete_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -289,11 +314,17 @@ pub async fn delete_inventory(
         "UPDATE erp.inventory SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("删除成功".to_string(), "删除库存成功"))
         }
         Ok(_) => Json(api_error(404, "库存不存在")),
@@ -314,7 +345,12 @@ pub async fn delete_inventory(
 pub async fn get_low_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<Inventory>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -322,7 +358,7 @@ pub async fn get_low_stock(
     let low_stock = match sqlx::query_as::<_, Inventory>(
         only_own_schema_query!("erp", "SELECT i.id, i.material_id, i.material_code, i.material_name, i.warehouse_id, i.warehouse_name, i.location_code, i.quantity, i.available_quantity, i.reserved_quantity, i.unit, i.unit_price, i.total_amount, i.batch_no, i.expire_date, i.status, i.created_at, i.updated_at FROM erp.inventory i JOIN erp.materials m ON i.material_id = m.id WHERE i.quantity < m.safety_stock AND i.status = 'active' ORDER BY i.quantity ASC"),
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     {
         Ok(l) => l,

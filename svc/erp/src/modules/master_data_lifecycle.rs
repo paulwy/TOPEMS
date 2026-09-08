@@ -4,7 +4,7 @@
 //! 以及已归档和待销毁主数据列表查询。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 use topems_shared::ApiResponse;
@@ -50,7 +50,7 @@ pub struct LifecycleQuery {
 
 /// V38.0 AC-10: 内部辅助函数 - 记录生命周期审计事件
 async fn record_lifecycle_audit(
-    db: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     master_data_id: &str,
     domain: &str,
     action: &str,
@@ -88,7 +88,7 @@ async fn record_lifecycle_audit(
     .bind(old_values)
     .bind(new_values)
     .bind(now)
-    .execute(db)
+    .execute(&mut **txn)
     .await;
 }
 
@@ -104,8 +104,13 @@ async fn record_lifecycle_audit(
 pub async fn archive_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ArchiveRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -113,7 +118,7 @@ pub async fn archive_master_data_ref(
         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match row {
@@ -143,13 +148,13 @@ pub async fn archive_master_data_ref(
             .bind(&req.reason)
             .bind(now)
             .bind(&master_data_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             match result {
                 Ok(_) => {
                     record_lifecycle_audit(
-                        &state.db,
+                        txn,
                         &master_data_id,
                         &domain,
                         "archive",
@@ -165,11 +170,19 @@ pub async fn archive_master_data_ref(
                         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .fetch_one(&state.db)
+                    .fetch_one(&mut **txn)
                     .await;
 
                     match updated {
-                        Ok(row) => Json(ApiResponse::success(row.into(), "主数据归档成功")),
+                        Ok(row) => {
+                            if let Some(t) = guard.take() {
+                                if let Err(e) = t.commit().await {
+                                    tracing::error!("事务提交失败: {}", e);
+                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                }
+                            }
+                            Json(ApiResponse::success(row.into(), "主数据归档成功"))
+                        }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询归档后数据失败: {}", e);
                             Json(ApiResponse::error(500, "归档成功但查询失败"))
@@ -202,8 +215,13 @@ pub async fn archive_master_data_ref(
 pub async fn restore_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RestoreRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -211,7 +229,7 @@ pub async fn restore_master_data_ref(
         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match row {
@@ -235,13 +253,13 @@ pub async fn restore_master_data_ref(
             ))
             .bind(now)
             .bind(&master_data_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             match result {
                 Ok(_) => {
                     record_lifecycle_audit(
-                        &state.db,
+                        txn,
                         &master_data_id,
                         &domain,
                         "restore",
@@ -257,11 +275,19 @@ pub async fn restore_master_data_ref(
                         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .fetch_one(&state.db)
+                    .fetch_one(&mut **txn)
                     .await;
 
                     match updated {
-                        Ok(row) => Json(ApiResponse::success(row.into(), "主数据恢复成功")),
+                        Ok(row) => {
+                            if let Some(t) = guard.take() {
+                                if let Err(e) = t.commit().await {
+                                    tracing::error!("事务提交失败: {}", e);
+                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                }
+                            }
+                            Json(ApiResponse::success(row.into(), "主数据恢复成功"))
+                        }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询恢复后数据失败: {}", e);
                             Json(ApiResponse::error(500, "恢复成功但查询失败"))
@@ -294,8 +320,13 @@ pub async fn restore_master_data_ref(
 pub async fn schedule_destruction(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ScheduleDestructionRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = chrono::Utc::now();
     let scheduled_at = req
         .scheduled_at
@@ -306,7 +337,7 @@ pub async fn schedule_destruction(
         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match row {
@@ -333,13 +364,13 @@ pub async fn schedule_destruction(
             .bind(&req.scheduled_by)
             .bind(now)
             .bind(&master_data_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             match result {
                 Ok(_) => {
                     record_lifecycle_audit(
-                        &state.db,
+                        txn,
                         &master_data_id,
                         &domain,
                         "schedule_destruction",
@@ -355,11 +386,19 @@ pub async fn schedule_destruction(
                         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .fetch_one(&state.db)
+                    .fetch_one(&mut **txn)
                     .await;
 
                     match updated {
-                        Ok(row) => Json(ApiResponse::success(row.into(), "销毁计划已安排")),
+                        Ok(row) => {
+                            if let Some(t) = guard.take() {
+                                if let Err(e) = t.commit().await {
+                                    tracing::error!("事务提交失败: {}", e);
+                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                }
+                            }
+                            Json(ApiResponse::success(row.into(), "销毁计划已安排"))
+                        }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询销毁计划数据失败: {}", e);
                             Json(ApiResponse::error(500, "计划安排成功但查询失败"))
@@ -392,7 +431,12 @@ pub async fn schedule_destruction(
 pub async fn cancel_destruction(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MasterDataRef>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -400,7 +444,7 @@ pub async fn cancel_destruction(
         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match row {
@@ -427,13 +471,13 @@ pub async fn cancel_destruction(
             ))
             .bind(now)
             .bind(&master_data_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             match result {
                 Ok(_) => {
                     record_lifecycle_audit(
-                        &state.db,
+                        txn,
                         &master_data_id,
                         &domain,
                         "cancel_destruction",
@@ -449,11 +493,19 @@ pub async fn cancel_destruction(
                         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .fetch_one(&state.db)
+                    .fetch_one(&mut **txn)
                     .await;
 
                     match updated {
-                        Ok(row) => Json(ApiResponse::success(row.into(), "销毁计划已取消")),
+                        Ok(row) => {
+                            if let Some(t) = guard.take() {
+                                if let Err(e) = t.commit().await {
+                                    tracing::error!("事务提交失败: {}", e);
+                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                }
+                            }
+                            Json(ApiResponse::success(row.into(), "销毁计划已取消"))
+                        }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询取消销毁后数据失败: {}", e);
                             Json(ApiResponse::error(500, "取消成功但查询失败"))
@@ -486,8 +538,13 @@ pub async fn cancel_destruction(
 pub async fn destroy_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<DestroyRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -495,7 +552,7 @@ pub async fn destroy_master_data_ref(
         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match row {
@@ -522,13 +579,13 @@ pub async fn destroy_master_data_ref(
             .bind(&req.reason)
             .bind(now)
             .bind(&master_data_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             match result {
                 Ok(_) => {
                     record_lifecycle_audit(
-                        &state.db,
+                        txn,
                         &master_data_id,
                         &domain,
                         "destroy",
@@ -544,11 +601,19 @@ pub async fn destroy_master_data_ref(
                         r#"SELECT * FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
                     ))
                     .bind(&master_data_id)
-                    .fetch_one(&state.db)
+                    .fetch_one(&mut **txn)
                     .await;
 
                     match updated {
-                        Ok(row) => Json(ApiResponse::success(row.into(), "主数据已销毁（软删除）")),
+                        Ok(row) => {
+                            if let Some(t) = guard.take() {
+                                if let Err(e) = t.commit().await {
+                                    tracing::error!("事务提交失败: {}", e);
+                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                }
+                            }
+                            Json(ApiResponse::success(row.into(), "主数据已销毁（软删除）"))
+                        }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询销毁后数据失败: {}", e);
                             Json(ApiResponse::error(500, "销毁成功但查询失败"))
@@ -582,7 +647,12 @@ pub async fn destroy_master_data_ref(
 pub async fn list_archived(
     State(state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -622,7 +692,7 @@ pub async fn list_archived(
         query = query.bind(bind);
     }
 
-    let rows = query.fetch_all(&state.db).await;
+    let rows = query.fetch_all(&mut **txn).await;
 
     match rows {
         Ok(data) => {
@@ -656,7 +726,12 @@ pub async fn list_archived(
 pub async fn list_pending_destruction(
     State(state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -697,7 +772,7 @@ pub async fn list_pending_destruction(
         query = query.bind(bind);
     }
 
-    let rows = query.fetch_all(&state.db).await;
+    let rows = query.fetch_all(&mut **txn).await;
 
     match rows {
         Ok(data) => {

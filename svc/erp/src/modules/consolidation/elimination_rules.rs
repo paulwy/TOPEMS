@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
@@ -22,7 +22,12 @@ use super::ApiState;
 pub async fn list_elimination_rules(
     State(state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<EliminationRule>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if params.scope_id.is_none() {
         return Json(api_error(400, "scope_id为必填参数"));
     }
@@ -47,7 +52,7 @@ pub async fn list_elimination_rules(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -63,7 +68,7 @@ pub async fn list_elimination_rules(
             .bind(scope_id)
             .bind(params.keyword.as_ref().map(|s| format!("%{}%", s)))
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -90,12 +95,17 @@ pub async fn list_elimination_rules(
 pub async fn get_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<EliminationRule>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, EliminationRule>(
         "SELECT * FROM erp.elimination_rules WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(rule_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "获取抵消规则成功")),
@@ -117,8 +127,13 @@ pub async fn get_elimination_rule(
 pub async fn create_elimination_rule(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let debit_codes = req
         .debit_account_codes
@@ -148,7 +163,7 @@ pub async fn create_elimination_rule(
     .bind(&req.company_pairs)
     .bind(req.auto_elimination.unwrap_or(true))
     .bind(req.priority.unwrap_or(100))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -175,8 +190,13 @@ pub async fn update_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let debit_codes = req
         .debit_account_codes
         .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
@@ -211,7 +231,7 @@ pub async fn update_elimination_rule(
     .bind(&req.company_pairs)
     .bind(req.auto_elimination)
     .bind(req.priority)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -245,10 +265,15 @@ pub async fn delete_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query("UPDATE erp.elimination_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(rule_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await
     {
         Ok(result) => {
@@ -263,6 +288,12 @@ pub async fn delete_elimination_rule(
                     &headers,
                 )
                 .await;
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("事务提交失败: {}", e);
+                        return Json(ApiResponse::error(500, "事务提交失败"));
+                    }
+                }
                 Json(ApiResponse::success((), "删除抵消规则成功"))
             }
         }
@@ -286,12 +317,17 @@ pub async fn delete_elimination_rule(
 pub async fn export_elimination_worksheet(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let rules = match sqlx::query_as::<_, EliminationRule>(
         "SELECT * FROM erp.elimination_rules WHERE deleted_at IS NULL AND scope_id = $1 ORDER BY priority ASC",
     )
     .bind(scope_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     {
         Ok(r) => r,
@@ -304,7 +340,7 @@ pub async fn export_elimination_worksheet(
     let transactions = match sqlx::query_as::<_, InternalTransaction>(
         "SELECT * FROM erp.internal_transactions ORDER BY transaction_date DESC",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     {
         Ok(t) => t,

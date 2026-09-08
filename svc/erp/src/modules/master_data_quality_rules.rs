@@ -4,7 +4,7 @@
 //! 支持 6 种规则类型：必填、格式（正则）、范围（min/max）、唯一性、引用完整性、自定义 SQL。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 use topems_shared::ApiResponse;
@@ -254,8 +254,13 @@ fn is_valid_identifier(s: &str) -> bool {
 )]
 pub async fn create_quality_rule(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateQualityRuleRequest>,
 ) -> Json<ApiResponse<QualityRule>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = uuid::Uuid::new_v4();
     let now = chrono::Utc::now();
     let description = req.description.unwrap_or_default();
@@ -279,26 +284,34 @@ pub async fn create_quality_rule(
     .bind(is_active)
     .bind(now)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(
-            QualityRule {
-                id,
-                name: req.name,
-                description,
-                domain: req.domain,
-                field_name: req.field_name,
-                rule_type: req.rule_type,
-                severity,
-                config,
-                is_active,
-                created_at: now,
-                updated_at: now,
-            },
-            "质量规则创建成功",
-        )),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                QualityRule {
+                    id,
+                    name: req.name,
+                    description,
+                    domain: req.domain,
+                    field_name: req.field_name,
+                    rule_type: req.rule_type,
+                    severity,
+                    config,
+                    is_active,
+                    created_at: now,
+                    updated_at: now,
+                },
+                "质量规则创建成功",
+            ))
+        }
         Err(e) => {
             tracing::warn!("[erp-mdm] 创建质量规则失败: {}", e);
             Json(ApiResponse::error(500, &format!("创建质量规则失败: {}", e)))
@@ -319,7 +332,12 @@ pub async fn create_quality_rule(
 pub async fn list_quality_rules(
     State(state): State<ApiState>,
     Query(params): Query<ListQualityRulesQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<QualityRule>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -339,7 +357,7 @@ pub async fn list_quality_rules(
             .bind(is_active)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
         (Some(domain), None) => {
@@ -350,7 +368,7 @@ pub async fn list_quality_rules(
             .bind(domain)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
         (None, Some(is_active)) => {
@@ -361,7 +379,7 @@ pub async fn list_quality_rules(
             .bind(is_active)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
         (None, None) => {
@@ -371,7 +389,7 @@ pub async fn list_quality_rules(
             ))
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
     };
@@ -410,7 +428,12 @@ pub async fn list_quality_rules(
 pub async fn get_quality_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<QualityRule>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
@@ -420,7 +443,7 @@ pub async fn get_quality_rule(
         "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
-    match sqlx::query(&sql).bind(rid).fetch_optional(&state.db).await {
+    match sqlx::query(&sql).bind(rid).fetch_optional(&mut **txn).await {
         Ok(Some(row)) => match quality_rule_from_row(&row) {
             Ok(rule) => Json(ApiResponse::success(rule, "质量规则详情")),
             Err(e) => {
@@ -448,8 +471,13 @@ pub async fn get_quality_rule(
 pub async fn update_quality_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateQualityRuleRequest>,
 ) -> Json<ApiResponse<QualityRule>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
@@ -462,7 +490,7 @@ pub async fn update_quality_rule(
     );
     let existing = match sqlx::query(&sql_select)
         .bind(rid)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
     {
         Ok(Some(row)) => quality_rule_from_row(&row),
@@ -505,26 +533,34 @@ pub async fn update_quality_rule(
     .bind(is_active)
     .bind(now)
     .bind(rid)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(
-            QualityRule {
-                id: rid,
-                name,
-                description,
-                domain,
-                field_name,
-                rule_type,
-                severity,
-                config,
-                is_active,
-                created_at: existing.created_at,
-                updated_at: now,
-            },
-            "质量规则更新成功",
-        )),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                QualityRule {
+                    id: rid,
+                    name,
+                    description,
+                    domain,
+                    field_name,
+                    rule_type,
+                    severity,
+                    config,
+                    is_active,
+                    created_at: existing.created_at,
+                    updated_at: now,
+                },
+                "质量规则更新成功",
+            ))
+        }
         Err(e) => {
             tracing::warn!("[erp-mdm] 更新质量规则失败: {}", e);
             Json(ApiResponse::error(500, &format!("更新失败: {}", e)))
@@ -544,7 +580,12 @@ pub async fn update_quality_rule(
 pub async fn delete_quality_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
@@ -555,7 +596,7 @@ pub async fn delete_quality_rule(
         "UPDATE erp_master_data_quality_rules SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(rid)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -563,6 +604,12 @@ pub async fn delete_quality_rule(
             if res.rows_affected() == 0 {
                 Json(ApiResponse::error(404, "未找到质量规则"))
             } else {
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("事务提交失败: {}", e);
+                        return Json(ApiResponse::error(500, "事务提交失败"));
+                    }
+                }
                 Json(ApiResponse::success(
                     serde_json::json!({ "rule_id": rule_id, "deleted": true }),
                     "质量规则删除成功",
@@ -591,16 +638,21 @@ pub async fn delete_quality_rule(
 )]
 pub async fn run_quality_check(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RunQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // 1. 加载规则
-    let rules = load_quality_rules(&state.db, req.domain.as_deref(), req.rule_ids.as_deref()).await;
+    let rules = load_quality_rules(txn, req.domain.as_deref(), req.rule_ids.as_deref()).await;
     if rules.is_empty() {
         return Json(ApiResponse::error(404, "未找到匹配的质量规则"));
     }
 
     // 2. 加载主数据记录（排除已销毁）
-    let records = load_records_for_quality(&state.db, req.domain.as_deref()).await;
+    let records = load_records_for_quality(txn, req.domain.as_deref()).await;
 
     // 3. 逐条规则执行校验
     let mut all_issues = Vec::new();
@@ -608,7 +660,7 @@ pub async fn run_quality_check(
         if !rule.is_active {
             continue;
         }
-        let issues = execute_rule(&state.db, rule, &records).await;
+        let issues = execute_rule(txn, rule, &records).await;
         all_issues.extend(issues);
     }
 
@@ -657,9 +709,15 @@ pub async fn run_quality_check(
     .bind(report.info as i64)
     .bind(&issues_json)
     .bind(report.generated_at)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         report,
         &format!(
@@ -682,7 +740,12 @@ pub async fn run_quality_check(
 pub async fn get_quality_report(
     State(state): State<ApiState>,
     Query(params): Query<QualityReportQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<QualityReport>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -697,7 +760,7 @@ pub async fn get_quality_report(
         .bind(domain)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query(
@@ -707,7 +770,7 @@ pub async fn get_quality_report(
         )
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -737,7 +800,7 @@ pub async fn get_quality_report(
 
 /// 加载质量规则（按 domain 过滤，或按 rule_ids 指定）
 async fn load_quality_rules(
-    pool: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     domain: Option<&str>,
     rule_ids: Option<&[uuid::Uuid]>,
 ) -> Vec<QualityRule> {
@@ -756,18 +819,18 @@ async fn load_quality_rules(
         for id in ids {
             query = query.bind(id);
         }
-        query.fetch_all(pool).await
+        query.fetch_all(&mut **txn).await
     } else if let Some(d) = domain {
         sqlx::query(&format!(
             "{} WHERE is_active = TRUE AND domain = $1",
             sql_base
         ))
         .bind(d)
-        .fetch_all(pool)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query(&format!("{} WHERE is_active = TRUE", sql_base))
-            .fetch_all(pool)
+            .fetch_all(&mut **txn)
             .await
     };
 
@@ -784,21 +847,24 @@ async fn load_quality_rules(
 }
 
 /// 加载主数据记录用于质量检查（排除已销毁）
-async fn load_records_for_quality(pool: &sqlx::PgPool, domain: Option<&str>) -> Vec<MasterDataRef> {
+async fn load_records_for_quality(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    domain: Option<&str>,
+) -> Vec<MasterDataRef> {
     let rows = if let Some(d) = domain {
         sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
             "erp",
             r#"SELECT * FROM erp.erp_master_data_refs WHERE status != 'destroyed' AND domain = $1"#
         ))
         .bind(d)
-        .fetch_all(pool)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
             "erp",
             r#"SELECT * FROM erp.erp_master_data_refs WHERE status != 'destroyed'"#
         ))
-        .fetch_all(pool)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -813,7 +879,7 @@ async fn load_records_for_quality(pool: &sqlx::PgPool, domain: Option<&str>) -> 
 
 /// 根据 rule_type 执行不同校验
 async fn execute_rule(
-    pool: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     rule: &QualityRule,
     records: &[MasterDataRef],
 ) -> Vec<QualityIssue> {
@@ -821,9 +887,9 @@ async fn execute_rule(
         QualityRuleType::Required => check_required(rule, records),
         QualityRuleType::Format => check_format(rule, records),
         QualityRuleType::Range => check_range(rule, records),
-        QualityRuleType::Uniqueness => check_uniqueness(pool, rule, records).await,
-        QualityRuleType::Reference => check_reference(pool, rule, records).await,
-        QualityRuleType::Custom => check_custom_sql(pool, rule, records).await,
+        QualityRuleType::Uniqueness => check_uniqueness(txn, rule, records).await,
+        QualityRuleType::Reference => check_reference(txn, rule, records).await,
+        QualityRuleType::Custom => check_custom_sql(txn, rule, records).await,
     }
 }
 
@@ -944,7 +1010,7 @@ pub fn check_range(rule: &QualityRule, records: &[MasterDataRef]) -> Vec<Quality
 
 /// Uniqueness: 唯一性校验（检查 records 集合内的重复值）
 async fn check_uniqueness(
-    _pool: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     rule: &QualityRule,
     records: &[MasterDataRef],
 ) -> Vec<QualityIssue> {
@@ -983,7 +1049,7 @@ async fn check_uniqueness(
 ///
 /// config 需包含 ref_table 和 ref_column，校验字段值在被引用表中是否存在
 async fn check_reference(
-    pool: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     rule: &QualityRule,
     records: &[MasterDataRef],
 ) -> Vec<QualityIssue> {
@@ -1011,7 +1077,7 @@ async fn check_reference(
         };
         let exists: Option<i32> = sqlx::query_scalar(&sql)
             .bind(&val)
-            .fetch_optional(pool)
+            .fetch_optional(&mut **txn)
             .await
             .ok()
             .flatten();
@@ -1038,7 +1104,7 @@ async fn check_reference(
 ///
 /// config 需包含 sql，SQL 应返回 master_data_id 列（违反规则的记录 ID）
 async fn check_custom_sql(
-    pool: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     rule: &QualityRule,
     records: &[MasterDataRef],
 ) -> Vec<QualityIssue> {
@@ -1051,7 +1117,7 @@ async fn check_custom_sql(
         .get("suggestion")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let rows = sqlx::query(sql_text).fetch_all(pool).await;
+    let rows = sqlx::query(sql_text).fetch_all(&mut **txn).await;
     match rows {
         Ok(rows) => {
             use sqlx::Row;

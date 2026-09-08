@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::HeaderMap,
     Json,
 };
@@ -23,7 +23,12 @@ use super::ApiState;
 pub async fn list_scope_companies(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ConsolidationScopeCompany>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
         SELECT * FROM erp.consolidation_scope_companies
@@ -32,7 +37,7 @@ pub async fn list_scope_companies(
         "#,
     )
     .bind(scope_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     {
         Ok(companies) => Json(ApiResponse::success(companies, "获取合并范围公司列表成功")),
@@ -53,8 +58,13 @@ pub async fn list_scope_companies(
 pub async fn add_scope_company(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<AddScopeCompanyRequest>,
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
@@ -73,7 +83,7 @@ pub async fn add_scope_company(
     .bind(req.consolidation_percentage.unwrap_or(100.0))
     .bind(req.minority_interest.unwrap_or(0.0))
     .bind(&req.effective_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -107,8 +117,13 @@ pub async fn update_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateScopeCompanyRequest>,
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
         UPDATE erp.consolidation_scope_companies
@@ -127,7 +142,7 @@ pub async fn update_scope_company(
     .bind(req.consolidation_percentage)
     .bind(req.minority_interest)
     .bind(&req.expiry_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -161,12 +176,17 @@ pub async fn remove_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query(
         "UPDATE erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1",
     )
     .bind(company_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await
     {
         Ok(result) => {
@@ -181,6 +201,12 @@ pub async fn remove_scope_company(
                     &headers,
                 )
                 .await;
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("事务提交失败: {}", e);
+                        return Json(ApiResponse::error(500, "事务提交失败"));
+                    }
+                }
                 Json(ApiResponse::success((), "从合并范围移除公司成功"))
             }
         }

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     Json,
 };
@@ -22,7 +22,12 @@ use super::ApiState;
 pub async fn list_reports(
     State(state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<ConsolidationReport>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -46,7 +51,7 @@ pub async fn list_reports(
     .bind(&params.period_to)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -64,7 +69,7 @@ pub async fn list_reports(
             .bind(&params.report_type)
             .bind(&params.period_from)
             .bind(&params.period_to)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -91,7 +96,12 @@ pub async fn list_reports(
 pub async fn get_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
@@ -101,7 +111,7 @@ pub async fn get_report(
         "#,
     )
     .bind(report_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(report)) => Json(ApiResponse::success(report, "获取合并报表成功")),
@@ -126,8 +136,13 @@ pub async fn get_report(
 pub async fn generate_report(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<GenerateConsolidationReportRequest>,
 ) -> Json<ApiResponse<ConsolidationReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let report_no = format!(
         "CR{}{:04}",
@@ -143,7 +158,7 @@ pub async fn generate_report(
         "SELECT COUNT(*) FROM erp.consolidation_scope_companies WHERE scope_id = $1",
     )
     .bind(req.scope_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -164,7 +179,7 @@ pub async fn generate_report(
     .bind(quarter)
     .bind(month)
     .bind(company_count)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let _report = match result {
@@ -201,7 +216,7 @@ pub async fn generate_report(
     .bind(total_assets * 0.3)
     .bind(total_assets * 0.1)
     .bind(total_assets * 0.08)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match updated_report {
@@ -234,12 +249,17 @@ pub async fn generate_report(
 pub async fn get_report_lines(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ConsolidationReportLine>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, ConsolidationReportLine>(
         "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     {
         Ok(lines) => Json(ApiResponse::success(lines, "获取合并报表行项目成功")),
@@ -263,7 +283,12 @@ pub async fn get_report_lines(
 pub async fn export_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let report = match sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
@@ -273,7 +298,7 @@ pub async fn export_report(
         "#,
     )
     .bind(report_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(r)) => r,
@@ -288,7 +313,7 @@ pub async fn export_report(
         "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     {
         Ok(l) => l,
@@ -320,7 +345,12 @@ pub async fn submit_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let username = headers
         .get("x-username")
         .and_then(|v| v.to_str().ok())
@@ -332,7 +362,7 @@ pub async fn submit_report(
         "SELECT * FROM erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let report = match report_result {
@@ -366,7 +396,7 @@ pub async fn submit_report(
         "#,
     )
     .bind(report_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -400,7 +430,12 @@ pub async fn approve_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let username = headers
         .get("x-username")
         .and_then(|v| v.to_str().ok())
@@ -412,7 +447,7 @@ pub async fn approve_report(
         "SELECT * FROM erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let report = match report_result {
@@ -446,7 +481,7 @@ pub async fn approve_report(
         "#,
     )
     .bind(report_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -480,7 +515,12 @@ pub async fn publish_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         UPDATE erp.consolidation_reports
@@ -490,7 +530,7 @@ pub async fn publish_report(
         "#,
     )
     .bind(report_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -524,13 +564,16 @@ pub async fn delete_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query(
-        "UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1",
-    )
-    .bind(report_id)
-    .execute(&state.db)
-    .await
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match sqlx::query("UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1")
+        .bind(report_id)
+        .execute(&mut **txn)
+        .await
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
@@ -544,6 +587,12 @@ pub async fn delete_report(
                     &headers,
                 )
                 .await;
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("事务提交失败: {}", e);
+                        return Json(ApiResponse::error(500, "事务提交失败"));
+                    }
+                }
                 Json(ApiResponse::success((), "删除合并报表成功"))
             }
         }
