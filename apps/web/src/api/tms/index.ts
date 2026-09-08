@@ -3,6 +3,7 @@ import driverApi from './driver';
 import carrierApi from './carrier';
 import routeApi from './route';
 import shipmentApi from './shipment';
+import optimizationApi from './optimization';
 
 export * from './types';
 
@@ -11,6 +12,8 @@ export { default as driverApi } from './driver';
 export { default as carrierApi } from './carrier';
 export { default as routeApi } from './route';
 export { default as shipmentApi } from './shipment';
+export { default as optimizationApi } from './optimization';
+export * from './optimization';
 
 export const tmsApi = {
   // Vehicle
@@ -58,6 +61,10 @@ export const tmsApi = {
   submitShipmentApproval: shipmentApi.submitApproval,
   approveShipment: shipmentApi.approve,
   rejectShipment: shipmentApi.reject,
+  // Optimization
+  planAssignments: optimizationApi.planAssignments,
+  optimizeRoutes: optimizationApi.optimizeRoutes,
+  quoteFreight: optimizationApi.quoteFreight,
 };
 
 export default tmsApi;
