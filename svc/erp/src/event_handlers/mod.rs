@@ -1506,9 +1506,25 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
 
-        // 根据 customer_id 和 amount 匹配应收账款并核销
-        // 若 customer_id 为空，回退到金额匹配（取最早一笔 pending 的）
-        let result = if let Some(customer_id) = payload.customer_id {
+        // 根据 customer_name（收款单无 customer_id，2026-09-08 新增字段）→ customer_id → 金额匹配
+        // 若均无，回退到金额匹配（取最早一笔 pending 的）
+        let result = if let Some(customer_name) = payload.customer_name.as_deref() {
+            sqlx::query(
+                r#"UPDATE erp.receivables
+                   SET status = 'paid',
+                       received_amount = received_amount + $1,
+                       updated_at = $2
+                   WHERE customer_name = $3
+                     AND status = 'pending'
+                     AND amount = $1
+                   RETURNING invoice_number"#,
+            )
+            .bind(payload.amount)
+            .bind(now)
+            .bind(customer_name)
+            .fetch_optional(&self.db)
+            .await
+        } else if let Some(customer_id) = payload.customer_id {
             sqlx::query(
                 r#"UPDATE erp.receivables
                    SET status = 'paid',

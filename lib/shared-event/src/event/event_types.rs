@@ -566,6 +566,8 @@ pub struct PaymentReceivedPayload {
     pub payment_no: String,
     pub order_id: Option<Uuid>,
     pub customer_id: Option<Uuid>,
+    /// 收款单客户名（用于无 customer_id 时精确匹配应收/账单）
+    pub customer_name: Option<String>,
     pub amount: f64,
     pub payment_method: Option<String>,
     pub received_at: Option<DateTime<Utc>>,

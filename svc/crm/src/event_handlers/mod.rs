@@ -12,7 +12,7 @@ use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMaster
 use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event, EventResult, EventSubscriber,
     EventType, MasterDataAction, MasterDataDomain, MasterDataEvent, OpportunityWonPayload,
-    ShippingOrderRequestedPayload,
+    PaymentReceivedPayload, ShippingOrderRequestedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -39,6 +39,7 @@ impl CrmEventHandlers {
         let h5 = self.clone();
         let h6 = self.clone();
         let h7 = self.clone();
+        let h8 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::AfterSalesTicketCreated], move |event| {
@@ -70,6 +71,14 @@ impl CrmEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_shipping_order_requested(event).await {
                         tracing::error!("[crm] handle_shipping_order_requested 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::PaymentReceived], move |event| {
+                let h = h8.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_payment_received(event).await {
+                        tracing::error!("[crm] handle_payment_received 失败: {}", e);
                     }
                 })
             })
@@ -294,6 +303,92 @@ impl CrmEventHandlers {
             }
         } else {
             tracing::debug!("[crm] 应收账款已存在（跳过）- invoice_no={}", invoice_no);
+        }
+
+        Ok(())
+    }
+
+    /// PaymentReceived → 核销应收账单（billing_records 状态流转）
+    ///
+    /// finance create_collection 发布 PaymentReceived（2026-09-08 补齐发布方）。
+    /// 匹配优先 customer_name（收款单无 customer_id 关联），回退金额匹配最早 pending 账单；
+    /// 置 status='paid' + paid_at。
+    async fn handle_payment_received(&self, event: Event) -> HandlerResult {
+        let payload: PaymentReceivedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 PaymentReceived payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[crm] PaymentReceived 处理 - payment_no={}, customer_name={:?}, amount={}, trace_id={:?}",
+            payload.payment_no,
+            payload.customer_name,
+            payload.amount,
+            event.trace_id
+        );
+
+        if payload.amount <= 0.0 {
+            return Ok(());
+        }
+
+        let now = chrono::Utc::now();
+
+        // 优先 customer_name 匹配；无则金额匹配最早 pending
+        let result = if let Some(name) = payload.customer_name.as_deref() {
+            sqlx::query(
+                r#"UPDATE crm.billing_records
+                   SET status = 'paid',
+                       paid_at = $1,
+                       updated_at = $1
+                   WHERE customer_name = $2
+                     AND status = 'pending'
+                     AND amount = $3
+                   RETURNING invoice_no"#,
+            )
+            .bind(now)
+            .bind(name)
+            .bind(payload.amount)
+            .fetch_optional(&self.db)
+            .await
+        } else {
+            sqlx::query(
+                r#"UPDATE crm.billing_records
+                   SET status = 'paid',
+                       paid_at = $1,
+                       updated_at = $1
+                   WHERE status = 'pending'
+                     AND amount = $2
+                   ORDER BY created_at ASC
+                   LIMIT 1
+                   RETURNING invoice_no"#,
+            )
+            .bind(now)
+            .bind(payload.amount)
+            .fetch_optional(&self.db)
+            .await
+        };
+
+        match result {
+            Ok(Some(row)) => {
+                let invoice_no: String = sqlx::Row::get(&row, "invoice_no");
+                tracing::info!(
+                    "[crm] 应收账单已核销 - invoice_no={}, amount={}, payment_no={}",
+                    invoice_no,
+                    payload.amount,
+                    payload.payment_no
+                );
+            }
+            Ok(None) => {
+                tracing::info!(
+                    "[crm] 无匹配应收账单（跳过）- payment_no={}, amount={}",
+                    payload.payment_no,
+                    payload.amount
+                );
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "[crm] 核销应收账单失败（graceful fallback）: {}",
+                    e
+                );
+            }
         }
 
         Ok(())

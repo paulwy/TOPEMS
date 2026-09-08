@@ -44,7 +44,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
 use topems_shared_auth::get_tenant_id_from_claims;
-use topems_shared_event::event::{EventType, FinancePaymentMadePayload};
+use topems_shared_event::event::{EventType, FinancePaymentMadePayload, PaymentReceivedPayload};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AccountQueryParams {
@@ -3419,7 +3419,54 @@ pub async fn create_collection_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_collection(tenant_id, req, &created_by).await {
-        Ok(data) => Json(ApiResponse::success(data, "创建成功")),
+        Ok(data) => {
+            // 收款创建 → PaymentReceived 事件（激活 erp 应收核销 / crm 账单核销 / finance 收款记录）
+            // 此前 PaymentReceived 仅有订阅方、无发布方，整条核销链空转；此处补齐发布（2026-09-08）
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let payment_id = data
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|v| uuid::Uuid::parse_str(v).ok())
+                    .unwrap_or_else(uuid::Uuid::new_v4);
+                let payment_no = data
+                    .get("collection_no")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string();
+                let customer_name = data.get("customer_name").and_then(|v| v.as_str()).map(String::from);
+                let amount = data.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                let payment_no_log = payment_no.clone();
+                tokio::spawn(async move {
+                    let payload = PaymentReceivedPayload {
+                        payment_id,
+                        payment_no,
+                        order_id: None,
+                        customer_id: None,
+                        customer_name,
+                        amount,
+                        payment_method: Some("collection".to_string()),
+                        received_at: Some(Utc::now()),
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::PaymentReceived, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[finance] PaymentReceived 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[finance] PaymentReceived 事件发布成功 - payment_no={}, amount={}",
+                            payment_no_log,
+                            amount
+                        );
+                    }
+                });
+            }
+            Json(ApiResponse::success(data, "创建成功"))
+        }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
