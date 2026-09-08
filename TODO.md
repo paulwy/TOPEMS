@@ -63,6 +63,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 **当前待办总数：19 项**（✅ 已闭环 18 / ⏳ 待阈值触发 1：#1 物理库拆分）
 
+> 09-08 **P7 覆盖度口径修复 + RLS 报告日期动态化已闭环**：①P7 覆盖度旧口径 USED/LEGAL（375/101=371.3% 荒谬 >100%）→ 改为"使用码中已声明比例"（LEGAL∩USED/USED，恒≤100%），实测 **4.3%**（375 使用码仅 16 条被声明覆盖，如实反映声明不足）；②check-rls-coverage.py 生成日期硬编码 2026-08-31（--write 已生效但显示旧日期）→ 改动态 `datetime.date.today()`，报告刷新为 2026-09-08（已启用 RLS 10 张 / 未显式启用 234 张：业务实体 201 + 系统类 33——RLS 覆盖率低为既有待办，非本次范围）。
+
+
 > 09-08 **API 覆盖率检查修复已闭环**（check-api.cjs coverage 模式两处缺陷）：①lowcode 页面目录不存在仍报 0% FAIL（配置假阳性）→ 目录缺失改为 skipped 跳过不 FAIL；②automation 60% 为浅层检测误报——DesignerCanvas 等 4 个 components 子组件被独立计为"页面"，且 AutomationDesignerPage 经 useAutomationDesigner hook 间接接 API 不被识别 → 改为**顶层页面单元聚合**（单元内任一文件含 API 即算接入）。修后：automation 60%→**100%**（5/5 页面单元）、lowcode skipped、coverage 检查全绿。
 
 

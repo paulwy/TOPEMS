@@ -18,6 +18,7 @@ RLS 覆盖核查脚本（P2-1 RLS 数据权限覆盖）
   - 未知：无法从 DDL 判断的，列入"待逐表人工确认"
 """
 import glob
+import datetime
 import os
 import re
 import sys
@@ -82,7 +83,7 @@ def main():
     lines = []
     lines.append("# RLS 数据权限覆盖报告（RLS Coverage Report）")
     lines.append("")
-    lines.append("> 由 `scripts/check-rls-coverage.py` 自动生成 · 生成日期：2026-08-31")
+    lines.append(f"> 由 `scripts/check-rls-coverage.py` 自动生成 · 生成日期：{datetime.date.today().isoformat()}")
     lines.append("")
     lines.append(f"**扫描范围**：{len(sql_files)} 个 SQL 文件，共 {len(tables)} 张 CREATE TABLE。")
     lines.append(f"**已启用 RLS**：{len(rls_tables)} 张表。")

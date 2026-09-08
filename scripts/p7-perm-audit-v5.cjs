@@ -387,7 +387,7 @@ P(``);
 P(`📊 基础统计`);
 P(`  • permissions.ts 声明的合法权限码总数：${String(LEGAL.size).padStart(5)} 条`);
 P(`  • config.ts (Nav+Route) 实际使用的权限码：${String(USED_CODES.length).padStart(5)} 条`);
-P(`  • 覆盖度：${((USED_CODES.length / Math.max(1, LEGAL.size)) * 100).toFixed(1)}%`);
+P(`  • 覆盖度（使用码中已声明比例，恒≤100%）：${((USED_CODES.filter((c) => LEGAL.has(c)).length / Math.max(1, USED_CODES.length)) * 100).toFixed(1)}%`);
 P(``);
 
 P(`🟡 NOT_LEGAL：config.ts 使用但 ∉ permissions.ts/app-shell 声明的权限码 → ${NOT_LEGAL.length} 条`);
@@ -456,7 +456,9 @@ const summary = {
   DEAD_count: DEAD.length,
   deadByReason,
   deadByAction,
-  coverage: +((USED_CODES.length / Math.max(1, LEGAL.size)) * 100).toFixed(1),
+  // 覆盖度 = 使用码中被声明覆盖的比例（LEGAL∩USED / USED），恒 ≤100%——
+  // 旧口径 USED/LEGAL 在 LEGAL 集不完整时会 >100%（如 375/101=371.3%），指标失真
+  coverage: +((USED_CODES.filter((c) => LEGAL.has(c)).length / Math.max(1, USED_CODES.length)) * 100).toFixed(1),
   NOT_LEGAL: NOT_LEGAL.map((c) => ({ code: c, usages: USED.get(c) || [] })),
   DEAD: DEAD.map((c) => ({ code: c, info: PERM_INFO.get(c) || null })),
   MISMATCH,
