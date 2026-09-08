@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS erp.bank_accounts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_bank_accounts_status ON erp.bank_accounts (status);
+
+-- 存量库兼容：旧版 bank_accounts 无 is_default 列（补列后再建索引）
+ALTER TABLE erp.bank_accounts ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE INDEX IF NOT EXISTS idx_bank_accounts_is_default ON erp.bank_accounts (is_default);
 
 CREATE TABLE IF NOT EXISTS erp.asset_categories (
