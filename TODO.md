@@ -65,6 +65,8 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 > 09-08 **RLS 精确盘点已闭环**：DB 实时盘点（information_schema+pg_class）——**含 tenant_id/org_id 列 570 张**（多租户隔离候选）、**RLS 已启用 236 张（41.4%）**、**含租户列但未启用 334 张**（finance 95 / lims 31 / hrm 26 / public 26 / qms 22 等 27 个 schema，清单已入 rls-coverage-report.md「DB 实时盘点」节）。**修正认知**：check-rls-coverage.py 静态口径（扫迁移 SQL CREATE TABLE）仅 10/234，严重低估实际启用数——脚本已加口径提示，报告以 DB 实时为准。334 张未启用为 RLS 实施目标清单（逐表策略设计另起专项）。
 
+> 09-08 **RLS 全量实施已闭环（阶段 1）**：迁移 `20260908000015`（试点 4 张）+ `20260908000016`（全量 327 张）——**567 张含租户列普通表 100% 启用 RLS**（3 视图由底层表控制）+ 策略 `rls_tenant_isolation` 331 个（无上下文全放行 / 有上下文按租户过滤 / tenant_id IS NULL 共享行 / 不 FORCE）。**语义验证**（非 superuser 角色）：读过滤 ✓、越权写拦截（violates row-level security）✓、superuser 绕过（预期）。**阶段 2 待专项**：服务层未设置 app.current_tenant_id 上下文 + 连接角色 topems 为 superuser——隔离真正生效需应用会话注入租户上下文 + 应用角色非 superuser 化或 FORCE（连接层改造）。权威记录：`docs/architecture/rls-live-coverage.md`（实时盘点，独立于静态脚本报告）。
+
 > 09-08 **权限码体系专项 A 方案（后端扩展签发）已闭环**：迁移 `20260908000014_sync_frontend_permission_codes.sql` 将前端导航/路由使用码 **374 条** 全量入库 `public.core_permissions`（133 原有 + 373 新增 = **506 条**；resource/action 按后端惯例拆分，幂等），并绑定 **superadmin + admin 全量**（各 506 条）。复算：前端 374 码 **100% 入库**，命中率 0.3%→100%。**运行时缺口关闭**：绑定角色的用户登录后 permissions 列表含细分码，前端 hasPermission 命中。剩余：P7 静态声明缺口（前端使用码未在 permissions.ts/app-shell 声明的 **359 条**）属 UI 元数据层——已核实不影响运行时（判定基于后端下发码）与权限管理页（authApi.listPermissions→后端 /permissions，506 条全量可见）；P7 报告文案已标注该事实，缺口仅为静态常量未同步。
 
 
