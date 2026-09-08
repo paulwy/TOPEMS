@@ -22,6 +22,7 @@ pub mod project_milestone;
 pub mod project_phase;
 pub mod project_report;
 pub mod research_cost;
+pub mod rd_ci_cd;
 pub mod rs_plugin;
 pub mod statistics;
 
@@ -49,7 +50,7 @@ impl FromRef<ApiState> for PgPool {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .merge(project::create_routes())
+        .merge(rd_ci_cd::create_routes())        .merge(project::create_routes())
         .merge(formula::create_routes())
         .merge(experiment::create_routes())
         .merge(material::create_routes())

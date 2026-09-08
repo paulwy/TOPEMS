@@ -11,6 +11,7 @@ pub mod equipment;
 pub mod equipment_oee;
 pub mod equipment_oee_calc;
 pub mod material_bom;
+pub mod material_plan;
 pub mod material_requirement;
 pub mod mes_plugin;
 pub mod oee_logic;
@@ -48,6 +49,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(equipment::create_routes())
         .merge(equipment_oee::create_routes())
         .merge(material_bom::create_routes())
+        .merge(material_plan::create_routes())
         .merge(material_requirement::create_routes())
         .merge(process_flow::create_routes())
         .merge(process_route::create_routes())

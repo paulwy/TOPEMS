@@ -54,7 +54,6 @@ export * as aiApi from './ai';
 export * as docApi from './doc';
 export * as fileApi from './file';
 export * as mailApi from './mail';
-export * as emailApi from './email';
 export * as imApi from './im';
 export * as notificationApi from './notification';
 export * as workflowApi from './workflow';

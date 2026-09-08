@@ -18,7 +18,9 @@ use topems_shared_service_client::service_client::{
 pub mod addressbook;
 pub mod announcement;
 pub mod asset;
+pub mod asset_category;
 pub mod audit;
+pub mod bank_account;
 pub mod consolidation;
 pub mod consolidation_calc;
 pub mod customer;
@@ -118,7 +120,9 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(dashboard::create_routes())
         .merge(addressbook::create_routes())
         .merge(asset::create_routes())
+        .merge(asset_category::create_routes())
         .merge(audit::create_routes())
+        .merge(bank_account::create_routes())
         .merge(consolidation::create_routes())
         .merge(fixed_asset::create_routes())
         .merge(finance::create_routes())
