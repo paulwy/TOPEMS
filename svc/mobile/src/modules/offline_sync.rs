@@ -247,7 +247,7 @@ pub async fn get_offline_status(
     };
 
     let pending_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'pending'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'pending'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -258,7 +258,7 @@ pub async fn get_offline_status(
     };
 
     let syncing_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'syncing'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'syncing'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -269,7 +269,7 @@ pub async fn get_offline_status(
     };
 
     let synced_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'synced'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'synced'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -280,7 +280,7 @@ pub async fn get_offline_status(
     };
 
     let failed_count = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'failed'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'failed'"),
     )
     .bind(user_id)
     .fetch_one(&pool)
@@ -291,7 +291,7 @@ pub async fn get_offline_status(
     };
 
     let last_sync = match sqlx::query(
-        only_own_schema_query!("mobile", "SELECT synced_at FROM public.offline_operations WHERE user_id = $1 AND sync_status = 'synced' ORDER BY synced_at DESC LIMIT 1"),
+        only_own_schema_query!("mobile", "SELECT synced_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = 'synced' ORDER BY synced_at DESC LIMIT 1"),
     )
     .bind(user_id)
     .fetch_optional(&pool)
@@ -353,7 +353,7 @@ pub async fn get_sync_history(
 
     let query = if let Some(status) = &params.status {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM public.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"),
+            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"),
         )
         .bind(user_id)
         .bind(status)
@@ -361,7 +361,7 @@ pub async fn get_sync_history(
         .bind(offset)
     } else {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM public.offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM mobile.offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(user_id)
         .bind(size)
@@ -384,7 +384,7 @@ pub async fn get_sync_history(
 
     let total = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM public.offline_operations WHERE user_id = $1"
+        "SELECT COUNT(*) FROM mobile.offline_operations WHERE user_id = $1"
     ))
     .bind(user_id)
     .fetch_one(&pool)

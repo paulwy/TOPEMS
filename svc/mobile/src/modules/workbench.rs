@@ -179,7 +179,7 @@ async fn get_today_quality_pass_rate(
 
 async fn get_shortcuts(pool: &PgPool, user_id: &str) -> Vec<Shortcut> {
     let rows = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT id, name, icon, path, color FROM public.shortcuts WHERE user_id = $1 OR user_id IS NULL ORDER BY sort_order"),
+        only_own_schema_query!("mobile", "SELECT id, name, icon, path, color FROM mobile.shortcuts WHERE user_id = $1 OR user_id IS NULL ORDER BY sort_order"),
     )
     .bind(user_id)
     .fetch_all(pool)

@@ -75,7 +75,7 @@ impl FinanceService {
         let payment_no = self.generate_payment_no(tenant_id).await?;
 
         let payment: Payment = sqlx::query_as(
-            only_own_schema_query!("finance", "INSERT INTO public.core_finance_payments (tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, payment_date, remark, created_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_payments (tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, payment_date, remark, created_by)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
              RETURNING *"),
         )
@@ -147,7 +147,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -194,13 +194,13 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let total: (i64,) =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT COUNT(*) FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1"))
                 .bind(tenant_id)
                 .fetch_one(&self.db_pool)
                 .await?;
 
         let payments: Vec<Payment> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(tenant_id)
         .bind(page_size)
@@ -241,7 +241,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -286,7 +286,7 @@ impl FinanceService {
         updated_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -346,7 +346,7 @@ impl FinanceService {
         .await?;
 
         sqlx::query(
-            only_own_schema_query!("finance", "UPDATE public.core_finance_payments SET supplier_id = $1, supplier_name = $2, payment_method = $3, bank_account_id = $4, bank_name = $5, bank_account_no = $6, total_amount = $7, remark = $8, updated_at = NOW() \
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET supplier_id = $1, supplier_name = $2, payment_method = $3, bank_account_id = $4, bank_name = $5, bank_account_no = $6, total_amount = $7, remark = $8, updated_at = NOW() \
              WHERE tenant_id = $9 AND id = $10"),
         )
         .bind(req.supplier_id)
@@ -401,7 +401,7 @@ impl FinanceService {
         payment_id: Uuid,
     ) -> Result<(), TopemsError> {
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&self.db_pool)
@@ -416,7 +416,7 @@ impl FinanceService {
 
         sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE public.core_finance_payments SET deleted_at = NOW() WHERE id = $1"
+            "UPDATE finance.core_finance_payments SET deleted_at = NOW() WHERE id = $1"
         ))
         .bind(payment_id)
         .execute(&self.db_pool)
@@ -431,7 +431,7 @@ impl FinanceService {
         let prefix = format!("FK{}", date_str);
 
         let count: (i64,) = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND payment_no LIKE $2"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND payment_no LIKE $2"),
         )
         .bind(tenant_id)
         .bind(format!("{}%", prefix))
@@ -456,7 +456,7 @@ impl FinanceService {
         );
 
         let mut query =
-            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM public.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1"
+            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1"
                 .to_string();
 
         if let Some(status) = req.status {

@@ -24,7 +24,7 @@ impl FinanceService {
 
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
-            "SELECT * FROM public.core_finance_payments WHERE tenant_id = $1 AND id = $2"
+            "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
@@ -195,7 +195,7 @@ impl FinanceService {
 
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
-            "SELECT * FROM public.core_finance_payments WHERE tenant_id = $1 AND id = $2"
+            "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
@@ -335,7 +335,7 @@ impl FinanceService {
             );
 
             sqlx::query(
-                only_own_schema_query!("finance", "UPDATE public.core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3"),
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3"),
             )
             .bind(approved_by)
             .bind(tenant_id)
@@ -382,7 +382,7 @@ impl FinanceService {
 
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
-            "SELECT * FROM public.core_finance_payments WHERE tenant_id = $1 AND id = $2"
+            "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
@@ -515,7 +515,7 @@ impl FinanceService {
     ) -> Result<PaymentResponse, TopemsError> {
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",
-            "SELECT * FROM public.core_finance_payments WHERE tenant_id = $1 AND id = $2"
+            "SELECT * FROM finance.core_finance_payments WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
@@ -530,7 +530,7 @@ impl FinanceService {
         }
 
         sqlx::query(
-            only_own_schema_query!("finance", "UPDATE public.core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), updated_at = NOW() WHERE tenant_id = $4 AND id = $5"),
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), updated_at = NOW() WHERE tenant_id = $4 AND id = $5"),
         )
         .bind(req.actual_payment_date)
         .bind(&req.bank_transaction_no)

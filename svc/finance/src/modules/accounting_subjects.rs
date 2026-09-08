@@ -110,7 +110,7 @@ impl<T: Serialize> ApiResponse<T> {
 // CRUD Handlers
 // ============================================================================
 
-const TABLE: &str = "public.accounting_subjects";
+const TABLE: &str = "finance.accounting_subjects";
 
 /// 列表查询（支持分页、搜索、筛选）
 #[utoipa::path(

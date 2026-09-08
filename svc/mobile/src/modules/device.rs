@@ -143,7 +143,7 @@ pub async fn register_device(
 
     let existing_device = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id FROM public.devices WHERE user_id = $1 AND device_id = $2"
+        "SELECT id FROM mobile.devices WHERE user_id = $1 AND device_id = $2"
     ))
     .bind(user_id)
     .bind(&payload.device_id)
@@ -161,7 +161,7 @@ pub async fn register_device(
     };
 
     if existing_device.is_some() {
-        if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE public.devices SET device_name = $1, device_type = $2, os_type = $3, os_version = $4, app_version = $5, push_token = $6, is_active = true, last_login_at = NOW(), updated_at = NOW() WHERE user_id = $7 AND device_id = $8"))
+        if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET device_name = $1, device_type = $2, os_type = $3, os_version = $4, app_version = $5, push_token = $6, is_active = true, last_login_at = NOW(), updated_at = NOW() WHERE user_id = $7 AND device_id = $8"))
             .bind(&payload.device_name)
             .bind(&payload.device_type)
             .bind(&payload.os_type)
@@ -183,7 +183,7 @@ pub async fn register_device(
     }
 
     let device_id = Uuid::new_v4();
-    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO public.devices (id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())"))
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.devices (id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())"))
         .bind(device_id)
         .bind(user_id)
         .bind(&payload.device_id)
@@ -233,7 +233,7 @@ pub async fn update_push_token(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE public.devices SET push_token = $1, updated_at = NOW() WHERE user_id = $2 AND device_id = $3"))
+    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET push_token = $1, updated_at = NOW() WHERE user_id = $2 AND device_id = $3"))
         .bind(&payload.push_token)
         .bind(user_id)
         .bind(&payload.device_id)

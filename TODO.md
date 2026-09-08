@@ -1329,6 +1329,13 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **执行**：git rm 01 + README 三处引用清理（方式一命令、方式二 \i、Q1 权限方案改为引导迁移体系）。
 - **init 目录终态**：03（权限初始化，35 INSERT 活跃数据）/ 04（inter_module_sync 定义 + srm 6 张幂等）/ 05（mobile 23 表服务活跃）/ 07（qms 27 表幂等副本）保留为"重建/初始化档案"；01/02/06 三个早期架构脚本已删除。README 顶部注记（以迁移体系为准）继续有效。
 
+## 2026-09-08 21 组 public.* 错引用归位 + push_notifications 补列（方案 A 第二轮）✅
+
+- **finance 8 组**（8 文件）：public.accounting_subjects/core_finance_payments/reconciliation_snapshots/settlement_snapshots/source_amount_snapshots → finance.*；public.financial_vouchers/voucher_items → finance.core_finance_vouchers/voucher_lines（列对齐验证 period/status/deleted_at/total_debit + project_id/debit/credit/voucher_id 全有）；voucher_template.rs 的 public.payment_records/payments → finance.core_finance_payments 且 amount→total_amount（core_finance_payments 无 amount 列）。
+- **mobile 12 组**（12 文件）：public.mobile_users/barcode_scans/devices/media_files/mobile_scan_records/offline_operations/offline_sync_records/photo_uploads/push_devices/push_templates/shortcuts/sync_policies → mobile.*；push_notifications → mobile.push_notifications 并补列迁移 20260908000010（user_id/read_at——群发表无该两列，repository.rs 群发统计查询不受影响）。
+- **integration 4 组**（qms_lims_ehs.rs）：public.qa_lab_samples/qa_lab_tasks/qa_ehs_hazards/qa_corrective_actions + qa_quality_inspections → qms.*；only_own_schema_query! 第三参 `"qms"`（宏语法：逗号分隔字符串非数组）；schema_boundary.json integration.allow 补 qms（上轮已做）。
+- **验证**：cargo check finance/mobile/integration 全过；cargo test finance 245 passed 全绿；check_schema_boundary 全 PASS（tms 59 引用）；三服务 public.* 残留 0。
+
 ## 2026-09-08 全仓"代码有表无"缺口补建（30 张表，方案 A 第一轮）✅
 
 - **盲区发现**：门禁只校验 schema 白名单、不校验表存在性——全仓 SQL 引用 vs 5432 实况比对（含跨行字符串修正）揪出 **30 张被活跃引用但从未建表的表** + 21 组错引用（下轮处理）。

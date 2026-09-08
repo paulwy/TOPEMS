@@ -364,7 +364,7 @@ pub async fn get_photo_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM public.photo_uploads WHERE id = $1"))
+    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM mobile.photo_uploads WHERE id = $1"))
         .bind(id)
         .fetch_optional(&pool)
         .await
@@ -412,7 +412,7 @@ pub async fn get_upload_progress(
 
     let row = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT upload_progress, upload_status, file_path FROM public.photo_uploads WHERE id = $1"
+        "SELECT upload_progress, upload_status, file_path FROM mobile.photo_uploads WHERE id = $1"
     ))
     .bind(id)
     .fetch_optional(&pool)
@@ -477,7 +477,7 @@ pub async fn delete_photo(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM public.photo_uploads WHERE id = $1 AND user_id = $2"
+        "DELETE FROM mobile.photo_uploads WHERE id = $1 AND user_id = $2"
     ))
     .bind(id)
     .bind(user_id)

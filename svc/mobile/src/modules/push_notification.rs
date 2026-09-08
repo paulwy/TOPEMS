@@ -342,7 +342,7 @@ pub async fn get_notification_list(
     let offset = (page - 1) * size;
 
     let query =
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, title, body, notification_type, read_at, created_at FROM public.push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, title, body, notification_type, read_at, created_at FROM mobile.push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2"))
             .bind(size)
             .bind(offset);
 
@@ -362,7 +362,7 @@ pub async fn get_notification_list(
 
     let total = match sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM public.push_notifications"
+        "SELECT COUNT(*) FROM mobile.push_notifications"
     ))
     .fetch_one(&pool)
     .await
@@ -394,7 +394,7 @@ pub async fn get_notification_stats(
 
     let total_sent: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COALESCE(SUM(sent_count), 0) FROM public.push_notifications WHERE status = 'sent'"
+        "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"
     ))
     .fetch_one(&pool)
     .await
@@ -404,7 +404,7 @@ pub async fn get_notification_stats(
     };
 
     let delivered_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM public.push_notifications WHERE status = 'sent'"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
     )
     .fetch_one(&pool)
     .await
@@ -414,7 +414,7 @@ pub async fn get_notification_stats(
     };
 
     let clicked_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM public.push_notifications WHERE status = 'sent'"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
     )
     .fetch_one(&pool)
     .await
@@ -517,7 +517,7 @@ pub async fn get_notification_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, title, body, notification_type, read_at, created_at FROM public.push_notifications WHERE id = $1"))
+    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, title, body, notification_type, read_at, created_at FROM mobile.push_notifications WHERE id = $1"))
         .bind(id)
         .fetch_optional(&pool)
         .await

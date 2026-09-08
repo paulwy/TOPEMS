@@ -444,7 +444,7 @@ pub async fn toggle_generate_rule(
 /// |-------------|--------|---------|------|
 /// | `sale` / `sales_order` | `plugin_erp.sales_orders` | `payable_amount` (F64→Decimal) | 销售订单应付金额 |
 /// | `purchase` / `purchase_order` | `plugin_erp.purchase_orders` | `payable_amount` (F64→Decimal) | 采购订单应付金额 |
-/// | `payment` | `public.payment_records` 或 `public.payments` | `amount` (F64→Decimal) | 支付记录金额（两表容错查询） |
+/// | `payment` | `finance.core_finance_payments` 或 `finance.core_finance_payments` | `amount` (F64→Decimal) | 支付记录金额（两表容错查询） |
 /// | 其他 / 未知 | — | 1000.00 默认 | 兼容 legacy 调用（如 demo/preview） |
 async fn resolve_source_amounts(
     pool: &PgPool,
@@ -505,7 +505,7 @@ async fn resolve_source_amounts(
 
     // 事件驱动：从 Finance 本地快照表读取，替代跨 Schema 直查 plugin_erp
     let snapshot_rows: Vec<(Uuid, Option<f64>)> = sqlx::query_as::<_, (Uuid, Option<f64>)>(
-        only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM public.source_amount_snapshots
+        only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM finance.source_amount_snapshots
            WHERE source_type = $1 AND source_id = ANY($2)"#),
     )
     .bind(snapshot_type)
@@ -529,7 +529,7 @@ async fn resolve_source_amounts(
     let amount_f64s: Vec<(Uuid, Option<f64>)> = if snapshot_type == "payment" {
         let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(only_own_schema_query!(
             "finance",
-            r#"SELECT id, amount FROM public.payment_records
+            r#"SELECT id, total_amount FROM finance.core_finance_payments
                WHERE tenant_id = $1 AND id = ANY($2)"#
         ))
         .bind(tenant_id)
@@ -540,7 +540,7 @@ async fn resolve_source_amounts(
             Ok(rows) if !rows.is_empty() => rows,
             _ => sqlx::query_as::<_, (Uuid, Option<f64>)>(only_own_schema_query!(
                 "finance",
-                r#"SELECT id, amount FROM public.payments
+                r#"SELECT id, total_amount FROM finance.core_finance_payments
                    WHERE tenant_id = $1 AND id = ANY($2)"#
             ))
             .bind(tenant_id)
@@ -551,7 +551,7 @@ async fn resolve_source_amounts(
                 static LOGGED: std::sync::atomic::AtomicBool =
                     std::sync::atomic::AtomicBool::new(false);
                 if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                    warn!(error = %e, "查询 public.payments 失败，使用默认金额 1000.00 兜底");
+                    warn!(error = %e, "查询 finance.core_finance_payments 失败，使用默认金额 1000.00 兜底");
                 }
             })
             .unwrap_or_default(),

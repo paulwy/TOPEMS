@@ -368,7 +368,7 @@ async fn save_scan_record(
     location_lat: Option<f64>,
     location_lng: Option<f64>,
 ) {
-    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO public.mobile_scan_records (user_id, scan_type, scan_data, result_data, location_lat, location_lng) VALUES ($1, $2, $3, $4, $5, $6)"))
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_scan_records (user_id, scan_type, scan_data, result_data, location_lat, location_lng) VALUES ($1, $2, $3, $4, $5, $6)"))
         .bind(user_id)
         .bind(scan_type)
         .bind(scan_data)

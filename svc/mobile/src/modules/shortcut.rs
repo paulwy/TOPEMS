@@ -80,7 +80,7 @@ pub async fn get_shortcuts(
 
     let shortcuts: Vec<Shortcut> = match sqlx::query_as::<_, Shortcut>(
         only_own_schema_query!("mobile", "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
-         FROM public.shortcuts WHERE user_id = $1 AND is_active = true ORDER BY sort_order ASC")
+         FROM mobile.shortcuts WHERE user_id = $1 AND is_active = true ORDER BY sort_order ASC")
     )
     .bind(user_id_uuid)
     .fetch_all(&pool)
@@ -133,7 +133,7 @@ pub async fn create_shortcut(
                 next_order: Option<i32>,
             }
             match sqlx::query_as::<_, NextOrder>(
-                only_own_schema_query!("mobile", "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM public.shortcuts WHERE user_id = $1")
+                only_own_schema_query!("mobile", "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM mobile.shortcuts WHERE user_id = $1")
             )
             .bind(user_id_uuid)
             .fetch_one(&pool)
@@ -147,7 +147,7 @@ pub async fn create_shortcut(
 
     let shortcut_id = Uuid::new_v4();
     if let Err(e) = sqlx::query(
-        only_own_schema_query!("mobile", "INSERT INTO public.shortcuts (id, user_id, name, icon, action_type, action_params, sort_order, is_active)
+        only_own_schema_query!("mobile", "INSERT INTO mobile.shortcuts (id, user_id, name, icon, action_type, action_params, sort_order, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
     )
         .bind(shortcut_id)
@@ -167,7 +167,7 @@ pub async fn create_shortcut(
 
     let shortcut = match sqlx::query_as::<_, Shortcut>(
         only_own_schema_query!("mobile", "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
-         FROM public.shortcuts WHERE id = $1")
+         FROM mobile.shortcuts WHERE id = $1")
     )
     .bind(shortcut_id)
     .fetch_one(&pool)

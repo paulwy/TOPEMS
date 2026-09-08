@@ -111,7 +111,7 @@ pub async fn get_profile(
         }
     };
 
-    let profile = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM public.mobile_users WHERE id = $1"))
+    let profile = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1"))
         .bind(user_id)
         .fetch_optional(&pool)
         .await
@@ -164,7 +164,7 @@ pub async fn update_profile(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE public.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6"))
+    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6"))
         .bind(payload.nickname)
         .bind(payload.phone)
         .bind(payload.email)
@@ -257,7 +257,7 @@ pub async fn upload_avatar(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE public.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2"
+        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2"
     ))
     .bind(&avatar_url)
     .bind(user_id)

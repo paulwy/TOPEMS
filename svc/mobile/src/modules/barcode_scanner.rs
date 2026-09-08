@@ -363,7 +363,7 @@ pub async fn get_scan_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM public.barcode_scans WHERE id = $1"))
+    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, barcode, barcode_type, scan_result, scanned_at FROM mobile.barcode_scans WHERE id = $1"))
         .bind(id)
         .fetch_optional(&pool)
         .await
@@ -472,7 +472,7 @@ pub async fn delete_scan_record(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM public.barcode_scans WHERE id = $1 AND user_id = $2"
+        "DELETE FROM mobile.barcode_scans WHERE id = $1 AND user_id = $2"
     ))
     .bind(id)
     .bind(user_id)

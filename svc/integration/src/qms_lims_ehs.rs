@@ -23,7 +23,7 @@ pub async fn handle_qms_inspection_completed(
     let sample_no = format!("{}-SMP", payload.inspection_no);
 
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (sample_no) DO UPDATE SET updated_at = NOW()")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (sample_no) DO UPDATE SET updated_at = NOW()", "qms")
     )
     .bind(tenant_id)
     .bind(&sample_no)
@@ -36,7 +36,7 @@ pub async fn handle_qms_inspection_completed(
 
     let task_no = format!("{}-TASK", payload.inspection_no);
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO public.qa_lab_tasks (tenant_id, task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (task_no) DO UPDATE SET updated_at = NOW()")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_tasks (tenant_id, task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (task_no) DO UPDATE SET updated_at = NOW()", "qms")
     )
     .bind(tenant_id)
     .bind(task_no)
@@ -77,7 +77,7 @@ pub async fn handle_qms_quality_issue_created(
     };
 
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO public.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by, related_inspection_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by, related_inspection_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", "qms")
     )
     .bind(tenant_id)
     .bind(hazard_no)
@@ -133,7 +133,7 @@ pub async fn handle_ehs_hazard_reported(
     };
 
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO public.qa_corrective_actions (tenant_id, action_no, title, description, status, priority, created_by, related_issue_id, related_issue_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, title, description, status, priority, created_by, related_issue_id, related_issue_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", "qms")
     )
     .bind(tenant_id)
     .bind(action_no)
@@ -171,7 +171,7 @@ pub async fn handle_ehs_accident_reported(
             .collect::<String>()
     );
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5, $6)")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5, $6)", "qms")
     )
     .bind(tenant_id)
     .bind(sample_no.clone())
@@ -193,7 +193,7 @@ pub async fn handle_ehs_accident_reported(
     );
     let test_items = serde_json::json!(["环境检测", "化学品残留", "材料分析", "安全评估"]);
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO public.qa_lab_tasks (tenant_id, task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5, $6)")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_tasks (tenant_id, task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5, $6)", "qms")
     )
     .bind(tenant_id)
     .bind(task_no)
@@ -241,7 +241,7 @@ pub async fn handle_lims_inspection_abnormal(
     };
 
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO public.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", "qms")
     )
     .bind(tenant_id)
     .bind(hazard_no)
@@ -271,9 +271,10 @@ pub async fn handle_lims_record_completed(
 
     let _ = sqlx::query(only_own_schema_query!(
         "integration",
-        "UPDATE public.qa_quality_inspections SET 
+        "UPDATE qms.qa_quality_inspections SET 
             test_result = $1, test_data = $2, conclusion = $3, updated_at = NOW()
-         WHERE tenant_id = $4 AND inspection_no = $5"
+         WHERE tenant_id = $4 AND inspection_no = $5",
+        "qms"
     ))
     .bind(payload.conclusion.clone())
     .bind(payload.test_data.clone())
