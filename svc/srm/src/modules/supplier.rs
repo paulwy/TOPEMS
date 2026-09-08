@@ -190,7 +190,7 @@ pub async fn list_suppliers(
     let query = format!(
         r#"
         SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM plugin_srm.suppliers
+        FROM srm.suppliers
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -215,7 +215,7 @@ pub async fn list_suppliers(
         Ok(suppliers) => {
             let count_query = format!(
                 r#"
-                SELECT COUNT(*) FROM plugin_srm.suppliers
+                SELECT COUNT(*) FROM srm.suppliers
                 WHERE tenant_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -286,8 +286,8 @@ pub async fn create_supplier(
 
     let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND supplier_no = $2",
-        "plugin_srm"
+        "SELECT COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND supplier_no = $2",
+        "srm"
     ))
     .bind(tenant_id)
     .bind(&req.supplier_no)
@@ -304,10 +304,10 @@ pub async fn create_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"
-        INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
+        INSERT INTO srm.suppliers (id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -461,8 +461,8 @@ pub async fn get_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2
-        "#, "plugin_srm"),
+        FROM srm.suppliers WHERE id = $1 AND tenant_id = $2
+        "#, "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -513,7 +513,7 @@ pub async fn update_supplier(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -551,11 +551,11 @@ pub async fn update_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"
-        UPDATE plugin_srm.suppliers SET
+        UPDATE srm.suppliers SET
             supplier_no = $2, name = $3, legal_name = $4, category = $5, status = $6, tax_id = $7, address = $8, contact_person = $9, phone = $10, email = $11, website = $12, credit_rating = $13, risk_level = $14, updated_at = $15
         WHERE id = $1 AND tenant_id = $16
         RETURNING id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(id)
     .bind(supplier_no)
@@ -673,7 +673,7 @@ pub async fn delete_supplier(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -687,7 +687,7 @@ pub async fn delete_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE plugin_srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1 AND tenant_id = $3", "plugin_srm"),
+        only_own_schema_query!("srm", "UPDATE srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1 AND tenant_id = $3", "srm"),
     )
     .bind(id)
     .bind(Utc::now())
@@ -742,10 +742,10 @@ async fn get_supplier_products(
     let result = sqlx::query_as::<_, SupplierProduct>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_products
+        FROM srm.supplier_products
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -782,10 +782,10 @@ async fn get_supplier_contracts(
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_contracts
+        FROM srm.supplier_contracts
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -820,7 +820,7 @@ async fn get_supplier_performance(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let supplier_query = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -830,10 +830,10 @@ async fn get_supplier_performance(
         "srm",
         r#"
         SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-        FROM plugin_srm.purchase_orders
+        FROM srm.purchase_orders
         WHERE supplier_id = $1 AND tenant_id = $2
         "#,
-        "plugin_srm"
+        "srm"
     ))
     .bind(id)
     .bind(tenant_id)
@@ -861,10 +861,10 @@ async fn get_supplier_performance(
             AVG(overall_score) as avg_overall,
             COUNT(*) as eval_count,
             MAX(evaluation_date) as last_eval_date
-        FROM plugin_srm.supplier_evaluations
+        FROM srm.supplier_evaluations
         WHERE supplier_id = $1 AND tenant_id = $2
         "#,
-        "plugin_srm"
+        "srm"
     ))
     .bind(id)
     .bind(tenant_id)
@@ -958,9 +958,9 @@ async fn record_audit_log(
 
     let result = sqlx::query(
         only_own_schema_query!("srm", r#"
-        INSERT INTO plugin_srm.audit_logs (id, tenant_id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
+        INSERT INTO srm.audit_logs (id, tenant_id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(log_id)
     .bind(tenant_id)
@@ -1008,7 +1008,7 @@ async fn start_supplier_approval(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1050,7 +1050,7 @@ async fn start_supplier_approval(
     });
 
     let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE plugin_srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "UPDATE srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1", "srm"),
     )
     .bind(id)
     .execute(&state.db)
@@ -1138,7 +1138,7 @@ async fn approve_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1155,8 +1155,8 @@ async fn approve_supplier(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE plugin_srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1",
-        "plugin_srm"
+        "UPDATE srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1",
+        "srm"
     ))
     .bind(id)
     .execute(&state.db)
@@ -1242,7 +1242,7 @@ async fn reject_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1259,8 +1259,8 @@ async fn reject_supplier(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE plugin_srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
-        "plugin_srm"
+        "UPDATE srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
+        "srm"
     ))
     .bind(id)
     .execute(&state.db)

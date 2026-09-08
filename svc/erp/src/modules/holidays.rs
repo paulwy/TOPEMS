@@ -11,7 +11,7 @@
 //!
 //! | 层级 | 数据源 | 触发条件 | 覆盖范围 |
 //! |------|--------|---------|---------|
-//! | L1 动态层 | `plugin_erp.holidays` 表（tenant_id + year 过滤） | DB 可用且对应当年有记录 | 租户可配置任意年度 |
+//! | L1 动态层 | `erp.holidays` 表（tenant_id + year 过滤） | DB 可用且对应当年有记录 | 租户可配置任意年度 |
 //! | L2 静态层 | 本文件 `HOLIDAY_RANGES` / `MAKEUP_WORKDAY_DATES` 常量 | L1 返回空或 DB 错误 | 2025–2026 国务院发布数据 |
 //!
 //! 纯函数 API（`is_holiday` / `is_makeup_workday` / `is_workday`）保持无状态，
@@ -88,7 +88,7 @@ async fn query_holiday_from_db(
     kind: &str,
 ) -> Option<bool> {
     // holidays 表结构（未迁移时查询会失败 → 自动回退 L2）：
-    //   CREATE TABLE IF NOT EXISTS plugin_erp.holidays (
+    //   CREATE TABLE IF NOT EXISTS erp.holidays (
     //       tenant_id UUID NOT NULL,
     //       year      INT  NOT NULL,
     //       date      DATE NOT NULL,
@@ -101,9 +101,9 @@ async fn query_holiday_from_db(
         Some(tid) => {
             sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "erp",
-                r#"SELECT COUNT(*) FROM plugin_erp.holidays
+                r#"SELECT COUNT(*) FROM erp.holidays
                    WHERE tenant_id = $1 AND year = $2 AND date = $3 AND kind = $4"#,
-                "plugin_erp"
+                "erp"
             ))
             .bind(tid)
             .bind(year)
@@ -116,9 +116,9 @@ async fn query_holiday_from_db(
             // 未传入 tenant_id 时，仅做全局查询（跨租户共享数据场景）
             sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "erp",
-                r#"SELECT COUNT(*) FROM plugin_erp.holidays
+                r#"SELECT COUNT(*) FROM erp.holidays
                    WHERE year = $1 AND date = $2 AND kind = $3 LIMIT 1"#,
-                "plugin_erp"
+                "erp"
             ))
             .bind(year)
             .bind(date)
@@ -136,7 +136,7 @@ async fn query_holiday_from_db(
             if !L2_FALLBACK_LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
                 warn!(
                     error = %e,
-                    "plugin_erp.holidays 表查询失败，回退到 L2 静态节假日数据（2025-2026）。后续可执行 ERP holidays 迁移脚本启用动态配置。"
+                    "erp.holidays 表查询失败，回退到 L2 静态节假日数据（2025-2026）。后续可执行 ERP holidays 迁移脚本启用动态配置。"
                 );
             }
             None

@@ -121,10 +121,10 @@ pub async fn create_shipping_from_outbound_internal(
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, expected_delivery, 
                actual_delivery, total_amount, status, remarks, created_at, updated_at
-        FROM plugin_wms.outbound_orders
+        FROM wms.outbound_orders
         WHERE id = $1 AND status = 'confirmed'
         "#,
-        "plugin_wms"
+        "wms"
     ))
     .bind(outbound_order_id)
     .fetch_optional(&state.db)
@@ -201,12 +201,12 @@ pub async fn create_shipping_from_outbound_internal(
     let _ = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        UPDATE plugin_wms.outbound_orders 
+        UPDATE wms.outbound_orders 
         SET status = 'shipped', sales_order_id = $2, 
             sales_order_number = $3, is_synced_to_crm = TRUE, updated_at = $4
         WHERE id = $1
         "#,
-        "plugin_wms"
+        "wms"
     ))
     .bind(outbound_order_id)
     .bind(shipping_id)
@@ -280,10 +280,10 @@ pub async fn create_inbound_from_scm(
         "wms",
         r#"
         SELECT id, order_number, supplier_id, total_amount, status
-        FROM plugin_wms.purchase_order_snapshots
+        FROM wms.purchase_order_snapshots
         WHERE id = $1 AND status = 'approved'
         "#,
-        "plugin_wms"
+        "wms"
     ))
     .bind(purchase_order_id)
     .fetch_optional(&state.db)
@@ -317,11 +317,11 @@ pub async fn create_inbound_from_scm(
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        INSERT INTO plugin_wms.inbound_orders (id, order_number, supplier_id, 
+        INSERT INTO wms.inbound_orders (id, order_number, supplier_id, 
                                               order_type, status, created_at, updated_at)
         VALUES ($1, $2, $3, 'purchase', 'pending', $4, $5)
         "#,
-        "plugin_wms"
+        "wms"
     ))
     .bind(inbound_id)
     .bind(&inbound_order_number)

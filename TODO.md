@@ -1315,6 +1315,13 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：7 张确认无真实 SQL 引用后删；finance 编译 0 error；门禁全 PASS。
 - **后续批次**：public 遗留双写 ~110 组（改代码引用→业务 schema）、iam 遗留 132 组（归位，联动待办④）、跨服务读改造 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）；详见 `docs/architecture/duplicate-table-consolidation.md`。
 
+## 2026-09-08 plugin_* 错位修复 + 空壳清理 ✅（记录待办收尾）
+
+- **背景**：1384 记录"plugin_* schema 常量业务零使用"仅指 shared-db 常量层；实测**服务代码仍有大量真实 plugin_* SQL 硬编码**——srm 445 处（模块主体，`only_own_schema_query!` 宏无替换逻辑、原样执行 → 运行时必 500）、wms 8 处（data_sync）、erp 11 处（holidays/opening_balance 跨读）、mes 63 行死建表段（建 plugin_mes.audit_logs 但查询读 mes.audit_logs）；20 个 plugin_* schema 全部空壳（0 表）。
+- **执行**：srm/wms/erp 全部 plugin_* → 真实 schema 前缀替换；**srm 4 张从未建过的缺表**（biddings/quotations/scoring_dimensions/bidding_suppliers，列定义提取自模块 INSERT/RETURNING）新迁移 `20260908000007` 建表（5432 实建，srm 16→20 张）；mes 删死建表段；DROP 20 个空壳 plugin_* schema。
+- **验证**：cargo test srm 424 + wms 516 + mes 542 全绿；erp check 通过；check_schema_boundary 全 PASS（srm 248/wms 281 引用）；5432 已无 plugin_* schema。
+- **注意**：`database/init/02_create_plugin_tables.sql`（26 张 plugin_* 表）为早期 plugin 架构遗留脚本，与 06 同性质——**保留待评审**（与 06 的 15 张共享表一样从未在 5432 建表）。
+
 ## 2026-09-08 shared 死 schema 清理 ✅（记录待办收尾）
 
 - **背景**：`shared` schema（9 张表：users/employees/companies/departments/positions/audit_logs/id_records/user_employee_map/system_params）为早期 hrm 遗留——审计数据止于 2026-06-16（417 行），3 个月零写入；全仓 SQL 引用核验为零（FROM/JOIN/INTO/UPDATE/DELETE shared.* 全空）；ai 服务 search_path 仍含 shared（`"ai, public, shared"`）但无任何命中表。

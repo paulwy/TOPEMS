@@ -913,70 +913,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
             .ok();
 
-    // 创建 plugin_mes schema 与 audit_logs 表（与 migration 20260812120100 对齐）
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS plugin_mes")
-        .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS plugin_mes.audit_logs (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            action VARCHAR(128) NOT NULL,
-            entity_type VARCHAR(64) NOT NULL,
-            entity_id UUID,
-            entity_ids JSONB,
-            user_id VARCHAR(128),
-            user_name VARCHAR(256),
-            request_details JSONB,
-            response_details JSONB,
-            status VARCHAR(32) NOT NULL DEFAULT 'success',
-            error_message TEXT,
-            ip_address VARCHAR(64),
-            user_agent TEXT,
-            tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
-            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_action ON plugin_mes.audit_logs(action)",
-    )
-    .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_entity_type ON plugin_mes.audit_logs(entity_type)")
-        .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_tenant_id ON plugin_mes.audit_logs(tenant_id)")
-        .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_created_at ON plugin_mes.audit_logs(created_at DESC)")
-        .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_user_id ON plugin_mes.audit_logs(user_id)",
-    )
-    .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
-
-    production_plan::init_database(pool).await?;
+production_plan::init_database(pool).await?;
     capacity::init_database(pool).await?;
     demand_forecast::init_database(pool).await?;
 

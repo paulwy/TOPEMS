@@ -96,10 +96,10 @@ async fn list_bid_requests(
     let requests = sqlx::query_as::<_, BidRequest>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
-        FROM plugin_srm.bid_requests
+        FROM srm.bid_requests
         WHERE tenant_id = $1 AND status != 'deleted'
         ORDER BY created_at DESC
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -170,10 +170,10 @@ async fn create_bid_request(
 
     let result = sqlx::query_as::<_, BidRequest>(
         only_own_schema_query!("srm", r#"
-        INSERT INTO plugin_srm.bid_requests (tenant_id, request_no, title, description, deadline, status, created_by)
+        INSERT INTO srm.bid_requests (tenant_id, request_no, title, description, deadline, status, created_by)
         VALUES ($1, $2, $3, $4, $5, 'pending', $6)
         RETURNING id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(tenant_id)
     .bind(request_no)
@@ -236,9 +236,9 @@ async fn get_bid_request(
     let result = sqlx::query_as::<_, BidRequest>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
-        FROM plugin_srm.bid_requests
+        FROM srm.bid_requests
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -310,13 +310,13 @@ async fn update_bid_request(
 
     let result = sqlx::query_as::<_, BidRequest>(
         only_own_schema_query!("srm", r#"
-        UPDATE plugin_srm.bid_requests
+        UPDATE srm.bid_requests
         SET title = COALESCE($1, title), description = COALESCE($2, description),
             status = COALESCE($3, status), deadline = COALESCE($4, deadline),
             updated_at = NOW()
         WHERE id = $5 AND tenant_id = $6 AND status != 'deleted'
         RETURNING id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(title)
     .bind(description)
@@ -381,7 +381,7 @@ async fn delete_bid_request(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE plugin_srm.bid_requests SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "UPDATE srm.bid_requests SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "srm"),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -433,10 +433,10 @@ async fn get_bid_request_bids(
     let bids = sqlx::query_as::<_, Bid>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.bids
+        FROM srm.bids
         WHERE request_id = $1 AND tenant_id = $2 AND status != 'deleted'
         ORDER BY price ASC
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(request_uuid)
     .bind(tenant_id)
@@ -537,10 +537,10 @@ async fn create_bid(
 
     let result = sqlx::query_as::<_, Bid>(
         only_own_schema_query!("srm", r#"
-        INSERT INTO plugin_srm.bids (tenant_id, request_id, supplier_id, supplier_name, price, currency, status, created_by)
+        INSERT INTO srm.bids (tenant_id, request_id, supplier_id, supplier_name, price, currency, status, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
         RETURNING id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(tenant_id)
     .bind(request_uuid)
@@ -604,9 +604,9 @@ async fn get_bid(
     let result = sqlx::query_as::<_, Bid>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.bids
+        FROM srm.bids
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -677,13 +677,13 @@ async fn update_bid(
 
     let result = sqlx::query_as::<_, Bid>(
         only_own_schema_query!("srm", r#"
-        UPDATE plugin_srm.bids
+        UPDATE srm.bids
         SET price = COALESCE($1, price), currency = COALESCE($2, currency),
             status = COALESCE($3, status), remarks = COALESCE($4, remarks),
             updated_at = NOW()
         WHERE id = $5 AND tenant_id = $6 AND status != 'deleted'
         RETURNING id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(price)
     .bind(currency)
@@ -748,7 +748,7 @@ async fn delete_bid(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE plugin_srm.bids SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "UPDATE srm.bids SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "srm"),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -796,10 +796,10 @@ async fn get_bid_comparison(
     let bids = sqlx::query_as::<_, Bid>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.bids
+        FROM srm.bids
         WHERE request_id = $1 AND tenant_id = $2 AND status != 'deleted'
         ORDER BY price ASC
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(request_uuid)
     .bind(tenant_id)

@@ -172,7 +172,7 @@ pub async fn create_opening_balance(
     let now = Utc::now();
 
     let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-        only_own_schema_query!("erp", "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "plugin_finance"),
+        only_own_schema_query!("erp", "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "finance"),
     )
     .bind(&req.subject_code)
     .fetch_optional(&state.db)
@@ -456,7 +456,7 @@ pub async fn import_opening_balances(
 
     for item in req {
         let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-            only_own_schema_query!("erp", "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "plugin_finance"),
+            only_own_schema_query!("erp", "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "finance"),
         )
         .bind(&item.subject_code)
         .fetch_optional(&state.db)

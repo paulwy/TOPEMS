@@ -82,7 +82,7 @@ async fn list_contracts(
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_contracts
+        FROM srm.supplier_contracts
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR title ILIKE $2 OR contract_no ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -90,7 +90,7 @@ async fn list_contracts(
           AND ($5::text IS NULL OR contract_type = $5)
         ORDER BY created_at DESC
         LIMIT $6 OFFSET $7
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -107,14 +107,14 @@ async fn list_contracts(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "srm",
                 r#"
-                SELECT COUNT(*) FROM plugin_srm.supplier_contracts
+                SELECT COUNT(*) FROM srm.supplier_contracts
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR title ILIKE $2 OR contract_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
                   AND ($5::text IS NULL OR contract_type = $5)
                 "#,
-                "plugin_srm"
+                "srm"
             ))
             .bind(tenant_id)
             .bind(&search_pattern)
@@ -177,7 +177,7 @@ async fn create_contract(
     };
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "srm"),
     )
     .bind(tenant_id)
     .bind(supplier_id)
@@ -192,7 +192,7 @@ async fn create_contract(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE deleted_at IS NULL AND tenant_id = $1 AND contract_no = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_contracts WHERE deleted_at IS NULL AND tenant_id = $1 AND contract_no = $2", "srm"),
     )
     .bind(tenant_id)
     .bind(&req.contract_no)
@@ -248,10 +248,10 @@ async fn create_contract(
 
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
-        INSERT INTO plugin_srm.supplier_contracts (id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at)
+        INSERT INTO srm.supplier_contracts (id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -301,8 +301,8 @@ async fn get_contract(
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2
-        "#, "plugin_srm"),
+        FROM srm.supplier_contracts WHERE id = $1 AND tenant_id = $2
+        "#, "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -340,7 +340,7 @@ async fn update_contract(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, SupplierContract>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM plugin_srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -375,7 +375,7 @@ async fn update_contract(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "plugin_srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "srm"),
         )
         .bind(tenant_id)
         .bind(supplier_uuid_val)
@@ -428,11 +428,11 @@ async fn update_contract(
 
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
-        UPDATE plugin_srm.supplier_contracts SET
+        UPDATE srm.supplier_contracts SET
             contract_no = $2, supplier_id = $3, supplier_name = $4, title = $5, contract_type = $6, total_amount = $7, currency = $8, sign_date = $9, start_date = $10, end_date = $11, status = $12, remarks = $13, updated_at = $14
         WHERE id = $1 AND tenant_id = $15
         RETURNING id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(id)
     .bind(contract_no)
@@ -478,7 +478,7 @@ async fn delete_contract(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE plugin_srm.supplier_contracts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "plugin_srm"))
+        sqlx::query(only_own_schema_query!("srm", "UPDATE srm.supplier_contracts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"))
             .bind(id)
             .bind(tenant_id)
             .execute(&state.db)
@@ -512,7 +512,7 @@ async fn get_contract_terms(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let contract_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "srm"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -526,10 +526,10 @@ async fn get_contract_terms(
     let result = sqlx::query_as::<_, ContractTerm>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_id, term_type, title, content, sort_order, created_at, updated_at
-        FROM plugin_srm.contract_terms
+        FROM srm.contract_terms
         WHERE contract_id = $1 AND tenant_id = $2
         ORDER BY sort_order
-        "#, "plugin_srm"),
+        "#, "srm"),
     )
     .bind(id)
     .bind(tenant_id)

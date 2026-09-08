@@ -254,7 +254,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
-    // 询价单表（event_handlers 写入，收敛自 plugin_srm_inquiries）
+    // 询价单表（event_handlers 写入，收敛自 srm_inquiries）
     (
         "inquiries",
         &[
@@ -268,7 +268,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
-    // 供应商绩效表（event_handlers 写入，收敛自 plugin_srm_supplier_performance）
+    // 供应商绩效表（event_handlers 写入，收敛自 srm_supplier_performance）
     (
         "supplier_performance",
         &[
