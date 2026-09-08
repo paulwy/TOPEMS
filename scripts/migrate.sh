@@ -560,7 +560,7 @@ cmd_run() {
 
   local dirs_file
   dirs_file="$(mktemp)"
-  trap 'rm -f "$dirs_file"' EXIT
+  trap 'rm -f -- "${dirs_file:-}"' EXIT
 
   collect_migration_dirs | filter_dirs_by_service "$SERVICE_FILTER" > "$dirs_file"
 
@@ -634,7 +634,7 @@ cmd_list() {
   # 使用临时文件避免管道子 shell 丢失计数器
   local dirs_file
   dirs_file="$(mktemp)"
-  trap 'rm -f "$dirs_file"' EXIT
+  trap 'rm -f -- "${dirs_file:-}"' EXIT
 
   collect_migration_dirs | filter_dirs_by_service "$SERVICE_FILTER" > "$dirs_file"
 
@@ -684,7 +684,7 @@ cmd_revert() {
 
   local dirs_file
   dirs_file="$(mktemp)"
-  trap 'rm -f "$dirs_file"' EXIT
+  trap 'rm -f -- "${dirs_file:-}"' EXIT
 
   collect_migration_dirs | filter_dirs_by_service "$SERVICE_FILTER" > "$dirs_file"
 
