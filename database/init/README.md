@@ -1,5 +1,7 @@
 # TOPEMS 数据库重建指南
 
+> **⚠️ 档案说明（2026-09-08）**：本文件为早期设计档案。其中 `shared` schema 设计（06 脚本及"业务 schema → public → shared"SEARCH_PATH 策略）**已废弃**——shared schema 已清理、SEARCH_PATH 统一为 `{svc}, public`（全服务）；`plugin_*` schema 表述同样过时（实际业务 schema 为各服务真实 schema）。重建请以 `database/migrations/` 迁移体系为准。
+
 ## 概述
 
 本文档提供 TOPEMS 数据库重建的详细步骤和注意事项。数据库重建将完全对齐产品架构计划，采用 `unified_core + plugin_*` 架构。
@@ -99,9 +101,8 @@ psql -h localhost -U topems -d topems -f database/init/04_create_scm_wms_srm_tab
 # 初始化移动端数据
 psql -h localhost -U topems -d topems -f database/init/05_mobile_init.sql
 
-# 创建 shared schema 及跨服务共享表（单位、币种、字典、地区等）
-psql -h localhost -U topems -d topems -f database/init/06_create_shared_schema.sql
 ```
+
 
 #### 方式二：在 psql 中执行
 
@@ -112,7 +113,6 @@ psql -h localhost -U topems -d topems -f database/init/06_create_shared_schema.s
 \i database/init/03_init_permissions.sql
 \i database/init/04_create_scm_wms_srm_tables.sql
 \i database/init/05_mobile_init.sql
-\i database/init/06_create_shared_schema.sql
 ```
 
 ### 步骤 5：验证重建结果
@@ -132,7 +132,6 @@ ORDER BY schema_name;
 schema_name
 --------------------
 public
-shared
 unified_core
 plugin_ai
 plugin_bi
