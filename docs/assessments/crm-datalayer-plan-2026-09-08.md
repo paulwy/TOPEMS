@@ -23,7 +23,7 @@
 | `crm.customer_scores` | customer_scoring/customer_segmentation/customer_profile（3） | id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at | P1（6 模块重挂依赖） |
 | `crm.customer_segments` | customer_segmentation（1） | id, name, description, criteria, customer_count, created_at, updated_at | P1 |
 | `crm.sales_forecasts` | sales_forecast（1） | id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at | P1 |
-| `crm.customer_tags` | customer_profile/tag（2） | id, tenant_id, org_id, customer_id, tag_id, tag, created_at | P1 |
+| `crm.customer_tags` | customer_profile/tag（2） | id, tenant_id, org_id, customer_id, tag_id, created_at（**无 tag 列**——tag.rs 经 JOIN crm.tags 取名称，DDL 与代码一致） | P1 |
 
 ### 第二批 · 增强表（6 模块重挂 + 扩展功能，4 张）
 
@@ -55,7 +55,7 @@
 
 - 验证：`cargo check`（topems-crm）+ schema-boundary 门禁（crm 自引用）+ tsc/eslint。
 - 本地 postgres(:5433) 未启动，迁移 SQL 无法实跑 → 人工核对 + 类型从 bind 反推；交付前建议在可用环境跑一次 dry-run。
-- 风险：旧模块（6 个被注释 + 已挂载的 16 张表）未经真实数据验证，DDL 字段类型可能与 bind 不完全匹配 → 落地后跑一次各模块 smoke test（真实 SQL 执行）。
+- 风险：旧模块（6 个被注释 + 已挂载的 16 张表）未经真实数据验证，DDL 字段类型可能与 bind 不完全匹配 → **已闭环（2026-09-08 smoke test）**：16 张核心表在 localhost:5432 全部真实 INSERT+SELECT 验证通过（事务回滚不落库），列集/类型与各模块 INSERT/RETURNING 逐一比对一致（含 wms 事件写入 sales_orders、PaymentReceived 核销 billing_records）；未发现产品缺陷。
 - 范围控制：本次仅数据层 + 重挂，不含 crm 业务逻辑重构（旧模块与新逻辑层并存问题留后续）。
 
 ## 5. 建议执行顺序
