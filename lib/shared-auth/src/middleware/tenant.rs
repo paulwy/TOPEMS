@@ -127,7 +127,7 @@ pub fn tenant_middleware() -> impl Fn(
                 }
                 let mut req = req;
                 req.extensions_mut()
-                    .insert(std::sync::Arc::new(tokio::sync::Mutex::new(txn)));
+                    .insert(std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn))));
                 req.extensions_mut().insert(TenantContext {
                     tenant_id: Uuid::nil(),
                     user_id: Uuid::nil(),
@@ -189,7 +189,7 @@ pub fn tenant_middleware() -> impl Fn(
 
             let mut req = req;
             req.extensions_mut()
-                .insert(std::sync::Arc::new(tokio::sync::Mutex::new(txn)));
+                .insert(std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn))));
             req.extensions_mut()
                 .insert(TenantContext { tenant_id, user_id });
 

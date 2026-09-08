@@ -77,12 +77,13 @@ pub async fn list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<sqlx::Transaction<'static, sqlx::Postgres>>>,
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Query(params): Query<CustomerPaginationParams>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ListResponse<Customer>>> {
-    let mut txn = txn_arc.lock().await;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
