@@ -66,7 +66,7 @@
 2. ✅ DDL 定稿 + 落地（迁移 20260908000006_crm_datalayer.sql，15 表；customers 补 13 档案列——customer_profile 旧代码引用 model 精简前字段，一并补回）
 3. ✅ audit.rs 附项（用户确认纳入）：3 处查询改指 public.audit_logs（15 列标准与 AuditLog 模型一致）+ user_id::text cast + SELECT 补 tenant_id
 4. ✅ 重挂 6 模块（mod.rs 取消注释 + merge）：customer_profile/customer_scoring/customer_segmentation/customer_recommendation/sales_forecast/sales_funnel；路由经核对与已挂载 forecast/rfm/scoring_logic/sales_funnel_logic 无冲突；修复 36 个编译错误（模型同步：Customer +13 字段、models/mod.rs re-export、customer.rs SELECT/RETURNING 列补全、customer_profile 类型修正）
-5. ⏳ 验证：cargo check 0 error、schema-boundary PASS、cargo test 499 passed / 1 DB 集成测试因本地 postgres 未启动失败（环境缺口）
+5. ✅ 验证闭环（2026-09-08 实跑，commit 7221d9593）：迁移在本地 postgres(localhost:5432/topems) 全量实跑——5 个 09 建表迁移 Applied（0802/0803/0804/0805/0806），crm schema 22 张表（含 billing_records/sales_orders）；顺带修复 0802 存量库兼容（bank_accounts 补 is_default 列）+ 测试迁移 0001 补 13 档案列 + RLS 测试 RETURNING 补列；cargo test **500/500 全绿**（原环境缺口 customer_isolated_by_tenant 已通过）
 2. 精确定稿 16 表 DDL（按 bind 类型）（1 天）
 3. 迁移 + 重挂 6 模块 + openapi（0.5 天）
 4. cargo check + 门禁 + smoke（0.5 天）
