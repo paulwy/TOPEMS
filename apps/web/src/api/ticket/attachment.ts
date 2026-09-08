@@ -40,21 +40,21 @@ export interface UploadAttachmentRequest {
 
 export const attachmentApi = {
   listAttachments: async (ticketId: string): Promise<ApiResponse<TicketAttachment[]>> => {
-    return apiClient.portal.get(`/tickets/${ticketId}/attachments`);
+    return apiClient.ticket.get(`/tickets/${ticketId}/attachments`);
   },
 
   getAttachment: async (
     ticketId: string,
     attachmentId: string
   ): Promise<ApiResponse<TicketAttachment>> => {
-    return apiClient.portal.get(`/tickets/${ticketId}/attachments/${attachmentId}`);
+    return apiClient.ticket.get(`/tickets/${ticketId}/attachments/${attachmentId}`);
   },
 
   uploadAttachment: async (
     ticketId: string,
     data: UploadAttachmentRequest | FormData
   ): Promise<ApiResponse<TicketAttachment>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/attachments`, data);
+    return apiClient.ticket.post(`/tickets/${ticketId}/attachments`, data);
   },
 
   updateAttachment: async (
@@ -62,18 +62,18 @@ export const attachmentApi = {
     attachmentId: string,
     data: { description?: string; is_private?: boolean }
   ): Promise<ApiResponse<TicketAttachment>> => {
-    return apiClient.portal.put(`/tickets/${ticketId}/attachments/${attachmentId}`, data);
+    return apiClient.ticket.put(`/tickets/${ticketId}/attachments/${attachmentId}`, data);
   },
 
   deleteAttachment: async (
     ticketId: string,
     attachmentId: string
   ): Promise<ApiResponse<{ deleted: boolean }>> => {
-    return apiClient.portal.delete(`/tickets/${ticketId}/attachments/${attachmentId}`);
+    return apiClient.ticket.delete(`/tickets/${ticketId}/attachments/${attachmentId}`);
   },
 
   downloadAttachment: async (ticketId: string, attachmentId: string): Promise<Blob> => {
-    const response = await apiClient.portal.get(
+    const response = await apiClient.ticket.get(
       `/tickets/${ticketId}/attachments/${attachmentId}/download`,
       { responseType: 'blob' }
     );
@@ -84,7 +84,7 @@ export const attachmentApi = {
     ticketId: string,
     files: UploadAttachmentRequest[]
   ): Promise<ApiResponse<TicketAttachment[]>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/attachments/batch`, {
+    return apiClient.ticket.post(`/tickets/${ticketId}/attachments/batch`, {
       files,
     });
   },
@@ -93,7 +93,7 @@ export const attachmentApi = {
     ticketId: string,
     attachmentIds: string[]
   ): Promise<ApiResponse<{ deleted_count: number }>> => {
-    return apiClient.portal.delete(`/tickets/${ticketId}/attachments/batch`, {
+    return apiClient.ticket.delete(`/tickets/${ticketId}/attachments/batch`, {
       data: { ids: attachmentIds },
     });
   },
@@ -102,7 +102,7 @@ export const attachmentApi = {
     ticketId: string,
     fileType: string
   ): Promise<ApiResponse<TicketAttachment[]>> => {
-    return apiClient.portal.get(`/tickets/${ticketId}/attachments`, {
+    return apiClient.ticket.get(`/tickets/${ticketId}/attachments`, {
       params: { file_type: fileType },
     });
   },
@@ -110,7 +110,7 @@ export const attachmentApi = {
   getAttachmentCount: async (
     ticketId: string
   ): Promise<ApiResponse<{ count: number; total_size: number }>> => {
-    return apiClient.portal.get(`/tickets/${ticketId}/attachments/stats`);
+    return apiClient.ticket.get(`/tickets/${ticketId}/attachments/stats`);
   },
 };
 

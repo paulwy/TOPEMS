@@ -60,18 +60,18 @@ export type { BatchResult } from './batch';
 export const ticketApi = {
   // 基础工单操作（推荐通过 BFF）
   listTickets: (query?: TicketQuery) =>
-    apiClient.portal.get<{ data: TicketListResponse }>('/tickets', { params: query }),
+    apiClient.ticket.get<{ data: TicketListResponse }>('/tickets', { params: query }),
 
-  getTicket: (id: string) => apiClient.portal.get<{ data: Ticket }>(`/tickets/${id}`),
+  getTicket: (id: string) => apiClient.ticket.get<{ data: Ticket }>(`/tickets/${id}`),
 
   createTicket: (data: CreateTicketRequest) =>
-    apiClient.portal.post<{ data: Ticket }>('/tickets', data),
+    apiClient.ticket.post<{ data: Ticket }>('/tickets', data),
 
   updateTicket: (id: string, data: UpdateTicketRequest) =>
-    apiClient.portal.put<{ data: Ticket }>(`/tickets/${id}`, data),
+    apiClient.ticket.put<{ data: Ticket }>(`/tickets/${id}`, data),
 
   deleteTicket: (id: string) =>
-    apiClient.portal.delete<{ data: { deleted: boolean } }>(`/tickets/${id}`),
+    apiClient.ticket.delete<{ data: { deleted: boolean } }>(`/tickets/${id}`),
 
   getStats: dashboardApi.getStats,
 

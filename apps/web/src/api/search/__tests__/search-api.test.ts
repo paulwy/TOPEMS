@@ -4,10 +4,10 @@ import { searchApi } from '../index';
 import apiClient from '@/api/client';
 
 vi.mock('@/api/client', () => {
-  const portalGetMock = vi.fn();
+  const searchGetMock = vi.fn();
   const apiClient = {
-    portal: {
-      get: portalGetMock,
+    search: {
+      get: searchGetMock,
       post: vi.fn(),
       put: vi.fn(),
       delete: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('@/api/client', () => {
   return {
     default: apiClient,
     apiClient,
-    __portalGetMock: portalGetMock,
+    __searchGetMock: searchGetMock,
   };
 });
 
@@ -37,7 +37,7 @@ describe('searchApi.globalSearch', () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     vi.clearAllMocks();
-    vi.mocked(apiClient.portal.get).mockResolvedValue({
+    vi.mocked(apiClient.search.get).mockResolvedValue({
       success: true,
       code: 200,
       message: 'ok',
@@ -98,11 +98,11 @@ describe('searchApi.globalSearch', () => {
       timestamp: Date.now(),
     };
 
-    vi.mocked(apiClient.portal.get).mockResolvedValue(mockResponse);
+    vi.mocked(apiClient.search.get).mockResolvedValue(mockResponse);
 
     const result = await searchApi.globalSearch('test', 10);
 
-    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=10', {
+    expect(apiClient.search.get).toHaveBeenCalledWith('/?q=test&limit=10', {
       signal: undefined,
     });
     expect(result).toEqual(mockResponse);
@@ -117,12 +117,12 @@ describe('searchApi.globalSearch', () => {
       timestamp: Date.now(),
     };
 
-    vi.mocked(apiClient.portal.get).mockResolvedValue(mockResponse);
+    vi.mocked(apiClient.search.get).mockResolvedValue(mockResponse);
 
     const controller = new AbortController();
     await searchApi.globalSearch('test', 10, controller.signal);
 
-    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=10', {
+    expect(apiClient.search.get).toHaveBeenCalledWith('/?q=test&limit=10', {
       signal: controller.signal,
     });
   });
@@ -130,13 +130,13 @@ describe('searchApi.globalSearch', () => {
   it('should use default limit of 20', async () => {
     await searchApi.globalSearch('test');
 
-    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=20', {
+    expect(apiClient.search.get).toHaveBeenCalledWith('/?q=test&limit=20', {
       signal: undefined,
     });
   });
 
   it('should throw error when API call fails', async () => {
-    vi.mocked(apiClient.portal.get).mockRejectedValue(new Error('Network error'));
+    vi.mocked(apiClient.search.get).mockRejectedValue(new Error('Network error'));
 
     await expect(searchApi.globalSearch('test')).rejects.toThrow('Network error');
   });
@@ -145,7 +145,7 @@ describe('searchApi.globalSearch', () => {
     const abortError = new Error('AbortError');
     abortError.name = 'AbortError';
 
-    vi.mocked(apiClient.portal.get).mockRejectedValue(abortError);
+    vi.mocked(apiClient.search.get).mockRejectedValue(abortError);
 
     await expect(searchApi.globalSearch('test', 10, new AbortController().signal)).rejects.toThrow(
       'AbortError'

@@ -65,49 +65,49 @@ export interface SendWithTemplateRequest {
 
 const mailApi = {
   listEmails: async (): Promise<ApiResponse<Email[]>> => {
-    return apiClient.notification.get('/mail/emails');
+    return apiClient.mail.get('emails');
   },
 
   getEmail: async (id: string): Promise<ApiResponse<Email>> => {
-    return apiClient.notification.get(`/mail/emails/${id}`);
+    return apiClient.mail.get(`emails/${id}`);
   },
 
   sendEmail: async (data: SendEmailRequest): Promise<ApiResponse<Email>> => {
-    return apiClient.notification.post('/mail/emails', data);
+    return apiClient.mail.post('emails', data);
   },
 
   markEmailAsRead: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.notification.post(`/mail/emails/${id}/read`);
+    return apiClient.mail.post(`emails/${id}/read`);
   },
 
   deleteEmail: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.notification.delete(`/mail/emails/${id}`);
+    return apiClient.mail.delete(`emails/${id}`);
   },
 
   listTemplates: async (): Promise<ApiResponse<EmailTemplate[]>> => {
-    return apiClient.notification.get('/mail/templates');
+    return apiClient.mail.get('templates');
   },
 
   getTemplate: async (id: string): Promise<ApiResponse<EmailTemplate>> => {
-    return apiClient.notification.get(`/mail/templates/${id}`);
+    return apiClient.mail.get(`templates/${id}`);
   },
 
   createTemplate: async (data: CreateEmailTemplateRequest): Promise<ApiResponse<EmailTemplate>> => {
-    return apiClient.notification.post('/mail/templates', data);
+    return apiClient.mail.post('templates', data);
   },
 
   updateTemplate: async (
     id: string,
     data: UpdateEmailTemplateRequest
   ): Promise<ApiResponse<EmailTemplate>> => {
-    return apiClient.notification.put(`/mail/templates/${id}`, data);
+    return apiClient.mail.put(`templates/${id}`, data);
   },
 
   sendWithTemplate: async (
     id: string,
     data: SendWithTemplateRequest
   ): Promise<ApiResponse<Email>> => {
-    return apiClient.notification.post(`/mail/templates/${id}/send`, data);
+    return apiClient.mail.post(`templates/${id}/send`, data);
   },
 };
 

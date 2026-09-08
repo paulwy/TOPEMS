@@ -150,53 +150,53 @@ export interface PinMessageRequest {
 
 export const imApi = {
   listRooms: async (): Promise<ApiResponse<ChatRoom[]>> => {
-    return apiClient.notification.get('/im/rooms');
+    return apiClient.im.get('rooms');
   },
 
   getRoom: async (id: string): Promise<ApiResponse<ChatRoom>> => {
-    return apiClient.notification.get(`/im/rooms/${id}`);
+    return apiClient.im.get(`rooms/${id}`);
   },
 
   createRoom: async (data: CreateRoomRequest): Promise<ApiResponse<ChatRoom>> => {
-    return apiClient.notification.post('/im/rooms', data);
+    return apiClient.im.post('rooms', data);
   },
 
   updateRoom: async (id: string, data: UpdateRoomRequest): Promise<ApiResponse<ChatRoom>> => {
-    return apiClient.notification.put(`/im/rooms/${id}`, data);
+    return apiClient.im.put(`rooms/${id}`, data);
   },
 
   deleteRoom: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.notification.delete(`/im/rooms/${id}`);
+    return apiClient.im.delete(`rooms/${id}`);
   },
 
   getRoomMessages: async (id: string): Promise<ApiResponse<ChatMessage[]>> => {
-    return apiClient.notification.get(`/im/rooms/${id}/messages`);
+    return apiClient.im.get(`rooms/${id}/messages`);
   },
 
   sendMessage: async (id: string, data: SendMessageRequest): Promise<ApiResponse<ChatMessage>> => {
-    return apiClient.notification.post(`/im/rooms/${id}/messages`, data);
+    return apiClient.im.post(`rooms/${id}/messages`, data);
   },
 
   searchRooms: async (query?: string): Promise<ApiResponse<ChatRoom[]>> => {
-    return apiClient.notification.get('/im/rooms/search', {
+    return apiClient.im.get('rooms/search', {
       params: { query },
     });
   },
 
   searchMessages: async (id: string, query?: string): Promise<ApiResponse<ChatMessage[]>> => {
-    return apiClient.notification.get(`/im/rooms/${id}/messages/search`, { params: { query } });
+    return apiClient.im.get(`rooms/${id}/messages/search`, { params: { query } });
   },
 
   listRoomMembers: async (id: string): Promise<ApiResponse<ChatMember[]>> => {
-    return apiClient.notification.get(`/im/rooms/${id}/members`);
+    return apiClient.im.get(`rooms/${id}/members`);
   },
 
   addMember: async (id: string, data: AddMemberRequest): Promise<ApiResponse<void>> => {
-    return apiClient.notification.post(`/im/rooms/${id}/members`, data);
+    return apiClient.im.post(`rooms/${id}/members`, data);
   },
 
   removeMember: async (id: string, data: { user_id: string }): Promise<ApiResponse<void>> => {
-    return apiClient.notification.delete(`/im/rooms/${id}/members`, {
+    return apiClient.im.delete(`rooms/${id}/members`, {
       data,
     });
   },
@@ -205,82 +205,82 @@ export const imApi = {
     id: string,
     data: UpdateMessageRequest
   ): Promise<ApiResponse<ChatMessage>> => {
-    return apiClient.notification.put(`/im/messages/${id}`, data);
+    return apiClient.im.put(`messages/${id}`, data);
   },
 
   deleteMessage: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.notification.delete(`/im/messages/${id}`);
+    return apiClient.im.delete(`messages/${id}`);
   },
 
   markMessagesRead: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.notification.post(`/im/rooms/${id}/read`);
+    return apiClient.im.post(`rooms/${id}/read`);
   },
 
   muteRoom: async (id: string, data: MuteRoomRequest): Promise<ApiResponse<void>> => {
-    return apiClient.notification.post(`/im/rooms/${id}/mute`, data);
+    return apiClient.im.post(`rooms/${id}/mute`, data);
   },
 
   pinMessage: async (id: string, data: PinMessageRequest): Promise<ApiResponse<void>> => {
-    return apiClient.notification.post(`/im/rooms/${id}/pin`, data);
+    return apiClient.im.post(`rooms/${id}/pin`, data);
   },
 
   listContacts: async (): Promise<ApiResponse<Contact[]>> => {
-    return apiClient.notification.get('/im/contacts');
+    return apiClient.im.get('contacts');
   },
 
   getContact: async (id: string): Promise<ApiResponse<Contact>> => {
-    return apiClient.notification.get(`/im/contacts/${id}`);
+    return apiClient.im.get(`contacts/${id}`);
   },
 
   addContact: async (data: AddContactRequest): Promise<ApiResponse<Contact>> => {
-    return apiClient.notification.post('/im/contacts', data);
+    return apiClient.im.post('contacts', data);
   },
 
   updateContact: async (id: string, data: UpdateContactRequest): Promise<ApiResponse<Contact>> => {
-    return apiClient.notification.put(`/im/contacts/${id}`, data);
+    return apiClient.im.put(`contacts/${id}`, data);
   },
 
   removeContact: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.notification.delete(`/im/contacts/${id}`);
+    return apiClient.im.delete(`contacts/${id}`);
   },
 
   getOnlineStatus: async (userId: string): Promise<ApiResponse<OnlineStatus>> => {
-    return apiClient.notification.get(`/im/online-status/${userId}`);
+    return apiClient.im.get(`online-status/${userId}`);
   },
 
   listImNotifications: async (userId: string): Promise<ApiResponse<ImNotification[]>> => {
-    return apiClient.notification.get(`/im/notifications/${userId}`);
+    return apiClient.im.get(`notifications/${userId}`);
   },
 
   listContactGroups: async (): Promise<ApiResponse<ContactGroup[]>> => {
-    return apiClient.notification.get('/im/contact-groups');
+    return apiClient.im.get('contact-groups');
   },
 
   createContactGroup: async (
     data: CreateContactGroupRequest
   ): Promise<ApiResponse<ContactGroup>> => {
-    return apiClient.notification.post('/im/contact-groups', data);
+    return apiClient.im.post('contact-groups', data);
   },
 
   updateContactGroup: async (
     id: string,
     data: UpdateContactGroupRequest
   ): Promise<ApiResponse<ContactGroup>> => {
-    return apiClient.notification.put(`/im/contact-groups/${id}`, data);
+    return apiClient.im.put(`contact-groups/${id}`, data);
   },
 
   deleteContactGroup: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.notification.delete(`/im/contact-groups/${id}`);
+    return apiClient.im.delete(`contact-groups/${id}`);
   },
 
   listProjectGroups: async (): Promise<ApiResponse<ProjectGroup[]>> => {
-    return apiClient.notification.get('/im/project-groups');
+    return apiClient.im.get('project-groups');
   },
 
   createProjectGroup: async (
     data: CreateProjectGroupRequest
   ): Promise<ApiResponse<ProjectGroup>> => {
-    return apiClient.notification.post('/im/project-groups', data);
+    return apiClient.im.post('project-groups', data);
   },
 };
 

@@ -105,23 +105,23 @@ export const dictTypeApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.core.get(`/dict/dict-types${queryString ? `?${queryString}` : ''}`);
+    return apiClient.master.get(`/dict/dict-types${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<DictType>> {
-    return apiClient.core.get(`/dict/dict-types/${id}`);
+    return apiClient.master.get(`/dict/dict-types/${id}`);
   },
 
   async create(data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.core.post('/dict/dict-types', data);
+    return apiClient.master.post('/dict/dict-types', data);
   },
 
   async update(id: string, data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.core.put(`/dict/dict-types/${id}`, data);
+    return apiClient.master.put(`/dict/dict-types/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.core.delete(`/dict/dict-types/${id}`);
+    return apiClient.master.delete(`/dict/dict-types/${id}`);
   },
 };
 
@@ -147,27 +147,27 @@ export const dictItemApi = {
   },
 
   async get(id: string): Promise<ApiResponse<DictItem>> {
-    return apiClient.core.get(`/dict/dict-items/${id}`);
+    return apiClient.master.get(`/dict/dict-items/${id}`);
   },
 
   async create(data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.core.post('/dict/dict-items', data);
+    return apiClient.master.post('/dict/dict-items', data);
   },
 
   async update(id: string, data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.core.put(`/dict/dict-items/${id}`, data);
+    return apiClient.master.put(`/dict/dict-items/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.core.delete(`/dict/dict-items/${id}`);
+    return apiClient.master.delete(`/dict/dict-items/${id}`);
   },
 
   async batchCreate(data: BatchCreateDictItemRequest): Promise<ApiResponse<DictItem[]>> {
-    return apiClient.core.post('/dict/dict-items/batch', data);
+    return apiClient.master.post('/dict/dict-items/batch', data);
   },
 
   async export(dictTypeId: string): Promise<string> {
-    const response = await apiClient.core.get(`/dict/dict-types/${dictTypeId}/items/export`, {
+    const response = await apiClient.master.get(`/dict/dict-types/${dictTypeId}/items/export`, {
       responseType: 'text',
     });
     return response.data;
@@ -184,25 +184,25 @@ export const dbStructureApi = {
     if (params?.search) searchParams.set('search', params.search);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/system/db/tables${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/db/tables${queryString ? `?${queryString}` : ''}`);
   },
 
   async getTableDetail(tableName: string): Promise<ApiResponse<TableDetail>> {
-    return apiClient.erp.get(`/system/db/tables/${tableName}`);
+    return apiClient.erp.get(`/db/tables/${tableName}`);
   },
 
   async previewAddColumn(data: {
     table_name: string;
     column: DbColumnDefinition;
   }): Promise<ApiResponse<SqlPreview>> {
-    return apiClient.erp.post('/system/db/columns/preview', data);
+    return apiClient.erp.post('/db/columns/preview', data);
   },
 
   async addColumn(data: {
     table_name: string;
     column: DbColumnDefinition;
   }): Promise<ApiResponse<string>> {
-    return apiClient.erp.post('/system/db/columns', data);
+    return apiClient.erp.post('/db/columns', data);
   },
 
   async modifyColumn(
@@ -210,7 +210,7 @@ export const dbStructureApi = {
     columnName: string,
     column: DbColumnDefinition
   ): Promise<ApiResponse<string>> {
-    return apiClient.erp.put(`/system/db/columns/${tableName}/${columnName}`, {
+    return apiClient.erp.put(`/db/columns/${tableName}/${columnName}`, {
       table_name: tableName,
       column_name: columnName,
       column,
@@ -218,7 +218,7 @@ export const dbStructureApi = {
   },
 
   async dropColumn(tableName: string, columnName: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/system/db/columns/${tableName}/${columnName}`);
+    return apiClient.erp.delete(`/db/columns/${tableName}/${columnName}`);
   },
 
   async listChanges(
@@ -230,7 +230,7 @@ export const dbStructureApi = {
     if (params?.table_name) searchParams.set('table_name', params.table_name);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/system/db/changes${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/db/changes${queryString ? `?${queryString}` : ''}`);
   },
 };
 

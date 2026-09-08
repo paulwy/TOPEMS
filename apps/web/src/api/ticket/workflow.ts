@@ -86,18 +86,18 @@ export const workflowApi = {
   // ==================== 工单流转 ====================
 
   listTransitions: async (ticketId: string): Promise<ApiResponse<TicketTransition[]>> => {
-    return apiClient.portal.get(`/tickets/${ticketId}/transitions`);
+    return apiClient.ticket.get(`/tickets/${ticketId}/transitions`);
   },
 
   performTransition: async (
     ticketId: string,
     data: CreateTicketTransitionRequest
   ): Promise<ApiResponse<Ticket>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/transition`, data);
+    return apiClient.ticket.post(`/tickets/${ticketId}/transition`, data);
   },
 
   approveTicket: async (ticketId: string, comment?: string): Promise<ApiResponse<Ticket>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/transition`, {
+    return apiClient.ticket.post(`/tickets/${ticketId}/transition`, {
       action: 'approve',
       to_status: 'in_progress',
       reason: comment,
@@ -105,7 +105,7 @@ export const workflowApi = {
   },
 
   rejectTicket: async (ticketId: string, reason: string): Promise<ApiResponse<Ticket>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/transition`, {
+    return apiClient.ticket.post(`/tickets/${ticketId}/transition`, {
       action: 'reject',
       to_status: 'closed',
       reason,
@@ -113,7 +113,7 @@ export const workflowApi = {
   },
 
   escalateTicket: async (ticketId: string, reason?: string): Promise<ApiResponse<Ticket>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/transition`, {
+    return apiClient.ticket.post(`/tickets/${ticketId}/transition`, {
       action: 'escalate',
       to_status: 'escalated',
       reason,
@@ -125,7 +125,7 @@ export const workflowApi = {
     assigneeId: string,
     reason?: string
   ): Promise<ApiResponse<Ticket>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/transition`, {
+    return apiClient.ticket.post(`/tickets/${ticketId}/transition`, {
       action: 'reassign',
       to_status: 'pending',
       assignee_id: assigneeId,
@@ -138,45 +138,45 @@ export const workflowApi = {
   listWorkflows: async (ticketType?: string): Promise<ApiResponse<TicketWorkflow[]>> => {
     const params: Record<string, string> = {};
     if (ticketType) params.ticket_type = ticketType;
-    return apiClient.portal.get('/workflows', { params });
+    return apiClient.ticket.get('/workflows', { params });
   },
 
   getWorkflow: async (id: string): Promise<ApiResponse<TicketWorkflow>> => {
-    return apiClient.portal.get(`/workflows/${id}`);
+    return apiClient.ticket.get(`/workflows/${id}`);
   },
 
   createWorkflow: async (data: CreateWorkflowRequest): Promise<ApiResponse<TicketWorkflow>> => {
-    return apiClient.portal.post('/workflows', data);
+    return apiClient.ticket.post('/workflows', data);
   },
 
   updateWorkflow: async (
     id: string,
     data: Partial<CreateWorkflowRequest>
   ): Promise<ApiResponse<TicketWorkflow>> => {
-    return apiClient.portal.put(`/workflows/${id}`, data);
+    return apiClient.ticket.put(`/workflows/${id}`, data);
   },
 
   deleteWorkflow: async (id: string): Promise<ApiResponse<{ deleted: boolean }>> => {
-    return apiClient.portal.delete(`/workflows/${id}`);
+    return apiClient.ticket.delete(`/workflows/${id}`);
   },
 
   listWorkflowTransitions: async (
     workflowId: string
   ): Promise<ApiResponse<WorkflowTransition[]>> => {
-    return apiClient.portal.get(`/workflows/${workflowId}/transitions`);
+    return apiClient.ticket.get(`/workflows/${workflowId}/transitions`);
   },
 
   addWorkflowTransition: async (
     workflowId: string,
     transition: Omit<WorkflowTransition, 'id'>
   ): Promise<ApiResponse<WorkflowTransition>> => {
-    return apiClient.portal.post(`/workflows/${workflowId}/transitions`, transition);
+    return apiClient.ticket.post(`/workflows/${workflowId}/transitions`, transition);
   },
 
   getWorkflowForTicketType: async (
     ticketType: string
   ): Promise<ApiResponse<TicketWorkflow | null>> => {
-    return apiClient.portal.get('/workflows/match', {
+    return apiClient.ticket.get('/workflows/match', {
       params: { ticket_type: ticketType },
     });
   },
@@ -188,11 +188,11 @@ export const workflowApi = {
       Array<{ id: string; name: string; trigger: string; action: string; is_active: boolean }>
     >
   > => {
-    return apiClient.portal.get('/workflows/automation-rules');
+    return apiClient.ticket.get('/workflows/automation-rules');
   },
 
   toggleAutomationRule: async (id: string, isActive: boolean): Promise<ApiResponse<void>> => {
-    return apiClient.portal.put(`/workflows/automation-rules/${id}/toggle`, {
+    return apiClient.ticket.put(`/workflows/automation-rules/${id}/toggle`, {
       is_active: isActive,
     });
   },

@@ -22,11 +22,11 @@ export const auditLogApi = {
     if (params?.success !== undefined) queryParams.append('success', params.success.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    return apiClient.erp.get<PaginatedAuditLogs>(`/system/audit-logs?${queryParams.toString()}`);
+    return apiClient.erp.get<PaginatedAuditLogs>(`/audit-logs?${queryParams.toString()}`);
   },
 
   getAuditLog: async (id: string): Promise<ApiResponse<AuditLog>> => {
-    return apiClient.erp.get<AuditLog>(`/system/audit-logs/${id}`);
+    return apiClient.erp.get<AuditLog>(`/audit-logs/${id}`);
   },
 
   exportAuditLogs: async (params?: AuditLogQueryParams): Promise<Blob> => {
@@ -39,12 +39,9 @@ export const auditLogApi = {
     if (params?.success !== undefined) queryParams.append('success', params.success.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.erp.get(
-      `/system/audit-logs/export?${queryParams.toString()}`,
-      {
-        responseType: 'blob',
-      }
-    );
+    const response = await apiClient.erp.get(`/audit-logs/export?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
     return response.data as unknown as Blob;
   },
 
@@ -58,9 +55,7 @@ export const auditLogApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
     if (params?.group_by) queryParams.append('group_by', params.group_by);
 
-    return apiClient.erp.get<Record<string, number>>(
-      `/system/audit-logs/stats?${queryParams.toString()}`
-    );
+    return apiClient.erp.get<Record<string, number>>(`/audit-logs/stats?${queryParams.toString()}`);
   },
 };
 

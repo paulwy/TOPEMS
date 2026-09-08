@@ -9,7 +9,7 @@ import type {
 } from './types';
 
 // V64: /api/v1/ 前缀已废弃，统一使用 /api/core/plugin（与 moduleMapping 对齐）
-const API_BASE = '/api/core/plugin';
+const API_BASE = '/api/plugin';
 
 export const pluginApi = {
   listMarketplace: async (): Promise<ApiResponse<Plugin[]>> => {

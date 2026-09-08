@@ -36,14 +36,14 @@ export const searchApi = {
     const searchParams = new URLSearchParams();
     searchParams.set('q', query);
     searchParams.set('limit', limit.toString());
-    return apiClient.portal.get(`/search?${searchParams.toString()}`, { signal });
+    return apiClient.search.get(`/?${searchParams.toString()}`, { signal });
   },
 
   async getSuggestions(
     query: string,
     signal?: AbortSignal
   ): Promise<ApiResponse<SearchSuggestionsResponse>> {
-    return apiClient.portal.get(`/search/suggestions?q=${encodeURIComponent(query)}`, { signal });
+    return apiClient.search.get(`/suggestions?q=${encodeURIComponent(query)}`, { signal });
   },
 };
 

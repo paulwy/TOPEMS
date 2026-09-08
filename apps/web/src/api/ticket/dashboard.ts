@@ -50,43 +50,43 @@ interface AssigneeLoad {
 
 export const dashboardApi = {
   getStats: async () => {
-    return apiClient.portal.get<{ data: TicketStats }>('/tickets/stats');
+    return apiClient.ticket.get<{ data: TicketStats }>('/tickets/stats');
   },
 
   getSlaStats: async () => {
-    return apiClient.portal.get<{ data: TicketSlaStats }>('/tickets/sla-stats');
+    return apiClient.ticket.get<{ data: TicketSlaStats }>('/tickets/sla-stats');
   },
 
   getSummary: async () => {
-    return apiClient.portal.get<{ data: DashboardSummary }>('/tickets/dashboard/summary');
+    return apiClient.ticket.get<{ data: DashboardSummary }>('/tickets/dashboard/summary');
   },
 
   getTrend: async (params?: { days?: number; from?: string; to?: string }) => {
-    return apiClient.portal.get<{ data: TrendPoint[] }>('/tickets/dashboard/trend', {
+    return apiClient.ticket.get<{ data: TrendPoint[] }>('/tickets/dashboard/trend', {
       params,
     });
   },
 
   getBySeverity: async () => {
-    return apiClient.portal.get<{
+    return apiClient.ticket.get<{
       data: Array<{ severity: string; count: number; breached: number }>;
     }>('/tickets/dashboard/by-severity');
   },
 
   getByType: async () => {
-    return apiClient.portal.get<{
+    return apiClient.ticket.get<{
       data: Array<{ ticket_type: string; count: number; open: number; resolved: number }>;
     }>('/tickets/dashboard/by-type');
   },
 
   getBySource: async () => {
-    return apiClient.portal.get<{ data: Array<{ source_service: string; count: number }> }>(
+    return apiClient.ticket.get<{ data: Array<{ source_service: string; count: number }> }>(
       '/tickets/dashboard/by-source'
     );
   },
 
   getSlaOverview: async () => {
-    return apiClient.portal.get<{
+    return apiClient.ticket.get<{
       data: {
         total: number;
         on_time: number;
@@ -99,11 +99,11 @@ export const dashboardApi = {
   },
 
   getAssigneeLoad: async () => {
-    return apiClient.portal.get<{ data: AssigneeLoad[] }>('/tickets/dashboard/assignee-load');
+    return apiClient.ticket.get<{ data: AssigneeLoad[] }>('/tickets/dashboard/assignee-load');
   },
 
   getMyDashboard: async () => {
-    return apiClient.portal.get<{
+    return apiClient.ticket.get<{
       data: {
         my_open: number;
         my_in_progress: number;
@@ -114,13 +114,13 @@ export const dashboardApi = {
   },
 
   searchTickets: async (query: string, params?: TicketQuery) => {
-    return apiClient.portal.get<{ data: TicketListResponse }>('/tickets/search', {
+    return apiClient.ticket.get<{ data: TicketListResponse }>('/tickets/search', {
       params: { q: query, ...params },
     });
   },
 
   exportTickets: async (params?: TicketQuery & { format?: 'csv' | 'xlsx' }) => {
-    return apiClient.portal.post<{ data: { url: string } }>('/tickets/export', { params });
+    return apiClient.ticket.post<{ data: { url: string } }>('/tickets/export', { params });
   },
 };
 

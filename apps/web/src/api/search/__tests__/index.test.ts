@@ -3,10 +3,10 @@ import { searchApi } from '../index';
 import apiClient from '@/api/client';
 
 vi.mock('@/api/client', () => {
-  const portalGetMock = vi.fn();
+  const searchGetMock = vi.fn();
   const apiClient = {
-    portal: {
-      get: portalGetMock,
+    search: {
+      get: searchGetMock,
       post: vi.fn(),
       put: vi.fn(),
       delete: vi.fn(),
@@ -26,14 +26,14 @@ vi.mock('@/api/client', () => {
   return {
     default: apiClient,
     apiClient,
-    __portalGetMock: portalGetMock,
+    __searchGetMock: searchGetMock,
   };
 });
 
 describe('searchApi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(apiClient.portal.get).mockResolvedValue({
+    vi.mocked(apiClient.search.get).mockResolvedValue({
       success: true,
       code: 200,
       message: 'ok',
@@ -71,8 +71,8 @@ describe('searchApi', () => {
       expect(result.success).toBe(true);
       expect(result.data.results).toHaveLength(1);
       expect(result.data.results[0].title).toBe('API Result');
-      expect(apiClient.portal.get).toHaveBeenCalledWith(
-        '/search?q=test&limit=20',
+      expect(apiClient.search.get).toHaveBeenCalledWith(
+        '/?q=test&limit=20',
         expect.objectContaining({})
       );
     });
@@ -82,8 +82,8 @@ describe('searchApi', () => {
 
       await searchApi.globalSearch('test', 10, abortController.signal);
 
-      expect(apiClient.portal.get).toHaveBeenCalledWith(
-        '/search?q=test&limit=10',
+      expect(apiClient.search.get).toHaveBeenCalledWith(
+        '/?q=test&limit=10',
         expect.objectContaining({
           signal: abortController.signal,
         })
@@ -91,7 +91,7 @@ describe('searchApi', () => {
     });
 
     it('should call API with correct query and limit params', async () => {
-      vi.mocked(apiClient.portal.get).mockResolvedValue({
+      vi.mocked(apiClient.search.get).mockResolvedValue({
         success: true,
         code: 200,
         message: 'ok',
@@ -101,20 +101,17 @@ describe('searchApi', () => {
 
       await searchApi.globalSearch('myquery', 50);
 
-      expect(apiClient.portal.get).toHaveBeenCalledWith(
-        '/search?q=myquery&limit=50',
-        expect.any(Object)
-      );
+      expect(apiClient.search.get).toHaveBeenCalledWith('/?q=myquery&limit=50', expect.any(Object));
     });
 
     it('should reject promise on API error (bubbles up)', async () => {
-      vi.mocked(apiClient.portal.get).mockRejectedValue(new Error('Network error'));
+      vi.mocked(apiClient.search.get).mockRejectedValue(new Error('Network error'));
 
       await expect(searchApi.globalSearch('test')).rejects.toThrow('Network error');
     });
 
     it('should return empty query if provided (API is still called)', async () => {
-      vi.mocked(apiClient.portal.get).mockResolvedValue({
+      vi.mocked(apiClient.search.get).mockResolvedValue({
         success: true,
         code: 200,
         message: 'ok',
@@ -126,16 +123,13 @@ describe('searchApi', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.results).toEqual([]);
-      expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=&limit=20', expect.any(Object));
+      expect(apiClient.search.get).toHaveBeenCalledWith('/?q=&limit=20', expect.any(Object));
     });
 
     it('should accept custom limit', async () => {
       await searchApi.globalSearch('keyword', 50);
 
-      expect(apiClient.portal.get).toHaveBeenCalledWith(
-        '/search?q=keyword&limit=50',
-        expect.any(Object)
-      );
+      expect(apiClient.search.get).toHaveBeenCalledWith('/?q=keyword&limit=50', expect.any(Object));
     });
   });
 });

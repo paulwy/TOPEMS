@@ -51,7 +51,7 @@ export const batchApi = {
   // ==================== 批量操作 ====================
 
   batchUpdate: async (data: BatchUpdateRequest): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.portal.post('/tickets/batch-update', data);
+    return apiClient.ticket.post('/tickets/batch-update', data);
   },
 
   batchAssign: async (
@@ -59,7 +59,7 @@ export const batchApi = {
     assigneeId: string,
     reason?: string
   ): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.portal.post('/tickets/batch-assign', {
+    return apiClient.ticket.post('/tickets/batch-assign', {
       ids: ticketIds,
       assignee_id: assigneeId,
       reason,
@@ -67,14 +67,14 @@ export const batchApi = {
   },
 
   batchClose: async (ticketIds: string[], reason?: string): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.portal.post('/tickets/batch-close', {
+    return apiClient.ticket.post('/tickets/batch-close', {
       ids: ticketIds,
       reason,
     });
   },
 
   batchDelete: async (ticketIds: string[]): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.portal.delete('/tickets/batch-delete', {
+    return apiClient.ticket.delete('/tickets/batch-delete', {
       data: { ids: ticketIds },
     });
   },
@@ -83,7 +83,7 @@ export const batchApi = {
     ticketIds: string[],
     reason?: string
   ): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.portal.post('/tickets/batch-escalate', {
+    return apiClient.ticket.post('/tickets/batch-escalate', {
       ids: ticketIds,
       reason,
     });
@@ -93,14 +93,14 @@ export const batchApi = {
     ticketIds: string[],
     priority: string
   ): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.portal.post('/tickets/batch-update', {
+    return apiClient.ticket.post('/tickets/batch-update', {
       ids: ticketIds,
       priority,
     });
   },
 
   batchAddTags: async (ticketIds: string[], tags: string[]): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.portal.post('/tickets/batch-update', {
+    return apiClient.ticket.post('/tickets/batch-update', {
       ids: ticketIds,
       tags,
     });
@@ -109,7 +109,7 @@ export const batchApi = {
   // ==================== 标签管理 ====================
 
   listTags: async (): Promise<ApiResponse<TicketTag[]>> => {
-    return apiClient.portal.get('/ticket-tags');
+    return apiClient.ticket.get('/ticket-tags');
   },
 
   createTag: async (data: {
@@ -117,35 +117,35 @@ export const batchApi = {
     color?: string;
     description?: string;
   }): Promise<ApiResponse<TicketTag>> => {
-    return apiClient.portal.post('/ticket-tags', data);
+    return apiClient.ticket.post('/ticket-tags', data);
   },
 
   updateTag: async (
     id: string,
     data: Partial<{ name: string; color: string; description: string }>
   ): Promise<ApiResponse<TicketTag>> => {
-    return apiClient.portal.put(`/ticket-tags/${id}`, data);
+    return apiClient.ticket.put(`/ticket-tags/${id}`, data);
   },
 
   deleteTag: async (id: string): Promise<ApiResponse<{ deleted: boolean }>> => {
-    return apiClient.portal.delete(`/ticket-tags/${id}`);
+    return apiClient.ticket.delete(`/ticket-tags/${id}`);
   },
 
   addTagToTicket: async (ticketId: string, tagId: string): Promise<ApiResponse<Ticket>> => {
-    return apiClient.portal.post(`/tickets/${ticketId}/tags`, {
+    return apiClient.ticket.post(`/tickets/${ticketId}/tags`, {
       tag_id: tagId,
     });
   },
 
   removeTagFromTicket: async (ticketId: string, tagId: string): Promise<ApiResponse<Ticket>> => {
-    return apiClient.portal.delete(`/tickets/${ticketId}/tags/${tagId}`);
+    return apiClient.ticket.delete(`/tickets/${ticketId}/tags/${tagId}`);
   },
 
   getTicketsByTag: async (
     tagId: string,
     params?: { page?: number; page_size?: number }
   ): Promise<ApiResponse<TicketListResponse>> => {
-    return apiClient.portal.get('/tickets', {
+    return apiClient.ticket.get('/tickets', {
       params: { tag_id: tagId, ...params },
     });
   },
