@@ -51,8 +51,6 @@ use crate::modules::*;
             crate::modules::ReverseVoucherRequest,
             crate::modules::GenerateVoucherRequest,
             crate::modules::PeriodActionRequest,
-            crate::modules::ReconcileRequest,
-            crate::modules::AutoReconcileRequest,
             // === V286 B轨: C 类 8+ schema 补齐（account/报表/交易对手/凭证操作/发票） ===
             AccountOpeningBalance,
             AccountBalance,
@@ -246,8 +244,6 @@ use crate::modules::*;
         crate::modules::close_income_period,
         crate::modules::year_end_close_v2,
         // RC4a 补齐: AR/AP 别名与对账
-        crate::modules::reconcile_handler,
-        crate::modules::auto_reconcile_handler,
         crate::modules::get_ar_aging,
         crate::modules::get_ap_aging,
         crate::modules::list_collections_handler,

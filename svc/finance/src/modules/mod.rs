@@ -11,6 +11,7 @@ pub mod forecast_v53;
 pub mod forecasting;
 pub mod multi_dimensional;
 pub mod operational;
+pub mod reconcile_orders;
 pub mod reconciliation;
 pub mod report_center;
 pub mod reports_v57;
@@ -4004,22 +4005,6 @@ pub struct PeriodListQuery {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct ReconcileRequest {
-    #[serde(rename = "type")]
-    pub reconcile_type: String,
-    pub invoice_id: String,
-    pub record_ids: Vec<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct AutoReconcileRequest {
-    #[serde(rename = "type")]
-    pub reconcile_type: String,
-    pub entity_id: String,
-    pub period: String,
-}
-
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ArAgingQuery {
     pub company_id: Option<String>,
@@ -4596,58 +4581,6 @@ pub async fn year_end_close_v2(
 }
 
 // ========== RC4a 补齐: AR/AP 别名与对账接口 ==========
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/reconcile",
-    tag = "Finance",
-    operation_id = "reconcile_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
-pub async fn reconcile_handler(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Json(req): Json<ReconcileRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "type": req.reconcile_type,
-            "invoice_id": req.invoice_id,
-            "reconciled_count": req.record_ids.len(),
-            "status": "reconciled",
-        }),
-        "对账成功",
-    ))
-}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/reconcile",
-    tag = "Finance",
-    operation_id = "auto_reconcile_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
-pub async fn auto_reconcile_handler(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Json(req): Json<AutoReconcileRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "type": req.reconcile_type,
-            "entity_id": req.entity_id,
-            "period": req.period,
-            "reconciled": 0,
-        }),
-        "自动对账完成",
-    ))
-}
 
 #[utoipa::path(
     get,
@@ -5314,6 +5247,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(treasury_v58::create_routes())
         .merge(risk_v59::create_routes())
         .merge(decision_v60::create_routes())
+        .merge(reconcile_orders::create_routes())
         .merge(reconciliation::create_routes())
         .merge(operational::create_routes())
         .merge(report_center::create_routes())
@@ -5731,11 +5665,6 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/ar/aging", axum::routing::get(get_ar_aging))
         .route("/ap/aging", axum::routing::get(get_ap_aging))
-        .route("/reconcile", axum::routing::post(reconcile_handler))
-        .route(
-            "/reconcile/auto",
-            axum::routing::post(auto_reconcile_handler),
-        )
         // RC4a 补齐: 科目扩展路由
         .route("/accounts/tree", axum::routing::get(get_account_tree))
         .route(
