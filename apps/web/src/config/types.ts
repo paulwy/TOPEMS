@@ -60,7 +60,7 @@ interface ServicesConfig {
   search: string;
   // 独立基础设施服务
   ticket: string;
-  feedback: string;
+  // [V2026.08 已合并] feedback 已合并至 ticket（customer_feedback 类型），字段随 svc/feedback 移除
   // [V2026.08 已移除] lowcode 空壳占位服务
   // 自动化编排服务（V64 新增，初期落地 unified-core，前端通过 /api/core/automation 访问）
   automation: string;

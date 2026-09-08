@@ -1172,7 +1172,6 @@ get_service_display_name() {
         gis) echo "地理信息" ;;
         integration) echo "集成服务" ;;
         communication) echo "通讯服务" ;;
-        feedback) echo "反馈服务" ;;
         master-data) echo "主数据服务" ;;
         search) echo "搜索服务" ;;
         ticket) echo "工单服务" ;;
@@ -1206,7 +1205,6 @@ get_service_description() {
         gis) echo "地理信息服务" ;;
         integration) echo "系统集成服务" ;;
         communication) echo "IM/通知/邮件/短信等通讯能力统一服务" ;;
-        feedback) echo "意见反馈与满意度调查服务" ;;
         master-data) echo "企业级主数据统一管理服务" ;;
         search) echo "Elasticsearch全文检索与搜索聚合服务" ;;
         ticket) echo "工单与服务请求流程引擎服务" ;;
@@ -2015,7 +2013,7 @@ db_defense_check_all() {
     info "第2批（高频业务11服务）汇总：通过 $b2_pass / 警告 $b2_warn / 失败 $b2_fail （共 ${b2_total} 服务）"
     echo
     # 第3批（业务7服务 — V69.3 shared-db 抽象，已落地）
-    local batch3="ai rd ticket feedback plugin-registry mobile"
+    local batch3="ai rd ticket plugin-registry mobile"
     local b3_total=0 b3_pass=0 b3_warn=0 b3_fail=0
     for svc in $batch3; do
         b3_total=$((b3_total + 1)); total=$((total + 1))
@@ -2959,7 +2957,7 @@ WebSocket:
   topems db defense-check-all       全量 Schema 防御自检（4 批共 26 服务）
                                         第1批 核心4: gis ehs portal finance
                                         第2批 业务10: erp hrm crm pm scm wms srm pdm mes qms
-                                        第3批 业务7: ai rd ticket feedback plugin-registry mobile
+                                        第3批 业务6: ai rd ticket plugin-registry mobile
                                         第4批 平台5: unified-core integration master-data communication analytics
   topems dev                  启动开发环境
   topems reset-password       重置 admin 密码为 admin123

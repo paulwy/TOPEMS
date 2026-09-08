@@ -1,3 +1,4 @@
+pub mod approval;
 pub mod attendance;
 pub mod auth_utils;
 pub mod barcode_scanner;

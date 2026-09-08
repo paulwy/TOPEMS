@@ -33,6 +33,11 @@ use topems_shared_service_client::service_client::{
 
 use db::repository::*;
 use models::*;
+use modules::approval::{
+    approve_approval_task, delegate_approval_task, get_approval_history,
+    get_approval_task, get_pending_approval_tasks, list_approval_tasks,
+    reject_approval_task,
+};
 use modules::attendance::{
     apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
     list_attendance_records, list_leave_applications,
@@ -267,6 +272,35 @@ async fn main() -> Result<()> {
 
     // Protected routes
     let protected_routes = Router::new()
+    // Approval Routes（V68.1 挂载：原 modules/approval.rs 已实现但未注册，前端 mobile/approval.ts 7 方法据此对齐）
+        .route(
+            "/approvals",
+            axum::routing::get(list_approval_tasks),
+        )
+        .route(
+            "/approvals/pending",
+            axum::routing::get(get_pending_approval_tasks),
+        )
+        .route(
+            "/approvals/history",
+            axum::routing::get(get_approval_history),
+        )
+        .route(
+            "/approvals/{id}",
+            axum::routing::get(get_approval_task),
+        )
+        .route(
+            "/approvals/{id}/approve",
+            axum::routing::post(approve_approval_task),
+        )
+        .route(
+            "/approvals/{id}/reject",
+            axum::routing::post(reject_approval_task),
+        )
+        .route(
+            "/approvals/{id}/delegate",
+            axum::routing::post(delegate_approval_task),
+        )
         // Workbench Routes
         .route("/workbench", axum::routing::get(get_workbench_data))
         // Stats Routes

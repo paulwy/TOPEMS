@@ -65,8 +65,6 @@ export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'communication', // 通讯（mail/im/notification/comm 整合），端口 8084
   'search', // 全文搜索，端口 8082
   'ticket', // 工单，端口 8086
-  'feedback', // 反馈，端口 8087（已合并至 ticket 的 customer_feedback 类型，/api/feedback 兼容路由）
-  // [V2026.08 已合并] feedback 已合并至 ticket（customer_feedback 类型），/api/feedback 兼容路由指向 ticket
   // [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
   // 子路径模块（归 Group2）
   'mail', // 归 communication 服务，路径 /api/communication/mail
@@ -116,7 +114,6 @@ export const SERVICE_CODES = {
   oa: 'oa',
   search: 'search', // Group2: 全文搜索（端口 8082）
   ticket: 'ticket', // Group2: 工单（端口 8086）
-  feedback: 'feedback', // Group2: 反馈（端口 8087）
   // [V2026.08 已移除] lowcode 空壳占位服务
   // V64: unified-core 虚拟模块
   automation: 'automation',
@@ -205,7 +202,6 @@ export const SERVICES = {
   communication: createServiceApi('communication'),
   search: createServiceApi('search'),
   ticket: createServiceApi('ticket'),
-  feedback: createServiceApi('feedback'),
   // [V2026.08 已移除] lowcode 空壳占位服务
   asset: createServiceApi('asset'),
 } as const;

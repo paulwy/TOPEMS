@@ -37,7 +37,6 @@ const NON_NAV_WHITELIST = [
   'system',
   'voucherTemplate',
   'email',
-  'feedback',
   'search',
   'external-erp',
   'crmFinance',

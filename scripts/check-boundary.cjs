@@ -57,7 +57,6 @@ const SERVICE_SCHEMA = {
   'unified-core': ['core', 'iam', 'unified_core', 'public'],
   wms: ['wms', 'plugin_wms'],
   monitor: ['public'],
-  feedback: ['public'],
   'plugin-registry': ['public'],
 };
 

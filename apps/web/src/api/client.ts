@@ -729,9 +729,6 @@ class ApiClient {
   get ticket() {
     return this.clients.ticket;
   }
-  get feedback() {
-    return this.clients.feedback;
-  }
   get lowcode() {
     return this.clients.lowcode;
   }

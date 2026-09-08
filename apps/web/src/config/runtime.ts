@@ -113,7 +113,8 @@ const config: RuntimeConfig = {
 
     // === 独立基础设施服务 ===
     ticket: getEnv('VITE_TICKET_SERVICE_URL', '/api/ticket'),
-    feedback: getEnv('VITE_FEEDBACK_SERVICE_URL', '/api/feedback'),
+
+    // [V2026.08 已合并] feedback 已合并至 ticket（customer_feedback 类型），client 映射随 svc/feedback 一起移除
 
     // [V2026.08 已移除] lowcode 空壳占位服务（后端尚未立项，所有handler返回501）
     // 如未来立项，可恢复：lowcode: getEnv('VITE_LOWCODE_SERVICE_URL', '/api/lowcode'),
