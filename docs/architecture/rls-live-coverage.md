@@ -110,7 +110,7 @@ WITH CHECK (同 USING)
 2. 无租户用户（未关联 core_tenant_users）登录后 protected 请求 400 缺少租户ID——既有设计，接入时需为全局用户建租户关联或白名单。
 3. 未来迁移创建 untrusted 扩展（vector/postgis）需 superuser——建议预置扩展或单独 superuser 迁移通道。
 4. 回退预案：`ALTER ROLE topems SUPERUSER` + `ALTER TABLE ... NO FORCE ROW LEVEL SECURITY`。
-## A 方案：请求级连接注入（2026-09-08 试点，commit 待）
+## A 方案：请求级连接注入（2026-09-08 试点定稿，commit 65c26583f + 8c27e3fb9）
 
 **问题实证**（连接池缺陷）：`set_config` 为连接级——tenant_middleware SET 的连接与 handler 查询连接不保证同一（池默认 4 连接）→ 多租户并发下存在越权窗口（handler 拿到无上下文连接即全量可见）。双连接实证：连接 1 SET 租户 X 后仅见本租户；连接 2（独立）无 SET 看到全量。
 
@@ -125,5 +125,15 @@ WITH CHECK (同 USING)
 2. 查询 `&state.db` → `&mut **txn`（txn 为 MutexGuard 时双层 deref；Transaction 直接持有时为 `&mut *txn`）
 3. **写操作**（INSERT/UPDATE/DELETE）：需显式 `txn.commit()`（中间件不 commit；drop 自动 ROLLBACK）
 4. 未改造 handler 无影响（中间件 txn 建而未用，drop 回滚——每请求多占 1 连接，池 4→3 并发上限，记录）
+
+**当前进度（全量推广，服务试点 = crm）**：
+- **批 1a**（commit `df88b08c1`）：`contact.rs` + `tag.rs` 全量 handler txn 注入 + 8 处写操作 commit。
+- **批 1b**（commit `1c2214d82`）：`opportunity.rs` / `aftersales.rs` / `customer.rs` / `interaction.rs`——4 模块全部 handler 注入 + **26 个写 handler 成功路径补 commit**；aftersales 4 个辅助函数穿透 txn 参数（generate_return_no / recalculate_refund_amount / sync_return_to_finance / sync_return_to_inventory）；`customer_isolated_by_tenant` DB 集成测试随 5432 在线恢复通过。crm lib 测试 **501 passed 0 failed**（含 rls 隔离测试）。
+- **commit 放置模式（批 1b 确立，3 种形态）**：
+  1. 直接 execute（`match ...execute().await {` 结构）→ commit 插 Ok 成功分支开头；
+  2. `let result = ...execute().await;` → commit 无条件插于 `.await;` 后（Err 时语句级回滚，commit 空事务无害）；
+  3. `let (response, ...) = match &result { Ok(x) => (...), ... }`（tuple 返回）→ commit 以 `if result.is_ok() { ... }` 插于 match 块后；
+  4. 经辅助函数写（无直接 execute）→ commit 插 handler 成功 Json 前。
+- **脚本教训**：机械正则补 commit 在 match 表达式内 execute（`.await` 后无分号）会错位插入破坏结构——已回退为"脚本只做 Extension+lock+替换，commit 人工逐个"。
 
 **注意**：service claims（nil）与无租户用户路径同样 txn 化——nil 上下文经策略豁免全量。
