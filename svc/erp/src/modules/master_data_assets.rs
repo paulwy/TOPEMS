@@ -3,10 +3,11 @@
 //! 提供数据资产目录列表和详情查询，包括各域主数据的记录数、质量评分、字段定义等。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
@@ -178,8 +179,13 @@ pub fn get_domain_fields(domain: &str) -> Vec<DataAssetField> {
 pub async fn list_data_assets(
     State(state): State<ApiState>,
     Query(params): Query<DataAssetQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<DataAssetSummary>>> {
-    let db = &state.db;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let db = &mut **txn;
 
     let rows = if let Some(ref domain) = params.domain {
         sqlx::query(only_own_schema_query!(
@@ -195,7 +201,7 @@ pub async fn list_data_assets(
                GROUP BY domain"#
         ))
         .bind(domain)
-        .fetch_all(db)
+        .fetch_all(&mut *db)
         .await
     } else {
         sqlx::query(only_own_schema_query!(
@@ -211,7 +217,7 @@ pub async fn list_data_assets(
                GROUP BY domain
                ORDER BY domain"#
         ))
-        .fetch_all(db)
+        .fetch_all(&mut *db)
         .await
     };
 
@@ -226,7 +232,7 @@ pub async fn list_data_assets(
                     row.try_get("last_updated").ok().flatten();
                 let owner_service: Option<String> = row.try_get("owner_service").ok().flatten();
 
-                let domain_quality_score = calculate_domain_quality_score(db, &domain).await;
+                let domain_quality_score = calculate_domain_quality_score(&mut *db, &domain).await;
 
                 assets.push(DataAssetSummary {
                     domain: domain.clone(),
@@ -248,7 +254,7 @@ pub async fn list_data_assets(
     }
 }
 
-async fn calculate_domain_quality_score(db: &sqlx::PgPool, domain: &str) -> f64 {
+async fn calculate_domain_quality_score(db: &mut sqlx::PgConnection, domain: &str) -> f64 {
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         r#"SELECT total_checked, total_issues, errors, warnings
@@ -257,7 +263,7 @@ async fn calculate_domain_quality_score(db: &sqlx::PgPool, domain: &str) -> f64 
            ORDER BY generated_at DESC LIMIT 1"#
     ))
     .bind(domain)
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await;
 
     match result.ok().flatten() {
@@ -289,8 +295,13 @@ async fn calculate_domain_quality_score(db: &sqlx::PgPool, domain: &str) -> f64 
 pub async fn get_data_asset_detail(
     State(state): State<ApiState>,
     Path(domain): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<DataAssetSummary>> {
-    let db = &state.db;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let db = &mut **txn;
 
     let row = sqlx::query(only_own_schema_query!(
         "erp",
@@ -303,7 +314,7 @@ pub async fn get_data_asset_detail(
            WHERE domain = $1 AND status != 'destroyed'"#
     ))
     .bind(&domain)
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await;
 
     match row {
@@ -314,7 +325,7 @@ pub async fn get_data_asset_detail(
                 row.try_get("last_updated").ok().flatten();
             let owner_service: Option<String> = row.try_get("owner_service").ok().flatten();
 
-            let quality_score = calculate_domain_quality_score(db, &domain).await;
+            let quality_score = calculate_domain_quality_score(&mut *db, &domain).await;
 
             Json(ApiResponse::success(
                 DataAssetSummary {

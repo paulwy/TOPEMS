@@ -3,10 +3,11 @@
 //! 记录主数据版本快照，支持查询版本历史、获取版本详情和回滚到指定版本。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
@@ -56,8 +57,13 @@ pub struct VersionQuery {
 pub async fn record_version(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RecordVersionRequest>,
 ) -> Json<ApiResponse<MasterDataVersion>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = uuid::Uuid::new_v4();
     let now = chrono::Utc::now();
 
@@ -66,7 +72,7 @@ pub async fn record_version(
         only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#),
     )
     .bind(&master_data_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -87,25 +93,33 @@ pub async fn record_version(
     .bind(&req.snapshot)
     .bind(&req.changed_by)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(
-            MasterDataVersion {
-                id: id.to_string(),
-                master_data_id,
-                version_number: new_version,
-                domain: req.domain,
-                code: req.code,
-                name: req.name,
-                status: req.status,
-                snapshot: req.snapshot,
-                changed_by: req.changed_by,
-                created_at: now.to_rfc3339(),
-            },
-            "版本记录成功",
-        )),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                MasterDataVersion {
+                    id: id.to_string(),
+                    master_data_id,
+                    version_number: new_version,
+                    domain: req.domain,
+                    code: req.code,
+                    name: req.name,
+                    status: req.status,
+                    snapshot: req.snapshot,
+                    changed_by: req.changed_by,
+                    created_at: now.to_rfc3339(),
+                },
+                "版本记录成功",
+            ))
+        }
         Err(e) => {
             tracing::warn!("[erp-mdm] 记录版本失败: {}", e);
             Json(ApiResponse::error(500, &format!("记录版本失败: {}", e)))
@@ -127,7 +141,12 @@ pub async fn get_versions(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Query(params): Query<VersionQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataVersion>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -144,7 +163,7 @@ pub async fn get_versions(
     .bind(&master_data_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match rows {
@@ -200,7 +219,12 @@ pub async fn get_versions(
 pub async fn get_version(
     State(state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MasterDataVersion>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let rows = sqlx::query(only_own_schema_query!(
         "erp",
         r#"SELECT id, master_data_id, version_number, domain, code, name, status,
@@ -210,7 +234,7 @@ pub async fn get_version(
     ))
     .bind(&master_data_id)
     .bind(&version_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match rows {
@@ -263,7 +287,12 @@ pub async fn get_version(
 pub async fn rollback_to_version(
     State(state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // 1. 获取目标版本快照
     let version_row = sqlx::query(only_own_schema_query!(
         "erp",
@@ -273,7 +302,7 @@ pub async fn rollback_to_version(
     ))
     .bind(&master_data_id)
     .bind(&version_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match version_row {
@@ -297,7 +326,7 @@ pub async fn rollback_to_version(
             .bind(&status)
             .bind(now)
             .bind(&master_data_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             if let Err(e) = update_result {
@@ -311,7 +340,7 @@ pub async fn rollback_to_version(
                 only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#),
             )
             .bind(&master_data_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
             let new_version = max_version + 1;
@@ -331,9 +360,15 @@ pub async fn rollback_to_version(
             .bind(&snapshot)
             .bind(format!("rollback from v{}", target_version))
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(
                 serde_json::json!({
                     "rolled_back_to_version": target_version,

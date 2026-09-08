@@ -3,13 +3,18 @@
 //! 供 HRM 等外部服务通过 HTTP 创建财务凭证，替代跨服务直写 erp 表。
 //! 参考 event_handlers 的销售凭证逻辑，schema 归属 erp。
 
-use axum::{extract::State, routing::post, Json, Router};
+use axum::{
+    extract::{Extension, State},
+    routing::post,
+    Json, Router,
+};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::modules::ApiState;
+use topems_shared::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -48,8 +53,13 @@ pub struct CreateVoucherResponse {
 
 pub async fn create_voucher(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateVoucherRequest>,
 ) -> Json<ApiResponse<CreateVoucherResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let voucher_id = Uuid::new_v4();
     let now = Utc::now();
     let department_id = req.department_id.unwrap_or_else(Uuid::nil);
@@ -72,7 +82,7 @@ pub async fn create_voucher(
     .bind(&req.source_id)
     .bind(now)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match voucher_result {
@@ -95,7 +105,7 @@ pub async fn create_voucher(
                 .bind(entry.department_id.unwrap_or(department_id))
                 .bind(now)
                 .bind(now)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
             }
 
@@ -106,6 +116,12 @@ pub async fn create_voucher(
                 req.source_id
             );
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(
                 CreateVoucherResponse {
                     success: true,

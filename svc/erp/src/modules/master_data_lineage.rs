@@ -3,10 +3,11 @@
 //! 展示主数据在各服务间的引用关系（来源服务 → 本地引用）。
 //! 从 master_data_refs.rs 拆分，保持独立模块。
 
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 
@@ -48,7 +49,12 @@ pub struct DataLineageResponse {
 pub async fn get_data_lineage(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<DataLineageResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // 查询主数据引用本身
     let ref_row = sqlx::query(only_own_schema_query!(
         "erp",
@@ -59,7 +65,7 @@ pub async fn get_data_lineage(
            WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match ref_row {

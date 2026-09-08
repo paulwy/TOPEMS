@@ -3,10 +3,11 @@
 //! 提供主数据血缘关系图，包括全局血缘图、指定主数据血缘、域血缘、上游血缘和下游血缘。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
@@ -57,8 +58,13 @@ pub struct LineageQuery {
 pub async fn get_lineage_graph(
     State(state): State<ApiState>,
     Query(params): Query<LineageQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LineageGraph>> {
-    let db = &state.db;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let db = &mut **txn;
     let _depth = params.depth.unwrap_or(3);
 
     let mut nodes: Vec<LineageNode> = Vec::new();
@@ -74,12 +80,27 @@ pub async fn get_lineage_graph(
     };
 
     if let Some(ref mid) = params.master_data_id {
-        build_lineage_for_master_data(db, mid, &mut nodes, &mut edges, &mut node_ids, add_node)
-            .await;
+        build_lineage_for_master_data(
+            &mut *db,
+            mid,
+            &mut nodes,
+            &mut edges,
+            &mut node_ids,
+            add_node,
+        )
+        .await;
     } else if let Some(ref domain) = params.domain {
-        build_lineage_for_domain(db, domain, &mut nodes, &mut edges, &mut node_ids, add_node).await;
+        build_lineage_for_domain(
+            &mut *db,
+            domain,
+            &mut nodes,
+            &mut edges,
+            &mut node_ids,
+            add_node,
+        )
+        .await;
     } else {
-        build_full_lineage_graph(db, &mut nodes, &mut edges, &mut node_ids, add_node).await;
+        build_full_lineage_graph(&mut *db, &mut nodes, &mut edges, &mut node_ids, add_node).await;
     }
 
     Json(ApiResponse::success(
@@ -89,7 +110,7 @@ pub async fn get_lineage_graph(
 }
 
 async fn build_lineage_for_master_data(
-    db: &sqlx::PgPool,
+    db: &mut sqlx::PgConnection,
     master_data_id: &str,
     nodes: &mut Vec<LineageNode>,
     edges: &mut Vec<LineageEdge>,
@@ -102,7 +123,7 @@ async fn build_lineage_for_master_data(
            FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(master_data_id)
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await;
 
     if let Ok(Some(row)) = row {
@@ -168,7 +189,7 @@ async fn build_lineage_for_master_data(
 }
 
 async fn build_lineage_for_domain(
-    db: &sqlx::PgPool,
+    db: &mut sqlx::PgConnection,
     domain: &str,
     nodes: &mut Vec<LineageNode>,
     edges: &mut Vec<LineageEdge>,
@@ -181,7 +202,7 @@ async fn build_lineage_for_domain(
            WHERE domain = $1 AND status != 'destroyed' LIMIT 10"#
     ))
     .bind(domain)
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await;
 
     let domain_node_id = format!("domain:{}", domain);
@@ -242,7 +263,7 @@ async fn build_lineage_for_domain(
 }
 
 async fn build_full_lineage_graph(
-    db: &sqlx::PgPool,
+    db: &mut sqlx::PgConnection,
     nodes: &mut Vec<LineageNode>,
     edges: &mut Vec<LineageEdge>,
     node_ids: &mut std::collections::HashSet<String>,
@@ -257,7 +278,7 @@ async fn build_full_lineage_graph(
            ORDER BY domain
            LIMIT 20"#
     ))
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await;
 
     if let Ok(rows) = rows {
@@ -310,8 +331,13 @@ async fn build_full_lineage_graph(
 pub async fn get_lineage_upstream(
     State(state): State<ApiState>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LineageGraph>> {
-    let db = &state.db;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let db = &mut **txn;
     let mut nodes: Vec<LineageNode> = Vec::new();
     let mut edges: Vec<LineageEdge> = Vec::new();
     let mut node_ids = std::collections::HashSet::new();
@@ -330,7 +356,7 @@ pub async fn get_lineage_upstream(
            FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&id)
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await;
 
     if let Ok(Some(row)) = row {
@@ -392,8 +418,13 @@ pub async fn get_lineage_upstream(
 pub async fn get_lineage_downstream(
     State(state): State<ApiState>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LineageGraph>> {
-    let db = &state.db;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let db = &mut **txn;
     let mut nodes: Vec<LineageNode> = Vec::new();
     let mut edges: Vec<LineageEdge> = Vec::new();
     let mut node_ids = std::collections::HashSet::new();
@@ -413,7 +444,7 @@ pub async fn get_lineage_downstream(
            FROM erp.erp_master_data_refs WHERE master_data_id = $1"#
     ))
     .bind(&id)
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await;
 
     if let Ok(Some(row)) = row {

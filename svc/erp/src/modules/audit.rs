@@ -1,11 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::get,
     Json, Router,
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -56,7 +57,12 @@ pub struct ListAuditLogsQuery {
 pub async fn list_audit_logs(
     State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -86,7 +92,7 @@ pub async fn list_audit_logs(
     .bind(params.end_date.clone())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -109,7 +115,7 @@ pub async fn list_audit_logs(
             .bind(&params.status)
             .bind(params.start_date)
             .bind(params.end_date)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -142,7 +148,12 @@ pub async fn list_audit_logs(
 pub async fn get_audit_log(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<AuditLog>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "erp",
         r#"
@@ -153,7 +164,7 @@ pub async fn get_audit_log(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

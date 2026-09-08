@@ -1,10 +1,11 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     routing::*,
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::repository::ListQueryParams;
@@ -41,7 +42,12 @@ pub struct SearchResult {
 async fn global_search(
     State(state): State<ApiState>,
     Query(params): Query<SearchParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let limit = params.base.page_size_or_default();
     let query = params.query.to_lowercase();
     let search_pattern = format!("%{}%", query);
@@ -68,7 +74,7 @@ async fn global_search(
         path: row.get(4),
         type_name: row.get(5),
     })
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
     results.extend(material_results);
@@ -81,7 +87,8 @@ async fn global_search(
         FROM crm.core_crm_customers
         WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
         LIMIT $2
-        "#, "crm"
+        "#,
+        "crm"
     ))
     .bind(search_pattern.clone())
     .bind(limit / 3)
@@ -93,7 +100,7 @@ async fn global_search(
         path: row.get(4),
         type_name: row.get(5),
     })
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
     results.extend(customer_results);
@@ -118,7 +125,7 @@ async fn global_search(
         path: row.get(4),
         type_name: row.get(5),
     })
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
     results.extend(supplier_results);

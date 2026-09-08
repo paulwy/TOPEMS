@@ -4,9 +4,14 @@
 //!
 //! Implements the plugin interface protocol for integration with unified-core
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{
+    extract::{Extension, State},
+    routing::get,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use std::env;
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 
 use crate::ApiState;
@@ -210,9 +215,16 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     operation_id = "plugin_health_check",
     responses((status = 200, description = "OK")),
 )]
-pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
+pub async fn plugin_health_check(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let db_healthy = sqlx::query(only_own_schema_query!("erp", "SELECT 1"))
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await
         .is_ok();
 

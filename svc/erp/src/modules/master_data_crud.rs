@@ -1,8 +1,9 @@
 // ==================== 核心 CRUD 类型定义 ====================
 
-use axum::extract::{Json, Path, Query, State};
+use axum::extract::{Extension, Json, Path, Query, State};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared::ApiResponse;
@@ -172,7 +173,12 @@ impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for MasterDataRow {
 pub async fn list_master_data_refs(
     State(state): State<ApiState>,
     Query(params): Query<MasterDataRefQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -191,7 +197,7 @@ pub async fn list_master_data_refs(
         .bind(domain)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -205,7 +211,7 @@ pub async fn list_master_data_refs(
         ))
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -240,7 +246,12 @@ pub async fn list_master_data_refs(
 pub async fn get_master_data_ref(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MasterDataRef>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
         r#"SELECT master_data_id, tenant_id, domain, code, name, status,
@@ -250,7 +261,7 @@ pub async fn get_master_data_ref(
            WHERE master_data_id = $1"#
     ))
     .bind(&master_data_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(row)) => Json(ApiResponse::success(row.into(), "本地主数据引用")),
@@ -274,7 +285,12 @@ pub async fn get_master_data_ref(
 pub async fn get_master_data_ref_by_code(
     State(state): State<ApiState>,
     Path((domain, code)): Path<(String, String)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MasterDataRef>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
         r#"SELECT master_data_id, tenant_id, domain, code, name, status,
@@ -285,7 +301,7 @@ pub async fn get_master_data_ref_by_code(
     ))
     .bind(&domain)
     .bind(&code)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(row)) => Json(ApiResponse::success(row.into(), "本地主数据引用")),

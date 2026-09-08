@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -10,6 +10,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 use crate::utils::validate_required_field;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
@@ -46,7 +47,12 @@ pub async fn list_documents(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Query(params): Query<DocumentQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<Document>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -68,7 +74,7 @@ pub async fn list_documents(
     .bind(&doc_type_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -82,7 +88,7 @@ pub async fn list_documents(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&doc_type_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -111,8 +117,13 @@ pub async fn list_documents(
 pub async fn create_document(
     State(state): State<ApiState>,
     _headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<CreateDocumentRequest>,
 ) -> Json<ApiResponse<Document>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("标题", &payload.title) {
         return Json(api_error(400, &e));
     }
@@ -131,7 +142,7 @@ pub async fn create_document(
     .bind(&payload.file_url)
     .bind(payload.file_size)
     .bind(&payload.uploader)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -156,10 +167,15 @@ pub async fn get_document(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Document>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query_as::<_, Document>("SELECT * FROM erp.documents WHERE id = $1")
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
     {
         Ok(Some(doc)) => Json(ApiResponse::success(doc, "文档获取成功")),
@@ -184,14 +200,17 @@ pub async fn update_document(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<UpdateDocumentRequest>,
 ) -> Json<ApiResponse<Document>> {
-    let existing = match sqlx::query_as::<_, Document>(
-        "SELECT * FROM erp.documents WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let existing = match sqlx::query_as::<_, Document>("SELECT * FROM erp.documents WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&mut **txn)
+        .await
     {
         Ok(Some(d)) => d,
         Ok(None) => return Json(api_error(404, "文档不存在")),
@@ -220,7 +239,7 @@ pub async fn update_document(
     .bind(file_size)
     .bind(&uploader)
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(doc) => Json(ApiResponse::success(doc, "文档更新成功")),
@@ -244,13 +263,24 @@ pub async fn delete_document(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query("DELETE FROM erp.documents WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await
     {
         Ok(res) if res.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(id.to_string(), "文档删除成功"))
         }
         Ok(_) => Json(api_error(404, "文档不存在")),

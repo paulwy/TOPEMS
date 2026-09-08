@@ -1,11 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -46,7 +47,12 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_supplies(
     State(state): State<ApiState>,
     Query(params): Query<SupplyQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<OfficeSupply>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -72,7 +78,7 @@ pub async fn list_supplies(
     .bind(&category_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -89,7 +95,7 @@ pub async fn list_supplies(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&category_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -119,8 +125,13 @@ pub async fn list_supplies(
 pub async fn create_supply(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("用品名称", &req.name) {
         return Json(api_error(400, &e));
     }
@@ -144,7 +155,7 @@ pub async fn create_supply(
     .bind(&req.location)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -206,7 +217,12 @@ pub async fn create_supply(
 pub async fn get_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<OfficeSupply>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, OfficeSupply>(only_own_schema_query!(
         "erp",
         r#"
@@ -215,7 +231,7 @@ pub async fn get_supply(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -245,13 +261,18 @@ pub async fn update_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, OfficeSupply>(
         only_own_schema_query!("erp", "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM office_supplies WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -288,7 +309,7 @@ pub async fn update_supply(
     .bind(&location)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -350,21 +371,34 @@ pub async fn delete_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE office_supplies SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "办公用品删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "办公用品删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "办公用品不存在")),
             "error".to_string(),

@@ -65,7 +65,12 @@ pub async fn list_production_orders(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ProductionOrderListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let _page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -94,7 +99,7 @@ pub async fn list_production_orders(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -110,7 +115,7 @@ pub async fn list_production_orders(
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -140,8 +145,13 @@ pub async fn list_production_orders(
 pub async fn create_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
     let order_no = format!(
         "ERP-PO{}{:04}",
@@ -189,7 +199,7 @@ pub async fn create_production_order(
     .bind(req.priority.unwrap_or(0))
     .bind(&req.notes)
     .bind(now.naive_utc())
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -218,7 +228,12 @@ pub async fn get_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ProductionOrder>(
         only_own_schema_query!("erp", r#"
         SELECT id, order_no, product_id, product_name, product_code,
@@ -233,7 +248,7 @@ pub async fn get_production_order(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -260,8 +275,13 @@ pub async fn update_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ProductionOrder>(
         only_own_schema_query!("erp", r#"
         UPDATE erp.erp_production_orders SET
@@ -296,7 +316,7 @@ pub async fn update_production_order(
     .bind(req.priority)
     .bind(&req.notes)
     .bind(Utc::now().naive_utc())
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -323,7 +343,12 @@ pub async fn delete_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
@@ -332,12 +357,18 @@ pub async fn delete_production_order(
         "#
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) => {
             if r.rows_affected() > 0 {
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("事务提交失败: {}", e);
+                        return Json(ApiResponse::error(500, "事务提交失败"));
+                    }
+                }
                 Json(ApiResponse::success("".to_string(), "生产订单删除成功"))
             } else {
                 Json(api_error(404, "生产订单不存在或状态不允许删除"))
@@ -364,8 +395,13 @@ pub async fn update_production_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateProductionProgressRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ProductionOrder>(
         only_own_schema_query!("erp", r#"
         UPDATE erp.erp_production_orders SET
@@ -390,7 +426,7 @@ pub async fn update_production_progress(
     .bind(req.actual_start_date.map(|d| d.naive_utc()))
     .bind(req.actual_end_date.map(|d| d.naive_utc()))
     .bind(Utc::now().naive_utc())
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -422,8 +458,13 @@ pub async fn update_production_status(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateStatusRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionOrder>(
@@ -444,7 +485,7 @@ pub async fn update_production_status(
     .bind(id)
     .bind(&req.status)
     .bind(now.naive_utc())
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -476,7 +517,10 @@ pub async fn update_production_status(
                             tracing::info!("[ERP→MES] 生产工单下达成功: {}", resp);
                         }
                         Err(e) => {
-                            tracing::error!("[ERP→MES] 生产工单下达失败（异步降级，不影响ERP订单）: {}", e);
+                            tracing::error!(
+                                "[ERP→MES] 生产工单下达失败（异步降级，不影响ERP订单）: {}",
+                                e
+                            );
                         }
                     }
                 });
@@ -514,8 +558,13 @@ pub struct MesProgressUpdate {
 pub async fn receive_mes_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<MesProgressUpdate>,
 ) -> Json<ApiResponse<ProductionOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // 服务间调用（service token）：事务内设置 nil 租户上下文，确保同连接（RLS 放行）
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,

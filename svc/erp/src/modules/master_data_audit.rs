@@ -3,10 +3,11 @@
 //! 记录主数据变更历史（创建/更新/删除/同步），支持查询审计追踪列表。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
@@ -57,8 +58,13 @@ pub struct AuditTrailQuery {
 )]
 pub async fn record_audit_event(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RecordAuditRequest>,
 ) -> Json<ApiResponse<MasterDataAuditEvent>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = uuid::Uuid::new_v4();
     let now = chrono::Utc::now();
     let target_service = req.target_service.unwrap_or_else(|| "erp".to_string());
@@ -80,25 +86,33 @@ pub async fn record_audit_event(
     .bind(&req.old_values)
     .bind(&req.new_values)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(
-            MasterDataAuditEvent {
-                id: id.to_string(),
-                master_data_id: req.master_data_id,
-                domain: req.domain,
-                action: req.action,
-                source_service: req.source_service,
-                target_service,
-                changed_by: req.changed_by,
-                old_values: req.old_values,
-                new_values: req.new_values,
-                created_at: now.to_rfc3339(),
-            },
-            "审计事件记录成功",
-        )),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                MasterDataAuditEvent {
+                    id: id.to_string(),
+                    master_data_id: req.master_data_id,
+                    domain: req.domain,
+                    action: req.action,
+                    source_service: req.source_service,
+                    target_service,
+                    changed_by: req.changed_by,
+                    old_values: req.old_values,
+                    new_values: req.new_values,
+                    created_at: now.to_rfc3339(),
+                },
+                "审计事件记录成功",
+            ))
+        }
         Err(e) => {
             tracing::warn!("[erp-mdm] 记录审计事件失败: {}", e);
             Json(ApiResponse::error(500, &format!("记录审计事件失败: {}", e)))
@@ -120,7 +134,12 @@ pub async fn get_audit_trail(
     State(state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Query(params): Query<AuditTrailQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataAuditEvent>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -137,7 +156,7 @@ pub async fn get_audit_trail(
     .bind(&master_data_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match rows {

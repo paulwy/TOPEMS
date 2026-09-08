@@ -6,7 +6,7 @@
 // 注意：前端契约字段为驼峰 parentId，响应层将 parent_id 映射为 parentId。
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
@@ -14,6 +14,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -22,7 +23,10 @@ use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/asset-categories", get(list_asset_categories).post(create_asset_category))
+        .route(
+            "/asset-categories",
+            get(list_asset_categories).post(create_asset_category),
+        )
         .route(
             "/asset-categories/{id}",
             get(get_asset_category)
@@ -82,7 +86,13 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_asset_categories(
     State(state): State<ApiState>,
     Query(params): Query<ListAssetCategoriesQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
@@ -91,15 +101,17 @@ pub async fn list_asset_categories(
     let status = params.status.clone();
     let search = params.search.clone();
 
-    let total: i64 = match sqlx::query(only_own_schema_query!("erp",
+    let total: i64 = match sqlx::query(only_own_schema_query!(
+        "erp",
         "SELECT COUNT(*) FROM erp.asset_categories \
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' \
-             OR code ILIKE '%' || $2 || '%')"))
-        .bind(&status)
-        .bind(&search)
-        .fetch_one(&state.db)
-        .await
+             OR code ILIKE '%' || $2 || '%')"
+    ))
+    .bind(&status)
+    .bind(&search)
+    .fetch_one(&mut **txn)
+    .await
     {
         Ok(row) => row.get::<i64, _>(0),
         Err(e) => {
@@ -108,19 +120,21 @@ pub async fn list_asset_categories(
         }
     };
 
-    let rows = match sqlx::query(only_own_schema_query!("erp",
+    let rows = match sqlx::query(only_own_schema_query!(
+        "erp",
         "SELECT id, name, code, parent_id, description, status, created_at, updated_at \
          FROM erp.asset_categories \
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' \
              OR code ILIKE '%' || $2 || '%') \
-         ORDER BY created_at DESC LIMIT $3 OFFSET $4"))
-        .bind(&status)
-        .bind(&search)
-        .bind(pagesize)
-        .bind(offset)
-        .fetch_all(&state.db)
-        .await
+         ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+    ))
+    .bind(&status)
+    .bind(&search)
+    .bind(pagesize)
+    .bind(offset)
+    .fetch_all(&mut **txn)
+    .await
     {
         Ok(rows) => rows,
         Err(e) => {
@@ -140,13 +154,21 @@ pub async fn list_asset_categories(
 pub async fn get_asset_category(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
-    let row = match sqlx::query(only_own_schema_query!("erp",
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let row = match sqlx::query(only_own_schema_query!(
+        "erp",
         "SELECT id, name, code, parent_id, description, status, created_at, updated_at \
-         FROM erp.asset_categories WHERE id = $1"))
-        .bind(id)
-        .fetch_optional(&state.db)
-        .await
+         FROM erp.asset_categories WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut **txn)
+    .await
     {
         Ok(Some(row)) => row,
         Ok(None) => {
@@ -169,21 +191,29 @@ pub async fn get_asset_category(
 
 pub async fn create_asset_category(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateAssetCategoryRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let status = req.status.unwrap_or_else(|| "active".to_string());
 
-    let row = match sqlx::query(only_own_schema_query!("erp",
+    let row = match sqlx::query(only_own_schema_query!(
+        "erp",
         "INSERT INTO erp.asset_categories (name, code, parent_id, description, status) \
          VALUES ($1, $2, $3, $4, $5) \
-         RETURNING id, name, code, parent_id, description, status, created_at, updated_at"))
-        .bind(&req.name)
-        .bind(&req.code)
-        .bind(&req.parent_id)
-        .bind(&req.description)
-        .bind(&status)
-        .fetch_one(&state.db)
-        .await
+         RETURNING id, name, code, parent_id, description, status, created_at, updated_at"
+    ))
+    .bind(&req.name)
+    .bind(&req.code)
+    .bind(&req.parent_id)
+    .bind(&req.description)
+    .bind(&status)
+    .fetch_one(&mut **txn)
+    .await
     {
         Ok(row) => row,
         Err(e) => {
@@ -201,9 +231,16 @@ pub async fn create_asset_category(
 pub async fn update_asset_category(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateAssetCategoryRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
-    let row = match sqlx::query(only_own_schema_query!("erp",
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let row = match sqlx::query(only_own_schema_query!(
+        "erp",
         "UPDATE erp.asset_categories SET \
          name = COALESCE($2, name), \
          code = COALESCE($3, code), \
@@ -212,15 +249,16 @@ pub async fn update_asset_category(
          status = COALESCE($6, status), \
          updated_at = NOW() \
          WHERE id = $1 \
-         RETURNING id, name, code, parent_id, description, status, created_at, updated_at"))
-        .bind(id)
-        .bind(&req.name)
-        .bind(&req.code)
-        .bind(&req.parent_id)
-        .bind(&req.description)
-        .bind(&req.status)
-        .fetch_optional(&state.db)
-        .await
+         RETURNING id, name, code, parent_id, description, status, created_at, updated_at"
+    ))
+    .bind(id)
+    .bind(&req.name)
+    .bind(&req.code)
+    .bind(&req.parent_id)
+    .bind(&req.description)
+    .bind(&req.status)
+    .fetch_optional(&mut **txn)
+    .await
     {
         Ok(Some(row)) => row,
         Ok(None) => {
@@ -244,12 +282,20 @@ pub async fn update_asset_category(
 pub async fn delete_asset_category(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
-    let result = sqlx::query(only_own_schema_query!("erp",
-        "DELETE FROM erp.asset_categories WHERE id = $1"))
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "DELETE FROM erp.asset_categories WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(res) => {
@@ -258,6 +304,15 @@ pub async fn delete_asset_category(
                     StatusCode::NOT_FOUND,
                     Json(ApiResponse::error(404, "资产分类不存在")),
                 ));
+            }
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "事务提交失败")),
+                    ));
+                }
             }
             Ok(Json(ApiResponse::success(
                 serde_json::json!({ "deleted": true, "id": id.to_string() }),

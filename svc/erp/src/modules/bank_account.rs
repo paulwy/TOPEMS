@@ -5,7 +5,7 @@
 // 表：erp.bank_accounts（迁移 20260908000002）
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
@@ -13,6 +13,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -21,7 +22,10 @@ use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/bank-accounts", get(list_bank_accounts).post(create_bank_account))
+        .route(
+            "/bank-accounts",
+            get(list_bank_accounts).post(create_bank_account),
+        )
         .route(
             "/bank-accounts/{id}",
             get(get_bank_account)
@@ -88,7 +92,13 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_bank_accounts(
     State(state): State<ApiState>,
     Query(params): Query<ListBankAccountsQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
@@ -97,16 +107,18 @@ pub async fn list_bank_accounts(
     let status = params.status.clone();
     let keyword = params.keyword.clone();
 
-    let total: i64 = match sqlx::query(only_own_schema_query!("erp",
+    let total: i64 = match sqlx::query(only_own_schema_query!(
+        "erp",
         "SELECT COUNT(*) FROM erp.bank_accounts \
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR bank_name ILIKE '%' || $2 || '%' \
              OR account_number ILIKE '%' || $2 || '%' \
-             OR account_name ILIKE '%' || $2 || '%')"))
-        .bind(&status)
-        .bind(&keyword)
-        .fetch_one(&state.db)
-        .await
+             OR account_name ILIKE '%' || $2 || '%')"
+    ))
+    .bind(&status)
+    .bind(&keyword)
+    .fetch_one(&mut **txn)
+    .await
     {
         Ok(row) => row.get::<i64, _>(0),
         Err(e) => {
@@ -127,7 +139,7 @@ pub async fn list_bank_accounts(
         .bind(&keyword)
         .bind(pagesize)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     {
         Ok(rows) => rows,
@@ -148,12 +160,18 @@ pub async fn list_bank_accounts(
 pub async fn get_bank_account(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let row = match sqlx::query(only_own_schema_query!("erp",
         "SELECT id, bank_name, account_number, account_name, bank_code, currency, balance, is_default, status, created_at, updated_at \
          FROM erp.bank_accounts WHERE id = $1"))
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
     {
         Ok(Some(row)) => row,
@@ -177,8 +195,14 @@ pub async fn get_bank_account(
 
 pub async fn create_bank_account(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateBankAccountRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
     let balance = req.balance.unwrap_or(0.0);
     let is_default = req.is_default.unwrap_or(false);
@@ -197,7 +221,7 @@ pub async fn create_bank_account(
         .bind(balance)
         .bind(is_default)
         .bind(&status)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await
     {
         Ok(row) => row,
@@ -216,8 +240,14 @@ pub async fn create_bank_account(
 pub async fn update_bank_account(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateBankAccountRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // COALESCE 保留未传字段原值
     let row = match sqlx::query(only_own_schema_query!("erp",
         "UPDATE erp.bank_accounts SET \
@@ -241,7 +271,7 @@ pub async fn update_bank_account(
         .bind(req.balance)
         .bind(req.is_default)
         .bind(&req.status)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
     {
         Ok(Some(row)) => row,
@@ -266,12 +296,20 @@ pub async fn update_bank_account(
 pub async fn delete_bank_account(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
-    let result = sqlx::query(only_own_schema_query!("erp",
-        "DELETE FROM erp.bank_accounts WHERE id = $1"))
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "DELETE FROM erp.bank_accounts WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(res) => {
@@ -280,6 +318,15 @@ pub async fn delete_bank_account(
                     StatusCode::NOT_FOUND,
                     Json(ApiResponse::error(404, "银行账户不存在")),
                 ));
+            }
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "事务提交失败")),
+                    ));
+                }
             }
             Ok(Json(ApiResponse::success(
                 serde_json::json!({ "deleted": true, "id": id.to_string() }),

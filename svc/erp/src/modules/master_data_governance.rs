@@ -3,10 +3,11 @@
 //! 提供治理仪表盘统计数据，包括主数据总量、质量、冲突、版本、审计等指标。
 //! 从 master_data_refs.rs 拆分。
 
-use axum::extract::State;
+use axum::extract::{Extension, State};
 use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 
@@ -42,14 +43,19 @@ pub struct GovernanceDashboardStats {
 )]
 pub async fn get_governance_dashboard(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<GovernanceDashboardStats>> {
-    let db = &state.db;
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let db = &mut **txn;
 
     let total_domains: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
         "SELECT COUNT(DISTINCT domain) FROM erp.erp_master_data_refs WHERE status != 'destroyed'"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -57,7 +63,7 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status != 'destroyed'"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -65,7 +71,7 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'active'"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -73,7 +79,7 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'archived'"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -81,7 +87,7 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'pending_destruction'"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -89,14 +95,14 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT COUNT(*) FROM erp.erp_master_data_refs WHERE status = 'destroyed'"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
     let quality_rules_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND is_active = TRUE"),
     )
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -106,7 +112,7 @@ pub async fn get_governance_dashboard(
            FROM erp_master_data_quality_reports
            ORDER BY generated_at DESC LIMIT 1"#
     ))
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await
     .ok()
     .flatten();
@@ -132,14 +138,14 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT COUNT(*) FROM erp_master_data_conflicts"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
     let unresolved_conflicts: i64 = sqlx::query_scalar(
         only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp_master_data_conflicts WHERE status IN ('detected', 'pending_review')"),
     )
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -147,7 +153,7 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT COUNT(*) FROM erp_master_data_versions"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -157,7 +163,7 @@ pub async fn get_governance_dashboard(
         "SELECT COUNT(*) FROM erp_master_data_audit_trail WHERE created_at >= $1"
     ))
     .bind(seven_days_ago)
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
@@ -165,7 +171,7 @@ pub async fn get_governance_dashboard(
         "erp",
         "SELECT DISTINCT source_service FROM erp.erp_master_data_refs WHERE status != 'destroyed'"
     ))
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await
     .unwrap_or_default();
 
