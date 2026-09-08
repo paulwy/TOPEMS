@@ -1,4 +1,9 @@
-use axum::{extract::FromRef, http::HeaderMap, routing::get, Json, Router};
+use axum::{
+    extract::{Extension, FromRef},
+    http::HeaderMap,
+    routing::get,
+    Json, Router,
+};
 use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
@@ -56,7 +61,12 @@ pub async fn list_warehouses(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<PaginationParams>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -91,7 +101,7 @@ pub async fn list_warehouses(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -109,7 +119,7 @@ pub async fn list_warehouses(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -148,8 +158,13 @@ pub async fn create_warehouse(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     axum::extract::Json(req): axum::extract::Json<CreateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -171,7 +186,7 @@ pub async fn create_warehouse(
     .bind(&req.phone)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -240,7 +255,12 @@ pub async fn get_warehouse(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Warehouse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let cache_key = warehouse_cache_key(tenant_id, id);
 
@@ -259,7 +279,7 @@ pub async fn get_warehouse(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -298,8 +318,13 @@ pub async fn update_warehouse(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     axum::extract::Json(req): axum::extract::Json<UpdateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let request_data = serde_json::to_value(&req).ok();
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -311,7 +336,7 @@ pub async fn update_warehouse(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -345,7 +370,7 @@ pub async fn update_warehouse(
     .bind(&status)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -416,7 +441,12 @@ pub async fn delete_warehouse(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
@@ -424,15 +454,23 @@ pub async fn delete_warehouse(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "仓库删除成功")),
-            "success",
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "仓库删除成功")),
+                "success",
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "仓库不存在")),
             "error",

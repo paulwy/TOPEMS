@@ -25,7 +25,12 @@ pub async fn list_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -47,14 +52,14 @@ pub async fn list_safety_stock(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
         Ok(items) => {
             let total =
                 sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM wms.safety_stock_settings")
-                    .fetch_one(&state.db)
+                    .fetch_one(&mut **txn)
                     .await
                     .unwrap_or(0);
 
@@ -105,7 +110,12 @@ pub async fn get_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -121,7 +131,7 @@ pub async fn get_safety_stock(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -166,8 +176,13 @@ pub async fn update_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -207,7 +222,7 @@ pub async fn update_safety_stock(
             .map(|v| v as i32),
     )
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -250,8 +265,13 @@ pub async fn update_safety_stock(
 pub async fn batch_update_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -293,7 +313,7 @@ pub async fn batch_update_safety_stock(
                             .map(|v| v as i32),
                     )
                     .bind(now)
-                    .execute(&state.db)
+                    .execute(&mut **txn)
                     .await;
 
                     if let Ok(r) = result {
@@ -304,6 +324,12 @@ pub async fn batch_update_safety_stock(
         }
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({ "updated_count": updated_count }),
         &format!("批量更新安全库存设置成功，共更新{}条", updated_count),
@@ -323,8 +349,13 @@ pub async fn batch_update_safety_stock(
 pub async fn calculate_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,

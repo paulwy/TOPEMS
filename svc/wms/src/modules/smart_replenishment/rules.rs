@@ -52,7 +52,12 @@ pub async fn list_rules(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -78,7 +83,7 @@ pub async fn list_rules(
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -90,7 +95,7 @@ pub async fn list_rules(
                 "#,
             )
             .bind(&search_pattern)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -127,8 +132,13 @@ pub async fn create_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateReplenishmentRuleRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -171,7 +181,7 @@ pub async fn create_rule(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -228,7 +238,12 @@ pub async fn get_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -243,7 +258,7 @@ pub async fn get_rule(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -274,8 +289,13 @@ pub async fn update_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateReplenishmentRuleRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -286,7 +306,7 @@ pub async fn update_rule(
     let existing =
         sqlx::query("SELECT id FROM wms.replenishment_rules WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
     match existing {
@@ -333,7 +353,7 @@ pub async fn update_rule(
     .bind(req.priority_order)
     .bind(&req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -391,23 +411,36 @@ pub async fn delete_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query("UPDATE wms.replenishment_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "补货规则删除成功")),
-            "success",
-            None,
-            Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "补货规则删除成功")),
+                "success",
+                None,
+                Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "补货规则不存在")),
             "error",

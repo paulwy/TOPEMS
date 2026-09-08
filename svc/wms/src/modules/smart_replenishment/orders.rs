@@ -25,7 +25,12 @@ pub async fn list_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -45,7 +50,7 @@ pub async fn list_orders(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -53,7 +58,7 @@ pub async fn list_orders(
             let total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM wms.replenishment_orders WHERE deleted_at IS NULL",
             )
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -99,8 +104,13 @@ pub async fn list_orders(
 pub async fn create_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -136,7 +146,7 @@ pub async fn create_order(
     )
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -170,12 +180,18 @@ pub async fn create_order(
                     .bind(item.get("total_amount").and_then(|v| v.as_f64()))
                     .bind(now)
                     .bind(now)
-                    .execute(&state.db)
+                    .execute(&mut **txn)
                     .await;
                     line_number += 1;
                 }
             }
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(
                 serde_json::json!({
                     "id": id,
@@ -210,7 +226,12 @@ pub async fn get_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -224,7 +245,7 @@ pub async fn get_order(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -264,8 +285,13 @@ pub async fn update_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -290,7 +316,7 @@ pub async fn update_order(
     .bind(req.get("warehouse_name").and_then(|v| v.as_str()))
     .bind(req.get("status").and_then(|v| v.as_str()))
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -330,7 +356,12 @@ pub async fn delete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -338,17 +369,23 @@ pub async fn delete_order(
 
     let _ = sqlx::query("DELETE FROM wms.replenishment_order_items WHERE order_id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     let result =
         sqlx::query("UPDATE wms.replenishment_orders SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "删除补货订单成功"))
         }
         Ok(_) => Json(api_error(404, "补货订单不存在")),
@@ -373,7 +410,12 @@ pub async fn list_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -389,7 +431,7 @@ pub async fn list_order_items(
         "#,
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -439,7 +481,12 @@ pub async fn confirm_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -458,7 +505,7 @@ pub async fn confirm_order(
     )
     .bind(id)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -493,7 +540,12 @@ pub async fn complete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -512,7 +564,7 @@ pub async fn complete_order(
     )
     .bind(id)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {

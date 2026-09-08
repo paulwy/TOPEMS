@@ -61,7 +61,12 @@ pub async fn list_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SerialNumberQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -93,7 +98,7 @@ pub async fn list_serial_numbers(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -118,7 +123,7 @@ pub async fn list_serial_numbers(
             .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
             .bind(&params.quality_status)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -154,8 +159,13 @@ pub async fn list_serial_numbers(
 pub async fn create_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSerialNumberRequest>,
 ) -> Json<ApiResponse<SerialNumber>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -196,7 +206,7 @@ pub async fn create_serial_number(
     .bind(&req.remark)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -223,8 +233,13 @@ pub async fn create_serial_number(
 pub async fn bulk_create_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<Vec<CreateSerialNumberRequest>>,
 ) -> Json<ApiResponse<Vec<SerialNumber>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -268,7 +283,7 @@ pub async fn bulk_create_serial_numbers(
         .bind(&item.remark)
         .bind(now)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if let Ok(serial) = result {
@@ -290,7 +305,12 @@ pub async fn get_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SerialNumber>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -305,7 +325,7 @@ pub async fn get_serial_number(
         only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(serial_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -332,7 +352,12 @@ pub async fn get_by_serial_no(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(serial_no): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SerialNumber>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -342,7 +367,7 @@ pub async fn get_by_serial_no(
         only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1"),
     )
     .bind(serial_no)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -369,7 +394,12 @@ pub async fn get_by_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(batch_no): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<SerialNumber>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -379,7 +409,7 @@ pub async fn get_by_batch(
         only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC"),
     )
     .bind(batch_no)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -408,8 +438,13 @@ pub async fn update_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSerialNumberRequest>,
 ) -> Json<ApiResponse<SerialNumber>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -469,7 +504,7 @@ pub async fn update_serial_number(
     .bind(&req.remark)
     .bind(now)
     .bind(serial_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -498,7 +533,12 @@ pub async fn delete_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -514,11 +554,17 @@ pub async fn delete_serial_number(
         "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(serial_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "删除序列号成功"))
         }
         Ok(_) => Json(api_error(404, "序列号不存在")),
@@ -540,7 +586,12 @@ pub async fn get_serial_number_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SerialNumberStatistics>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -564,7 +615,7 @@ pub async fn get_serial_number_statistics(
         "#),
     )
     .bind(warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -601,8 +652,13 @@ pub async fn transfer_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SerialNumber>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -630,7 +686,7 @@ pub async fn transfer_location(
     ))
     .bind(to_location_id)
     .bind(serial_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -657,7 +713,12 @@ pub async fn get_trace(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,

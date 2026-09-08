@@ -54,7 +54,12 @@ pub async fn list_transfers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TransferOrderQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -80,7 +85,7 @@ pub async fn list_transfers(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -99,7 +104,7 @@ pub async fn list_transfers(
             .bind(params.from_warehouse_id)
             .bind(params.to_warehouse_id)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -130,8 +135,13 @@ pub async fn list_transfers(
 pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateTransferOrderRequest>,
 ) -> Json<ApiResponse<TransferOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -165,7 +175,7 @@ pub async fn create_transfer(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -204,7 +214,7 @@ pub async fn create_transfer(
                 .bind("pending")
                 .bind(now)
                 .bind(now)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
 
                 line_number += 1;
@@ -215,12 +225,18 @@ pub async fn create_transfer(
                 "SELECT SUM(planned_quantity) FROM wms.transfer_order_items WHERE transfer_id = $1"
             ))
             .bind(id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
             transfer.total_quantity = Some(total_qty);
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(transfer, "创建调拨单成功"))
         }
         Err(e) => {
@@ -241,7 +257,12 @@ pub async fn get_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<TransferOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -256,7 +277,7 @@ pub async fn get_transfer(
         only_own_schema_query!("wms", "SELECT id, tenant_id, order_number AS transfer_no, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(transfer_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -280,7 +301,12 @@ pub async fn list_transfer_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -295,7 +321,7 @@ pub async fn list_transfer_items(
         only_own_schema_query!("wms", "SELECT id, tenant_id, transfer_id, item_id, item_code, item_name, quantity, unit, line_number, created_at FROM wms.transfer_order_items WHERE transfer_id = $1 ORDER BY line_number"),
     )
     .bind(transfer_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -324,8 +350,13 @@ pub async fn update_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TransferOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -385,7 +416,7 @@ pub async fn update_transfer(
     .bind(req.get("remarks").and_then(|v| v.as_str()))
     .bind(now)
     .bind(transfer_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -409,7 +440,12 @@ pub async fn delete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -425,7 +461,7 @@ pub async fn delete_transfer(
         "DELETE FROM wms.transfer_order_items WHERE transfer_id = $1"
     ))
     .bind(transfer_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     if let Err(e) = result {
@@ -438,11 +474,17 @@ pub async fn delete_transfer(
         "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(transfer_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "删除调拨单成功"))
         }
         Ok(_) => Json(api_error(404, "调拨单不存在")),
@@ -464,7 +506,12 @@ pub async fn confirm_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<TransferOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -491,7 +538,7 @@ pub async fn confirm_transfer(
     .bind(now)
     .bind(now)
     .bind(transfer_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -515,7 +562,12 @@ pub async fn ship_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<TransferOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -542,7 +594,7 @@ pub async fn ship_transfer(
     .bind(now)
     .bind(now)
     .bind(transfer_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -566,8 +618,13 @@ pub async fn receive_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TransferOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -602,7 +659,7 @@ pub async fn receive_transfer(
                 .bind(now)
                 .bind(item_id)
                 .bind(transfer_id)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
             }
         }
@@ -622,11 +679,19 @@ pub async fn receive_transfer(
     .bind(now)
     .bind(now)
     .bind(transfer_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(transfer) => Json(ApiResponse::success(transfer, "收货成功")),
+        Ok(transfer) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(transfer, "收货成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(404, "调拨单不存在或状态不正确")),
         Err(e) => {
             tracing::error!("收货失败: {}", e);
@@ -646,7 +711,12 @@ pub async fn complete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<TransferOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -672,7 +742,7 @@ pub async fn complete_transfer(
     ))
     .bind(now)
     .bind(transfer_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -756,8 +826,13 @@ pub async fn start_transfer_approval(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -784,7 +859,7 @@ pub async fn start_transfer_approval(
     ))
     .bind(transfer_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match current {
@@ -794,7 +869,7 @@ pub async fn start_transfer_approval(
                 return Json(ApiResponse::error(400, "当前状态无需审批"));
             }
             let _ = crate::models::audit_log::log_approval_event(
-                &state.db,
+                &mut **txn,
                 &tenant_id.to_string(),
                 "transfer_order",
                 &transfer_id.to_string(),
@@ -830,8 +905,13 @@ pub async fn approve_transfer(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -858,7 +938,7 @@ pub async fn approve_transfer(
     ))
     .bind(transfer_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match current {
@@ -875,12 +955,12 @@ pub async fn approve_transfer(
             )
             .bind(transfer_id)
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
             match result {
                 Ok(_) => {
                     let _ = crate::models::audit_log::log_approval_event(
-                        &state.db,
+                        &mut **txn,
                         &tenant_id.to_string(),
                         "transfer_order",
                         &transfer_id.to_string(),
@@ -922,8 +1002,13 @@ pub async fn reject_transfer(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -950,7 +1035,7 @@ pub async fn reject_transfer(
     ))
     .bind(transfer_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match current {
@@ -966,12 +1051,12 @@ pub async fn reject_transfer(
             )
             .bind(transfer_id)
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
             match result {
                 Ok(_) => {
                     let _ = crate::models::audit_log::log_approval_event(
-                        &state.db,
+                        &mut **txn,
                         &tenant_id.to_string(),
                         "transfer_order",
                         &transfer_id.to_string(),

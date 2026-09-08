@@ -45,7 +45,12 @@ pub async fn list_batches(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<BatchQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -75,7 +80,7 @@ pub async fn list_batches(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -98,7 +103,7 @@ pub async fn list_batches(
             .bind(&params.supplier_id)
             .bind(&params.quality_status)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -134,8 +139,13 @@ pub async fn list_batches(
 pub async fn create_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateBatchRequest>,
 ) -> Json<ApiResponse<Batch>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -176,7 +186,7 @@ pub async fn create_batch(
     .bind(&req.remark)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -204,7 +214,12 @@ pub async fn get_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Batch>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -219,7 +234,7 @@ pub async fn get_batch(
         only_own_schema_query!("wms", "SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(batch_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -249,8 +264,13 @@ pub async fn update_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateBatchRequest>,
 ) -> Json<ApiResponse<Batch>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -308,7 +328,7 @@ pub async fn update_batch(
     .bind(&req.remark)
     .bind(now)
     .bind(batch_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -337,7 +357,12 @@ pub async fn delete_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -353,11 +378,17 @@ pub async fn delete_batch(
         "UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(batch_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "删除批次成功"))
         }
         Ok(_) => Json(api_error(404, "批次不存在")),
@@ -379,7 +410,12 @@ pub async fn get_batch_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<BatchStatistics>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -401,7 +437,7 @@ pub async fn get_batch_statistics(
         "#,
         warehouse_id
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -441,7 +477,12 @@ pub async fn get_expiring_soon(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<Batch>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -460,7 +501,7 @@ pub async fn get_expiring_soon(
     )
     .bind(days)
     .bind(warehouse_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -486,7 +527,12 @@ pub async fn get_expired(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<Batch>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -503,7 +549,7 @@ pub async fn get_expired(
         "#),
     )
     .bind(warehouse_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -529,8 +575,13 @@ pub async fn adjust_quantity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Batch>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -556,7 +607,7 @@ pub async fn adjust_quantity(
     ))
     .bind(quantity)
     .bind(batch_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -583,8 +634,13 @@ pub async fn transfer_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Batch>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -612,7 +668,7 @@ pub async fn transfer_location(
     ))
     .bind(to_location_id)
     .bind(batch_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {

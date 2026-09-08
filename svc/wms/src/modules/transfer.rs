@@ -59,7 +59,12 @@ pub async fn list_transfers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TransferPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -91,7 +96,7 @@ pub async fn list_transfers(
     .bind(&to_warehouse_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -109,7 +114,7 @@ pub async fn list_transfers(
             .bind(&status_filter)
             .bind(&from_warehouse_id)
             .bind(&to_warehouse_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -135,8 +140,13 @@ pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateTransferRequest>,
 ) -> Json<ApiResponse<Transfer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -161,7 +171,7 @@ pub async fn create_transfer(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -209,7 +219,12 @@ pub async fn get_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Transfer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -221,7 +236,7 @@ pub async fn get_transfer(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -239,8 +254,13 @@ pub async fn update_transfer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateTransferRequest>,
 ) -> Json<ApiResponse<Transfer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -253,7 +273,7 @@ pub async fn update_transfer(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -287,7 +307,7 @@ pub async fn update_transfer(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -336,22 +356,35 @@ pub async fn delete_transfer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(only_own_schema_query!("wms", "UPDATE transfers SET deleted_at = NOW() WHERE id = $1"))
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
             Json(ApiResponse::success("".to_string(), "调拨删除成功")),
             "success",
             None,
-        ),
+        )
+        },
         Ok(_) => (
             Json(api_error(404, "调拨不存在")),
             "error",
@@ -396,7 +429,12 @@ pub async fn list_transfer_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -411,7 +449,7 @@ pub async fn list_transfer_items(
         "#),
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -442,8 +480,13 @@ pub async fn create_transfer_item(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateTransferItemRequest>,
 ) -> Json<ApiResponse<TransferItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -466,7 +509,7 @@ pub async fn create_transfer_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -514,7 +557,12 @@ pub async fn get_transfer_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<TransferItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -527,7 +575,7 @@ pub async fn get_transfer_item(
     )
     .bind(id)
     .bind(item_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -545,8 +593,13 @@ pub async fn update_transfer_item(
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateTransferItemRequest>,
 ) -> Json<ApiResponse<TransferItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -560,7 +613,7 @@ pub async fn update_transfer_item(
     )
     .bind(id)
     .bind(item_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -589,7 +642,7 @@ pub async fn update_transfer_item(
     .bind(now)
     .bind(id)
     .bind(item_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -638,7 +691,12 @@ pub async fn delete_transfer_item(
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -646,15 +704,23 @@ pub async fn delete_transfer_item(
     let result = sqlx::query(only_own_schema_query!("wms", "DELETE FROM transfer_items WHERE transfer_id = $1 AND id = $2"))
         .bind(id)
         .bind(item_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
             Json(ApiResponse::success("".to_string(), "调拨明细删除成功")),
             "success",
             None,
-        ),
+        )
+        },
         Ok(_) => (
             Json(api_error(404, "调拨明细不存在")),
             "error",
@@ -700,7 +766,12 @@ pub async fn execute_transfer(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Transfer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -713,7 +784,7 @@ pub async fn execute_transfer(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let transfer = match transfer {
@@ -733,7 +804,7 @@ pub async fn execute_transfer(
         "#),
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let items = match items {
@@ -756,7 +827,7 @@ pub async fn execute_transfer(
         .bind(item.quantity)
         .bind(now)
         .bind(item.inventory_item_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
         match result {
@@ -787,7 +858,7 @@ pub async fn execute_transfer(
         .bind(&new_warehouse_id)
         .bind(now)
         .bind(item.inventory_item_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
         if let Err(e) = update_result {
@@ -806,12 +877,18 @@ pub async fn execute_transfer(
     )
     .bind(id)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(transfer) => (
-            Json(ApiResponse::success(transfer.clone(), "调拨执行成功")),
+                        if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                                    tracing::error!("事务提交失败: {}", e);
+                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+            }
+Json(ApiResponse::success(transfer.clone(), "调拨执行成功")),
             "success",
             None,
         ),

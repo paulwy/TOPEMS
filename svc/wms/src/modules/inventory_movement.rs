@@ -17,7 +17,10 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 /// 生成移动单号: MV-YYYYMMDD-6位序列号
-async fn generate_movement_no(state: &ApiState, tenant_id: Uuid) -> String {
+async fn generate_movement_no(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    tenant_id: Uuid,
+) -> String {
     let today = Utc::now().format("%Y%m%d").to_string();
     let prefix = format!("MV-{}", today);
 
@@ -30,7 +33,7 @@ async fn generate_movement_no(state: &ApiState, tenant_id: Uuid) -> String {
     ))
     .bind(tenant_id)
     .bind(format!("{}%", prefix))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -67,8 +70,13 @@ async fn list_inventory_movements(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Query(params): Query<InventoryMovementQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         return e;
     }
@@ -115,7 +123,7 @@ async fn list_inventory_movements(
     .bind(params.material_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -138,7 +146,7 @@ async fn list_inventory_movements(
             .bind(&reference_filter)
             .bind(&reference_type_filter)
             .bind(params.material_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -173,8 +181,13 @@ async fn create_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateInventoryMovementRequest>,
 ) -> Json<ApiResponse<InventoryMovement>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         return e;
     }
@@ -189,7 +202,7 @@ async fn create_inventory_movement(
 
     let now = Utc::now();
     let id = Uuid::new_v4();
-    let movement_no = generate_movement_no(&state, tenant_id).await;
+    let movement_no = generate_movement_no(&mut *txn, tenant_id).await;
     let operator_id = Uuid::parse_str(&claims.sub).ok();
 
     let result = sqlx::query_as::<_, InventoryMovement>(only_own_schema_query!(
@@ -230,7 +243,7 @@ async fn create_inventory_movement(
     .bind(now)
     .bind(&req.notes)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -256,8 +269,13 @@ async fn get_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<InventoryMovement>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         return e;
     }
@@ -283,7 +301,7 @@ async fn get_inventory_movement(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

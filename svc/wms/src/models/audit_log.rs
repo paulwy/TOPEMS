@@ -4,7 +4,7 @@ pub use topems_shared_db::audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest
 
 /// 记录审批事件到 wms_approval_events 表
 pub async fn log_approval_event(
-    pool: &sqlx::PgPool,
+    pool: &mut sqlx::PgConnection,
     tenant_id: &str,
     entity_type: &str,
     entity_id: &str,
@@ -28,7 +28,7 @@ pub async fn log_approval_event(
             created_at TIMESTAMP DEFAULT NOW()
         )"#,
     )
-    .execute(pool)
+    .execute(&mut *pool)
     .await?;
 
     sqlx::query(
@@ -43,7 +43,7 @@ pub async fn log_approval_event(
     .bind(status_from)
     .bind(status_to)
     .bind(comment)
-    .execute(pool)
+    .execute(&mut *pool)
     .await?;
     Ok(())
 }

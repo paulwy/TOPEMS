@@ -50,7 +50,12 @@ pub async fn list_discrepancies(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DiscrepancyQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -80,7 +85,7 @@ pub async fn list_discrepancies(
     .bind(&adjustment_status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -95,7 +100,7 @@ pub async fn list_discrepancies(
             )
             .bind(&stock_take_id)
             .bind(&adjustment_status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -117,7 +122,7 @@ pub async fn list_discrepancies(
                 &stock_take_id,
                 &adjustment_status
             )
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             Json(ApiResponse::success(
@@ -143,7 +148,12 @@ pub async fn get_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<DiscrepancyRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -160,7 +170,7 @@ pub async fn get_discrepancy(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -178,8 +188,13 @@ pub async fn create_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateDiscrepancyRequest>,
 ) -> Json<ApiResponse<DiscrepancyRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -201,7 +216,7 @@ pub async fn create_discrepancy(
         "#,
         req.stock_take_item_id
     )
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let stock_take_item = match stock_take_item {
@@ -247,7 +262,7 @@ pub async fn create_discrepancy(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -297,8 +312,13 @@ pub async fn approve_discrepancy(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApproveDiscrepancyRequest>,
 ) -> Json<ApiResponse<DiscrepancyRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -328,7 +348,7 @@ pub async fn approve_discrepancy(
     .bind(now)
     .bind(&req.notes)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -393,7 +413,12 @@ pub async fn adjust_inventory(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -413,7 +438,7 @@ pub async fn adjust_inventory(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let record = match record {
@@ -438,7 +463,7 @@ pub async fn adjust_inventory(
         record.adjustment_quantity,
         now
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if adjust_result.is_err() {
@@ -459,13 +484,13 @@ pub async fn adjust_inventory(
     )
     .bind(id)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(record) => {
             log_audit_event(
-                &state.db,
+        &state.db,
                 "adjust".to_string(),
                 "discrepancy_record".to_string(),
                 Some(id),
@@ -501,7 +526,12 @@ pub async fn process_stock_take_discrepancies(
     Extension(claims): Extension<Claims>,
     Path(stock_take_id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -521,7 +551,7 @@ pub async fn process_stock_take_discrepancies(
         "#,
         stock_take_id
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let items = match items {
@@ -562,7 +592,7 @@ pub async fn process_stock_take_discrepancies(
             discrepancy_type,
             now
         )
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if create_result.is_ok() {

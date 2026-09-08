@@ -1,11 +1,12 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     routing::post,
     Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -66,8 +67,13 @@ where
 )]
 pub async fn outbound_to_shipping(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<OutboundToShippingRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let outbound_order_id = match Uuid::parse_str(&req.outbound_order_id) {
         Ok(id) => id,
         Err(_) => {
@@ -89,8 +95,21 @@ pub async fn outbound_to_shipping(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    create_shipping_from_outbound_internal(&state, outbound_order_id, customer_id, req.remarks)
-        .await
+    let _resp = create_shipping_from_outbound_internal(
+        &state,
+        outbound_order_id,
+        customer_id,
+        req.remarks,
+        &mut *txn,
+    )
+    .await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
+    _resp
 }
 
 #[utoipa::path(
@@ -106,8 +125,20 @@ pub async fn outbound_to_shipping(
 pub async fn create_shipping_from_outbound(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    create_shipping_from_outbound_internal(&state, id, None, None).await
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let _resp = create_shipping_from_outbound_internal(&state, id, None, None, &mut *txn).await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
+    _resp
 }
 
 pub async fn create_shipping_from_outbound_internal(
@@ -115,6 +146,7 @@ pub async fn create_shipping_from_outbound_internal(
     outbound_order_id: Uuid,
     customer_id: Option<Uuid>,
     _remarks: Option<String>,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let outbound_order = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -127,7 +159,7 @@ pub async fn create_shipping_from_outbound_internal(
         "wms"
     ))
     .bind(outbound_order_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let outbound_order = match outbound_order {
@@ -212,11 +244,11 @@ pub async fn create_shipping_from_outbound_internal(
     .bind(shipping_id)
     .bind(&shipping_order_number)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let _ = record_sync_log(
-        state,
+        &state,
         "outbound_to_shipping",
         "wms",
         "crm",
@@ -229,6 +261,7 @@ pub async fn create_shipping_from_outbound_internal(
         "success",
         None,
         0,
+        &mut *txn,
     )
     .await;
 
@@ -261,8 +294,13 @@ pub struct InboundFromScmRequest {
 )]
 pub async fn create_inbound_from_scm(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<InboundFromScmRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let purchase_order_id = match Uuid::parse_str(&req.purchase_order_id) {
         Ok(id) => id,
         Err(_) => {
@@ -286,7 +324,7 @@ pub async fn create_inbound_from_scm(
         "wms"
     ))
     .bind(purchase_order_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (_po_id, po_number, po_supplier_id) = match purchase_order {
@@ -328,7 +366,7 @@ pub async fn create_inbound_from_scm(
     .bind(po_supplier_id)
     .bind(now)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -347,9 +385,16 @@ pub async fn create_inbound_from_scm(
                 "success",
                 None,
                 0,
+                &mut *txn,
             )
             .await;
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(
                 serde_json::json!({
                     "success": true,
@@ -380,8 +425,13 @@ pub async fn create_inbound_from_scm(
 )]
 pub async fn get_sync_logs(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<SyncLogsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -405,7 +455,7 @@ pub async fn get_sync_logs(
     .bind(&req.source_module)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match rows {
@@ -459,6 +509,7 @@ pub async fn record_sync_log(
     status: &str,
     error_message: Option<String>,
     retry_count: i32,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(only_own_schema_query!(
         "wms",
@@ -486,7 +537,7 @@ pub async fn record_sync_log(
     .bind(3)
     .bind(Utc::now())
     .bind(Utc::now())
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await?;
     Ok(())
 }

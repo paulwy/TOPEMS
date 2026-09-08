@@ -132,7 +132,12 @@ pub async fn list_alerts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -225,7 +230,7 @@ pub async fn list_alerts(
         page_size,
         offset
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -289,7 +294,12 @@ pub async fn get_alert(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<InventoryAlert>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -340,7 +350,7 @@ pub async fn get_alert(
         "#,
         id
     )
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -392,7 +402,12 @@ pub async fn acknowledge_alert(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -404,7 +419,7 @@ pub async fn acknowledge_alert(
         "SELECT COUNT(*) FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match exists {
@@ -451,7 +466,12 @@ pub async fn acknowledge_alert(
 pub async fn get_alert_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -479,7 +499,7 @@ pub async fn get_alert_statistics(
           )
         "#,
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let summary = match summary_result {
@@ -519,7 +539,7 @@ pub async fn get_alert_statistics(
         GROUP BY i.warehouse_id, w.warehouse_name
         "#,
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let alerts_by_warehouse: Vec<WarehouseAlertCount> = match by_warehouse_result {
@@ -554,7 +574,7 @@ pub async fn get_alert_statistics(
         LIMIT 10
         "#,
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let alerts_by_material: Vec<MaterialAlertCount> = match by_material_result {
@@ -593,7 +613,12 @@ pub async fn get_alert_statistics(
 pub async fn get_alert_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<AlertSummary>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -621,7 +646,7 @@ pub async fn get_alert_summary(
           )
         "#,
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -676,7 +701,12 @@ pub async fn get_alerts_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -744,7 +774,7 @@ pub async fn get_alerts_by_warehouse(
         "#,
         warehouse_id
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -839,7 +869,12 @@ pub async fn list_alert_rules(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -864,7 +899,7 @@ pub async fn list_alert_rules(
     .bind(params.alert_type.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -879,7 +914,7 @@ pub async fn list_alert_rules(
             ))
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.alert_type.as_deref())
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -932,8 +967,13 @@ pub async fn create_alert_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateAlertRuleRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -963,7 +1003,7 @@ pub async fn create_alert_rule(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -1034,7 +1074,12 @@ pub async fn get_alert_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1043,7 +1088,7 @@ pub async fn get_alert_rule(
     let result =
         sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, warehouse_id, item_id, item_code, alert_type, threshold_min, threshold_max, unit, is_active, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1"))
             .bind(id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
     match result {
@@ -1088,8 +1133,13 @@ pub async fn update_alert_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateAlertRuleRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1120,7 +1170,7 @@ pub async fn update_alert_rule(
     .bind(req.enabled)
     .bind(&req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -1198,7 +1248,12 @@ pub async fn delete_alert_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1209,16 +1264,24 @@ pub async fn delete_alert_rule(
         "UPDATE wms.inventory_alert_rules SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "预警规则删除成功")),
-            "success",
-            None,
-            Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "预警规则删除成功")),
+                "success",
+                None,
+                Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "预警规则不存在")),
             "error",
@@ -1268,7 +1331,12 @@ pub async fn list_alert_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1294,7 +1362,7 @@ pub async fn list_alert_records(
     .bind(params.warehouse_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -1313,7 +1381,7 @@ pub async fn list_alert_records(
             .bind(params.severity.as_deref())
             .bind(params.status.as_deref())
             .bind(params.warehouse_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -1373,7 +1441,12 @@ pub async fn get_alert_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1381,7 +1454,7 @@ pub async fn get_alert_record(
 
     let result = sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records WHERE id = $1"))
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
 
     match result {
@@ -1437,8 +1510,13 @@ pub async fn confirm_alert_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ConfirmAlertRecordRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1460,7 +1538,7 @@ pub async fn confirm_alert_record(
     .bind(id)
     .bind(req.notes.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {

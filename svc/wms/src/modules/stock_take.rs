@@ -121,7 +121,12 @@ pub async fn list_stock_takes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<StockTakePaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -156,7 +161,7 @@ pub async fn list_stock_takes(
     .bind(warehouse_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -174,7 +179,7 @@ pub async fn list_stock_takes(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(warehouse_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -214,8 +219,13 @@ pub async fn create_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateStockTakeRequest>,
 ) -> Json<ApiResponse<StockTake>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -242,7 +252,7 @@ pub async fn create_stock_take(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -297,7 +307,12 @@ pub async fn get_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -314,7 +329,7 @@ pub async fn get_stock_take(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -348,8 +363,13 @@ pub async fn update_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateStockTakeRequest>,
 ) -> Json<ApiResponse<StockTake>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -365,7 +385,7 @@ pub async fn update_stock_take(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -397,7 +417,7 @@ pub async fn update_stock_take(
     .bind(end_time)
     .bind(&remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -454,7 +474,12 @@ pub async fn delete_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -464,15 +489,23 @@ pub async fn delete_stock_take(
         r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "盘点删除成功")),
-            "success",
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "盘点删除成功")),
+                "success",
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "盘点不存在")),
             "error",
@@ -531,7 +564,12 @@ pub async fn start_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -604,7 +642,7 @@ pub async fn start_stock_take(
         "#
     ))
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match result {
@@ -658,7 +696,12 @@ pub async fn list_stock_take_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -680,7 +723,7 @@ pub async fn list_stock_take_items(
         "#
     ))
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -737,8 +780,13 @@ pub async fn create_stock_take_item(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateStockTakeItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -795,7 +843,7 @@ pub async fn create_stock_take_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -856,8 +904,13 @@ pub async fn count_stock_take(
     Extension(claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
     _headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(items): Json<Vec<CountItemRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -941,7 +994,12 @@ pub async fn get_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -961,7 +1019,7 @@ pub async fn get_stock_take_item(
     ))
     .bind(id)
     .bind(item_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -990,8 +1048,13 @@ pub async fn update_stock_take_item(
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateStockTakeItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1008,7 +1071,7 @@ pub async fn update_stock_take_item(
     ))
     .bind(id)
     .bind(item_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -1073,7 +1136,7 @@ pub async fn update_stock_take_item(
     .bind(now)
     .bind(id)
     .bind(item_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -1129,7 +1192,12 @@ pub async fn delete_stock_take_item(
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1137,15 +1205,23 @@ pub async fn delete_stock_take_item(
     let result = sqlx::query(only_own_schema_query!("wms", r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL"#))
         .bind(id)
         .bind(item_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "盘点明细删除成功")),
-            "success",
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "盘点明细删除成功")),
+                "success",
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "盘点明细不存在")),
             "error",
@@ -1204,7 +1280,12 @@ pub async fn complete_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1301,7 +1382,7 @@ pub async fn complete_stock_take(
         "#
     ))
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match result {
@@ -1362,7 +1443,12 @@ pub async fn adjust_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1469,8 +1555,13 @@ pub async fn start_stock_take_approval(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::StockTakeApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1492,7 +1583,7 @@ pub async fn start_stock_take_approval(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match current {
@@ -1502,7 +1593,7 @@ pub async fn start_stock_take_approval(
                 return Json(ApiResponse::error(400, "当前状态无需审批"));
             }
             let _ = crate::models::audit_log::log_approval_event(
-                &state.db,
+                &mut **txn,
                 &tenant_id.to_string(),
                 "stock_take",
                 &id.to_string(),
@@ -1539,8 +1630,13 @@ pub async fn approve_stock_take(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::StockTakeApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1562,7 +1658,7 @@ pub async fn approve_stock_take(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match current {
@@ -1579,12 +1675,12 @@ pub async fn approve_stock_take(
             )
             .bind(id)
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
             match result {
                 Ok(_) => {
                     let _ = crate::models::audit_log::log_approval_event(
-                        &state.db,
+                        &mut **txn,
                         &tenant_id.to_string(),
                         "stock_take",
                         &id.to_string(),
@@ -1627,8 +1723,13 @@ pub async fn reject_stock_take(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::StockTakeApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1650,7 +1751,7 @@ pub async fn reject_stock_take(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match current {
@@ -1660,7 +1761,7 @@ pub async fn reject_stock_take(
                 return Json(ApiResponse::error(400, "当前状态不允许驳回返工"));
             }
             let _ = crate::models::audit_log::log_approval_event(
-                &state.db,
+                &mut **txn,
                 &tenant_id.to_string(),
                 "stock_take",
                 &id.to_string(),

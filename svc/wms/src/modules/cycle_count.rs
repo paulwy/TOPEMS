@@ -52,7 +52,12 @@ pub async fn list_cycle_count_configs(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CycleCountQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -80,7 +85,7 @@ pub async fn list_cycle_count_configs(
     .bind(&is_active)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -95,7 +100,7 @@ pub async fn list_cycle_count_configs(
             )
             .bind(&warehouse_id)
             .bind(&is_active)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -122,8 +127,13 @@ pub async fn create_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateCycleCountConfigRequest>,
 ) -> Json<ApiResponse<CycleCountConfig>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -157,7 +167,7 @@ pub async fn create_cycle_count_config(
     .bind(next_count_date)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -206,7 +216,12 @@ pub async fn get_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<CycleCountConfig>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -221,7 +236,7 @@ pub async fn get_cycle_count_config(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -240,8 +255,13 @@ pub async fn update_cycle_count_config(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateCycleCountConfigRequest>,
 ) -> Json<ApiResponse<CycleCountConfig>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -276,7 +296,7 @@ pub async fn update_cycle_count_config(
     .bind(&req.priority_level)
     .bind(next_count_date)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -326,7 +346,12 @@ pub async fn delete_cycle_count_config(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -341,15 +366,23 @@ pub async fn delete_cycle_count_config(
         id,
         Utc::now()
     )
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
             Json(ApiResponse::success("".to_string(), "循环盘点配置删除成功")),
             "success",
             None,
-        ),
+        )
+        },
         Ok(_) => (
             Json(api_error(404, "循环盘点配置不存在")),
             "error",
@@ -390,7 +423,12 @@ pub async fn generate_cycle_count(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -406,7 +444,7 @@ pub async fn generate_cycle_count(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let config = match config {
@@ -442,7 +480,7 @@ pub async fn generate_cycle_count(
         now
     )
     .bind(&config.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let new_stock_take_id = match result {
@@ -469,7 +507,7 @@ pub async fn generate_cycle_count(
         next_count_date,
         now
     )
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     log_audit_event(
@@ -488,7 +526,13 @@ pub async fn generate_cycle_count(
     )
     .await;
 
-    Json(ApiResponse::success(
+        if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
+Json(ApiResponse::success(
         serde_json::json!({
             "stock_take_id": new_stock_take_id,
             "stock_take_number": stock_take_number
@@ -502,7 +546,12 @@ pub async fn generate_all_cycle_counts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -521,7 +570,7 @@ pub async fn generate_all_cycle_counts(
         "#),
     )
     .bind(now)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let configs = match configs {
@@ -554,7 +603,7 @@ pub async fn generate_all_cycle_counts(
             now,
             now
         )
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if create_result.is_ok() {
@@ -577,7 +626,7 @@ pub async fn generate_all_cycle_counts(
                 next_count_date,
                 now
             )
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             generated_count += 1;
@@ -605,7 +654,13 @@ pub async fn generate_all_cycle_counts(
     )
     .await;
 
-    Json(ApiResponse::success(
+        if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
+Json(ApiResponse::success(
         serde_json::json!({
             "generated_count": generated_count,
             "results": results

@@ -83,7 +83,12 @@ pub async fn list_wave_picks(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<WavePick>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -114,7 +119,7 @@ pub async fn list_wave_picks(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -130,7 +135,7 @@ pub async fn list_wave_picks(
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -165,8 +170,13 @@ pub async fn create_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateWavePickRequest>,
 ) -> Json<ApiResponse<WavePick>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -197,7 +207,7 @@ pub async fn create_wave_pick(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -248,7 +258,12 @@ pub async fn get_wave_pick(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<WavePick>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -266,7 +281,7 @@ pub async fn get_wave_pick(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -291,8 +306,13 @@ pub async fn update_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<WavePick>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -327,7 +347,7 @@ pub async fn update_wave_pick(
     .bind(priority)
     .bind(remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -385,7 +405,12 @@ pub async fn delete_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -396,16 +421,24 @@ pub async fn delete_wave_pick(
         "UPDATE wms.wave_picks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "波次拣货删除成功")),
-            "success",
-            None,
-            Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "波次拣货删除成功")),
+                "success",
+                None,
+                Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "波次拣货不存在")),
             "error",
@@ -471,7 +504,12 @@ pub async fn list_wave_pick_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -490,7 +528,7 @@ pub async fn list_wave_pick_items(
         "#
     ))
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -523,8 +561,13 @@ pub async fn assign_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<AssignWavePickRequest>,
 ) -> Json<ApiResponse<WavePick>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -548,7 +591,7 @@ pub async fn assign_wave_pick(
     .bind(id)
     .bind(req.assigned_to)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -606,7 +649,12 @@ pub async fn start_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<WavePick>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -630,7 +678,7 @@ pub async fn start_wave_pick(
     .bind(id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -688,7 +736,12 @@ pub async fn complete_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<WavePick>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -712,7 +765,7 @@ pub async fn complete_wave_pick(
     .bind(id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -770,7 +823,12 @@ pub async fn cancel_wave_pick(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<WavePick>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -792,7 +850,7 @@ pub async fn cancel_wave_pick(
     ))
     .bind(id)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {

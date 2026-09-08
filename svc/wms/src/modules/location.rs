@@ -77,7 +77,12 @@ pub async fn list_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LocationPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -106,7 +111,7 @@ pub async fn list_locations(
     .bind(warehouse_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -123,7 +128,7 @@ pub async fn list_locations(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(warehouse_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -161,8 +166,13 @@ pub async fn create_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateLocationRequest>,
 ) -> Json<ApiResponse<Location>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -186,7 +196,7 @@ pub async fn create_location(
     .bind(req.capacity)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -241,7 +251,12 @@ pub async fn get_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Location>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -259,7 +274,7 @@ pub async fn get_location(
         "#),
     )
     .bind(location_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -290,8 +305,13 @@ pub async fn update_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateLocationRequest>,
 ) -> Json<ApiResponse<Location>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -310,7 +330,7 @@ pub async fn update_location(
         "#),
     )
     .bind(location_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -344,7 +364,7 @@ pub async fn update_location(
     .bind(capacity)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -401,7 +421,12 @@ pub async fn delete_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -417,15 +442,23 @@ pub async fn delete_location(
         "UPDATE wms.locations SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(location_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "库位删除成功")),
-            "success",
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "库位删除成功")),
+                "success",
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "库位不存在")),
             "error",
@@ -482,7 +515,12 @@ pub async fn get_location_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LocationStatusParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LocationStatusSummary>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -503,7 +541,7 @@ pub async fn get_location_status(
         "#,
         warehouse_id
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -540,8 +578,13 @@ pub async fn get_location_status(
 pub async fn batch_create_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<Vec<CreateLocationRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -567,7 +610,7 @@ pub async fn batch_create_locations(
         .bind(item.capacity)
         .bind(now)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if let Ok(location) = result {
@@ -595,8 +638,13 @@ pub async fn batch_create_locations(
 pub async fn batch_update_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<BatchUpdateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -636,14 +684,22 @@ pub async fn batch_update_locations(
     .bind(&req.updates.status)
     .bind(now)
     .bind(&ids)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
-            serde_json::json!({ "updated_count": r.rows_affected() }),
-            "批量更新库位成功",
-        )),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({ "updated_count": r.rows_affected() }),
+                "批量更新库位成功",
+            ))
+        }
         Err(e) => {
             tracing::error!("批量更新库位失败: {}", e);
             Json(api_error(500, "批量更新库位失败"))
@@ -666,8 +722,13 @@ pub async fn batch_update_locations(
 pub async fn batch_delete_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -692,14 +753,22 @@ pub async fn batch_delete_locations(
         "UPDATE wms.locations SET deleted_at = NOW() WHERE id = ANY($1)"
     ))
     .bind(&ids)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
-            serde_json::json!({ "deleted_count": r.rows_affected() }),
-            "批量删除库位成功",
-        )),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({ "deleted_count": r.rows_affected() }),
+                "批量删除库位成功",
+            ))
+        }
         Err(e) => {
             tracing::error!("批量删除库位失败: {}", e);
             Json(api_error(500, "批量删除库位失败"))
