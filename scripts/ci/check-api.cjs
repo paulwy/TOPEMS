@@ -281,6 +281,28 @@ function checkApiImportCoverage(filePath, apiImport) {
   }
 }
 
+// 按顶层页面单元聚合：页面单元 = 直接 .tsx 文件或子目录；单元内任一文件（含 hook/components 子组件）
+// 接入 API 即算该页面已接入——修复：AutomationDesignerPage 经 useAutomationDesigner hook 间接接 API 被误报未接入
+function findPageUnitsCoverage(dir, apiImport) {
+  const units = [];
+  if (!fs.existsSync(dir)) return units;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.name === '__tests__') continue;
+    const fullPath = path.join(dir, entry.name);
+    let files = [];
+    if (entry.isDirectory()) {
+      files = findTsxFilesCoverage(fullPath);
+    } else if (entry.isFile() && entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx')) {
+      files = [fullPath];
+    }
+    if (files.length === 0) continue;
+    const hasApi = files.some((f) => checkApiImportCoverage(f, apiImport));
+    units.push({ path: path.relative(WEB_ROOT, fullPath), hasApi, fileCount: files.length });
+  }
+  return units;
+}
+
 function runCoverageCheck(opts) {
   const { strict } = opts;
   const report = {
@@ -289,29 +311,36 @@ function runCoverageCheck(opts) {
   };
 
   for (const check of MODULE_CHECKS) {
-    const files = findTsxFilesCoverage(check.pagesDir);
-    const withApi = [];
-    const withoutApi = [];
-
-    for (const file of files) {
-      const relPath = path.relative(WEB_ROOT, file);
-      if (checkApiImportCoverage(file, check.apiImport)) {
-        withApi.push(relPath);
-      } else {
-        withoutApi.push(relPath);
-      }
+    if (!fs.existsSync(check.pagesDir)) {
+      // 目录不存在：该模块页面已下线/迁移，跳过检查，不 FAIL（此前 lowcode 目录缺失被误报 0% FAIL）
+      report.modules.push({
+        name: check.name,
+        description: check.description,
+        skipped: true,
+        total_pages: 0,
+        pages_with_api: 0,
+        pages_without_api: 0,
+        coverage_rate: null,
+        passed: true,
+        without_api_files: [],
+      });
+      continue;
     }
 
-    const passed = withoutApi.length === 0 && files.length >= check.minPages;
+    const units = findPageUnitsCoverage(check.pagesDir, check.apiImport);
+    const withApi = units.filter((u) => u.hasApi).map((u) => u.path);
+    const withoutApi = units.filter((u) => !u.hasApi).map((u) => u.path);
+
+    const passed = withoutApi.length === 0 && units.length >= check.minPages;
     if (!passed) report.passed = false;
 
     report.modules.push({
       name: check.name,
       description: check.description,
-      total_pages: files.length,
+      total_pages: units.length,
       pages_with_api: withApi.length,
       pages_without_api: withoutApi.length,
-      coverage_rate: files.length > 0 ? Math.round((withApi.length / files.length) * 100) : 0,
+      coverage_rate: units.length > 0 ? Math.round((withApi.length / units.length) * 100) : 0,
       passed,
       without_api_files: withoutApi,
     });

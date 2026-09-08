@@ -63,6 +63,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 **当前待办总数：19 项**（✅ 已闭环 18 / ⏳ 待阈值触发 1：#1 物理库拆分）
 
+> 09-08 **API 覆盖率检查修复已闭环**（check-api.cjs coverage 模式两处缺陷）：①lowcode 页面目录不存在仍报 0% FAIL（配置假阳性）→ 目录缺失改为 skipped 跳过不 FAIL；②automation 60% 为浅层检测误报——DesignerCanvas 等 4 个 components 子组件被独立计为"页面"，且 AutomationDesignerPage 经 useAutomationDesigner hook 间接接 API 不被识别 → 改为**顶层页面单元聚合**（单元内任一文件含 API 即算接入）。修后：automation 60%→**100%**（5/5 页面单元）、lowcode skipped、coverage 检查全绿。
+
+
 > 09-08 **P6 RED 修复已闭环**：`tauriApi.getAuditLogs` 不存在（tauri.ts 仅 invoke/window/app；AuditLogPage 运行时 TypeError）。修复：AuditLogPage 改走 `auditLogApi.listAuditLogs`（HTTP → erp 网关 /audit-logs，后端 list_audit_logs 已有）；filter 映射（from→start_date / to→end_date，target_type 无后端对应字段已忽略）；后端行→页面行映射（created_at→timestamp / resource→target_type / resource_id→target_id）。验证：P6 RED 1→**0**、tsc 0 error、eslint 通过。
 > 09-08 **359 条权限码声明缺口结论升级（体系专项）**：核对后端 `iam.permissions` 仅 **40 条粗码**（rs_read/lims_read 风格）vs 前端 config.ts 使用 **375 条细分码**（pm:project:read 风格）——**前后端权限码体系不一致**：前端 `hasPermission = permissions.includes(code)`（后端下发列表）对未签发细分码**恒 false**（仅 superuser 绕过）；permissionMapping.ts 仅 100 条模板映射。非机械可修，需专项：统一码体系或建立后端→前端映射层，并决定细分码是否由后端签发。
 
