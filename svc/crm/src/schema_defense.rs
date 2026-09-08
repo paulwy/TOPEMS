@@ -134,32 +134,6 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         ],
     ),
     (
-        "dashboard_metrics",
-        &[
-            ("org_id", "UUID NOT NULL"),
-            ("metric_type", "VARCHAR(50) NOT NULL"),
-            ("metric_name", "VARCHAR(100) NOT NULL"),
-            ("metric_value", "DECIMAL(15,2) NOT NULL"),
-            ("metric_unit", "VARCHAR(20)"),
-            ("period_type", "VARCHAR(20) NOT NULL"),
-            ("period_start", "DATE NOT NULL"),
-            ("period_end", "DATE NOT NULL"),
-            ("comparison_value", "DECIMAL(15,2)"),
-            ("comparison_period_start", "DATE"),
-            ("comparison_period_end", "DATE"),
-            ("trend", "VARCHAR(20)"),
-            ("target_value", "DECIMAL(15,2)"),
-            ("achievement_percentage", "DECIMAL(5,2)"),
-            ("details", "JSONB"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("created_by", "UUID"),
-            ("updated_by", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ"),
-            ("tenant_id", "UUID"),
-        ],
-    ),
-    (
         "interactions",
         &[
             ("org_id", "UUID NOT NULL"),
@@ -356,7 +330,6 @@ mod tests {
         assert!(names.contains(&"return_items"));
         assert!(names.contains(&"rfm_results"));
         assert!(names.contains(&"customer_tags"));
-        assert!(names.contains(&"dashboard_metrics"));
         assert!(names.contains(&"customer_orders"));
         // NOTE: crm_master_data_refs is created by shared-db ensure_master_data_refs_table()
         // in default_init_db path — intentionally excluded from TABLE_DEFS.

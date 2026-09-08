@@ -138,42 +138,8 @@ const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         ],
     ),
     // 10. core_chat_rooms
-    (
-        "core_chat_rooms",
-        &[
-            ("id", "UUID PRIMARY KEY DEFAULT gen_random_uuid()"),
-            ("name", "VARCHAR(128)"),
-            ("room_type", "VARCHAR(32) DEFAULT 'private'"),
-            ("creator_id", "UUID NOT NULL"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-        ],
-    ),
     // 11. core_chat_members
-    (
-        "core_chat_members",
-        &[
-            ("room_id", "UUID NOT NULL REFERENCES core_chat_rooms(id)"),
-            ("user_id", "UUID NOT NULL"),
-            ("role", "VARCHAR(32) DEFAULT 'member'"),
-            ("joined_at", "TIMESTAMP DEFAULT NOW()"),
-        ],
-    ),
     // 12. core_chat_messages
-    (
-        "core_chat_messages",
-        &[
-            ("id", "UUID PRIMARY KEY DEFAULT gen_random_uuid()"),
-            ("room_id", "UUID NOT NULL REFERENCES core_chat_rooms(id)"),
-            ("sender_id", "UUID NOT NULL"),
-            ("sender_name", "VARCHAR(128)"),
-            ("message_type", "VARCHAR(32) DEFAULT 'text'"),
-            ("content", "TEXT NOT NULL"),
-            ("file_url", "VARCHAR(512)"),
-            ("is_recalled", "BOOLEAN DEFAULT FALSE"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-        ],
-    ),
 ];
 
 /// Creates the base tables (with only the `id` primary-key column) and then
@@ -222,8 +188,8 @@ mod tests {
     }
 
     #[test]
-    fn test_table_defs_count_is_nine() {
-        assert_eq!(table_defs_for_test().len(), 9);
+    fn test_table_defs_count_is_six() {
+        assert_eq!(table_defs_for_test().len(), 6);
     }
 
     #[test]
@@ -231,9 +197,6 @@ mod tests {
         let names: Vec<&str> = table_defs_for_test().iter().map(|(n, _)| *n).collect();
         assert!(names.contains(&"core_notifications"));
         assert!(names.contains(&"core_notification_templates"));
-        assert!(names.contains(&"core_chat_rooms"));
-        assert!(names.contains(&"core_chat_members"));
-        assert!(names.contains(&"core_chat_messages"));
         assert!(names.contains(&"core_emails"));
         assert!(names.contains(&"core_email_templates"));
         assert!(names.contains(&"core_location_messages"));

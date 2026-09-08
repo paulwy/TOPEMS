@@ -65,22 +65,6 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         ],
     ),
     (
-        "integration_configs",
-        &[
-            ("config_name", "VARCHAR(100) NOT NULL"),
-            ("source_system", "VARCHAR(50) NOT NULL"),
-            ("target_system", "VARCHAR(50) NOT NULL"),
-            ("config_type", "VARCHAR(50) NOT NULL"),
-            ("config_value", "JSONB NOT NULL"),
-            ("is_active", "BOOLEAN NOT NULL DEFAULT true"),
-            ("description", "TEXT"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMPTZ"),
-            ("tenant_id", "UUID"),
-        ],
-    ),
-    (
         "integration_events",
         &[
             ("source_system", "VARCHAR(50) NOT NULL"),

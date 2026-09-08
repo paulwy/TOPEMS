@@ -11,7 +11,7 @@
 use sqlx::PgPool;
 use topems_shared::schema::run_schema_defense;
 
-pub const SERVICE_SCHEMA: &str = "public";
+pub const SERVICE_SCHEMA: &str = "ehs";
 pub const SERVICE_TAG: &str = "ehs";
 
 /// ehs 43 张表的列定义单一事实源。不含 PRIMARY KEY 的 id 列（verify 阶段自动拼 "id"）。

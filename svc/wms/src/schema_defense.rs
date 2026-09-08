@@ -594,26 +594,6 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     ),
     // ===== 20260623000001_create_inventory_alerts.sql =====
     (
-        "inventory_alerts",
-        &[
-            ("organization_id", "UUID NOT NULL"),
-            ("inventory_id", "UUID NOT NULL"),
-            ("alert_type", "VARCHAR(50) NOT NULL"),
-            ("current_quantity", "NUMERIC(15, 2)"),
-            ("threshold_value", "NUMERIC(15, 2)"),
-            ("deviation_quantity", "NUMERIC(15, 2)"),
-            ("severity", "VARCHAR(20) NOT NULL DEFAULT 'warning'"),
-            ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
-            ("remarks", "TEXT"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("created_by", "UUID"),
-            ("updated_by", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ"),
-            ("tenant_id", "UUID"),
-        ],
-    ),
-    (
         "cycle_count_configs",
         &[
             ("organization_id", "UUID NOT NULL"),

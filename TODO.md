@@ -4,7 +4,12 @@
 - 迁移 CASCADE 处理 flow/doc_service 内部 FK 依赖；台账 success=t
 - 关联修复：schema_boundary.json erp.allow+=crm、ehs.allow+=ehs（门禁归零）；shared-event 测试补 customer_name；communication TABLE_DEFS 补 chat 3 表+断言
 - 剩余 44 张 0 引用 = C 组 42（规划表保留）+ D 组 1（customer_orders）+ wms_master_data_refs 1
-- 待办：schema_defense.rs TABLE_DEFS 悬空条目清理（独立项）
+- 已闭环：schema_defense TABLE_DEFS 悬空条目清理（独立项，提交待推）
+  - 盘点：71 条悬空声明（声明有、库无）——47 条表在其他 schema（归属错配）+ 23 条全库不存在
+  - 处置：删 28 条（analytics 11 / erp 11 / communication 3 / crm 1 / integration 1 / wms 1，全库不存在 23 + 归他 schema 5）
+    + ehs SERVICE_SCHEMA public→ehs（43 条 qa_ehs_* 表实建在 ehs，声明转正）
+  - 同步断言：communication 表数 9→6、crm dashboard_metrics 移除
+  - 验证：重盘点 0 悬空；七服务 check 0 error；全仓 0 FAILED；门禁 0 FAIL
 
 ## 治理（第三轮）：跨 schema 裸表名引用修复
 - 状态：✅ 完成（待提交 20260908000011）
