@@ -47,10 +47,15 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_customer_scores(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerScoringQueryParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -80,7 +85,7 @@ async fn list_customer_scores(
     .bind(&score_level_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -96,7 +101,7 @@ async fn list_customer_scores(
             .bind(tenant_id)
             .bind(&customer_id_filter)
             .bind(&score_level_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -120,10 +125,15 @@ async fn list_customer_scores(
 
 async fn get_customer_score(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<CustomerScore>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -139,7 +149,7 @@ async fn get_customer_score(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -154,10 +164,15 @@ async fn get_customer_score(
 
 async fn create_customer_score(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateCustomerScoreRequest>,
 ) -> Json<ApiResponse<CustomerScore>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -170,7 +185,7 @@ async fn create_customer_score(
     )
     .bind(&req.customer_id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let customer_name = match customer {
@@ -192,7 +207,7 @@ async fn create_customer_score(
     )
     .bind(&req.customer_id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None)
     .flatten();
@@ -221,7 +236,7 @@ async fn create_customer_score(
     .bind(&last_score)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -239,6 +254,12 @@ async fn create_customer_score(
             )
         }
     };
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(score) = &result {
@@ -270,11 +291,16 @@ async fn create_customer_score(
 
 async fn update_customer_score(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateCustomerScoreRequest>,
 ) -> Json<ApiResponse<CustomerScore>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -289,7 +315,7 @@ async fn update_customer_score(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -319,7 +345,7 @@ async fn update_customer_score(
     .bind(&factors)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -337,6 +363,12 @@ async fn update_customer_score(
             )
         }
     };
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let response_data = if let Ok(score) = &result {
         serde_json::to_value(score).ok()
@@ -367,10 +399,15 @@ async fn update_customer_score(
 
 async fn delete_customer_score(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -383,7 +420,7 @@ async fn delete_customer_score(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -406,6 +443,12 @@ async fn delete_customer_score(
             )
         }
     };
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -436,10 +479,15 @@ async fn delete_customer_score(
 
 async fn batch_calculate(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchCalculateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -460,7 +508,7 @@ async fn batch_calculate(
             )
             .bind(customer_id)
             .bind(tenant_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await
             .unwrap_or(None);
 
@@ -472,7 +520,7 @@ async fn batch_calculate(
             )
             .bind(customer_id)
             .bind(tenant_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await
             .unwrap_or(None);
 
@@ -481,7 +529,7 @@ async fn batch_calculate(
             )
             .bind(customer_id)
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -490,7 +538,7 @@ async fn batch_calculate(
             )
             .bind(customer_id)
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -499,7 +547,7 @@ async fn batch_calculate(
             )
             .bind(customer_id)
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -525,7 +573,7 @@ async fn batch_calculate(
             )
             .bind(customer_id)
             .bind(tenant_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await
             .unwrap_or(None)
             .flatten();
@@ -559,7 +607,7 @@ async fn batch_calculate(
             .bind(&last_score)
             .bind(now)
             .bind(now)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             if let Ok(score) = result {
@@ -568,6 +616,12 @@ async fn batch_calculate(
         }
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({ "scores": results, "count": results.len() }),
         &format!("成功计算 {} 个客户评分", results.len()),

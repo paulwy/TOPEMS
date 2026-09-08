@@ -33,9 +33,14 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn get_dashboard_stats(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<DashboardStats>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -46,7 +51,7 @@ async fn get_dashboard_stats(
     let customers_total: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1")
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -54,7 +59,7 @@ async fn get_dashboard_stats(
         "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND status = 'active'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -62,14 +67,14 @@ async fn get_dashboard_stats(
         "SELECT industry, COUNT(*) as count FROM crm.customers WHERE tenant_id = $1 AND industry IS NOT NULL GROUP BY industry ORDER BY count DESC"
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
     let contacts_total: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM crm.contacts WHERE tenant_id = $1")
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -77,14 +82,14 @@ async fn get_dashboard_stats(
         "SELECT COUNT(*) FROM crm.contacts WHERE tenant_id = $1 AND status = 'active'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let opportunities_total: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1")
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -92,7 +97,7 @@ async fn get_dashboard_stats(
         "SELECT stage, COUNT(*) as count FROM crm.opportunities WHERE tenant_id = $1 GROUP BY stage ORDER BY count DESC",
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -100,14 +105,14 @@ async fn get_dashboard_stats(
         "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND value IS NOT NULL",
     )
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0));
 
     let interactions_total: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1")
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -115,7 +120,7 @@ async fn get_dashboard_stats(
         "SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1 AND status = 'scheduled'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -123,7 +128,7 @@ async fn get_dashboard_stats(
         "SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1 AND status = 'completed'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -131,7 +136,7 @@ async fn get_dashboard_stats(
         "SELECT type, COUNT(*) as count FROM crm.interactions WHERE tenant_id = $1 GROUP BY type ORDER BY count DESC",
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -163,10 +168,15 @@ async fn get_dashboard_stats(
 
 async fn get_customer_details(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<CustomerWithDetails>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -182,7 +192,7 @@ async fn get_customer_details(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match customer {
@@ -193,7 +203,7 @@ async fn get_customer_details(
             )
             .bind(id)
             .bind(tenant_id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -203,7 +213,7 @@ async fn get_customer_details(
             )
             .bind(id)
             .bind(tenant_id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -213,7 +223,7 @@ async fn get_customer_details(
             )
             .bind(id)
             .bind(tenant_id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -236,9 +246,14 @@ async fn get_customer_details(
 
 async fn get_sales_funnel(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<FunnelStage>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -263,7 +278,7 @@ async fn get_sales_funnel(
         )
         .bind(stage)
         .bind(tenant_id)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await
         .unwrap_or(0);
 
@@ -272,7 +287,7 @@ async fn get_sales_funnel(
         )
         .bind(stage)
         .bind(tenant_id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0));
 
@@ -288,10 +303,15 @@ async fn get_sales_funnel(
 
 async fn get_sales_forecast(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ForecastParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<SalesForecast>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -325,7 +345,7 @@ async fn get_sales_forecast(
         .bind(month_start)
         .bind(month_end)
         .bind(tenant_id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0));
 
@@ -356,7 +376,7 @@ async fn get_sales_forecast(
     .bind(last_month_start)
     .bind(last_month_end)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 

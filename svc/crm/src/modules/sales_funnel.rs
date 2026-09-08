@@ -69,9 +69,14 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn get_funnel_data(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<FunnelQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -100,7 +105,7 @@ async fn get_funnel_data(
             "#,
         )
         .bind(stage)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         match result {
@@ -130,8 +135,13 @@ async fn get_funnel_data(
 
 async fn get_funnel_metrics(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<FunnelMetrics>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -146,7 +156,7 @@ async fn get_funnel_metrics(
         FROM crm.opportunities
         "#,
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -169,7 +179,7 @@ async fn get_funnel_metrics(
                 WHERE stage != 'closed_lost'
                 "#,
             )
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let weighted_value = weighted_result.unwrap_or(Decimal::from(0));
@@ -194,8 +204,13 @@ async fn get_funnel_metrics(
 
 async fn get_funnel_conversion(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FunnelConversion>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -211,13 +226,13 @@ async fn get_funnel_conversion(
         let from_count_result: Result<i64, sqlx::Error> =
             sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#)
                 .bind(from_stage)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await;
 
         let to_count_result: Result<i64, sqlx::Error> =
             sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#)
                 .bind(to_stage)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await;
 
         if let (Ok(from_count), Ok(to_count)) = (from_count_result, to_count_result) {
@@ -241,9 +256,14 @@ async fn get_funnel_conversion(
 
 async fn get_funnel_trend(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FunnelQueryParams>,
 ) -> Json<ApiResponse<Vec<FunnelTrend>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -273,7 +293,7 @@ async fn get_funnel_trend(
     );
 
     let result: Result<Vec<sqlx::postgres::PgRow>, sqlx::Error> =
-        sqlx::query(&query_str).fetch_all(&state.db).await;
+        sqlx::query(&query_str).fetch_all(&mut **txn).await;
 
     match result {
         Ok(rows) => {
@@ -298,10 +318,15 @@ async fn get_funnel_trend(
 
 async fn get_stage_opportunities(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(stage): Path<String>,
     Query(params): Query<FunnelQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -323,7 +348,7 @@ async fn get_stage_opportunities(
     .bind(&stage)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -332,7 +357,7 @@ async fn get_stage_opportunities(
                 r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#,
             )
             .bind(&stage)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);

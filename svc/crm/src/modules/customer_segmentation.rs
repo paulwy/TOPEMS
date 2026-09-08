@@ -84,9 +84,14 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_segments(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SegmentQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -106,7 +111,7 @@ async fn list_segments(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -114,7 +119,7 @@ async fn list_segments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM crm.customer_segments WHERE deleted_at IS NULL",
             )
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -138,9 +143,14 @@ async fn list_segments(
 
 async fn get_segment(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Json<ApiResponse<CustomerSegment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -153,7 +163,7 @@ async fn get_segment(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -168,9 +178,14 @@ async fn get_segment(
 
 async fn create_segment(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSegmentRequest>,
 ) -> Json<ApiResponse<CustomerSegment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -184,7 +199,7 @@ async fn create_segment(
     let now = Utc::now();
     let criteria_json = serde_json::to_value(&req.criteria).unwrap_or(serde_json::json!({}));
 
-    let customer_count = count_matching_customers(&state.db, &req.criteria).await;
+    let customer_count = count_matching_customers(txn, &req.criteria).await;
 
     let result = sqlx::query_as::<_, CustomerSegment>(
         r#"
@@ -200,11 +215,19 @@ async fn create_segment(
     .bind(customer_count)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(segment) => Json(ApiResponse::success(segment, "客户分群创建成功")),
+        Ok(segment) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(segment, "客户分群创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建客户分群失败: {}", e);
             Json(api_error(500, "创建客户分群失败"))
@@ -214,9 +237,14 @@ async fn create_segment(
 
 async fn delete_segment(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -224,14 +252,22 @@ async fn delete_segment(
 
     let result = sqlx::query("UPDATE crm.customer_segments SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "客户分群删除成功"))
         }
-        Ok(_) => Json(api_error(404, "客户分群不存在")),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
+            Json(api_error(404, "客户分群不存在"))
+        }
         Err(e) => {
             tracing::error!("删除客户分群失败: {}", e);
             Json(api_error(500, "删除客户分群失败"))
@@ -241,10 +277,15 @@ async fn delete_segment(
 
 async fn get_segment_customers(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Query(params): Query<SegmentQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -258,7 +299,7 @@ async fn get_segment_customers(
         "SELECT name, criteria FROM crm.customer_segments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (segment_name, criteria) = match segment_result {
@@ -272,9 +313,9 @@ async fn get_segment_customers(
 
     let criteria: SegmentCriteria = serde_json::from_value(criteria).unwrap_or_default();
 
-    let customers = fetch_segment_customers(&state.db, &criteria, page_size, offset).await;
+    let customers = fetch_segment_customers(txn, &criteria, page_size, offset).await;
 
-    let total = count_matching_customers(&state.db, &criteria).await;
+    let total = count_matching_customers(txn, &criteria).await;
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -290,8 +331,13 @@ async fn get_segment_customers(
 
 async fn auto_segment(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -359,7 +405,7 @@ async fn auto_segment(
 
     let mut results = Vec::new();
     for (name, criteria) in segments {
-        let count = count_matching_customers(&state.db, &criteria).await;
+        let count = count_matching_customers(txn, &criteria).await;
         results.push(serde_json::json!({
             "name": name,
             "criteria": criteria,
@@ -373,7 +419,10 @@ async fn auto_segment(
     ))
 }
 
-async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria) -> i64 {
+async fn count_matching_customers(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    criteria: &SegmentCriteria,
+) -> i64 {
     let mut conditions = Vec::new();
     let mut params = Vec::new();
     let mut param_idx = 1;
@@ -464,7 +513,7 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
         sqlx_query = sqlx_query.bind(param);
     }
 
-    match sqlx_query.fetch_one(db).await {
+    match sqlx_query.fetch_one(&mut **txn).await {
         Ok(row) => row.get_unchecked(0),
         Err(e) => {
             tracing::error!("统计分群客户数量失败: {}", e);
@@ -474,7 +523,7 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
 }
 
 async fn fetch_segment_customers(
-    db: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     criteria: &SegmentCriteria,
     limit: i64,
     offset: i64,
@@ -585,7 +634,7 @@ async fn fetch_segment_customers(
     }
     sqlx_query = sqlx_query.bind(limit).bind(offset);
 
-    match sqlx_query.fetch_all(db).await {
+    match sqlx_query.fetch_all(&mut **txn).await {
         Ok(mut customers) => {
             for customer in &mut customers {
                 customer.segment_tags = generate_segment_tags(customer);

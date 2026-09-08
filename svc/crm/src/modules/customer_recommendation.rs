@@ -67,9 +67,14 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_recommendations(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RecommendationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -93,7 +98,7 @@ async fn list_recommendations(
     .bind(&params.recommendation_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -107,7 +112,7 @@ async fn list_recommendations(
             )
             .bind(&params.customer_id)
             .bind(&params.recommendation_type)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.map(|r| r.get::<i64, _>(0)).unwrap_or(0);
@@ -148,9 +153,14 @@ async fn list_recommendations(
 
 async fn get_recommendation(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Json<ApiResponse<RecommendationResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -163,7 +173,7 @@ async fn get_recommendation(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -193,9 +203,14 @@ async fn get_recommendation(
 
 async fn create_recommendation(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RecommendationRequest>,
 ) -> Json<ApiResponse<RecommendationResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -204,7 +219,7 @@ async fn create_recommendation(
     let customer_name_result =
         sqlx::query_scalar::<_, Option<String>>("SELECT name FROM crm.customers WHERE id = $1")
             .bind(&req.customer_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
     let customer_name = match customer_name_result {
@@ -214,8 +229,14 @@ async fn create_recommendation(
     };
 
     let top_k = req.top_k.unwrap_or(10);
-    let recommendations =
-        generate_recommendations(&state, &req.customer_id, &req.recommendation_type, top_k).await;
+    let recommendations = generate_recommendations(
+        &state,
+        txn,
+        &req.customer_id,
+        &req.recommendation_type,
+        top_k,
+    )
+    .await;
 
     let recommendations_json =
         serde_json::to_value(&recommendations).unwrap_or(serde_json::json!([]));
@@ -240,11 +261,17 @@ async fn create_recommendation(
     .bind("TOPEMS-AI")
     .bind(confidence)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let items: Vec<RecommendationItem> =
                 serde_json::from_value(r.get(3)).unwrap_or_default();
             Json(ApiResponse::success(
@@ -269,10 +296,15 @@ async fn create_recommendation(
 
 async fn get_customer_recommendations(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecommendationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -281,7 +313,7 @@ async fn get_customer_recommendations(
     let customer_name_result =
         sqlx::query_scalar::<_, Option<String>>("SELECT name FROM crm.customers WHERE id = $1")
             .bind(id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
     let customer_name = match customer_name_result {
@@ -293,7 +325,7 @@ async fn get_customer_recommendations(
     let rec_type = params.recommendation_type.as_deref().unwrap_or("product");
     let top_k = params.page_size.unwrap_or(10) as i32;
 
-    let recommendations = generate_recommendations(&state, &id, rec_type, top_k).await;
+    let recommendations = generate_recommendations(&state, txn, &id, rec_type, top_k).await;
     let confidence = calculate_overall_confidence(&recommendations);
 
     Json(ApiResponse::success(
@@ -312,13 +344,14 @@ async fn get_customer_recommendations(
 
 async fn generate_recommendations(
     state: &ApiState,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     customer_id: &Uuid,
     rec_type: &str,
     top_k: i32,
 ) -> Vec<RecommendationItem> {
     match rec_type {
         "product" => recommend_products(state, customer_id, top_k).await,
-        "opportunity" => recommend_opportunities(state, customer_id, top_k).await,
+        "opportunity" => recommend_opportunities(state, txn, customer_id, top_k).await,
         "service" => recommend_services(state, customer_id, top_k).await,
         "cross-sell" => recommend_cross_sell(state, customer_id, top_k).await,
         "upsell" => recommend_upsell(state, customer_id, top_k).await,
@@ -368,13 +401,14 @@ async fn recommend_products(
 
 async fn recommend_opportunities(
     state: &ApiState,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     customer_id: &Uuid,
     top_k: i32,
 ) -> Vec<RecommendationItem> {
     let industry_result =
         sqlx::query_scalar::<_, Option<String>>("SELECT industry FROM crm.customers WHERE id = $1")
             .bind(customer_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
     let industry = industry_result

@@ -22,10 +22,15 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_billing_records(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<BillingQueryParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::BillingRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -55,7 +60,7 @@ async fn list_billing_records(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -71,7 +76,7 @@ async fn list_billing_records(
             .bind(tenant_id)
             .bind(customer_id_filter)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -95,10 +100,15 @@ async fn list_billing_records(
 
 async fn get_billing_record(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<BillingRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::BillingRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -114,7 +124,7 @@ async fn get_billing_record(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

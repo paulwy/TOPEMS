@@ -51,9 +51,14 @@ pub struct ListAuditLogsQuery {
 
 async fn list_audit_logs(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -87,7 +92,7 @@ async fn list_audit_logs(
     .bind(params.end_date.clone())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -109,7 +114,7 @@ async fn list_audit_logs(
             .bind(&params.status)
             .bind(params.start_date)
             .bind(params.end_date)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -133,9 +138,14 @@ async fn list_audit_logs(
 
 async fn get_audit_log(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -150,7 +160,7 @@ async fn get_audit_log(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

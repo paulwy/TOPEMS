@@ -108,10 +108,15 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn get_customer_profile(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<ProfileQueryParams>,
 ) -> Json<ApiResponse<CustomerProfile>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -126,7 +131,7 @@ async fn get_customer_profile(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let customer = match customer_result {
@@ -138,22 +143,22 @@ async fn get_customer_profile(
         }
     };
 
-    let score = fetch_customer_score(&state.db, id).await;
+    let score = fetch_customer_score(txn, id).await;
 
     let opportunities = if params.include_opportunities.unwrap_or(true) {
-        fetch_customer_opportunities(&state.db, id).await
+        fetch_customer_opportunities(txn, id).await
     } else {
         Vec::new()
     };
 
     let interactions = if params.include_interactions.unwrap_or(true) {
-        fetch_customer_interactions(&state.db, id).await
+        fetch_customer_interactions(txn, id).await
     } else {
         Vec::new()
     };
 
     let contacts = if params.include_contacts.unwrap_or(true) {
-        fetch_customer_contacts(&state.db, id).await
+        fetch_customer_contacts(txn, id).await
     } else {
         Vec::new()
     };
@@ -192,7 +197,7 @@ async fn get_customer_profile(
 }
 
 async fn fetch_customer_score(
-    db: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     customer_id: Uuid,
 ) -> Option<CustomerScoreSummary> {
     let result = sqlx::query(
@@ -205,7 +210,7 @@ async fn fetch_customer_score(
         "#,
     )
     .bind(customer_id)
-    .fetch_optional(db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -221,7 +226,7 @@ async fn fetch_customer_score(
 }
 
 async fn fetch_customer_opportunities(
-    db: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     customer_id: Uuid,
 ) -> Vec<OpportunitySummary> {
     let result = sqlx::query_as::<_, OpportunitySummary>(
@@ -234,7 +239,7 @@ async fn fetch_customer_opportunities(
         "#,
     )
     .bind(customer_id)
-    .fetch_all(db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -247,7 +252,7 @@ async fn fetch_customer_opportunities(
 }
 
 async fn fetch_customer_interactions(
-    db: &sqlx::PgPool,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     customer_id: Uuid,
 ) -> Vec<InteractionSummary> {
     let result = sqlx::query_as::<_, InteractionSummary>(
@@ -260,7 +265,7 @@ async fn fetch_customer_interactions(
         "#,
     )
     .bind(customer_id)
-    .fetch_all(db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -272,7 +277,10 @@ async fn fetch_customer_interactions(
     }
 }
 
-async fn fetch_customer_contacts(db: &sqlx::PgPool, customer_id: Uuid) -> Vec<ContactSummary> {
+async fn fetch_customer_contacts(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    customer_id: Uuid,
+) -> Vec<ContactSummary> {
     let result = sqlx::query_as::<_, ContactSummary>(
         r#"
         SELECT id, name, email, phone, position, department
@@ -283,7 +291,7 @@ async fn fetch_customer_contacts(db: &sqlx::PgPool, customer_id: Uuid) -> Vec<Co
         "#,
     )
     .bind(customer_id)
-    .fetch_all(db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -345,10 +353,15 @@ fn generate_profile_tags(
 
 async fn add_profile_tags(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -365,7 +378,7 @@ async fn add_profile_tags(
         .bind(id)
         .bind(tag)
         .bind(Utc::now())
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
         if let Err(e) = result {
@@ -374,15 +387,26 @@ async fn add_profile_tags(
         }
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success("".to_string(), "标签添加成功"))
 }
 
 async fn remove_profile_tags(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -393,7 +417,7 @@ async fn remove_profile_tags(
             sqlx::query("DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag = $2")
                 .bind(id)
                 .bind(tag)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
 
         if let Err(e) = result {
@@ -402,14 +426,25 @@ async fn remove_profile_tags(
         }
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success("".to_string(), "标签删除成功"))
 }
 
 async fn list_customer_profiles(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -439,7 +474,7 @@ async fn list_customer_profiles(
     .bind(&params.customer_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match customers_result {
@@ -455,17 +490,17 @@ async fn list_customer_profiles(
             .bind(&search_pattern)
             .bind(&params.status)
             .bind(&params.customer_type)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
 
             let mut profiles = Vec::new();
             for customer in customers {
-                let score = fetch_customer_score(&state.db, customer.id).await;
-                let opportunities = fetch_customer_opportunities(&state.db, customer.id).await;
-                let interactions = fetch_customer_interactions(&state.db, customer.id).await;
-                let contacts = fetch_customer_contacts(&state.db, customer.id).await;
+                let score = fetch_customer_score(txn, customer.id).await;
+                let opportunities = fetch_customer_opportunities(txn, customer.id).await;
+                let interactions = fetch_customer_interactions(txn, customer.id).await;
+                let contacts = fetch_customer_contacts(txn, customer.id).await;
                 let profile_tags = generate_profile_tags(&customer, &score, &opportunities);
 
                 profiles.push(CustomerProfile {

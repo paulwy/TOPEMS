@@ -38,10 +38,15 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_sales_forecasts(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesForecastQueryParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -71,7 +76,7 @@ async fn list_sales_forecasts(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -87,7 +92,7 @@ async fn list_sales_forecasts(
             .bind(tenant_id)
             .bind(&period_type_filter)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -111,10 +116,15 @@ async fn list_sales_forecasts(
 
 async fn get_sales_forecast(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<SalesForecast>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -130,7 +140,7 @@ async fn get_sales_forecast(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -145,10 +155,15 @@ async fn get_sales_forecast(
 
 async fn create_sales_forecast(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSalesForecastRequest>,
 ) -> Json<ApiResponse<SalesForecast>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -184,7 +199,7 @@ async fn create_sales_forecast(
     .bind(&factors)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -202,6 +217,14 @@ async fn create_sales_forecast(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(forecast) = &result {
@@ -233,10 +256,15 @@ async fn create_sales_forecast(
 
 async fn generate_forecast(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSalesForecastRequest>,
 ) -> Json<ApiResponse<SalesForecast>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -283,11 +311,19 @@ async fn generate_forecast(
     .bind(&factors)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(forecast) => Json(ApiResponse::success(forecast, "销售预测生成成功")),
+        Ok(forecast) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(forecast, "销售预测生成成功"))
+        }
         Err(e) => {
             tracing::error!("生成销售预测失败: {}", e);
             Json(api_error(500, "销售预测生成失败"))
@@ -297,11 +333,16 @@ async fn generate_forecast(
 
 async fn update_sales_forecast(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SalesForecast>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -316,7 +357,7 @@ async fn update_sales_forecast(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -366,7 +407,7 @@ async fn update_sales_forecast(
     .bind(&status)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -384,6 +425,14 @@ async fn update_sales_forecast(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(forecast) = &result {
         serde_json::to_value(forecast).ok()
@@ -414,10 +463,15 @@ async fn update_sales_forecast(
 
 async fn delete_sales_forecast(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -430,7 +484,7 @@ async fn delete_sales_forecast(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -453,6 +507,14 @@ async fn delete_sales_forecast(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -490,10 +552,15 @@ pub struct SalesTrendQuery {
 
 async fn get_sales_trend(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -517,7 +584,7 @@ async fn get_sales_trend(
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -584,10 +651,15 @@ pub struct CompareForecastQuery {
 
 async fn compare_sales_forecasts(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareForecastQuery>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -612,7 +684,7 @@ async fn compare_sales_forecasts(
     .bind(tenant_id)
     .bind(&period_type)
     .bind(&periods)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -693,10 +765,15 @@ async fn compare_sales_forecasts(
 
 async fn get_accuracy_report(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -721,7 +798,7 @@ async fn get_accuracy_report(
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

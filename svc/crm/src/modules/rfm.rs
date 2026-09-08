@@ -323,10 +323,15 @@ pub fn create_routes() -> Router<ApiState> {
 /// POST /rfm/analyze — 执行 RFM 分析
 async fn analyze_rfm(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<RfmConfig>,
 ) -> Json<ApiResponse<Vec<RfmRecord>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -361,7 +366,7 @@ async fn analyze_rfm(
     .bind(reference_date)
     .bind(tenant_id)
     .bind(period_start)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let raw = match raw_result {
@@ -378,7 +383,7 @@ async fn analyze_rfm(
     let now = chrono::Utc::now();
     let _ = sqlx::query("DELETE FROM crm.rfm_results WHERE tenant_id = $1")
         .bind(tenant_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     for rec in &records {
@@ -403,19 +408,30 @@ async fn analyze_rfm(
         .bind(now)
         .bind(now)
         .bind(now)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(records, "RFM 分析完成"))
 }
 
 /// GET /rfm/segments — 获取所有分群及统计
 async fn get_segments(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<SegmentStats>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -448,7 +464,7 @@ async fn get_segments(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let mut stats: Vec<SegmentStats> = Vec::new();
@@ -491,10 +507,15 @@ async fn get_segments(
 /// GET /rfm/customer/{id} — 获取单个客户的 RFM 记录
 async fn get_customer_rfm(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<RfmRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -525,7 +546,7 @@ async fn get_customer_rfm(
     )
     .bind(tenant_id)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     // 获取客户名称
@@ -534,7 +555,7 @@ async fn get_customer_rfm(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let customer_name = name_result.unwrap_or(None).unwrap_or_default();
