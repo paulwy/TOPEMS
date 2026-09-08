@@ -15,17 +15,17 @@ pub mod billing;
 pub mod contact;
 pub mod crm_plugin;
 pub mod customer;
-// pub mod customer_profile;
-// pub mod customer_recommendation;
-// pub mod customer_scoring;
-// pub mod customer_segmentation;
+pub mod customer_profile;
+pub mod customer_recommendation;
+pub mod customer_scoring;
+pub mod customer_segmentation;
 pub mod forecast;
 pub mod interaction;
 pub mod openapi;
 pub mod opportunity;
 pub mod rfm;
-// pub mod sales_forecast;
-// pub mod sales_funnel;
+pub mod sales_forecast;
+pub mod sales_funnel;
 pub mod sales_funnel_logic;
 pub mod scoring_logic;
 pub mod tag;
@@ -97,9 +97,12 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(rfm::create_routes())
         .merge(forecast::create_routes())
         .merge(tag::create_routes())
-    // .merge(customer_scoring::create_routes())
-    // .merge(sales_forecast::create_routes())
-    // .merge(sales_funnel::create_routes())
+        .merge(customer_profile::create_routes())
+        .merge(customer_scoring::create_routes())
+        .merge(customer_segmentation::create_routes())
+        .merge(customer_recommendation::create_routes())
+        .merge(sales_forecast::create_routes())
+        .merge(sales_funnel::create_routes())
 }
 /// 系统级路由（无需认证，挂载在 app root）
 pub fn create_system_routes() -> Router<ApiState> {

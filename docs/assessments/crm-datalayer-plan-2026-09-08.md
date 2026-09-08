@@ -61,6 +61,10 @@
 ## 5. 建议执行顺序
 
 1. ✅ 核对写入方（已完成 2026-09-08）：interactions 有写入方（event_handlers）；customer_orders/billing_records 无写入方（建表+待接通）；audit_logs 不建（改指 public，附项）
+2. ✅ DDL 定稿 + 落地（迁移 20260908000006_crm_datalayer.sql，15 表；customers 补 13 档案列——customer_profile 旧代码引用 model 精简前字段，一并补回）
+3. ✅ audit.rs 附项（用户确认纳入）：3 处查询改指 public.audit_logs（15 列标准与 AuditLog 模型一致）+ user_id::text cast + SELECT 补 tenant_id
+4. ✅ 重挂 6 模块（mod.rs 取消注释 + merge）：customer_profile/customer_scoring/customer_segmentation/customer_recommendation/sales_forecast/sales_funnel；路由经核对与已挂载 forecast/rfm/scoring_logic/sales_funnel_logic 无冲突；修复 36 个编译错误（模型同步：Customer +13 字段、models/mod.rs re-export、customer.rs SELECT/RETURNING 列补全、customer_profile 类型修正）
+5. ⏳ 验证：cargo check 0 error、schema-boundary PASS、cargo test 499 passed / 1 DB 集成测试因本地 postgres 未启动失败（环境缺口）
 2. 精确定稿 16 表 DDL（按 bind 类型）（1 天）
 3. 迁移 + 重挂 6 模块 + openapi（0.5 天）
 4. cargo check + 门禁 + smoke（0.5 天）

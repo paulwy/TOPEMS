@@ -21,6 +21,32 @@ pub struct Customer {
     pub owner_id: Uuid,
     #[serde(default)]
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub code: Option<String>,
+    #[serde(default)]
+    pub email: Option<String>,
+    #[serde(default)]
+    pub phone: Option<String>,
+    #[serde(default)]
+    pub website: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub city: Option<String>,
+    #[serde(default)]
+    pub province: Option<String>,
+    #[serde(default)]
+    pub country: Option<String>,
+    #[serde(default)]
+    pub company_size: Option<String>,
+    #[serde(default)]
+    pub employee_count: Option<i32>,
+    #[serde(default)]
+    pub revenue: Option<f64>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
     #[serde(default = "default_approval_none")]
     pub approval_status: String,
     pub created_at: DateTime<Utc>,
@@ -41,6 +67,19 @@ impl Default for Customer {
             region: None,
             owner_id: Uuid::nil(),
             tags: vec![],
+            code: None,
+            email: None,
+            phone: None,
+            website: None,
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            company_size: None,
+            employee_count: None,
+            revenue: None,
+            source: None,
+            status: None,
             approval_status: "none".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -159,6 +198,19 @@ mod tests {
             region: Some("华东".to_string()),
             owner_id: Uuid::new_v4(),
             tags: vec!["vip".to_string(), "manufacturing".to_string()],
+            code: Some("C-001".to_string()),
+            email: Some("contact@acme.com".to_string()),
+            phone: Some("021-88888888".to_string()),
+            website: Some("https://acme.example".to_string()),
+            address: Some("张江高科".to_string()),
+            city: Some("上海".to_string()),
+            province: Some("上海".to_string()),
+            country: Some("中国".to_string()),
+            company_size: Some("500-999".to_string()),
+            employee_count: Some(800),
+            revenue: Some(5200000.0),
+            source: Some("manual".to_string()),
+            status: Some("active".to_string()),
             approval_status: "approved".to_string(),
             created_at: now,
             updated_at: later,
@@ -180,6 +232,19 @@ mod tests {
             region: None,
             owner_id: Uuid::nil(),
             tags: vec![],
+            code: None,
+            email: None,
+            phone: None,
+            website: None,
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            company_size: None,
+            employee_count: None,
+            revenue: None,
+            source: None,
+            status: None,
             approval_status: "none".into(),
             created_at: now,
             updated_at: now,

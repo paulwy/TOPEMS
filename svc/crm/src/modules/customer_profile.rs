@@ -30,7 +30,7 @@ pub struct CustomerProfile {
     pub city: Option<String>,
     pub province: Option<String>,
     pub country: Option<String>,
-    pub status: String,
+    pub status: Option<String>,
     pub customer_type: Option<String>,
     pub source: Option<String>,
     pub rating: Option<String>,
@@ -174,9 +174,9 @@ async fn get_customer_profile(
         province: customer.province,
         country: customer.country,
         status: customer.status,
-        customer_type: customer.customer_type,
+        customer_type: Some(customer.customer_type),
         source: customer.source,
-        rating: customer.rating,
+        rating: Some(customer.rating),
         revenue: customer.revenue,
         employee_count: customer.employee_count,
         created_at: customer.created_at,
@@ -302,7 +302,9 @@ fn generate_profile_tags(
 ) -> Vec<String> {
     let mut tags = Vec::new();
 
-    tags.push(format!("状态: {}", customer.status));
+    if let Some(status) = &customer.status {
+        tags.push(format!("状态: {}", status));
+    }
 
     if let Some(industry) = &customer.industry {
         tags.push(format!("行业: {}", industry));
@@ -312,7 +314,8 @@ fn generate_profile_tags(
         tags.push(format!("规模: {}", company_size));
     }
 
-    if let Some(rating) = &customer.rating {
+    {
+        let rating = &customer.rating;
         tags.push(format!("评级: {}", rating));
     }
 
@@ -479,9 +482,9 @@ async fn list_customer_profiles(
                     province: customer.province,
                     country: customer.country,
                     status: customer.status,
-                    customer_type: customer.customer_type,
+                    customer_type: Some(customer.customer_type),
                     source: customer.source,
-                    rating: customer.rating,
+                    rating: Some(customer.rating),
                     revenue: customer.revenue,
                     employee_count: customer.employee_count,
                     created_at: customer.created_at,
