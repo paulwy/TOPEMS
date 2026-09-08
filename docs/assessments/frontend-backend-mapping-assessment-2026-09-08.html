@@ -228,6 +228,11 @@
     ② 决策 P0 级"前端有后端无"模块去留：RD bugs/builds/deploys/tests（4个完整页面）、APS material-plans、erp/bank-accounts、asset/asset-categories——要么补后端路由，要么删除前端页面和 API。<br>
     ③ mobile/approvals 审批模块：代码已标注"待注册"，在 svc/mobile 中实现或代理至 workflow/bpm。<br>
     ④ feedback 空壳服务：删除 svc/feedback 目录与 runtime 映射，明确由 ticket 承载；或恢复独立服务。<br><br>
+    <b>第一批执行状态（2026-09-08 全部闭环）</b>：<br>
+    ① 命名空间 6 处 → ✅ 已闭环（commit 86ff2de53）<br>
+    ② P0"前端有后端无" → ✅ 已闭环（commit c496c6758）：A 补 4 组后端——erp bank-accounts / asset-categories（5 方法 CRUD）、mes material-plans（8 方法，复用 /api/aps 兼容层兜底重定向）、rd bugs/builds/deploys/tests 四件套（迁移 20260908000002-0004）；B 归档 email 旧版重复实现（mail.ts 已承载 /api/communication/mail）；asset 前端核查修正为<b>无需归档</b>（asset.ts 全部走 erp /assets+/fixed-assets，后端已覆盖）。<br>
+    ③ mobile/approvals → ✅ 已闭环（commit 7ba64c3bf）<br>
+    ④ feedback 空壳 → ✅ 已闭环（commit 7ba64c3bf）<br><br>
     <b>第二批（结构性 · 1-2 周）</b>：<br>
     ⑤ 大规模归档悬空 API：im/ 扩展功能（~540方法）、master V61-V79（~470方法）、WMS 6模块（~80方法）、notification扩展（~145方法）、ticket扩展（41方法）——标记 @deprecated 或移至 _archive，避免维护成本累积。<br>
     ⑥ crm 分析模块决策：6 个被注释的后端模块（28路由）+ 7个 Mock 页面——要么取消注释修复编译实现真实功能，要么删除前端页面和 Mock。<br>
