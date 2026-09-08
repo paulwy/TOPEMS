@@ -1,6 +1,7 @@
 # RLS 数据权限覆盖报告（RLS Coverage Report）
 
 > 由 `scripts/check-rls-coverage.py` 自动生成 · 生成日期：2026-09-08
+> ⚠ 静态口径仅覆盖迁移 SQL 的 CREATE TABLE，实际启用数以 DB 实时盘点为准——2026-09-08 实测含租户列 570 张 / RLS 启用 236 张，见报告「DB 实时盘点」节。
 
 **扫描范围**：116 个 SQL 文件，共 234 张 CREATE TABLE。
 **已启用 RLS**：10 张表。

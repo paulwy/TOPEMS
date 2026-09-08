@@ -83,7 +83,7 @@ def main():
     lines = []
     lines.append("# RLS 数据权限覆盖报告（RLS Coverage Report）")
     lines.append("")
-    lines.append(f"> 由 `scripts/check-rls-coverage.py` 自动生成 · 生成日期：{datetime.date.today().isoformat()}")
+    lines.append(f"> 由 `scripts/check-rls-coverage.py` 自动生成 · 生成日期：{datetime.date.today().isoformat()}\n> ⚠ 静态口径仅覆盖迁移 SQL 的 CREATE TABLE，实际启用数以 DB 实时盘点为准——2026-09-08 实测含租户列 570 张 / RLS 启用 236 张，见报告「DB 实时盘点」节。")
     lines.append("")
     lines.append(f"**扫描范围**：{len(sql_files)} 个 SQL 文件，共 {len(tables)} 张 CREATE TABLE。")
     lines.append(f"**已启用 RLS**：{len(rls_tables)} 张表。")
