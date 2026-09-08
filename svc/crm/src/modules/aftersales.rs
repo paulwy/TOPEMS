@@ -139,7 +139,11 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// 生成退换单号: RET-YYYYMMDD-6位序列号
-async fn generate_return_no(state: &ApiState, tenant_id: Uuid) -> String {
+async fn generate_return_no(
+    _state: &ApiState,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    tenant_id: Uuid,
+) -> String {
     let today = Utc::now().format("%Y%m%d").to_string();
     let prefix = format!("RET-{}", today);
 
@@ -151,7 +155,7 @@ async fn generate_return_no(state: &ApiState, tenant_id: Uuid) -> String {
     )
     .bind(tenant_id)
     .bind(format!("{}%", prefix))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -166,7 +170,8 @@ fn extract_operator_id(claims: &Claims) -> Option<Uuid> {
 
 /// 重算退换单的退款金额：refund_amount = SUM(items.total_amount)
 async fn recalculate_refund_amount(
-    state: &ApiState,
+    _state: &ApiState,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     return_id: Uuid,
     tenant_id: Uuid,
 ) -> Result<Decimal, sqlx::Error> {
@@ -178,7 +183,7 @@ async fn recalculate_refund_amount(
     )
     .bind(return_id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await?;
 
     let total = total.unwrap_or(Decimal::ZERO);
@@ -190,7 +195,7 @@ async fn recalculate_refund_amount(
     .bind(total)
     .bind(Utc::now())
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await?;
 
     Ok(total)
@@ -198,10 +203,15 @@ async fn recalculate_refund_amount(
 
 async fn list_returns(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReturnQuery>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -239,7 +249,7 @@ async fn list_returns(
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -261,7 +271,7 @@ async fn list_returns(
             .bind(params.customer_id)
             .bind(params.order_id)
             .bind(&search_pattern)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -285,10 +295,15 @@ async fn list_returns(
 
 async fn create_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateReturnRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -299,7 +314,7 @@ async fn create_return(
     let id = Uuid::new_v4();
     let operator_id = extract_operator_id(&claims);
 
-    let return_no = generate_return_no(&state, tenant_id).await;
+    let return_no = generate_return_no(&state, txn, tenant_id).await;
     let return_type = req
         .return_type
         .clone()
@@ -331,7 +346,7 @@ async fn create_return(
     .bind(now)
     .bind(req.ticket_id)
     .bind(req.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -352,6 +367,14 @@ async fn create_return(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(return_record) = &result {
@@ -383,10 +406,15 @@ async fn create_return(
 
 async fn get_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -405,7 +433,7 @@ async fn get_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -420,11 +448,16 @@ async fn get_return(
 
 async fn update_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateReturnRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -443,7 +476,7 @@ async fn update_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -491,7 +524,7 @@ async fn update_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -512,6 +545,14 @@ async fn update_return(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(return_record) = &result {
         serde_json::to_value(return_record).ok()
@@ -542,10 +583,15 @@ async fn update_return(
 
 async fn delete_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -565,7 +611,7 @@ async fn delete_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -583,8 +629,15 @@ async fn delete_return(
         sqlx::query("UPDATE crm.returns SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -636,11 +689,16 @@ async fn delete_return(
 
 async fn approve_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -661,7 +719,7 @@ async fn approve_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -697,11 +755,17 @@ async fn approve_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(return_record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             tracing::debug!(
                 "退换货 {} 审批通过，操作备注: {:?}",
                 return_record.return_no,
@@ -718,11 +782,16 @@ async fn approve_return(
 
 async fn reject_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -743,7 +812,7 @@ async fn reject_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -779,11 +848,17 @@ async fn reject_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(return_record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             tracing::debug!(
                 "退换货 {} 已拒绝，操作备注: {:?}",
                 return_record.return_no,
@@ -800,11 +875,16 @@ async fn reject_return(
 
 async fn receive_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -825,7 +905,7 @@ async fn receive_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -862,7 +942,7 @@ async fn receive_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -873,8 +953,16 @@ async fn receive_return(
                 req.comment
             );
             // 库存联动：确认收货时同步退货入库到 erp.inventory
-            if let Err(e) = sync_return_to_inventory(&state, return_record.id, tenant_id).await {
+            if let Err(e) = sync_return_to_inventory(&state, txn, return_record.id, tenant_id).await
+            {
                 tracing::warn!("退换货 {} 库存联动失败: {}", return_record.return_no, e);
+            }
+
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
             }
             Json(ApiResponse::success(return_record, "退换货已确认收货"))
         }
@@ -887,11 +975,16 @@ async fn receive_return(
 
 async fn complete_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -912,7 +1005,7 @@ async fn complete_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -949,7 +1042,7 @@ async fn complete_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -1044,8 +1137,15 @@ async fn complete_return(
             }
 
             // 财务对账：退换货完成时同步到 erp.fin_reconciliations
-            if let Err(e) = sync_return_to_finance(&state, return_record.id, tenant_id).await {
+            if let Err(e) = sync_return_to_finance(&state, txn, return_record.id, tenant_id).await {
                 tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
+            }
+
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
             }
             Json(ApiResponse::success(return_record, "退换货已完成"))
         }
@@ -1058,11 +1158,16 @@ async fn complete_return(
 
 async fn cancel_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1083,7 +1188,7 @@ async fn cancel_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -1115,11 +1220,17 @@ async fn cancel_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(return_record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             tracing::debug!(
                 "退换货 {} 已取消，操作备注: {:?}",
                 return_record.return_no,
@@ -1136,10 +1247,15 @@ async fn cancel_return(
 
 async fn list_return_items(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ReturnItem>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1157,7 +1273,7 @@ async fn list_return_items(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -1171,11 +1287,16 @@ async fn list_return_items(
 
 async fn add_return_item(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<CreateReturnItemRequest>,
 ) -> Json<ApiResponse<ReturnItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1196,7 +1317,7 @@ async fn add_return_item(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
 
@@ -1224,13 +1345,20 @@ async fn add_return_item(
     .bind(req.unit_price)
     .bind(total_amount)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(item) => {
             // 自动重算退款金额
-            let _ = recalculate_refund_amount(&state, id, tenant_id).await;
+            let _ = recalculate_refund_amount(&state, txn, id, tenant_id).await;
+
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(item, "退换货明细添加成功"))
         }
         Err(e) => {
@@ -1251,6 +1379,7 @@ async fn add_return_item(
 /// 改为通过 `TypedServiceClient<ErpApi>` 调用 ERP 服务的 REST API。
 pub async fn sync_return_to_finance(
     state: &ApiState,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     return_id: Uuid,
     tenant_id: Uuid,
 ) -> Result<Uuid, Box<dyn std::error::Error + Send + Sync>> {
@@ -1265,7 +1394,7 @@ pub async fn sync_return_to_finance(
     )
     .bind(return_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await?;
 
     let now = Utc::now();
@@ -1360,6 +1489,7 @@ pub async fn sync_return_to_finance(
 /// - 调用 POST /api/wms/inventory-movements 登记审计流水
 pub async fn sync_return_to_inventory(
     state: &ApiState,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     return_id: Uuid,
     tenant_id: Uuid,
 ) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
@@ -1374,7 +1504,7 @@ pub async fn sync_return_to_inventory(
     )
     .bind(return_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await?;
 
     let warehouse_id = match return_record.warehouse_id {
@@ -1397,7 +1527,7 @@ pub async fn sync_return_to_inventory(
     )
     .bind(return_id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await?;
 
     if items.is_empty() {
@@ -1509,10 +1639,15 @@ pub async fn sync_return_to_inventory(
 /// 查询退换货的财务对账状态
 async fn get_return_finance_status(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1526,7 +1661,7 @@ async fn get_return_finance_status(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .ok()
     .flatten();
@@ -1580,10 +1715,15 @@ async fn get_return_finance_status(
 /// 查询退换货的库存联动状态（已记录的库存移动流水）
 async fn get_return_inventory_status(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1597,7 +1737,7 @@ async fn get_return_inventory_status(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .ok()
     .flatten();
@@ -1658,11 +1798,16 @@ async fn get_return_inventory_status(
 
 async fn accept_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(_req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1683,7 +1828,7 @@ async fn accept_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -1720,11 +1865,19 @@ async fn accept_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(r, "退换货已受理")),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(r, "退换货已受理"))
+        }
         Err(e) => {
             tracing::error!("受理退换货失败: {}", e);
             Json(api_error(500, "受理退换货失败"))
@@ -1734,11 +1887,16 @@ async fn accept_return(
 
 async fn process_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(_req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1759,7 +1917,7 @@ async fn process_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -1797,13 +1955,21 @@ async fn process_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(return_record) => {
-            if let Err(e) = sync_return_to_inventory(&state, return_record.id, tenant_id).await {
+            if let Err(e) = sync_return_to_inventory(&state, txn, return_record.id, tenant_id).await
+            {
                 tracing::warn!("退换货 {} 库存联动失败: {}", return_record.return_no, e);
+            }
+
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
             }
             Json(ApiResponse::success(return_record, "退换货进入处理中"))
         }
@@ -1816,11 +1982,16 @@ async fn process_return(
 
 async fn resolve_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1841,7 +2012,7 @@ async fn resolve_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -1888,11 +2059,17 @@ async fn resolve_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let msg = match target {
                 ReturnStage::Resolving => "退换货进入方案确认".to_string(),
                 ReturnStage::Processing => "退换货已退回重新处理".to_string(),
@@ -1909,11 +2086,16 @@ async fn resolve_return(
 
 async fn confirm_return(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1934,7 +2116,7 @@ async fn confirm_return(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -1982,7 +2164,7 @@ async fn confirm_return(
     .bind(now)
     .bind(operator_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -2029,11 +2211,19 @@ async fn confirm_return(
                         }
                     });
                 }
-                if let Err(e) = sync_return_to_finance(&state, return_record.id, tenant_id).await {
+                if let Err(e) =
+                    sync_return_to_finance(&state, txn, return_record.id, tenant_id).await
+                {
                     tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
                 }
             }
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let msg = match target {
                 ReturnStage::Done => "退换货已完成结案".to_string(),
                 ReturnStage::Rejected => "退换货已拒绝结案".to_string(),

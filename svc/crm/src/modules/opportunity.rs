@@ -196,10 +196,15 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 async fn list_opportunities(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<OpportunityPaginationParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -232,7 +237,7 @@ async fn list_opportunities(
     .bind(customer_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -250,7 +255,7 @@ async fn list_opportunities(
             .bind(&search_pattern)
             .bind(&stage_filter)
             .bind(customer_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -286,10 +291,15 @@ async fn list_opportunities(
 )]
 async fn create_opportunity(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -338,7 +348,7 @@ async fn create_opportunity(
     .bind(now)
     .bind(now)
     .bind(org_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -359,6 +369,14 @@ async fn create_opportunity(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(opportunity) = &result {
@@ -390,10 +408,15 @@ async fn create_opportunity(
 
 async fn get_opportunity(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Opportunity>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -409,7 +432,7 @@ async fn get_opportunity(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -424,11 +447,16 @@ async fn get_opportunity(
 
 async fn update_opportunity(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -443,7 +471,7 @@ async fn update_opportunity(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -490,7 +518,7 @@ async fn update_opportunity(
     .bind(&notes)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -511,6 +539,14 @@ async fn update_opportunity(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(opportunity) = &result {
         serde_json::to_value(opportunity).ok()
@@ -541,10 +577,15 @@ async fn update_opportunity(
 
 async fn delete_opportunity(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -557,8 +598,15 @@ async fn delete_opportunity(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -610,10 +658,15 @@ async fn delete_opportunity(
 
 async fn batch_delete_opportunities(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -630,8 +683,15 @@ async fn batch_delete_opportunities(
     )
     .bind(&req.ids)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
@@ -681,9 +741,14 @@ async fn batch_delete_opportunities(
 
 async fn get_sales_funnel(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<FunnelStage>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -708,7 +773,7 @@ async fn get_sales_funnel(
         )
         .bind(tenant_id)
         .bind(stage)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await
         .unwrap_or(0);
 
@@ -717,7 +782,7 @@ async fn get_sales_funnel(
         )
         .bind(tenant_id)
         .bind(stage)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0));
 
@@ -726,7 +791,7 @@ async fn get_sales_funnel(
         )
         .bind(tenant_id)
         .bind(stage)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0));
 
@@ -744,9 +809,14 @@ async fn get_sales_funnel(
 
 async fn get_opportunity_stats(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<OpportunityStats>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -758,7 +828,7 @@ async fn get_opportunity_stats(
         "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1",
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -766,7 +836,7 @@ async fn get_opportunity_stats(
         "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND value IS NOT NULL",
     )
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
@@ -774,7 +844,7 @@ async fn get_opportunity_stats(
         "SELECT COALESCE(SUM(value * probability / 100), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND value IS NOT NULL AND probability IS NOT NULL"
     )
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
@@ -782,7 +852,7 @@ async fn get_opportunity_stats(
         "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_won'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -790,7 +860,7 @@ async fn get_opportunity_stats(
         "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_won' AND value IS NOT NULL"
     )
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
@@ -798,7 +868,7 @@ async fn get_opportunity_stats(
         "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_lost'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -806,7 +876,7 @@ async fn get_opportunity_stats(
         "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_lost' AND value IS NOT NULL"
     )
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
@@ -825,10 +895,15 @@ async fn get_opportunity_stats(
 
 async fn get_opportunity_forecast(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ForecastParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<OpportunityForecast>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -862,7 +937,7 @@ async fn get_opportunity_forecast(
         .bind(tenant_id)
         .bind(month_start)
         .bind(month_end)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0))
         .unwrap_or(0.0);
@@ -877,7 +952,7 @@ async fn get_opportunity_forecast(
         .bind(tenant_id)
         .bind(month_start)
         .bind(month_end)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0))
         .unwrap_or(0);
@@ -892,7 +967,7 @@ async fn get_opportunity_forecast(
         .bind(tenant_id)
         .bind(month_start)
         .bind(month_end)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0))
         .unwrap_or(0.0);
@@ -910,9 +985,14 @@ async fn get_opportunity_forecast(
 
 async fn get_stage_transitions(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StageTransition>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -930,7 +1010,7 @@ async fn get_stage_transitions(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -987,11 +1067,16 @@ fn prev_stage(from: OppStage) -> OppStage {
 )]
 async fn advance_opportunity(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<AdvanceOpportunityRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1007,7 +1092,7 @@ async fn advance_opportunity(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(o)) => o,
@@ -1059,11 +1144,17 @@ async fn advance_opportunity(
     .bind(req.note.as_deref().or(existing.notes.as_deref()))
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(_opp) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let from_s = from_stage.as_str();
             let to_s = to_stage_str;
             let response_payload = serde_json::json!({
@@ -1141,11 +1232,16 @@ async fn advance_opportunity(
 )]
 async fn rollback_opportunity(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<RollbackOpportunityRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1161,7 +1257,7 @@ async fn rollback_opportunity(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(o)) => o,
@@ -1227,11 +1323,17 @@ async fn rollback_opportunity(
     .bind(notes_combined.as_deref())
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(_opp) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let from_s = from_stage.as_str();
             let to_s = to_stage_str;
             let response_payload = serde_json::json!({

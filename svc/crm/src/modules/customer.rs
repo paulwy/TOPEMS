@@ -139,10 +139,15 @@ pub async fn list_customers(
 )]
 async fn create_customer(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -180,11 +185,17 @@ async fn create_customer(
     .bind(now)
     .bind(now)
     .bind(org_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(customer) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let request_data = serde_json::to_value(&req).ok();
             let response_data = serde_json::to_value(&customer).ok();
             tokio::spawn(async move {
@@ -229,10 +240,15 @@ async fn create_customer(
 )]
 async fn get_customer(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Customer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -245,7 +261,7 @@ async fn get_customer(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(customer)) => Json(ApiResponse::success(customer, "获取客户成功")),
@@ -272,11 +288,16 @@ async fn get_customer(
 )]
 async fn update_customer(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -289,7 +310,7 @@ async fn update_customer(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -326,10 +347,16 @@ async fn update_customer(
     .bind(&tags[..])
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(customer) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let response_data = serde_json::to_value(&customer).ok();
             tokio::spawn(async move {
                 let _ = log_audit_event(
@@ -373,10 +400,15 @@ async fn update_customer(
 )]
 async fn delete_customer(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -389,10 +421,16 @@ async fn delete_customer(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let response_data = serde_json::json!({ "rows_affected": r.rows_affected() });
             tokio::spawn(async move {
                 let _ = log_audit_event(
@@ -438,10 +476,15 @@ async fn delete_customer(
 #[axum::debug_handler]
 async fn batch_delete_customers(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -458,10 +501,16 @@ async fn batch_delete_customers(
     )
     .bind(&req.ids)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await
     {
         Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             let entity_ids = serde_json::to_value(&req.ids).ok();
             let response_data = serde_json::json!({ "rows_affected": r.rows_affected() });
             tokio::spawn(async move {
@@ -523,11 +572,16 @@ pub struct ApprovalActionRequest {
 )]
 async fn start_customer_approval(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Json(req): Json<StartApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -540,7 +594,7 @@ async fn start_customer_approval(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let customer = match customer {
@@ -575,8 +629,15 @@ async fn start_customer_approval(
         "UPDATE crm.customers SET approval_status = 'pending', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let request_data = serde_json::json!({
         "workflow_id": req.workflow_id.to_string(),
@@ -634,11 +695,16 @@ async fn start_customer_approval(
 )]
 async fn approve_customer(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Json(req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -651,7 +717,7 @@ async fn approve_customer(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let customer = match customer {
@@ -665,8 +731,15 @@ async fn approve_customer(
         "UPDATE crm.customers SET approval_status = 'approved', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let request_data = serde_json::json!({
         "comment": req.comment,
@@ -721,11 +794,16 @@ async fn approve_customer(
 )]
 async fn reject_customer(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
     Json(req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -738,7 +816,7 @@ async fn reject_customer(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let customer = match customer {
@@ -752,8 +830,15 @@ async fn reject_customer(
         "UPDATE crm.customers SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1",
     )
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("提交事务失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
 
     let reason = req.reason.clone().unwrap_or_default();
     let request_data = serde_json::json!({

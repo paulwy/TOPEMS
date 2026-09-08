@@ -33,10 +33,15 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_interactions(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InteractionPaginationParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<ListResponse<Interaction>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -76,7 +81,7 @@ async fn list_interactions(
     .bind(contact_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -96,7 +101,7 @@ async fn list_interactions(
             .bind(&status_filter)
             .bind(customer_filter)
             .bind(contact_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -115,10 +120,15 @@ async fn list_interactions(
 
 async fn get_interaction(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Interaction>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -134,7 +144,7 @@ async fn get_interaction(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
