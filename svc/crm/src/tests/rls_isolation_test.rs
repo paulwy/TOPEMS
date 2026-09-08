@@ -66,11 +66,17 @@ async fn rls_txn_context_isolates_tenant(pool: PgPool) {
 
     // 测试库（sqlx::test 模板）可能未带 RLS 策略——测试内幂等启用，验证隔离语义本身
     sqlx::query("ALTER TABLE crm.customers ENABLE ROW LEVEL SECURITY")
-        .execute(&pool).await.unwrap();
+        .execute(&pool)
+        .await
+        .unwrap();
     sqlx::query("ALTER TABLE crm.customers FORCE ROW LEVEL SECURITY")
-        .execute(&pool).await.unwrap();
+        .execute(&pool)
+        .await
+        .unwrap();
     sqlx::query("DROP POLICY IF EXISTS rls_tenant_isolation ON crm.customers")
-        .execute(&pool).await.unwrap();
+        .execute(&pool)
+        .await
+        .unwrap();
     sqlx::query(
         "CREATE POLICY rls_tenant_isolation ON crm.customers USING (
            current_setting('app.tenant_id', true) IS NULL
@@ -85,7 +91,10 @@ async fn rls_txn_context_isolates_tenant(pool: PgPool) {
            OR tenant_id IS NULL
            OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
          )",
-    ).execute(&pool).await.unwrap();
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
 
     let cust_a = create_customer_for(&pool, tenant_a, "Factory A").await;
     let cust_b = create_customer_for(&pool, tenant_b, "Factory B").await;
@@ -98,12 +107,11 @@ async fn rls_txn_context_isolates_tenant(pool: PgPool) {
         .execute(&mut *txn_a)
         .await
         .unwrap();
-    let rows_a: Vec<Customer> = sqlx::query_as::<_, Customer>(
-        "SELECT * FROM crm.customers WHERE deleted_at IS NULL",
-    )
-    .fetch_all(&mut *txn_a)
-    .await
-    .unwrap();
+    let rows_a: Vec<Customer> =
+        sqlx::query_as::<_, Customer>("SELECT * FROM crm.customers WHERE deleted_at IS NULL")
+            .fetch_all(&mut *txn_a)
+            .await
+            .unwrap();
     assert_eq!(rows_a.len(), 1, "租户A上下文下应仅见本租户");
     assert_eq!(rows_a[0].id, cust_a.id);
     txn_a.rollback().await.unwrap();
@@ -114,22 +122,20 @@ async fn rls_txn_context_isolates_tenant(pool: PgPool) {
         .execute(&mut *txn_b)
         .await
         .unwrap();
-    let rows_b: Vec<Customer> = sqlx::query_as::<_, Customer>(
-        "SELECT * FROM crm.customers WHERE deleted_at IS NULL",
-    )
-    .fetch_all(&mut *txn_b)
-    .await
-    .unwrap();
+    let rows_b: Vec<Customer> =
+        sqlx::query_as::<_, Customer>("SELECT * FROM crm.customers WHERE deleted_at IS NULL")
+            .fetch_all(&mut *txn_b)
+            .await
+            .unwrap();
     assert_eq!(rows_b.len(), 1, "租户B上下文下应仅见本租户");
     assert_eq!(rows_b[0].id, cust_b.id);
     txn_b.rollback().await.unwrap();
 
     // 无上下文（pool 直连，模拟未注入中间件的连接）→ 策略放行（兼容）
-    let all: Vec<Customer> = sqlx::query_as::<_, Customer>(
-        "SELECT * FROM crm.customers WHERE deleted_at IS NULL",
-    )
-    .fetch_all(&pool)
-    .await
-    .unwrap();
+    let all: Vec<Customer> =
+        sqlx::query_as::<_, Customer>("SELECT * FROM crm.customers WHERE deleted_at IS NULL")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
     assert_eq!(all.len(), 2, "无上下文应放行（全量）");
 }

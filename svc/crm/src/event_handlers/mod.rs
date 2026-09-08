@@ -246,13 +246,12 @@ impl CrmEventHandlers {
         let due_date = now + chrono::Duration::days(30);
         let billing_amount = payload.amount.unwrap_or(0.0);
 
-        let existing_bill: Option<(uuid::Uuid,)> = sqlx::query_as(
-            "SELECT id FROM crm.billing_records WHERE invoice_no = $1",
-        )
-        .bind(&invoice_no)
-        .fetch_optional(&self.db)
-        .await
-        .map_err(|e| format!("查询应收账单失败: {}", e))?;
+        let existing_bill: Option<(uuid::Uuid,)> =
+            sqlx::query_as("SELECT id FROM crm.billing_records WHERE invoice_no = $1")
+                .bind(&invoice_no)
+                .fetch_optional(&self.db)
+                .await
+                .map_err(|e| format!("查询应收账单失败: {}", e))?;
 
         if existing_bill.is_none() {
             // 多租户：经 customers 反查 tenant_id（OpportunityWon payload 无租户维度）
@@ -384,10 +383,7 @@ impl CrmEventHandlers {
                 );
             }
             Err(e) => {
-                tracing::warn!(
-                    "[crm] 核销应收账单失败（graceful fallback）: {}",
-                    e
-                );
+                tracing::warn!("[crm] 核销应收账单失败（graceful fallback）: {}", e);
             }
         }
 

@@ -222,11 +222,10 @@ async fn delete_segment(
         Err(e) => return e,
     }
 
-    let result =
-        sqlx::query("UPDATE crm.customer_segments SET deleted_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query("UPDATE crm.customer_segments SET deleted_at = NOW() WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -255,11 +254,12 @@ async fn get_segment_customers(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let segment_result =
-        sqlx::query("SELECT name, criteria FROM crm.customer_segments WHERE deleted_at IS NULL AND id = $1")
-            .bind(id)
-            .fetch_optional(&state.db)
-            .await;
+    let segment_result = sqlx::query(
+        "SELECT name, criteria FROM crm.customer_segments WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
 
     let (segment_name, criteria) = match segment_result {
         Ok(Some(s)) => (s.get::<String, _>(0), s.get::<serde_json::Value, _>(1)),
