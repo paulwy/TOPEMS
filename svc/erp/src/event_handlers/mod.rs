@@ -340,7 +340,7 @@ impl ErpEventHandlers {
                 .map_err(|e| format!("创建销售凭证失败: {}", e))?;
 
                 sqlx::query(
-                    r#"INSERT INTO public.voucher_items
+                    r#"INSERT INTO erp.voucher_items
                        (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                        VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $5)"#,
                 )
@@ -354,7 +354,7 @@ impl ErpEventHandlers {
                 .map_err(|e| format!("创建凭证明细（应收账款）失败: {}", e))?;
 
                 sqlx::query(
-                    r#"INSERT INTO public.voucher_items
+                    r#"INSERT INTO erp.voucher_items
                        (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                        VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $5)"#,
                 )
@@ -488,7 +488,7 @@ impl ErpEventHandlers {
                 .map_err(|e| format!("创建采购凭证失败: {}", e))?;
 
                 sqlx::query(
-                    r#"INSERT INTO public.voucher_items
+                    r#"INSERT INTO erp.voucher_items
                        (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                        VALUES ($1, $2, 1, '1403', '原材料', $3, $4, 0, $5, $5)"#,
                 )
@@ -502,7 +502,7 @@ impl ErpEventHandlers {
                 .map_err(|e| format!("创建凭证明细（原材料）失败: {}", e))?;
 
                 sqlx::query(
-                    r#"INSERT INTO public.voucher_items
+                    r#"INSERT INTO erp.voucher_items
                        (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                        VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5)"#,
                 )
@@ -845,7 +845,7 @@ impl ErpEventHandlers {
             match voucher_result {
                 Ok(_) => {
                     let _ = sqlx::query(
-                        r#"INSERT INTO public.voucher_items
+                        r#"INSERT INTO erp.voucher_items
                            (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                            VALUES ($1, $2, 1, '6602', '管理费用', $3, $4, 0, $5, $5)"#,
                     )
@@ -858,7 +858,7 @@ impl ErpEventHandlers {
                     .await;
 
                     let _ = sqlx::query(
-                        r#"INSERT INTO public.voucher_items
+                        r#"INSERT INTO erp.voucher_items
                            (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                            VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5)"#,
                     )
@@ -1003,7 +1003,7 @@ impl ErpEventHandlers {
             match voucher_result {
                 Ok(_) => {
                     let _ = sqlx::query(
-                        r#"INSERT INTO public.voucher_items
+                        r#"INSERT INTO erp.voucher_items
                            (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
                            VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $6, $6)"#,
                     )
@@ -1017,7 +1017,7 @@ impl ErpEventHandlers {
                     .await;
 
                     let _ = sqlx::query(
-                        r#"INSERT INTO public.voucher_items
+                        r#"INSERT INTO erp.voucher_items
                            (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
                            VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $6, $6)"#,
                     )
@@ -1147,7 +1147,7 @@ impl ErpEventHandlers {
         match voucher_result {
             Ok(_) => {
                 let _ = sqlx::query(
-                    r#"INSERT INTO public.voucher_items
+                    r#"INSERT INTO erp.voucher_items
                        (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
                        VALUES ($1, $2, 1, '6401', '主营业务成本', $3, $4, 0, $5, $6, $6)"#,
                 )
@@ -1161,7 +1161,7 @@ impl ErpEventHandlers {
                 .await;
 
                 let _ = sqlx::query(
-                    r#"INSERT INTO public.voucher_items
+                    r#"INSERT INTO erp.voucher_items
                        (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
                        VALUES ($1, $2, 2, '1405', '库存商品', $3, 0, $4, $5, $6, $6)"#,
                 )
@@ -1177,7 +1177,7 @@ impl ErpEventHandlers {
                 let profit_amount = settled_amount - cost_amount;
                 if profit_amount > 0.0 {
                     let _ = sqlx::query(
-                        r#"INSERT INTO public.voucher_items
+                        r#"INSERT INTO erp.voucher_items
                            (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
                            VALUES ($1, $2, 3, '4103', '本年利润', $3, $4, 0, $5, $6, $6)"#,
                     )
@@ -1437,7 +1437,7 @@ impl ErpEventHandlers {
 
         // 凭证明细1：借 - 主营业务收入（冲减收入）
         sqlx::query(
-            r#"INSERT INTO public.voucher_items
+            r#"INSERT INTO erp.voucher_items
                (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                VALUES ($1, $2, 1, '6001', '主营业务收入', $3, $4, 0, $5, $5)"#,
         )
@@ -1453,7 +1453,7 @@ impl ErpEventHandlers {
         // 凭证明细2：贷 - 应收账款/银行存款
         let customer_label = payload.customer_name.as_deref().unwrap_or("客户");
         sqlx::query(
-            r#"INSERT INTO public.voucher_items
+            r#"INSERT INTO erp.voucher_items
                (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
                VALUES ($1, $2, 2, '1122', '应收账款', $3, 0, $4, $5, $5)"#,
         )
