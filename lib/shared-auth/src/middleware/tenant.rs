@@ -111,14 +111,23 @@ pub fn tenant_middleware() -> impl Fn(
                     "service claims: set nil tenant context for {}",
                     claims.username
                 );
-                if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                let mut txn = match pool.begin().await {
+                    Ok(t) => t,
+                    Err(e) => {
+                        tracing::error!("Failed to begin RLS txn: {}", e);
+                        return next.run(req).await;
+                    }
+                };
+                if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
                     .bind(Uuid::nil().to_string())
-                    .execute(&pool)
+                    .execute(&mut *txn)
                     .await
                 {
                     tracing::error!("Failed to set nil RLS context: {}", e);
                 }
                 let mut req = req;
+                req.extensions_mut()
+                    .insert(std::sync::Arc::new(tokio::sync::Mutex::new(txn)));
                 req.extensions_mut().insert(TenantContext {
                     tenant_id: Uuid::nil(),
                     user_id: Uuid::nil(),
@@ -150,9 +159,16 @@ pub fn tenant_middleware() -> impl Fn(
                 }
             };
 
-            match sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+            let mut txn = match pool.begin().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to begin RLS txn: {}", e);
+                    return next.run(req).await;
+                }
+            };
+            match sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
                 .bind(tenant_id.to_string())
-                .execute(&pool)
+                .execute(&mut *txn)
                 .await
             {
                 Ok(_) => tracing::debug!("Applied RLS context for tenant: {}", tenant_id),
@@ -172,6 +188,8 @@ pub fn tenant_middleware() -> impl Fn(
             };
 
             let mut req = req;
+            req.extensions_mut()
+                .insert(std::sync::Arc::new(tokio::sync::Mutex::new(txn)));
             req.extensions_mut()
                 .insert(TenantContext { tenant_id, user_id });
 

@@ -76,9 +76,13 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<sqlx::Transaction<'static, sqlx::Postgres>>>,
+    >,
     Query(params): Query<CustomerPaginationParams>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ListResponse<Customer>>> {
+    let mut txn = txn_arc.lock().await;
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -112,8 +116,8 @@ pub async fn list_customers(
         ).bind(tenant_id).bind(like).bind(page_size).bind(offset);
     }
 
-    let total: i64 = count_qb.fetch_one(&state.db).await.unwrap_or(0);
-    let items: Vec<Customer> = list_qb.fetch_all(&state.db).await.unwrap_or_default();
+    let total: i64 = count_qb.fetch_one(&mut **txn).await.unwrap_or(0);
+    let items: Vec<Customer> = list_qb.fetch_all(&mut **txn).await.unwrap_or_default();
 
     let body = ListResponse::with_pagination(items, total, page, page_size);
 

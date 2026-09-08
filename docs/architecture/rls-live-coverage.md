@@ -110,3 +110,20 @@ WITH CHECK (同 USING)
 2. 无租户用户（未关联 core_tenant_users）登录后 protected 请求 400 缺少租户ID——既有设计，接入时需为全局用户建租户关联或白名单。
 3. 未来迁移创建 untrusted 扩展（vector/postgis）需 superuser——建议预置扩展或单独 superuser 迁移通道。
 4. 回退预案：`ALTER ROLE topems SUPERUSER` + `ALTER TABLE ... NO FORCE ROW LEVEL SECURITY`。
+## A 方案：请求级连接注入（2026-09-08 试点，commit 待）
+
+**问题实证**（连接池缺陷）：`set_config` 为连接级——tenant_middleware SET 的连接与 handler 查询连接不保证同一（池默认 4 连接）→ 多租户并发下存在越权窗口（handler 拿到无上下文连接即全量可见）。双连接实证：连接 1 SET 租户 X 后仅见本租户；连接 2（独立）无 SET 看到全量。
+
+**方案 A（请求级连接注入）试点**：
+- **中间件改造**（`lib/shared-auth/src/middleware/tenant.rs`，两处 SET 点）：`pool.begin()` 建请求级事务 → `SET LOCAL app.tenant_id`（事务内，请求结束自动失效）→ `Arc<Mutex<Transaction<Postgres>>>` 注入 request extension → handler 经 `Extension<Arc<Mutex<Transaction>>>` 提取，查询用 `&mut **txn`（DerefMut 解到 `PgConnection`——sqlx 0.8.6 中 `&mut Transaction` 无 Executor impl，已注释于 sqlx-core transaction.rs:133）。
+- **试点 handler**：`list_customers`（`svc/crm/src/modules/customer.rs`）——提取 txn + count/list 查询改 `&mut **txn`；`check_permission` 仍用 pool（权限表无租户维度）。
+- **txn 链路测试**（`svc/crm/src/tests/rls_isolation_test.rs` 新增 `rls_txn_context_isolates_tenant`）：测试库（sqlx::test 模板未带策略）内幂等启用 RLS+FORCE+策略后——租户 A 上下文（SET LOCAL）仅见 A；租户 B 仅见 B；无上下文放行——**通过**（模拟中间件→handler 查询路径）。
+- crm 编译 + 全测试通过（500 原 + 1 新增）。
+
+**推广模式**（其余 handler/服务）：
+1. handler 签名加 `Extension(txn_arc): Extension<Arc<Mutex<Transaction<Postgres>>>>`（import 可选全路径）
+2. 查询 `&state.db` → `&mut **txn`（txn 为 MutexGuard 时双层 deref；Transaction 直接持有时为 `&mut *txn`）
+3. **写操作**（INSERT/UPDATE/DELETE）：需显式 `txn.commit()`（中间件不 commit；drop 自动 ROLLBACK）
+4. 未改造 handler 无影响（中间件 txn 建而未用，drop 回滚——每请求多占 1 连接，池 4→3 并发上限，记录）
+
+**注意**：service claims（nil）与无租户用户路径同样 txn 化——nil 上下文经策略豁免全量。
