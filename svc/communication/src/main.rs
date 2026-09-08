@@ -309,59 +309,6 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // IM 聊天室表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_chat_rooms (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name VARCHAR(128),
-            room_type VARCHAR(32) DEFAULT 'private',
-            creator_id UUID NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    // IM 成员表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_chat_members (
-            room_id UUID NOT NULL REFERENCES core_chat_rooms(id),
-            user_id UUID NOT NULL,
-            role VARCHAR(32) DEFAULT 'member',
-            joined_at TIMESTAMP DEFAULT NOW(),
-            PRIMARY KEY (room_id, user_id)
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    // IM 消息表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_chat_messages (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            room_id UUID NOT NULL REFERENCES core_chat_rooms(id),
-            sender_id UUID NOT NULL,
-            sender_name VARCHAR(128),
-            message_type VARCHAR(32) DEFAULT 'text',
-            content TEXT NOT NULL,
-            file_url VARCHAR(512),
-            is_recalled BOOLEAN DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
     // 邮件表
     sqlx::query(only_own_schema_query!(
         "communication",
@@ -409,18 +356,6 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(only_own_schema_query!(
         "communication",
         "CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id)"
-    ))
-    .execute(pool)
-    .await?;
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        "CREATE INDEX IF NOT EXISTS idx_core_chat_rooms_members ON core_chat_members(user_id)"
-    ))
-    .execute(pool)
-    .await?;
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        "CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room ON core_chat_messages(room_id)"
     ))
     .execute(pool)
     .await?;
