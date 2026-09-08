@@ -86,9 +86,6 @@ psql -h localhost -U topems -d topems
 # 在项目根目录执行
 cd /Users/xingzhai/TOPEMS
 
-# 执行核心重建脚本
-psql -h localhost -U topems -d topems -f database/init/01_rebuild_database.sql
-
 # 初始化权限数据
 psql -h localhost -U topems -d topems -f database/init/03_init_permissions.sql
 
@@ -105,7 +102,6 @@ psql -h localhost -U topems -d topems -f database/init/05_mobile_init.sql
 
 ```sql
 -- 连接数据库后执行
-\i database/init/01_rebuild_database.sql
 \i database/init/03_init_permissions.sql
 \i database/init/04_create_scm_wms_srm_tables.sql
 \i database/init/05_mobile_init.sql
@@ -413,8 +409,8 @@ pg_restore -h localhost -U topems -d topems topems_backup_YYYYMMDD_HHMMSS.dump
 
 **解决方案：**
 ```bash
-# 使用超级用户执行
-psql -h localhost -U postgres -d topems -f database/init/01_rebuild_database.sql
+# 使用超级用户执行（或改用迁移体系重建，见文档顶部注记）
+psql -h localhost -U postgres -d topems -f database/init/03_init_permissions.sql
 ```
 
 ### Q2: 扩展安装失败
