@@ -243,6 +243,11 @@
     ⑩ 消除 6 组重复实现：consolidation 保留 erp/core/consolidation、voucherTemplate 保留 finance/、financialReport 合并入 finance/report、risk 统一 riskV54、receivablePayable 统一 finance/、database 统一 erp/core/dbStructure。<br>
     ⑪ 版本化模块生命周期管理：建立 Vxx 模块的启用/废弃/前端对应状态清单，master V61-V79 和 finance V51-V60 明确产品决策。<br>
     ⑫ 零消费模块决策：master/(702)、file/(45)、dict/(11)、unified-core/(77) 共 835 方法——确认是规划中还是应归档。<br>
+    <b>第二批执行状态（2026-09-08）</b>：<br>
+    ⑤ 悬空 API 归档 → 待决策：im 扩展实测 612 方法、master 实测 934 方法（报告数偏保守），归档前需先抽样验证页面消费（零消费才归档），工作量最大。<br>
+    ⑥ crm 6 模块 → 待决策：注释模块确认（customer_profile/recommendation/scoring/segmentation/sales_forecast/sales_funnel）+ 6+ Mock 页面（CRM*Page），A 补后端 vs B 删页面。<br>
+    ⑦ 路径前缀 → 部分闭环：mobile 双 /mobile/ 前缀 233 处已修复（commit dbadf6e3b，后端 api_prefix=/api/mobile 且路由无 /mobile/ 段，修复前必然 404）；WMS/SCM sync 核查已统一为 /sync-records RESTful（无缺口）；finance/reconciliation 核查发现<b>真实缺口</b>：前端 reconciliation.ts 9 种调用走 /reconcile 模型（orderId 粒度），后端 mod.rs 仅 2 条且为<b>桩实现</b>（reconcile_handler 不查库），新 reconciliation.rs 为 session 模型（/reconciliation/*，前端未接）——模型不匹配，需决策（A 后端补齐 /reconcile 真实现 / B 前端改接 session 模型 / C 归档页面）。<br>
+    ⑧ ehs 写操作 → ✅ 核查已闭环：hazardous_material/occupational_disease/occupational_health/training/environmental_compliance 均有 POST/PUT/DELETE，accident.rs 含 /incidents 全套（报告原判缺口不成立）。<br>
     ⑬ 补全高价值后端能力的前端：finance 版本化模块（155路由）、ai DSH 高级能力、pm kanban-board/timeline、TMS optimization。
   </div>
 
