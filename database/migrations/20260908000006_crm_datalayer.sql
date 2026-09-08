@@ -217,7 +217,8 @@ CREATE TABLE IF NOT EXISTS crm.rfm_results (
 );
 CREATE INDEX IF NOT EXISTS idx_crm_rfm_results_tenant ON crm.rfm_results(tenant_id, customer_id);
 
--- 12. 客户订单（rfm.rs JOIN 只读；无写入方，待 erp/订单服务接通）
+-- 12. 客户订单（已废弃：rfm 改读 crm.sales_orders——wms ShippingOrderRequested 事件真实写入；
+--      保留本表兼容历史引用，不再被代码使用）
 CREATE TABLE IF NOT EXISTS crm.customer_orders (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id    UUID NOT NULL,
@@ -292,3 +293,16 @@ CREATE TABLE IF NOT EXISTS crm.return_items (
     created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_crm_return_items_return ON crm.return_items(return_id);
+
+-- 16. 销售订单（wms ShippingOrderRequested 事件驱动写入；rfm.rs 数据源）
+CREATE TABLE IF NOT EXISTS crm.sales_orders (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_number  TEXT NOT NULL UNIQUE,
+    customer_id   UUID,
+    order_date    DATE,
+    total_amount  NUMERIC(15,2),
+    status        TEXT DEFAULT 'pending',
+    created_at    TIMESTAMPTZ DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_crm_sales_orders_customer ON crm.sales_orders(customer_id);

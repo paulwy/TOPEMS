@@ -231,6 +231,71 @@ impl CrmEventHandlers {
             }
         }
 
+        // 商机赢单 → 应收账款记录（billing_records 写入方接通）
+        // 数据源：OpportunityWon 事件（crm 商机赢单发布），幂等按 invoice_no=OPP-{opportunity_id}
+        let invoice_no = format!("OPP-{}", payload.opportunity_id);
+        let due_date = now + chrono::Duration::days(30);
+        let billing_amount = payload.amount.unwrap_or(0.0);
+
+        let existing_bill: Option<(uuid::Uuid,)> = sqlx::query_as(
+            "SELECT id FROM crm.billing_records WHERE invoice_no = $1",
+        )
+        .bind(&invoice_no)
+        .fetch_optional(&self.db)
+        .await
+        .map_err(|e| format!("查询应收账单失败: {}", e))?;
+
+        if existing_bill.is_none() {
+            // 多租户：经 customers 反查 tenant_id（OpportunityWon payload 无租户维度）
+            let tenant_id: Option<uuid::Uuid> =
+                sqlx::query_scalar("SELECT tenant_id FROM crm.customers WHERE id = $1")
+                    .bind(payload.customer_id)
+                    .fetch_optional(&self.db)
+                    .await
+                    .ok()
+                    .flatten();
+
+            let items = serde_json::json!({
+                "opportunity_id": payload.opportunity_id,
+                "opportunity_name": payload.opportunity_name,
+                "won_by": payload.won_by,
+            });
+
+            let bill_result = sqlx::query(
+                r#"INSERT INTO crm.billing_records
+                   (tenant_id, customer_id, customer_name, invoice_no, amount,
+                    currency, status, due_date, paid_at, items, created_at, updated_at)
+                   VALUES ($1, $2, $3, $4, $5, 'CNY', 'pending', $6, NULL, $7, $8, $8)
+                   ON CONFLICT DO NOTHING"#,
+            )
+            .bind(tenant_id)
+            .bind(payload.customer_id)
+            .bind(payload.customer_name.as_deref())
+            .bind(&invoice_no)
+            .bind(billing_amount)
+            .bind(due_date)
+            .bind(items)
+            .bind(now)
+            .execute(&self.db)
+            .await;
+
+            match bill_result {
+                Ok(_) => {
+                    tracing::info!(
+                        "[crm] 已创建应收账款 - invoice_no={}, amount={}, due_date={}",
+                        invoice_no,
+                        billing_amount,
+                        due_date.format("%Y-%m-%d")
+                    );
+                }
+                Err(e) => {
+                    tracing::warn!("[crm] 创建应收账款失败（graceful fallback）: {}", e);
+                }
+            }
+        } else {
+            tracing::debug!("[crm] 应收账款已存在（跳过）- invoice_no={}", invoice_no);
+        }
+
         Ok(())
     }
 
@@ -413,7 +478,7 @@ impl CrmEventHandlers {
             r#"INSERT INTO crm.sales_orders 
                (id, order_number, customer_id, order_date, 
                 total_amount, status, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)
+               VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7)
                ON CONFLICT (order_number) DO NOTHING"#,
         )
         .bind(payload.shipping_id)

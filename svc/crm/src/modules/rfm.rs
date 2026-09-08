@@ -3,7 +3,7 @@
 //! 基于 R（Recency 最近购买）、F（Frequency 购买频次）、M（Monetary 消费金额）
 //! 三个维度对客户进行五分位打分，并映射到 8 种客户分群。
 //!
-//! 数据来源：crm.customer_orders 表（订单记录）
+//! 数据来源：crm.sales_orders 表（wms ShippingOrderRequested 事件写入）
 //! 缓存表：crm.rfm_results 表（分析结果）
 
 use axum::{
@@ -339,7 +339,7 @@ async fn analyze_rfm(
     let period_days = req.period_days.max(1).min(3650);
     let period_start = reference_date - chrono::Duration::days(period_days as i64);
 
-    // 从 customer_orders 聚合原始 R/F/M
+    // 从 sales_orders 聚合原始 R/F/M
     let raw_result = sqlx::query_as::<_, RawRfm>(
         r#"
         SELECT
@@ -347,11 +347,10 @@ async fn analyze_rfm(
             c.name AS customer_name,
             COALESCE(($1::date - MAX(o.order_date))::int, 9999)::float8 AS recency_days,
             COUNT(o.id)::float8 AS frequency,
-            COALESCE(SUM(o.order_amount), 0)::float8 AS monetary
+            COALESCE(SUM(o.total_amount), 0)::float8 AS monetary
         FROM crm.customers c
-        LEFT JOIN crm.customer_orders o
+        LEFT JOIN crm.sales_orders o
             ON o.customer_id = c.id
-           AND o.tenant_id = $2
            AND o.status = 'completed'
            AND o.order_date >= $3
         WHERE c.tenant_id = $2 AND c.deleted_at IS NULL
