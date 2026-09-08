@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -60,7 +60,12 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_vehicles(
     State(state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<Vehicle>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -85,7 +90,7 @@ pub async fn list_vehicles(
     .bind(&type_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -101,7 +106,7 @@ pub async fn list_vehicles(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&type_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -131,8 +136,13 @@ pub async fn list_vehicles(
 pub async fn create_vehicle(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("车牌号", &req.plate_number) {
         return Json(api_error(400, &e));
     }
@@ -157,7 +167,7 @@ pub async fn create_vehicle(
     .bind(&req.fuel_type)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -175,6 +185,14 @@ pub async fn create_vehicle(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(vehicle) = &result {
@@ -219,7 +237,12 @@ pub async fn create_vehicle(
 pub async fn get_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vehicle>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Vehicle>(
         only_own_schema_query!("erp", r#"
         SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
@@ -227,7 +250,7 @@ pub async fn get_vehicle(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -257,13 +280,18 @@ pub async fn update_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, Vehicle>(
         only_own_schema_query!("erp", "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM vehicles WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -304,7 +332,7 @@ pub async fn update_vehicle(
     .bind(mileage)
     .bind(&fuel_type)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -322,6 +350,14 @@ pub async fn update_vehicle(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(vehicle) = &result {
         serde_json::to_value(vehicle).ok()
@@ -366,13 +402,18 @@ pub async fn delete_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE vehicles SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -395,6 +436,14 @@ pub async fn delete_vehicle(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -435,7 +484,12 @@ pub async fn delete_vehicle(
 pub async fn list_vehicle_requests(
     State(state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<VehicleApplication>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -457,7 +511,7 @@ pub async fn list_vehicle_requests(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -472,7 +526,7 @@ pub async fn list_vehicle_requests(
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -502,8 +556,13 @@ pub async fn list_vehicle_requests(
 pub async fn create_vehicle_request(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateVehicleRequestRequest>,
 ) -> Json<ApiResponse<VehicleApplication>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("申请人", &req.requester) {
         return Json(api_error(400, &e));
     }
@@ -512,7 +571,7 @@ pub async fn create_vehicle_request(
         only_own_schema_query!("erp", "SELECT id, plate_number, status FROM vehicles WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
     )
     .bind(req.vehicle_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let vehicle = match vehicle_result {
@@ -532,7 +591,7 @@ pub async fn create_vehicle_request(
     .bind(req.vehicle_id)
     .bind(req.end_time)
     .bind(req.start_time)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if let Ok(count) = overlapping {
@@ -561,7 +620,7 @@ pub async fn create_vehicle_request(
     .bind(req.driver_required)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -579,6 +638,14 @@ pub async fn create_vehicle_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(request) = &result {
@@ -623,7 +690,12 @@ pub async fn create_vehicle_request(
 pub async fn get_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<VehicleApplication>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", r#"
         SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
@@ -631,7 +703,7 @@ pub async fn get_vehicle_request(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -661,13 +733,18 @@ pub async fn update_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateVehicleRequestRequest>,
 ) -> Json<ApiResponse<VehicleApplication>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", "SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at FROM vehicle_requests WHERE id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -698,7 +775,7 @@ pub async fn update_vehicle_request(
     .bind(approved_at)
     .bind(&rejected_reason)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -716,6 +793,14 @@ pub async fn update_vehicle_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(request) = &result {
         serde_json::to_value(request).ok()
@@ -760,13 +845,18 @@ pub async fn delete_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE vehicle_requests SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -789,6 +879,14 @@ pub async fn delete_vehicle_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -832,7 +930,12 @@ pub async fn delete_vehicle_request(
 pub async fn get_vehicle_requests(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<VehicleApplication>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", r#"
         SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
@@ -840,7 +943,7 @@ pub async fn get_vehicle_requests(
         "#),
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

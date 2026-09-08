@@ -49,7 +49,12 @@ pub async fn list_purchase_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<PurchaseOrder>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -76,7 +81,7 @@ pub async fn list_purchase_orders(
         .bind(status.unwrap_or_default())
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, PurchaseOrder>(
@@ -84,7 +89,7 @@ pub async fn list_purchase_orders(
         )
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -101,7 +106,7 @@ pub async fn list_purchase_orders(
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(t) => t,
@@ -134,7 +139,12 @@ pub async fn get_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -143,7 +153,7 @@ pub async fn get_purchase_order(
         only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(o) => o,
@@ -169,8 +179,13 @@ pub async fn get_purchase_order(
 pub async fn create_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -180,7 +195,7 @@ pub async fn create_purchase_order(
         "SELECT name FROM erp.suppliers WHERE id = $1"
     ))
     .bind(req.supplier_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     {
         Ok(name) => name.unwrap_or_default(),
@@ -217,7 +232,7 @@ pub async fn create_purchase_order(
     .bind(payable_amount)
     .bind(default_purchase_order_status())
     .bind(req.remark)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let purchase_order = match result {
@@ -251,6 +266,12 @@ pub async fn create_purchase_order(
         }
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(purchase_order, "创建采购订单成功"))
 }
 
@@ -272,8 +293,13 @@ pub async fn update_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -292,7 +318,7 @@ pub async fn update_purchase_order(
     .bind(req.remark)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let purchase_order = match result {
@@ -303,6 +329,12 @@ pub async fn update_purchase_order(
         }
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(purchase_order, "更新采购订单成功"))
 }
 
@@ -323,7 +355,12 @@ pub async fn delete_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -333,11 +370,19 @@ pub async fn delete_purchase_order(
         "UPDATE erp.purchase_orders SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success("".to_string(), "删除采购订单成功")),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success("".to_string(), "删除采购订单成功"))
+        }
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
             Json(api_error(500, "删除采购订单失败"))
@@ -362,7 +407,12 @@ pub async fn approve_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -375,11 +425,17 @@ pub async fn approve_purchase_order(
     )
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             if let Some(ref publisher) = state.event_publisher {
                 let payload = PurchaseOrderApprovedPayload {
                     order_id: order.id,
@@ -428,7 +484,12 @@ pub async fn cancel_purchase_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -441,11 +502,19 @@ pub async fn cancel_purchase_order(
     )
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(order) => Json(ApiResponse::success(order, "采购订单已取消")),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(r, "采购订单已取消"))
+        }
         Err(e) => {
             tracing::error!("取消采购订单失败: {}", e);
             Json(api_error(500, "取消采购订单失败"))

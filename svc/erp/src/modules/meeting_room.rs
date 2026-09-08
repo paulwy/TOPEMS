@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -54,7 +54,12 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_rooms(
     State(state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<MeetingRoom>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -77,7 +82,7 @@ pub async fn list_rooms(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -92,7 +97,7 @@ pub async fn list_rooms(
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -122,8 +127,13 @@ pub async fn list_rooms(
 pub async fn create_room(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateMeetingRoomRequest>,
 ) -> Json<ApiResponse<MeetingRoom>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("会议室名称", &req.name) {
         return Json(api_error(400, &e));
     }
@@ -145,7 +155,7 @@ pub async fn create_room(
     .bind(&req.facilities)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -163,6 +173,14 @@ pub async fn create_room(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(room) = &result {
@@ -208,7 +226,12 @@ pub async fn create_room(
 pub async fn get_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MeetingRoom>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
         "erp",
         r#"
@@ -217,7 +240,7 @@ pub async fn get_room(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -248,13 +271,18 @@ pub async fn update_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateMeetingRoomRequest>,
 ) -> Json<ApiResponse<MeetingRoom>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, MeetingRoom>(
         only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -288,7 +316,7 @@ pub async fn update_room(
     .bind(&facilities)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -306,6 +334,14 @@ pub async fn update_room(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(room) = &result {
         serde_json::to_value(room).ok()
@@ -351,13 +387,18 @@ pub async fn delete_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE meeting_rooms SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -380,6 +421,14 @@ pub async fn delete_room(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -420,7 +469,12 @@ pub async fn delete_room(
 pub async fn list_bookings(
     State(state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<MeetingBooking>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -442,7 +496,7 @@ pub async fn list_bookings(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -456,7 +510,7 @@ pub async fn list_bookings(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -486,8 +540,13 @@ pub async fn list_bookings(
 pub async fn create_booking(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateMeetingBookingRequest>,
 ) -> Json<ApiResponse<MeetingBooking>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("会议标题", &req.title) {
         return Json(api_error(400, &e));
     }
@@ -496,7 +555,7 @@ pub async fn create_booking(
         only_own_schema_query!("erp", "SELECT id, name FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
     )
     .bind(req.room_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let room = match room_result {
@@ -516,7 +575,7 @@ pub async fn create_booking(
     .bind(req.room_id)
     .bind(req.end_time)
     .bind(req.start_time)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if let Ok(count) = overlapping {
@@ -544,7 +603,7 @@ pub async fn create_booking(
     .bind(req.end_time)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -562,6 +621,14 @@ pub async fn create_booking(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(booking) = &result {
@@ -606,7 +673,12 @@ pub async fn create_booking(
 pub async fn get_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MeetingBooking>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
@@ -614,7 +686,7 @@ pub async fn get_booking(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -644,13 +716,18 @@ pub async fn update_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateMeetingBookingRequest>,
 ) -> Json<ApiResponse<MeetingBooking>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -683,7 +760,7 @@ pub async fn update_booking(
     .bind(end_time)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -701,6 +778,14 @@ pub async fn update_booking(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(booking) = &result {
         serde_json::to_value(booking).ok()
@@ -745,13 +830,18 @@ pub async fn delete_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE meeting_bookings SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -774,6 +864,14 @@ pub async fn delete_booking(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -817,7 +915,12 @@ pub async fn delete_booking(
 pub async fn get_room_bookings(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<MeetingBooking>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
@@ -825,7 +928,7 @@ pub async fn get_room_bookings(
         "#),
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

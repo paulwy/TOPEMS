@@ -208,7 +208,12 @@ pub async fn list_leave_requests(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LeaveRequestQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<LeaveRequest>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     let page = params.page.unwrap_or(1).max(1);
@@ -244,7 +249,7 @@ pub async fn list_leave_requests(
     .bind(tenant)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -264,7 +269,7 @@ pub async fn list_leave_requests(
             .bind(&type_filter)
             .bind(employee_filter)
             .bind(tenant)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -293,8 +298,13 @@ pub async fn create_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("申请人姓名", &req.employee_name) {
@@ -345,7 +355,7 @@ pub async fn create_leave_request(
     .bind(&tenant)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -363,6 +373,14 @@ pub async fn create_leave_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(leave) = &result {
@@ -404,7 +422,12 @@ pub async fn get_leave_request(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -421,7 +444,7 @@ pub async fn get_leave_request(
     ))
     .bind(id)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -447,8 +470,13 @@ pub async fn update_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -465,7 +493,7 @@ pub async fn update_leave_request(
     ))
     .bind(id)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -518,7 +546,7 @@ pub async fn update_leave_request(
     .bind(days)
     .bind(&reason)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -536,6 +564,14 @@ pub async fn update_leave_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(leave) = &result {
         serde_json::to_value(leave).ok()
@@ -577,7 +613,12 @@ pub async fn delete_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -588,7 +629,7 @@ pub async fn delete_leave_request(
     ))
     .bind(id)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -611,6 +652,14 @@ pub async fn delete_leave_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -653,7 +702,12 @@ pub async fn submit_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -672,7 +726,7 @@ pub async fn submit_leave_request(
     .bind(id)
     .bind(now)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -695,6 +749,14 @@ pub async fn submit_leave_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(Some(leave)) = &result {
         serde_json::to_value(leave).ok()
@@ -737,8 +799,13 @@ pub async fn approve_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApproveLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
@@ -765,7 +832,7 @@ pub async fn approve_leave_request(
     .bind(now)
     .bind(now)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -788,6 +855,14 @@ pub async fn approve_leave_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(Some(leave)) = &result {
         serde_json::to_value(leave).ok()
@@ -830,8 +905,13 @@ pub async fn reject_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RejectLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
@@ -862,7 +942,7 @@ pub async fn reject_leave_request(
     .bind(&req.rejected_reason)
     .bind(now)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -885,6 +965,14 @@ pub async fn reject_leave_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(Some(leave)) = &result {
         serde_json::to_value(leave).ok()
@@ -927,7 +1015,12 @@ pub async fn cancel_leave_request(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -946,7 +1039,7 @@ pub async fn cancel_leave_request(
     .bind(id)
     .bind(now)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -972,6 +1065,14 @@ pub async fn cancel_leave_request(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(Some(leave)) = &result {
         serde_json::to_value(leave).ok()

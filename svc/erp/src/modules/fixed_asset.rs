@@ -105,7 +105,12 @@ pub async fn list_fixed_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FixedAssetParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<FixedAsset>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
         return e;
     }
@@ -143,7 +148,7 @@ pub async fn list_fixed_assets(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -166,7 +171,7 @@ pub async fn list_fixed_assets(
                     .as_ref()
                     .and_then(|s| Uuid::parse_str(s).ok()),
             )
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -194,8 +199,13 @@ pub async fn create_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
@@ -251,7 +261,7 @@ pub async fn create_fixed_asset(
     .bind(&status)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -269,6 +279,14 @@ pub async fn create_fixed_asset(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(asset) = &result {
@@ -310,7 +328,12 @@ pub async fn get_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<FixedAsset>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
         return e;
     }
@@ -326,7 +349,7 @@ pub async fn get_fixed_asset(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -352,8 +375,13 @@ pub async fn update_fixed_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
@@ -366,7 +394,7 @@ pub async fn update_fixed_asset(
                 location, status, created_at, updated_at FROM erp.fixed_assets WHERE id = $1"
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -429,7 +457,7 @@ pub async fn update_fixed_asset(
     .bind(&location)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -447,6 +475,14 @@ pub async fn update_fixed_asset(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(asset) = &result {
         serde_json::to_value(asset).ok()
@@ -488,7 +524,12 @@ pub async fn delete_fixed_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
@@ -498,7 +539,7 @@ pub async fn delete_fixed_asset(
         "UPDATE erp.fixed_assets SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -521,6 +562,14 @@ pub async fn delete_fixed_asset(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -625,8 +674,13 @@ pub async fn depreciate_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<DepreciateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) =
         check_permission(&state.db, &claims, &ModulePermission::FixedAssetDepreciate).await
     {
@@ -647,7 +701,7 @@ pub async fn depreciate_assets(
                 placeholders
             ))
             .bind(ids)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
         None => {
@@ -655,7 +709,7 @@ pub async fn depreciate_assets(
                 "erp",
                 "SELECT * FROM erp.fixed_assets WHERE deleted_at IS NULL AND status = 'active'"
             ))
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
     };
@@ -685,7 +739,7 @@ pub async fn depreciate_assets(
                     .bind(calc.new_net_value)
                     .bind(&req.period)
                     .bind(now)
-                    .execute(&state.db)
+                    .execute(&mut **txn)
                     .await
                 } else {
                     // 正常计提：更新累计、净值、期间
@@ -697,7 +751,7 @@ pub async fn depreciate_assets(
                     .bind(calc.new_net_value)
                     .bind(&req.period)
                     .bind(now)
-                    .execute(&state.db)
+                    .execute(&mut **txn)
                     .await
                 };
 
@@ -746,6 +800,12 @@ pub async fn depreciate_assets(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(result, "固定资产折旧完成"))
 }
 

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -90,7 +90,12 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_opening_balances(
     State(state): State<ApiState>,
     Query(params): Query<OpeningBalanceParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<OpeningBalance>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -117,7 +122,7 @@ pub async fn list_opening_balances(
     .bind(&params.subject_code)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -139,7 +144,7 @@ pub async fn list_opening_balances(
             )
             .bind(&params.period)
             .bind(&params.subject_code)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -166,16 +171,23 @@ pub async fn list_opening_balances(
 pub async fn create_opening_balance(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-        only_own_schema_query!("erp", "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "finance"),
-    )
+    let subject_name = match sqlx::query_as::<_, AccountingSubject>(only_own_schema_query!(
+        "erp",
+        "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
+        "finance"
+    ))
     .bind(&req.subject_code)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(s)) => s.name,
@@ -198,7 +210,7 @@ pub async fn create_opening_balance(
     .bind(req.credit_balance)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -216,6 +228,14 @@ pub async fn create_opening_balance(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(balance) = &result {
@@ -256,7 +276,12 @@ pub async fn create_opening_balance(
 pub async fn get_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<OpeningBalance>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", r#"
         SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
@@ -264,7 +289,7 @@ pub async fn get_opening_balance(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -289,13 +314,18 @@ pub async fn update_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", "SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at FROM erp.opening_balances WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -321,7 +351,7 @@ pub async fn update_opening_balance(
     .bind(debit_balance)
     .bind(credit_balance)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -339,6 +369,14 @@ pub async fn update_opening_balance(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(balance) = &result {
         serde_json::to_value(balance).ok()
@@ -379,13 +417,18 @@ pub async fn delete_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE erp.opening_balances SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -408,6 +451,14 @@ pub async fn delete_opening_balance(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -446,8 +497,13 @@ pub async fn delete_opening_balance(
 pub async fn import_opening_balances(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<Vec<CreateOpeningBalanceRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let mut success_count = 0;
     let mut failed_count = 0;
     let mut errors = Vec::new();
@@ -455,11 +511,13 @@ pub async fn import_opening_balances(
     let request_data = serde_json::to_value(&req).ok();
 
     for item in req {
-        let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-            only_own_schema_query!("erp", "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL", "finance"),
-        )
+        let subject_name = match sqlx::query_as::<_, AccountingSubject>(only_own_schema_query!(
+            "erp",
+            "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
+            "finance"
+        ))
         .bind(&item.subject_code)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
         {
             Ok(Some(s)) => s.name,
@@ -481,10 +539,10 @@ pub async fn import_opening_balances(
         .bind(item.credit_balance)
         .bind(now)
         .bind(now)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
-        match result {
+        match &result {
             Ok(_) => success_count += 1,
             Err(e) => {
                 failed_count += 1;
@@ -527,6 +585,12 @@ pub async fn import_opening_balances(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(result, "期初余额批量导入完成"))
 }
 
@@ -540,8 +604,13 @@ pub async fn import_opening_balances(
 pub async fn carry_forward_opening_balance(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CarryForwardRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let request_data = serde_json::to_value(&req).ok();
 
     let query = r#"
@@ -558,10 +627,10 @@ pub async fn carry_forward_opening_balance(
     let result = sqlx::query(query)
         .bind(&req.from_period)
         .bind(&req.to_period)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
-    let (response, status_str, error_msg) = match result {
+    let (response, status_str, error_msg) = match &result {
         Ok(r) => (
             Json(ApiResponse::success(
                 serde_json::json!({ "rows_affected": r.rows_affected() }),
@@ -579,6 +648,14 @@ pub async fn carry_forward_opening_balance(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     log_audit_event(
         &state.db,

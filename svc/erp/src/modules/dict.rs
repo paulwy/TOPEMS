@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::{header, HeaderMap, Request, Response, StatusCode},
     middleware::Next,
     response::IntoResponse,
@@ -197,7 +197,12 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_dict_types(
     State(state): State<ApiState>,
     Query(params): Query<DictTypeQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<DictType>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -239,7 +244,7 @@ pub async fn list_dict_types(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -256,7 +261,7 @@ pub async fn list_dict_types(
             .bind(&search_pattern)
             .bind(&category_filter)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -290,8 +295,13 @@ pub async fn list_dict_types(
 pub async fn create_dict_type(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = validate_required_field("字典类型编码", &req.code) {
         return Json(api_error(400, &e));
     }
@@ -317,11 +327,17 @@ pub async fn create_dict_type(
     .bind(&req.description)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
         Ok(dict_type) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             state.dict_cache.remove("all_dict_types");
             (
                 Json(ApiResponse::success(dict_type.clone(), "字典类型创建成功")),
@@ -378,7 +394,12 @@ pub async fn create_dict_type(
 pub async fn get_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<DictType>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, DictType>(only_own_schema_query!(
         "erp",
         r#"
@@ -387,7 +408,7 @@ pub async fn get_dict_type(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -412,13 +433,18 @@ pub async fn update_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, DictType>(
         only_own_schema_query!("erp", "SELECT id, code, name, category, description, status, created_at, updated_at FROM erp.dict_types WHERE id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -450,11 +476,17 @@ pub async fn update_dict_type(
     .bind(&description)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(dict_type) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
+            }
             state.dict_cache.remove("all_dict_types");
             (
                 Json(ApiResponse::success(dict_type.clone(), "字典类型更新成功")),
@@ -511,13 +543,18 @@ pub async fn delete_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE erp.dict_items SET deleted_at = NOW() WHERE dict_type_id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await
     {
         tracing::warn!("删除字典条目失败，继续删除字典类型: {}", e);
@@ -528,7 +565,7 @@ pub async fn delete_dict_type(
         "UPDATE erp.dict_types SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -554,6 +591,14 @@ pub async fn delete_dict_type(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -596,7 +641,12 @@ pub async fn list_dict_items(
     State(state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
     Query(params): Query<DictItemQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResponse<DictItem>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(100).min(500);
     let offset = (page - 1) * page_size;
@@ -617,7 +667,7 @@ pub async fn list_dict_items(
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -632,7 +682,7 @@ pub async fn list_dict_items(
             ))
             .bind(dict_type_id)
             .bind(&search_pattern)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -660,8 +710,13 @@ pub async fn list_dict_items(
 pub async fn create_dict_item(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
     let sort_order = req.sort_order.unwrap_or(0);
@@ -683,7 +738,7 @@ pub async fn create_dict_item(
     .bind(&req.extra_data)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -701,6 +756,14 @@ pub async fn create_dict_item(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(item) = &result {
@@ -741,7 +804,12 @@ pub async fn create_dict_item(
 pub async fn get_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<DictItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
@@ -749,7 +817,7 @@ pub async fn get_dict_item(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -774,13 +842,18 @@ pub async fn update_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM erp.dict_items WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -817,7 +890,7 @@ pub async fn update_dict_item(
     .bind(&extra_data)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -835,6 +908,14 @@ pub async fn update_dict_item(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(item) = &result {
         serde_json::to_value(item).ok()
@@ -875,13 +956,18 @@ pub async fn delete_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE erp.dict_items SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -904,6 +990,14 @@ pub async fn delete_dict_item(
             )
         }
     };
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "事务提交失败"));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -943,8 +1037,13 @@ pub async fn delete_dict_item(
 pub async fn batch_create_dict_items(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<BatchCreateDictItemRequest>,
 ) -> Json<ApiResponse<Vec<DictItem>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let mut created_items = Vec::new();
     let now = Utc::now();
 
@@ -969,7 +1068,7 @@ pub async fn batch_create_dict_items(
         .bind(&item_req.extra_data)
         .bind(now)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         match result {
@@ -1003,6 +1102,12 @@ pub async fn batch_create_dict_items(
     .await;
 
     let count = created_items.len();
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         created_items,
         &format!("成功创建 {} 个字典项", count),
@@ -1020,7 +1125,12 @@ pub async fn batch_create_dict_items(
 pub async fn export_dict_items(
     State(state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Response<String> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
@@ -1030,7 +1140,7 @@ pub async fn export_dict_items(
         "#),
     )
     .bind(dict_type_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
