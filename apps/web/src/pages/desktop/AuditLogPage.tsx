@@ -23,7 +23,7 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import { useTranslation } from 'react-i18next';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates/list/types';
-import { tauriApi } from '../../services/TauriApi';
+import { auditLogApi } from '@/api/admin/auditLog';
 import { tauriAuth } from '../../services/TauriAuth';
 
 interface AuditLog {
@@ -79,26 +79,30 @@ const AuditLogPage = () => {
     try {
       const params: Record<string, string> = {};
       if (f.action) params.action = f.action;
-      if (f.target_type) params.target_type = f.target_type;
       if (f.user_id) params.user_id = f.user_id;
-      if (f.from) params.from = f.from;
-      if (f.to) params.to = f.to;
+      if (f.from) params.start_date = f.from;
+      if (f.to) params.end_date = f.to;
 
-      const result = await tauriApi.getAuditLogs(
+      const result = await auditLogApi.listAuditLogs(
         Object.keys(params).length > 0 ? params : undefined
       );
 
       let data: AuditLog[] = [];
-      if (Array.isArray(result)) {
-        data = result as AuditLog[];
-      } else if (result && typeof result === 'object') {
-        const obj = result as Record<string, unknown>;
-        if (Array.isArray(obj.data)) {
-          data = obj.data as AuditLog[];
-        } else if (Array.isArray(obj.logs)) {
-          data = obj.logs as AuditLog[];
-        }
-      }
+      const payload = result?.data;
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : [];
+      data = rows.map((r) => ({
+        id: r.id,
+        timestamp: r.created_at,
+        action: r.action,
+        target_type: r.resource,
+        target_id: r.resource_id ?? '',
+        user_id: r.user_id,
+        details: r.request_params ?? undefined,
+      }));
 
       setLogs(data);
       setLastRefresh(new Date());

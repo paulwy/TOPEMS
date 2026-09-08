@@ -63,6 +63,10 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 **当前待办总数：19 项**（✅ 已闭环 18 / ⏳ 待阈值触发 1：#1 物理库拆分）
 
+> 09-08 **P6 RED 修复已闭环**：`tauriApi.getAuditLogs` 不存在（tauri.ts 仅 invoke/window/app；AuditLogPage 运行时 TypeError）。修复：AuditLogPage 改走 `auditLogApi.listAuditLogs`（HTTP → erp 网关 /audit-logs，后端 list_audit_logs 已有）；filter 映射（from→start_date / to→end_date，target_type 无后端对应字段已忽略）；后端行→页面行映射（created_at→timestamp / resource→target_type / resource_id→target_id）。验证：P6 RED 1→**0**、tsc 0 error、eslint 通过。
+> 09-08 **359 条权限码声明缺口结论升级（体系专项）**：核对后端 `iam.permissions` 仅 **40 条粗码**（rs_read/lims_read 风格）vs 前端 config.ts 使用 **375 条细分码**（pm:project:read 风格）——**前后端权限码体系不一致**：前端 `hasPermission = permissions.includes(code)`（后端下发列表）对未签发细分码**恒 false**（仅 superuser 绕过）；permissionMapping.ts 仅 100 条模板映射。非机械可修，需专项：统一码体系或建立后端→前端映射层，并决定细分码是否由后端签发。
+
+
 > 09-08 **P7 门禁脚本假阳性修复已闭环**：p7-perm-audit-v5.cjs 的 LEGAL 只扫 `apps/web/src/config/permissions.ts` 文件内字面量，而该文件 PERMISSIONS 系 re-export 自 `@topems/app-shell`（permissions-types.ts 100 条模块模板码）→ LEGAL 误计 1 条、NOT_LEGAL 假报 374 条"🔴 菜单永远隐藏"。修复：①并入 app-shell 真源（LEGAL→101 条）；②严重度口径修正——前端运行时判定 `hasPermission = state.permissions.includes(code)` 基于**后端下发码列表**（unified-core iam 动态签发），静态声明缺 ≠ 运行时缺口，文案改 🟡 声明缺口；③最终 RBAC 判定同步改 🟡。修后 NOT_LEGAL 374→**359 条真实细分码声明缺口**（pm:project:read 等，app-shell 模板仅覆盖 15 条）——已记录为**后续专项**：需人工核对后端签发码集后补 permissions.ts UI 元数据（name/分组无法自动化生成）。
 
 
