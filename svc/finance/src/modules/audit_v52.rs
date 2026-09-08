@@ -551,7 +551,7 @@ impl AutoAuditEngine {
 
         let rows: Vec<(Uuid, String, String, i64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
-            r#"SELECT id, voucher_no, status, COUNT(*) as cnt FROM vouchers
+            r#"SELECT id, voucher_no, status, COUNT(*) as cnt FROM finance.core_finance_vouchers
                WHERE tenant_id = $1
                GROUP BY voucher_no, status
                HAVING COUNT(*) > $2
@@ -600,7 +600,7 @@ impl AutoAuditEngine {
             "finance",
             r#"SELECT v.id, v.voucher_no, v.total_amount,
                       COALESCE(SUM(vl.amount), 0) as line_total
-               FROM vouchers v
+               FROM finance.core_finance_vouchers v
                LEFT JOIN voucher_lines vl ON vl.voucher_id = v.id
                WHERE v.tenant_id = $1 AND v.status NOT IN ('draft', 'cancelled')
                GROUP BY v.id, v.voucher_no, v.total_amount
@@ -705,7 +705,7 @@ impl AutoAuditEngine {
         let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, created_at
-               FROM vouchers
+               FROM finance.core_finance_vouchers
                WHERE tenant_id = $1 AND created_at > $2
                ORDER BY created_at DESC
                LIMIT 500"#
@@ -756,7 +756,7 @@ impl AutoAuditEngine {
         let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, total_amount
-               FROM vouchers
+               FROM finance.core_finance_vouchers
                WHERE tenant_id = $1 AND total_amount >= $2
                AND ROUND(total_amount, 0) = total_amount
                AND status NOT IN ('draft', 'cancelled')
@@ -1025,7 +1025,7 @@ impl AnomalyDetector {
             r#"SELECT id, voucher_no, total_amount,
                       AVG(total_amount) OVER () as mean_amt,
                       STDDEV(total_amount) OVER () as std_amt
-               FROM vouchers
+               FROM finance.core_finance_vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND created_at > NOW() - INTERVAL '30 days'
                ORDER BY created_at DESC
@@ -1084,7 +1084,7 @@ impl AnomalyDetector {
         let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, ABS(total_amount) as amount
-               FROM vouchers
+               FROM finance.core_finance_vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND total_amount > 0
                ORDER BY created_at DESC
@@ -1145,7 +1145,7 @@ impl AnomalyDetector {
         let rows: Vec<(Uuid, String, DateTime<Utc>)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, created_at
-               FROM vouchers
+               FROM finance.core_finance_vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND created_at > NOW() - INTERVAL '30 days'
                ORDER BY created_at DESC
@@ -1195,7 +1195,7 @@ impl AnomalyDetector {
         let rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT created_by, COUNT(*) as cnt
-               FROM vouchers
+               FROM finance.core_finance_vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND created_at > NOW() - INTERVAL '7 days'
                GROUP BY created_by
@@ -1243,7 +1243,7 @@ impl AnomalyDetector {
             "finance",
             r#"SELECT DATE_TRUNC('day', created_at) as day,
                       SUM(total_amount) as daily_total
-               FROM vouchers
+               FROM finance.core_finance_vouchers
                WHERE tenant_id = $1 AND status NOT IN ('draft', 'cancelled')
                AND created_at > NOW() - INTERVAL '30 days'
                GROUP BY day

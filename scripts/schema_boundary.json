@@ -59,7 +59,8 @@
       "schema": "integration",
       "search_path": "integration, public",
       "allow": [
-        "qms"
+        "qms",
+        "ehs"
       ]
     },
     "lims": {

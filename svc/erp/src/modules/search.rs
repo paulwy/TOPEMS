@@ -78,10 +78,10 @@ async fn global_search(
         r#"
         SELECT id, name as title, contact_person as description, 'customer' as module, 
                '/crm/customers' as path, '客户' as type_name
-        FROM core_crm_customers
+        FROM crm.core_crm_customers
         WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
         LIMIT $2
-        "#
+        "#, "crm"
     ))
     .bind(search_pattern.clone())
     .bind(limit / 3)

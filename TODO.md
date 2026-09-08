@@ -1,3 +1,14 @@
+## 治理（第三轮）：跨 schema 裸表名引用修复
+- 状态：✅ 完成（待提交 20260908000011）
+- 迁移：`database/migrations/20260908000011_cross_schema_bare_tables.sql`（已实跑）
+  - 建表 6 张：public.core_workflow_instances / core_workflow_tasks / approvals / approval_records（unified-core flow 模块，search_path=public 语义）
+  - finance.vouchers / voucher_lines（forecast_v53 预测表）
+- 改码 3 组：
+  - erp/search.rs：FROM core_crm_customers → crm.core_crm_customers（宏第三参 "crm"）
+  - finance/audit_v52.rs：9 处裸 vouchers → finance.core_finance_vouchers（列对齐验证）
+  - integration/qms_lims_ehs.rs：INSERT qa_ehs_alerts → ehs.qa_ehs_alerts + 去 tenant_id（表无此列）+ 宏第三参 "ehs"
+- 验证：四服务 cargo check 过；5393 测试全绿；门禁全 PASS；跨 schema 裸引用真炸点清零（剩余 18 组为 search_path 可达 public/ehs/pg_catalog 或 monitor 演示数据，假阳性）
+
 # TOPEMS DSH AI 中间层 - 任务清单
 
 ## 📋 项目概述
