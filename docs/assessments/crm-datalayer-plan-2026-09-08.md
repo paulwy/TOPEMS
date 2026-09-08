@@ -32,13 +32,13 @@
 | `crm.tags` | tag（1） | id, tenant_id, org_id, name, color, description, created_at, updated_at | P1 |
 | `crm.customer_recommendations` | customer_recommendation（1） | id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at | P2 |
 | `crm.rfm_results` | rfm（已挂载） | id, tenant_id, customer_id, r_score, f_score, m_score, recency_days, frequency, monetary, rfm_score, segment, analyzed_at, created_at, updated_at | P2 |
-| `crm.customer_orders` | rfm（已挂载） | **核对结论：建表**。SELECT 列已取（id/customer_id/order_date/order_amount/status/tenant_id）；**全仓库无写入方** → 建表 + 写入方待接通（预期 erp/订单服务），RFM 在空表下返回 9999 天/0 次 | P2 |
+| `crm.customer_orders` | rfm（已挂载） | **✅ 已闭环（2026-09-08 写入方专项）**：rfm 数据源改读 `crm.sales_orders`（wms 事件驱动，真实写入）；本表**废弃**（保留兼容，代码不再引用） | P2 ✅ |
 
 ### 第三批 · 业务台账表（已挂载模块，4 张）
 
 | 表 | 使用模块 | 核心字段 | 优先级 |
 |---|---|---|---|
-| `crm.billing_records` | billing（已挂载） | **核对结论：建表**。SELECT 列已取（id/tenant_id/customer_id/customer_name/invoice_no/amount/currency/status/due_date/paid_at/items/deleted_at）；**全仓库无写入方** → 建表 + 写入方待接通（预期 finance/erp 账单服务） | P2 |
+| `crm.billing_records` | billing（已挂载） | **✅ 已闭环（2026-09-08 写入方专项）**：handle_opportunity_won 追加写入（invoice_no=OPP-{opportunity_id} 幂等，tenant 经 customers 反查，due=+30d）；未覆盖应收回款状态流转（erp/finance 侧待接通） | P2 ✅ |
 | `crm.returns` | aftersales（已挂载） | id, tenant_id, return_no, customer_id, order_id, ticket_id, warehouse_id, return_type, status, reason, reason_detail, refund_amount, exchange_product_id, received, created_by, updated_by, created_at, updated_at | P2 |
 | `crm.return_items` | aftersales（已挂载） | id, tenant_id, return_id, product_id, quantity, unit_price, total_amount, created_at | P2 |
 | ~~`crm.audit_logs`~~ | audit（已挂载） | **核对结论：不建表**。全仓库无 INSERT INTO crm.audit_logs；审计写入统一走 public.audit_logs（unified-core 3 处）。audit.rs SELECT 含 user_name/entity_ids/error_message（public 无此列）→ 列入专项附项：audit.rs 改指 public.audit_logs + 列适配 | 附项 |
@@ -46,7 +46,7 @@
 ## 3. 迁移方案要点
 
 1. **单迁移文件** `20260908000006_crm_datalayer.sql`：`CREATE SCHEMA IF NOT EXISTS crm;` + 16 张表 `IF NOT EXISTS`，UUID 主键（`gen_random_uuid()`）、`tenant_id UUID NOT NULL`、`created_at/updated_at TIMESTAMPTZ DEFAULT NOW()`、业务字段按模块 bind 类型（VARCHAR/TEXT/DOUBLE PRECISION/INTEGER/BOOLEAN/JSONB）精确定稿。
-2. **只读表核对结果**：`interactions` 有真实写入方（crm event_handlers）→ 必建；`customer_orders`/`billing_records` 无写入方 → 建表 + 写入方待接通（预期 erp/finance 服务，专项外待办）；`audit_logs` 不建（改指 public，附项）。
+2. **只读表核对结果**：`interactions` 有真实写入方（crm event_handlers）→ 必建；`customer_orders`/`billing_records` 原判无写入方 → **2026-09-08 写入方专项已接通**（rfm 改读 sales_orders + OpportunityWon→billing_records）；`audit_logs` 不建（改指 public，附项）。
 3. **audit_logs 不建**：审计写入统一在 public.audit_logs（unified-core 3 处 INSERT 已核实）；audit.rs 列不兼容（user_name/entity_ids/error_message）→ 单独附项改造，不纳入本迁移。
 4. **重挂 6 模块**：迁移落地后取消 mod.rs 注释（18-21/27-28 声明 + 87-89/100-102 merge）+ openapi.rs 注册；新逻辑层（scoring_logic/sales_funnel_logic/rfm/forecast）保持不动。
 5. **前端**：mock 开关保留（受控演示），生产自动走真实 API，无需前端改动。
@@ -60,7 +60,8 @@
 
 ## 5. 建议执行顺序
 
-1. ✅ 核对写入方（已完成 2026-09-08）：interactions 有写入方（event_handlers）；customer_orders/billing_records 无写入方（建表+待接通）；audit_logs 不建（改指 public，附项）
+1. ✅ 核对写入方（已完成 2026-09-08）：interactions 有写入方（event_handlers）；customer_orders/billing_records 原判无写入方 → 已接通（见下）；audit_logs 不建（改指 public，附项）
+6. ✅ 写入方接通（已完成 2026-09-08，bd3c288b7）：补建 crm.sales_orders（第 16 张）；rfm 改读 sales_orders（status='completed'，wms 出库事件写入）；OpportunityWon → billing_records（幂等 OPP-{opportunity_id}）；customer_orders 废弃标注
 2. ✅ DDL 定稿 + 落地（迁移 20260908000006_crm_datalayer.sql，15 表；customers 补 13 档案列——customer_profile 旧代码引用 model 精简前字段，一并补回）
 3. ✅ audit.rs 附项（用户确认纳入）：3 处查询改指 public.audit_logs（15 列标准与 AuditLog 模型一致）+ user_id::text cast + SELECT 补 tenant_id
 4. ✅ 重挂 6 模块（mod.rs 取消注释 + merge）：customer_profile/customer_scoring/customer_segmentation/customer_recommendation/sales_forecast/sales_funnel；路由经核对与已挂载 forecast/rfm/scoring_logic/sales_funnel_logic 无冲突；修复 36 个编译错误（模型同步：Customer +13 字段、models/mod.rs re-export、customer.rs SELECT/RETURNING 列补全、customer_profile 类型修正）
@@ -74,8 +75,8 @@
 | 表 | 写入方 | 结论 |
 |---|---|---|
 | crm.interactions | ✅ event_handlers/mod.rs:135/202（aftersales_ticket 事件） | 建表（列已取） |
-| crm.customer_orders | ❌ 全仓库无 | 建表 + 写入方待接通（RFM 空表兜底） |
-| crm.billing_records | ❌ 全仓库无 | 建表 + 写入方待接通 |
+| crm.customer_orders | ~~无~~ → **废弃** | rfm 改读 sales_orders（bd3c288b7），表保留兼容不引用 |
+| crm.billing_records | ~~无~~ → **OpportunityWon 事件** | handle_opportunity_won 幂等写入（bd3c288b7），应收回款状态流转待 erp/finance 接通 |
 | crm.audit_logs | ❌ 无（审计统一走 public.audit_logs） | 不建；audit.rs 改指 public（附项） |
 | crm.customers/contacts/opportunities/tags/returns/return_items | ✅ 挂载模块自带 INSERT（customer/contact/opportunity/tag/aftersales 各 ≥1） | 建表即闭环 |
 
