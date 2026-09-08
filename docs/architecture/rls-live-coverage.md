@@ -82,3 +82,31 @@ WITH CHECK (同 USING)
 1. **应用角色非 superuser 化**：`topems` 为 Superuser（RLS 默认绕过）——需专用业务角色（可选项：FORCE ROW LEVEL SECURITY + 策略白名单）。
 2. **受限角色端到端回归**：非 superuser 角色 + tenant_middleware 链路下多租户互不可见（DB 层三态已验证，服务层需接入受限连接后复验）。
 3. 无租户用户（未关联 core_tenant_users）登录后 protected 请求返回 400 缺少租户ID——属既有设计（tenant_middleware 行为），接入时需为全局用户建立租户关联或白名单。
+## 阶段 2 收尾：非 superuser 化 + FORCE（20260908000018，2026-09-08 实跑）
+
+**前置审计**（降级影响）：
+- `topems` 原为 SUPERUSER（RLS 默认绕过）——降级目标：让连接角色自身受 RLS 约束。
+- public schema 66 表均 topems owner（schema 级属 air/pg_database_owner）；core schema 表 owner 混合（6 air + 6 topems）。
+- 首次 psql 多语句因语法错误整体回滚 → schema owner 未转移；改用 air 补 `GRANT USAGE, CREATE ON SCHEMA core/public TO topems` 解决降级后 FORCE 的 `permission denied for schema core`。
+- 扩展：pgcrypto/uuid-ossp（trusted，PG18）可后续自建；vector/postgis（untrusted）需 superuser——未来迁移若 CREATE EXTENSION 需记录此限制。
+
+**执行结果**：
+- `ALTER ROLE topems NOSUPERUSER CREATEDB CREATEROLE`——保留 CREATEDB（sqlx::test 建库）+ CREATEROLE（测试/审计角色）运维能力；BYPASSRLS=f。
+- `ALTER TABLE <331 表> FORCE ROW LEVEL SECURITY`（迁移 0018，台账 success=t）——owner 亦受策略约束。
+- core 表 owner 统一为 topems（DO 块转移）；public 表本就 topems。
+
+**FORCE 四态语义验证**（topems 降级后、owner 身份直连）：
+| 态 | 上下文 | 结果 |
+|---|---|---|
+| A | `app.tenant_id`=本租户 | count=1（owner 亦被过滤——FORCE 生效）✓ |
+| B | `app.tenant_id`=他租户 | count=0（owner 越权不可见）✓ |
+| C | nil UUID（服务身份） | count=1（服务调用豁免）✓ |
+| D | 无上下文 | count=1（兼容放行）✓ |
+
+**阶段 2 全部闭环**：567 表启用 RLS + 331 策略（GUC 对齐）+ tenant_middleware 54 服务全量接线 + topems 非 superuser + FORCE。
+
+**遗留（非本轮，记录）**：
+1. 连接池下 `set_config` 为连接级：tenant_middleware SET 的连接与 handler 查询连接不保证同一——服务层端到端（受限连接 + 真实请求）复验时需确认；若隔离需严格，应改 `pool.connection()` 级上下文或查询级注入。
+2. 无租户用户（未关联 core_tenant_users）登录后 protected 请求 400 缺少租户ID——既有设计，接入时需为全局用户建租户关联或白名单。
+3. 未来迁移创建 untrusted 扩展（vector/postgis）需 superuser——建议预置扩展或单独 superuser 迁移通道。
+4. 回退预案：`ALTER ROLE topems SUPERUSER` + `ALTER TABLE ... NO FORCE ROW LEVEL SECURITY`。
