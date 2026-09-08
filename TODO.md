@@ -1315,6 +1315,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：7 张确认无真实 SQL 引用后删；finance 编译 0 error；门禁全 PASS。
 - **后续批次**：public 遗留双写 ~110 组（改代码引用→业务 schema）、iam 遗留 132 组（归位，联动待办④）、跨服务读改造 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）；详见 `docs/architecture/duplicate-table-consolidation.md`。
 
+## 2026-09-08 shared 死 schema 清理 ✅（记录待办收尾）
+
+- **背景**：`shared` schema（9 张表：users/employees/companies/departments/positions/audit_logs/id_records/user_employee_map/system_params）为早期 hrm 遗留——审计数据止于 2026-06-16（417 行），3 个月零写入；全仓 SQL 引用核验为零（FROM/JOIN/INTO/UPDATE/DELETE shared.* 全空）；ai 服务 search_path 仍含 shared（`"ai, public, shared"`）但无任何命中表。
+- **执行**：pg_dump 备份 `/tmp/topems_shared_schema_backup_20260908.dump`（61KB）→ `DROP SCHEMA shared CASCADE`（级联 20 对象）→ ai main.rs search_path 收敛为 `"ai, public"`（注释标注）→ `cargo check -p topems-ai` 通过。
+- **注意**：`database/init/06_create_shared_schema.sql` 定义的 15 张"基础数据共享层"表（unit_categories/units/currencies/number_sequences 等）在 5432 不存在、与本次清理的旧 9 张是两套——**未启用建表脚本，保留待评审**（若启用需独立决策归属，勿混入）。
+
 ## 2026-08-31 同名多 schema 表收敛 第三批 finance 组 ✅
 - **8 张 finance 活跃表从 public 归位**：支付链 5 张（core_finance_payments/items/workflow/approval_config/approval_nodes）+ 对账/结算/来源快照 3 张（reconciliation_snapshots/settlement_snapshots/source_amount_snapshots）—— 均在 finance.schema_defense 补定义 + 建表（FK/UNIQUE/数组类型对齐）+ 迁移数据（15 行）+ 代码 public.X→X + 删 public 表。
 - **2 张死读改读**：financial_reports 读 public.financial_vouchers/voucher_items → core_finance_vouchers/voucher_lines。

@@ -28,7 +28,7 @@ use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application,
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ai, public, shared");
+    std::env::set_var("SEARCH_PATH", "ai, public"); // shared schema 已清理（2026-09-08，死表 + 历史数据，全仓零引用）
 
     let config = ServiceConfig {
         name: "topems-ai",
