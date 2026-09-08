@@ -135,7 +135,19 @@ if (defsBlock) {
   }
 }
 
-console.log(`[P7 v5] LEGAL（合法权限码） = ${LEGAL.size} 条`);
+// ── 阶段 A2：并入 @topems/app-shell 真源（permissions.ts 为 re-export，模块级模板码在 app-shell）──
+// permissions.ts 的 PERMISSIONS 来自 import，脚本此前只扫文件内字面量导致 LEGAL 严重低估（假阳性 NOT_LEGAL）。
+// 将 packages/app-shell/src/permissions-types.ts 的 PERMISSIONS 块并入 LEGAL。
+const SHELL_SRC = path.join(ROOT, 'packages/app-shell/src/permissions-types.ts');
+if (fs.existsSync(SHELL_SRC)) {
+  const shellText = readFile(SHELL_SRC);
+  for (const kw of ['export const PERMISSIONS', 'export const PERMISSION_DEFS', 'export const ROLE_PERMISSIONS']) {
+    const blk = extractObjectBlock(shellText, kw);
+    for (const m of blk.matchAll(/'([A-Za-z0-9_:-]{3,90})'/g)) LEGAL.add(m[1]);
+  }
+}
+
+console.log(`[P7 v5] LEGAL（合法权限码，含 app-shell 真源） = ${LEGAL.size} 条`);
 console.log(`[P7 v5] PERM_INFO（带元数据） = ${PERM_INFO.size} 条`);
 
 /* ============ B：扫描所有 config.ts 提取 USED + MISMATCH ============ */
@@ -378,8 +390,8 @@ P(`  • config.ts (Nav+Route) 实际使用的权限码：${String(USED_CODES.le
 P(`  • 覆盖度：${((USED_CODES.length / Math.max(1, LEGAL.size)) * 100).toFixed(1)}%`);
 P(``);
 
-P(`🔴 NOT_LEGAL：config.ts 使用但 ∉ permissions.ts 的权限码 → ${NOT_LEGAL.length} 条`);
-P(`   严重度 = ${NOT_LEGAL.length > 0 ? '🔴 FAIL 级：高风险（菜单永远隐藏/路由永远403）' : '✅ PASS 级：0 违规'}`);
+P(`🟡 NOT_LEGAL：config.ts 使用但 ∉ permissions.ts/app-shell 声明的权限码 → ${NOT_LEGAL.length} 条`);
+P(`   判定 = ${NOT_LEGAL.length > 0 ? '🟡 声明缺口（前端运行时判定基于后端下发码列表 permissions.includes，静态声明缺 ≠ 菜单隐藏；仅 UI 元数据不完整，需与后端动态签发码集人工核对）' : '✅ PASS 级：0 违规'}`);
 if (NOT_LEGAL.length) {
   for (const [m, arr] of Object.entries(nLegalByMod).sort((a, b) => b[1].length - a[1].length)) {
     P(`\n   模块 [${m}] 共 ${arr.length} 条：`);
@@ -458,7 +470,7 @@ P(`  • ${p7Dead}${OPTS.apply ? '' : '  (未写，加 --apply)'}（${DEAD.lengt
 P(`  • ${p7Report}${OPTS.apply ? '' : '  (未写，加 --apply)'}（结构化 JSON 报告）`);
 P(``);
 P(
-  `✅ RBAC 合规判定：${NOT_LEGAL.length === 0 && MISMATCH.length === 0 ? 'PASS（NOT_LEGAL=0, MISMATCH=0）' : 'FAIL（需修复）'}`
+  `✅ RBAC 合规判定：${NOT_LEGAL.length === 0 && MISMATCH.length === 0 ? 'PASS（NOT_LEGAL=0, MISMATCH=0）' : '🟡 声明缺口（NOT_LEGAL>0：前端权限码未在 permissions.ts/app-shell 声明，运行时判定基于后端动态签发不受影响；需人工核对后端签发码集并补 UI 元数据）'}`
 );
 if (!OPTS.apply) {
   process.stderr.write(`\n[p7-perm-audit-v5] 💡 当前为 DRY-RUN，加 --apply 才会写 3 个 artifact 文件。\n`);

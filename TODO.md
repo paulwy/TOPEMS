@@ -63,6 +63,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 **当前待办总数：19 项**（✅ 已闭环 18 / ⏳ 待阈值触发 1：#1 物理库拆分）
 
+> 09-08 **P7 门禁脚本假阳性修复已闭环**：p7-perm-audit-v5.cjs 的 LEGAL 只扫 `apps/web/src/config/permissions.ts` 文件内字面量，而该文件 PERMISSIONS 系 re-export 自 `@topems/app-shell`（permissions-types.ts 100 条模块模板码）→ LEGAL 误计 1 条、NOT_LEGAL 假报 374 条"🔴 菜单永远隐藏"。修复：①并入 app-shell 真源（LEGAL→101 条）；②严重度口径修正——前端运行时判定 `hasPermission = state.permissions.includes(code)` 基于**后端下发码列表**（unified-core iam 动态签发），静态声明缺 ≠ 运行时缺口，文案改 🟡 声明缺口；③最终 RBAC 判定同步改 🟡。修后 NOT_LEGAL 374→**359 条真实细分码声明缺口**（pm:project:read 等，app-shell 模板仅覆盖 15 条）——已记录为**后续专项**：需人工核对后端签发码集后补 permissions.ts UI 元数据（name/分组无法自动化生成）。
+
+
 > 09-08 **im 孤儿 schema 清理已闭环**（死表评审 A 组漏网补删）：im 服务已不存在（svc 无 im 目录、全仓无 im schema 建表/查询），但 im schema 残留 7 张表——core_chat_members/messages/rooms 因 communication TABLE_DEFS 声明+main.rs 建表段被误判为有引用；audit_logs/contacts/messages/notifications 因其他 schema 同名表被裸名误判——均漏过 0012 死表清理（0012 仅删了 im 旧版 9 表 chat_rooms/friends 等）。本轮：删 communication main.rs 死建表段（3 建表+2 索引，chat 功能无查询/路由使用）；新增迁移 `20260908000013_drop_im_schema.sql`（DROP SCHEMA im CASCADE，幂等）实跑 success=t；验证 im schema 0 残留、库表 869 张、communication check 0 error、全仓测试 0 FAILED、门禁 0 FAIL。
 
 
