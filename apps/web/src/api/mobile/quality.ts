@@ -90,22 +90,22 @@ export const qualityApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<QualityTask>>> => {
-    return apiClient.mobile.get('/mobile/quality/tasks', { params });
+    return apiClient.mobile.get('quality/tasks', { params });
   },
 
   getTask: async (id: string): Promise<ApiResponse<QualityTask>> => {
-    return apiClient.mobile.get(`/mobile/quality/tasks/${id}`);
+    return apiClient.mobile.get(`quality/tasks/${id}`);
   },
 
   startTask: async (id: string): Promise<ApiResponse<QualityTask>> => {
-    return apiClient.mobile.post(`/mobile/quality/tasks/${id}/start`);
+    return apiClient.mobile.post(`quality/tasks/${id}/start`);
   },
 
   updateTaskStatus: async (
     id: string,
     data: UpdateTaskStatusRequest
   ): Promise<ApiResponse<QualityTask>> => {
-    return apiClient.mobile.put(`/mobile/quality/tasks/${id}/status`, data);
+    return apiClient.mobile.put(`quality/tasks/${id}/status`, data);
   },
 
   // ==================== 缺陷记录 ====================
@@ -117,15 +117,15 @@ export const qualityApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<DefectRecord>>> => {
-    return apiClient.mobile.get('/mobile/quality/defects', { params });
+    return apiClient.mobile.get('quality/defects', { params });
   },
 
   getDefect: async (id: string): Promise<ApiResponse<DefectRecord>> => {
-    return apiClient.mobile.get(`/mobile/quality/defects/${id}`);
+    return apiClient.mobile.get(`quality/defects/${id}`);
   },
 
   reportDefect: async (data: CreateDefectRequest): Promise<ApiResponse<DefectRecord>> => {
-    return apiClient.mobile.post('/mobile/quality/defects', data);
+    return apiClient.mobile.post('quality/defects', data);
   },
 
   updateDefectStatus: async (
@@ -133,7 +133,7 @@ export const qualityApi = {
     status: DefectStatus,
     remark?: string
   ): Promise<ApiResponse<DefectRecord>> => {
-    return apiClient.mobile.put(`/mobile/quality/defects/${id}/status`, {
+    return apiClient.mobile.put(`quality/defects/${id}/status`, {
       status,
       remark,
     });
@@ -144,7 +144,7 @@ export const qualityApi = {
   getQualityStats: async (params?: {
     period?: 'today' | 'week' | 'month';
   }): Promise<ApiResponse<QualityStats>> => {
-    return apiClient.mobile.get('/mobile/quality/stats', { params });
+    return apiClient.mobile.get('quality/stats', { params });
   },
 };
 

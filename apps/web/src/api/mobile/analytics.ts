@@ -113,29 +113,29 @@ export const analyticsApi = {
     from?: string;
     to?: string;
   }): Promise<ApiResponse<MobileUsageStats>> => {
-    return apiClient.mobile.get('/mobile/analytics/usage', { params });
+    return apiClient.mobile.get('analytics/usage', { params });
   },
 
   getScreenTime: async (params?: {
     from?: string;
     to?: string;
   }): Promise<ApiResponse<ScreenTimeData>> => {
-    return apiClient.mobile.get('/mobile/analytics/screen-time', { params });
+    return apiClient.mobile.get('analytics/screen-time', { params });
   },
 
   getFeatureUsage: async (params?: {
     category?: string;
     limit?: number;
   }): Promise<ApiResponse<FeatureUsage[]>> => {
-    return apiClient.mobile.get('/mobile/analytics/feature-usage', { params });
+    return apiClient.mobile.get('analytics/feature-usage', { params });
   },
 
   getPerformance: async (): Promise<ApiResponse<MobilePerformance>> => {
-    return apiClient.mobile.get('/mobile/analytics/performance');
+    return apiClient.mobile.get('analytics/performance');
   },
 
   getDailySummary: async (date?: string): Promise<ApiResponse<DailySummary>> => {
-    return apiClient.mobile.get('/mobile/analytics/daily-summary', {
+    return apiClient.mobile.get('analytics/daily-summary', {
       params: { date },
     });
   },
@@ -143,7 +143,7 @@ export const analyticsApi = {
   getEngagement: async (params?: {
     period?: 'day' | 'week' | 'month';
   }): Promise<ApiResponse<EngagementMetrics>> => {
-    return apiClient.mobile.get('/mobile/analytics/engagement', { params });
+    return apiClient.mobile.get('analytics/engagement', { params });
   },
 };
 

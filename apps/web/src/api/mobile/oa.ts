@@ -164,34 +164,34 @@ export const oaApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Meeting>>> => {
-    return apiClient.mobile.get('/mobile/meetings', { params });
+    return apiClient.mobile.get('meetings', { params });
   },
 
   getMeeting: async (id: string): Promise<ApiResponse<Meeting>> => {
-    return apiClient.mobile.get(`/mobile/meetings/${id}`);
+    return apiClient.mobile.get(`meetings/${id}`);
   },
 
   createMeeting: async (data: CreateMeetingRequest): Promise<ApiResponse<Meeting>> => {
-    return apiClient.mobile.post('/mobile/meetings', data);
+    return apiClient.mobile.post('meetings', data);
   },
 
   updateMeeting: async (
     id: string,
     data: Partial<CreateMeetingRequest>
   ): Promise<ApiResponse<Meeting>> => {
-    return apiClient.mobile.put(`/mobile/meetings/${id}`, data);
+    return apiClient.mobile.put(`meetings/${id}`, data);
   },
 
   deleteMeeting: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/meetings/${id}`);
+    return apiClient.mobile.delete(`meetings/${id}`);
   },
 
   joinMeeting: async (id: string): Promise<ApiResponse<Meeting>> => {
-    return apiClient.mobile.post(`/mobile/meetings/${id}/join`);
+    return apiClient.mobile.post(`meetings/${id}/join`);
   },
 
   leaveMeeting: async (id: string): Promise<ApiResponse<Meeting>> => {
-    return apiClient.mobile.post(`/mobile/meetings/${id}/leave`);
+    return apiClient.mobile.post(`meetings/${id}/leave`);
   },
 
   // ==================== 日历事件 ====================
@@ -201,24 +201,24 @@ export const oaApi = {
     end_date?: string;
     type?: OaCalendarEventType;
   }): Promise<ApiResponse<CalendarEvent[]>> => {
-    return apiClient.mobile.get('/mobile/calendar/events', { params });
+    return apiClient.mobile.get('calendar/events', { params });
   },
 
   createCalendarEvent: async (
     data: CreateCalendarEventRequest
   ): Promise<ApiResponse<CalendarEvent>> => {
-    return apiClient.mobile.post('/mobile/calendar/events', data);
+    return apiClient.mobile.post('calendar/events', data);
   },
 
   updateCalendarEvent: async (
     id: string,
     data: Partial<CreateCalendarEventRequest>
   ): Promise<ApiResponse<CalendarEvent>> => {
-    return apiClient.mobile.put(`/mobile/calendar/events/${id}`, data);
+    return apiClient.mobile.put(`calendar/events/${id}`, data);
   },
 
   deleteCalendarEvent: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/calendar/events/${id}`);
+    return apiClient.mobile.delete(`calendar/events/${id}`);
   },
 
   // ==================== 任务协作 ====================
@@ -231,30 +231,30 @@ export const oaApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<OaTask>>> => {
-    return apiClient.mobile.get('/mobile/tasks', { params });
+    return apiClient.mobile.get('tasks', { params });
   },
 
   getTask: async (id: string): Promise<ApiResponse<OaTask>> => {
-    return apiClient.mobile.get(`/mobile/tasks/${id}`);
+    return apiClient.mobile.get(`tasks/${id}`);
   },
 
   createTask: async (data: CreateOaTaskRequest): Promise<ApiResponse<OaTask>> => {
-    return apiClient.mobile.post('/mobile/tasks', data);
+    return apiClient.mobile.post('tasks', data);
   },
 
   updateTask: async (
     id: string,
     data: Partial<CreateOaTaskRequest & { status?: OaTaskStatus }>
   ): Promise<ApiResponse<OaTask>> => {
-    return apiClient.mobile.put(`/mobile/tasks/${id}`, data);
+    return apiClient.mobile.put(`tasks/${id}`, data);
   },
 
   deleteTask: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/tasks/${id}`);
+    return apiClient.mobile.delete(`tasks/${id}`);
   },
 
   completeTask: async (id: string): Promise<ApiResponse<OaTask>> => {
-    return apiClient.mobile.post(`/mobile/tasks/${id}/complete`);
+    return apiClient.mobile.post(`tasks/${id}/complete`);
   },
 
   // ==================== 公告通知 ====================
@@ -264,21 +264,21 @@ export const oaApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<OaAnnouncement>>> => {
-    return apiClient.mobile.get('/mobile/announcements', { params });
+    return apiClient.mobile.get('announcements', { params });
   },
 
   getAnnouncement: async (id: string): Promise<ApiResponse<OaAnnouncement>> => {
-    return apiClient.mobile.get(`/mobile/announcements/${id}`);
+    return apiClient.mobile.get(`announcements/${id}`);
   },
 
   markAnnouncementRead: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.post(`/mobile/announcements/${id}/read`);
+    return apiClient.mobile.post(`announcements/${id}/read`);
   },
 
   // ==================== OA 统计 ====================
 
   getOaStats: async (): Promise<ApiResponse<OaStats>> => {
-    return apiClient.mobile.get('/mobile/oa/stats');
+    return apiClient.mobile.get('oa/stats');
   },
 };
 

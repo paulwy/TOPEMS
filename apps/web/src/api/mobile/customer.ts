@@ -121,30 +121,30 @@ export const customerApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
-    return apiClient.mobile.get('/mobile/customers', { params });
+    return apiClient.mobile.get('customers', { params });
   },
 
   getCustomer: async (id: string): Promise<ApiResponse<Customer>> => {
-    return apiClient.mobile.get(`/mobile/customers/${id}`);
+    return apiClient.mobile.get(`customers/${id}`);
   },
 
   createCustomer: async (data: CreateCustomerRequest): Promise<ApiResponse<Customer>> => {
-    return apiClient.mobile.post('/mobile/customers', data);
+    return apiClient.mobile.post('customers', data);
   },
 
   updateCustomer: async (
     id: string,
     data: Partial<CreateCustomerRequest>
   ): Promise<ApiResponse<Customer>> => {
-    return apiClient.mobile.put(`/mobile/customers/${id}`, data);
+    return apiClient.mobile.put(`customers/${id}`, data);
   },
 
   deleteCustomer: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/customers/${id}`);
+    return apiClient.mobile.delete(`customers/${id}`);
   },
 
   assignCustomer: async (id: string, assigneeId: string): Promise<ApiResponse<Customer>> => {
-    return apiClient.mobile.post(`/mobile/customers/${id}/assign`, {
+    return apiClient.mobile.post(`customers/${id}/assign`, {
       assigned_to: assigneeId,
     });
   },
@@ -152,27 +152,27 @@ export const customerApi = {
   // ==================== 联系人管理 ====================
 
   listContacts: async (customerId: string): Promise<ApiResponse<CustomerContact[]>> => {
-    return apiClient.mobile.get(`/mobile/customers/${customerId}/contacts`);
+    return apiClient.mobile.get(`customers/${customerId}/contacts`);
   },
 
   createContact: async (
     customerId: string,
     data: CreateContactRequest
   ): Promise<ApiResponse<CustomerContact>> => {
-    return apiClient.mobile.post(`/mobile/customers/${customerId}/contacts`, data);
+    return apiClient.mobile.post(`customers/${customerId}/contacts`, data);
   },
 
   // ==================== 跟进记录 ====================
 
   listFollowUps: async (customerId: string): Promise<ApiResponse<FollowUpRecord[]>> => {
-    return apiClient.mobile.get(`/mobile/customers/${customerId}/follow-ups`);
+    return apiClient.mobile.get(`customers/${customerId}/follow-ups`);
   },
 
   createFollowUp: async (
     customerId: string,
     data: CreateFollowUpRequest
   ): Promise<ApiResponse<FollowUpRecord>> => {
-    return apiClient.mobile.post(`/mobile/customers/${customerId}/follow-ups`, data);
+    return apiClient.mobile.post(`customers/${customerId}/follow-ups`, data);
   },
 
   // ==================== 线索管理 ====================
@@ -184,18 +184,18 @@ export const customerApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Lead>>> => {
-    return apiClient.mobile.get('/mobile/leads', { params });
+    return apiClient.mobile.get('leads', { params });
   },
 
   createLead: async (data: CreateLeadRequest): Promise<ApiResponse<Lead>> => {
-    return apiClient.mobile.post('/mobile/leads', data);
+    return apiClient.mobile.post('leads', data);
   },
 
   convertLead: async (
     id: string,
     customerData?: Partial<CreateCustomerRequest>
   ): Promise<ApiResponse<Customer>> => {
-    return apiClient.mobile.put(`/mobile/leads/${id}/convert`, customerData);
+    return apiClient.mobile.put(`leads/${id}/convert`, customerData);
   },
 };
 

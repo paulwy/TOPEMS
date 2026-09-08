@@ -108,29 +108,29 @@ export const productionApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ProductionOrder>>> => {
-    return apiClient.mobile.get('/mobile/production/orders', { params });
+    return apiClient.mobile.get('production/orders', { params });
   },
 
   getOrder: async (id: string): Promise<ApiResponse<ProductionOrder>> => {
-    return apiClient.mobile.get(`/mobile/production/orders/${id}`);
+    return apiClient.mobile.get(`production/orders/${id}`);
   },
 
   startOrder: async (id: string): Promise<ApiResponse<ProductionOrder>> => {
-    return apiClient.mobile.post(`/mobile/production/orders/${id}/start`);
+    return apiClient.mobile.post(`production/orders/${id}/start`);
   },
 
   pauseOrder: async (
     id: string,
     data?: { reason?: string }
   ): Promise<ApiResponse<ProductionOrder>> => {
-    return apiClient.mobile.post(`/mobile/production/orders/${id}/pause`, data);
+    return apiClient.mobile.post(`production/orders/${id}/pause`, data);
   },
 
   completeOrder: async (
     id: string,
     data?: { final_quantity?: number; remarks?: string }
   ): Promise<ApiResponse<ProductionOrder>> => {
-    return apiClient.mobile.post(`/mobile/production/orders/${id}/complete`, data);
+    return apiClient.mobile.post(`production/orders/${id}/complete`, data);
   },
 
   // ==================== 工作报工 ====================
@@ -141,11 +141,11 @@ export const productionApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<WorkReport>>> => {
-    return apiClient.mobile.get('/mobile/production/work-reports', { params });
+    return apiClient.mobile.get('production/work-reports', { params });
   },
 
   submitWorkReport: async (data: SubmitWorkReportRequest): Promise<ApiResponse<WorkReport>> => {
-    return apiClient.mobile.post('/mobile/production/work-reports', data);
+    return apiClient.mobile.post('production/work-reports', data);
   },
 
   // ==================== 设备管理 ====================
@@ -156,11 +156,11 @@ export const productionApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Equipment>>> => {
-    return apiClient.mobile.get('/mobile/production/equipment', { params });
+    return apiClient.mobile.get('production/equipment', { params });
   },
 
   getEquipment: async (id: string): Promise<ApiResponse<Equipment>> => {
-    return apiClient.mobile.get(`/mobile/production/equipment/${id}`);
+    return apiClient.mobile.get(`production/equipment/${id}`);
   },
 
   updateEquipmentStatus: async (
@@ -168,7 +168,7 @@ export const productionApi = {
     status: EquipmentStatus,
     note?: string
   ): Promise<ApiResponse<Equipment>> => {
-    return apiClient.mobile.put(`/mobile/production/equipment/${id}/status`, {
+    return apiClient.mobile.put(`production/equipment/${id}/status`, {
       status,
       note,
     });
@@ -180,7 +180,7 @@ export const productionApi = {
     area?: string;
     status?: 'online' | 'offline' | 'maintenance';
   }): Promise<ApiResponse<Workstation[]>> => {
-    return apiClient.mobile.get('/mobile/production/workstations', { params });
+    return apiClient.mobile.get('production/workstations', { params });
   },
 
   // ==================== 生产统计 ====================
@@ -188,7 +188,7 @@ export const productionApi = {
   getProductionStats: async (params?: {
     period?: 'today' | 'week' | 'month';
   }): Promise<ApiResponse<ProductionStats>> => {
-    return apiClient.mobile.get('/mobile/production/stats', { params });
+    return apiClient.mobile.get('production/stats', { params });
   },
 };
 

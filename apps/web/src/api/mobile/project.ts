@@ -109,11 +109,11 @@ export const projectApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Project>>> => {
-    return apiClient.mobile.get('/mobile/projects', { params });
+    return apiClient.mobile.get('projects', { params });
   },
 
   getProject: async (id: string): Promise<ApiResponse<Project>> => {
-    return apiClient.mobile.get(`/mobile/projects/${id}`);
+    return apiClient.mobile.get(`projects/${id}`);
   },
 
   // ==================== 任务管理 ====================
@@ -126,35 +126,35 @@ export const projectApi = {
       assignee?: string;
     }
   ): Promise<ApiResponse<ProjectTask[]>> => {
-    return apiClient.mobile.get(`/mobile/projects/${projectId}/tasks`, { params });
+    return apiClient.mobile.get(`projects/${projectId}/tasks`, { params });
   },
 
   createTask: async (
     projectId: string,
     data: CreateTaskRequest
   ): Promise<ApiResponse<ProjectTask>> => {
-    return apiClient.mobile.post(`/mobile/projects/${projectId}/tasks`, data);
+    return apiClient.mobile.post(`projects/${projectId}/tasks`, data);
   },
 
   getTask: async (id: string): Promise<ApiResponse<ProjectTask>> => {
-    return apiClient.mobile.get(`/mobile/tasks/${id}`);
+    return apiClient.mobile.get(`tasks/${id}`);
   },
 
   updateTaskStatus: async (id: string, status: TaskStatus): Promise<ApiResponse<ProjectTask>> => {
-    return apiClient.mobile.put(`/mobile/tasks/${id}/status`, { status });
+    return apiClient.mobile.put(`tasks/${id}/status`, { status });
   },
 
   // ==================== 里程碑管理 ====================
 
   listMilestones: async (projectId: string): Promise<ApiResponse<Milestone[]>> => {
-    return apiClient.mobile.get(`/mobile/projects/${projectId}/milestones`);
+    return apiClient.mobile.get(`projects/${projectId}/milestones`);
   },
 
   createMilestone: async (
     projectId: string,
     data: CreateMilestoneRequest
   ): Promise<ApiResponse<Milestone>> => {
-    return apiClient.mobile.post(`/mobile/projects/${projectId}/milestones`, data);
+    return apiClient.mobile.post(`projects/${projectId}/milestones`, data);
   },
 
   // ==================== 我的任务 ====================
@@ -165,13 +165,13 @@ export const projectApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ProjectTask>>> => {
-    return apiClient.mobile.get('/mobile/my-tasks', { params });
+    return apiClient.mobile.get('my-tasks', { params });
   },
 
   // ==================== 项目统计 ====================
 
   getProjectStats: async (): Promise<ApiResponse<ProjectStats>> => {
-    return apiClient.mobile.get('/mobile/projects/stats');
+    return apiClient.mobile.get('projects/stats');
   },
 };
 

@@ -147,7 +147,7 @@ export const aiAssistantApi = {
   // ==================== 对话管理 ====================
 
   sendMessage: async (data: SendMessageRequest): Promise<ApiResponse<AiMessage>> => {
-    return apiClient.mobile.post('/mobile/ai/chat', data);
+    return apiClient.mobile.post('ai/chat', data);
   },
 
   listConversations: async (params?: {
@@ -155,22 +155,22 @@ export const aiAssistantApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<AiConversation>>> => {
-    return apiClient.mobile.get('/mobile/ai/conversations', { params });
+    return apiClient.mobile.get('ai/conversations', { params });
   },
 
   getConversation: async (id: string): Promise<ApiResponse<AiConversation>> => {
-    return apiClient.mobile.get(`/mobile/ai/conversations/${id}`);
+    return apiClient.mobile.get(`ai/conversations/${id}`);
   },
 
   deleteConversation: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/ai/conversations/${id}`);
+    return apiClient.mobile.delete(`ai/conversations/${id}`);
   },
 
   streamConversation: async (
     id: string,
     data: { content: string }
   ): Promise<ApiResponse<ReadableStream>> => {
-    return apiClient.mobile.post(`/mobile/ai/conversations/${id}/stream`, data, {
+    return apiClient.mobile.post(`ai/conversations/${id}/stream`, data, {
       responseType: 'stream',
     });
   },
@@ -178,13 +178,13 @@ export const aiAssistantApi = {
   // ==================== 语音交互 ====================
 
   transcribeAudio: async (data: TranscribeRequest): Promise<ApiResponse<{ text: string }>> => {
-    return apiClient.mobile.post('/mobile/ai/voice/transcribe', data);
+    return apiClient.mobile.post('ai/voice/transcribe', data);
   },
 
   synthesizeSpeech: async (
     data: SynthesizeRequest
   ): Promise<ApiResponse<{ audio_url: string }>> => {
-    return apiClient.mobile.post('/mobile/ai/voice/synthesize', data);
+    return apiClient.mobile.post('ai/voice/synthesize', data);
   },
 
   // ==================== 智能推荐 ====================
@@ -193,14 +193,14 @@ export const aiAssistantApi = {
     context?: string;
     limit?: number;
   }): Promise<ApiResponse<AiRecommendation[]>> => {
-    return apiClient.mobile.get('/mobile/ai/recommendations', { params });
+    return apiClient.mobile.get('ai/recommendations', { params });
   },
 
   submitRecommendationFeedback: async (
     id: string,
     data: { type: AiFeedbackType; comment?: string }
   ): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.post(`/mobile/ai/recommendations/feedback/${id}`, data);
+    return apiClient.mobile.post(`ai/recommendations/feedback/${id}`, data);
   },
 
   // ==================== 智能命令 ====================
@@ -209,17 +209,17 @@ export const aiAssistantApi = {
     category?: string;
     status?: AiCommandStatus;
   }): Promise<ApiResponse<AiCommand[]>> => {
-    return apiClient.mobile.get('/mobile/ai/commands', { params });
+    return apiClient.mobile.get('ai/commands', { params });
   },
 
   executeCommand: async (
     data: ExecuteCommandRequest
   ): Promise<ApiResponse<{ result: unknown }>> => {
-    return apiClient.mobile.post('/mobile/ai/execute', data);
+    return apiClient.mobile.post('ai/execute', data);
   },
 
   listQuickActions: async (): Promise<ApiResponse<AiRecommendation[]>> => {
-    return apiClient.mobile.get('/mobile/ai/quick-actions');
+    return apiClient.mobile.get('ai/quick-actions');
   },
 
   // ==================== AI 图像生成 ====================
@@ -227,17 +227,17 @@ export const aiAssistantApi = {
   generateImage: async (
     data: GenerateImageRequest
   ): Promise<ApiResponse<{ image_url: string }>> => {
-    return apiClient.mobile.post('/mobile/ai/images/generate', data);
+    return apiClient.mobile.post('ai/images/generate', data);
   },
 
   // ==================== 模型管理与统计 ====================
 
   listModels: async (): Promise<ApiResponse<AiModel[]>> => {
-    return apiClient.mobile.get('/mobile/ai/models');
+    return apiClient.mobile.get('ai/models');
   },
 
   getAiStats: async (): Promise<ApiResponse<AiStats>> => {
-    return apiClient.mobile.get('/mobile/ai/stats');
+    return apiClient.mobile.get('ai/stats');
   },
 };
 

@@ -120,7 +120,7 @@ interface CreateLeaveRequest {
 
 export const attendanceApi = {
   getOverview: async (): Promise<ApiResponse<AttendanceOverview>> => {
-    return apiClient.mobile.get('/mobile/attendance/overview');
+    return apiClient.mobile.get('attendance/overview');
   },
 
   listRecords: async (params?: {
@@ -129,7 +129,7 @@ export const attendanceApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<{ items: AttendanceRecord[]; total: number }>> => {
-    return apiClient.mobile.get('/mobile/attendance/records', { params });
+    return apiClient.mobile.get('attendance/records', { params });
   },
 
   checkIn: async (data: {
@@ -138,7 +138,7 @@ export const attendanceApi = {
     address?: string;
     method?: 'location' | 'qr_code' | 'face';
   }): Promise<ApiResponse<AttendanceRecord>> => {
-    return apiClient.mobile.post('/mobile/attendance/check-in', data);
+    return apiClient.mobile.post('attendance/check-in', data);
   },
 
   checkOut: async (data: {
@@ -146,25 +146,25 @@ export const attendanceApi = {
     lng: number;
     address?: string;
   }): Promise<ApiResponse<AttendanceRecord>> => {
-    return apiClient.mobile.post('/mobile/attendance/check-out', data);
+    return apiClient.mobile.post('attendance/check-out', data);
   },
 
   clockIn: async (): Promise<ApiResponse<AttendanceRecord>> => {
-    return apiClient.mobile.post('/mobile/attendance/clock-in');
+    return apiClient.mobile.post('attendance/clock-in');
   },
 
   clockOut: async (): Promise<ApiResponse<AttendanceRecord>> => {
-    return apiClient.mobile.post('/mobile/attendance/clock-out');
+    return apiClient.mobile.post('attendance/clock-out');
   },
 
   getStatistics: async (params?: {
     month?: string;
   }): Promise<ApiResponse<AttendanceStatistics>> => {
-    return apiClient.mobile.get('/mobile/attendance/statistics', { params });
+    return apiClient.mobile.get('attendance/statistics', { params });
   },
 
   listShifts: async (): Promise<ApiResponse<Shift[]>> => {
-    return apiClient.mobile.get('/mobile/attendance/shifts');
+    return apiClient.mobile.get('attendance/shifts');
   },
 
   listLeaves: async (params?: {
@@ -173,15 +173,15 @@ export const attendanceApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<{ items: LeaveApplication[]; total: number }>> => {
-    return apiClient.mobile.get('/mobile/attendance/leaves', { params });
+    return apiClient.mobile.get('attendance/leaves', { params });
   },
 
   applyLeave: async (data: CreateLeaveRequest): Promise<ApiResponse<LeaveApplication>> => {
-    return apiClient.mobile.post('/mobile/attendance/leaves', data);
+    return apiClient.mobile.post('attendance/leaves', data);
   },
 
   cancelLeave: async (id: string): Promise<ApiResponse<LeaveApplication>> => {
-    return apiClient.mobile.post(`/mobile/attendance/leaves/${id}/cancel`);
+    return apiClient.mobile.post(`attendance/leaves/${id}/cancel`);
   },
 };
 

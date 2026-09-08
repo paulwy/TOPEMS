@@ -133,39 +133,39 @@ export const supplierApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
-    return apiClient.mobile.get('/mobile/suppliers', { params });
+    return apiClient.mobile.get('suppliers', { params });
   },
 
   getSupplier: async (id: string): Promise<ApiResponse<Supplier>> => {
-    return apiClient.mobile.get(`/mobile/suppliers/${id}`);
+    return apiClient.mobile.get(`suppliers/${id}`);
   },
 
   createSupplier: async (data: CreateSupplierRequest): Promise<ApiResponse<Supplier>> => {
-    return apiClient.mobile.post('/mobile/suppliers', data);
+    return apiClient.mobile.post('suppliers', data);
   },
 
   updateSupplier: async (
     id: string,
     data: Partial<CreateSupplierRequest>
   ): Promise<ApiResponse<Supplier>> => {
-    return apiClient.mobile.put(`/mobile/suppliers/${id}`, data);
+    return apiClient.mobile.put(`suppliers/${id}`, data);
   },
 
   deleteSupplier: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/suppliers/${id}`);
+    return apiClient.mobile.delete(`suppliers/${id}`);
   },
 
   // ==================== 供应商评估 ====================
 
   listEvaluations: async (supplierId: string): Promise<ApiResponse<SupplierEvaluation[]>> => {
-    return apiClient.mobile.get(`/mobile/suppliers/${supplierId}/evaluations`);
+    return apiClient.mobile.get(`suppliers/${supplierId}/evaluations`);
   },
 
   createEvaluation: async (
     supplierId: string,
     data: CreateEvaluationRequest
   ): Promise<ApiResponse<SupplierEvaluation>> => {
-    return apiClient.mobile.post(`/mobile/suppliers/${supplierId}/evaluations`, data);
+    return apiClient.mobile.post(`suppliers/${supplierId}/evaluations`, data);
   },
 
   // ==================== 供应商合同 ====================
@@ -176,25 +176,25 @@ export const supplierApi = {
       status?: ContractStatus;
     }
   ): Promise<ApiResponse<SupplierContract[]>> => {
-    return apiClient.mobile.get(`/mobile/suppliers/${supplierId}/contracts`, { params });
+    return apiClient.mobile.get(`suppliers/${supplierId}/contracts`, { params });
   },
 
   // ==================== 供应商产品 ====================
 
   listProducts: async (supplierId: string): Promise<ApiResponse<SupplierProduct[]>> => {
-    return apiClient.mobile.get(`/mobile/suppliers/${supplierId}/products`);
+    return apiClient.mobile.get(`suppliers/${supplierId}/products`);
   },
 
   // ==================== 供应商分类 ====================
 
   listCategories: async (): Promise<ApiResponse<SupplierCategory[]>> => {
-    return apiClient.mobile.get('/mobile/suppliers/categories');
+    return apiClient.mobile.get('suppliers/categories');
   },
 
   // ==================== 供应商统计 ====================
 
   getSupplierStats: async (): Promise<ApiResponse<SupplierStats>> => {
-    return apiClient.mobile.get('/mobile/suppliers/stats');
+    return apiClient.mobile.get('suppliers/stats');
   },
 };
 

@@ -131,17 +131,17 @@ export const bpmApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<BpmDefinition>>> => {
-    return apiClient.mobile.get('/mobile/workflow/definitions', { params });
+    return apiClient.mobile.get('workflow/definitions', { params });
   },
 
   getDefinition: async (id: string): Promise<ApiResponse<BpmDefinition>> => {
-    return apiClient.mobile.get(`/mobile/workflow/definitions/${id}`);
+    return apiClient.mobile.get(`workflow/definitions/${id}`);
   },
 
   // ==================== 流程实例 ====================
 
   startInstance: async (data: StartBpmInstanceRequest): Promise<ApiResponse<BpmInstance>> => {
-    return apiClient.mobile.post('/mobile/workflow/instances', data);
+    return apiClient.mobile.post('workflow/instances', data);
   },
 
   listInstances: async (params?: {
@@ -151,23 +151,23 @@ export const bpmApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<BpmInstance>>> => {
-    return apiClient.mobile.get('/mobile/workflow/instances', { params });
+    return apiClient.mobile.get('workflow/instances', { params });
   },
 
   getInstance: async (id: string): Promise<ApiResponse<BpmInstance>> => {
-    return apiClient.mobile.get(`/mobile/workflow/instances/${id}`);
+    return apiClient.mobile.get(`workflow/instances/${id}`);
   },
 
   cancelInstance: async (id: string): Promise<ApiResponse<BpmInstance>> => {
-    return apiClient.mobile.post(`/mobile/workflow/instances/${id}/cancel`);
+    return apiClient.mobile.post(`workflow/instances/${id}/cancel`);
   },
 
   suspendInstance: async (id: string): Promise<ApiResponse<BpmInstance>> => {
-    return apiClient.mobile.post(`/mobile/workflow/instances/${id}/suspend`);
+    return apiClient.mobile.post(`workflow/instances/${id}/suspend`);
   },
 
   resumeInstance: async (id: string): Promise<ApiResponse<BpmInstance>> => {
-    return apiClient.mobile.post(`/mobile/workflow/instances/${id}/resume`);
+    return apiClient.mobile.post(`workflow/instances/${id}/resume`);
   },
 
   // ==================== 任务管理 ====================
@@ -176,15 +176,15 @@ export const bpmApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<BpmTask>>> => {
-    return apiClient.mobile.get('/mobile/workflow/tasks/pending', { params });
+    return apiClient.mobile.get('workflow/tasks/pending', { params });
   },
 
   getTask: async (id: string): Promise<ApiResponse<BpmTask>> => {
-    return apiClient.mobile.get(`/mobile/workflow/tasks/${id}`);
+    return apiClient.mobile.get(`workflow/tasks/${id}`);
   },
 
   claimTask: async (instanceId: string, taskId: string): Promise<ApiResponse<BpmTask>> => {
-    return apiClient.mobile.post(`/mobile/workflow/instances/${instanceId}/tasks/${taskId}/claim`);
+    return apiClient.mobile.post(`workflow/instances/${instanceId}/tasks/${taskId}/claim`);
   },
 
   completeTask: async (
@@ -202,17 +202,17 @@ export const bpmApi = {
     taskId: string,
     data: DelegateBpmTaskRequest
   ): Promise<ApiResponse<BpmTask>> => {
-    return apiClient.mobile.post(`/mobile/workflow/tasks/${taskId}/delegate`, data);
+    return apiClient.mobile.post(`workflow/tasks/${taskId}/delegate`, data);
   },
 
   // ==================== 历史记录与统计 ====================
 
   getInstanceHistory: async (instanceId: string): Promise<ApiResponse<BpmHistory[]>> => {
-    return apiClient.mobile.get(`/mobile/workflow/instances/${instanceId}/history`);
+    return apiClient.mobile.get(`workflow/instances/${instanceId}/history`);
   },
 
   getWorkflowStats: async (): Promise<ApiResponse<BpmStats>> => {
-    return apiClient.mobile.get('/mobile/workflow/stats');
+    return apiClient.mobile.get('workflow/stats');
   },
 };
 

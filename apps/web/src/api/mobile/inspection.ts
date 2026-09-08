@@ -129,15 +129,15 @@ export const inspectionApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<{ items: InspectionPlan[]; total: number }>> => {
-    return apiClient.mobile.get('/mobile/inspection/plans', { params });
+    return apiClient.mobile.get('inspection/plans', { params });
   },
 
   getPlan: async (id: string): Promise<ApiResponse<InspectionPlan>> => {
-    return apiClient.mobile.get(`/mobile/inspection/plans/${id}`);
+    return apiClient.mobile.get(`inspection/plans/${id}`);
   },
 
   createPlan: async (data: CreateInspectionPlanRequest): Promise<ApiResponse<InspectionPlan>> => {
-    return apiClient.mobile.post('/mobile/inspection/plans', data);
+    return apiClient.mobile.post('inspection/plans', data);
   },
 
   listTasks: async (params?: {
@@ -147,11 +147,11 @@ export const inspectionApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<{ items: InspectionTask[]; total: number }>> => {
-    return apiClient.mobile.get('/mobile/inspection/tasks', { params });
+    return apiClient.mobile.get('inspection/tasks', { params });
   },
 
   startTask: async (id: string): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.mobile.post(`/mobile/inspection/tasks/${id}/start`);
+    return apiClient.mobile.post(`inspection/tasks/${id}/start`);
   },
 
   completeTask: async (
@@ -163,20 +163,20 @@ export const inspectionApi = {
       photos?: string[];
     }
   ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.mobile.post(`/mobile/inspection/tasks/${id}/complete`, data);
+    return apiClient.mobile.post(`inspection/tasks/${id}/complete`, data);
   },
 
   failTask: async (
     id: string,
     data: { reason: string; photos?: string[] }
   ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.mobile.post(`/mobile/inspection/tasks/${id}/fail`, data);
+    return apiClient.mobile.post(`inspection/tasks/${id}/fail`, data);
   },
 
   listTemplates: async (
     inspectionType?: InspectionType
   ): Promise<ApiResponse<InspectionTemplate[]>> => {
-    return apiClient.mobile.get('/mobile/inspection/templates', {
+    return apiClient.mobile.get('inspection/templates', {
       params: { inspection_type: inspectionType },
     });
   },
@@ -185,7 +185,7 @@ export const inspectionApi = {
     period?: 'day' | 'week' | 'month';
     inspection_type?: InspectionType;
   }): Promise<ApiResponse<InspectionStats>> => {
-    return apiClient.mobile.get('/mobile/inspection/stats', { params });
+    return apiClient.mobile.get('inspection/stats', { params });
   },
 };
 

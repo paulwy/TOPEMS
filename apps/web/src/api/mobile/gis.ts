@@ -170,39 +170,39 @@ export const gisApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Route>>> => {
-    return apiClient.mobile.get('/mobile/routes', { params });
+    return apiClient.mobile.get('routes', { params });
   },
 
   getRoute: async (id: string): Promise<ApiResponse<Route>> => {
-    return apiClient.mobile.get(`/mobile/routes/${id}`);
+    return apiClient.mobile.get(`routes/${id}`);
   },
 
   createRoute: async (data: CreateRouteRequest): Promise<ApiResponse<Route>> => {
-    return apiClient.mobile.post('/mobile/routes', data);
+    return apiClient.mobile.post('routes', data);
   },
 
   updateRoute: async (
     id: string,
     data: Partial<CreateRouteRequest>
   ): Promise<ApiResponse<Route>> => {
-    return apiClient.mobile.put(`/mobile/routes/${id}`, data);
+    return apiClient.mobile.put(`routes/${id}`, data);
   },
 
   deleteRoute: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/routes/${id}`);
+    return apiClient.mobile.delete(`routes/${id}`);
   },
 
   // ==================== 路线停靠点 ====================
 
   listRouteStops: async (routeId: string): Promise<ApiResponse<RouteStop[]>> => {
-    return apiClient.mobile.get(`/mobile/routes/${routeId}/stops`);
+    return apiClient.mobile.get(`routes/${routeId}/stops`);
   },
 
   createRouteStop: async (
     routeId: string,
     data: CreateStopRequest
   ): Promise<ApiResponse<RouteStop>> => {
-    return apiClient.mobile.post(`/mobile/routes/${routeId}/stops`, data);
+    return apiClient.mobile.post(`routes/${routeId}/stops`, data);
   },
 
   // ==================== 区域管理 ====================
@@ -211,11 +211,11 @@ export const gisApi = {
     type?: ZoneType;
     is_active?: boolean;
   }): Promise<ApiResponse<Zone[]>> => {
-    return apiClient.mobile.get('/mobile/zones', { params });
+    return apiClient.mobile.get('zones', { params });
   },
 
   createZone: async (data: CreateZoneRequest): Promise<ApiResponse<Zone>> => {
-    return apiClient.mobile.post('/mobile/zones', data);
+    return apiClient.mobile.post('zones', data);
   },
 
   // ==================== 地理围栏 ====================
@@ -224,35 +224,35 @@ export const gisApi = {
     shape?: GeofenceShape;
     is_active?: boolean;
   }): Promise<ApiResponse<Geofence[]>> => {
-    return apiClient.mobile.get('/mobile/geofences', { params });
+    return apiClient.mobile.get('geofences', { params });
   },
 
   createGeofence: async (data: CreateGeofenceRequest): Promise<ApiResponse<Geofence>> => {
-    return apiClient.mobile.post('/mobile/geofences', data);
+    return apiClient.mobile.post('geofences', data);
   },
 
   updateGeofence: async (
     id: string,
     data: Partial<CreateGeofenceRequest>
   ): Promise<ApiResponse<Geofence>> => {
-    return apiClient.mobile.put(`/mobile/geofences/${id}`, data);
+    return apiClient.mobile.put(`geofences/${id}`, data);
   },
 
   deleteGeofence: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/geofences/${id}`);
+    return apiClient.mobile.delete(`geofences/${id}`);
   },
 
   checkGeofence: async (
     id: string,
     location: GeoPoint
   ): Promise<ApiResponse<GeofenceCheckResult>> => {
-    return apiClient.mobile.post(`/mobile/geofences/${id}/check`, location);
+    return apiClient.mobile.post(`geofences/${id}/check`, location);
   },
 
   // ==================== 位置服务 ====================
 
   getCurrentLocation: async (): Promise<ApiResponse<LocationRecord>> => {
-    return apiClient.mobile.get('/mobile/locations/current');
+    return apiClient.mobile.get('locations/current');
   },
 
   trackLocation: async (data: {
@@ -260,7 +260,7 @@ export const gisApi = {
     speed_kmh?: number;
     bearing?: number;
   }): Promise<ApiResponse<LocationRecord>> => {
-    return apiClient.mobile.post('/mobile/locations/track', data);
+    return apiClient.mobile.post('locations/track', data);
   },
 
   getLocationHistory: async (params?: {
@@ -268,20 +268,20 @@ export const gisApi = {
     end_time?: string;
     limit?: number;
   }): Promise<ApiResponse<LocationRecord[]>> => {
-    return apiClient.mobile.get('/mobile/locations/history', { params });
+    return apiClient.mobile.get('locations/history', { params });
   },
 
   // ==================== 地图图层与标记 ====================
 
   listMapLayers: async (): Promise<ApiResponse<MapLayer[]>> => {
-    return apiClient.mobile.get('/mobile/map/layers');
+    return apiClient.mobile.get('map/layers');
   },
 
   listMapMarkers: async (params?: {
     entity_type?: MapMarker['entity_type'];
     bounds?: string;
   }): Promise<ApiResponse<MapMarker[]>> => {
-    return apiClient.mobile.get('/mobile/map/markers', { params });
+    return apiClient.mobile.get('map/markers', { params });
   },
 };
 

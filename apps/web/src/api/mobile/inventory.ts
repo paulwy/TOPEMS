@@ -137,18 +137,18 @@ export const inventoryApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<InventoryItem>>> => {
-    return apiClient.mobile.get('/mobile/inventory/items', { params });
+    return apiClient.mobile.get('inventory/items', { params });
   },
 
   getItem: async (id: string): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.mobile.get(`/mobile/inventory/items/${id}`);
+    return apiClient.mobile.get(`inventory/items/${id}`);
   },
 
   adjustItem: async (
     id: string,
     data: InventoryAdjustRequest
   ): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.mobile.post(`/mobile/inventory/items/${id}/adjust`, data);
+    return apiClient.mobile.post(`inventory/items/${id}/adjust`, data);
   },
 
   // ==================== 盘点管理 ====================
@@ -159,31 +159,31 @@ export const inventoryApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<StocktakeTask>>> => {
-    return apiClient.mobile.get('/mobile/inventory/stocktake', { params });
+    return apiClient.mobile.get('inventory/stocktake', { params });
   },
 
   createStocktakeTask: async (
     data: CreateStocktakeRequest
   ): Promise<ApiResponse<StocktakeTask>> => {
-    return apiClient.mobile.post('/mobile/inventory/stocktake', data);
+    return apiClient.mobile.post('inventory/stocktake', data);
   },
 
   getStocktakeTask: async (id: string): Promise<ApiResponse<StocktakeTask>> => {
-    return apiClient.mobile.get(`/mobile/inventory/stocktake/${id}`);
+    return apiClient.mobile.get(`inventory/stocktake/${id}`);
   },
 
   submitStocktakeRecord: async (
     taskId: string,
     data: StocktakeRecordInput
   ): Promise<ApiResponse<StocktakeRecord>> => {
-    return apiClient.mobile.post(`/mobile/inventory/stocktake/${taskId}/records`, data);
+    return apiClient.mobile.post(`inventory/stocktake/${taskId}/records`, data);
   },
 
   completeStocktakeTask: async (
     id: string,
     data?: { remarks?: string }
   ): Promise<ApiResponse<StocktakeTask>> => {
-    return apiClient.mobile.put(`/mobile/inventory/stocktake/${id}/complete`, data);
+    return apiClient.mobile.put(`inventory/stocktake/${id}/complete`, data);
   },
 
   // ==================== 入库管理 ====================
@@ -193,14 +193,14 @@ export const inventoryApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<InboundOrder>>> => {
-    return apiClient.mobile.get('/mobile/inventory/inbound', { params });
+    return apiClient.mobile.get('inventory/inbound', { params });
   },
 
   confirmInboundOrder: async (
     id: string,
     data?: { received_quantity?: number; remarks?: string }
   ): Promise<ApiResponse<InboundOrder>> => {
-    return apiClient.mobile.post(`/mobile/inventory/inbound/${id}/confirm`, data);
+    return apiClient.mobile.post(`inventory/inbound/${id}/confirm`, data);
   },
 
   // ==================== 出库管理 ====================
@@ -210,14 +210,14 @@ export const inventoryApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<OutboundOrder>>> => {
-    return apiClient.mobile.get('/mobile/inventory/outbound', { params });
+    return apiClient.mobile.get('inventory/outbound', { params });
   },
 
   confirmOutboundOrder: async (
     id: string,
     data?: { shipped_quantity?: number; remarks?: string }
   ): Promise<ApiResponse<OutboundOrder>> => {
-    return apiClient.mobile.post(`/mobile/inventory/outbound/${id}/confirm`, data);
+    return apiClient.mobile.post(`inventory/outbound/${id}/confirm`, data);
   },
 
   // ==================== 调拨管理 ====================
@@ -227,14 +227,14 @@ export const inventoryApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<TransferOrder>>> => {
-    return apiClient.mobile.get('/mobile/inventory/transfer', { params });
+    return apiClient.mobile.get('inventory/transfer', { params });
   },
 
   confirmTransferOrder: async (
     id: string,
     data?: { remarks?: string }
   ): Promise<ApiResponse<TransferOrder>> => {
-    return apiClient.mobile.post(`/mobile/inventory/transfer/${id}/confirm`, data);
+    return apiClient.mobile.post(`inventory/transfer/${id}/confirm`, data);
   },
 };
 

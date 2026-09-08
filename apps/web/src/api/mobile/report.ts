@@ -167,33 +167,33 @@ export const reportApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Report>>> => {
-    return apiClient.mobile.get('/mobile/reports', { params });
+    return apiClient.mobile.get('reports', { params });
   },
 
   getReport: async (id: string): Promise<ApiResponse<Report>> => {
-    return apiClient.mobile.get(`/mobile/reports/${id}`);
+    return apiClient.mobile.get(`reports/${id}`);
   },
 
   createReport: async (data: CreateReportRequest): Promise<ApiResponse<Report>> => {
-    return apiClient.mobile.post('/mobile/reports', data);
+    return apiClient.mobile.post('reports', data);
   },
 
   generateReport: async (
     id: string,
     data?: GenerateReportRequest
   ): Promise<ApiResponse<Report>> => {
-    return apiClient.mobile.post(`/mobile/reports/${id}/generate`, data);
+    return apiClient.mobile.post(`reports/${id}/generate`, data);
   },
 
   exportReport: async (
     id: string,
     data: ExportReportRequest
   ): Promise<ApiResponse<ExportResult>> => {
-    return apiClient.mobile.post(`/mobile/reports/${id}/export`, data);
+    return apiClient.mobile.post(`reports/${id}/export`, data);
   },
 
   listReportCategories: async (): Promise<ApiResponse<ReportCategory[]>> => {
-    return apiClient.mobile.get('/mobile/reports/categories');
+    return apiClient.mobile.get('reports/categories');
   },
 
   // ==================== 仪表盘管理 ====================
@@ -202,39 +202,39 @@ export const reportApi = {
     category?: string;
     is_default?: boolean;
   }): Promise<ApiResponse<Dashboard[]>> => {
-    return apiClient.mobile.get('/mobile/dashboards', { params });
+    return apiClient.mobile.get('dashboards', { params });
   },
 
   getDashboard: async (id: string): Promise<ApiResponse<Dashboard>> => {
-    return apiClient.mobile.get(`/mobile/dashboards/${id}`);
+    return apiClient.mobile.get(`dashboards/${id}`);
   },
 
   createDashboard: async (data: CreateDashboardRequest): Promise<ApiResponse<Dashboard>> => {
-    return apiClient.mobile.post('/mobile/dashboards', data);
+    return apiClient.mobile.post('dashboards', data);
   },
 
   listDashboardWidgets: async (dashboardId: string): Promise<ApiResponse<DashboardWidget[]>> => {
-    return apiClient.mobile.get(`/mobile/dashboards/${dashboardId}/widgets`);
+    return apiClient.mobile.get(`dashboards/${dashboardId}/widgets`);
   },
 
   addDashboardWidget: async (
     dashboardId: string,
     data: CreateWidgetRequest
   ): Promise<ApiResponse<DashboardWidget>> => {
-    return apiClient.mobile.post(`/mobile/dashboards/${dashboardId}/widgets`, data);
+    return apiClient.mobile.post(`dashboards/${dashboardId}/widgets`, data);
   },
 
   removeDashboardWidget: async (
     dashboardId: string,
     widgetId: string
   ): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/dashboards/${dashboardId}/widgets/${widgetId}`);
+    return apiClient.mobile.delete(`dashboards/${dashboardId}/widgets/${widgetId}`);
   },
 
   // ==================== 数据查询与导出 ====================
 
   queryData: async (data: QueryRequest): Promise<ApiResponse<QueryResult>> => {
-    return apiClient.mobile.post('/mobile/data/query', data);
+    return apiClient.mobile.post('data/query', data);
   },
 
   exportData: async (params: {
@@ -242,21 +242,21 @@ export const reportApi = {
     format: ExportFormat;
     filters?: string;
   }): Promise<ApiResponse<ExportResult>> => {
-    return apiClient.mobile.get('/mobile/data/export', { params });
+    return apiClient.mobile.get('data/export', { params });
   },
 
   // ==================== 定时调度 ====================
 
   createSchedule: async (data: CreateScheduleRequest): Promise<ApiResponse<Schedule>> => {
-    return apiClient.mobile.post('/mobile/data/schedule', data);
+    return apiClient.mobile.post('data/schedule', data);
   },
 
   listSchedules: async (): Promise<ApiResponse<Schedule[]>> => {
-    return apiClient.mobile.get('/mobile/data/schedules');
+    return apiClient.mobile.get('data/schedules');
   },
 
   deleteSchedule: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/data/schedules/${id}`);
+    return apiClient.mobile.delete(`data/schedules/${id}`);
   },
 };
 

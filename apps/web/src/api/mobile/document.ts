@@ -122,52 +122,52 @@ export const documentApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Document>>> => {
-    return apiClient.mobile.get('/mobile/documents', { params });
+    return apiClient.mobile.get('documents', { params });
   },
 
   getDocument: async (id: string): Promise<ApiResponse<Document>> => {
-    return apiClient.mobile.get(`/mobile/documents/${id}`);
+    return apiClient.mobile.get(`documents/${id}`);
   },
 
   createDocument: async (data: CreateDocumentRequest): Promise<ApiResponse<Document>> => {
-    return apiClient.mobile.post('/mobile/documents', data);
+    return apiClient.mobile.post('documents', data);
   },
 
   updateDocument: async (
     id: string,
     data: Partial<CreateDocumentRequest>
   ): Promise<ApiResponse<Document>> => {
-    return apiClient.mobile.put(`/mobile/documents/${id}`, data);
+    return apiClient.mobile.put(`documents/${id}`, data);
   },
 
   deleteDocument: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.delete(`/mobile/documents/${id}`);
+    return apiClient.mobile.delete(`documents/${id}`);
   },
 
   // ==================== 版本管理 ====================
 
   listVersions: async (documentId: string): Promise<ApiResponse<DocumentVersion[]>> => {
-    return apiClient.mobile.get(`/mobile/documents/${documentId}/versions`);
+    return apiClient.mobile.get(`documents/${documentId}/versions`);
   },
 
   createVersion: async (
     documentId: string,
     data: CreateVersionRequest
   ): Promise<ApiResponse<DocumentVersion>> => {
-    return apiClient.mobile.post(`/mobile/documents/${documentId}/versions`, data);
+    return apiClient.mobile.post(`documents/${documentId}/versions`, data);
   },
 
   // ==================== 审批管理 ====================
 
   listApprovals: async (documentId: string): Promise<ApiResponse<DocumentApproval[]>> => {
-    return apiClient.mobile.get(`/mobile/documents/${documentId}/approvals`);
+    return apiClient.mobile.get(`documents/${documentId}/approvals`);
   },
 
   createApproval: async (
     documentId: string,
     data: CreateApprovalRequest
   ): Promise<ApiResponse<DocumentApproval>> => {
-    return apiClient.mobile.post(`/mobile/documents/${documentId}/approvals`, data);
+    return apiClient.mobile.post(`documents/${documentId}/approvals`, data);
   },
 
   updateApproval: async (
@@ -175,7 +175,7 @@ export const documentApi = {
     approvalId: string,
     data: { status: ApprovalStatus; comments?: string }
   ): Promise<ApiResponse<DocumentApproval>> => {
-    return apiClient.mobile.put(`/mobile/documents/${documentId}/approvals/${approvalId}`, data);
+    return apiClient.mobile.put(`documents/${documentId}/approvals/${approvalId}`, data);
   },
 
   // ==================== 分类管理 ====================
@@ -183,17 +183,17 @@ export const documentApi = {
   listCategories: async (params?: {
     parent_id?: string;
   }): Promise<ApiResponse<DocumentCategory[]>> => {
-    return apiClient.mobile.get('/mobile/document-categories', { params });
+    return apiClient.mobile.get('document-categories', { params });
   },
 
   // ==================== 统计与最近文档 ====================
 
   getDocumentStats: async (): Promise<ApiResponse<DocumentStats>> => {
-    return apiClient.mobile.get('/mobile/documents/stats');
+    return apiClient.mobile.get('documents/stats');
   },
 
   listRecentDocuments: async (params?: { limit?: number }): Promise<ApiResponse<Document[]>> => {
-    return apiClient.mobile.get('/mobile/my-documents/recent', { params });
+    return apiClient.mobile.get('my-documents/recent', { params });
   },
 };
 

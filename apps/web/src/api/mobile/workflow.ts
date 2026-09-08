@@ -97,18 +97,18 @@ export const workflowApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<{ items: WorkflowInstance[]; total: number }>> => {
-    return apiClient.mobile.get('/mobile/workflow/instances', { params });
+    return apiClient.mobile.get('workflow/instances', { params });
   },
 
   getInstance: async (id: string): Promise<ApiResponse<WorkflowInstance>> => {
-    return apiClient.mobile.get(`/mobile/workflow/instances/${id}`);
+    return apiClient.mobile.get(`workflow/instances/${id}`);
   },
 
   performAction: async (
     id: string,
     data: WorkflowActionRequest
   ): Promise<ApiResponse<WorkflowInstance>> => {
-    return apiClient.mobile.post(`/mobile/workflow/instances/${id}/action`, data);
+    return apiClient.mobile.post(`workflow/instances/${id}/action`, data);
   },
 
   listTasks: async (params?: {
@@ -118,25 +118,25 @@ export const workflowApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<{ items: WorkflowTask[]; total: number }>> => {
-    return apiClient.mobile.get('/mobile/workflow/tasks', { params });
+    return apiClient.mobile.get('workflow/tasks', { params });
   },
 
   completeTask: async (
     id: string,
     data?: { comment?: string; form_data?: Record<string, unknown> }
   ): Promise<ApiResponse<WorkflowTask>> => {
-    return apiClient.mobile.post(`/mobile/workflow/tasks/${id}/complete`, data || {});
+    return apiClient.mobile.post(`workflow/tasks/${id}/complete`, data || {});
   },
 
   listDefinitions: async (params?: {
     category?: string;
     is_active?: boolean;
   }): Promise<ApiResponse<WorkflowDefinition[]>> => {
-    return apiClient.mobile.get('/mobile/workflow/definitions', { params });
+    return apiClient.mobile.get('workflow/definitions', { params });
   },
 
   getPendingCount: async (): Promise<ApiResponse<PendingTaskCount>> => {
-    return apiClient.mobile.get('/mobile/workflow/pending-count');
+    return apiClient.mobile.get('workflow/pending-count');
   },
 };
 

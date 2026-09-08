@@ -107,11 +107,11 @@ export const employeeApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Employee>>> => {
-    return apiClient.mobile.get('/mobile/employees', { params });
+    return apiClient.mobile.get('employees', { params });
   },
 
   getEmployee: async (id: string): Promise<ApiResponse<Employee>> => {
-    return apiClient.mobile.get(`/mobile/employees/${id}`);
+    return apiClient.mobile.get(`employees/${id}`);
   },
 
   searchEmployees: async (params: {
@@ -119,7 +119,7 @@ export const employeeApi = {
     department_id?: string;
     limit?: number;
   }): Promise<ApiResponse<Employee[]>> => {
-    return apiClient.mobile.get('/mobile/employees/search', { params });
+    return apiClient.mobile.get('employees/search', { params });
   },
 
   // ==================== 部门管理 ====================
@@ -128,11 +128,11 @@ export const employeeApi = {
     parent_id?: string;
     keyword?: string;
   }): Promise<ApiResponse<Department[]>> => {
-    return apiClient.mobile.get('/mobile/departments', { params });
+    return apiClient.mobile.get('departments', { params });
   },
 
   getDepartment: async (id: string): Promise<ApiResponse<Department>> => {
-    return apiClient.mobile.get(`/mobile/departments/${id}`);
+    return apiClient.mobile.get(`departments/${id}`);
   },
 
   listDepartmentMembers: async (
@@ -142,7 +142,7 @@ export const employeeApi = {
       page_size?: number;
     }
   ): Promise<ApiResponse<PaginatedResponse<Employee>>> => {
-    return apiClient.mobile.get(`/mobile/departments/${departmentId}/members`, { params });
+    return apiClient.mobile.get(`departments/${departmentId}/members`, { params });
   },
 
   // ==================== 公告通知 ====================
@@ -152,23 +152,23 @@ export const employeeApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<Announcement>>> => {
-    return apiClient.mobile.get('/mobile/announcements', { params });
+    return apiClient.mobile.get('announcements', { params });
   },
 
   getAnnouncement: async (id: string): Promise<ApiResponse<Announcement>> => {
-    return apiClient.mobile.get(`/mobile/announcements/${id}`);
+    return apiClient.mobile.get(`announcements/${id}`);
   },
 
   // ==================== 个人信息 ====================
 
   getMyInfo: async (): Promise<ApiResponse<EmployeeInfo>> => {
-    return apiClient.mobile.get('/mobile/my-info');
+    return apiClient.mobile.get('my-info');
   },
 
   // ==================== 公司信息 ====================
 
   getCompanyInfo: async (): Promise<ApiResponse<CompanyInfo>> => {
-    return apiClient.mobile.get('/mobile/company-info');
+    return apiClient.mobile.get('company-info');
   },
 };
 
