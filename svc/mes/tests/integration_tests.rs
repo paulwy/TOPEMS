@@ -1,6 +1,5 @@
 // MES 服务集成测试
 
-use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -158,35 +157,34 @@ mod tests {
 
         let create_result = sqlx::query(
             r#"
-            INSERT INTO production_orders (
-                id, order_no, product_name, product_code, quantity,
-                completed_quantity, status, source, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-            RETURNING id, order_no, product_name, status
+            INSERT INTO mes.production_orders (
+                id, order_number, product_name, product_code, quantity,
+                completed_quantity, status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            RETURNING id, order_number, product_name, status
             "#,
         )
         .bind(order_id)
         .bind(&order_no)
         .bind("测试产品")
         .bind("TEST-PROD-001")
-        .bind(Decimal::from(1000))
-        .bind(Decimal::from(0))
+        .bind(1000)
+        .bind(0)
         .bind("pending")
-        .bind("manual")
         .fetch_one(&pool)
         .await;
 
         assert!(create_result.is_ok(), "生产订单创建应该成功");
 
         let created_order = create_result.unwrap();
-        assert_eq!(created_order.get::<String, _>("order_no"), order_no);
+        assert_eq!(created_order.get::<String, _>("order_number"), order_no);
         assert_eq!(created_order.get::<String, _>("product_name"), "测试产品");
         assert_eq!(created_order.get::<String, _>("status"), "pending");
 
         let read_result = sqlx::query(
             r#"
-            SELECT id, order_no, product_name, status
-            FROM production_orders
+            SELECT id, order_number, product_name, status
+            FROM mes.production_orders
             WHERE id = $1
             "#,
         )
@@ -198,7 +196,7 @@ mod tests {
 
         let update_result = sqlx::query(
             r#"
-            UPDATE production_orders
+            UPDATE mes.production_orders
             SET product_name = $2, status = $3, completed_quantity = $4, updated_at = NOW()
             WHERE id = $1
             RETURNING product_name, status, completed_quantity
@@ -207,7 +205,7 @@ mod tests {
         .bind(order_id)
         .bind("更新后的产品名称")
         .bind("released")
-        .bind(Decimal::from(500))
+        .bind(500)
         .fetch_one(&pool)
         .await;
 
@@ -220,13 +218,13 @@ mod tests {
         );
         assert_eq!(updated_order.get::<String, _>("status"), "released");
         assert_eq!(
-            updated_order.get::<Decimal, _>("completed_quantity"),
-            Decimal::from(500)
+            updated_order.get::<i32, _>("completed_quantity"),
+            500
         );
 
         let delete_result = sqlx::query(
             r#"
-            DELETE FROM production_orders
+            DELETE FROM mes.production_orders
             WHERE id = $1
             "#,
         )
@@ -238,7 +236,7 @@ mod tests {
         assert!(delete_result.unwrap().rows_affected() > 0, "应该有行被删除");
 
         let verify_delete = sqlx::query_scalar::<_, Option<i64>>(
-            r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#,
+            r#"SELECT COUNT(*) FROM mes.production_orders WHERE id = $1"#,
         )
         .bind(order_id)
         .fetch_one(&pool)
@@ -264,11 +262,11 @@ mod tests {
 
         let create_result = sqlx::query(
             r#"
-            INSERT INTO equipment (
-                id, equipment_no, name, model, manufacturer, status, location,
-                maintenance_cycle, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-            RETURNING id, equipment_no, name, status, model, location
+            INSERT INTO mes.equipment (
+                id, equipment_code, equipment_name, model, manufacturer, status, location,
+                maintenance_frequency_days, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            RETURNING id, equipment_code, equipment_name, status, model, location
             "#,
         )
         .bind(equipment_id)
@@ -288,14 +286,14 @@ mod tests {
         }
 
         let created = create_result.unwrap();
-        assert_eq!(created.get::<String, _>("equipment_no"), equipment_no);
-        assert_eq!(created.get::<String, _>("name"), "测试设备");
+        assert_eq!(created.get::<String, _>("equipment_code"), equipment_no);
+        assert_eq!(created.get::<String, _>("equipment_name"), "测试设备");
         assert_eq!(created.get::<String, _>("status"), "normal");
         assert_eq!(created.get::<String, _>("model"), "CNC-5000");
 
         let update_result = sqlx::query(
             r#"
-            UPDATE equipment
+            UPDATE mes.equipment
             SET name = $2, status = $3, location = $4, updated_at = NOW()
             WHERE id = $1
             RETURNING name, status, location
@@ -311,12 +309,12 @@ mod tests {
         assert!(update_result.is_ok(), "设备更新应该成功");
 
         let updated = update_result.unwrap();
-        assert_eq!(updated.get::<String, _>("name"), "更新后的设备名称");
+        assert_eq!(updated.get::<String, _>("equipment_name"), "更新后的设备名称");
         assert_eq!(updated.get::<String, _>("status"), "maintenance");
 
         let delete_result = sqlx::query(
             r#"
-            DELETE FROM equipment
+            DELETE FROM mes.equipment
             WHERE id = $1
             "#,
         )
@@ -328,7 +326,7 @@ mod tests {
         assert!(delete_result.unwrap().rows_affected() > 0, "应该有行被删除");
 
         let verify_delete =
-            sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM equipment WHERE id = $1"#)
+            sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM mes.equipment WHERE id = $1"#)
                 .bind(equipment_id)
                 .fetch_one(&pool)
                 .await;
@@ -349,10 +347,10 @@ mod tests {
 
         let create_result = sqlx::query(
             r#"
-            INSERT INTO work_stations (
-                id, station_no, name, location, status, capacity, created_at, updated_at
+            INSERT INTO mes.work_stations (
+                id, station_code, station_name, location, status, capacity, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-            RETURNING id, station_no, name, status, capacity
+            RETURNING id, station_code, station_name, status, capacity
             "#,
         )
         .bind(station_id)
@@ -367,17 +365,17 @@ mod tests {
         assert!(create_result.is_ok(), "工位点创建应该成功");
 
         let created = create_result.unwrap();
-        assert_eq!(created.get::<String, _>("station_no"), station_no);
-        assert_eq!(created.get::<String, _>("name"), "测试工位");
+        assert_eq!(created.get::<String, _>("station_code"), station_no);
+        assert_eq!(created.get::<String, _>("station_name"), "测试工位");
         assert_eq!(created.get::<String, _>("status"), "active");
         assert_eq!(created.get::<i32, _>("capacity"), 2);
 
         let update_result = sqlx::query(
             r#"
-            UPDATE work_stations
-            SET name = $2, status = $3, capacity = $4, updated_at = NOW()
+            UPDATE mes.work_stations
+            SET station_name = $2, status = $3, capacity = $4, updated_at = NOW()
             WHERE id = $1
-            RETURNING name, status, capacity
+            RETURNING station_name, status, capacity
             "#,
         )
         .bind(station_id)
@@ -390,12 +388,12 @@ mod tests {
         assert!(update_result.is_ok(), "工位点更新应该成功");
 
         let updated = update_result.unwrap();
-        assert_eq!(updated.get::<String, _>("name"), "更新后的工位名称");
+        assert_eq!(updated.get::<String, _>("station_name"), "更新后的工位名称");
         assert_eq!(updated.get::<String, _>("status"), "inactive");
 
         let delete_result = sqlx::query(
             r#"
-            DELETE FROM work_stations
+            DELETE FROM mes.work_stations
             WHERE id = $1
             "#,
         )
@@ -406,7 +404,7 @@ mod tests {
         assert!(delete_result.is_ok(), "工位点删除应该成功");
 
         let verify_delete = sqlx::query_scalar::<_, Option<i64>>(
-            r#"SELECT COUNT(*) FROM work_stations WHERE id = $1"#,
+            r#"SELECT COUNT(*) FROM mes.work_stations WHERE id = $1"#,
         )
         .bind(station_id)
         .fetch_one(&pool)
@@ -429,11 +427,11 @@ mod tests {
         let result = sqlx::query(
             r#"
             BEGIN;
-            INSERT INTO production_orders (
-                id, order_no, product_name, product_code, quantity,
-                completed_quantity, status, source, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW());
-            INSERT INTO production_orders (id) VALUES ('invalid-uuid');
+            INSERT INTO mes.production_orders (
+                id, order_number, product_name, product_code, quantity,
+                completed_quantity, status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW());
+            INSERT INTO mes.production_orders (id) VALUES ('invalid-uuid');
             COMMIT;
             "#,
         )
@@ -441,17 +439,16 @@ mod tests {
         .bind(&order_no)
         .bind("事务测试产品")
         .bind("TX-PROD-001")
-        .bind(Decimal::from(100))
-        .bind(Decimal::from(0))
+        .bind(100)
+        .bind(0)
         .bind("pending")
-        .bind("manual")
         .execute(&pool)
         .await;
 
         assert!(result.is_err(), "事务应该失败回滚");
 
         let count = sqlx::query_scalar::<_, Option<i64>>(
-            r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#,
+            r#"SELECT COUNT(*) FROM mes.production_orders WHERE id = $1"#,
         )
         .bind(order_id)
         .fetch_one(&pool)
@@ -478,20 +475,19 @@ mod tests {
 
         let insert_result = sqlx::query(
             r#"
-            INSERT INTO production_orders (
-                id, order_no, product_name, product_code, quantity,
-                completed_quantity, status, source, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO mes.production_orders (
+                id, order_number, product_name, product_code, quantity,
+                completed_quantity, status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id)
         .bind(&order_no)
         .bind("事务成功测试产品")
         .bind("TX-SUCCESS-001")
-        .bind(Decimal::from(200))
-        .bind(Decimal::from(0))
+        .bind(200)
+        .bind(0)
         .bind("pending")
-        .bind("manual")
         .execute(&mut *tx)
         .await;
 
@@ -501,7 +497,7 @@ mod tests {
         assert!(commit_result.is_ok(), "事务提交应该成功");
 
         let count = sqlx::query_scalar::<_, Option<i64>>(
-            r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#,
+            r#"SELECT COUNT(*) FROM mes.production_orders WHERE id = $1"#,
         )
         .bind(order_id)
         .fetch_one(&pool)
@@ -510,7 +506,7 @@ mod tests {
 
         assert_eq!(count.unwrap_or(0), 1, "事务提交后数据应该存在");
 
-        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id = $1"#)
+        let _ = sqlx::query(r#"DELETE FROM mes.production_orders WHERE id = $1"#)
             .bind(order_id)
             .execute(&pool)
             .await;
@@ -532,10 +528,10 @@ mod tests {
 
         let create_result_1 = sqlx::query(
             r#"
-            INSERT INTO production_orders (
-                id, order_no, product_name, product_code, quantity,
-                completed_quantity, status, source, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO mes.production_orders (
+                id, order_number, product_name, product_code, quantity,
+                completed_quantity, status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id_1)
@@ -545,7 +541,6 @@ mod tests {
         .bind(500.0)
         .bind(0.0)
         .bind("pending")
-        .bind("manual")
         .execute(&pool)
         .await;
 
@@ -553,10 +548,10 @@ mod tests {
 
         let create_result_2 = sqlx::query(
             r#"
-            INSERT INTO production_orders (
-                id, order_no, product_name, product_code, quantity,
-                completed_quantity, status, source, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO mes.production_orders (
+                id, order_number, product_name, product_code, quantity,
+                completed_quantity, status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id_2)
@@ -566,14 +561,13 @@ mod tests {
         .bind(300.0)
         .bind(0.0)
         .bind("pending")
-        .bind("manual")
         .execute(&pool)
         .await;
 
         assert!(create_result_2.is_ok(), "租户2订单创建应该成功");
 
         let total_count = sqlx::query_scalar::<_, Option<i64>>(
-            r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT%'"#,
+            r#"SELECT COUNT(*) FROM mes.production_orders WHERE order_number LIKE 'MO-TENANT%'"#,
         )
         .fetch_one(&pool)
         .await
@@ -583,7 +577,7 @@ mod tests {
         assert_eq!(total_count, 2, "应该有2条测试订单");
 
         let tenant1_count = sqlx::query_scalar::<_, Option<i64>>(
-            r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT1%'"#,
+            r#"SELECT COUNT(*) FROM mes.production_orders WHERE order_number LIKE 'MO-TENANT1%'"#,
         )
         .fetch_one(&pool)
         .await
@@ -593,7 +587,7 @@ mod tests {
         assert_eq!(tenant1_count, 1, "租户1应该只能看到自己的订单");
 
         let tenant2_count = sqlx::query_scalar::<_, Option<i64>>(
-            r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT2%'"#,
+            r#"SELECT COUNT(*) FROM mes.production_orders WHERE order_number LIKE 'MO-TENANT2%'"#,
         )
         .fetch_one(&pool)
         .await
@@ -602,7 +596,7 @@ mod tests {
 
         assert_eq!(tenant2_count, 1, "租户2应该只能看到自己的订单");
 
-        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id IN ($1, $2)"#)
+        let _ = sqlx::query(r#"DELETE FROM mes.production_orders WHERE id IN ($1, $2)"#)
             .bind(order_id_1)
             .bind(order_id_2)
             .execute(&pool)
@@ -622,10 +616,10 @@ mod tests {
 
         let _ = sqlx::query(
             r#"
-            INSERT INTO production_orders (
-                id, order_no, product_name, product_code, quantity,
-                completed_quantity, status, source, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO mes.production_orders (
+                id, order_number, product_name, product_code, quantity,
+                completed_quantity, status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id)
@@ -635,7 +629,6 @@ mod tests {
         .bind(100.0)
         .bind(0.0)
         .bind("pending")
-        .bind("manual")
         .execute(&pool)
         .await;
 
@@ -649,7 +642,7 @@ mod tests {
             let prev_status = statuses[i - 1];
             let result = sqlx::query(
                 r#"
-                UPDATE production_orders
+                UPDATE mes.production_orders
                 SET status = $2, updated_at = NOW()
                 WHERE id = $1 AND status = $3
                 RETURNING status
@@ -670,7 +663,7 @@ mod tests {
             );
         }
 
-        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id = $1"#)
+        let _ = sqlx::query(r#"DELETE FROM mes.production_orders WHERE id = $1"#)
             .bind(order_id)
             .execute(&pool)
             .await;
@@ -689,10 +682,10 @@ mod tests {
 
         let _ = sqlx::query(
             r#"
-            INSERT INTO production_orders (
-                id, order_no, product_name, product_code, quantity,
-                completed_quantity, status, source, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO mes.production_orders (
+                id, order_number, product_name, product_code, quantity,
+                completed_quantity, status, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id)
@@ -710,16 +703,16 @@ mod tests {
 
         let create_result = sqlx::query(
             r#"
-            INSERT INTO production_records (
-                id, order_id, start_time, quantity_produced, quantity_defective, status, created_at, updated_at
-            ) VALUES ($1, $2, NOW(), $3, $4, $5, NOW(), NOW())
-            RETURNING id, order_id, quantity_produced, quantity_defective, status
+            INSERT INTO mes.production_records (
+                id, organization_id, order_id, operator, start_time, completed_quantity, rejected_quantity, status, created_at, updated_at
+            ) VALUES ($1, gen_random_uuid(), $2, 'tester', NOW(), $3, $4, $5, NOW(), NOW())
+            RETURNING id, order_id, completed_quantity, rejected_quantity, status
             "#,
         )
         .bind(record_id)
         .bind(order_id)
-        .bind(Decimal::from(100))
-        .bind(Decimal::from(5))
+        .bind(100)
+        .bind(5)
         .bind("in_progress")
         .fetch_one(&pool)
         .await;
@@ -728,25 +721,25 @@ mod tests {
 
         let created = create_result.unwrap();
         assert_eq!(
-            created.get::<Decimal, _>("quantity_produced"),
-            Decimal::from(100)
+            created.get::<i32, _>("completed_quantity"),
+            100
         );
         assert_eq!(
-            created.get::<Decimal, _>("quantity_defective"),
-            Decimal::from(5)
+            created.get::<i32, _>("rejected_quantity"),
+            5
         );
 
         let update_result = sqlx::query(
             r#"
-            UPDATE production_records
-            SET quantity_produced = $2, quantity_defective = $3, status = $4, updated_at = NOW()
+            UPDATE mes.production_records
+            SET completed_quantity = $2, rejected_quantity = $3, status = $4, updated_at = NOW()
             WHERE id = $1
-            RETURNING quantity_produced, quantity_defective, status
+            RETURNING completed_quantity, rejected_quantity, status
             "#,
         )
         .bind(record_id)
-        .bind(Decimal::from(200))
-        .bind(Decimal::from(10))
+        .bind(200)
+        .bind(10)
         .bind("completed")
         .fetch_one(&pool)
         .await;
@@ -755,18 +748,18 @@ mod tests {
 
         let updated = update_result.unwrap();
         assert_eq!(
-            updated.get::<Decimal, _>("quantity_produced"),
-            Decimal::from(200)
+            updated.get::<i32, _>("completed_quantity"),
+            200
         );
         assert_eq!(
-            updated.get::<Decimal, _>("quantity_defective"),
-            Decimal::from(10)
+            updated.get::<i32, _>("rejected_quantity"),
+            10
         );
         assert_eq!(updated.get::<String, _>("status"), "completed");
 
         let delete_result = sqlx::query(
             r#"
-            DELETE FROM production_records
+            DELETE FROM mes.production_records
             WHERE id = $1
             "#,
         )
@@ -776,7 +769,7 @@ mod tests {
 
         assert!(delete_result.is_ok(), "生产记录删除应该成功");
 
-        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id = $1"#)
+        let _ = sqlx::query(r#"DELETE FROM mes.production_orders WHERE id = $1"#)
             .bind(order_id)
             .execute(&pool)
             .await;

@@ -33,6 +33,7 @@ bigdecimal = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
 topems-shared-event = { workspace = true }
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
 
 [[bin]]
 name = "topems-pdm"

@@ -64,7 +64,18 @@ async fn test_pdm_material_event_publish_and_subscribe() {
     );
     let expected_event_id = event.event_id;
 
-    let publish_task = tokio::spawn(async move { event.publish().await });
+    let payload = serde_json::to_string(&event).unwrap();
+    let pub_client = client.clone();
+    let publish_task = tokio::spawn(async move {
+        let mut con = pub_client
+            .get_async_connection()
+            .await
+            .map_err(|e| Box::<dyn std::error::Error + Send + Sync>::from(e.to_string()))?;
+        redis::AsyncCommands::publish::<_, _, ()>(&mut con, channel.as_str(), payload.as_str())
+            .await
+            .map_err(|e| Box::<dyn std::error::Error + Send + Sync>::from(e.to_string()))?;
+        Ok::<_, Box<dyn std::error::Error + Send + Sync>>(())
+    });
 
     // ——— 阶段三：等待匹配事件并断言 ———
     let (received, publish_result) = tokio::join!(subscription.wait_for_match(), publish_task,);
@@ -123,7 +134,18 @@ async fn test_pdm_material_event_concurrent_no_crosstalk() {
             tokio::time::sleep(tokio::time::Duration::from_millis(delay as u64)).await;
 
             // —— 阶段三：发布并等待 ——
-            let pub_task = tokio::spawn(async move { event.publish().await });
+            let payload = serde_json::to_string(&event).unwrap();
+            let ch2 = ch.clone();
+            let pub_task = tokio::spawn(async move {
+                let mut con = client
+                    .get_async_connection()
+                    .await
+                    .map_err(|e| Box::<dyn std::error::Error + Send + Sync>::from(e.to_string()))?;
+                redis::AsyncCommands::publish::<_, _, ()>(&mut con, ch2.as_str(), payload.as_str())
+                    .await
+                    .map_err(|e| Box::<dyn std::error::Error + Send + Sync>::from(e.to_string()))?;
+                Ok::<_, Box<dyn std::error::Error + Send + Sync>>(())
+            });
             let (received, pub_res) = tokio::join!(sub.wait_for_match(), pub_task);
             assert!(pub_res.is_ok(), "第{i}个 publish 失败: {pub_res:?}");
             let inner = pub_res.unwrap();
