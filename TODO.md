@@ -1,3 +1,11 @@
+## 死表清理（评审 A 方案）
+- 状态：✅ 完成（20260908000012）
+- 删除 90 张（A 组 56 无服务 schema + B 组 34 旧表替代），库表 962→872，全部 rows=0 无数据
+- 迁移 CASCADE 处理 flow/doc_service 内部 FK 依赖；台账 success=t
+- 关联修复：schema_boundary.json erp.allow+=crm、ehs.allow+=ehs（门禁归零）；shared-event 测试补 customer_name；communication TABLE_DEFS 补 chat 3 表+断言
+- 剩余 44 张 0 引用 = C 组 42（规划表保留）+ D 组 1（customer_orders）+ wms_master_data_refs 1
+- 待办：schema_defense.rs TABLE_DEFS 悬空条目清理（独立项）
+
 ## 治理（第三轮）：跨 schema 裸表名引用修复
 - 状态：✅ 完成（待提交 20260908000011）
 - 迁移：`database/migrations/20260908000011_cross_schema_bare_tables.sql`（已实跑）

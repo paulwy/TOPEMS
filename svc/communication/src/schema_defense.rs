@@ -137,6 +137,43 @@ const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
         ],
     ),
+    // 10. core_chat_rooms
+    (
+        "core_chat_rooms",
+        &[
+            ("id", "UUID PRIMARY KEY DEFAULT gen_random_uuid()"),
+            ("name", "VARCHAR(128)"),
+            ("room_type", "VARCHAR(32) DEFAULT 'private'"),
+            ("creator_id", "UUID NOT NULL"),
+            ("created_at", "TIMESTAMP DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
+        ],
+    ),
+    // 11. core_chat_members
+    (
+        "core_chat_members",
+        &[
+            ("room_id", "UUID NOT NULL REFERENCES core_chat_rooms(id)"),
+            ("user_id", "UUID NOT NULL"),
+            ("role", "VARCHAR(32) DEFAULT 'member'"),
+            ("joined_at", "TIMESTAMP DEFAULT NOW()"),
+        ],
+    ),
+    // 12. core_chat_messages
+    (
+        "core_chat_messages",
+        &[
+            ("id", "UUID PRIMARY KEY DEFAULT gen_random_uuid()"),
+            ("room_id", "UUID NOT NULL REFERENCES core_chat_rooms(id)"),
+            ("sender_id", "UUID NOT NULL"),
+            ("sender_name", "VARCHAR(128)"),
+            ("message_type", "VARCHAR(32) DEFAULT 'text'"),
+            ("content", "TEXT NOT NULL"),
+            ("file_url", "VARCHAR(512)"),
+            ("is_recalled", "BOOLEAN DEFAULT FALSE"),
+            ("created_at", "TIMESTAMP DEFAULT NOW()"),
+        ],
+    ),
 ];
 
 /// Creates the base tables (with only the `id` primary-key column) and then
@@ -180,7 +217,7 @@ mod tests {
 
     #[test]
     fn test_service_constants() {
-        assert_eq!(service_schema_for_test(), "public");
+        assert_eq!(service_schema_for_test(), "communication");
         assert_eq!(service_tag_for_test(), "communication");
     }
 

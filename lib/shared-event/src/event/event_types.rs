@@ -1679,6 +1679,7 @@ mod tests {
             amount: 5000.00,
             payment_method: Some("bank_transfer".into()),
             received_at: Some(Utc::now()),
+            customer_name: None,
         };
         let json = serde_json::to_string(&p).unwrap();
         let back: PaymentReceivedPayload = serde_json::from_str(&json).unwrap();

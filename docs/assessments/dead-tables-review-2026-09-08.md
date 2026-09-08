@@ -68,7 +68,15 @@ core_* 旧表（早期 core 前缀设计）已被各服务同名新表替代；�
 |---|---|
 | crm.customer_orders | 迁移建表（20260908000006），已标注废弃（数据源迁移至 crm.sales_orders），保留兼容 |
 
-## 处置建议
+## 处置结果（2026-09-08 已执行）
+
+**已选方案 A**：迁移 `20260908000012_dead_tables_cleanup.sql` 实跑成功（台账 success=t），A 组 56 + B 组 34 = **90 张全部删除**（DROP ... CASCADE 处理内部 FK 依赖链，保留表不受影响）。库表 962 → **872**。
+
+- 剩余 0 引用表 44 张 = C 组 42（评审笔误 35，实为 ehs14+lims8+hrm5+qms4+mes3+pm4+mobile2+gis1+portal1）+ D 组 crm.customer_orders + 漏分 wms.wms_master_data_refs。
+- 关联修复：schema_boundary.json erp.allow+=crm / ehs.allow+=ehs（门禁 FAIL 归零）；shared-event 测试补 customer_name（既有漏改）；communication TABLE_DEFS 补 chat 3 表 + 断言更新（4f0c3e51b 既有不一致）。
+- 白名单（schema_defense.rs TABLE_DEFS）悬空条目未清理：为防御声明，悬空无害，删除需同步 9 文件+测试断言，列为独立项。
+
+## 处置建议（原稿，供参考）
 
 - **方案 A**：删除 A 组（56 张）+ B 组（34 张）= **90 张**；C 组 35 张保留（补注记）；D 组保留。
 - **方案 B**：仅删除 A 组（56 张）无服务 schema 表；B/C/D 全保留。

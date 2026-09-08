@@ -29,13 +29,16 @@
     "ehs": {
       "schema": "public",
       "search_path": "ehs, public",
-      "allow": []
+      "allow": [
+        "ehs"
+      ]
     },
     "erp": {
       "schema": "erp",
       "search_path": "erp, public",
       "allow": [
-        "finance"
+        "finance",
+        "crm"
       ]
     },
     "finance": {
