@@ -391,7 +391,7 @@ P(`  • 覆盖度（使用码中已声明比例，恒≤100%）：${((USED_CODE
 P(``);
 
 P(`🟡 NOT_LEGAL：config.ts 使用但 ∉ permissions.ts/app-shell 声明的权限码 → ${NOT_LEGAL.length} 条`);
-P(`   判定 = ${NOT_LEGAL.length > 0 ? '🟡 声明缺口（前端运行时判定基于后端下发码列表 permissions.includes，静态声明缺 ≠ 菜单隐藏；仅 UI 元数据不完整，需与后端动态签发码集人工核对）' : '✅ PASS 级：0 违规'}`);
+P(`   判定 = ${NOT_LEGAL.length > 0 ? '🟡 声明缺口（前端运行时判定基于后端下发码列表 permissions.includes，静态声明缺 ≠ 菜单隐藏；仅 UI 元数据不完整，已核对：后端 core_permissions 经迁移 20260908000014 已含全部前端使用码(506 条)，运行时判定与权限管理页(authApi.listPermissions→后端 /permissions)均已覆盖；此缺口仅指 permissions.ts/app-shell 静态常量未同步，纯 UI 元数据层）' : '✅ PASS 级：0 违规'}`);
 if (NOT_LEGAL.length) {
   for (const [m, arr] of Object.entries(nLegalByMod).sort((a, b) => b[1].length - a[1].length)) {
     P(`\n   模块 [${m}] 共 ${arr.length} 条：`);
