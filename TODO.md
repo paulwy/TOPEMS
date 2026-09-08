@@ -1329,6 +1329,13 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **执行**：git rm 01 + README 三处引用清理（方式一命令、方式二 \i、Q1 权限方案改为引导迁移体系）。
 - **init 目录终态**：03（权限初始化，35 INSERT 活跃数据）/ 04（inter_module_sync 定义 + srm 6 张幂等）/ 05（mobile 23 表服务活跃）/ 07（qms 27 表幂等副本）保留为"重建/初始化档案"；01/02/06 三个早期架构脚本已删除。README 顶部注记（以迁移体系为准）继续有效。
 
+## 2026-09-08 全仓"代码有表无"缺口补建（30 张表，方案 A 第一轮）✅
+
+- **盲区发现**：门禁只校验 schema 白名单、不校验表存在性——全仓 SQL 引用 vs 5432 实况比对（含跨行字符串修正）揪出 **30 张被活跃引用但从未建表的表** + 21 组错引用（下轮处理）。
+- **真缺表分布**：tms 5（schema 整个不存在，59 引用全空转）/ scm 6（MRP/质检/看板）/ rs 7（研发全域）/ erp 3（documents/vouchers/account_balances）/ core 4（ai_knowledge 09-08 挂载未建表）/ ai 1 / qms 3（integration 集成写目标）/ unified_core 1（password_resets）。
+- **执行**：新迁移 `20260908000009_missing_tables.sql`（30 张，CREATE SCHEMA IF NOT EXISTS tms + 幂等建表 + 8 索引，列定义提取自模块 INSERT/SELECT/UPDATE/RETURNING）；5432 实建 30/30；门禁补 integration→qms allow 基线（下轮改码所需）；门禁全 PASS。
+- **遗留（下轮）**：21 组错引用改码——finance 8（public.*→finance.*/core_finance_vouchers）+ mobile 12（public.*→mobile.*，push_notifications→mobile_push_notifications）+ integration 1（qa_corrective_actions→qms）。
+
 ## 2026-09-08 plugin_* 错位修复 + 空壳清理 ✅（记录待办收尾）
 
 - **背景**：1384 记录"plugin_* schema 常量业务零使用"仅指 shared-db 常量层；实测**服务代码仍有大量真实 plugin_* SQL 硬编码**——srm 445 处（模块主体，`only_own_schema_query!` 宏无替换逻辑、原样执行 → 运行时必 500）、wms 8 处（data_sync）、erp 11 处（holidays/opening_balance 跨读）、mes 63 行死建表段（建 plugin_mes.audit_logs 但查询读 mes.audit_logs）；20 个 plugin_* schema 全部空壳（0 表）。

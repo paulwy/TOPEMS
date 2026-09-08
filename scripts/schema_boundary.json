@@ -57,7 +57,10 @@
     },
     "integration": {
       "schema": "integration",
-      "search_path": "integration, public"
+      "search_path": "integration, public",
+      "allow": [
+        "qms"
+      ]
     },
     "lims": {
       "schema": "lims",
