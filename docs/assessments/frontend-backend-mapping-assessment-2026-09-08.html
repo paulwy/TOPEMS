@@ -172,9 +172,9 @@
   </div>
 
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
-    <b style="color:#CF1322;">主题六：核心子模块功能缺失（13 项）— ⑥-⑬ 已闭环（2026-09-09，commit 83f1d93a6/f3b3be75e/9f76f39dc），① 仍待办</b><br>
-    ① <b>workflow 六大子模块 128 方法无后端</b>：监控(30)、表单(23)、变量(14)、分类、委托、规则。<span style="color:#6B7280;font-size:11px;">api/workflow/monitor.ts/form.ts/variable.ts 等；svc/unified-core/src/modules/flow/</span><br>
-    ② <b>doc 工作区/检出/共享功能 52/55 方法无后端</b>。<span style="color:#6B7280;font-size:11px;">api/doc/workspace.ts；api/doc/versionControl.ts；api/doc/collaboration.ts</span><br>
+    <b style="color:#CF1322;">主题六：核心子模块功能缺失（13 项）— 全部闭环（2026-09-09）</b><br>
+    ① <b>workflow 六大子模块（✅ 已闭环 cefe6e631）</b>：166 条前端路径 vs 73 条后端路由精确 diff，页面真实消费缺 4 条（workflow versions×3 + monitor retry×1）已补；其余 106 条（form/rules/variables/categories/delegates/monitor 扩展）均无页面消费=预埋。<span style="color:#6B7280;font-size:11px;">api/workflow/*；svc/unified-core/src/routes/flow.rs</span><br>
+    ② <b>doc 工作区/检出/共享（✅ 已闭环 ac282db14）</b>：28 条前端路径 diff，页面真实消费缺 3 条（versions list/get/restore）已补；workspaces/collaborators/lock/share/checkouts 等 25 条无页面消费=预埋。<span style="color:#6B7280;font-size:11px;">api/doc/；svc/unified-core/src/modules/doc/handlers.rs</span><br>
     ③ <b>erp MDM（✅ 误报，2026-09-09 复核）</b>：前端 mdm-v49 路径 22 条 vs 后端 mdm_v49*.rs 23 条（含 /api/erp 前缀归一）——全齐。原判定未计 apiClient.erp 的 /api/erp 服务前缀，且只扫了 master_data_refs.rs 单文件。mdmLifecycle/mdmRefs 无页面消费（预埋）。<span style="color:#6B7280;font-size:11px;">api/erp/core/mdmLifecycle.ts；svc/erp/src/modules/mdm_v49*.rs</span><br>
     ④ <b>finance/report（✅ 误报，2026-09-09 复核）</b>：前端 report.ts 19 条路径 vs 后端全模块 78 条 /reports 路由——全齐（account-balance/account-ledger/dimension-detail/3×export 均存在）。原判定漏扫 financial_reports 之外的后端模块且未计 /api/finance 前缀。<span style="color:#6B7280;font-size:11px;">api/finance/report.ts；svc/finance/src/modules/*.rs</span><br>
     ⑤ <b>finance/tax（✅ 误报，2026-09-09 复核）</b>：前端 tax.ts 19 条 /finance-v56/tax/* 路径 vs 后端 tax_v56.rs 路由——全齐（含 forms/rates/plans/compliance 全系）。原判定统计口径错误。<span style="color:#6B7280;font-size:11px;">api/finance/tax.ts；svc/finance/src/modules/tax_v56.rs</span><br>
