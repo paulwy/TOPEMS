@@ -5,7 +5,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
-    routing::{get, put},
+    routing::{get, post, put},
     Json, Router,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
@@ -17,6 +17,7 @@ use sqlx::{
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
+use crate::shared::aps_fsm::schedule_can_transition;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared::response::ApiResponse;
@@ -36,6 +37,12 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/schedules/{id}/adjust", put(adjust_schedule))
         .route("/schedules/gantt", get(get_gantt_data))
+        .route("/schedules/{id}/submit", post(submit_schedule))
+        .route("/schedules/{id}/release", post(release_schedule))
+        .route("/schedules/{id}/hold", post(hold_schedule))
+        .route("/schedules/{id}/start", post(start_schedule))
+        .route("/schedules/{id}/complete", post(complete_schedule))
+        .route("/schedules/{id}/cancel", post(cancel_schedule))
 }
 
 // ==================== Data Types ====================
@@ -975,3 +982,155 @@ mod tests {
         assert_eq!(big_decimal_to_f64(Some(bd)), 1234567.89);
     }
 }
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct ScheduleActionRequest {
+    pub operator: Option<String>,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct ScheduleActionResponse {
+    pub success: bool,
+    pub message: String,
+    pub id: Option<Uuid>,
+}
+
+async fn transition_schedule(
+    state: &AppState,
+    claims: &Claims,
+    id: Uuid,
+    to_status: &str,
+    comment: Option<String>,
+) -> Json<ApiResponse<ScheduleActionResponse>> {
+    if let Err(e) = check_permission(
+        &state.pool,
+        claims,
+        &ModulePermission::ProductionSchedulingWrite,
+    )
+    .await
+    {
+        return e;
+    }
+
+    let tenant_id = get_schedule_tenant_id(claims);
+
+    let existing: Option<(String,)> = match sqlx::query_as(
+        "SELECT status FROM production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(row)) => Some(row),
+        Ok(None) => None,
+        Err(e) => {
+            tracing::error!("查询排产单状态失败: {}", e);
+            return Json(ApiResponse::error(500, "查询排产单状态失败"));
+        }
+    };
+
+    let Some((current_status,)) = existing else {
+        return Json(ApiResponse::error(404, "排产单不存在"));
+    };
+
+    if let Err(e) = schedule_can_transition(&current_status, to_status) {
+        return Json(ApiResponse::error(
+            409,
+            &format!("当前状态 {} 不允许切换到 {}", current_status, to_status),
+        ));
+    }
+
+    let now = Utc::now();
+    let updated = sqlx::query(
+        "UPDATE production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL",
+    )
+    .bind(to_status)
+    .bind(&comment)
+    .bind(now)
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
+
+    match updated {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            ScheduleActionResponse {
+                success: true,
+                message: format!("排产单已{}", to_status),
+                id: Some(id),
+            },
+            "操作成功",
+        )),
+        Ok(_) => Json(ApiResponse::error(404, "排产单不存在")),
+        Err(e) => {
+            tracing::error!("更新排产单状态失败: {}", e);
+            Json(ApiResponse::error(500, "更新排产单状态失败"))
+        }
+    }
+}
+
+fn get_schedule_tenant_id(claims: &Claims) -> Uuid {
+    match &claims.tenant_id {
+        Some(t) => Uuid::parse_str(t).unwrap_or_else(|_| {
+            Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap()
+        }),
+        None => Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap(),
+    }
+}
+
+pub async fn submit_schedule(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ScheduleActionRequest>,
+) -> Json<ApiResponse<ScheduleActionResponse>> {
+    transition_schedule(&state, &claims, id, "released", req.comment).await
+}
+
+pub async fn release_schedule(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ScheduleActionRequest>,
+) -> Json<ApiResponse<ScheduleActionResponse>> {
+    transition_schedule(&state, &claims, id, "released", req.comment).await
+}
+
+pub async fn hold_schedule(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ScheduleActionRequest>,
+) -> Json<ApiResponse<ScheduleActionResponse>> {
+    transition_schedule(&state, &claims, id, "pending", req.comment).await
+}
+
+pub async fn start_schedule(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ScheduleActionRequest>,
+) -> Json<ApiResponse<ScheduleActionResponse>> {
+    transition_schedule(&state, &claims, id, "running", req.comment).await
+}
+
+pub async fn complete_schedule(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ScheduleActionRequest>,
+) -> Json<ApiResponse<ScheduleActionResponse>> {
+    transition_schedule(&state, &claims, id, "completed", req.comment).await
+}
+
+pub async fn cancel_schedule(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ScheduleActionRequest>,
+) -> Json<ApiResponse<ScheduleActionResponse>> {
+    transition_schedule(&state, &claims, id, "cancelled", req.comment).await
+}
+

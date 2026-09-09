@@ -27,6 +27,7 @@ pub fn create_routes() -> Router<AppState> {
                 .delete(delete_capacity),
         )
         .route("/capacities/{id}/allocate", post(allocate_capacity))
+        .route("/capacities/{id}/submit", post(submit_capacity))
         .route("/capacities/{id}/release", post(release_capacity))
         .route("/capacities/{id}/maintenance", post(maintenance_capacity))
 }
@@ -78,7 +79,8 @@ pub struct UpdateCapacityRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct AllocateRequest {
-    pub hours: f64,
+    /// 可选：分配/释放工时；缺省时 allocate 按 0、release 按当前已用工时处理（兼容前端 ApprovalRequest body）
+    pub hours: Option<f64>,
 }
 
 // ==================== Database Init ====================
@@ -395,14 +397,14 @@ pub async fn allocate_capacity(
 
     let available = existing.available_hours.unwrap_or(0.0);
     let current_used = existing.used_hours.unwrap_or(0.0);
-    let new_used = current_used + req.hours;
+    let new_used = current_used + req.hours.unwrap_or(0.0);
 
     if new_used > available {
         return Json(ApiResponse::error(
             400,
             &format!(
                 "分配工时 {} 超过可用工时 {}（当前已用 {}）",
-                req.hours, available, current_used
+                new_used, available, current_used
             ),
         ));
     }
@@ -466,7 +468,7 @@ pub async fn release_capacity(
 
     let available = existing.available_hours.unwrap_or(0.0);
     let current_used = existing.used_hours.unwrap_or(0.0);
-    let new_used = (current_used - req.hours).max(0.0);
+    let new_used = (current_used - req.hours.unwrap_or(current_used)).max(0.0);
     let utilization_rate = calc_utilization(Some(available), Some(new_used));
     let now = Utc::now();
 
@@ -597,3 +599,63 @@ mod tests {
         assert!(!can_transition("maintenance", "allocated"));
     }
 }
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct SubmitCapacityRequest {
+    pub operator: Option<String>,
+    pub comment: Option<String>,
+}
+
+pub async fn submit_capacity(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(_req): Json<SubmitCapacityRequest>,
+) -> Json<ApiResponse<Capacity>> {
+    let tenant_id = get_tenant_id(&claims);
+
+    let existing = match sqlx::query_as::<_, Capacity>(
+        "SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(c)) => c,
+        Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+    };
+
+    if !can_transition(&existing.status, "allocated") {
+        return Json(ApiResponse::error(
+            409,
+            &format!("当前状态 {} 不允许提交产能", existing.status),
+        ));
+    }
+
+    let now = Utc::now();
+    let result = sqlx::query_as::<_, Capacity>(
+        r#"
+        UPDATE capacities SET
+            status = 'allocated', updated_at = $1
+        WHERE id = $2 AND tenant_id = $3
+        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
+                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        "#,
+    )
+    .bind(now)
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(cap) => Json(ApiResponse::success(cap, "产能提交成功")),
+        Err(e) => {
+            tracing::error!("提交产能失败: {}", e);
+            Json(ApiResponse::error(500, "提交产能失败"))
+        }
+    }
+}
+
