@@ -130,6 +130,9 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     if let Err(e) = init_erp_mappings_table(pool).await {
         tracing::warn!("init_erp_mappings_table warning: {}", e);
     }
+    if let Err(e) = init_external_erp_sync_logs_table(pool).await {
+        tracing::warn!("init_external_erp_sync_logs_table warning: {}", e);
+    }
 
     // V69.3 Schema 防御：增量迁移 + 一致性自检（8 表）
     if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
@@ -218,6 +221,47 @@ async fn init_erp_connections_table(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(only_own_schema_query!(
         "integration",
         "CREATE INDEX IF NOT EXISTS idx_erp_connections_tenant ON erp_connections(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+/// 初始化外部 ERP 同步日志表（缺口#13 扩展）
+async fn init_external_erp_sync_logs_table(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        r#"
+        CREATE TABLE IF NOT EXISTS external_erp_sync_logs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
+            connection_id UUID REFERENCES erp_connections(id) ON DELETE SET NULL,
+            entity VARCHAR(64) NOT NULL,
+            direction VARCHAR(32) DEFAULT 'export',
+            status VARCHAR(32) DEFAULT 'pending',
+            total_records INTEGER DEFAULT 0,
+            success_count INTEGER DEFAULT 0,
+            failed_count INTEGER DEFAULT 0,
+            error_message TEXT,
+            started_at TIMESTAMP,
+            completed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_external_erp_sync_logs_tenant ON external_erp_sync_logs(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_external_erp_sync_logs_connection ON external_erp_sync_logs(connection_id)"
     ))
     .execute(pool)
     .await?;
