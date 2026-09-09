@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { GitMerge, Play, ArrowRight, Copy } from 'lucide-react';
 import { Box, Typography, Paper, Stack } from '@mui/material';
 
@@ -28,7 +28,12 @@ import {
 } from '@/schemas/integration';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { integrationApi } from '@/api/integration';
+import { mappingApi } from '@/api/integration/mapping';
+import type {
+  ErpMapping,
+  CreateErpMappingRequest,
+  UpdateErpMappingRequest,
+} from '@/api/integration/types';
 
 interface Mapping {
   id: string;
@@ -42,63 +47,68 @@ interface Mapping {
   description: string;
 }
 
-const MOCK_MAPPINGS: Mapping[] = [
-  {
-    id: 'map-001',
-    name: i18n.t('integration.integration_mappings_page.k0'),
-    type: 'field',
-    source: i18n.t('integration.integration_mappings_page.m1'),
-    target: i18n.t('integration.integration_mappings_page.m2'),
-    status: 'active',
-    fieldCount: 15,
-    lastSyncTime: '2024-01-15 14:30:00',
-    description: i18n.t('integration.integration_mappings_page.iamcrm_1'),
-  },
-  {
-    id: 'map-002',
-    name: i18n.t('integration.integration_mappings_page.k2'),
-    type: 'transform',
-    source: i18n.t('integration.integration_mappings_page.m3'),
-    target: i18n.t('integration.integration_mappings_page.m4'),
-    status: 'active',
-    fieldCount: 8,
-    lastSyncTime: '2024-01-15 13:20:00',
-    description: i18n.t('integration.integration_mappings_page.k3'),
-  },
-  {
-    id: 'map-003',
-    name: i18n.t('integration.integration_mappings_page.k4'),
-    type: 'filter',
-    source: i18n.t('integration.integration_mappings_page.m5'),
-    target: i18n.t('integration.integration_mappings_page.m6'),
-    status: 'inactive',
-    fieldCount: 12,
-    lastSyncTime: '2024-01-14 22:00:00',
-    description: i18n.t('integration.integration_mappings_page.k5'),
-  },
-  {
-    id: 'map-004',
-    name: i18n.t('integration.integration_mappings_page.k6'),
-    type: 'validate',
-    source: i18n.t('integration.integration_mappings_page.m7'),
-    target: i18n.t('integration.integration_mappings_page.m8'),
-    status: 'active',
-    fieldCount: 20,
-    lastSyncTime: '2024-01-15 10:15:00',
-    description: i18n.t('integration.integration_mappings_page.k7'),
-  },
-  {
-    id: 'map-005',
-    name: i18n.t('integration.integration_mappings_page.k8'),
-    type: 'field',
-    source: i18n.t('integration.integration_mappings_page.m9'),
-    target: i18n.t('integration.integration_mappings_page.m10'),
-    status: 'draft',
-    fieldCount: 25,
-    lastSyncTime: '-',
-    description: i18n.t('integration.integration_mappings_page.k9'),
-  },
-];
+// ===== ErpMapping ↔ Mapping 双向适配器 =====
+// 页面使用通用 Mapping 模型（name/type/source/target/status/fieldCount/lastSyncTime/description），
+// 后端使用 ErpMapping 模型（local_code/local_name/external_code/external_name/mapping_type/isactive/condition）。
+// 通过适配器在 apiAdapter 层做双向转换，保持页面 UI/schema 不变。
+
+const TYPE_TO_ERP: Record<string, string> = {
+  field: 'customer',
+  transform: 'supplier',
+  filter: 'account',
+  validate: 'project',
+};
+
+const ERP_TO_TYPE: Record<string, MappingType> = {
+  account: 'filter',
+  customer: 'field',
+  supplier: 'transform',
+  project: 'validate',
+  department: 'field',
+  employee: 'field',
+};
+
+function erpMappingToMapping(erp: ErpMapping): Mapping {
+  return {
+    id: erp.id,
+    name: erp.local_name || erp.local_code,
+    type: ERP_TO_TYPE[erp.mapping_type] ?? 'field',
+    source: erp.local_code,
+    target: erp.external_code,
+    status: erp.isactive ? 'active' : 'inactive',
+    fieldCount: erp.condition ? (erp.condition.match(/,/g)?.length ?? 0) + 1 : 0,
+    lastSyncTime: erp.updated_at ? new Date(erp.updated_at).toLocaleString('zh-CN') : '-',
+    description: erp.condition ?? '',
+  };
+}
+
+function mappingToCreateRequest(data: Record<string, unknown>): CreateErpMappingRequest {
+  const type = (data.type as string) ?? 'field';
+  return {
+    mapping_type: (TYPE_TO_ERP[type] ?? 'customer') as CreateErpMappingRequest['mapping_type'],
+    local_id: crypto.randomUUID(),
+    local_code: (data.source as string) ?? '',
+    local_name: (data.name as string) ?? '',
+    external_code: (data.target as string) ?? '',
+    external_name: (data.name as string) ?? '',
+    direction: 'bidirectional',
+    priority: 0,
+    condition: (data.description as string) ?? undefined,
+  };
+}
+
+function mappingToUpdateRequest(data: Record<string, unknown>): UpdateErpMappingRequest {
+  const req: UpdateErpMappingRequest = {};
+  if (data.name !== undefined) req.local_name = data.name as string;
+  if (data.source !== undefined) req.local_code = data.source as string;
+  if (data.target !== undefined) req.external_code = data.target as string;
+  if (data.description !== undefined) req.condition = data.description as string;
+  if (data.status !== undefined) req.isactive = (data.status as string) === 'active';
+  if (data.type !== undefined) {
+    req.priority = 0; // no direct mapping_type update in UpdateErpMappingRequest, keep priority
+  }
+  return req;
+}
 
 const CRUD_QUERY_KEY = ['crud', 'integration_mapping'];
 
@@ -189,16 +199,6 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
 };
 
 export const IntegrationMappingsPage: React.FC = () => {
-  const {} = useQuery({
-    queryKey: ['integration', 'mapping'],
-    queryFn: async () => {
-      try {
-        return await integrationApi.mappings.listMappings();
-      } catch {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('integration');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -206,8 +206,9 @@ export const IntegrationMappingsPage: React.FC = () => {
   const handleToggleStatus = useCallback(
     async (mapping: Mapping) => {
       try {
-        // 切换映射状态（原页面直接修改 queryClient 缓存）
-        const next: MappingStatus = mapping.status === 'active' ? 'inactive' : 'active';
+        const nextIsActive = mapping.status !== 'active';
+        await mappingApi.updateMapping(mapping.id, { isactive: nextIsActive });
+        const next: MappingStatus = nextIsActive ? 'active' : 'inactive';
         queryClient.setQueryData<{ data: Mapping[] } | undefined>(CRUD_QUERY_KEY, (old) =>
           old
             ? {
@@ -282,20 +283,14 @@ export const IntegrationMappingsPage: React.FC = () => {
   const apiAdapter = useMemo<CrudApiAdapter<Mapping>>(
     () => ({
       list: async () => {
-        return { data: MOCK_MAPPINGS, total: MOCK_MAPPINGS.length };
+        const res = await mappingApi.listMappings();
+        const mappings = (res.data ?? []).map(erpMappingToMapping);
+        return { data: mappings, total: mappings.length };
       },
       create: async (data) => {
-        const mapping: Mapping = {
-          id: `map-${Date.now()}`,
-          name: (data.name as string) ?? '',
-          type: (data.type as MappingType) ?? 'field',
-          source: (data.source as string) ?? '',
-          target: (data.target as string) ?? '',
-          status: (data.status as MappingStatus) ?? 'draft',
-          fieldCount: (data.fieldCount as number) ?? 0,
-          lastSyncTime: '-',
-          description: (data.description as string) ?? '',
-        };
+        const req = mappingToCreateRequest(data);
+        const res = await mappingApi.createMapping(req);
+        const mapping = erpMappingToMapping(res.data);
         addNotification({
           title: t('integration.integration_mappings_page.k23'),
           message: i18n.t('integration.integration_mappings_page.e1', { v1: mapping.name }),
@@ -303,15 +298,19 @@ export const IntegrationMappingsPage: React.FC = () => {
         });
         return mapping;
       },
-      update: async (_id, data) => {
+      update: async (id, data) => {
+        const req = mappingToUpdateRequest(data);
+        const res = await mappingApi.updateMapping(id, req);
+        const mapping = erpMappingToMapping(res.data);
         addNotification({
           title: t('integration.integration_mappings_page.k24'),
           message: t('integration.integration_mappings_page.k25'),
           type: 'success',
         });
-        return data as Mapping;
+        return mapping;
       },
-      delete: async () => {
+      delete: async (id) => {
+        await mappingApi.deleteMapping(id);
         addNotification({
           title: t('integration.integration_mappings_page.k26'),
           message: t('integration.integration_mappings_page.k27'),
