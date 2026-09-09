@@ -386,6 +386,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("stock_take_number", "VARCHAR(100) NOT NULL"),
             ("stock_take_type", "VARCHAR(50) NOT NULL"),
             ("warehouse_id", "UUID NOT NULL"),
+            // V514-2: cycle_count 盘点单生成写入 material_category（此前缺失导致 schema 校验失败）
+            ("material_category", "VARCHAR(50)"),
             ("warehouse_name", "VARCHAR(255)"),
             ("location_id", "UUID"),
             ("location_code", "VARCHAR(100)"),

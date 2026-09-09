@@ -11,7 +11,9 @@ pub mod audit;
 pub mod batch;
 pub mod discrepancy_logic;
 pub mod replenishment_logic;
-// pub mod cycle_count;
+// V514-2: 恢复此前被注释的已实现模块（InventoryCyclePage 前端真实消费 /cycle-counts）
+pub mod cycle_count;
+// discrepancy.rs 存量编译错误（E0308 类型不匹配×3）未修复前保持注释，待后续单独收口
 // pub mod discrepancy;
 pub mod data_sync;
 pub mod inbound_order;
@@ -72,8 +74,9 @@ where
         .merge(stock_take::create_routes())
         .merge(smart_replenishment::create_routes())
         .merge(wave_pick::create_routes())
-        // .merge(cycle_count::create_routes())
-        // .merge(discrepancy::create_routes())
+        // V514-2: 恢复 cycle_count 挂载（模块实现完整，此前仅注册被注释）
+        .merge(cycle_count::create_routes())
+        // discrepancy 待修复后恢复（见 mod 声明处注释）
         .merge(audit::create_routes())
         .merge(data_sync::create_routes())
 }

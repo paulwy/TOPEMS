@@ -464,7 +464,7 @@ pub async fn generate_cycle_count(
         INSERT INTO wms.stock_takes (id, stock_take_number, stock_take_type, warehouse_id, warehouse_name,
                                      location_id, location_code, material_code, material_name,
                                      status, planned_date, planned_by, planned_by_id, created_at, updated_at)
-        VALUES ($1, $2, 'cycle', $3, w.warehouse_name, $4, l.location_code, $5, $6,
+        VALUES ($1, $2, 'cycle', $3, NULL, $4, NULL, $5, $6,
                 'planned', CURRENT_DATE, $7, $8, $9, $10)
         RETURNING id
         "#,
@@ -479,7 +479,6 @@ pub async fn generate_cycle_count(
         now,
         now
     )
-    .bind(&config.warehouse_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -517,7 +516,7 @@ pub async fn generate_cycle_count(
         Some(id),
         None,
         None,
-        Some(new_stock_take_id),
+        Some(new_stock_take_id.to_string()),
         None,
         None,
         "success".to_string(),
