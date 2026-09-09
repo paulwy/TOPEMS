@@ -62,27 +62,27 @@ export const businessMetricApi = {
     service_name?: string;
     metric_type?: string;
   }): Promise<ApiResponse<BusinessMetric[]>> => {
-    return apiClient.core.get('/api/core/monitor/business-metrics', { params });
+    return apiClient.monitor.get('/business-metrics', { params });
   },
 
   get: (id: string): Promise<ApiResponse<BusinessMetric>> => {
-    return apiClient.core.get(`/api/core/monitor/business-metrics/${id}`);
+    return apiClient.monitor.get(`/business-metrics/${id}`);
   },
 
   create: (data: Partial<BusinessMetric>): Promise<ApiResponse<BusinessMetric>> => {
-    return apiClient.core.post('/api/core/monitor/business-metrics', data);
+    return apiClient.monitor.post('/business-metrics', data);
   },
 
   update: (id: string, data: Partial<BusinessMetric>): Promise<ApiResponse<BusinessMetric>> => {
-    return apiClient.core.put(`/api/core/monitor/business-metrics/${id}`, data);
+    return apiClient.monitor.put(`/business-metrics/${id}`, data);
   },
 
   getKpi: (params?: { service_name?: string }): Promise<ApiResponse<BusinessMetricKpi[]>> => {
-    return apiClient.core.get('/api/core/monitor/business-metrics/kpi', { params });
+    return apiClient.monitor.get('/business-metrics/kpi', { params });
   },
 
   getSummary: (params?: { period?: string }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.get('/api/core/monitor/business-metrics/summary', { params });
+    return apiClient.monitor.get('/business-metrics/summary', { params });
   },
 
   getTrend: (params?: {
@@ -91,24 +91,24 @@ export const businessMetricApi = {
     start_date?: string;
     end_date?: string;
   }): Promise<ApiResponse<Array<{ timestamp: string; value: number }>>> => {
-    return apiClient.core.get('/api/core/monitor/business-metrics/trend', { params });
+    return apiClient.monitor.get('/business-metrics/trend', { params });
   },
 
   getHealth: (): Promise<ApiResponse<{ status: string; services: Record<string, string> }>> => {
-    return apiClient.core.get('/api/core/monitor/health');
+    return apiClient.monitor.get('/health');
   },
 
   getMetrics: (
     type: 'system' | 'database' | 'realtime'
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.get(`/api/core/monitor/metrics/${type}`);
+    return apiClient.monitor.get(`/metrics/${type}`);
   },
 
   getPerformanceApi: (params?: {
     endpoint?: string;
     period?: string;
   }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.get('/api/core/monitor/performance/api', { params });
+    return apiClient.monitor.get('/performance/api', { params });
   },
 
   getPerformanceReport: (params?: {
@@ -116,96 +116,96 @@ export const businessMetricApi = {
     start_date?: string;
     end_date?: string;
   }): Promise<ApiResponse<PerformanceReport>> => {
-    return apiClient.core.get('/api/core/monitor/reports/performance', { params });
+    return apiClient.monitor.get('/reports/performance', { params });
   },
 
   listAlerts: (params?: {
     status?: string;
     severity?: string;
   }): Promise<ApiResponse<Record<string, unknown>[]>> => {
-    return apiClient.core.get('/api/core/monitor/alerts', { params });
+    return apiClient.monitor.get('/alerts', { params });
   },
 
   acknowledgeAlert: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.post(`/api/core/monitor/alerts/${id}/acknowledge`, {});
+    return apiClient.monitor.post(`/alerts/${id}/acknowledge`, {});
   },
 
   dismissAlert: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.post(`/api/core/monitor/alerts/${id}/dismiss`, {});
+    return apiClient.monitor.post(`/alerts/${id}/dismiss`, {});
   },
 
   escalateAlert: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.post(`/api/core/monitor/alerts/${id}/escalate`, {});
+    return apiClient.monitor.post(`/alerts/${id}/escalate`, {});
   },
 
   resolveAlert: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.post(`/api/core/monitor/alerts/${id}/resolve`, {});
+    return apiClient.monitor.post(`/alerts/${id}/resolve`, {});
   },
 
   listRules: (params?: { status?: string }): Promise<ApiResponse<Record<string, unknown>[]>> => {
-    return apiClient.core.get('/api/core/monitor/rules', { params });
+    return apiClient.monitor.get('/rules', { params });
   },
 
   createRule: (data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.post('/api/core/monitor/rules', data);
+    return apiClient.monitor.post('/rules', data);
   },
 
   getRule: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.get(`/api/core/monitor/rules/${id}`);
+    return apiClient.monitor.get(`/rules/${id}`);
   },
 
   updateRule: (
     id: string,
     data: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.put(`/api/core/monitor/rules/${id}`, data);
+    return apiClient.monitor.put(`/rules/${id}`, data);
   },
 
   deleteRule: (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.core.delete(`/api/core/monitor/rules/${id}`);
+    return apiClient.monitor.delete(`/rules/${id}`);
   },
 
   enableRule: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.post(`/api/core/monitor/rules/${id}/enable`, {});
+    return apiClient.monitor.post(`/rules/${id}/enable`, {});
   },
 
   disableRule: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.post(`/api/core/monitor/rules/${id}/disable`, {});
+    return apiClient.monitor.post(`/rules/${id}/disable`, {});
   },
 
   listSlos: (params?: { status?: string }): Promise<ApiResponse<Slos[]>> => {
-    return apiClient.core.get('/api/core/monitor/slos', { params });
+    return apiClient.monitor.get('/slos', { params });
   },
 
   createSlos: (data: Partial<Slos>): Promise<ApiResponse<Slos>> => {
-    return apiClient.core.post('/api/core/monitor/slos', data);
+    return apiClient.monitor.post('/slos', data);
   },
 
   getSlos: (id: string): Promise<ApiResponse<Slos>> => {
-    return apiClient.core.get(`/api/core/monitor/slos/${id}`);
+    return apiClient.monitor.get(`/slos/${id}`);
   },
 
   updateSlos: (id: string, data: Partial<Slos>): Promise<ApiResponse<Slos>> => {
-    return apiClient.core.put(`/api/core/monitor/slos/${id}`, data);
+    return apiClient.monitor.put(`/slos/${id}`, data);
   },
 
   getSlosBudget: (): Promise<ApiResponse<SlosBudget>> => {
-    return apiClient.core.get('/api/core/monitor/slos/budget');
+    return apiClient.monitor.get('/slos/budget');
   },
 
   getSlosSummary: (): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.core.get('/api/core/monitor/slos/summary');
+    return apiClient.monitor.get('/slos/summary');
   },
 
   getSlosTrend: (params?: {
     start_date?: string;
     end_date?: string;
   }): Promise<ApiResponse<Array<{ timestamp: string; value: number }>>> => {
-    return apiClient.core.get('/api/core/monitor/slos/trend', { params });
+    return apiClient.monitor.get('/slos/trend', { params });
   },
 
   resolveSloViolation: (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.core.post(`/api/core/monitor/slos/violations/${id}/resolve`, {});
+    return apiClient.monitor.post(`/slos/violations/${id}/resolve`, {});
   },
 };
 
