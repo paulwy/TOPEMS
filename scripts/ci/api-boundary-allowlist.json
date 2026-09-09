@@ -1,5 +1,5 @@
 {
-  "_comment": "API boundary allowlist (2026-09-09). prebuilt=预埋零消费（正常放行）；known_gap=页面真实消费但后端未实现（登记缺口，仍需实现）。；2026-09-09 ai 后端补齐后移除 15 条 ai known_gap（已转 matched），剩 crm 7 条",
+  "_comment": "API boundary allowlist (2026-09-09). prebuilt=预埋零消费（正常放行）；known_gap 已清零：ai 15 条（2026-09-09 后端补齐）+ crm 7 条（2026-09-09 前端改指 finance+finance 补齐）全部转 matched。",
   "entries": [
     {
       "svc": "ai",
@@ -112,62 +112,6 @@
       "file": "crm/index.ts",
       "type": "prebuilt",
       "reason": "crm /health 健康检查预埋，无页面消费"
-    },
-    {
-      "svc": "crm",
-      "verb": "DELETE",
-      "path": "/invoices/",
-      "file": "crmFinance/index.ts",
-      "type": "known_gap",
-      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
-    },
-    {
-      "svc": "crm",
-      "verb": "GET",
-      "path": "/reports/receivable-aging",
-      "file": "crmFinance/index.ts",
-      "type": "known_gap",
-      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
-    },
-    {
-      "svc": "crm",
-      "verb": "GET",
-      "path": "/reports/receivable-summary",
-      "file": "crmFinance/index.ts",
-      "type": "known_gap",
-      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
-    },
-    {
-      "svc": "crm",
-      "verb": "GET",
-      "path": "/reports/overdue-receivables",
-      "file": "crmFinance/index.ts",
-      "type": "known_gap",
-      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
-    },
-    {
-      "svc": "crm",
-      "verb": "GET",
-      "path": "/invoices/export",
-      "file": "crmFinance/index.ts",
-      "type": "known_gap",
-      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
-    },
-    {
-      "svc": "crm",
-      "verb": "GET",
-      "path": "/collections/export",
-      "file": "crmFinance/index.ts",
-      "type": "known_gap",
-      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
-    },
-    {
-      "svc": "crm",
-      "verb": "GET",
-      "path": "/reports/receivable-aging/export",
-      "file": "crmFinance/index.ts",
-      "type": "known_gap",
-      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
     },
     {
       "svc": "integration",

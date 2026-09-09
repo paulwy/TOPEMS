@@ -97,8 +97,8 @@ export const crmFinanceApi = {
     page?: number;
     pagesize?: number;
   }) => {
-    const response = await apiClient.crm.get<PaginatedResponse<SalesInvoice>>(
-      '/invoices',
+    const response = await apiClient.finance.get<PaginatedResponse<SalesInvoice>>(
+      '/sales-invoices',
       { params }
     );
     return handleResponse(response);
@@ -106,20 +106,20 @@ export const crmFinanceApi = {
 
   // 获取销售发票详情
   getSalesInvoice: async (invoiceId: string) => {
-    const response = await apiClient.crm.get<SalesInvoice>(`/invoices/${invoiceId}`);
+    const response = await apiClient.finance.get<SalesInvoice>(`/sales-invoices/${invoiceId}`);
     return handleResponse(response);
   },
 
   // 创建销售发票
   createSalesInvoice: async (data: Partial<SalesInvoice>) => {
-    const response = await apiClient.crm.post<SalesInvoice>('/invoices', data);
+    const response = await apiClient.finance.post<SalesInvoice>('/sales-invoices', data);
     return handleResponse(response);
   },
 
   // 更新销售发票
   updateSalesInvoice: async (invoiceId: string, data: Partial<SalesInvoice>) => {
-    const response = await apiClient.crm.put<SalesInvoice>(
-      `/invoices/${invoiceId}`,
+    const response = await apiClient.finance.put<SalesInvoice>(
+      `/sales-invoices/${invoiceId}`,
       data
     );
     return handleResponse(response);
@@ -127,22 +127,22 @@ export const crmFinanceApi = {
 
   // 删除销售发票
   deleteSalesInvoice: async (invoiceId: string) => {
-    const response = await apiClient.crm.delete(`/invoices/${invoiceId}`);
+    const response = await apiClient.finance.delete(`/sales-invoices/${invoiceId}`);
     return handleResponse(response);
   },
 
   // 开具发票
   issueSalesInvoice: async (invoiceId: string) => {
-    const response = await apiClient.crm.post<SalesInvoice>(
-      `/invoices/${invoiceId}/issue`
+    const response = await apiClient.finance.post<SalesInvoice>(
+      `/sales-invoices/${invoiceId}/issue`
     );
     return handleResponse(response);
   },
 
   // 取消发票
   cancelSalesInvoice: async (invoiceId: string, reason: string) => {
-    const response = await apiClient.crm.post<SalesInvoice>(
-      `/invoices/${invoiceId}/cancel`,
+    const response = await apiClient.finance.post<SalesInvoice>(
+      `/sales-invoices/${invoiceId}/cancel`,
       { reason }
     );
     return handleResponse(response);
@@ -150,8 +150,8 @@ export const crmFinanceApi = {
 
   // 红冲发票
   redFlushSalesInvoice: async (invoiceId: string, reason?: string) => {
-    const response = await apiClient.crm.post<SalesInvoice>(
-      `/invoices/${invoiceId}/red-flush`,
+    const response = await apiClient.finance.post<SalesInvoice>(
+      `/sales-invoices/${invoiceId}/red-flush`,
       { reason }
     );
     return handleResponse(response);
@@ -166,8 +166,8 @@ export const crmFinanceApi = {
     page?: number;
     pagesize?: number;
   }) => {
-    const response = await apiClient.crm.get<PaginatedResponse<CollectionRecord>>(
-      '/collections',
+    const response = await apiClient.finance.get<PaginatedResponse<CollectionRecord>>(
+      '/sales-collections',
       { params }
     );
     return handleResponse(response);
@@ -175,29 +175,32 @@ export const crmFinanceApi = {
 
   // 获取收款记录详情
   getCollectionRecord: async (recordId: string) => {
-    const response = await apiClient.crm.get<CollectionRecord>(
-      `/collections/${recordId}`
+    const response = await apiClient.finance.get<CollectionRecord>(
+      `/sales-collections/${recordId}`
     );
     return handleResponse(response);
   },
 
   // 创建收款记录
   createCollectionRecord: async (data: Partial<CollectionRecord>) => {
-    const response = await apiClient.crm.post<CollectionRecord>('/collections', data);
+    const response = await apiClient.finance.post<CollectionRecord>('/sales-collections', data);
     return handleResponse(response);
   },
 
   // 确认收款
   confirmCollection: async (recordId: string) => {
-    const response = await apiClient.crm.post<CollectionRecord>(
-      `/collections/${recordId}/confirm`
+    const response = await apiClient.finance.post<CollectionRecord>(
+      `/sales-collections/${recordId}/confirm`
     );
     return handleResponse(response);
   },
 
   // 批量确认收款
   batchConfirmCollections: async (recordIds: string[]) => {
-    const response = await apiClient.crm.post<{ success: number; failed: number }>('/collections/batch-confirm', { record_ids: recordIds });
+    const response = await apiClient.finance.post<{ success: number; failed: number }>(
+      '/sales-collections/batch-confirm',
+      { record_ids: recordIds }
+    );
     return handleResponse(response);
   },
 
@@ -207,7 +210,7 @@ export const crmFinanceApi = {
     customer_ids?: string[];
     as_of_date: string;
   }) => {
-    const response = await apiClient.crm.get('/reports/receivable-aging', {
+    const response = await apiClient.finance.get('/reports/receivable-aging', {
       params,
     });
     return handleResponse(response);
@@ -215,7 +218,7 @@ export const crmFinanceApi = {
 
   // 获取客户应收账款汇总
   getReceivableSummary: async (customerId?: string) => {
-    const response = await apiClient.crm.get('/reports/receivable-summary', {
+    const response = await apiClient.finance.get('/reports/receivable-summary', {
       params: customerId ? { customer_id: customerId } : undefined,
     });
     return handleResponse(response);
@@ -229,7 +232,7 @@ export const crmFinanceApi = {
     page?: number;
     pagesize?: number;
   }) => {
-    const response = await apiClient.crm.get('/reports/overdue-receivables', {
+    const response = await apiClient.finance.get('/reports/overdue-receivables', {
       params,
     });
     return handleResponse(response);
@@ -244,7 +247,7 @@ export const crmFinanceApi = {
     end_date?: string;
     format: 'csv' | 'xlsx';
   }) => {
-    const response = await apiClient.crm.get('/invoices/export', {
+    const response = await apiClient.finance.get('/sales-invoices/export', {
       params,
       responseType: 'blob',
     });
@@ -258,7 +261,7 @@ export const crmFinanceApi = {
     end_date?: string;
     format: 'csv' | 'xlsx';
   }) => {
-    const response = await apiClient.crm.get('/collections/export', {
+    const response = await apiClient.finance.get('/sales-collections/export', {
       params,
       responseType: 'blob',
     });
@@ -272,7 +275,7 @@ export const crmFinanceApi = {
     as_of_date: string;
     format: 'csv' | 'xlsx';
   }) => {
-    const response = await apiClient.crm.get('/reports/receivable-aging/export', {
+    const response = await apiClient.finance.get('/reports/receivable-aging/export', {
       params,
       responseType: 'blob',
     });

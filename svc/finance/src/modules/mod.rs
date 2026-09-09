@@ -19,6 +19,7 @@ pub mod risk_v54;
 pub mod risk_v59;
 pub mod settlement_center;
 pub mod settlement_v55;
+pub mod sales_invoice;
 pub mod shared_services;
 pub mod tax_v56;
 pub mod treasury_v58;
@@ -5295,6 +5296,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(forecast_v53::create_routes())
         .merge(risk_v54::create_routes())
         .merge(settlement_v55::create_routes())
+        .merge(sales_invoice::create_routes())
         .merge(settlement_center::create_routes())
         .merge(tax_v56::create_routes())
         .merge(reports_v57::create_routes())
