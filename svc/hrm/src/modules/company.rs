@@ -40,11 +40,16 @@ pub fn create_routes() -> Router<ApiState> {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn list_companies(
+pub async fn list_companies(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -59,7 +64,7 @@ async fn list_companies(
 
     // 验证连接状态
     let conn_test = sqlx::query(only_own_schema_query!("hrm", "SHOW search_path"))
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
     tracing::debug!("Connection search_path: {:?}", conn_test);
 
@@ -79,7 +84,7 @@ async fn list_companies(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -94,7 +99,7 @@ async fn list_companies(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -148,12 +153,17 @@ async fn list_companies(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn create_company(
+pub async fn create_company(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -185,11 +195,17 @@ async fn create_company(
     .bind(&req.description)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(company) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             // 记录审计日志
             let user_id = headers
                 .get("x-user-id")
@@ -242,11 +258,16 @@ async fn create_company(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_company(
+pub async fn get_company(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Company>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -260,7 +281,7 @@ async fn get_company(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -288,13 +309,18 @@ async fn get_company(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn update_company(
+pub async fn update_company(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateCompanyRequest>,
 ) -> Json<ApiResponse<Company>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -308,7 +334,7 @@ async fn update_company(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -354,7 +380,7 @@ async fn update_company(
     .bind(&description)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -411,12 +437,17 @@ async fn update_company(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn delete_company(
+pub async fn delete_company(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -430,7 +461,7 @@ async fn delete_company(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match existing {
@@ -440,7 +471,7 @@ async fn delete_company(
                 "UPDATE hrm.companies SET deleted_at = NOW() WHERE id = $1"
             ))
             .bind(id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             match result {

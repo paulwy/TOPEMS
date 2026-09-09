@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::*,
     Json, Router,
 };
@@ -59,10 +59,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_plans(
+pub async fn list_plans(
     State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -82,7 +87,7 @@ async fn list_plans(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -95,7 +100,7 @@ async fn list_plans(
                 "#
             ))
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -120,10 +125,15 @@ async fn list_plans(
     }
 }
 
-async fn create_plan(
+pub async fn create_plan(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateTrainingPlanRequest>,
 ) -> Json<ApiResponse<TrainingPlan>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
     let code = req.code.unwrap_or_else(|| {
@@ -150,11 +160,19 @@ async fn create_plan(
     .bind(req.budget)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(plan) => Json(ApiResponse::success(plan, "培训计划创建成功")),
+        Ok(plan) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(plan, "培训计划创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建培训计划失败: {}", e);
             Json(ApiResponse::<TrainingPlan>::error(500, "培训计划创建失败"))
@@ -162,10 +180,15 @@ async fn create_plan(
     }
 }
 
-async fn get_plan(
+pub async fn get_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
         SELECT id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
@@ -173,7 +196,7 @@ async fn get_plan(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -189,7 +212,7 @@ async fn get_plan(
                 "#
             ))
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -215,11 +238,16 @@ async fn get_plan(
     }
 }
 
-async fn update_plan(
+pub async fn update_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateTrainingPlanRequest>,
 ) -> Json<ApiResponse<TrainingPlan>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, TrainingPlan>(
@@ -246,7 +274,7 @@ async fn update_plan(
     .bind(&req.status)
     .bind(req.budget)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -259,16 +287,21 @@ async fn update_plan(
     }
 }
 
-async fn delete_plan(
+pub async fn delete_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.training_plans SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -301,10 +334,15 @@ async fn delete_plan(
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_courses(
+pub async fn list_courses(
     State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -330,7 +368,7 @@ async fn list_courses(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -346,7 +384,7 @@ async fn list_courses(
             ))
             .bind(plan_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -371,10 +409,15 @@ async fn list_courses(
     }
 }
 
-async fn create_course(
+pub async fn create_course(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateTrainingCourseRequest>,
 ) -> Json<ApiResponse<TrainingCourse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
     let code = req.code.unwrap_or_else(|| {
@@ -410,11 +453,19 @@ async fn create_course(
     .bind(req.max_participants)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(course) => Json(ApiResponse::success(course, "课程创建成功")),
+        Ok(course) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(course, "课程创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建课程失败: {}", e);
             Json(ApiResponse::<TrainingCourse>::error(500, "课程创建失败"))
@@ -422,10 +473,15 @@ async fn create_course(
     }
 }
 
-async fn get_course(
+pub async fn get_course(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<TrainingCourse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
         "hrm",
         r#"
@@ -436,7 +492,7 @@ async fn get_course(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -449,11 +505,16 @@ async fn get_course(
     }
 }
 
-async fn update_course(
+pub async fn update_course(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateTrainingCourseRequest>,
 ) -> Json<ApiResponse<TrainingCourse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
@@ -491,7 +552,7 @@ async fn update_course(
     .bind(req.max_participants)
     .bind(&req.status)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -504,16 +565,21 @@ async fn update_course(
     }
 }
 
-async fn delete_course(
+pub async fn delete_course(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.training_courses SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -546,10 +612,15 @@ async fn delete_course(
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_records(
+pub async fn list_records(
     State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -575,7 +646,7 @@ async fn list_records(
     .bind(employee_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -591,7 +662,7 @@ async fn list_records(
             ))
             .bind(course_id)
             .bind(employee_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -616,10 +687,15 @@ async fn list_records(
     }
 }
 
-async fn create_record(
+pub async fn create_record(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateTrainingRecordRequest>,
 ) -> Json<ApiResponse<TrainingRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -641,11 +717,19 @@ async fn create_record(
     .bind(req.enrollment_date)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(record) => Json(ApiResponse::success(record, "培训记录创建成功")),
+        Ok(record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(record, "培训记录创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建培训记录失败: {}", e);
             Json(ApiResponse::<TrainingRecord>::error(
@@ -656,11 +740,16 @@ async fn create_record(
     }
 }
 
-async fn enroll_course(
+pub async fn enroll_course(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<EnrollRequest>,
 ) -> Json<ApiResponse<TrainingRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let record_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -682,11 +771,19 @@ async fn enroll_course(
     .bind(now)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(record) => Json(ApiResponse::success(record, "报名成功")),
+        Ok(record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(record, "报名成功"))
+        }
         Err(e) => {
             tracing::error!("报名失败: {}", e);
             Json(ApiResponse::<TrainingRecord>::error(500, "报名失败"))
@@ -699,10 +796,15 @@ pub struct EnrollRequest {
     pub employee_id: Uuid,
 }
 
-async fn get_record(
+pub async fn get_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<TrainingRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
         r#"
@@ -713,7 +815,7 @@ async fn get_record(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -729,11 +831,16 @@ async fn get_record(
     }
 }
 
-async fn update_record(
+pub async fn update_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateTrainingRecordRequest>,
 ) -> Json<ApiResponse<TrainingRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
@@ -761,7 +868,7 @@ async fn update_record(
     .bind(req.completed_at)
     .bind(&req.feedback)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -777,16 +884,21 @@ async fn update_record(
     }
 }
 
-async fn delete_record(
+pub async fn delete_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.training_records SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -801,11 +913,16 @@ async fn delete_record(
     }
 }
 
-async fn get_course_records(
+pub async fn get_course_records(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -824,7 +941,7 @@ async fn get_course_records(
     .bind(id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -833,7 +950,7 @@ async fn get_course_records(
                 only_own_schema_query!("hrm", "SELECT COUNT(*) FROM hrm.training_records WHERE deleted_at IS NULL AND course_id = $1"),
             )
             .bind(id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -858,11 +975,16 @@ async fn get_course_records(
     }
 }
 
-async fn get_employee_records(
+pub async fn get_employee_records(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -881,7 +1003,7 @@ async fn get_employee_records(
     .bind(id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -890,7 +1012,7 @@ async fn get_employee_records(
                 only_own_schema_query!("hrm", "SELECT COUNT(*) FROM hrm.training_records WHERE deleted_at IS NULL AND employee_id = $1"),
             )
             .bind(id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);

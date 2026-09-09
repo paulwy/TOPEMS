@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::*, Json, Router};
+use axum::{
+    extract::{Extension, State},
+    routing::*,
+    Json, Router,
+};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -112,9 +116,14 @@ pub fn create_routes() -> Router<ApiState> {
 
 const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
-async fn get_init_progress(
+pub async fn get_init_progress(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<InitProgressResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
 
     let steps = sqlx::query_as::<_, InitializationStatus>(
@@ -126,7 +135,7 @@ async fn get_init_progress(
         "#),
     )
     .bind(org_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match steps {
@@ -143,7 +152,7 @@ async fn get_init_progress(
                 "SELECT id FROM hrm.companies WHERE tenant_id = $1 AND name != '我的公司' LIMIT 1"
             ))
             .bind(org_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
             let step_statuses: Vec<StepStatus> = steps
@@ -176,10 +185,15 @@ async fn get_init_progress(
     }
 }
 
-async fn setup_company_info(
+pub async fn setup_company_info(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CompanyInfoRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
 
@@ -219,7 +233,7 @@ async fn setup_company_info(
     .bind(&req.website)
     .bind(&req.description)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -235,7 +249,7 @@ async fn setup_company_info(
             ))
             .bind(now)
             .bind(org_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             // 记录日志
@@ -249,9 +263,15 @@ async fn setup_company_info(
             .bind(org_id)
             .bind(serde_json::json!({ "org_id": company.id, "name": company.name }))
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(
                 serde_json::json!({ "org_id": company.id, "name": company.name }),
                 "公司信息更新成功",
@@ -283,10 +303,15 @@ pub struct Company {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-async fn setup_departments(
+pub async fn setup_departments(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<DepartmentsBatchRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
 
@@ -327,7 +352,7 @@ async fn setup_departments(
         .bind(&dept.description)
         .bind(now)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         match result {
@@ -357,7 +382,7 @@ async fn setup_departments(
     ))
     .bind(now)
     .bind(org_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     Json(ApiResponse::success(
@@ -391,10 +416,15 @@ pub struct Department {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-async fn setup_positions(
+pub async fn setup_positions(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<PositionsBatchRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
 
@@ -429,7 +459,7 @@ async fn setup_positions(
         .bind(&pos.description)
         .bind(now)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         match result {
@@ -459,7 +489,7 @@ async fn setup_positions(
     ))
     .bind(now)
     .bind(org_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     Json(ApiResponse::success(
@@ -493,10 +523,15 @@ pub struct Position {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-async fn setup_admin_user(
+pub async fn setup_admin_user(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<AdminUserRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
 
@@ -550,7 +585,7 @@ async fn setup_admin_user(
     .bind(&req.address)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -569,7 +604,7 @@ async fn setup_admin_user(
             ))
             .bind(now)
             .bind(org_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             Json(ApiResponse::success(
@@ -604,10 +639,15 @@ pub struct Employee {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-async fn complete_initialization(
+pub async fn complete_initialization(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CompleteInitRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
 
@@ -625,7 +665,7 @@ async fn complete_initialization(
         "#),
     )
     .bind(org_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match steps {
@@ -654,7 +694,7 @@ async fn complete_initialization(
             ))
             .bind(now)
             .bind(org_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             Json(ApiResponse::success(

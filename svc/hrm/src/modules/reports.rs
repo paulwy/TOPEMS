@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     routing::get,
     Json, Router,
 };
@@ -94,10 +94,15 @@ pub struct EmployeeSummaryResponse {
     pub terminations_this_month: i64,
 }
 
-async fn employee_summary(
+pub async fn employee_summary(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let _start_date = params.start_date.clone();
     let _end_date = params.end_date.clone();
 
@@ -105,35 +110,35 @@ async fn employee_summary(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.employees"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let inactive_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'inactive'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let male_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'male'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let female_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'female'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let tenure_result = sqlx::query_scalar::<_, Option<f64>>(only_own_schema_query!(
@@ -144,7 +149,7 @@ async fn employee_summary(
         WHERE hire_date IS NOT NULL AND status = 'active'
         "#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let now = Utc::now();
@@ -158,7 +163,7 @@ async fn employee_summary(
         "#
     ))
     .bind(&current_month)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let terminations_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -170,7 +175,7 @@ async fn employee_summary(
         "#
     ))
     .bind(&current_month)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match (
@@ -229,7 +234,14 @@ struct DepartmentSummaryRow {
     active_count: Option<i64>,
 }
 
-async fn department_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn department_summary(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, DepartmentSummaryRow>(only_own_schema_query!(
         "hrm",
         r#"
@@ -244,7 +256,7 @@ async fn department_summary(State(state): State<ApiState>) -> Json<ApiResponse<s
         ORDER BY d.name
         "#
     ))
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -283,7 +295,14 @@ pub struct ContractSummaryResponse {
     pub expiring_next_month: i64,
 }
 
-async fn contract_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn contract_summary(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
     let current_month = now.format("%Y-%m").to_string();
     let next_month = (now + chrono::Duration::days(30))
@@ -294,28 +313,28 @@ async fn contract_summary(State(state): State<ApiState>) -> Json<ApiResponse<ser
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.contracts"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date > CURRENT_DATE"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let expired_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date <= CURRENT_DATE"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let expiring_this_month_result = sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("hrm", r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1 AND end_date > CURRENT_DATE"#),
     )
     .bind(&current_month)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let expiring_next_month_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -323,7 +342,7 @@ async fn contract_summary(State(state): State<ApiState>) -> Json<ApiResponse<ser
         r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1"#
     ))
     .bind(&next_month)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match (
@@ -364,47 +383,54 @@ pub struct TrainingSummaryResponse {
     pub avg_completion_rate: f64,
 }
 
-async fn training_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn training_summary(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let total_plans_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.training_plans"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let active_plans_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.training_plans WHERE status = 'active'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let total_courses_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.training_courses"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let completed_courses_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.training_courses WHERE status = 'completed'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let total_records_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.training_records"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let completed_records_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.training_records WHERE status = 'completed'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match (
@@ -460,10 +486,15 @@ pub struct AttendanceSummaryResponse {
     pub attendance_rate: f64,
 }
 
-async fn attendance_summary(
+pub async fn attendance_summary(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let (start_date, end_date) = params.get_date_range();
 
     let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -472,7 +503,7 @@ async fn attendance_summary(
     ))
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let on_time_result = sqlx::query_scalar::<_, i64>(
@@ -480,7 +511,7 @@ async fn attendance_summary(
     )
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let late_result = sqlx::query_scalar::<_, i64>(
@@ -488,7 +519,7 @@ async fn attendance_summary(
     )
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let absent_result = sqlx::query_scalar::<_, i64>(
@@ -496,7 +527,7 @@ async fn attendance_summary(
     )
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let leave_result = sqlx::query_scalar::<_, i64>(
@@ -504,7 +535,7 @@ async fn attendance_summary(
     )
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match (
@@ -553,10 +584,15 @@ pub struct PayrollSummaryResponse {
     pub bonus_total: f64,
 }
 
-async fn payroll_summary(
+pub async fn payroll_summary(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let _start_date = params.start_date.clone();
     let _end_date = params.end_date.clone();
 
@@ -565,7 +601,7 @@ async fn payroll_summary(
             "hrm",
             r#"SELECT COALESCE(SUM(net_amount), 0) FROM hrm.payroll_items"#
         ))
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let avg_salary_result =
@@ -573,32 +609,32 @@ async fn payroll_summary(
             "hrm",
             r#"SELECT COALESCE(AVG(salary), 0) FROM hrm.contracts WHERE status = 'active'"#
         ))
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let min_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
         only_own_schema_query!("hrm", r#"SELECT COALESCE(MIN(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#),
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let max_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
         only_own_schema_query!("hrm", r#"SELECT COALESCE(MAX(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#),
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let employee_count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let bonus_total_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
         only_own_schema_query!("hrm", r#"SELECT COALESCE(SUM(CASE WHEN item_type = 'bonus' THEN amount ELSE 0 END), 0) FROM hrm.payroll_details"#),
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match (

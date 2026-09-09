@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -147,10 +147,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_payroll_runs(
+pub async fn list_payroll_runs(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -173,7 +178,7 @@ async fn list_payroll_runs(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -187,7 +192,7 @@ async fn list_payroll_runs(
             )
             .bind(&pay_period)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -212,11 +217,16 @@ async fn list_payroll_runs(
     }
 }
 
-async fn create_payroll_run(
+pub async fn create_payroll_run(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePayrollRunRequest>,
 ) -> Json<ApiResponse<PayrollRun>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if !validate_pay_period(&req.pay_period) {
         return Json(api_error(400, "薪资周期为空或格式不正确（应为 YYYY-MM）"));
     }
@@ -235,7 +245,7 @@ async fn create_payroll_run(
     .bind(&req.pay_period)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -280,15 +290,20 @@ async fn create_payroll_run(
     response
 }
 
-async fn get_payroll_run(
+pub async fn get_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -297,7 +312,7 @@ async fn get_payroll_run(
                 only_own_schema_query!("hrm", "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE payroll_run_id = $1")
             )
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -323,17 +338,22 @@ async fn get_payroll_run(
     }
 }
 
-async fn delete_payroll_run(
+pub async fn delete_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.payroll_runs SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -382,17 +402,22 @@ async fn delete_payroll_run(
     response
 }
 
-async fn calculate_payroll_run(
+pub async fn calculate_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PayrollRun>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "hrm",
         "SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let emp_count = result.unwrap_or(0);
@@ -410,7 +435,7 @@ async fn calculate_payroll_run(
     .bind(total_amount)
     .bind(emp_count)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -429,7 +454,7 @@ async fn calculate_payroll_run(
     }
 }
 
-async fn create_payroll_items(
+pub async fn create_payroll_items(
     db: &PgPool,
     payroll_run_id: Uuid,
     emp_count: i32,
@@ -463,10 +488,15 @@ async fn create_payroll_items(
     Ok(())
 }
 
-async fn pay_payroll_run(
+pub async fn pay_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PayrollRun>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let _ = sqlx::query(only_own_schema_query!(
@@ -479,7 +509,7 @@ async fn pay_payroll_run(
     ))
     .bind(id)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let result = sqlx::query_as::<_, PayrollRun>(
@@ -492,7 +522,7 @@ async fn pay_payroll_run(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -508,10 +538,15 @@ async fn pay_payroll_run(
     }
 }
 
-async fn list_payroll_items(
+pub async fn list_payroll_items(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -536,7 +571,7 @@ async fn list_payroll_items(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -553,7 +588,7 @@ async fn list_payroll_items(
             .bind(payroll_run_id)
             .bind(emp_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -578,15 +613,20 @@ async fn list_payroll_items(
     }
 }
 
-async fn get_payroll_item(
+pub async fn get_payroll_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PayrollItem>(
         only_own_schema_query!("hrm", "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -595,7 +635,7 @@ async fn get_payroll_item(
                 only_own_schema_query!("hrm", "SELECT id, payroll_item_id, item_type, category, description, amount, created_at FROM hrm.payroll_details WHERE payroll_item_id = $1")
             )
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -621,10 +661,15 @@ async fn get_payroll_item(
     }
 }
 
-async fn list_payroll_details(
+pub async fn list_payroll_details(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -644,7 +689,7 @@ async fn list_payroll_details(
     .bind(payroll_item_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -653,7 +698,7 @@ async fn list_payroll_details(
                 only_own_schema_query!("hrm", "SELECT COUNT(*) FROM hrm.payroll_details WHERE ($1::uuid IS NULL OR payroll_item_id = $1)"),
             )
             .bind(payroll_item_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -678,10 +723,15 @@ async fn list_payroll_details(
     }
 }
 
-async fn create_payroll_detail(
+pub async fn create_payroll_detail(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<PayrollDetail>,
 ) -> Json<ApiResponse<PayrollDetail>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
 
     let result = sqlx::query_as::<_, PayrollDetail>(
@@ -697,11 +747,19 @@ async fn create_payroll_detail(
     .bind(&req.category)
     .bind(&req.description)
     .bind(&req.amount)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(detail) => Json(ApiResponse::success(detail, "薪资详情添加成功")),
+        Ok(detail) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(detail, "薪资详情添加成功"))
+        }
         Err(e) => {
             tracing::error!("添加薪资详情失败: {}", e);
             Json(ApiResponse::<PayrollDetail>::error(500, "添加薪资详情失败"))
@@ -711,17 +769,22 @@ async fn create_payroll_detail(
 
 /// 生成薪资凭证
 /// 根据薪资发放记录生成财务凭证
-async fn generate_payroll_voucher(
+pub async fn generate_payroll_voucher(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<GeneratePayrollVoucherRequest>,
 ) -> Json<ApiResponse<PayrollVoucherResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // 获取薪资发放记录
     let payroll_run: Option<PayrollRun> = sqlx::query_as(
         only_own_schema_query!("hrm", "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
 
@@ -763,7 +826,7 @@ async fn generate_payroll_voucher(
         "#
     ))
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .ok();
 
@@ -927,10 +990,15 @@ pub struct PayrollSlip {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-async fn list_payroll_slips(
+pub async fn list_payroll_slips(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -975,7 +1043,7 @@ async fn list_payroll_slips(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -993,7 +1061,7 @@ async fn list_payroll_slips(
             .bind(payroll_run_id)
             .bind(emp_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -135,10 +135,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_reviews(
+pub async fn list_reviews(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -163,7 +168,7 @@ async fn list_reviews(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -180,7 +185,7 @@ async fn list_reviews(
             .bind(emp_id)
             .bind(&review_period)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -205,11 +210,16 @@ async fn list_reviews(
     }
 }
 
-async fn create_review(
+pub async fn create_review(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePerformanceReviewRequest>,
 ) -> Json<ApiResponse<PerformanceReview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
         return Json(api_error(400, "员工ID不能为空"));
     }
@@ -234,7 +244,7 @@ async fn create_review(
     .bind(req.reviewer_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -279,15 +289,20 @@ async fn create_review(
     response
 }
 
-async fn get_review(
+pub async fn get_review(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PerformanceReview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceReview>(
         only_own_schema_query!("hrm", "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -306,11 +321,16 @@ async fn get_review(
     }
 }
 
-async fn update_review(
+pub async fn update_review(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdatePerformanceReviewRequest>,
 ) -> Json<ApiResponse<PerformanceReview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceReview>(
@@ -338,7 +358,7 @@ async fn update_review(
     .bind(&req.comments)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -357,17 +377,22 @@ async fn update_review(
     }
 }
 
-async fn delete_review(
+pub async fn delete_review(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.performance_reviews SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -416,10 +441,15 @@ async fn delete_review(
     response
 }
 
-async fn submit_review(
+pub async fn submit_review(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PerformanceReview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceReview>(
@@ -432,7 +462,7 @@ async fn submit_review(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -451,10 +481,15 @@ async fn submit_review(
     }
 }
 
-async fn approve_review(
+pub async fn approve_review(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PerformanceReview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceReview>(
@@ -467,7 +502,7 @@ async fn approve_review(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -486,10 +521,15 @@ async fn approve_review(
     }
 }
 
-async fn list_goals(
+pub async fn list_goals(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -511,7 +551,7 @@ async fn list_goals(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -526,7 +566,7 @@ async fn list_goals(
             ))
             .bind(emp_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -551,11 +591,16 @@ async fn list_goals(
     }
 }
 
-async fn create_goal(
+pub async fn create_goal(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePerformanceGoalRequest>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
         return Json(api_error(400, "员工ID不能为空"));
     }
@@ -583,7 +628,7 @@ async fn create_goal(
     .bind(req.due_date)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -628,15 +673,20 @@ async fn create_goal(
     response
 }
 
-async fn get_goal(
+pub async fn get_goal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PerformanceGoal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceGoal>(
         only_own_schema_query!("hrm", "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -652,11 +702,16 @@ async fn get_goal(
     }
 }
 
-async fn update_goal(
+pub async fn update_goal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdatePerformanceGoalRequest>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
@@ -684,7 +739,7 @@ async fn update_goal(
     .bind(req.due_date)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -700,17 +755,22 @@ async fn update_goal(
     }
 }
 
-async fn delete_goal(
+pub async fn delete_goal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.performance_goals SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -759,15 +819,20 @@ async fn delete_goal(
     response
 }
 
-async fn get_employee_reviews(
+pub async fn get_employee_reviews(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceReview>(
         only_own_schema_query!("hrm", "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE deleted_at IS NULL AND employee_id = $1 ORDER BY created_at DESC")
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -788,15 +853,20 @@ async fn get_employee_reviews(
     }
 }
 
-async fn get_employee_goals(
+pub async fn get_employee_goals(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceGoal>(
         only_own_schema_query!("hrm", "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE employee_id = $1 ORDER BY created_at DESC")
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

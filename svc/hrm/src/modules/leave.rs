@@ -99,10 +99,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_leaves(
+pub async fn list_leaves(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -125,7 +130,7 @@ async fn list_leaves(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -140,7 +145,7 @@ async fn list_leaves(
             ))
             .bind(emp_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -179,12 +184,17 @@ async fn list_leaves(
     ),
     security(("bearerAuth" = []))
 )]
-async fn create_leave(
+pub async fn create_leave(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
         return Json(api_error(400, "员工ID不能为空"));
     }
@@ -219,7 +229,7 @@ async fn create_leave(
     .bind(org_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -278,15 +288,20 @@ async fn create_leave(
     ),
     security(("bearerAuth" = []))
 )]
-async fn get_leave(
+pub async fn get_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, LeaveRequest>(
         only_own_schema_query!("hrm", "SELECT id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at FROM hrm.leave_records WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -315,11 +330,16 @@ async fn get_leave(
     ),
     security(("bearerAuth" = []))
 )]
-async fn update_leave(
+pub async fn update_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, LeaveRequest>(
@@ -343,7 +363,7 @@ async fn update_leave(
     .bind(&req.reason)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -373,17 +393,22 @@ async fn update_leave(
     ),
     security(("bearerAuth" = []))
 )]
-async fn delete_leave(
+pub async fn delete_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.leave_records SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -432,11 +457,16 @@ async fn delete_leave(
     response
 }
 
-async fn approve_leave(
+pub async fn approve_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApproveLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, LeaveRequest>(
@@ -454,7 +484,7 @@ async fn approve_leave(
     .bind(id)
     .bind(req.approver_id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -470,11 +500,16 @@ async fn approve_leave(
     }
 }
 
-async fn reject_leave(
+pub async fn reject_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RejectLeaveRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, LeaveRequest>(
@@ -494,7 +529,7 @@ async fn reject_leave(
     .bind(req.approver_id)
     .bind(now)
     .bind(&req.reason)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

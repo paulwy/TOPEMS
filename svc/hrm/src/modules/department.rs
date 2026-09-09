@@ -56,10 +56,15 @@ pub struct DepartmentPaginationParams {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn list_departments(
+pub async fn list_departments(
     State(state): State<ApiState>,
     Query(params): Query<DepartmentPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -84,7 +89,7 @@ async fn list_departments(
     .bind(org_id_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -101,7 +106,7 @@ async fn list_departments(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(org_id_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -134,11 +139,16 @@ async fn list_departments(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn create_department(
+pub async fn create_department(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -169,11 +179,17 @@ async fn create_department(
     .bind(&req.description)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(department) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             // 发布 MDM 主数据事件
             let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
             let dept_id = department.id;
@@ -227,10 +243,15 @@ async fn create_department(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_department(
+pub async fn get_department(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Department>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
@@ -238,7 +259,7 @@ async fn get_department(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -266,17 +287,22 @@ async fn get_department(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn update_department(
+pub async fn update_department(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", "SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -317,7 +343,7 @@ async fn update_department(
     .bind(&description)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -375,17 +401,22 @@ async fn update_department(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn delete_department(
+pub async fn delete_department(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {

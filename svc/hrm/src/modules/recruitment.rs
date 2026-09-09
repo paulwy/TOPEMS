@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -199,10 +199,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_job_openings(
+pub async fn list_job_openings(
     State(state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -231,7 +236,7 @@ async fn list_job_openings(
     .bind(&employment_type_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -250,7 +255,7 @@ async fn list_job_openings(
             .bind(dept_id)
             .bind(&status_filter)
             .bind(&employment_type_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -275,11 +280,16 @@ async fn list_job_openings(
     }
 }
 
-async fn create_job_opening(
+pub async fn create_job_opening(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateJobOpeningRequest>,
 ) -> Json<ApiResponse<JobOpening>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.title.is_empty() {
         return Json(api_error(400, "职位标题不能为空"));
     }
@@ -307,7 +317,7 @@ async fn create_job_opening(
     .bind(&req.salary_max)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -352,15 +362,20 @@ async fn create_job_opening(
     response
 }
 
-async fn get_job_opening(
+pub async fn get_job_opening(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<JobOpening>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, JobOpening>(
         only_own_schema_query!("hrm", "SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at FROM hrm.job_openings WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -373,11 +388,16 @@ async fn get_job_opening(
     }
 }
 
-async fn update_job_opening(
+pub async fn update_job_opening(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateJobOpeningRequest>,
 ) -> Json<ApiResponse<JobOpening>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, JobOpening>(
@@ -411,7 +431,7 @@ async fn update_job_opening(
     .bind(&req.salary_max)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -424,16 +444,21 @@ async fn update_job_opening(
     }
 }
 
-async fn delete_job_opening(
+pub async fn delete_job_opening(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(
         only_own_schema_query!("hrm", "UPDATE hrm.job_openings SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'"),
     )
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -482,10 +507,15 @@ async fn delete_job_opening(
     response
 }
 
-async fn publish_job_opening(
+pub async fn publish_job_opening(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<JobOpening>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, JobOpening>(
@@ -498,7 +528,7 @@ async fn publish_job_opening(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -514,10 +544,15 @@ async fn publish_job_opening(
     }
 }
 
-async fn close_job_opening(
+pub async fn close_job_opening(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<JobOpening>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, JobOpening>(
@@ -530,7 +565,7 @@ async fn close_job_opening(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -546,10 +581,15 @@ async fn close_job_opening(
     }
 }
 
-async fn list_candidates(
+pub async fn list_candidates(
     State(state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -575,7 +615,7 @@ async fn list_candidates(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -592,7 +632,7 @@ async fn list_candidates(
             .bind(&search)
             .bind(job_opening_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -617,11 +657,16 @@ async fn list_candidates(
     }
 }
 
-async fn create_candidate(
+pub async fn create_candidate(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateCandidateRequest>,
 ) -> Json<ApiResponse<Candidate>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.name.is_empty() {
         return Json(api_error(400, "候选人姓名不能为空"));
     }
@@ -646,7 +691,7 @@ async fn create_candidate(
     .bind(&req.source)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -691,15 +736,20 @@ async fn create_candidate(
     response
 }
 
-async fn get_candidate(
+pub async fn get_candidate(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Candidate>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Candidate>(
         only_own_schema_query!("hrm", "SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at FROM hrm.candidates WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -712,11 +762,16 @@ async fn get_candidate(
     }
 }
 
-async fn update_candidate(
+pub async fn update_candidate(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateCandidateRequest>,
 ) -> Json<ApiResponse<Candidate>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Candidate>(
@@ -746,7 +801,7 @@ async fn update_candidate(
     .bind(&req.status)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -759,17 +814,22 @@ async fn update_candidate(
     }
 }
 
-async fn delete_candidate(
+pub async fn delete_candidate(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.candidates SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -818,10 +878,15 @@ async fn delete_candidate(
     response
 }
 
-async fn list_interviews(
+pub async fn list_interviews(
     State(state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -844,7 +909,7 @@ async fn list_interviews(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -859,7 +924,7 @@ async fn list_interviews(
             ))
             .bind(candidate_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -884,10 +949,15 @@ async fn list_interviews(
     }
 }
 
-async fn create_interview(
+pub async fn create_interview(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateInterviewRequest>,
 ) -> Json<ApiResponse<Interview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
     let round = req.round.unwrap_or(1);
@@ -908,11 +978,19 @@ async fn create_interview(
     .bind(duration)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(interview) => Json(ApiResponse::success(interview, "面试安排成功")),
+        Ok(interview) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(interview, "面试安排成功"))
+        }
         Err(e) => {
             tracing::error!("安排面试失败: {}", e);
             Json(ApiResponse::<Interview>::error(500, "安排面试失败"))
@@ -920,15 +998,20 @@ async fn create_interview(
     }
 }
 
-async fn get_interview(
+pub async fn get_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Interview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Interview>(
         only_own_schema_query!("hrm", "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM hrm.interviews WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -941,11 +1024,16 @@ async fn get_interview(
     }
 }
 
-async fn update_interview(
+pub async fn update_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateInterviewRequest>,
 ) -> Json<ApiResponse<Interview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Interview>(
@@ -977,7 +1065,7 @@ async fn update_interview(
     .bind(&req.score)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -990,16 +1078,21 @@ async fn update_interview(
     }
 }
 
-async fn delete_interview(
+pub async fn delete_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.interviews SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -1011,11 +1104,16 @@ async fn delete_interview(
     }
 }
 
-async fn complete_interview(
+pub async fn complete_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateInterviewRequest>,
 ) -> Json<ApiResponse<Interview>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Interview>(
@@ -1038,7 +1136,7 @@ async fn complete_interview(
     .bind(&req.score)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
-    Extension, Json, Router,
+    Json, Router,
 };
 use bigdecimal::BigDecimal;
 use chrono::Utc;
@@ -103,10 +103,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_positions(
+pub async fn list_positions(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PaginatedResult<Position>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let pagination = PaginationQuery {
         page: params.page,
         page_size: params.page_size,
@@ -137,7 +142,7 @@ async fn list_positions(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -155,7 +160,7 @@ async fn list_positions(
             .bind(dept_id)
             .bind(org_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -189,12 +194,17 @@ async fn list_positions(
     ),
     security(("bearerAuth" = []))
 )]
-async fn create_position(
+pub async fn create_position(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePositionRequest>,
 ) -> Json<ApiResponse<Position>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.name.is_empty() {
         return Json(api_error(400, "岗位名称不能为空"));
     }
@@ -231,7 +241,7 @@ async fn create_position(
     .bind(&req.requirements)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -290,15 +300,20 @@ async fn create_position(
     ),
     security(("bearerAuth" = []))
 )]
-async fn get_position(
+pub async fn get_position(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Position>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Position>(
         only_own_schema_query!("hrm", "SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -327,11 +342,16 @@ async fn get_position(
     ),
     security(("bearerAuth" = []))
 )]
-async fn update_position(
+pub async fn update_position(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdatePositionRequest>,
 ) -> Json<ApiResponse<Position>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Position>(
@@ -365,7 +385,7 @@ async fn update_position(
     .bind(&req.status)
     .bind(now)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -392,17 +412,22 @@ async fn update_position(
     ),
     security(("bearerAuth" = []))
 )]
-async fn delete_position(
+pub async fn delete_position(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.positions SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {

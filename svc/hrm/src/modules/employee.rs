@@ -1,4 +1,4 @@
-use axum::{routing::*, Json, Router};
+use axum::{extract::Extension, routing::*, Json, Router};
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
@@ -85,12 +85,17 @@ pub struct ExportRequest {
         (status = 403, description = "权限不足")
     )
 )]
-async fn list_employees(
+pub async fn list_employees(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<EmployeePaginationParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ListResponse<Employee>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
@@ -130,12 +135,17 @@ async fn list_employees(
         (status = 404, description = "员工不存在")
     )
 )]
-async fn get_employee(
+pub async fn get_employee(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Employee>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
@@ -195,12 +205,17 @@ async fn get_employee(
         (status = 404, description = "员工不存在")
     )
 )]
-async fn get_employee_details(
+pub async fn get_employee_details(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
@@ -226,7 +241,7 @@ async fn get_employee_details(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -274,12 +289,17 @@ async fn get_employee_details(
         (status = 409, description = "员工编号已存在")
     )
 )]
-async fn create_employee(
+pub async fn create_employee(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     axum::extract::Json(req): axum::extract::Json<CreateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
         return e;
     }
@@ -411,13 +431,18 @@ async fn create_employee(
         (status = 404, description = "员工不存在")
     )
 )]
-async fn update_employee(
+pub async fn update_employee(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     axum::extract::Json(req): axum::extract::Json<UpdateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
         return e;
     }
@@ -511,12 +536,17 @@ async fn update_employee(
         (status = 404, description = "员工不存在")
     )
 )]
-async fn delete_employee(
+pub async fn delete_employee(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
         return e;
     }
@@ -587,12 +617,17 @@ async fn delete_employee(
         (status = 403, description = "权限不足")
     )
 )]
-async fn export_employees(
+pub async fn export_employees(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     axum::extract::Json(req): axum::extract::Json<ExportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
@@ -636,7 +671,7 @@ async fn export_employees(
             .bind(ids)
             .bind(tenant_id)
             .bind(MAX_EXPORT_COUNT)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
         None => {
@@ -660,7 +695,7 @@ async fn export_employees(
             ))
             .bind(tenant_id)
             .bind(MAX_EXPORT_COUNT)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
         }
     };

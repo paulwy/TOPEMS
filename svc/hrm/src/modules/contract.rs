@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
-    Extension, Json, Router,
+    Json, Router,
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
@@ -55,10 +55,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_contracts(
+pub async fn list_contracts(
     State(state): State<ApiState>,
     Query(params): Query<ContractPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -87,7 +92,7 @@ async fn list_contracts(
     .bind(&type_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -104,7 +109,7 @@ async fn list_contracts(
             .bind(emp_filter)
             .bind(&status_filter)
             .bind(&type_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -129,10 +134,15 @@ async fn list_contracts(
     }
 }
 
-async fn list_expiring_contracts(
+pub async fn list_expiring_contracts(
     State(state): State<ApiState>,
     Query(params): Query<ExpiringParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let days = params.days.unwrap_or(30);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -158,7 +168,7 @@ async fn list_expiring_contracts(
     .bind(end_date_threshold)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -173,7 +183,7 @@ async fn list_expiring_contracts(
                 "#
             ))
             .bind(end_date_threshold)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -221,12 +231,17 @@ pub struct ExpiringParams {
     ),
     security(("bearerAuth" = []))
 )]
-async fn create_contract(
+pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
         return Json(api_error(400, "员工ID不能为空"));
     }
@@ -283,7 +298,7 @@ async fn create_contract(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -340,10 +355,15 @@ async fn create_contract(
     ),
     security(("bearerAuth" = []))
 )]
-async fn get_contract(
+pub async fn get_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
@@ -354,7 +374,7 @@ async fn get_contract(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -371,7 +391,7 @@ async fn get_contract(
                 "#
             ))
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -407,12 +427,17 @@ async fn get_contract(
     ),
     security(("bearerAuth" = []))
 )]
-async fn update_contract(
+pub async fn update_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let contract_result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
@@ -423,7 +448,7 @@ async fn update_contract(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let _contract = match contract_result {
@@ -476,7 +501,7 @@ async fn update_contract(
     .bind(&req.status)
     .bind(&req.notes)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -534,17 +559,22 @@ async fn update_contract(
     ),
     security(("bearerAuth" = []))
 )]
-async fn delete_contract(
+pub async fn delete_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.contracts SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -593,11 +623,16 @@ async fn delete_contract(
     response
 }
 
-async fn create_renewal(
+pub async fn create_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateRenewalRequest>,
 ) -> Json<ApiResponse<ContractRenewal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let renewal_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -622,11 +657,19 @@ async fn create_renewal(
     .bind(req.new_salary)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(renewal) => Json(ApiResponse::success(renewal, "续签申请提交成功")),
+        Ok(renewal) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(renewal, "续签申请提交成功"))
+        }
         Err(e) => {
             tracing::error!("提交续签申请失败: {}", e);
             Json(ApiResponse::<ContractRenewal>::error(
@@ -637,10 +680,15 @@ async fn create_renewal(
     }
 }
 
-async fn list_renewals(
+pub async fn list_renewals(
     State(state): State<ApiState>,
     Query(params): Query<RenewalParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -665,7 +713,7 @@ async fn list_renewals(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -680,7 +728,7 @@ async fn list_renewals(
             ))
             .bind(contract_id)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -714,10 +762,15 @@ pub struct RenewalParams {
     pub status: Option<String>,
 }
 
-async fn get_renewal(
+pub async fn get_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ContractRenewal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
         r#"
@@ -728,7 +781,7 @@ async fn get_renewal(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -744,11 +797,16 @@ async fn get_renewal(
     }
 }
 
-async fn update_renewal(
+pub async fn update_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateRenewalRequest>,
 ) -> Json<ApiResponse<ContractRenewal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
@@ -774,7 +832,7 @@ async fn update_renewal(
     .bind(req.new_end_date)
     .bind(req.new_salary)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -793,16 +851,21 @@ async fn update_renewal(
     }
 }
 
-async fn delete_renewal(
+pub async fn delete_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -820,10 +883,15 @@ async fn delete_renewal(
     }
 }
 
-async fn approve_renewal(
+pub async fn approve_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ContractRenewal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
@@ -841,7 +909,7 @@ async fn approve_renewal(
     ))
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -860,11 +928,16 @@ async fn approve_renewal(
     }
 }
 
-async fn reject_renewal(
+pub async fn reject_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RejectRequest>,
 ) -> Json<ApiResponse<ContractRenewal>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
@@ -883,7 +956,7 @@ async fn reject_renewal(
     .bind(id)
     .bind(&req.reason)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -907,10 +980,15 @@ pub struct RejectRequest {
     pub reason: String,
 }
 
-async fn execute_renewal(
+pub async fn execute_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let renewal = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
         r#"
@@ -921,16 +999,22 @@ async fn execute_renewal(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let renewal = match renewal {
         Ok(Some(r)) => r,
         Ok(None) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             return Json(ApiResponse::<serde_json::Value>::error(
                 404,
                 "续签记录不存在",
-            ))
+            ));
         }
         Err(e) => {
             return Json(ApiResponse::<serde_json::Value>::error(
@@ -966,7 +1050,7 @@ async fn execute_renewal(
     .bind(renewal.new_end_date)
     .bind(renewal.new_salary)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match update_result {
@@ -976,7 +1060,7 @@ async fn execute_renewal(
             )
             .bind(id)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             Json(ApiResponse::success(

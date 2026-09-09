@@ -35,10 +35,15 @@ pub struct TodayStatusParams {
     pub employee_id: Option<Uuid>,
 }
 
-async fn get_today_status(
+pub async fn get_today_status(
     State(state): State<ApiState>,
     Query(params): Query<TodayStatusParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // TODO(Mobile-BFF 数据迁移): 跨 schema 查询旧表待迁移
     //
     // 当前实现：当传入 user_id 时跨 schema 查询 `mobile.mobile_attendance`
@@ -100,7 +105,7 @@ async fn get_today_status(
             "mobile"
         ))
         .bind(uid)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
     } else if let Some(eid) = employee_id {
         sqlx::query(only_own_schema_query!(
@@ -114,7 +119,7 @@ async fn get_today_status(
             "#
         ))
         .bind(eid)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await
     } else {
         unreachable!()
@@ -186,11 +191,16 @@ pub struct AttendancePaginationParams {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_attendance(
+pub async fn list_attendance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AttendancePaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::AttendanceRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -220,7 +230,7 @@ async fn list_attendance(
     .bind(&date_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -236,7 +246,7 @@ async fn list_attendance(
             ))
             .bind(emp_filter)
             .bind(&date_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -275,12 +285,17 @@ async fn list_attendance(
     ),
     security(("bearerAuth" = []))
 )]
-async fn create_attendance(
+pub async fn create_attendance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateAttendanceRequest>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
         return Json(api_error(400, "员工ID不能为空"));
     }
@@ -316,7 +331,7 @@ async fn create_attendance(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -375,10 +390,15 @@ async fn create_attendance(
     ),
     security(("bearerAuth" = []))
 )]
-async fn get_attendance(
+pub async fn get_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<AttendanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
         r#"
@@ -389,7 +409,7 @@ async fn get_attendance(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -424,11 +444,16 @@ async fn get_attendance(
     ),
     security(("bearerAuth" = []))
 )]
-async fn update_attendance(
+pub async fn update_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateAttendanceRequest>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
         r#"
@@ -439,7 +464,7 @@ async fn update_attendance(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -484,11 +509,19 @@ async fn update_attendance(
     .bind(work_hours)
     .bind(&notes)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(record) => Json(ApiResponse::success(record, "考勤记录更新成功")),
+        Ok(record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(record, "考勤记录更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新考勤记录失败: {}", e);
             Json(ApiResponse::<AttendanceRecord>::error(
@@ -513,17 +546,22 @@ async fn update_attendance(
     ),
     security(("bearerAuth" = []))
 )]
-async fn delete_attendance(
+pub async fn delete_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.attendance_records SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {

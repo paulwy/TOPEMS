@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::{get, put},
     Json, Router,
 };
@@ -59,10 +59,15 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     security(("bearerAuth" = []))
 )]
-async fn list_salary_adjustments(
+pub async fn list_salary_adjustments(
     State(state): State<ApiState>,
     Query(params): Query<SalaryAdjustmentPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -102,7 +107,7 @@ async fn list_salary_adjustments(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -118,7 +123,7 @@ async fn list_salary_adjustments(
             ))
             .bind(params.employee_id)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -154,10 +159,15 @@ async fn list_salary_adjustments(
     ),
     security(("bearerAuth" = []))
 )]
-async fn get_salary_adjustment(
+pub async fn get_salary_adjustment(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
         "hrm",
         r#"
@@ -186,7 +196,7 @@ async fn get_salary_adjustment(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -210,10 +220,15 @@ async fn get_salary_adjustment(
     ),
     security(("bearerAuth" = []))
 )]
-async fn create_salary_adjustment(
+pub async fn create_salary_adjustment(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSalaryAdjustmentRequest>,
 ) -> Json<ApiResponse<SalaryAdjustment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let adjustment_amount = match (&req.old_salary, &req.new_salary) {
         (Some(old), Some(new)) => Some(new.clone() - old.clone()),
         _ => None,
@@ -248,11 +263,19 @@ async fn create_salary_adjustment(
     .bind(adjustment_amount)
     .bind(req.reason)
     .bind(req.effective_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(sa) => Json(ApiResponse::success(sa, "创建薪资调整成功")),
+        Ok(sa) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(sa, "创建薪资调整成功"))
+        }
         Err(e) => {
             tracing::error!("创建薪资调整失败: {}", e);
             Json(api_error(500, "创建薪资调整失败"))
@@ -276,11 +299,16 @@ async fn create_salary_adjustment(
     ),
     security(("bearerAuth" = []))
 )]
-async fn update_salary_adjustment(
+pub async fn update_salary_adjustment(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSalaryAdjustmentRequest>,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
         "hrm",
         r#"
@@ -306,7 +334,7 @@ async fn update_salary_adjustment(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -354,11 +382,19 @@ async fn update_salary_adjustment(
     .bind(req.effective_date)
     .bind(req.status)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(sa) => Json(ApiResponse::success(sa, "更新薪资调整成功")),
+        Ok(sa) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(sa, "更新薪资调整成功"))
+        }
         Err(e) => {
             tracing::error!("更新薪资调整失败: {}", e);
             Json(api_error(500, "更新薪资调整失败"))
@@ -366,11 +402,16 @@ async fn update_salary_adjustment(
     }
 }
 
-async fn approve_salary_adjustment(
+pub async fn approve_salary_adjustment(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApproveSalaryAdjustmentRequest>,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
         "hrm",
         r#"
@@ -390,11 +431,19 @@ async fn approve_salary_adjustment(
     ))
     .bind(req.approver_id)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(sa) => Json(ApiResponse::success(sa, "批准薪资调整成功")),
+        Ok(sa) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(sa, "批准薪资调整成功"))
+        }
         Err(e) => {
             tracing::error!("批准薪资调整失败: {}", e);
             Json(api_error(500, "批准薪资调整失败"))
@@ -402,11 +451,16 @@ async fn approve_salary_adjustment(
     }
 }
 
-async fn reject_salary_adjustment(
+pub async fn reject_salary_adjustment(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RejectSalaryAdjustmentRequest>,
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
         "hrm",
         r#"
@@ -427,11 +481,19 @@ async fn reject_salary_adjustment(
     .bind(req.approver_id)
     .bind(req.reason)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(sa) => Json(ApiResponse::success(sa, "拒绝薪资调整成功")),
+        Ok(sa) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(sa, "拒绝薪资调整成功"))
+        }
         Err(e) => {
             tracing::error!("拒绝薪资调整失败: {}", e);
             Json(api_error(500, "拒绝薪资调整失败"))
