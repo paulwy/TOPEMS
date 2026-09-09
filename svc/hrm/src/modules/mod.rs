@@ -29,6 +29,7 @@ pub mod recruitment;
 pub mod reports;
 pub mod salary_adjustment;
 pub mod setup;
+pub mod settings;
 pub mod social_insurance_calc;
 pub mod training;
 
@@ -82,4 +83,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(salary_adjustment::create_routes())
         .merge(company::create_routes())
         .merge(setup::create_routes())
+        .merge(settings::create_routes())
 }

@@ -106,12 +106,12 @@ pub struct CompleteInitRequest {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/hrm/setup/progress", get(get_init_progress))
-        .route("/hrm/setup/company", post(setup_company_info))
-        .route("/hrm/setup/departments", post(setup_departments))
-        .route("/hrm/setup/positions", post(setup_positions))
-        .route("/hrm/setup/admin", post(setup_admin_user))
-        .route("/hrm/setup/complete", post(complete_initialization))
+        .route("/setup/progress", get(get_init_progress))
+        .route("/setup/company", post(setup_company_info))
+        .route("/setup/departments", post(setup_departments))
+        .route("/setup/positions", post(setup_positions))
+        .route("/setup/admin", post(setup_admin_user))
+        .route("/setup/complete", post(complete_initialization))
 }
 
 const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);

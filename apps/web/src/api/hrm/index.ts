@@ -15,6 +15,7 @@ import { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './trainin
 import { hrmReportsApi } from './hrmReports';
 import { hrmAuditApi } from './hrmAudit';
 import { hrmSetupApi } from './hrmSetup';
+import { hrmSettingsApi } from './settings';
 
 export * from './types';
 
@@ -31,6 +32,7 @@ export { trainingCourseApi } from './training';
 export { hrmReportsApi } from './hrmReports';
 export { hrmAuditApi } from './hrmAudit';
 export { hrmSetupApi } from './hrmSetup';
+export { hrmSettingsApi } from './settings';
 
 export const hrmApi = {
   dashboard: hrmDashboardApi,
@@ -58,6 +60,7 @@ export const hrmApi = {
   reports: hrmReportsApi,
   audit: hrmAuditApi,
   setup: hrmSetupApi,
+  settings: hrmSettingsApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.hrm.get('/health');
