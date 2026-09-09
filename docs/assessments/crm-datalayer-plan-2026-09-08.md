@@ -79,7 +79,7 @@
 |---|---|---|
 | crm.interactions | ✅ event_handlers/mod.rs:135/202（aftersales_ticket 事件） | 建表（列已取） |
 | crm.customer_orders | ~~无~~ → **废弃** | rfm 改读 sales_orders（bd3c288b7），表保留兼容不引用 |
-| crm.billing_records | ~~无~~ → **OpportunityWon 事件** | handle_opportunity_won 幂等写入（bd3c288b7），应收回款状态流转待 erp/finance 接通 |
+| crm.billing_records | ~~无~~ → **OpportunityWon 事件** | handle_opportunity_won 幂等写入（bd3c288b7）→ **已闭环（2026-09-09）**：PaymentReceived 事件核销（finance 发 PaymentMade 修复后链路连通）、customer_orders 由 SalesOrderCreated 订阅写入（5061b0b40） |
 | crm.audit_logs | ❌ 无（审计统一走 public.audit_logs） | 不建；audit.rs 改指 public（附项） |
 | crm.customers/contacts/opportunities/tags/returns/return_items | ✅ 挂载模块自带 INSERT（customer/contact/opportunity/tag/aftersales 各 ≥1） | 建表即闭环 |
 

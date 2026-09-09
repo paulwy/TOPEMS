@@ -142,7 +142,7 @@
 - **发布点层**：8 处发布点统一在 txn 内读取 GUC `app.tenant_id` 并填充 payload：wms data_sync（shipping）/inbound_order、scm purchase_order（approve）/data_sync（inbound+batch）、erp purchase_order（create+approve）/sales_order、finance create_collection_handler（已有 tenant 变量直接复用）。
 - **核销链 tenant 化**（crm+erp 三 handler，统一模式）：`match payload.tenant_id { Some(tid) => 全部 SQL 加 AND tenant_id=$N，None => Ok(None) }`——**无租户时禁用兜底匹配（宁缺勿乱）**，从根上堵死跨租户乱配。
 - **孤儿 INSERT 全量绑定**：crm 3 处（interactions/sales_orders×2）、erp 10 处（receivables/payables/financial_vouchers×4/vouchers×3/….）、wms 3 处（inbound_orders/purchase_order_snapshots×2）、finance 7 处（core_finance_vouchers 硬编码 nil 租户改为真实 tenant、source_amount_snapshots×4、快照审批/拒绝 UPDATE 加 tenant 条件）——统一 `.bind(tenant.unwrap_or(Uuid::nil()))`，存量事件（无 tenant）落 nil 租户而非 NULL。
-- **B-2 迁移** `database/migrations/20260909000001_rls_event_chain_tenant.sql`（已实跑 5432）：4 张无租户表加 tenant_id 列 + 索引 + `rls_tenant_isolation` 策略；crm.sales_orders / erp.vouchers / wms.purchase_order_snapshots 三表 **FORCE RLS**（写方均已绑定）；erp.voucher_items 仅 ENABLE 不 FORCE（HTTP 明细写入未绑 tenant，待绑定后补 FORCE，见 §六·B）。
+- **B-2 迁移** `database/migrations/20260909000001_rls_event_chain_tenant.sql`（已实跑 5432）：4 张无租户表加 tenant_id 列 + 索引 + `rls_tenant_isolation` 策略；crm.sales_orders / erp.vouchers / wms.purchase_order_snapshots 三表 **FORCE RLS**（写方均已绑定）；erp.voucher_items 仅 ENABLE 不 FORCE（HTTP 明细写入未绑 tenant）→ **已于 §六·B 闭环**：B-2 补迁移 20260909000002 已 FORCE + 实测（GUC=t2 跨租户插入被拒、事件 11 列/HTTP 12 列双形态均过）。
 
 ### 3. 验证（本机 5432 实跑）
 - **静态核对**：发布点 GUC 读取 8/8；核销 handler `match payload.tenant_id` 3/3；孤儿 INSERT 绑定 23 处（crm 3 + erp 10 + wms 3 + finance 7）；`cargo check --workspace` 0 error。
