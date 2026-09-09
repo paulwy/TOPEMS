@@ -24,6 +24,7 @@ pub mod project_report;
 pub mod rd_ci_cd;
 pub mod research_cost;
 pub mod rs_plugin;
+pub mod settings;
 pub mod statistics;
 
 #[derive(Clone)]
@@ -65,5 +66,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(project_member::create_routes())
         .merge(project_report::create_routes())
         .merge(statistics::create_routes())
+        .merge(settings::create_routes())
         .merge(change_management::create_routes())
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -24,6 +24,7 @@ import { settingSchema } from '@/schemas/rd';
 import type { EntitySchema } from '@/schema';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
+import { rdSettingsApi } from '@/api/rd/settings';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 interface SettingItem extends Record<string, unknown> {
@@ -137,6 +138,37 @@ const getDefaultData = (): Record<string, SettingItem[]> => ({
 const RsSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('repo');
   const [localData, setLocalData] = useState<Record<string, SettingItem[]>>(getDefaultData());
+
+  // 将当前 tab 的设置项序列化并持久化到后端
+  const persistSettings = useCallback(async (tab: string, items: SettingItem[]) => {
+    try {
+      await rdSettingsApi.updateSettings(tab, {
+        items: JSON.stringify(items),
+      });
+    } catch (e) {
+      console.error('[RsSettings] 持久化设置失败:', e);
+    }
+  }, []);
+
+  // 从后端加载指定 tab 的设置项
+  const loadSettings = useCallback(async (tab: string) => {
+    try {
+      const response = await rdSettingsApi.getSettings(tab);
+      if (response.success && response.data?.settings?.items) {
+        const parsed = JSON.parse(response.data.settings.items) as SettingItem[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLocalData((prev) => ({ ...prev, [tab]: parsed }));
+        }
+      }
+    } catch (e) {
+      console.error('[RsSettings] 加载设置失败，使用默认值:', e);
+    }
+  }, []);
+
+  // 初始加载 + tab 切换时加载
+  useEffect(() => {
+    loadSettings(activeTab);
+  }, [activeTab, loadSettings]);
   const statisticsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.STATISTICS,
     queryFn: async () => {
@@ -159,7 +191,7 @@ const RsSettingsPage: React.FC = () => {
   ];
   // 当前Tab的数据
   const currentData = localData[activeTab] || [];
-  // 创建本地数据的API适配器（支持所有Tab）
+  // 创建本地数据的API适配器（支持所有Tab），变更后自动持久化到后端
   const localApiAdapter: CrudApiAdapter<SettingItem> = {
     list: async () => ({ data: currentData, total: currentData.length }),
     create: async (data) => {
@@ -169,29 +201,26 @@ const RsSettingsPage: React.FC = () => {
         description: String(data.description || ''),
         enabled: data.enabled ?? true,
       };
-      setLocalData((prev) => ({
-        ...prev,
-        [activeTab]: [...(prev[activeTab] || []), newItem],
-      }));
+      const updated = [...(localData[activeTab] || []), newItem];
+      setLocalData((prev) => ({ ...prev, [activeTab]: updated }));
+      persistSettings(activeTab, updated);
       return newItem;
     },
     update: async (id, data) => {
-      setLocalData((prev) => ({
-        ...prev,
-        [activeTab]: (prev[activeTab] || []).map((item) =>
-          item.id === id ? { ...item, ...data } : item
-        ),
-      }));
+      const updated = (localData[activeTab] || []).map((item) =>
+        item.id === id ? { ...item, ...data } : item
+      );
+      setLocalData((prev) => ({ ...prev, [activeTab]: updated }));
+      persistSettings(activeTab, updated);
       const updatedItem = currentData.find((item) => item.id === id);
       return updatedItem
         ? { ...updatedItem, ...data }
         : ({ id, name: '', description: '', enabled: false } as SettingItem);
     },
     delete: async (id) => {
-      setLocalData((prev) => ({
-        ...prev,
-        [activeTab]: (prev[activeTab] || []).filter((item) => item.id !== id),
-      }));
+      const updated = (localData[activeTab] || []).filter((item) => item.id !== id);
+      setLocalData((prev) => ({ ...prev, [activeTab]: updated }));
+      persistSettings(activeTab, updated);
     },
   };
   // 获取当前Tab的标题

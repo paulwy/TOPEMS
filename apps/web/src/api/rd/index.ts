@@ -8,6 +8,7 @@ import { bugApi } from './bug';
 import { testApi } from './test';
 import { buildApi } from './build';
 import { deployApi } from './deploy';
+import { rdSettingsApi } from './settings';
 
 export * from './types';
 
@@ -19,6 +20,7 @@ export { auditRdApi } from './audit';
 export { bugApi } from './bug';
 export { buildApi } from './build';
 export { deployApi } from './deploy';
+export { rdSettingsApi } from './settings';
 
 export const rdApi = {
   listProjects: projectApi.listProjects,
