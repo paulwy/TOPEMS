@@ -116,8 +116,21 @@ pub async fn purchase_to_inbound(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    create_inbound_from_purchase_internal(&state, purchase_order_id, warehouse_id, req.remarks)
-        .await
+    let result = create_inbound_from_purchase_internal(
+        &state,
+        purchase_order_id,
+        warehouse_id,
+        req.remarks,
+        &mut *txn,
+    )
+    .await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(api_error(500, "提交事务失败"));
+        }
+    }
+    result
 }
 
 pub async fn create_inbound_from_purchase(
@@ -129,7 +142,14 @@ pub async fn create_inbound_from_purchase(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    create_inbound_from_purchase_internal(&state, id, None, None).await
+    let result = create_inbound_from_purchase_internal(&state, id, None, None, &mut *txn).await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(api_error(500, "提交事务失败"));
+        }
+    }
+    result
 }
 
 pub async fn create_inbound_from_purchase_internal(
@@ -137,6 +157,7 @@ pub async fn create_inbound_from_purchase_internal(
     purchase_order_id: Uuid,
     warehouse_id: Option<Uuid>,
     _remarks: Option<String>,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
@@ -146,7 +167,7 @@ pub async fn create_inbound_from_purchase_internal(
         "#),
     )
     .bind(purchase_order_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let purchase_order = match purchase_order {
@@ -209,7 +230,7 @@ pub async fn create_inbound_from_purchase_internal(
         "#
     ))
     .bind(&purchase_order.order_number)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing_inbound.unwrap_or(0) > 0 {
@@ -262,7 +283,7 @@ pub async fn create_inbound_from_purchase_internal(
     .bind(purchase_order_id)
     .bind(&purchase_order.order_number)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -300,7 +321,7 @@ pub async fn create_inbound_from_purchase_internal(
             .bind(inbound_id)
             .bind(&inbound_order_number)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             let _ = record_sync_log(
@@ -362,7 +383,7 @@ pub async fn create_inbound_from_purchase_internal(
             .bind(e.to_string())
             .bind(new_retry_count)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             let _ = record_sync_log(

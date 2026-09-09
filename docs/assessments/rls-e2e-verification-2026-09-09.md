@@ -85,6 +85,36 @@
 - 隔离当前由业务层保证：service INSERT 用 `self.tenant_id`（来自 claims），body 的 tenant_id 被忽略（实测落 T1）——**无越权写漏洞**，但 A 方案"RLS 兜底"在该封装路径未生效。
 - hrm 分布：16 模块 201 处 `&mut **txn` 直查（RLS 生效）；employee.rs 的 EmployeeService 封装路径属豁免形态（employee.rs 仅 3 处 txn 直查）。对照 erp 284 处 txn 直查。
 - 修复选项（待拍板）：A=EmployeeService 方法穿透 txn（&mut PgConnection）；B=全仓盘点"txn 白拿"handler 批量穿透；C=接受现状（业务层已保证），RLS 兜底列入后续。
+- **已拍板：B 方案（全仓批量盘点穿透）**，实施与复测见 §四·D。
+
+## 四·D、B 方案实施：写路径 RLS 兜底穿透（已闭环）
+
+盘点脚本（`/tmp/rls_txn_audit.py` 修正版）以「handler 注入 txn_arc 但业务 SQL 未走事务」为判据全仓扫描（8 服务 modules/*.rs），初筛 37 个→逐个人工核对后**真白拿 6 个（写 4 + 读 2）**，其余 31 个为误报（txn 变量名 `tx`、薄包装传参、无 SQL 纯内存/mock、池豁免）。实施如下：
+
+| 服务/文件 | handler | 缺口 | 修复 |
+|---|---|---|---|
+| hrm/employee.rs | update_employee / delete_employee | EmployeeService 写走 PgPool（self.db） | service 方法加 `conn: &mut sqlx::PgConnection`，体内 `&self.db`→`&mut *conn`（2+1 处）；handler 传 `&mut *txn` |
+| srm/data_sync.rs | sync_supplier_from_scm | UPDATE/INSERT 走 `&state.db` | 业务 SQL→`&mut **txn`（fetch_optional/fetch_one/execute）；成功路径补 commit（原 pool 自动提交，改 txn 后必须显式 commit） |
+| srm/data_sync.rs | sync_all_suppliers_from_scm | 同上（循环内批量写） | 同上 + 循环后补 commit |
+| scm/data_sync.rs | purchase_to_inbound / create_inbound_from_purchase | 写经 `create_inbound_from_purchase_internal` 走 `&state.db`（INSERT/UPDATE×3 + 读×2） | internal 加 `txn: &mut sqlx::Transaction` 参数、体内 `&state.db`→`&mut **txn`（5 处）；两 handler 传参 + 调用后 commit |
+
+**同步穿透（读路径，同文件低成本）**：srm/data_sync.rs `sync_supplier_to_scm` / `sync_all_suppliers_to_scm` / `get_sync_logs` 的 `&state.db` 读→`&mut **txn`（3 handler，A 类 handler 内直查）。
+
+**复核归零**：修正判据（含 `tx` 变量名、txn 传参、guard.take/commit）全仓复扫 → **写路径真白拿 = 0**。逐项豁免/已穿透依据：
+- erp sales_order approve/ship/complete/cancel：薄包装把 txn 传 `update_sales_order_status` ✓ 已穿透
+- crm auto_segment：`count_matching_customers(txn, …)` ✓ 已穿透
+- erp receive_mes_progress / wms count/adjust_stock_take / scm compute_mrp：`&mut *tx`（tx 变量名）✓ 已穿透
+- erp preview_add_column / wms get_trace / tms 3 个 / srm portal 3 个：**无 SQL**（纯内存算法 / mock 数据）→ 无 RLS 风险，豁免
+- hrm employee list/get/create：EmployeeService 读路径，SQL 均有显式 `tenant_id` 业务过滤 → 读兜底由业务层承担（豁免，记录在案）
+
+**验证**：
+- `cargo check --workspace`（DATABASE_URL 注入 + CARGO_BUILD_RUSTC_WRAPPER=""）：0 error（2m03s）
+- hrm 真实进程 + JWT 全链路复测（8020，改造后代码）：
+  - T1 token 正常 UPDATE 自己员工 → 200「员工更新成功」，GET 验证落库 ✓（txn 穿透无回归）
+  - **越权 UPDATE**：T1 token 改 T2 员工 → 404「员工不存在」（RLS 上下文 T1 拦在 SELECT existing，早退）✓，T2 数据未污染 ✓
+  - **越权 DELETE**：T1 token 删 T2 员工 → 404 ✓，T2 行仍存在 ✓
+  - 测试数据已恢复（T1 total 仍 6，name 还原）
+- 修复后写路径防护链：**业务层 tenant 条件（第一层）+ txn 内 RLS FORCE 过滤（第二层）**，事务提交前双重校验。
 
 ## 五、结论
 
@@ -96,7 +126,7 @@
 
 ## 六、剩余缺口（未做，如需可继续）
 
-1. **service 封装路径的 RLS 兜底**：见 §四·C 关键发现——写路径（如 hrm `EmployeeService`）走 PgPool 直连、无 RLS 上下文；业务层已保证隔离，RLS 纵深防御待 A/B/C 拍板后实施。
+1. ~~service 封装路径的 RLS 兜底~~：**已闭环**（B 方案，见 §四·D）——hrm EmployeeService、srm/scm data_sync 写路径全部穿透 txn + 补 commit，写路径真白拿归零；读路径豁免清单与依据已记录。
 2. **跨服务事件链路**：erp/crm/finance 等事件驱动写路径在受限角色下的隔离（当前 DB 层验证未覆盖事件消费者）。
 
 ## 七、验证资产

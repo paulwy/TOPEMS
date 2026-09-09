@@ -106,7 +106,7 @@ pub async fn sync_supplier_from_scm(
     )
     .bind(supplier_id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (
@@ -152,7 +152,7 @@ pub async fn sync_supplier_from_scm(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -187,11 +187,17 @@ pub async fn sync_supplier_from_scm(
         .bind(id)
         .bind(now)
         .bind(tenant_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
         match result {
             Ok(_) => {
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(api_error(500, "提交事务失败"));
+                    }
+                }
                 let _ = record_sync_log(
                     &state.db,
                     tenant_id,
@@ -250,11 +256,17 @@ pub async fn sync_supplier_from_scm(
         .bind(id)
         .bind(now)
         .bind(now)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
         match result {
             Ok(_) => {
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(api_error(500, "提交事务失败"));
+                    }
+                }
                 let _ = record_sync_log(
                     &state.db,
                     tenant_id,
@@ -314,7 +326,7 @@ pub async fn sync_all_suppliers_from_scm(
         "#),
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let scm_suppliers = match scm_suppliers {
@@ -351,7 +363,7 @@ pub async fn sync_all_suppliers_from_scm(
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if existing.unwrap_or(0) > 0 {
@@ -378,7 +390,7 @@ pub async fn sync_all_suppliers_from_scm(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             if result.is_ok() {
@@ -410,7 +422,7 @@ pub async fn sync_all_suppliers_from_scm(
             .bind(id)
             .bind(now)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             if result.is_ok() {
@@ -418,6 +430,13 @@ pub async fn sync_all_suppliers_from_scm(
             } else {
                 failed_count += 1;
             }
+        }
+    }
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(api_error(500, "提交事务失败"));
         }
     }
 
@@ -489,7 +508,7 @@ pub async fn sync_supplier_to_scm(
     ))
     .bind(supplier_id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (id, name, legal_name, contact_person, phone, email, address, tax_number, status) =
@@ -648,7 +667,7 @@ pub async fn sync_all_suppliers_to_scm(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let srm_suppliers = match srm_suppliers {
@@ -759,7 +778,7 @@ pub async fn get_sync_logs(
     .bind(&req.source_module)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match rows {

@@ -279,6 +279,7 @@ impl EmployeeService {
         &self,
         id: &Uuid,
         req: UpdateEmployeeRequest,
+        conn: &mut sqlx::PgConnection,
     ) -> ApiResponse<Employee> {
         let existing = sqlx::query_as::<_, Employee>(
             r#"
@@ -298,7 +299,7 @@ impl EmployeeService {
         )
         .bind(id)
         .bind(self.tenant_id)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut *conn)
         .await;
 
         let mut existing = match existing {
@@ -431,7 +432,7 @@ impl EmployeeService {
         .bind(user_id)
         .bind(&status)
         .bind(now)
-        .fetch_one(&self.db)
+        .fetch_one(&mut *conn)
         .await;
 
         match result {
@@ -446,13 +447,17 @@ impl EmployeeService {
         }
     }
 
-    pub async fn delete_employee(&self, id: &Uuid) -> ApiResponse<String> {
+    pub async fn delete_employee(
+        &self,
+        id: &Uuid,
+        conn: &mut sqlx::PgConnection,
+    ) -> ApiResponse<String> {
         let result = sqlx::query(
             "UPDATE hrm.employees SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(self.tenant_id)
-        .execute(&self.db)
+        .execute(&mut *conn)
         .await;
 
         match result {

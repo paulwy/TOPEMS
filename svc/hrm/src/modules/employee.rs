@@ -449,7 +449,7 @@ pub async fn update_employee(
 
     let tenant_id = get_tenant_id(&claims, &headers);
     let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
-    let result = service.update_employee(&id, req).await;
+    let result = service.update_employee(&id, req, &mut *txn).await;
 
     if result.code == 200 {
         state.employee_cache.remove(&employee_cache_key(&id));
@@ -553,7 +553,7 @@ pub async fn delete_employee(
 
     let tenant_id = get_tenant_id(&claims, &headers);
     let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
-    let result = service.delete_employee(&id).await;
+    let result = service.delete_employee(&id, &mut *txn).await;
 
     if result.code == 200 {
         state.employee_cache.remove(&employee_cache_key(&id));
