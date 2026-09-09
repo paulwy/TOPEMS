@@ -36,7 +36,7 @@ export const instrumentApi = {
     id: string,
     data: CreateCalibrationRequest
   ): Promise<ApiResponse<CalibrationRecord>> => {
-    return apiClient.lims.post(`/instruments/${id}/calibrate`, data);
+    return apiClient.lims.post(`/instruments/${id}/calibration`, data);
   },
 
   listCalibrationRecords: async (

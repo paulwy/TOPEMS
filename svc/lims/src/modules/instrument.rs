@@ -1,10 +1,10 @@
 use axum::{
     extract::State,
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, Row};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
@@ -24,6 +24,13 @@ pub fn create_routes() -> Router<AppState> {
                 .delete(delete_instrument),
         )
         .route("/instruments/{id}/calibration", post(calibrate))
+        .route("/instruments/{id}/calibrations", get(get_calibration_history))
+        .route("/instruments/{id}/maintenance", get(list_maintenance))
+        .route("/maintenance", post(create_maintenance))
+        .route(
+            "/maintenance/{id}",
+            put(update_maintenance).delete(delete_maintenance),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -450,8 +457,10 @@ pub async fn get_calibration_history(
 
     let rows = sqlx::query(
         r#"
-        SELECT id, instrument_id, instrument_no, instrument_name, calibrated_by,
-               calibration_date::TEXT, next_calibration_date::TEXT, calibration_result,
+        SELECT id, instrument_id, instrument_no, instrument_name,
+               calibrated_by AS performed_by,
+               calibration_date::TEXT, next_calibration_date::TEXT,
+               calibration_result AS result,
                parameters, notes, certificate_no, created_at::TEXT
         FROM qa_lab_calibration_records
         WHERE instrument_id = $1
@@ -471,10 +480,10 @@ pub async fn get_calibration_history(
                     instrument_id: row.get("instrument_id"),
                     instrument_no: row.get("instrument_no"),
                     instrument_name: row.get("instrument_name"),
-                    calibrated_by: row.get("calibrated_by"),
+                    calibrated_by: row.get("performed_by"),
                     calibration_date: row.get("calibration_date"),
                     next_calibration_date: row.get("next_calibration_date"),
-                    calibration_result: row.get("calibration_result"),
+                    calibration_result: row.get("result"),
                     parameters: row.get("parameters"),
                     notes: row.get("notes"),
                     certificate_no: row.get("certificate_no"),
@@ -708,3 +717,203 @@ pub async fn get_overdue_calibrations(
         }
     }
 }
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct MaintenanceRecord {
+    pub id: String,
+    pub instrument_id: String,
+    pub maintenance_type: String,
+    pub description: Option<String>,
+    pub performed_by: Option<String>,
+    pub performed_at: Option<String>,
+    pub next_maintenance_date: Option<String>,
+    pub cost: Option<f64>,
+    pub notes: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct CreateMaintenanceRequest {
+    pub instrument_id: Uuid,
+    pub maintenance_type: String,
+    pub description: Option<String>,
+    pub performed_by: Option<String>,
+    pub performed_at: Option<String>,
+    pub next_maintenance_date: Option<String>,
+    pub cost: Option<f64>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct UpdateMaintenanceRequest {
+    pub maintenance_type: Option<String>,
+    pub description: Option<String>,
+    pub performed_by: Option<String>,
+    pub performed_at: Option<String>,
+    pub next_maintenance_date: Option<String>,
+    pub cost: Option<f64>,
+    pub notes: Option<String>,
+}
+
+const MAINTENANCE_COLUMNS: &str = "id, instrument_id, maintenance_type, description, performed_by, performed_at::TEXT, next_maintenance_date::TEXT, cost::float8 AS cost, notes, created_at::TEXT";
+
+pub async fn list_maintenance(
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    axum::extract::Path(instrument_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Vec<MaintenanceRecord>>> {
+    let id = match Uuid::parse_str(&instrument_id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
+    };
+    let rows = sqlx::query(
+        &format!(
+            "SELECT {MAINTENANCE_COLUMNS} FROM lims.maintenance_records WHERE tenant_id = $1 AND instrument_id = $2 AND deleted_at IS NULL ORDER BY performed_at DESC NULLS LAST, created_at DESC"
+        ),
+    )
+    .bind(ctx.tenant_id)
+    .bind(id)
+    .fetch_all(&state.pool)
+    .await;
+    match rows {
+        Ok(rows) => {
+            let records: Vec<MaintenanceRecord> = rows
+                .into_iter()
+                .map(|row| MaintenanceRecord {
+                    id: row.get("id"),
+                    instrument_id: row.get("instrument_id"),
+                    maintenance_type: row.get("maintenance_type"),
+                    description: row.get("description"),
+                    performed_by: row.get("performed_by"),
+                    performed_at: row.get("performed_at"),
+                    next_maintenance_date: row.get("next_maintenance_date"),
+                    cost: row.get("cost"),
+                    notes: row.get("notes"),
+                    created_at: row.get("created_at"),
+                })
+                .collect();
+            Json(ApiResponse::success(records, "获取维护记录成功"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch maintenance records: {}", e);
+            Json(ApiResponse::error(500, "获取维护记录失败"))
+        }
+    }
+}
+
+pub async fn create_maintenance(
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    Json(req): Json<CreateMaintenanceRequest>,
+) -> Json<ApiResponse<MaintenanceRecord>> {
+    let row = sqlx::query(
+        "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id, instrument_id, maintenance_type, description, performed_by, performed_at::TEXT, next_maintenance_date::TEXT, cost::float8 AS cost, notes, created_at::TEXT",
+    )
+    .bind(ctx.tenant_id)
+    .bind(req.instrument_id)
+    .bind(&req.maintenance_type)
+    .bind(&req.description)
+    .bind(&req.performed_by)
+    .bind(&req.performed_at)
+    .bind(&req.next_maintenance_date)
+    .bind(req.cost)
+    .bind(&req.notes)
+    .fetch_one(&state.pool)
+    .await;
+    match row {
+        Ok(r) => Json(ApiResponse::success(
+            MaintenanceRecord {
+                id: r.get("id"),
+                instrument_id: r.get("instrument_id"),
+                maintenance_type: r.get("maintenance_type"),
+                description: r.get("description"),
+                performed_by: r.get("performed_by"),
+                performed_at: r.get("performed_at"),
+                next_maintenance_date: r.get("next_maintenance_date"),
+                cost: r.get("cost"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+            },
+            "维护记录创建成功",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to create maintenance record: {}", e);
+            Json(ApiResponse::error(500, "创建维护记录失败"))
+        }
+    }
+}
+
+pub async fn update_maintenance(
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateMaintenanceRequest>,
+) -> Json<ApiResponse<MaintenanceRecord>> {
+    let record_id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的维护记录ID")),
+    };
+    let row = sqlx::query(
+        "UPDATE lims.maintenance_records SET maintenance_type = COALESCE($3, maintenance_type), description = COALESCE($4, description), performed_by = COALESCE($5, performed_by), performed_at = COALESCE($6::TIMESTAMPTZ, performed_at), next_maintenance_date = COALESCE($7::TIMESTAMPTZ, next_maintenance_date), cost = COALESCE($8, cost), notes = COALESCE($9, notes), updated_at = now() WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING id, instrument_id, maintenance_type, description, performed_by, performed_at::TEXT, next_maintenance_date::TEXT, cost::float8 AS cost, notes, created_at::TEXT",
+    )
+    .bind(ctx.tenant_id)
+    .bind(record_id)
+    .bind(&req.maintenance_type)
+    .bind(&req.description)
+    .bind(&req.performed_by)
+    .bind(&req.performed_at)
+    .bind(&req.next_maintenance_date)
+    .bind(req.cost)
+    .bind(&req.notes)
+    .fetch_optional(&state.pool)
+    .await;
+    match row {
+        Ok(Some(r)) => Json(ApiResponse::success(
+            MaintenanceRecord {
+                id: r.get("id"),
+                instrument_id: r.get("instrument_id"),
+                maintenance_type: r.get("maintenance_type"),
+                description: r.get("description"),
+                performed_by: r.get("performed_by"),
+                performed_at: r.get("performed_at"),
+                next_maintenance_date: r.get("next_maintenance_date"),
+                cost: r.get("cost"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+            },
+            "维护记录更新成功",
+        )),
+        Ok(None) => Json(ApiResponse::error(404, "维护记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update maintenance record: {}", e);
+            Json(ApiResponse::error(500, "更新维护记录失败"))
+        }
+    }
+}
+
+pub async fn delete_maintenance(
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<bool>> {
+    let record_id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的维护记录ID")),
+    };
+    let result = sqlx::query(
+        "UPDATE lims.maintenance_records SET deleted_at = now(), updated_at = now() WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL",
+    )
+    .bind(ctx.tenant_id)
+    .bind(record_id)
+    .execute(&state.pool)
+    .await;
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "维护记录删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "维护记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to delete maintenance record: {}", e);
+            Json(ApiResponse::error(500, "删除维护记录失败"))
+        }
+    }
+}
+

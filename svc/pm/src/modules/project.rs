@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared::ApiResponse;
@@ -137,6 +138,7 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
         )
         .route("/projects/{id}/dashboard", get(get_project_dashboard))
         .route("/projects/{id}/gantt", get(get_project_gantt))
+        .route("/projects/kanban-board", get(get_kanban_board))
         .with_state(state)
 }
 
@@ -1106,3 +1108,94 @@ mod tests {
         assert_eq!(v["risks"].as_array().unwrap().len(), 1);
     }
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct KanbanCard {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub priority: Option<String>,
+    pub status: String,
+    pub assignee: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct KanbanColumn {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub cards: Vec<KanbanCard>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct KanbanBoardResponse {
+    pub columns: Vec<KanbanColumn>,
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/api/pm/projects/kanban-board",
+    tag = "projects",
+    responses(
+        (status = 200, description = "获取看板成功", body = ApiResponse<KanbanBoardResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+async fn get_kanban_board(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<KanbanBoardResponse>> {
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "SELECT id::TEXT, title, description, priority, status, assignee, COALESCE(progress, 0) AS progress FROM pm.pm_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC"
+    ))
+    .fetch_all(&state.pool)
+    .await;
+
+    let rows = match result {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("获取看板任务失败: {}", e);
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取看板任务失败",
+            ));
+        }
+    };
+
+    let mut backlog: Vec<KanbanCard> = Vec::new();
+    let mut in_progress: Vec<KanbanCard> = Vec::new();
+    let mut review: Vec<KanbanCard> = Vec::new();
+    let mut completed: Vec<KanbanCard> = Vec::new();
+
+    for row in rows {
+        let status: String = row.get("status");
+        let card = KanbanCard {
+            id: row.get("id"),
+            title: row.get("title"),
+            description: row.get("description"),
+            priority: row.get("priority"),
+            status: status.clone(),
+            assignee: row.try_get("assignee").unwrap_or(None),
+        };
+        match status.as_str() {
+            "in-progress" => in_progress.push(card),
+            "review" => review.push(card),
+            "completed" => completed.push(card),
+            _ => backlog.push(card),
+        }
+    }
+
+    Json(ApiResponse::success(
+        KanbanBoardResponse {
+            columns: vec![
+                KanbanColumn { id: "backlog".into(), title: "待办".into(), status: "backlog".into(), cards: backlog },
+                KanbanColumn { id: "in-progress".into(), title: "进行中".into(), status: "in-progress".into(), cards: in_progress },
+                KanbanColumn { id: "review".into(), title: "评审".into(), status: "review".into(), cards: review },
+                KanbanColumn { id: "completed".into(), title: "已完成".into(), status: "completed".into(), cards: completed },
+            ],
+        },
+        "获取看板成功",
+    ))
+}
+
