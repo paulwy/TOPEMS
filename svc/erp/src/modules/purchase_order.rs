@@ -437,18 +437,18 @@ pub async fn approve_purchase_order(
 
     match result {
         Ok(order) => {
+            let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+            )
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
                     return Json(api_error(500, "事务提交失败"));
                 }
-                let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
-                )
-                .fetch_optional(&mut **txn)
-                .await
-                .ok()
-                .flatten();
             }
             if let Some(ref publisher) = state.event_publisher {
                 let payload = PurchaseOrderApprovedPayload {

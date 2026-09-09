@@ -63,11 +63,18 @@ pub async fn create_voucher(
     let voucher_id = Uuid::new_v4();
     let now = Utc::now();
     let department_id = req.department_id.unwrap_or_else(Uuid::nil);
+    let tenant_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+    )
+    .fetch_optional(&mut **txn)
+    .await
+    .ok()
+    .flatten();
 
     let voucher_result = sqlx::query(
         r#"INSERT INTO erp.financial_vouchers
-           (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11, $12, $13)"#,
+           (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11, $12, $13, $14)"#,
     )
     .bind(voucher_id)
     .bind(&req.voucher_number)
@@ -82,6 +89,7 @@ pub async fn create_voucher(
     .bind(&req.source_id)
     .bind(now)
     .bind(now)
+    .bind(tenant_id.unwrap_or_else(Uuid::nil))
     .execute(&mut **txn)
     .await;
 
@@ -91,8 +99,8 @@ pub async fn create_voucher(
                 let item_id = Uuid::new_v4();
                 let _ = sqlx::query(
                     r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at)
-                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#,
+                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#,
                 )
                 .bind(item_id)
                 .bind(voucher_id)
@@ -105,6 +113,7 @@ pub async fn create_voucher(
                 .bind(entry.department_id.unwrap_or(department_id))
                 .bind(now)
                 .bind(now)
+                .bind(tenant_id.unwrap_or_else(Uuid::nil))
                 .execute(&mut **txn)
                 .await;
             }

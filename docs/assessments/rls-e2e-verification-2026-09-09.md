@@ -152,13 +152,29 @@
   - 核销 UPDATE 隔离：GUC=t1 更新 tenant_id=t1 单据命中（pending→paid）✓；GUC=t2 对 tenant_id=t1 条件 0 行 ✓。
 - **零污染**：全部测试行已清理（sales_orders/vouchers/billing_records 均回到 0 行）。
 
-## 六·B、遗留（不在本专项范围，已记录）
+## 六·B、补充专项（2026-09-09 第二轮：消费者写入全量一致化）
+**范围**：盘点 4 服务全部事件消费者写表（36 个 handler），对写 tenant 表但未绑 tenant 的路径全量补齐。
 
-1. **事件消费者进程未注入 GUC**：消费进程 PgPool 直连无 GUC → RLS 宽松策略下 FORCE 拦不住（本专项靠**代码层 tenant 绑定**保证隔离，RLS 为已设 GUC 连接的兜底）。更彻底方案：事件消费入口统一注入 `app.tenant_id`（后续专项）。
-2. **erp HTTP 创建凭证（POST /api/erp/vouchers）不填 tenant_id**：financial_vouchers/voucher_items 写入 tenant_id=NULL（宽松策略放行）→ 该凭证对所有租户可见。属既有 HTTP 路径漏洞，未擅改，建议后续专项。
-3. **erp.voucher_items 未 FORCE**：事件明细 INSERT 未绑 tenant，待绑定后补 FORCE。
-4. **erp_cost_allocations 表在库中不存在**：`handle_work_order_completed`/`handle_stock_inbound` 仍写该表（死代码，graceful 失败），待核对补迁移或删代码。
-5. **PaymentMadePayload 疑似无发布方**：全仓无构造点，`erp.handle_payment_made` 订阅可能空转（与历史 PaymentReceived 同类问题），待核实。
+**已闭环**：
+1. **erp.handle_return_completed 绑定**（ReturnCompletedPayload 发布方 crm.aftersales 已填 tenant_id）：financial_vouchers + voucher_items×2 补 tenant 列与绑定。
+2. **erp.voucher_items 事件侧全量绑定**：sales_order_approved×2 / purchase_order_approved×2 / hrm_payroll×1 / return_completed×2 共 7 处 INSERT 加 tenant 列+VALUES+bind。
+3. **erp HTTP create_voucher（POST /api/erp/vouchers）tenant 化**：txn 内读 GUC `app.tenant_id`，financial_vouchers（14→15 列）+ voucher_items（11→12 列）写入真实租户——修复"凭证对所有租户可见"漏洞。
+4. **fin_reconciliations 快照审批 UPDATE 加 `AND tenant_id`**：handle_reconciliation_approved（WHERE 原仅 id+status）、handle_reconciliation_updated（原仅 id）→ 跨租户改写风险消除。
+5. **死链路 handler 一致化**：handle_employee_onboarded / handle_pm_project_completed / handle_pm_project_settled 的 payables/receivables/financial_vouchers/voucher_items 补 tenant 绑定；EmployeeOnboardedPayload / PmProjectCompletedPayload / PmProjectSettledPayload 增加 `tenant_id: Option<Uuid>` 字段（**注意：全仓无这些事件的发布方，属空转订阅，绑定仅为一致性 + 未来发布方接入准备**）。
+6. **SalesOrderCreatedPayload 补 `tenant_id` 字段 + erp 发布点注入**（finance.create_auto_voucher 调用点依赖该字段，上一轮漏检）。
+
+**B-2 补迁移** `20260909000002_rls_voucher_items_force.sql`（已实跑）：voucher_items FORCE。
+
+**验证（5432 实测，全部事务回滚零污染）**：
+- voucher_items FORCE 后：GUC=t1 本租户插入 ✓（事件 11 列 / HTTP 12 列两种形态均过）；GUC=t2 插入 t1 租户行 → **RLS 拒绝** ✓
+- fin_reconciliations UPDATE 隔离：GUC=t1 同租户命中 ✓；GUC=t2 对 t1 单据 **0 行** ✓
+- `cargo check --workspace` 0 error
+
+**仍遗留（不在本专项范围）**：
+1. **事件消费进程仍不注入 GUC**：隔离由代码层 tenant 绑定兜底，FORCE 表为已设 GUC 连接的后置防线；彻底方案（消费者入口注入）待后续专项。
+2. **erp_cost_allocations 表在库中不存在**：`handle_work_order_completed`/`handle_stock_inbound` 仍写该表（死代码，graceful 失败），待核对补迁移或删代码。
+3. **PaymentMadePayload 无发布方**：全仓无构造点，`erp.handle_payment_made` 订阅可能空转，待核实。
+4. **erp.account_balances 无 tenant 维度**：`handle_inventory_updated` 写账目汇总表（跨租户共享），需单独评估。
 
 ## 七、验证资产
 

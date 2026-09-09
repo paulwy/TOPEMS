@@ -342,28 +342,30 @@ impl ErpEventHandlers {
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
-                       VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $5)"#,
+                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $5, $6)"#,
                 )
                 .bind(uuid::Uuid::new_v4())
                 .bind(voucher_id)
                 .bind(format!("销售订单{}应收账款", payload.order_no))
                 .bind(amount)
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| format!("创建凭证明细（应收账款）失败: {}", e))?;
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
-                       VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $5)"#,
+                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $5, $6)"#,
                 )
                 .bind(uuid::Uuid::new_v4())
                 .bind(voucher_id)
                 .bind(format!("销售订单{}销售收入", payload.order_no))
                 .bind(amount)
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| format!("创建凭证明细（主营业务收入）失败: {}", e))?;
@@ -492,28 +494,30 @@ impl ErpEventHandlers {
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
-                       VALUES ($1, $2, 1, '1403', '原材料', $3, $4, 0, $5, $5)"#,
+                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, 1, '1403', '原材料', $3, $4, 0, $5, $5, $6)"#,
                 )
                 .bind(uuid::Uuid::new_v4())
                 .bind(voucher_id)
                 .bind(format!("采购订单{}原材料入库", payload.order_no))
                 .bind(amount)
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| format!("创建凭证明细（原材料）失败: {}", e))?;
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
-                       VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5)"#,
+                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5, $6)"#,
                 )
                 .bind(uuid::Uuid::new_v4())
                 .bind(voucher_id)
                 .bind(format!("采购订单{}应付账款", payload.order_no))
                 .bind(amount)
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| format!("创建凭证明细（应付账款）失败: {}", e))?;
@@ -852,27 +856,29 @@ impl ErpEventHandlers {
                 Ok(_) => {
                     let _ = sqlx::query(
                         r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
-                           VALUES ($1, $2, 1, '6602', '管理费用', $3, $4, 0, $5, $5)"#,
+                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
+                           VALUES ($1, $2, 1, '6602', '管理费用', $3, $4, 0, $5, $5, $6)"#,
                     )
                     .bind(uuid::Uuid::new_v4())
                     .bind(voucher_id)
                     .bind(format!("员工{}入职培训费", payload.name))
                     .bind(onboarding_cost)
                     .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                     .execute(&mut *tx)
                     .await;
 
                     let _ = sqlx::query(
                         r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
-                           VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5)"#,
+                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
+                           VALUES ($1, $2, 2, '2202', '应付账款', $3, 0, $4, $5, $5, $6)"#,
                     )
                     .bind(uuid::Uuid::new_v4())
                     .bind(voucher_id)
                     .bind(format!("员工{}入职费用应付", payload.name))
                     .bind(onboarding_cost)
                     .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                     .execute(&mut *tx)
                     .await;
 
@@ -1010,8 +1016,8 @@ impl ErpEventHandlers {
                 Ok(_) => {
                     let _ = sqlx::query(
                         r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
-                           VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $6, $6)"#,
+                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
+                           VALUES ($1, $2, 1, '1122', '应收账款', $3, $4, 0, $5, $6, $6, $7)"#,
                     )
                     .bind(uuid::Uuid::new_v4())
                     .bind(voucher_id)
@@ -1019,13 +1025,14 @@ impl ErpEventHandlers {
                     .bind(project_amount)
                     .bind(payload.project_id)
                     .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                     .execute(&mut *tx)
                     .await;
 
                     let _ = sqlx::query(
                         r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
-                           VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $6, $6)"#,
+                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
+                           VALUES ($1, $2, 2, '6001', '主营业务收入', $3, 0, $4, $5, $6, $6, $7)"#,
                     )
                     .bind(uuid::Uuid::new_v4())
                     .bind(voucher_id)
@@ -1033,6 +1040,7 @@ impl ErpEventHandlers {
                     .bind(project_amount)
                     .bind(payload.project_id)
                     .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                     .execute(&mut *tx)
                     .await;
 
@@ -1154,8 +1162,8 @@ impl ErpEventHandlers {
             Ok(_) => {
                 let _ = sqlx::query(
                     r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
-                       VALUES ($1, $2, 1, '6401', '主营业务成本', $3, $4, 0, $5, $6, $6)"#,
+                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, 1, '6401', '主营业务成本', $3, $4, 0, $5, $6, $6, $7)"#,
                 )
                 .bind(uuid::Uuid::new_v4())
                 .bind(voucher_id)
@@ -1163,13 +1171,14 @@ impl ErpEventHandlers {
                 .bind(cost_amount)
                 .bind(payload.project_id)
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await;
 
                 let _ = sqlx::query(
                     r#"INSERT INTO erp.voucher_items
-                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
-                       VALUES ($1, $2, 2, '1405', '库存商品', $3, 0, $4, $5, $6, $6)"#,
+                       (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, 2, '1405', '库存商品', $3, 0, $4, $5, $6, $6, $7)"#,
                 )
                 .bind(uuid::Uuid::new_v4())
                 .bind(voucher_id)
@@ -1177,6 +1186,7 @@ impl ErpEventHandlers {
                 .bind(cost_amount)
                 .bind(payload.project_id)
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await;
 
@@ -1184,8 +1194,8 @@ impl ErpEventHandlers {
                 if profit_amount > 0.0 {
                     let _ = sqlx::query(
                         r#"INSERT INTO erp.voucher_items
-                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at)
-                           VALUES ($1, $2, 3, '4103', '本年利润', $3, $4, 0, $5, $6, $6)"#,
+                           (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)
+                           VALUES ($1, $2, 3, '4103', '本年利润', $3, $4, 0, $5, $6, $6, $7)"#,
                     )
                     .bind(uuid::Uuid::new_v4())
                     .bind(voucher_id)
@@ -1193,6 +1203,7 @@ impl ErpEventHandlers {
                     .bind(profit_amount)
                     .bind(payload.project_id)
                     .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                     .execute(&mut *tx)
                     .await;
                 }
@@ -1438,6 +1449,7 @@ impl ErpEventHandlers {
         .bind(refund_amount)
         .bind(payload.return_id.to_string())
         .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await
         .map_err(|e| format!("创建退款凭证失败: {}", e))?;
@@ -1445,7 +1457,7 @@ impl ErpEventHandlers {
         // 凭证明细1：借 - 主营业务收入（冲减收入）
         sqlx::query(
             r#"INSERT INTO erp.voucher_items
-               (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
+               (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
                VALUES ($1, $2, 1, '6001', '主营业务收入', $3, $4, 0, $5, $5)"#,
         )
         .bind(uuid::Uuid::new_v4())
@@ -1453,6 +1465,7 @@ impl ErpEventHandlers {
         .bind(format!("退换货{}冲减收入", payload.return_no))
         .bind(refund_amount)
         .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await
         .map_err(|e| format!("创建退款凭证明细（收入冲减）失败: {}", e))?;
@@ -1461,7 +1474,7 @@ impl ErpEventHandlers {
         let customer_label = payload.customer_name.as_deref().unwrap_or("客户");
         sqlx::query(
             r#"INSERT INTO erp.voucher_items
-               (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at)
+               (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
                VALUES ($1, $2, 2, '1122', '应收账款', $3, 0, $4, $5, $5)"#,
         )
         .bind(uuid::Uuid::new_v4())
@@ -1469,6 +1482,7 @@ impl ErpEventHandlers {
         .bind(format!("退换货{}退款给{}", payload.return_no, customer_label))
         .bind(refund_amount)
         .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await
         .map_err(|e| format!("创建退款凭证明细（应收退款）失败: {}", e))?;
@@ -1943,9 +1957,10 @@ impl ErpEventHandlers {
             r#"UPDATE erp.fin_reconciliations
                SET status = 'approved',
                    updated_at = NOW()
-               WHERE id = $1 AND status IN ('pending', 'draft')"#,
+               WHERE id = $1 AND status IN ('pending', 'draft') AND tenant_id = $2"#,
         )
         .bind(payload.id)
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await
         .map_err(|e| format!("更新 erp.fin_reconciliations 失败: {}", e))?;
@@ -1969,10 +1984,11 @@ impl ErpEventHandlers {
             r#"UPDATE erp.fin_reconciliations
                SET status = $1,
                    updated_at = NOW()
-               WHERE id = $2"#,
+               WHERE id = $2 AND tenant_id = $3"#,
         )
         .bind(&payload.status)
         .bind(payload.id)
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await
         .map_err(|e| format!("更新 erp.fin_reconciliations 失败: {}", e))?;
@@ -2027,8 +2043,8 @@ impl ErpEventHandlers {
             sqlx::query(
                 r#"INSERT INTO erp.voucher_items
                    (id, voucher_id, line_number, subject_code, subject_name, summary,
-                    debit_amount, credit_amount, department_id, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#,
+                    debit_amount, credit_amount, department_id, created_at, updated_at, tenant_id)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#,
             )
             .bind(uuid::Uuid::new_v4())
             .bind(voucher_id)
@@ -2041,6 +2057,7 @@ impl ErpEventHandlers {
             .bind(payload.department_id)
             .bind(now)
             .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&self.db)
             .await
             .map_err(|e| format!("创建 erp.voucher_items 失败: {}", e))?;

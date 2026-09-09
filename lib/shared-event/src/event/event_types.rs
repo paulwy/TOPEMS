@@ -526,6 +526,7 @@ pub struct PmProjectCompletedPayload {
     pub project_name: String,
     pub completed_by: Option<String>,
     pub completed_at: Option<DateTime<Utc>>,
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -535,6 +536,7 @@ pub struct PmProjectSettledPayload {
     pub settled_amount: Option<f64>,
     pub settled_by: Option<String>,
     pub settled_at: Option<DateTime<Utc>>,
+    pub tenant_id: Option<Uuid>,
 }
 
 // --- ERP Sales Events ---
@@ -548,6 +550,7 @@ pub struct SalesOrderCreatedPayload {
     pub total_amount: Option<f64>,
     pub payable_amount: Option<f64>,
     pub created_by: Option<String>,
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -913,6 +916,7 @@ pub struct EmployeeOnboardedPayload {
     pub department_id: Option<Uuid>,
     pub position_id: Option<Uuid>,
     pub onboard_date: Option<DateTime<Utc>>,
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
