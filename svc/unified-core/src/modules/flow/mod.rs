@@ -58,6 +58,24 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
+        CREATE TABLE IF NOT EXISTS core_workflow_versions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            workflow_id UUID NOT NULL REFERENCES core_workflows(id),
+            version VARCHAR(64) NOT NULL,
+            definition JSONB NOT NULL,
+            change_description TEXT,
+            created_by VARCHAR(128) DEFAULT 'system',
+            isactive BOOLEAN DEFAULT TRUE,
+            deleted_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
         CREATE TABLE IF NOT EXISTS core_workflow_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             instance_id UUID NOT NULL REFERENCES core_workflow_instances(id),

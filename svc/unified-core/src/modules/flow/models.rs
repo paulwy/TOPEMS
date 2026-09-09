@@ -881,3 +881,15 @@ mod tests {
         assert_eq!(de2.rule_type, "reminder");
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
+pub struct WorkflowVersion {
+    pub id: Uuid,
+    pub workflow_id: Uuid,
+    pub version: String,
+    pub definition: serde_json::Value,
+    pub change_description: Option<String>,
+    pub created_by: String,
+    pub isactive: bool,
+    pub created_at: DateTime<Utc>,
+}

@@ -10,7 +10,7 @@ use uuid::Uuid;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
-use super::models::{CreateWorkflowRequest, UpdateWorkflowRequest, Workflow};
+use super::models::{CreateWorkflowRequest, UpdateWorkflowRequest, Workflow, WorkflowVersion};
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[schema(as = WorkflowQueryParams)]
@@ -522,4 +522,152 @@ pub async fn rollback_workflow(
     };
 
     Json(ApiResponse::success(workflow, "回滚成功"))
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct CreateWorkflowVersionRequest {
+    pub version: String,
+    pub definition: Option<serde_json::Value>,
+    pub change_description: Option<String>,
+    pub created_by: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:flow:workflow:read"])),
+    path = "/api/core/flow/workflows/{workflow_id}/versions",
+    tag = "Flow-Workflow",
+    params(
+        ("workflow_id" = Uuid, Path, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "版本列表", body = ApiResponse<Vec<WorkflowVersion>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn list_workflow_versions(
+    State(state): State<AppState>,
+    Path(workflow_id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<WorkflowVersion>>> {
+    let versions = sqlx::query_as::<_, WorkflowVersion>(
+        "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
+         FROM core_workflow_versions
+         WHERE workflow_id = $1 AND deleted_at IS NULL
+         ORDER BY created_at DESC",
+    )
+    .bind(workflow_id)
+    .fetch_all(&state.pool)
+    .await;
+
+    match versions {
+        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Err(e) => {
+            tracing::error!("查询工作流版本失败: {}", e);
+            Json(api_error(500, "查询工作流版本失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["unified-core:flow:workflow:write"])),
+    path = "/api/core/flow/workflows/{workflow_id}/versions",
+    tag = "Flow-Workflow",
+    params(
+        ("workflow_id" = Uuid, Path, description = "工作流ID"),
+    ),
+    request_body = CreateWorkflowVersionRequest,
+    responses(
+        (status = 200, description = "创建版本成功", body = ApiResponse<WorkflowVersion>),
+        (status = 404, description = "工作流不存在"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
+pub async fn create_workflow_version(
+    State(state): State<AppState>,
+    Path(workflow_id): Path<Uuid>,
+    Json(payload): Json<CreateWorkflowVersionRequest>,
+) -> Json<ApiResponse<WorkflowVersion>> {
+    // definition 未传时从当前工作流快照
+    let definition = match payload.definition {
+        Some(d) => d,
+        None => match sqlx::query_scalar::<_, serde_json::Value>(
+            "SELECT definition FROM core_workflows WHERE id = $1 AND deleted_at IS NULL",
+        )
+        .bind(workflow_id)
+        .fetch_optional(&state.pool)
+        .await
+        {
+            Ok(Some(d)) => d,
+            Ok(None) => return Json(api_error(404, "工作流不存在")),
+            Err(e) => {
+                tracing::error!("读取工作流快照失败: {}", e);
+                return Json(api_error(500, "创建工作流版本失败"));
+            }
+        },
+    };
+
+    let version = sqlx::query_as::<_, WorkflowVersion>(
+        "INSERT INTO core_workflow_versions
+         (workflow_id, version, definition, change_description, created_by)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, workflow_id, version, definition, change_description, created_by, isactive, created_at",
+    )
+    .bind(workflow_id)
+    .bind(&payload.version)
+    .bind(definition)
+    .bind(&payload.change_description)
+    .bind(payload.created_by.as_deref().unwrap_or("system"))
+    .fetch_one(&state.pool)
+    .await;
+
+    match version {
+        Ok(v) => Json(ApiResponse::success(v, "创建版本成功")),
+        Err(e) => {
+            tracing::error!("创建工作流版本失败: {}", e);
+            Json(api_error(500, "创建工作流版本失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:flow:workflow:read"])),
+    path = "/api/core/flow/workflows/{workflow_id}/versions/{version_id}",
+    tag = "Flow-Workflow",
+    params(
+        ("workflow_id" = Uuid, Path, description = "工作流ID"),
+        ("version_id" = Uuid, Path, description = "版本ID"),
+    ),
+    responses(
+        (status = 200, description = "版本详情", body = ApiResponse<WorkflowVersion>),
+        (status = 404, description = "版本不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn get_workflow_version(
+    State(state): State<AppState>,
+    Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<WorkflowVersion>> {
+    let version = sqlx::query_as::<_, WorkflowVersion>(
+        "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
+         FROM core_workflow_versions
+         WHERE workflow_id = $1 AND id = $2 AND deleted_at IS NULL",
+    )
+    .bind(workflow_id)
+    .bind(version_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match version {
+        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Err(e) => {
+            if matches!(e, sqlx::Error::RowNotFound) {
+                return Json(api_error(404, "工作流版本不存在"));
+            }
+            tracing::error!("查询工作流版本失败: {}", e);
+            Json(api_error(500, "查询工作流版本失败"))
+        }
+    }
 }

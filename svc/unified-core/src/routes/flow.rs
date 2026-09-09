@@ -38,6 +38,14 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/workflows/{id}",
             get(modules::flow::workflow::get_workflow),
         )
+        .route(
+            "/workflows/{workflow_id}/versions",
+            get(modules::flow::workflow::list_workflow_versions),
+        )
+        .route(
+            "/workflows/{workflow_id}/versions/{version_id}",
+            get(modules::flow::workflow::get_workflow_version),
+        )
         .route("/instances", get(modules::flow::instance::list_instances))
         .route(
             "/instances/{id}",
@@ -257,6 +265,14 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/settings/batch",
             post(modules::flow::setting::batch_update_settings),
+        )
+        .route(
+            "/workflows/{workflow_id}/versions",
+            post(modules::flow::workflow::create_workflow_version),
+        )
+        .route(
+            "/monitor/instances/{id}/retry",
+            post(modules::flow::instance::retry_instance),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),

@@ -637,3 +637,56 @@ pub async fn overdue_instances(
         "查询成功",
     ))
 }
+
+
+#[derive(Debug, Deserialize)]
+pub struct RetryInstanceRequest {
+    pub node_id: Option<String>,
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["unified-core:flow:instance:write"])),
+    path = "/api/core/flow/monitor/instances/{id}/retry",
+    tag = "Flow-Monitor",
+    params(
+        ("id" = Uuid, Path, description = "实例ID"),
+    ),
+    request_body = RetryInstanceRequest,
+    responses(
+        (status = 200, description = "重试成功", body = ApiResponse<WorkflowInstance>),
+        (status = 404, description = "实例不存在"),
+        (status = 500, description = "重试失败"),
+    ),
+)]
+pub async fn retry_instance(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<Option<RetryInstanceRequest>>,
+) -> Json<ApiResponse<WorkflowInstance>> {
+    let node_id = payload.and_then(|p| p.node_id);
+    let instance = sqlx::query_as::<_, WorkflowInstance>(
+        "UPDATE core_workflow_instances
+         SET status = 'running',
+             current_node_id = COALESCE($2, current_node_id),
+             completed_at = NULL,
+             updated_at = NOW()
+         WHERE id = $1
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+    )
+    .bind(id)
+    .bind(node_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match instance {
+        Ok(v) => Json(ApiResponse::success(v, "重试成功")),
+        Err(e) => {
+            if matches!(e, sqlx::Error::RowNotFound) {
+                return Json(api_error(404, "工作流实例不存在"));
+            }
+            tracing::error!("重试工作流实例失败: {}", e);
+            Json(api_error(500, "重试工作流实例失败"))
+        }
+    }
+}

@@ -90,6 +90,10 @@ use super::models::{
         super::workflow::deactivate_workflow,
         super::workflow::deploy_workflow,
         super::workflow::rollback_workflow,
+        super::workflow::list_workflow_versions,
+        super::workflow::create_workflow_version,
+        super::workflow::get_workflow_version,
+        super::instance::retry_instance,
         // === Flow-Instance ===
         super::instance::list_instances,
         super::instance::get_instance,
