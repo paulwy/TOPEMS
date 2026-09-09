@@ -47,7 +47,7 @@
 
 1. **单迁移文件** `20260908000006_crm_datalayer.sql`：`CREATE SCHEMA IF NOT EXISTS crm;` + 16 张表 `IF NOT EXISTS`，UUID 主键（`gen_random_uuid()`）、`tenant_id UUID NOT NULL`、`created_at/updated_at TIMESTAMPTZ DEFAULT NOW()`、业务字段按模块 bind 类型（VARCHAR/TEXT/DOUBLE PRECISION/INTEGER/BOOLEAN/JSONB）精确定稿。
 2. **只读表核对结果**：`interactions` 有真实写入方（crm event_handlers）→ 必建；`customer_orders`/`billing_records` 原判无写入方 → **2026-09-08 写入方专项已接通**（rfm 改读 sales_orders + OpportunityWon→billing_records）；`audit_logs` 不建（改指 public，附项）。
-3. **audit_logs 不建**：审计写入统一在 public.audit_logs（unified-core 3 处 INSERT 已核实）；audit.rs 列不兼容（user_name/entity_ids/error_message）→ 单独附项改造，不纳入本迁移。
+3. **audit_logs 不建**：审计写入统一在 public.audit_logs（unified-core 3 处 INSERT 已核实）；audit.rs 列不兼容（user_name/entity_ids/error_message）→ 单独附项改造，不纳入本迁移。**【附项已闭环（2026-09-09 核实）】**：`lib/shared-db/src/audit.rs` INSERT 全 13 列（tenant_id/action/entity_type/entity_id/entity_ids/user_id/user_name/request_details/response_details/status/error_message/ip_address/user_agent）与 public.audit_logs 15 列完全对齐，RETURNING 含 id/created_at；user_id 字符串容错解析（失败写 NULL）、ip 直接 TEXT（不再强制 INET cast）；unified-core middleware/audit_log.rs 10 列子集 INSERT 无旧列残留。
 4. **重挂 6 模块**：迁移落地后取消 mod.rs 注释（18-21/27-28 声明 + 87-89/100-102 merge）+ openapi.rs 注册；新逻辑层（scoring_logic/sales_funnel_logic/rfm/forecast）保持不动。
 5. **前端**：mock 开关保留（受控演示），生产自动走真实 API，无需前端改动。
 
