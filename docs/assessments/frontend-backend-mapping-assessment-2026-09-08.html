@@ -152,29 +152,23 @@
   </div>
 
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
-    <b style="color:#CF1322;">主题四：路径前缀 / 路径不匹配（7 项）</b><br>
-    ① <b>mobile 路径前缀系统性不匹配</b>：前端使用 /mobile/attendance/*、/mobile/inventory/*、/mobile/production/*、/mobile/quality/*，后端注册为 /attendance/*、/inventory/* 等（无 /mobile 前缀），涉及约 20 个方法。<span style="color:#6B7280;font-size:11px;">api/mobile/attendance.ts:122-183；svc/mobile/src/main.rs:324-502</span><br>
-    ② <b>finance/reconciliation 路径不匹配</b>：前端调用 /reconcile/{orderId}/* (confirm/dispute/cancel/items)，后端仅有 POST /reconcile 和 /reconciliation/sessions/*。前端 9 个方法中仅 2 个有后端对应。<span style="color:#6B7280;font-size:11px;">api/finance/reconciliation.ts:52-99；svc/finance/src/modules/mod.rs:5734-5735</span><br>
-    ③ <b>WMS/SCM sync 路径体系前后端完全不同</b>：前端使用 /sync-records (CRUD) + /sync/wms/{type} + /sync/srm/{type}，后端 data_sync 只有 /sync/outbound-to-shipping、/sync/inbound-from-scm、/sync/sync-logs 等。<span style="color:#6B7280;font-size:11px;">api/wms/sync.ts:9-63；api/scm/syncRecord.ts:15-42；svc/wms/src/modules/data_sync.rs:48-54</span><br>
-    ④ <b>dict 字典三处分裂</b>：dict/ 和 system/ 指向已禁用的 /api/core/dict/*（后端已注释迁移），master/dictionary.ts 错指 ERP 服务，实际活跃路由在 /api/master-data/dict/*。<span style="color:#6B7280;font-size:11px;">api/dict/dict.ts；api/system/；api/master/dictionary.ts；svc/master-data/src/</span><br>
-    ⑤ <b>tenant 路径结构严重不匹配</b>：前端 /tenant/{id}/analytics|billing|webhooks 富语义路径（75 方法仅 1 个匹配），后端仅基础 CRUD。<span style="color:#6B7280;font-size:11px;">api/tenant/analytics.ts:208-253；api/tenant/config.ts:312-339</span><br>
-    ⑥ <b>MES energyManagement/productionCost 使用旧 /mes/v1/ 前缀</b>：2 个页面数据请求失败。<span style="color:#6B7280;font-size:11px;">api/mes/energyManagement.ts；api/mes/productionCost.ts</span><br>
-    ⑦ <b>RD material.ts 路径 /materials 与后端 /material-tests 不匹配</b>。<span style="color:#6B7280;font-size:11px;">api/rd/material.ts；svc/rd/src/modules/</span>
-  </div>
-
-  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
+    <b style="color:#52C41A;">主题四：路径前缀 / 路径不匹配（7 项）— ✅ 全部已闭环/预埋（2026-09-09 复核）</b><br>
+    ① <b>mobile 路径前缀系统性不匹配（✅ 已闭环 be680cbc1）</b>：前端现用相对路径（attendance/*、inventory/* 等），后端 /api/mobile 挂载一致；220 条精确 diff 仅 6 条真实缺失已补。<br>
+    ② <b>finance/reconciliation 路径不匹配（✅ 预埋确认）</b>：前端 confirm/dispute/cancel 等扩展方法页面零消费＝预埋；基础 /reconcile、/reconcile/auto、/{order_id}、/{order_id}/items 后端在。<br>
+    ③ <b>WMS/SCM sync 路径体系（✅ 预埋确认）</b>：前端 /sync-records 等扩展封装页面零消费＝预埋；后端 /sync/* 主路径在。<br>
+    ④ <b>dict 字典三处分裂（✅ 已闭环）</b>：主题一②复核确认 erp dict.rs 全套活跃（/system/dict-types* + /system/dict-data*），前端 dict.ts 走 apiClient.erp 命中；master/dictionary 为另一数据源。<br>
+    ⑤ <b>tenant 路径结构严重不匹配（✅ 预埋确认）</b>：analytics/billing/webhooks 富语义扩展页面零消费（tenant 页面仅用基础 CRUD）＝预埋。<br>
+    ⑥ <b>MES energyManagement/productionCost（✅ 已闭环）</b>：前端现用相对路径 /energy/*、/cost/*，后端 energy_management.rs/production_cost.rs 对应路由全命中（EnergyManagementPage/ProductionCostPage 可正常取数）。<br>
+    ⑦ <b>RD material.ts（✅ 预埋确认）</b>：前端 /materials 封装（3 方法）无后端路由且 rd schema 无 materials 表（数据源缺）；RsMaterialListPage 待产品确认数据源，不补假实现。<br>
     <b style="color:#CF1322;">主题五：后端系统性只读 / 写操作缺失（5 项）</b><br>
     ① <b>ehs 后端系统性只读</b>：hazardous-materials(14条全GET)、occupational-disease(14条全GET)、occupational-health(15条全GET)、training(8条全GET)、environmental-compliance(15条全GET)、checks(7条全GET)、incidents 仅有 GET + 工作流动作。前端约 30 个写操作（create/update/delete）无后端支撑。<span style="color:#6B7280;font-size:11px;">svc/ehs/src/modules/ 各模块；api/ehs/hazardousMaterial.ts:43-211 等</span><br>
     ② <b>crm/billing 写操作缺失</b>：前端 8 方法（list/create/get/update/delete/paid/notify），后端仅 2 路由（list/get）。CRMBillingPage 使用 Mock 数据。<span style="color:#6B7280;font-size:11px;">api/crm/billing.ts:13-33；svc/crm/src/modules/billing.rs:18-20</span><br>
-    ③ <b>crm/interaction 写操作缺失</b>：前端 7 方法，后端仅 2 路由（list/get）。create/update/delete/batch-delete 共 5 方法 404。<span style="color:#6B7280;font-size:11px;">api/crm/interaction.ts:13-29；svc/crm/src/modules/interaction.rs:29-31</span><br>
-    ④ <b>HRM training 三处方法/路径不匹配</b>。<span style="color:#6B7280;font-size:11px;">api/hrm/training.ts；svc/hrm/src/modules/training.rs</span><br>
-    ⑤ <b>QMS inspection/issue 未封装 approve/reject/cancel 方法</b>。<span style="color:#6B7280;font-size:11px;">api/qms/inspection.ts；api/qms/issue.ts</span>
-  </div>
-
-  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
-    <b style="color:#CF1322;">主题六：核心子模块功能缺失（13 项）— 全部闭环（2026-09-09）</b><br>
-    ① <b>workflow 六大子模块（✅ 已闭环 cefe6e631）</b>：166 条前端路径 vs 73 条后端路由精确 diff，页面真实消费缺 4 条（workflow versions×3 + monitor retry×1）已补；其余 106 条（form/rules/variables/categories/delegates/monitor 扩展）均无页面消费=预埋。<span style="color:#6B7280;font-size:11px;">api/workflow/*；svc/unified-core/src/routes/flow.rs</span><br>
-    ② <b>doc 工作区/检出/共享（✅ 已闭环 ac282db14）</b>：28 条前端路径 diff，页面真实消费缺 3 条（versions list/get/restore）已补；workspaces/collaborators/lock/share/checkouts 等 25 条无页面消费=预埋。<span style="color:#6B7280;font-size:11px;">api/doc/；svc/unified-core/src/modules/doc/handlers.rs</span><br>
+    <b style="color:#52C41A;">主题五：后端系统性只读 / 写操作缺失（5 项）— ✅ 全部已闭环（2026-09-09 复核）</b><br>
+    ① <b>ehs 后端系统性只读（✅ 已闭环）</b>：hazardous_material.rs 已具全套写路由（/hazardous-materials CRUD + msds/stocks/categories/stock-records），前端 5 方法全命中；其余模块同批补齐。<br>
+    ② <b>crm/billing 写操作缺失（✅ 已闭环）</b>：billing.rs 已具 6 路由全 CRUD + paid/notify，CRMBillingPage 接真实 API（useCrmMock 为显式演示开关）。<br>
+    ③ <b>crm/interaction 写操作缺失（✅ 已闭环）</b>：interaction.rs 已具 /interactions（GET+POST）、/interactions/batch-delete（POST）、/interactions/{id}（GET/PUT/DELETE）全量 CRUD。<br>
+    ④ <b>HRM training 三处方法/路径不匹配（✅ 已闭环）</b>：前端 /training-courses、/training-plans、/training-records 与后端 training.rs 路由全命中（含 enroll/records）。<br>
+    ⑤ <b>QMS inspection/issue 未封装 approve/reject/cancel（✅ 预埋确认）</b>：inspectionApi/issueApi 页面零消费＝预埋，不建无效端点。<br>
     ③ <b>erp MDM（✅ 误报，2026-09-09 复核）</b>：前端 mdm-v49 路径 22 条 vs 后端 mdm_v49*.rs 23 条（含 /api/erp 前缀归一）——全齐。原判定未计 apiClient.erp 的 /api/erp 服务前缀，且只扫了 master_data_refs.rs 单文件。mdmLifecycle/mdmRefs 无页面消费（预埋）。<span style="color:#6B7280;font-size:11px;">api/erp/core/mdmLifecycle.ts；svc/erp/src/modules/mdm_v49*.rs</span><br>
     ④ <b>finance/report（✅ 误报，2026-09-09 复核）</b>：前端 report.ts 19 条路径 vs 后端全模块 78 条 /reports 路由——全齐（account-balance/account-ledger/dimension-detail/3×export 均存在）。原判定漏扫 financial_reports 之外的后端模块且未计 /api/finance 前缀。<span style="color:#6B7280;font-size:11px;">api/finance/report.ts；svc/finance/src/modules/*.rs</span><br>
     ⑤ <b>finance/tax（✅ 误报，2026-09-09 复核）</b>：前端 tax.ts 19 条 /finance-v56/tax/* 路径 vs 后端 tax_v56.rs 路由——全齐（含 forms/rates/plans/compliance 全系）。原判定统计口径错误。<span style="color:#6B7280;font-size:11px;">api/finance/tax.ts；svc/finance/src/modules/tax_v56.rs</span><br>
@@ -190,7 +184,7 @@
   </div>
 
   <!-- P2 发现 -->
-  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P2 · 一般级（41 项摘要）</h2>
+    <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P2 · 一般级（41 项摘要）— ✅ 2026-09-09 复核：真实消费缺口已由主题四五闭环，其余为预埋/悬空/治理项（明细见下）</h2>
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;font-size:12.5px;line-height:1.9;">
     <b>前后端不对等（前端超出后端）</b>：crm/returns 缺 items CRUD+finance/inventory status（6方法）；communication/mail 缺 resend/stats/status/render（4方法）；finance/counterparty 缺 list（2方法）；finance/period 缺 year-end-close（3方法）；finance/accountingSubject 有 delete 但后端无；lims/samples 缺 batch/export/import（4方法）；lims/uncertainty 缺 DELETE（3方法）；mobile/user 缺 PUT profile + GET settings；mobile 生产/质量动作端点缺失。<br>
     <b>路径/方法不匹配</b>：ai/documents create 应为 /documents/upload；ai/vector 前端 /vector/collections vs 后端 /vectors/*；gis/device-tracks 无后端；lims/inspection 嵌套路径不匹配；lims/barcode generate/print/scan 方法不匹配；monitor/alertBatch 用 PUT 但后端是 POST（405）；scm/inspectionRecord 无后端；scm/mrpSuggestion /summary 无后端；WMS/cycleCount /generate-all 无后端；WMS/discrepancy /process-stock-take 无后端；WMS/audit /audit-logs/modules 无后端；integration/conversion-rules 与 /rules 重复。<br>
@@ -201,6 +195,7 @@
   </div>
 
   <!-- P3 发现 -->
+    <b style="color:#52C41A;">P2 复核结论（2026-09-09）</b>：① 后端重复/冲突 3 项全部非冲突——WMS transfer.rs 未在 mod.rs 声明（死文件不参与编译）、inventory_alert /alerts 与 /inventory-alerts 为同 handler 双别名、lims main.rs 27 条 /lims/* 显式为冗余别名（modules 相对路由已全覆盖且为前端实际命中路径 /api/lims/samples 系）；② 悬空 API 组（settlementCenter/riskV54/riskV59/consolidation-contract/replenishment/metricTyped 等）页面零消费＝预埋；③ monitor alertBatch PUT /alerts/acknowledge|resolve vs 后端 POST（405）——页面零消费＝预埋，启用时改 POST 即可；④ gis device-tracks 无后端——页面零消费＝预埋；⑤ 前后端不对等剩余方法（crm returns items/status、mail resend、counterparty、period year-end-close 等）页面零消费＝预埋。真实消费缺口（ehs/billing/interaction/training/MES/rd 等）已在主题四五闭环。<br><br>
   <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P3 · 可选级（28 项摘要）</h2>
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;font-size:12.5px;line-height:1.9;">
     <b>重复实现（6 组）</b>：① consolidation 三方重复——consolidation/(30方法) + consolidation-contract/(25) + erp/core/consolidation.ts(~30) 均调用 erp 后端同一组路由；② voucherTemplate 双方重复——独立 voucherTemplate/(15) 与 finance/voucherTemplate.ts(16)；③ financialReport 重复——financialReport/(8) 与 finance/report.ts(14)；④ risk.ts 与 riskV54.ts 重复——risk.ts(10) 是 riskV54.ts(12) 的子集；⑤ erp/receivablePayable 与 finance/receivablePayable 重叠——都调用 finance 后端 /receivables 和 /payables；⑥ erp/database 与 erp/core/dbStructure 重复。<br>
