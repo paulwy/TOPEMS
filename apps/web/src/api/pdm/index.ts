@@ -9,6 +9,7 @@ import { documentApprovalApi } from './documentApproval';
 import { changeNoticeActionApi } from './changeNoticeAction';
 import { workflowApi } from './workflow';
 import { pdmVersionApi } from './pdmVersion';
+import { pdmSettingsApi } from './settings';
 
 export * from './bom';
 export * from './project';
@@ -20,6 +21,7 @@ export { pdmDashboardApi } from './dashboard';
 export { documentApprovalApi } from './documentApproval';
 export { changeNoticeActionApi } from './changeNoticeAction';
 export { workflowApi } from './workflow';
+export { pdmSettingsApi } from './settings';
 
 export type Document = PdmDocument;
 
@@ -515,6 +517,9 @@ export const pdmApi = {
 
   // Versions
   ...pdmVersionApi,
+
+  // Settings
+  ...pdmSettingsApi,
 };
 
 export default pdmApi;

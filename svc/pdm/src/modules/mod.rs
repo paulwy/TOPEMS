@@ -14,6 +14,7 @@ pub mod production_process;
 pub mod production_statistics;
 pub mod production_step;
 pub mod project;
+pub mod settings;
 pub mod state_machine;
 pub mod version;
 pub mod version_logic;
@@ -42,6 +43,7 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(production_statistics::create_routes())
         .merge(change_notice::create_routes())
         .merge(workflow::create_routes())
+        .merge(settings::create_routes())
 }
 
 #[cfg(test)]
