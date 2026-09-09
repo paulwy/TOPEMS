@@ -67,6 +67,7 @@
 3. ✅ audit.rs 附项（用户确认纳入）：3 处查询改指 public.audit_logs（15 列标准与 AuditLog 模型一致）+ user_id::text cast + SELECT 补 tenant_id
 4. ✅ 重挂 6 模块（mod.rs 取消注释 + merge）：customer_profile/customer_scoring/customer_segmentation/customer_recommendation/sales_forecast/sales_funnel；路由经核对与已挂载 forecast/rfm/scoring_logic/sales_funnel_logic 无冲突；修复 36 个编译错误（模型同步：Customer +13 字段、models/mod.rs re-export、customer.rs SELECT/RETURNING 列补全、customer_profile 类型修正）
 5. ✅ 验证闭环（2026-09-08 实跑，commit 7221d9593）：迁移在本地 postgres(localhost:5432/topems) 全量实跑——5 个 09 建表迁移 Applied（0802/0803/0804/0805/0806），crm schema 22 张表（含 billing_records/sales_orders）；顺带修复 0802 存量库兼容（bank_accounts 补 is_default 列）+ 测试迁移 0001 补 13 档案列 + RLS 测试 RETURNING 补列；cargo test **500/500 全绿**（原环境缺口 customer_isolated_by_tenant 已通过）
+6. ✅ 迁移台账一致性闭环（2026-09-09）：`_sqlx_migrations` 97 条全部 success=true、`sqlx migrate status` 全 installed 无 modified/missing、`migrate.sh run` 应用 0/错误 0；**checksum 规格证实**：sqlx 0.8.6 期望 **sha384 二进制 digest（48B）**（早前 96B ASCII hexdigest 文本导致 modified 的根因）；RLS 事件链迁移 20260909000001/0002（psql 直跑未入台账）已按同规格补录。crm 目录 `svc/crm/migrations/0001` 内容已等效应用、不入台账（共用单表，避免 version=1 幽灵记录）。
 2. 精确定稿 16 表 DDL（按 bind 类型）（1 天）
 3. 迁移 + 重挂 6 模块 + openapi（0.5 天）
 4. cargo check + 门禁 + smoke（0.5 天）
