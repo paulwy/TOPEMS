@@ -5,6 +5,7 @@ pub mod barcode_scanner;
 pub mod device;
 pub mod inventory;
 pub mod media;
+pub mod missing_endpoints;
 pub mod mobile_plugin;
 pub mod offline;
 pub mod offline_records;

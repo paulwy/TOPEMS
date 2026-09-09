@@ -90,6 +90,7 @@ use modules::user::{get_profile, update_profile, upload_avatar};
 use modules::workbench::get_workbench_data;
 
 use modules::mobile_plugin::create_routes;
+use modules::missing_endpoints::{get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config, update_push_template};
 use shared::AppState;
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
@@ -273,6 +274,11 @@ async fn main() -> Result<()> {
 
     // Protected routes
     let protected_routes = Router::new()
+        .route("/inspection/tasks", axum::routing::get(list_inspection_tasks))
+        .route("/analytics/usage", axum::routing::get(get_usage_stats))
+        .route("/user/settings", axum::routing::get(get_user_settings))
+        .route("/push/config", axum::routing::get(get_push_config).put(update_push_config))
+        .route("/push/templates/{id}", axum::routing::put(update_push_template))
         // Approval Routes（V68.1 挂载：原 modules/approval.rs 已实现但未注册，前端 mobile/approval.ts 7 方法据此对齐）
         .route("/approvals", axum::routing::get(list_approval_tasks))
         .route(
