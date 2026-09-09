@@ -13,6 +13,7 @@ mod models;
 mod openapi;
 mod schema_defense;
 pub mod sla_service;
+mod ticket_ext;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -54,6 +55,7 @@ async fn main() -> anyhow::Result<()> {
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
     let protected_routes = handlers::ticket_routes()
         .merge(feedback_compat::feedback_compat_routes())
+        .merge(ticket_ext::ticket_ext_routes())
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
