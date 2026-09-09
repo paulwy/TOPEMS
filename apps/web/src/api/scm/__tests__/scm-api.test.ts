@@ -455,10 +455,10 @@ describe('SCM inventoryTurnoverApi', () => {
     expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/1');
   });
 
-  it('should call GET /inventory-turnover/abc-classification for abcClassification', async () => {
+  it('should call GET /inventory-turnover/abc-analysis for abcClassification', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
     await inventoryTurnoverApi.abcClassification();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/abc-classification', {
+    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/abc-analysis', {
       params: undefined,
     });
   });

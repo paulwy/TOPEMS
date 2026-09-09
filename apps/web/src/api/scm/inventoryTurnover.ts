@@ -23,7 +23,7 @@ export const inventoryTurnoverApi = {
   abcClassification: async (
     params?: AbcClassificationQueryParams
   ): Promise<ApiResponse<AbcClassification[]>> => {
-    return apiClient.scm.get('/inventory-turnover/abc-classification', { params });
+    return apiClient.scm.get('/inventory-turnover/abc-analysis', { params });
   },
 
   trend: async (params?: TurnoverTrendQueryParams): Promise<ApiResponse<TurnoverTrendData[]>> => {
