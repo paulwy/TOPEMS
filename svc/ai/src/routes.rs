@@ -2,7 +2,7 @@
 
 use crate::handlers::{
     ai_handlers, connector_handlers, dify_handlers, dsh_agent_handlers, dsh_ai_enhanced_handlers,
-    dsh_performance_handlers, health, workflow_handlers,
+    dsh_performance_handlers, health, model_admin_handlers, prompt_handlers, workflow_handlers,
 };
 use crate::modules::{
     AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
@@ -147,6 +147,49 @@ pub fn create_routes(
         .route("/complete", post(ai_handlers::complete))
         .route("/summarize", post(ai_handlers::summarize))
         .route("/templates", get(ai_handlers::list_templates))
+        // ========== AI 仪表盘（known_gap A 补全，2026-09-09）==========
+        .route("/dashboard/stats", get(model_admin_handlers::get_dashboard_stats))
+        .route(
+            "/dashboard/activity-trend",
+            get(model_admin_handlers::get_activity_trend),
+        )
+        .route(
+            "/dashboard/feature-usage",
+            get(model_admin_handlers::get_feature_usage),
+        )
+        // ========== 模型管理（known_gap A 补全，2026-09-09）==========
+        .route("/models", get(model_admin_handlers::list_models))
+        .route(
+            "/models/usage",
+            get(model_admin_handlers::get_model_usage),
+        )
+        .route(
+            "/models/{id}/config",
+            get(model_admin_handlers::get_model_config).put(model_admin_handlers::update_model_config),
+        )
+        // ========== Prompt 模板（known_gap A 补全，2026-09-09）==========
+        .route(
+            "/prompts/templates",
+            get(prompt_handlers::list_prompt_templates).post(prompt_handlers::create_prompt_template),
+        )
+        .route(
+            "/prompts/templates/{id}",
+            get(prompt_handlers::get_prompt_template)
+                .put(prompt_handlers::update_prompt_template)
+                .delete(prompt_handlers::delete_prompt_template),
+        )
+        .route(
+            "/prompts/templates/{id}/favorite",
+            post(prompt_handlers::toggle_prompt_favorite),
+        )
+        .route(
+            "/prompts/templates/{id}/use",
+            post(prompt_handlers::use_prompt_template),
+        )
+        .route(
+            "/prompts/categories",
+            get(prompt_handlers::get_prompt_categories),
+        )
         // AI 智能助手 Phase 3
         .route("/assistant/report", post(ai_handlers::report_assistant))
         .route("/assistant/flow", post(ai_handlers::flow_assistant))
