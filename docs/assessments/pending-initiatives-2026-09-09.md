@@ -1,7 +1,7 @@
 # 预埋项立项建议清单（DECIDED · 2026-09-10 拍板）
 
 > 目的：把 P1-P3 审计中判定"预埋/待立项"且需产品决策的能力项，收敛为**可直接评审拍板**的立项卡。
-> 状态：**DECIDED（2026-09-10 产品分析拍板）**——3 张卡全部拍板，卡 3 已执行改指，卡 1/2 按决策推进。
+> 状态：**DECIDED（2026-09-10 产品分析拍板）**——3 张卡全部拍板，卡 2/3 已执行上线，卡 1 维持预埋观察。
 > 判定口径：页面零消费 + 后端（或前端）实现存在但不承接；与"真实消费缺口"（P0/P1 已闭环）严格区分。
 > 配套：版本化生命周期登记表 `docs/assessments/version-lifecycle-registry-2026-09-09.md`；主报告 `frontend-backend-mapping-assessment-2026-09-08.html`。
 
@@ -10,7 +10,7 @@
 | # | 立项卡 | 现状 | **拍板决策** | 执行状态 | 优先级 |
 |---|---|---|---|---|---|
 | 1 | IM 白板 / 呼叫 | 前端 imApi 基础 95 方法在役；白板/呼叫前后端均无实现 | **暂缓立项，维持预埋**：重基建能力零场景零回报，需求驱动触发 | 维持预埋，登记表观察 | P2 |
-| 2 | master V61+ 数据治理产品族 | 前端 21 文件 + 后端 10 模块 ~240 路由真实挂载，页面零消费 | **试点 dataAssetCatalogV66（数据资产目录）**：治理入口、成本最低、与 ai usage 衔接 | 待实施（1 迭代周期内出前端承接页） | P3 |
+| 2 | master V61+ 数据治理产品族 | 前端 21 文件 + 后端 10 模块 ~240 路由真实挂载，页面零消费 | **试点 dataAssetCatalogV66（数据资产目录）**：治理入口、成本最低、与 ai usage 衔接 | ✅ 已上线（承接页 + API 改指 V60，commit `41a23563d`） | P3 |
 | 3 | WMS 拣货 6 模块 | 前端 6 模块完整封装，后端无对应模块；wave_pick 已实现路径不匹配 | **a) 改指复用 wave_pick**：8 个方法改指 `/wave-picks/*`，9 个无对应路由方法保留预埋 | ✅ 已执行（picking.ts 改指 + 门禁 PASS） | P2 |
 
 ## 立项卡明细
@@ -32,6 +32,7 @@
 - **拍板问题**：① 数据治理产品的目标用户（数据管理员/分析师/合规）；② 首个试点能力选择；③ 与 bi/analytics 服务的边界（指标口径避免重复建设）。
 - **依赖**：数据产品负责人在役场景；指标口径与 ai 统计域（usage_logs）衔接。
 - **推荐决策依据（试点 dataAssetCatalogV66）**：① 目录是治理入口，价值可直接感知（"有哪些数据、归谁管"），比血缘/质量更易做出第一版；② 后端 metadata_v60/schema_registry 已真实挂载，试点仅需前端承接页 + 少量对齐，成本最低；③ 与 ai usage_logs 统计域天然衔接（目录可登记埋点/上报链路）。**其余 V6x 不立项**：满 2 个主版本周期无承接，按登记表 §4 归档。
+- **【2026-09-10 执行记录】**：拍板试点 dataAssetCatalogV66。后端复用 master-data V60 metadata 模块（`/mdm-v60/metadata` + `/mdm-v60/lineage`），无需新建后端。前端 `dataAssetCatalogV66.ts` 核心 10 个方法改指 V60 路由（listAssets/getAsset/createAsset/updateAsset/deleteAsset/searchAssets/quickSearch/getDashboard/getLineageUpstream/getLineageDownstream），高级方法（bulk/import/export/columns/tags/categories/maps/search-suggestions/dashboard-recent/orphans）保留预埋。新增前端承接页 `DataAssetCatalogPage.tsx`（MUI，统计卡片+搜索+资产列表+详情对话框），新增 master 模块配置（路由+菜单导航），注册到 routes/v2 moduleImports，菜单路径 `/master/data-asset-catalog`。验证：TypeScript 编译 0 错误；门禁 check-api-boundary PASS（0 violations）；原 V66 API 预埋悬空，改指零影响。Commit `41a23563d`。
 
 ### 卡 3 · WMS 拣货 6 模块（P2）
 
