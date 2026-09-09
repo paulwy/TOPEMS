@@ -7,13 +7,25 @@
 --   2) 与全局共享语义冲突。
 -- 本迁移：补列（兼容仅由服务建表的旧库）+ 放宽为可空（NULL = 共享行，
 -- 与全库 RLS "tenant_id IS NULL 放行" 语义一致）。幂等。
+-- 注：portal 服务 schema_defense 会先 CREATE TABLE IF NOT EXISTS 建骨架表，
+-- 本迁移若表尚未创建则跳过（DO IF EXISTS 守护），不阻塞迁移流程。
 
-ALTER TABLE public.core_faqs ADD COLUMN IF NOT EXISTS tenant_id UUID;
-ALTER TABLE public.core_guides ADD COLUMN IF NOT EXISTS tenant_id UUID;
-ALTER TABLE public.core_guide_lessons ADD COLUMN IF NOT EXISTS tenant_id UUID;
-ALTER TABLE public.core_guide_progress ADD COLUMN IF NOT EXISTS tenant_id UUID;
-
-ALTER TABLE public.core_faqs ALTER COLUMN tenant_id DROP NOT NULL;
-ALTER TABLE public.core_guides ALTER COLUMN tenant_id DROP NOT NULL;
-ALTER TABLE public.core_guide_lessons ALTER COLUMN tenant_id DROP NOT NULL;
-ALTER TABLE public.core_guide_progress ALTER COLUMN tenant_id DROP NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'core_faqs') THEN
+        ALTER TABLE public.core_faqs ADD COLUMN IF NOT EXISTS tenant_id UUID;
+        ALTER TABLE public.core_faqs ALTER COLUMN tenant_id DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'core_guides') THEN
+        ALTER TABLE public.core_guides ADD COLUMN IF NOT EXISTS tenant_id UUID;
+        ALTER TABLE public.core_guides ALTER COLUMN tenant_id DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'core_guide_lessons') THEN
+        ALTER TABLE public.core_guide_lessons ADD COLUMN IF NOT EXISTS tenant_id UUID;
+        ALTER TABLE public.core_guide_lessons ALTER COLUMN tenant_id DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'core_guide_progress') THEN
+        ALTER TABLE public.core_guide_progress ADD COLUMN IF NOT EXISTS tenant_id UUID;
+        ALTER TABLE public.core_guide_progress ALTER COLUMN tenant_id DROP NOT NULL;
+    END IF;
+END $$;
