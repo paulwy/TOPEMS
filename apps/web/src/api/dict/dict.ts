@@ -1,6 +1,17 @@
 import apiClient from '@/api/client';
 import type { ApiResponse } from '@/api/client';
 
+/**
+ * @deprecated 本文件为无消费方死代码（2026-09-09 审计 P1 主题四④ 确认）。
+ * 活跃 dict API 为：
+ *   - apps/web/src/api/erp/core/dict.ts（erpApi.dictApi → /api/erp/system/dict-*，后端 svc/erp/src/modules/dict.rs）
+ *   - apps/web/src/api/master/dictionary.ts（master 聚合 → 同上 /system/dict-* 体系）
+ * 下方 /dict/types（斜杠）路径与 master-data 后端 /dict-types（连字符）不匹配，
+ * 且无任何页面 import；如需使用 master-data 数据字典，请改调
+ * apiClient.master-data 的 /dict-types 系列（svc/master-data/src/modules/dict/handlers.rs）。
+ * 全仓无消费方，保留仅为兼容旧引用；请勿新代码 import 本文件。
+ */
+
 export interface DictType {
   id: string;
   code: string;
