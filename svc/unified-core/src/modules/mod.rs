@@ -30,4 +30,5 @@ pub mod migration;
 pub mod openapi;
 // V68.1 A2.2: plugin 模块已拆出到独立 svc/plugin-registry/（端口 8096）
 // pub mod plugin;
+pub mod system_audit;
 pub mod tenant;
