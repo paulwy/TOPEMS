@@ -175,6 +175,23 @@ pre-commit:
           exit 0
         fi
 
+    # [Gate P2b] API boundary check（修复建议⑨，2026-09-09 编码）：
+    # 前端 apiClient.<svc> 调用路径（baseURL+path 前 3 段）必须在后端路由注册表中；
+    # 预埋零消费进 allowlist（prebuilt），页面在役但后端未实现进 allowlist（known_gap，需实现）
+    api-boundary-gate:
+      tags: api boundary frontend
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/src/.*\.(ts|tsx)$|^svc/.*\.rs$' || true)
+        if [ -z "$STAGED" ]; then
+          exit 0
+        fi
+        if [ -f "scripts/ci/check-api-boundary.cjs" ]; then
+          node scripts/ci/check-api-boundary.cjs
+        else
+          printf '\033[33m[Gate P2b] WARN\033[0m scripts/ci/check-api-boundary.cjs not found, skipping api-boundary-gate\n'
+          exit 0
+        fi
+
     # [Gate Q] Hardcoded CJK in admin module (strict) — migrated from husky #8b
     i18n-hardcode-admin:
       tags: frontend i18n hardcoded

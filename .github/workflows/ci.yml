@@ -631,6 +631,9 @@ jobs:
       - name: Run dependency security audit (V515)
         run: node scripts/ci/check-dependency-audit.cjs
 
+      - name: Run API boundary gate (⑨, 2026-09-09)
+        run: node scripts/ci/check-api-boundary.cjs
+
   design-system-check:
     name: Design System Token Check
     needs: changes

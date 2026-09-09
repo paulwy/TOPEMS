@@ -1,0 +1,2685 @@
+{
+  "_comment": "API boundary allowlist (2026-09-09). prebuilt=预埋零消费（正常放行）；known_gap=页面真实消费但后端未实现（登记缺口，仍需实现）。",
+  "entries": [
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/conversations/",
+      "file": "ai/chat.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/conversations",
+      "file": "ai/chat.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "DELETE",
+      "path": "/conversations/",
+      "file": "ai/chat.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "PUT",
+      "path": "/conversations/",
+      "file": "ai/index.ts",
+      "type": "prebuilt",
+      "reason": "ai conversations 系无页面消费（页面用 ai.chat/ai.dashboard/ai.model/ai.prompt）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/conversations//messages",
+      "file": "ai/index.ts",
+      "type": "prebuilt",
+      "reason": "ai conversations 系无页面消费（页面用 ai.chat/ai.dashboard/ai.model/ai.prompt）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/conversations//messages//regenerate",
+      "file": "ai/index.ts",
+      "type": "prebuilt",
+      "reason": "ai conversations 系无页面消费（页面用 ai.chat/ai.dashboard/ai.model/ai.prompt）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/dashboard/stats",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/dashboard/activity-trend",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/dashboard/feature-usage",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/models",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/models//config",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "PUT",
+      "path": "/models//config",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/models/usage",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/prompts/templates",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/prompts/templates/",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/prompts/templates",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "PUT",
+      "path": "/prompts/templates/",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "DELETE",
+      "path": "/prompts/templates/",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/prompts/templates//favorite",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/prompts/categories",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/prompts/templates//use",
+      "file": "ai/index.ts",
+      "type": "known_gap",
+      "reason": "AiDashboardPage/AiModelSettingsPage/AiPromptLibraryPage 真实消费但 ai 后端无 /dashboard /models /prompts 路由——真缺口待实现"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/recommendations",
+      "file": "ai/recommendation.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/recommendations/personalized",
+      "file": "ai/recommendation.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/recommendations/feedback",
+      "file": "ai/recommendation.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "GET",
+      "path": "/vector/collections",
+      "file": "ai/vector.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/vector/collections",
+      "file": "ai/vector.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "DELETE",
+      "path": "/vector/collections/",
+      "file": "ai/vector.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "ai",
+      "verb": "POST",
+      "path": "/vector/index/",
+      "file": "ai/vector.ts",
+      "type": "prebuilt",
+      "reason": "ai 前端封装无页面消费（useAiAssistant 仅用 ai.assistant；AiChatPage 用 ai.chat）——预埋登记"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/health",
+      "file": "crm/index.ts",
+      "type": "prebuilt",
+      "reason": "crm /health 健康检查预埋，无页面消费"
+    },
+    {
+      "svc": "crm",
+      "verb": "DELETE",
+      "path": "/invoices/",
+      "file": "crmFinance/index.ts",
+      "type": "known_gap",
+      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/reports/receivable-aging",
+      "file": "crmFinance/index.ts",
+      "type": "known_gap",
+      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/reports/receivable-summary",
+      "file": "crmFinance/index.ts",
+      "type": "known_gap",
+      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/reports/overdue-receivables",
+      "file": "crmFinance/index.ts",
+      "type": "known_gap",
+      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/invoices/export",
+      "file": "crmFinance/index.ts",
+      "type": "known_gap",
+      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/collections/export",
+      "file": "crmFinance/index.ts",
+      "type": "known_gap",
+      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/reports/receivable-aging/export",
+      "file": "crmFinance/index.ts",
+      "type": "known_gap",
+      "reason": "CustomerDetailPage+hooks/useCrmFinance 真实消费但 crm 后端无 /invoices /reports /collections 路由——真缺口待实现（发票域在 finance 服务）"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections/",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections/",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections/",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//toggle",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections/test",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//sync-status",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//company-mappings",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//company-mappings",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//company-mappings/",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections//company-mappings/",
+      "file": "external-erp/connection.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//account-mappings",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//account-mappings/batch",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//account-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections//account-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//account-mappings/auto-match",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//customer-mappings",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//customer-mappings/batch",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//customer-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections//customer-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//supplier-mappings",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//supplier-mappings/batch",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//supplier-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections//supplier-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//project-mappings",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//project-mappings/batch",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//project-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections//project-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//department-mappings",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//department-mappings/batch",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//department-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections//department-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//employee-mappings",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/connections//employee-mappings/batch",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/external-erp/connections//employee-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/external-erp/connections//employee-mappings/",
+      "file": "external-erp/mapping.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//preview/accounts",
+      "file": "external-erp/preview.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//preview/customers",
+      "file": "external-erp/preview.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//preview/suppliers",
+      "file": "external-erp/preview.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//preview/vouchers",
+      "file": "external-erp/preview.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/accounts",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/customers",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/suppliers",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/projects",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/departments",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/employees",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/vouchers",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/invoices",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync/full",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/external-erp/sync//cancel",
+      "file": "external-erp/sync.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/sync-logs",
+      "file": "external-erp/syncLogs.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/sync-logs/",
+      "file": "external-erp/syncLogs.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/connections//sync-statistics",
+      "file": "external-erp/syncLogs.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/external-erp/sync-statistics",
+      "file": "external-erp/syncLogs.ts",
+      "type": "prebuilt",
+      "reason": "external-erp 前端封装 0 页面消费——预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/images/thumbnail",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/images//thumbnails",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "DELETE",
+      "path": "/images//thumbnails/",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/images//convert",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/images//compress",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/images//crop",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/images//resize",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/images/batch-process",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/images/formats",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/images//metadata",
+      "file": "file/image.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/files/export",
+      "file": "file/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/scan/",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/scan/",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/scan//history",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/scan/batch",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/scan/rules",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/scan/rules",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "PUT",
+      "path": "/scan/rules/",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "DELETE",
+      "path": "/scan/rules/",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/scan/quarantine",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/scan/quarantine//release",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "DELETE",
+      "path": "/scan/quarantine/",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/scan/stats",
+      "file": "file/scan.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/storage/buckets",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/storage/buckets/",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/storage/buckets",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "PUT",
+      "path": "/storage/buckets/",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "DELETE",
+      "path": "/storage/buckets/",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/storage/buckets//files",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/storage/categories",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/storage/categories",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "PUT",
+      "path": "/storage/categories/",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "DELETE",
+      "path": "/storage/categories/",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/storage/usage",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/storage/cleanup",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/storage/retention-policies",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/storage/retention-policies",
+      "file": "file/storage.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/reconciliations",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/reconciliations/",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/reconciliations",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/reconciliations//reconcile",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/auto-reconcile",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/settlements",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/settlements/",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/settlements",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/settlements//approve",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/links",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/links",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "DELETE",
+      "path": "/api/core/settlement-center/links/",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/differences",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/differences",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/differences//approve",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "POST",
+      "path": "/api/core/settlement-center/differences//reject",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/dashboard",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "finance",
+      "verb": "GET",
+      "path": "/api/core/settlement-center/statistics",
+      "file": "finance/settlementCenter.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/erp/connections",
+      "file": "integration/connection.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/erp/connections/",
+      "file": "integration/connection.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/erp/connections",
+      "file": "integration/connection.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/erp/connections/",
+      "file": "integration/connection.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/erp/connections/",
+      "file": "integration/connection.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/erp/connections/test",
+      "file": "integration/connection.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/conversion-rules",
+      "file": "integration/conversionRule.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/conversion-rules/",
+      "file": "integration/conversionRule.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/conversion-rules",
+      "file": "integration/conversionRule.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/conversion-rules/",
+      "file": "integration/conversionRule.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/conversion-rules/",
+      "file": "integration/conversionRule.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/endpoints",
+      "file": "integration/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/erp/mappings",
+      "file": "integration/mapping.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/erp/mappings/",
+      "file": "integration/mapping.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "POST",
+      "path": "/erp/mappings",
+      "file": "integration/mapping.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "PUT",
+      "path": "/erp/mappings/",
+      "file": "integration/mapping.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "DELETE",
+      "path": "/erp/mappings/",
+      "file": "integration/mapping.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/sync-stats",
+      "file": "integration/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "integration",
+      "verb": "GET",
+      "path": "/sync-stats/history",
+      "file": "integration/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v70/score",
+      "file": "master/complianceReportV70.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v75/domains//consumers",
+      "file": "master/dataFederationMeshV75.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v75/products//consumers",
+      "file": "master/dataFederationMeshV75.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v75/products//quality",
+      "file": "master/dataFederationMeshV75.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "POST",
+      "path": "/mdm-v75/nodes//health",
+      "file": "master/dataFederationMeshV75.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v75/products//impact",
+      "file": "master/dataFederationMeshV75.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v75/domains//stats",
+      "file": "master/dataFederationMeshV75.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v75/health",
+      "file": "master/dataFederationMeshV75.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v74/quality/trend",
+      "file": "master/dataGovernanceDashboardV74.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v74/assets//lineage/impact",
+      "file": "master/dataGovernanceDashboardV74.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v74/compliance/summary",
+      "file": "master/dataGovernanceDashboardV74.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v74/compliance/sensitive-data",
+      "file": "master/dataGovernanceDashboardV74.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v74/metrics",
+      "file": "master/dataGovernanceDashboardV74.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v74/stats/owners",
+      "file": "master/dataGovernanceDashboardV74.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v69/assets//stats",
+      "file": "master/dataMarketplaceV69.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v79/policies//versions/diff",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "POST",
+      "path": "/mdm-v79/policies//evaluate",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "POST",
+      "path": "/mdm-v79/policies//test",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v79/policies//impact",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "PATCH",
+      "path": "/mdm-v79/policies/batch-status",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "POST",
+      "path": "/mdm-v79/policies/batch-delete",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "POST",
+      "path": "/mdm-v79/policies/batch-execute",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v79/policies/export",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "POST",
+      "path": "/mdm-v79/policies/import",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v79/templates",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v79/stats",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v79/compliance-report",
+      "file": "master/dataPolicyConfigurationV79.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v72/stats",
+      "file": "master/dataProductCatalogV72.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v73/sellers//stats",
+      "file": "master/dataServiceMarketplaceV73.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v73/buyers//stats",
+      "file": "master/dataServiceMarketplaceV73.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v71/services//metrics",
+      "file": "master/dataServiceOrchestrationV71.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v71/orchestrations//statistics",
+      "file": "master/dataServiceOrchestrationV71.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v78/approvals/stats",
+      "file": "master/dataWorkflowAutomationV78.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "POST",
+      "path": "/mdm-v78/mappings//test",
+      "file": "master/dataWorkflowAutomationV78.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v78/workflows//versions",
+      "file": "master/dataWorkflowAutomationV78.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v78/workflows//diff",
+      "file": "master/dataWorkflowAutomationV78.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "master",
+      "verb": "GET",
+      "path": "/mdm-v78/stats",
+      "file": "master/dataWorkflowAutomationV78.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "mes",
+      "verb": "GET",
+      "path": "/health",
+      "file": "mes/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "migration",
+      "verb": "GET",
+      "path": "/migrations/services",
+      "file": "migration/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "migration",
+      "verb": "POST",
+      "path": "/migrations/services//apply",
+      "file": "migration/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "migration",
+      "verb": "POST",
+      "path": "/migrations/services//rollback",
+      "file": "migration/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "mobile",
+      "verb": "POST",
+      "path": "/mobile/workflow/instances//tasks//complete",
+      "file": "mobile/bpm.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "monitor",
+      "verb": "GET",
+      "path": "/plugins/health",
+      "file": "monitor/plugin.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "monitor",
+      "verb": "GET",
+      "path": "/plugins/info",
+      "file": "monitor/plugin.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "GET",
+      "path": "/health",
+      "file": "scm/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "POST",
+      "path": "/inspection-records",
+      "file": "scm/inspectionRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "GET",
+      "path": "/inspection-records/",
+      "file": "scm/inspectionRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "PUT",
+      "path": "/inspection-records/",
+      "file": "scm/inspectionRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "DELETE",
+      "path": "/inspection-records/",
+      "file": "scm/inspectionRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "GET",
+      "path": "/sync-records",
+      "file": "scm/syncRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "POST",
+      "path": "/sync-records",
+      "file": "scm/syncRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "GET",
+      "path": "/sync-records/",
+      "file": "scm/syncRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "POST",
+      "path": "/sync-records//retry",
+      "file": "scm/syncRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "scm",
+      "verb": "GET",
+      "path": "/sync-records//details",
+      "file": "scm/syncRecord.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "search",
+      "verb": "GET",
+      "path": "/suggestions",
+      "file": "search/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "POST",
+      "path": "/upload",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/attachments",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/attachments/",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "DELETE",
+      "path": "/attachments/",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "file",
+      "verb": "GET",
+      "path": "/attachments//download",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/comments",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "POST",
+      "path": "/comments",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "PUT",
+      "path": "/comments/",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "DELETE",
+      "path": "/comments/",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/favorites",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "POST",
+      "path": "/favorites",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "DELETE",
+      "path": "/favorites/",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/favorites/check",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/search",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/search/suggestions",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/search/recent",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "DELETE",
+      "path": "/search/recent",
+      "file": "shared/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "srm",
+      "verb": "GET",
+      "path": "/supplier-categories)}",
+      "file": "srm/supplierCategory.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "srm",
+      "verb": "GET",
+      "path": "/supplier-products)}",
+      "file": "srm/supplierProduct.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/dict/dict-types//items",
+      "file": "system/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/list",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/slug/",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "POST",
+      "path": "/create",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "POST",
+      "path": "//activate",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "POST",
+      "path": "//suspend",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "//usage",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "//billing",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "//invoices",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/context",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "GET",
+      "path": "/my",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "core",
+      "verb": "POST",
+      "path": "/switch",
+      "file": "tenant/index.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/kitting/orders",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/kitting/orders/",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/kitting/orders",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/kitting/orders//start",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/kitting/orders//complete",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/kitting/orders//cancel",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/kitting/boms",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/kitting/boms",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/kitting/boms/",
+      "file": "wms/kitting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/labor/efficiency",
+      "file": "wms/labor.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/labor/efficiency/",
+      "file": "wms/labor.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/labor/productivity",
+      "file": "wms/labor.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/labor/workload",
+      "file": "wms/labor.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/labor/performance-dashboard",
+      "file": "wms/labor.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/labor/shifts",
+      "file": "wms/labor.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/labor/shifts",
+      "file": "wms/labor.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/manifests",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/manifests/",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "PUT",
+      "path": "/manifests/",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "DELETE",
+      "path": "/manifests/",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/manifests//items",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests//items",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "DELETE",
+      "path": "/manifests//items/",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests//confirm",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests//ship",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests//cancel",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests//print",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests/batch-create",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/manifests//labels",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests//labels/reprint",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/manifests/carriers",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/manifests/carriers",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/manifests/statistics",
+      "file": "wms/manifest.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/picking/tasks",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/picking/tasks/",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/tasks",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/tasks//start",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/tasks//complete",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/tasks//cancel",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/tasks//assign",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/picking/tasks//lines",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/tasks//lines//pick",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/tasks//lines//short-pick",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/picking/lists",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/lists",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/picking/lists/",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/picking/strategies",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/picking/strategies",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/picking/statistics",
+      "file": "wms/picking.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/putaway/plans",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/putaway/plans/",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/plans",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/plans//execute",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/plans//cancel",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/putaway/plans//items",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/plans//items//confirm",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/plans//items//reject",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/putaway/suggestions",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/suggestions//accept",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/suggestions//reject",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/putaway/rules",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/rules",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/putaway/statistics",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/putaway/tasks",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/tasks",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/tasks//start",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/putaway/tasks//complete",
+      "file": "wms/putaway.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/slotting/optimize",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/slotting/suggestions",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/slotting/suggestions/",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/slotting/suggestions//apply",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/slotting/suggestions//reject",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/slotting/zones",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/slotting/zones",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/slotting/rules",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/slotting/rules",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/slotting/impact-analysis",
+      "file": "wms/slotting.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/sync-records",
+      "file": "wms/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/sync-records/",
+      "file": "wms/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/sync-records//items",
+      "file": "wms/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/sync-records//retry",
+      "file": "wms/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "POST",
+      "path": "/sync-records//retry-items",
+      "file": "wms/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/sync-records/statistics",
+      "file": "wms/sync.ts",
+      "type": "prebuilt",
+      "reason": "预埋登记"
+    }
+  ]
+}
