@@ -17,10 +17,11 @@
 | [rls-e2e-verification-2026-09-09.md](./rls-e2e-verification-2026-09-09.md) | 2026-09-09 | RLS 端到端验证 | RLS 受限用户切换验证（voucher_items FORCE 已闭环） |
 | [version-lifecycle-registry-2026-09-09.md](./version-lifecycle-registry-2026-09-09.md) | 2026-09-09 | 版本生命周期 | 版本化生命周期登记表（V54-V79 预埋观察、finance/risk 待评审） |
 | [pending-initiatives-2026-09-09.md](./pending-initiatives-2026-09-09.md) | 2026-09-09 | 预埋立项 | 3 张立项卡 READY FOR REVIEW（IM 白板/呼叫、master dataAssetCatalog、WMS 拣货 wave_pick） |
+| [module-completeness-reassessment-2026-09-09.html](./module-completeness-reassessment-2026-09-09.html) | 2026-09-09 | 全模块重评估 | **49 模块 × 5 维全量实测**：后端路由 4,519 / 前端 API 方法 5,404 / 真实缺口 32 项 / 预埋悬空 43 组 / 冗余 64 项（commit `59bb09c71`） |
 
-## 原始数据（中间产物）
+## 原始取证（评估工作流中间产物，供审计追溯）
 
-`group-*-raw.md` 为全模块重评估工作流的分组实测原始数据（前后端方法/路由统计），供审计追溯，非独立报告。
+`group-*-raw.md` 为全模块重评估 6 组并行实测的分组取证（前后端方法/路由统计与 file:line 证据），非独立报告。
 
 ## 关联
 
