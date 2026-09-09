@@ -6,7 +6,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::inventory_alert::{
@@ -24,6 +24,15 @@ pub struct DiscrepancyQueryParams {
     pub page_size: Option<i64>,
     pub stock_take_id: Option<Uuid>,
     pub adjustment_status: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct DiscrepancySummary {
+    pub total_count: i64,
+    pub pending_count: i64,
+    pub approved_count: i64,
+    pub completed_count: i64,
+    pub total_discrepancy: Option<f64>,
 }
 
 pub fn create_routes<S>() -> Router<S>
@@ -106,8 +115,8 @@ pub async fn list_discrepancies(
             let total = count_result.unwrap_or(0);
 
             // 统计汇总
-            let summary = sqlx::query!(
-                r#"
+            let summary = sqlx::query_as::<_, DiscrepancySummary>(
+                only_own_schema_query!("wms", r#"
                 SELECT 
                     COUNT(*) as total_count,
                     SUM(CASE WHEN adjustment_status = 'pending' THEN 1 ELSE 0 END) as pending_count,
@@ -118,12 +127,26 @@ pub async fn list_discrepancies(
                 WHERE ($1::uuid IS NULL OR stock_take_id = $1)
                   AND ($2::text IS NULL OR adjustment_status = $2)
                   AND deleted_at IS NULL
-                "#,
-                &stock_take_id,
-                &adjustment_status
+                "#),
             )
+            .bind(&stock_take_id)
+            .bind(&adjustment_status)
             .fetch_one(&mut **txn)
             .await;
+
+            let summary = match summary {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::error!("获取差异汇总失败: {}", e);
+                    DiscrepancySummary {
+                        total_count: 0,
+                        pending_count: 0,
+                        approved_count: 0,
+                        completed_count: 0,
+                        total_discrepancy: None,
+                    }
+                }
+            };
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -460,7 +483,10 @@ pub async fn adjust_inventory(
         RETURNING id
         "#,
         record.inventory_id,
-        record.adjustment_quantity,
+        record.adjustment_quantity.map(|v| {
+            use std::str::FromStr;
+            sqlx::types::BigDecimal::from_str(&format!("{:.2}", v)).unwrap_or_default()
+        }),
         now
     )
     .fetch_one(&mut **txn)
@@ -495,7 +521,7 @@ pub async fn adjust_inventory(
                 "discrepancy_record".to_string(),
                 Some(id),
                 None,
-                Some(record.inventory_id),
+                Some(record.inventory_id.to_string()),
                 None,
                 None,
                 None,
@@ -547,7 +573,7 @@ pub async fn process_stock_take_discrepancies(
                i.id as inventory_id
         FROM wms.stock_take_items sti
         JOIN wms.inventory i ON sti.material_code = i.material_code
-        WHERE sti.stock_take_id = $1 AND sti.status = 'completed' AND sti.discrepancy_quantity != 0
+        WHERE sti.stock_take_id = $1 AND sti.adjustment_status = 'completed' AND sti.discrepancy_quantity != 0
         "#,
         stock_take_id
     )
@@ -564,7 +590,10 @@ pub async fn process_stock_take_discrepancies(
 
     for item in items {
         let discrepancy_id = Uuid::new_v4();
-        let discrepancy_type = if item.discrepancy_quantity > 0.0 {
+        let discrepancy_q = item.discrepancy_quantity.as_ref()
+            .and_then(|b| b.to_string().parse::<f64>().ok())
+            .unwrap_or(0.0);
+        let discrepancy_type = if discrepancy_q > 0.0 {
             "over"
         } else {
             "under"
