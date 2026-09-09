@@ -4,8 +4,8 @@
 > - 文档版本：v1.0（2026-08-31 归档）
 > - 状态：生效中 · 待办部分以交付物、依赖、完成定义和验收为标准
 > - 来源：飞书云文档 [《TopEMS 架构演进与待办清单》](https://feishu.doubao.com/docx/WvXDdSprFovcKWxcTMSc1IYqnob)
-> - 关联文档：`docs/architecture/overview.md` · `docs/architecture/TOPEMS_Architecture_Roadmap_v2.md` · `config/services.yaml` · `TODO.md`
-> - 待办状态追踪：见 `TODO.md`「架构演进与待办清单」章节
+> - 关联文档：`docs/architecture/overview.md` · `docs/architecture/TOPEMS_Architecture_Roadmap_v2.md` · `config/services.yaml` · `docs/roadmap/TODO.md`
+> - 待办状态追踪：唯一权威见 `docs/roadmap/TODO.md`；架构演进与待办清单（Phase 1-5/批准执行记录）已归档至 `docs/roadmap/archive/TODO-archived-workbench-2026-09-09.md`
 
 ---
 
@@ -81,9 +81,9 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 | P2-2 | API 网关 8080 落地 | ✅ **完成方案+nginx 补强**：`api-gateway-plan.md`（Traefik 8080 待 staging 部署验证）+ 生产 `deploy/nginx/topems.conf` 补强落地（限流/连接限制/失败转移熔断） |
 | P2-3 | 发布/CHANGELOG 自动化 | ✅ **完成落地**：`scripts/ci/generate-changelog.py` + `scripts/release.sh`（接入发布流程）+ CI `changelog-gate`（tag 触发校验） |
 
-> 待办状态追踪的权威来源：`TODO.md`「架构演进与待办清单」章节，后续在此更新进度。本轮（P1-2/P1-3/P2-1/P2-2/P2-3）产物均已归档至 `docs/architecture/` 与 `scripts/`。
+> 待办状态追踪的权威来源：`docs/roadmap/TODO.md`（唯一权威）；架构演进与待办清单（含 Phase 1-5、批准执行落地记录）已归档至 `docs/roadmap/archive/TODO-archived-workbench-2026-09-09.md`。本轮（P1-2/P1-3/P2-1/P2-2/P2-3）产物均已归档至 `docs/architecture/` 与 `scripts/`。
 >
-> **2026-08-31 批准执行落地（P2-1→P2-3→P2-2→P1-3）**：详见 `TODO.md`「批准执行落地记录」——RLS 302 表启用+3 缺陷修复（含 `lib/shared-db/src/rls.rs` 编译通过）、release.sh+changelog-gate 接入发布、nginx 限流/熔断补强（`nginx -t` 通过）、E2E 矩阵收敛；`rls-coverage-report.md` 已追加活库落地状态。
+> **2026-08-31 批准执行落地（P2-1→P2-3→P2-2→P1-3）**：详见 `docs/roadmap/archive/TODO-archived-workbench-2026-09-09.md`「批准执行落地记录」——RLS 302 表启用+3 缺陷修复（含 `lib/shared-db/src/rls.rs` 编译通过）、release.sh+changelog-gate 接入发布、nginx 限流/熔断补强（`nginx -t` 通过）、E2E 矩阵收敛；`rls-coverage-report.md` 已追加活库落地状态。
 
 ---
 
