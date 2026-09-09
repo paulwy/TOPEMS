@@ -38,8 +38,8 @@
 | A-1 | im 白板 / 呼叫 | 前端封装全、后端无路由、页面零消费 | **暂缓**：与现有 im 消息通道无用户诉求，先不建无效端点 | — | A 立项 / B 暂缓 / C 废弃 |
 | A-2 | master V61-V79（24 文件） | 前端 24 个版本化 API、后端 /mdm-v6x 路由、页面 0 消费 | **选型**：确立"版本化采用 vXX 后缀 vs 统一 /api/core"策略后批量立项；否则维持预埋 | 中（24 文件契约+页面） | A 立项 / B 维持预埋 |
 | A-3 | WMS 拣货 | 页面零消费（P3 判定） | 暂缓：待拣货业务流程产品需求 | — | A 立项 / B 暂缓 |
-| A-4 | RD material 数据源 | 前端 3 方法无后端、**rd schema 无 materials 表**（数据源缺） | 需先补 DDL（建表）+ 后端路由，再接通前端 | 0.5 天 | A 立项（补数据源）/ B 暂缓 |
-| A-5 | receivablePayable 归并 | 两组 API 均有页面消费（erp 5 处 / finance 发票收据页） | 页面迁移至 finance 版后归档 erp 版 | 0.5-1 天 | A 归并 / B 维持双份 |
+| A-4 | RD material 数据源 | ✅ 误报闭环（2026-09-09）：前端 material.ts（7 方法）走 **apiClient.erp**（非 rd 服务）；erp 后端 /materials 5 端点齐全、erp.materials 表 18 列与前端类型对应 | 无需立项 | 0 | ✅ 已核实（erp 承载） |
+| A-5 | receivablePayable 归并 | ✅ 复核修正为**非重复**（2026-09-09）：erp 版＝应收应付台账 CRUD（真实消费仅 ReceivablePayablePage 1 处 CrudPage adapter）；finance 版＝发票/回款/付款单据工作流（发票/收据页）——**语义域不同，属业务分层**非功能重复 | 维持双份 | 0 | ✅ 已核实（业务分层） |
 
 ## 四、口径说明
 

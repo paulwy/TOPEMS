@@ -160,7 +160,7 @@
     ④ <b>dict 字典三处分裂（✅ 已闭环）</b>：主题一②复核确认 erp dict.rs 全套活跃（/system/dict-types* + /system/dict-data*），前端 dict.ts 走 apiClient.erp 命中；master/dictionary 为另一数据源。<br>
     ⑤ <b>tenant 路径结构严重不匹配（✅ 预埋确认）</b>：analytics/billing/webhooks 富语义扩展页面零消费（tenant 页面仅用基础 CRUD）＝预埋。<br>
     ⑥ <b>MES energyManagement/productionCost（✅ 已闭环）</b>：前端现用相对路径 /energy/*、/cost/*，后端 energy_management.rs/production_cost.rs 对应路由全命中（EnergyManagementPage/ProductionCostPage 可正常取数）。<br>
-    ⑦ <b>RD material.ts（✅ 预埋确认）</b>：前端 /materials 封装（3 方法）无后端路由且 rd schema 无 materials 表（数据源缺）；RsMaterialListPage 待产品确认数据源，不补假实现。<br>
+    ⑦ <b>RD material.ts（✅ 复核修正为误报闭环，2026-09-09）</b>：前端 material.ts（7 方法）调用 apiClient.erp 服务（非 rd）——erp 后端 svc/erp/src/modules/material.rs:28-34 有完整 /materials（GET list+POST create）、/materials/import（POST）、/materials/{id}（GET/PUT/DELETE）路由，erp.materials 表 18 列（code/name/specification/unit/category/brand/model/barcode/safety_stock/unit_price/tax_rate/tenant_id 等）与前端类型完全对应；rd schema 无 materials 表属服务归属误读（rd 侧仅 material-tests 子资源）。前端 7 方法全部有后端支撑，无需立项。<br>
     <b style="color:#CF1322;">主题五：后端系统性只读 / 写操作缺失（5 项）</b><br>
     ① <b>ehs 后端系统性只读</b>：hazardous-materials(14条全GET)、occupational-disease(14条全GET)、occupational-health(15条全GET)、training(8条全GET)、environmental-compliance(15条全GET)、checks(7条全GET)、incidents 仅有 GET + 工作流动作。前端约 30 个写操作（create/update/delete）无后端支撑。<span style="color:#6B7280;font-size:11px;">svc/ehs/src/modules/ 各模块；api/ehs/hazardousMaterial.ts:43-211 等</span><br>
     ② <b>crm/billing 写操作缺失</b>：前端 8 方法（list/create/get/update/delete/paid/notify），后端仅 2 路由（list/get）。CRMBillingPage 使用 Mock 数据。<span style="color:#6B7280;font-size:11px;">api/crm/billing.ts:13-33；svc/crm/src/modules/billing.rs:18-20</span><br>
