@@ -210,6 +210,55 @@ pub struct TestConnectionResponse {
     pub error_message: Option<String>,
 }
 
+// ===== ERP 字段映射模型（缺口#12） =====
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ErpMapping {
+    pub id: Uuid,
+    pub tenant_id: String,
+    pub connection_id: Option<Uuid>,
+    pub mapping_type: String,
+    pub local_id: Option<String>,
+    pub local_code: Option<String>,
+    pub local_name: Option<String>,
+    pub external_code: Option<String>,
+    pub external_name: Option<String>,
+    pub direction: String,
+    pub isactive: bool,
+    pub priority: i32,
+    pub condition: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateErpMappingRequest {
+    pub connection_id: Option<Uuid>,
+    pub mapping_type: String,
+    pub local_id: Option<String>,
+    pub local_code: Option<String>,
+    pub local_name: Option<String>,
+    pub external_code: Option<String>,
+    pub external_name: Option<String>,
+    pub direction: Option<String>,
+    pub priority: Option<i32>,
+    pub condition: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateErpMappingRequest {
+    pub connection_id: Option<Uuid>,
+    pub local_id: Option<String>,
+    pub local_code: Option<String>,
+    pub local_name: Option<String>,
+    pub external_code: Option<String>,
+    pub external_name: Option<String>,
+    pub direction: Option<String>,
+    pub isactive: Option<bool>,
+    pub priority: Option<i32>,
+    pub condition: Option<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

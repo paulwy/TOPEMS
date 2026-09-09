@@ -1,5 +1,6 @@
 pub mod conversion_rules;
 pub mod erp_connections;
+pub mod erp_mappings;
 pub mod events;
 pub mod lims_qms;
 pub mod mes_erp;

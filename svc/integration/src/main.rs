@@ -126,6 +126,9 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     if let Err(e) = init_erp_connections_table(pool).await {
         tracing::warn!("init_erp_connections_table warning: {}", e);
     }
+    if let Err(e) = init_erp_mappings_table(pool).await {
+        tracing::warn!("init_erp_mappings_table warning: {}", e);
+    }
 
     // V69.3 Schema 防御：增量迁移 + 一致性自检（8 表）
     if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
@@ -214,6 +217,49 @@ async fn init_erp_connections_table(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(only_own_schema_query!(
         "integration",
         "CREATE INDEX IF NOT EXISTS idx_erp_connections_tenant ON erp_connections(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+/// 初始化 ERP 字段映射表（缺口#12）
+async fn init_erp_mappings_table(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        r#"
+        CREATE TABLE IF NOT EXISTS erp_mappings (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
+            connection_id UUID,
+            mapping_type VARCHAR(32) NOT NULL DEFAULT 'account',
+            local_id VARCHAR(128),
+            local_code VARCHAR(128),
+            local_name VARCHAR(256),
+            external_code VARCHAR(128),
+            external_name VARCHAR(256),
+            direction VARCHAR(32) DEFAULT 'bidirectional',
+            isactive BOOLEAN DEFAULT TRUE,
+            priority INTEGER DEFAULT 0,
+            condition TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_erp_mappings_tenant ON erp_mappings(tenant_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_erp_mappings_connection ON erp_mappings(connection_id)"
     ))
     .execute(pool)
     .await?;

@@ -15,7 +15,7 @@ use topems_shared_db::rls::rls_middleware;
 use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
-use crate::handlers::{conversion_rules, erp_connections, events, lims_qms, mes_erp, mes_qms, sync, wms_scm};
+use crate::handlers::{conversion_rules, erp_connections, erp_mappings, events, lims_qms, mes_erp, mes_qms, sync, wms_scm};
 use crate::models::AppState;
 use crate::plugin;
 
@@ -52,6 +52,12 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/erp/connections/{id}", get(erp_connections::get_connection))
         .route("/erp/connections/{id}", put(erp_connections::update_connection))
         .route("/erp/connections/{id}", delete(erp_connections::delete_connection))
+        // ERP 字段映射（缺口#12）
+        .route("/erp/mappings", get(erp_mappings::list_mappings))
+        .route("/erp/mappings", post(erp_mappings::create_mapping))
+        .route("/erp/mappings/{id}", get(erp_mappings::get_mapping))
+        .route("/erp/mappings/{id}", put(erp_mappings::update_mapping))
+        .route("/erp/mappings/{id}", delete(erp_mappings::delete_mapping))
         .route("/lims-qms", get(lims_qms::list_lims_qms_sync))
         .route("/lims-qms", post(lims_qms::create_lims_qms_sync))
         .route("/lims-qms/{id}", get(lims_qms::get_lims_qms_sync))
