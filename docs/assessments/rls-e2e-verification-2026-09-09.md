@@ -42,6 +42,30 @@
 
 命令：`DATABASE_URL=postgres://topems@localhost:5432/topems cargo test -p topems-crm -- rls_isolation`（2 passed；此前因 5433 不可达失败的记录已随 5432 在线 + DATABASE_URL 指向修正而闭合）
 
+## 四·A、真实 tenant_middleware → handler 端到端（新增，shared-auth 集成测试）
+
+`lib/shared-auth/tests/rls_middleware_e2e.rs`：直接驱动**生产 `tenant_middleware` 函数**（Claims → begin → `set_config('app.tenant_id', …, true)` → txn 注入）→ 真实 handler 经 `Extension<Arc<Mutex<Transaction>>>` 提取 → `&mut **txn` 查询 → FORCE RLS 过滤。
+
+| 测试 | 场景 | 结果 |
+|---|---|---|
+| `tenant_middleware_filters_by_claims_tenant` | T1 Claims → 仅见 T1 行；T2 Claims → 仅见 T2 行 | ✅ ok |
+| `tenant_middleware_service_claims_full_access` | service 身份（role=service）→ nil UUID 上下文 → 全量访问 | ✅ ok |
+| `tenant_middleware_unauthorized_without_claims` | 无 Claims → 401 | ✅ ok |
+
+命令：`DATABASE_URL=postgres://topems@localhost:5432/topems cargo test -p topems-shared-auth --test rls_middleware_e2e`（3 passed）
+
+## 四·B、写路径 commit 冒烟（受限角色，业务库 hrm.employees）
+
+| 步骤 | 期望 | 实测 | 结论 |
+|---|---|---|---|
+| T2 上下文 INSERT 本租户行 + COMMIT | 落库 | INSERT 0 1 | ✅ |
+| COMMIT 后无上下文 | 9 行（8+1） | 9 | ✅ |
+| T1 上下文读新行 | 0（越权拦截） | 0 | ✅ |
+| T2 上下文读新行 | 1 | 1 | ✅ |
+| T2 上下文 DELETE 本租户行 + 无上下文 | 恢复 8 行 | 8 | ✅ |
+
+验证期间无污染残留（清理后计数已核）。
+
 ## 五、结论
 
 - **A 方案隔离生效**：受限角色在 `app.tenant_id` 注入下读写均被 RLS 约束；越权读=0 行、越权 UPDATE=0 行受影响（静默）、越权 INSERT=WITH CHECK 报错。
@@ -52,9 +76,8 @@
 
 ## 六、剩余缺口（未做，如需可继续）
 
-1. **真实 HTTP 链路**：启动完整服务栈 + 网关 + 登录换取带租户 token，逐 handler 验证 HTTP 级隔离（当前以 sqlx::test 集成测试覆盖中间件→handler 语义，未跑真实进程）。
-2. **写路径 commit 冒烟**：真实 handler 提交后数据落库、GUC 失效后二次读取确认（集成测试已模拟回滚，未模拟提交后跨请求场景）。
-3. **跨服务事件链路**：erp/crm/finance 等事件驱动写路径在受限角色下的隔离（当前 DB 层验证未覆盖事件消费者）。
+1. **真实进程 + 登录链路**：启动完整服务栈 + 网关 + 登录换取带租户 JWT，经真实 HTTP 端口逐 handler 验证（当前已覆盖：生产 `tenant_middleware` 函数 → handler 全链路于 §四·A；仅差进程监听与 JWT 签发）。
+2. **跨服务事件链路**：erp/crm/finance 等事件驱动写路径在受限角色下的隔离（当前 DB 层验证未覆盖事件消费者）。
 
 ## 七、验证资产
 
