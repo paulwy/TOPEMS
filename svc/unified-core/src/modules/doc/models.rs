@@ -298,3 +298,14 @@ mod tests {
         assert_eq!(de2.is_enabled, Some(false));
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct DocumentVersion {
+    pub id: Uuid,
+    pub document_id: Uuid,
+    pub version: i32,
+    pub content: String,
+    pub summary: Option<String>,
+    pub created_by: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}

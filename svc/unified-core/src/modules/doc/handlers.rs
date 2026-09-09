@@ -608,4 +608,153 @@ pub fn create_routes() -> Router<AppState> {
         .route("/folders/{folder_id}", axum::routing::get(get_folder))
         .route("/folders/{folder_id}", axum::routing::put(update_folder))
         .route("/folders/{folder_id}", axum::routing::delete(delete_folder))
+        .route(
+            "/documents/{document_id}/versions",
+            axum::routing::get(list_document_versions),
+        )
+        .route(
+            "/documents/{document_id}/versions/{version}",
+            axum::routing::get(get_document_version),
+        )
+        .route(
+            "/documents/{document_id}/versions/{version}/restore",
+            axum::routing::post(restore_document_version),
+        )
+}
+
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:doc:read"])),
+    path = "/api/core/doc/documents/{document_id}/versions",
+    tag = "Doc",
+    params(
+        ("document_id" = Uuid, Path, description = "文档ID"),
+    ),
+    responses(
+        (status = 200, description = "版本列表", body = ApiResponse<Vec<DocumentVersion>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn list_document_versions(
+    State(state): State<AppState>,
+    Path(document_id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<DocumentVersion>>> {
+    let versions = sqlx::query_as::<_, DocumentVersion>(
+        "SELECT id, document_id, version, content, summary, created_by, created_at
+         FROM core_doc_document_versions
+         WHERE document_id = $1
+         ORDER BY version DESC",
+    )
+    .bind(document_id)
+    .fetch_all(&state.pool)
+    .await;
+
+    match versions {
+        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Err(e) => {
+            tracing::error!("查询文档版本失败: {}", e);
+            Json(ApiResponse::error(500, "查询文档版本失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:doc:read"])),
+    path = "/api/core/doc/documents/{document_id}/versions/{version}",
+    tag = "Doc",
+    params(
+        ("document_id" = Uuid, Path, description = "文档ID"),
+        ("version" = i32, Path, description = "版本号"),
+    ),
+    responses(
+        (status = 200, description = "版本详情", body = ApiResponse<DocumentVersion>),
+        (status = 404, description = "版本不存在"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn get_document_version(
+    State(state): State<AppState>,
+    Path((document_id, version)): Path<(Uuid, i32)>,
+) -> Json<ApiResponse<DocumentVersion>> {
+    let ver = sqlx::query_as::<_, DocumentVersion>(
+        "SELECT id, document_id, version, content, summary, created_by, created_at
+         FROM core_doc_document_versions
+         WHERE document_id = $1 AND version = $2",
+    )
+    .bind(document_id)
+    .bind(version)
+    .fetch_one(&state.pool)
+    .await;
+
+    match ver {
+        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Err(e) => {
+            if matches!(e, sqlx::Error::RowNotFound) {
+                return Json(ApiResponse::error(404, "文档版本不存在"));
+            }
+            tracing::error!("查询文档版本失败: {}", e);
+            Json(ApiResponse::error(500, "查询文档版本失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["unified-core:doc:write"])),
+    path = "/api/core/doc/documents/{document_id}/versions/{version}/restore",
+    tag = "Doc",
+    params(
+        ("document_id" = Uuid, Path, description = "文档ID"),
+        ("version" = i32, Path, description = "版本号"),
+    ),
+    responses(
+        (status = 200, description = "恢复成功", body = ApiResponse<Document>),
+        (status = 404, description = "版本不存在"),
+        (status = 500, description = "恢复失败"),
+    ),
+)]
+pub async fn restore_document_version(
+    State(state): State<AppState>,
+    Path((document_id, version)): Path<(Uuid, i32)>,
+) -> Json<ApiResponse<Document>> {
+    let content = sqlx::query_scalar::<_, String>(
+        "SELECT content FROM core_doc_document_versions WHERE document_id = $1 AND version = $2",
+    )
+    .bind(document_id)
+    .bind(version)
+    .fetch_optional(&state.pool)
+    .await;
+
+    let content = match content {
+        Ok(Some(c)) => c,
+        Ok(None) => return Json(ApiResponse::error(404, "文档版本不存在")),
+        Err(e) => {
+            tracing::error!("读取文档版本失败: {}", e);
+            return Json(ApiResponse::error(500, "恢复文档版本失败"));
+        }
+    };
+
+    let doc = sqlx::query_as::<_, Document>(
+        "UPDATE core_doc_documents
+         SET content = $1, version = version + 1, updated_at = NOW()
+         WHERE id = $2
+         RETURNING id, folder_id, title, description, file_name, file_path, file_size, content_type, content, status, version, tags, template_id, tenant_id, created_by, created_at, updated_at, archived_at, archived_by, deleted_at",
+    )
+    .bind(content)
+    .bind(document_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match doc {
+        Ok(d) => Json(ApiResponse::success(d, "恢复成功")),
+        Err(e) => {
+            if matches!(e, sqlx::Error::RowNotFound) {
+                return Json(ApiResponse::error(404, "文档不存在"));
+            }
+            tracing::error!("恢复文档版本失败: {}", e);
+            Json(ApiResponse::error(500, "恢复文档版本失败"))
+        }
+    }
 }
