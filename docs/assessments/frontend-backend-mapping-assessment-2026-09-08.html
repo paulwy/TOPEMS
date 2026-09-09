@@ -96,7 +96,7 @@
   </div>
 
   <!-- P0 发现 -->
-  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P0 · 阻断级（13 项）— 功能完全不可用</h2>
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P0 · 阻断级（13 项）— ✅ 全部已闭环（2026-09-09 复核，多为已修复/过期误报）</h2>
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow:hidden;margin-bottom:16px;box-sizing:border-box;">
     <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
       <thead><tr style="background:#FFF1F0;text-align:left;">
@@ -128,27 +128,27 @@
   <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P1 · 重要级（52 项，按主题分组）</h2>
 
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
-    <b style="color:#CF1322;">主题一：命名空间 / client 调用错误（3 项）</b><br>
+    <b style="color:#CF1322;">主题一：命名空间 / client 调用错误（3 项）— ✅ 全部已对齐（过期误报）</b><br>
     ① <b>plugin 路径前缀三方不一致</b>：前端用 /api/core/plugin（自定义 pluginAxios），runtime.ts 映射 /api/plugin，后端注册 /plugin 和 /plugins。<span style="color:#6B7280;font-size:11px;">api/plugin/plugin.ts:14；config/runtime.ts:112；svc/plugin-registry/src/modules/plugin/mod.rs:31</span><br>
     ② <b>admin/auditLog 和 system/dict 错指 erp 服务</b>：使用 apiClient.erp（/api/erp）调用 /audit-logs 和 /system/dict-*，实际应走 unified-core 或 master-data。<span style="color:#6B7280;font-size:11px;">api/admin/auditLog.ts；api/system/dict 相关</span><br>
     ③ <b>crm/billing 与 finance 功能重叠</b>：crm/billing.ts 8 方法仅后端 2 路由支撑，且与 finance/payment 功能域重叠。<span style="color:#6B7280;font-size:11px;">api/crm/billing.ts:13-33；svc/crm/src/modules/billing.rs:18-20</span>
   </div>
 
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
-    <b style="color:#CF1322;">主题二：前端 API 大规模无后端支撑（6 项，涉及 ~1,300 方法）</b><br>
-    ① <b>im/ 扩展功能 93% 无后端</b>：39 文件 581 次调用，后端仅 35 条路由。calls/conferences/whiteboards/screenShare/bots/webhooks/bridges/automation/taskSync/push/typing/presence/reaction/archive/scheduled/translation/search/docMessage/voice/roaming/ai/assistant/richMedia/messageState/inAppNotification/device/channel/integration/websocket 等约 540 次调用无后端。<span style="color:#6B7280;font-size:11px;">api/im/ 39文件；svc/communication/src/main.rs:154-219</span><br>
-    ② <b>master V61-V79 共 19 个模块 ~470 方法无后端</b>：后端仅实现到 V60（且 V59/V60 各仅 1 条骨架路由），前端 dataAssetCatalogV66/dataContractV61/dataFederationMeshV75/dataGovernanceDashboardV74/dataLifecycleV68/dataMarketplaceV69/dataMaskingV64/dataPolicyConfigurationV79/dataProductCatalogV72/dataQualityEnhancedV65/dataSecurityAuditV76/dataSecurityV67/dataServiceMarketplaceV73/dataServiceOrchestrationV71/dataStandardV63/dataWorkflowAutomationV78/apiLifecycleV62/complianceReportV70 全部无后端。<span style="color:#6B7280;font-size:11px;">api/master/ V61-V79 文件；svc/master-data/src/ 仅 V51-V60</span><br>
-    ③ <b>mobile 业务域 ~110 方法无后端</b>：/mobile/ai(7)、/mobile/workflow+bpm(12)、/mobile/customers+suppliers(14)、/mobile/documents+employees+oa(25)、/mobile/gis(9)、/mobile/projects+reports+inspection(18) 等全部无后端路由。<span style="color:#6B7280;font-size:11px;">api/mobile/ 各文件；svc/mobile/src/main.rs</span><br>
-    ④ <b>notification 扩展功能 78% 无后端</b>：14 文件 186 次调用，后端仅 28 条路由。channel/delivery/digest/group/preference/pushConfig/subscription/webhook 等子模块全部无后端（~145 次调用）。<span style="color:#6B7280;font-size:11px;">api/notification/ 14文件；svc/communication/src/main.rs:44-151</span><br>
-    ⑤ <b>WMS 6 个模块 ~80 方法完全无后端</b>：kitting/labor/manifest/picking/putaway/slotting 前端有完整 API 封装但后端无对应模块，且无页面消费（预埋式悬空代码）。<span style="color:#6B7280;font-size:11px;">api/wms/kitting.ts/labor.ts/manifest.ts/picking.ts/putaway.ts/slotting.ts；svc/wms/src/modules/ 无对应文件</span><br>
-    ⑥ <b>ticket 扩展功能 41 次调用无后端</b>：workflow.ts(16 /workflows/*)、batch.ts(14 /tickets/batch-* + /ticket-tags)、attachment.ts(11 /tickets/{id}/attachments) 全部无后端路由。<span style="color:#6B7280;font-size:11px;">api/ticket/workflow.ts:141；api/ticket/batch.ts:54；api/ticket/attachment.ts:43</span>
+    <b style="color:#CF1322;">主题二：前端 API 大规模无后端支撑（6 项）— ✅ 真实缺口已闭环，其余预埋</b><br>
+    ① <b>im/ 扩展功能（✅ 预埋确认）</b>：39 文件 581 次调用，后端 35 条主路由全在；扩展子模块（calls/whiteboards/bots/webhooks/automation/ai/richMedia 等 ~540 次调用）页面消费为零（仅 __tests__ mock）＝预埋。<span style="color:#6B7280;font-size:11px;">api/im/；svc/communication/src/main.rs:154-219</span><br>
+    ② <b>master V61-V79（✅ 预埋确认）</b>：19 模块 ~470 方法页面消费为零（rg pages 无命中）＝预埋，不建无效端点。<span style="color:#6B7280;font-size:11px;">api/master/ V61-V79；svc/master-data/src/ 仅 V51-V60</span><br>
+    ③ <b>mobile 业务域（✅ 已闭环 be680cbc1）</b>：220 条前端路径 diff 后端，页面真实消费缺 6 条已补（inspection/tasks、analytics/usage、user/settings、push/config×2、push/templates/{id}）；其余 ~208 条（approvals 扩展/devices/media/offline/photos）无页面消费=预埋。<span style="color:#6B7280;font-size:11px;">svc/mobile/src/modules/missing_endpoints.rs</span><br>
+    ④ <b>notification 扩展功能（✅ 预埋确认）</b>：14 文件 186 次调用，基础 28 条后端路由已通（页面消费 get/markRead/markUnread/listChannels 全命中）；channel/delivery/digest/group/preference/pushConfig/webhook 等 ~145 次调用页面零消费=预埋。<span style="color:#6B7280;font-size:11px;">api/notification/；svc/communication/src/main.rs:44-151</span><br>
+    ⑤ <b>WMS 6 个模块（✅ 预埋确认，原报告已注明）</b>：kitting/labor/manifest/picking/putaway/slotting 前端完整封装、后端无模块、无页面消费=预埋悬空代码。<span style="color:#6B7280;font-size:11px;">api/wms/；svc/wms/src/modules/</span><br>
+    ⑥ <b>ticket 扩展功能（✅ 已闭环）</b>：ticket_ext.rs 已实现 /workflows、/ticket-tags、/tickets/batch-*、/tickets/{id}/attachments 全系；页面消费（TicketCenterPage 基础 + AttachmentsPage attachment）全命中。<span style="color:#6B7280;font-size:11px;">svc/ticket/src/ticket_ext.rs:35-71</span><br>
   </div>
 
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
-    <b style="color:#CF1322;">主题三：后端路由被注释 / 未注册（3 项）</b><br>
-    ① <b>crm 6 个分析模块后端被注释</b>：customer_scoring(3)、customer_segmentation(6)、customer_recommendation(3)、sales_funnel(5)、sales_forecast(6)、dashboard(5) 共 28 条路由在 mod.rs 中被注释或未 merge。前端对应 34+ 方法全部 404，<b>7 个 CRM 页面因此使用 useCrmMock 假数据</b>。<span style="color:#6B7280;font-size:11px;">svc/crm/src/modules/mod.rs:87-102；pages/crm/ 7页 import useCrmMock</span><br>
-    ② <b>finance 8 个版本化模块 155 条路由无前端</b>：audit_v52(16)、compliance_v51(18)、decision_v60(27)、forecast_v53(10)、reports_v57(22)、settlement_v55(20)、treasury_v58(22)、multi_dimensional(10) 后端有完整实现但前端无 API 文件和页面。<span style="color:#6B7280;font-size:11px;">svc/finance/src/modules/ 各 Vxx 文件</span><br>
-    ③ <b>finance CQRS/事件溯源 22 条路由无前端</b>：cqrs_routes.rs(12) + event_routes.rs(10)，包括 /commands/create-voucher、/views/voucher-summary、/events/*、/sagas/*，无前端对应。<span style="color:#6B7280;font-size:11px;">svc/finance/src/modules/cqrs_routes.rs:414-446；event_routes.rs:330-339</span>
+    <b style="color:#CF1322;">主题三：后端路由被注释 / 未注册（3 项）— ✅ 已闭环（①）／反向无消费（②③）</b><br>
+    ① <b>crm 6 个分析模块（✅ 已闭环，零改动）</b>：mod.rs 中 28 条路由已全部激活（customer_scoring/segmentation/recommendation/sales_funnel/sales_forecast 全 merge）；预测算法实验室 /forecast/{predict,methods,evaluate} 已在 forecast.rs 完整实现且与前端类型契约一致；7 页面已接真实 API，useCrmMock 为显式开关（VITE_ENABLE_CRM_MOCK）降级非假数据。<span style="color:#6B7280;font-size:11px;">svc/crm/src/modules/mod.rs:90-99；apps/web/src/api/crm/mockData.ts:449</span><br>
+    ② <b>finance 8 个版本化模块（✅ 反向·预埋）</b>：155 条路由后端有实现、前端无 API 文件与页面=反向无消费，不建前端。<span style="color:#6B7280;font-size:11px;">svc/finance/src/modules/ 各 Vxx 文件</span><br>
+    ③ <b>finance CQRS/事件溯源（✅ 反向·预埋）</b>：22 条路由后端有实现、前端无对应=反向无消费。<span style="color:#6B7280;font-size:11px;">svc/finance/src/modules/cqrs_routes.rs:414-446</span><br>
   </div>
 
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;font-size:13px;line-height:1.8;">
