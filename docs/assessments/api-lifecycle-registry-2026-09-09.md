@@ -9,7 +9,7 @@
 | 模块 | 前端文件 | 后端路由 | 页面消费 | 状态 | 治理动作 / 备注 |
 |---|---|---|---|---|---|
 | master V61-V79 | `api/master/` 24 个 V* 文件（dataContractV61/apiLifecycleV62/dataStandardV63/dataMaskingV64/dataQualityEnhancedV65/dataAssetCatalogV66/dataSecurityV67/dataLifecycleV68/dataMarketplaceV69/complianceReportV70/dataServiceOrchestrationV71/dataProductCatalogV72/dataServiceMarketplaceV73/dataGovernanceDashboardV74/dataFederationMeshV75/dataSecurityAuditV76/dataLineageEnhancedV77/dataWorkflowAutomationV78/dataPolicyConfigurationV79/aiGovernanceV59 等） | `svc/master-data/mod.rs:454` `/mdm-v60` 起系列 | **0 页面消费** | 预埋 | 待立项（见 §三 B 项） |
-| finance 版本化路由 | `api/finance/` 21 文件（riskV54/riskV59/settlementCenter 等） | 版本化路径 V001/V999/v1 系（src 全量 52 处 route 定义；报告口径 155 条含子路由展开） | 前端已覆盖 19 文件、路由为**反向无消费**（后端有前端无） | 启用/预埋 | 155 条口径与 src 52 处差异为子路由展开 vs 静态注册，后续复核 |
+| finance 版本化路由 | `api/finance/` 21 文件（riskV54/riskV59/settlementCenter 等） | 版本化路径 V001/V999/v1 系（**2026-09-09 复核：业务 `.route(` 注册 415 处 = 顶层 mod.rs 127 + 模块内 288（V51-V60 版本化 10 模块 182）**） | 前端已覆盖 19 文件、路由为**反向无消费**（后端有前端无） | 启用/预埋 | 旧注记 155/52 口径不可复现，以 415 处注册文本数为准（含多方法合并，非等价端点数） |
 | finance risk | riskV54.ts（12 方法） | finance /risk* 系 | V54 前端覆盖 | **启用** | 保留规范版；risk.ts（子集）+ riskV59.ts（悬空）已归档（8db835b1f） |
 | consolidation | api/consolidation/（30 方法） | erp /consolidation* | hooks/useConsolidation.ts + 页面 | **启用** | 保留；consolidation-contract/(7 文件) 与 erp/core/consolidation.ts 已归档 |
 | voucherTemplate | finance/voucherTemplate.ts（16） | finance /voucher-templates* | 0（经 financeApi 桶可访问） | 启用（唯一实现） | 独立 api/voucherTemplate/ 已归档 |
@@ -44,5 +44,5 @@
 ## 四、口径说明
 
 - "页面消费"含四种访问模式：直接 import、hooks 中转 import、api 桶（index.ts）re-export、`financeApi.xxx` 对象属性访问。
-- finance 155 条版本化路由为报告期统计（子路由展开口径），src 静态 route( 定义 52 处，差异已注记待复核。
+- finance 版本化路由口径已复核（2026-09-09）：业务 `.route(` 注册 415 处（顶层 127 + 模块内 288，V51-V60 十模块 182），旧注记 155/52 为早期快照不可复现；415 为注册文本数（含 `.route("/x", get(a).post(b))` 多方法合并），非等价暴露端点数，如需精确端点数以运行期 OpenAPI 为准。
 - 归档动作全部可回滚（git 历史），行为兼容优先。

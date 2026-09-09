@@ -212,7 +212,7 @@
     <b>2. 命名空间 / client 调用混乱（✅ 已闭环）</b>：ticket/search 已改各自 client、notification im/mail 已改 apiClient.im/mail、plugin 三方一致 /api/plugin、admin/system→erp 为正确承载（erp 确有 audit-logs/system/dict 路由）、dict 三分文件各自对齐（master/erp/api-dict）。原 6 处"错误"全部核实为已修复或误报。<br><br>
     <b>3. 路径前缀不匹配（✅ 已闭环）</b>：mobile 前端相对路径与后端 /api/mobile 对齐（220 条 diff 仅 6 条真实缺失已补）；WMS/SCM sync、finance/reconciliation、MES 前缀在主题四已全部归一；plugin 三方一致。CI 门禁建议保留：前端 API 路径须在后端路由注册表中存在。<br><br>
     <b>4. 后端系统性只读（✅ 已闭环）</b>：ehs 写路由已补、crm billing 已具全 CRUD（6 路由）+ 回款流转、finance 写操作在主题五已补齐。前端页面可正常增删改。<br><br>
-    <b>5. 版本化模块管理混乱（✅ 已标注）</b>：master V61-V79 前端悬空已判预埋（页面零消费）；finance 155 条版本化路由为反向无消费；risk 三份并存（risk/riskV54/riskV59）属 P3 重复实现治理项。剩余为治理项：建议对版本化模块建立生命周期登记（启用/废弃/前端状态）。<br><br>
+    <b>5. 版本化模块管理混乱（✅ 已标注）</b>：master V61-V79 前端悬空已判预埋（页面零消费）；finance 版本化路由（2026-09-09 复核 `.route(` 注册 415 处：顶层 127+模块内 288、V51-V60 182）为反向无消费；risk 三份并存（risk/riskV54/riskV59）属 P3 重复实现治理项。剩余为治理项：建议对版本化模块建立生命周期登记（启用/废弃/前端状态）。<br><br>
     <b>6. 重复实现增加维护成本</b>：至少 6 组 API 模块存在功能重叠（consolidation 三方、voucherTemplate 双方、financialReport、risk 双份、receivablePayable 跨模块、database 双份），加上 WMS 后端 transfer 重复注册、inventory_alert 双路径。改一处漏一处的风险高。
   </div>
 
