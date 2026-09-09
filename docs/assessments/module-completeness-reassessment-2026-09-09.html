@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="margin:0;padding:0;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS 全量模块完整度重新评估报告 · 2026-09-09</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F3EE;font-family:'Roboto','PingFang SC','Segoe UI',Arial,sans-serif;color:#1A1B1C;">
+<div style="max-width:1100px;margin:0 auto;padding:24px 20px 48px;box-sizing:border-box;">
+
+  <h1 style="font-size:22px;font-weight:600;margin:0 0 4px;">TOPEMS 全量模块完整度重新评估报告 · 2026-09-09</h1>
+  <div style="font-size:13px;color:#6B7280;margin-bottom:20px;">49 个前端模块 × 6 个评估组（核心平台 / ERP财务CRM / 制造研发项目 / 供应链物流HR / AI-BI-分析 / 通信集成移动）· 后端路由↔前端API方法↔页面消费三方实测核对 · 数据源：group-a~f 六份原始评估报告（2026-09-09）</div>
+
+  <!-- ============ 第一部分：健康概览 ============ -->
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+    <div style="flex:1 1 150px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">评估模块总数</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;">49</div>
+      <div style="font-size:11px;color:#6B7280;">6 组 · A13 / B7 / C8 / D5 / E6 / F10</div>
+    </div>
+    <div style="flex:1 1 150px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">后端路由总数</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;">4,519</div>
+      <div style="font-size:11px;color:#6B7280;">6 组注册口径汇总（含跨服务共享）</div>
+    </div>
+    <div style="flex:1 1 150px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">前端 API 方法总数</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;">5,404</div>
+      <div style="font-size:11px;color:#6B7280;">含 workflow 测试80、master 933 等</div>
+    </div>
+    <div style="flex:1 1 150px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">真实缺口数</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;color:#CF1322;">32</div>
+      <div style="font-size:11px;color:#6B7280;">页面级 23 · API/预埋级 9</div>
+    </div>
+    <div style="flex:1 1 150px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">预埋悬空数</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;color:#8C8C8C;">43</div>
+      <div style="font-size:11px;color:#6B7280;">方法级合计 1300+（有封装无消费）</div>
+    </div>
+    <div style="flex:1 1 150px;min-width:0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:#6B7280;">冗余项数</div>
+      <div style="font-size:24px;font-weight:600;margin-top:4px;color:#D48806;">64</div>
+      <div style="font-size:11px;color:#6B7280;">重复封装/重复注册/死代码/死链路</div>
+    </div>
+  </div>
+
+  <!-- 各组汇总表 -->
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow:hidden;margin-bottom:20px;box-sizing:border-box;">
+    <div style="font-size:15px;font-weight:600;padding:14px 16px 4px;">六组评估汇总</div>
+    <div style="font-size:12px;color:#6B7280;padding:0 16px 10px;">后端路由 / 前端方法 / 真实缺口 / 预埋悬空 / 冗余 · 均取自各分组原始报告汇总数</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:8px 10px;font-weight:600;">评估组</th>
+        <th style="padding:8px 10px;font-weight:600;">覆盖模块</th>
+        <th style="padding:8px 10px;font-weight:600;text-align:center;">后端路由</th>
+        <th style="padding:8px 10px;font-weight:600;text-align:center;">前端方法</th>
+        <th style="padding:8px 10px;font-weight:600;text-align:center;">真实缺口</th>
+        <th style="padding:8px 10px;font-weight:600;text-align:center;">预埋悬空</th>
+        <th style="padding:8px 10px;font-weight:600;text-align:center;">冗余项</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:7px 10px;">A · 核心平台</td><td style="padding:7px 10px;">iam/workflow/file/doc/migration/automation/admin/system/tenant/permission/master/bff/unified-core</td><td style="padding:7px 10px;text-align:center;">1,717</td><td style="padding:7px 10px;text-align:center;">1,677</td><td style="padding:7px 10px;text-align:center;color:#CF1322;">6</td><td style="padding:7px 10px;text-align:center;">10</td><td style="padding:7px 10px;text-align:center;">12</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:7px 10px;">B · ERP/财务/CRM</td><td style="padding:7px 10px;">erp/finance/crm/crmFinance/consolidation/asset/addressbook</td><td style="padding:7px 10px;text-align:center;">878</td><td style="padding:7px 10px;text-align:center;">690</td><td style="padding:7px 10px;text-align:center;color:#CF1322;">6</td><td style="padding:7px 10px;text-align:center;">6</td><td style="padding:7px 10px;text-align:center;">12</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:7px 10px;">C · 制造/研发/项目</td><td style="padding:7px 10px;">mes/aps/qms/pdm/ehs/lims/rd/pm</td><td style="padding:7px 10px;text-align:center;">751</td><td style="padding:7px 10px;text-align:center;">1,023</td><td style="padding:7px 10px;text-align:center;color:#CF1322;">2</td><td style="padding:7px 10px;text-align:center;">4</td><td style="padding:7px 10px;text-align:center;">9</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:7px 10px;">D · 供应链/物流/HR</td><td style="padding:7px 10px;">scm/srm/wms/tms/hrm</td><td style="padding:7px 10px;text-align:center;">410</td><td style="padding:7px 10px;text-align:center;">778</td><td style="padding:7px 10px;text-align:center;color:#CF1322;">5</td><td style="padding:7px 10px;text-align:center;">5</td><td style="padding:7px 10px;text-align:center;">9</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:7px 10px;">E · AI/BI/分析</td><td style="padding:7px 10px;">ai/bi/report/monitor/search/gis</td><td style="padding:7px 10px;text-align:center;">432</td><td style="padding:7px 10px;text-align:center;">458</td><td style="padding:7px 10px;text-align:center;color:#CF1322;">3</td><td style="padding:7px 10px;text-align:center;">11</td><td style="padding:7px 10px;text-align:center;">8</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:7px 10px;">F · 通信/集成/移动</td><td style="padding:7px 10px;">im/notification/mail/integration/external-erp/mobile/plugin/ticket/oa/communication</td><td style="padding:7px 10px;text-align:center;">331</td><td style="padding:7px 10px;text-align:center;">778</td><td style="padding:7px 10px;text-align:center;color:#CF1322;">10</td><td style="padding:7px 10px;text-align:center;">7</td><td style="padding:7px 10px;text-align:center;">14</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;background:#FAFAF7;"><td style="padding:7px 10px;font-weight:600;">合计</td><td style="padding:7px 10px;">49 模块</td><td style="padding:7px 10px;text-align:center;font-weight:600;">4,519</td><td style="padding:7px 10px;text-align:center;font-weight:600;">5,404</td><td style="padding:7px 10px;text-align:center;font-weight:600;color:#CF1322;">32</td><td style="padding:7px 10px;text-align:center;font-weight:600;">43</td><td style="padding:7px 10px;text-align:center;font-weight:600;">64</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 5维评分分布图 -->
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:16px;margin-bottom:20px;box-sizing:border-box;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:4px;">5 维评分分布（49 模块）</div>
+    <div style="font-size:12px;color:#6B7280;margin-bottom:12px;">D1 前后端完整度 / D2 前后端 API 对应 / D3 菜单前后端覆盖 / D4 设置合理性 / D5 冗余判定 · 按评分档位计数</div>
+    <div id="chart-dist" style="width:100%;height:300px;min-width:0;box-sizing:border-box;"></div>
+    <noscript><div style="padding:10px;font-size:13px;color:#6B7280;">图表需 JavaScript 渲染（ECharts CDN），下方矩阵与评估卡已含全部结论。</div></noscript>
+  </div>
+
+  <!-- ============ 第二部分：模块×5维总览矩阵 ============ -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">第二部分 · 模块 × 5 维总览矩阵</h2>
+  <div style="font-size:12px;color:#6B7280;margin-bottom:10px;">评分色标：<span style="color:#52C41A;">✅ 完整（绿）</span> · <span style="color:#D48806;">🟡 部分（橙）</span> · <span style="color:#CF1322;">❌ 缺口（红）</span> · <span style="color:#8C8C8C;">⚪ 预埋悬空（灰）</span> · <span style="color:#BFBFBF;">➖ 不适用 / 无设置 / 无菜单（灰字）</span>。数字均来自 6 份原始报告实测，未取证处标注「未取证」。</div>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow-x:auto;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1080px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:7px 8px;font-weight:600;">模块</th>
+        <th style="padding:7px 8px;font-weight:600;">后端服务</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">后端路由</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">前端API方法</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">D1 完整度</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">D2 API对应</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">D3 菜单覆盖</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">D4 设置合理</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">D5 冗余判定</th>
+        <th style="padding:7px 8px;font-weight:600;text-align:center;">综合健康度</th>
+      </tr></thead>
+      <tbody>
+        <!-- A组 -->
+        <tr style="border-top:1px solid #E4E3DD;background:#FBFBFA;"><td colspan="10" style="padding:5px 8px;font-weight:600;color:#6B7280;">A 组 · 核心平台</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">iam</td><td style="padding:6px 8px;">unified-core (/api/core/iam)</td><td style="padding:6px 8px;text-align:center;">57</td><td style="padding:6px 8px;text-align:center;">55</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">workflow</td><td style="padding:6px 8px;">unified-core (/api/core/flow)</td><td style="padding:6px 8px;text-align:center;">84</td><td style="padding:6px 8px;text-align:center;">292（含测试80）</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">file</td><td style="padding:6px 8px;">unified-core (/api/core/file)</td><td style="padding:6px 8px;text-align:center;">25</td><td style="padding:6px 8px;text-align:center;">48</td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪ 预埋</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">doc</td><td style="padding:6px 8px;">unified-core (/api/core/doc)</td><td style="padding:6px 8px;text-align:center;">20</td><td style="padding:6px 8px;text-align:center;">55</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">migration</td><td style="padding:6px 8px;">unified-core (migration.rs)</td><td style="padding:6px 8px;text-align:center;">4</td><td style="padding:6px 8px;text-align:center;">4</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">automation</td><td style="padding:6px 8px;">unified-core (automation.rs, 全部501)</td><td style="padding:6px 8px;text-align:center;">6（全501）</td><td style="padding:6px 8px;text-align:center;">32</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">admin</td><td style="padding:6px 8px;">unified-core + erp + monitor（复用）</td><td style="padding:6px 8px;text-align:center;">—（复用）</td><td style="padding:6px 8px;text-align:center;">41</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">system</td><td style="padding:6px 8px;">unified-core + erp + master-data</td><td style="padding:6px 8px;text-align:center;">34（10+4+audit20）</td><td style="padding:6px 8px;text-align:center;">37</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">tenant</td><td style="padding:6px 8px;">unified-core (master.rs 租户段)</td><td style="padding:6px 8px;text-align:center;">30</td><td style="padding:6px 8px;text-align:center;">75</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪ 预埋为主</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">permission</td><td style="padding:6px 8px;">unified-core (iam.rs /permissions)</td><td style="padding:6px 8px;text-align:center;">6</td><td style="padding:6px 8px;text-align:center;">24（4+8+12）</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">master</td><td style="padding:6px 8px;">master-data (v51-v60+schema-registry+dict)</td><td style="padding:6px 8px;text-align:center;">240</td><td style="padding:6px 8px;text-align:center;">933</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪ 预埋/孤儿</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">bff</td><td style="padding:6px 8px;">portal 854 + server 15</td><td style="padding:6px 8px;text-align:center;">869</td><td style="padding:6px 8px;text-align:center;">4</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">unified-core</td><td style="padding:6px 8px;">unified-core</td><td style="padding:6px 8px;text-align:center;">342</td><td style="padding:6px 8px;text-align:center;">77</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪ 预埋</span></td></tr>
+        <!-- B组 -->
+        <tr style="border-top:1px solid #E4E3DD;background:#FBFBFA;"><td colspan="10" style="padding:5px 8px;font-weight:600;color:#6B7280;">B 组 · ERP / 财务 / CRM</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">svc/erp</td><td style="padding:6px 8px;text-align:center;">308</td><td style="padding:6px 8px;text-align:center;">241</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">finance</td><td style="padding:6px 8px;">svc/finance</td><td style="padding:6px 8px;text-align:center;">474</td><td style="padding:6px 8px;text-align:center;">222</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">crm</td><td style="padding:6px 8px;">svc/crm</td><td style="padding:6px 8px;text-align:center;">96</td><td style="padding:6px 8px;text-align:center;">106</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">crmFinance</td><td style="padding:6px 8px;">crm + finance（跨服务）</td><td style="padding:6px 8px;text-align:center;">—（跨服务）</td><td style="padding:6px 8px;text-align:center;">19</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">consolidation</td><td style="padding:6px 8px;">erp（寄宿）</td><td style="padding:6px 8px;text-align:center;">23</td><td style="padding:6px 8px;text-align:center;">30</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">asset</td><td style="padding:6px 8px;">erp（寄宿）</td><td style="padding:6px 8px;text-align:center;">—（erp 内）</td><td style="padding:6px 8px;text-align:center;">15</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">addressbook</td><td style="padding:6px 8px;">erp（寄宿）</td><td style="padding:6px 8px;text-align:center;">5</td><td style="padding:6px 8px;text-align:center;">57</td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪ 预埋/孤儿</span></td></tr>
+        <!-- C组 -->
+        <tr style="border-top:1px solid #E4E3DD;background:#FBFBFA;"><td colspan="10" style="padding:5px 8px;font-weight:600;color:#6B7280;">C 组 · 制造 / 质量 / 研发 / 项目管理</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">mes</td><td style="padding:6px 8px;">svc/server → mes</td><td style="padding:6px 8px;text-align:center;">170（180注册）</td><td style="padding:6px 8px;text-align:center;">181 / 65路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康（设置占位）</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">aps</td><td style="padding:6px 8px;">mes 兼容层（无独立服务）</td><td style="padding:6px 8px;text-align:center;">22（可达，含301）</td><td style="padding:6px 8px;text-align:center;">42 / 5路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 过渡态</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">qms</td><td style="padding:6px 8px;">svc/server → qms</td><td style="padding:6px 8px;text-align:center;">99（154注册）</td><td style="padding:6px 8px;text-align:center;">115 / 26路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">pdm</td><td style="padding:6px 8px;">svc/pdm（独立部署 8031）</td><td style="padding:6px 8px;text-align:center;">67（77注册）</td><td style="padding:6px 8px;text-align:center;">121 / 24路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康（设置占位）</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ehs</td><td style="padding:6px 8px;">svc/server → ehs</td><td style="padding:6px 8px;text-align:center;">136（139注册）</td><td style="padding:6px 8px;text-align:center;">258 / 49路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">lims</td><td style="padding:6px 8px;">svc/server → lims</td><td style="padding:6px 8px;text-align:center;">118（120注册）</td><td style="padding:6px 8px;text-align:center;">99 / 46路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">rd</td><td style="padding:6px 8px;">svc/server → rd</td><td style="padding:6px 8px;text-align:center;">74（82注册）</td><td style="padding:6px 8px;text-align:center;">60 / 16路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">pm</td><td style="padding:6px 8px;">svc/server → pm</td><td style="padding:6px 8px;text-align:center;">87（89注册）</td><td style="padding:6px 8px;text-align:center;">147 / 27路径</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康</span></td></tr>
+        <!-- D组 -->
+        <tr style="border-top:1px solid #E4E3DD;background:#FBFBFA;"><td colspan="10" style="padding:5px 8px;font-weight:600;color:#6B7280;">D 组 · 供应链 / 物流 / 人力资源</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">scm</td><td style="padding:6px 8px;">svc/scm</td><td style="padding:6px 8px;text-align:center;">84（82唯一）</td><td style="padding:6px 8px;text-align:center;">134</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">srm</td><td style="padding:6px 8px;">svc/srm</td><td style="padding:6px 8px;text-align:center;">76（74唯一）</td><td style="padding:6px 8px;text-align:center;">159</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">wms</td><td style="padding:6px 8px;">svc/wms</td><td style="padding:6px 8px;text-align:center;">136（131唯一）</td><td style="padding:6px 8px;text-align:center;">295</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 重灾区</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">tms</td><td style="padding:6px 8px;">svc/tms</td><td style="padding:6px 8px;text-align:center;">30（30唯一）</td><td style="padding:6px 8px;text-align:center;">43</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">hrm</td><td style="padding:6px 8px;">svc/hrm</td><td style="padding:6px 8px;text-align:center;">84（84唯一）</td><td style="padding:6px 8px;text-align:center;">147</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <!-- E组 -->
+        <tr style="border-top:1px solid #E4E3DD;background:#FBFBFA;"><td colspan="10" style="padding:5px 8px;font-weight:600;color:#6B7280;">E 组 · AI / BI / 数据分析 / 监控 / 搜索 / GIS</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ai</td><td style="padding:6px 8px;">svc/ai</td><td style="padding:6px 8px;text-align:center;">162</td><td style="padding:6px 8px;text-align:center;">142（+generated28未计）</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">bi</td><td style="padding:6px 8px;">svc/analytics（前缀 /api/bi）</td><td style="padding:6px 8px;text-align:center;">154</td><td style="padding:6px 8px;text-align:center;">119</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">report</td><td style="padding:6px 8px;">svc/analytics（复用 /api/bi）</td><td style="padding:6px 8px;text-align:center;">—（复用 bi）</td><td style="padding:6px 8px;text-align:center;">31</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">monitor</td><td style="padding:6px 8px;">svc/monitor</td><td style="padding:6px 8px;text-align:center;">49</td><td style="padding:6px 8px;text-align:center;">113</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">search</td><td style="padding:6px 8px;">svc/search</td><td style="padding:6px 8px;text-align:center;">2（业务仅1）</td><td style="padding:6px 8px;text-align:center;">2</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 欠实现</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">gis</td><td style="padding:6px 8px;">svc/gis</td><td style="padding:6px 8px;text-align:center;">65</td><td style="padding:6px 8px;text-align:center;">51</td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康</span></td></tr>
+        <!-- F组 -->
+        <tr style="border-top:1px solid #E4E3DD;background:#FBFBFA;"><td colspan="10" style="padding:5px 8px;font-weight:600;color:#6B7280;">F 组 · 通信 / 集成 / 移动 / 插件 / 工单 / OA</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">communication</td><td style="padding:6px 8px;">svc/communication</td><td style="padding:6px 8px;text-align:center;">86（78生效+8死）</td><td style="padding:6px 8px;text-align:center;">261（36+210+15）</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">im</td><td style="padding:6px 8px;">svc/communication (/im)</td><td style="padding:6px 8px;text-align:center;">34</td><td style="padding:6px 8px;text-align:center;">36</td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#8C8C8C;">⚪ 预埋</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">notification</td><td style="padding:6px 8px;">svc/communication (/notification)</td><td style="padding:6px 8px;text-align:center;">30</td><td style="padding:6px 8px;text-align:center;">210</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">mail</td><td style="padding:6px 8px;">svc/communication (/mail)</td><td style="padding:6px 8px;text-align:center;">10</td><td style="padding:6px 8px;text-align:center;">15</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">integration</td><td style="padding:6px 8px;">svc/integration</td><td style="padding:6px 8px;text-align:center;">54</td><td style="padding:6px 8px;text-align:center;">44</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">external-erp</td><td style="padding:6px 8px;">svc/integration（无 /external-erp 路由）</td><td style="padding:6px 8px;text-align:center;">—（无路由）</td><td style="padding:6px 8px;text-align:center;">57</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">mobile</td><td style="padding:6px 8px;">svc/mobile</td><td style="padding:6px 8px;text-align:center;">91</td><td style="padding:6px 8px;text-align:center;">312</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡 一般</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">plugin</td><td style="padding:6px 8px;">svc/plugin-registry</td><td style="padding:6px 8px;text-align:center;">63</td><td style="padding:6px 8px;text-align:center;">0 apiClient（独立axios 10+）</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ticket</td><td style="padding:6px 8px;">svc/ticket</td><td style="padding:6px 8px;text-align:center;">37</td><td style="padding:6px 8px;text-align:center;">83</td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">🟢 健康（消费面稳）</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">oa</td><td style="padding:6px 8px;">无独立（mobile/erp 承载）</td><td style="padding:6px 8px;text-align:center;">0</td><td style="padding:6px 8px;text-align:center;">21</td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#52C41A;">✅</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#BFBFBF;">➖</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#D48806;">🟡</span></td><td style="padding:6px 8px;text-align:center;"><span style="color:#CF1322;">❌ 缺口</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 第三部分：逐模块评估卡 ============ -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">第三部分 · 逐模块评估卡（按 6 组分组）</h2>
+  <div style="font-size:12px;color:#6B7280;margin-bottom:12px;">每卡含：后端路由数+证据 / 前端API方法数+证据 / 页面消费 / 5维评分及一句话结论 / 关键发现（真实缺口 · 预埋 · 冗余），证据引用 file:line。数字均来自六份原始报告实测，无法取证处标注「未取证」。</div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;color:#1A1B1C;">A 组 · 核心平台（数据源：group-a-core-platform-raw.md）</h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <!-- iam -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">iam</b> <span style="color:#6B7280;font-size:11px;">unified-core → /api/core/iam</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>57</b> 条（iam.rs 51 + mod.rs auth 6）｜证据：svc/unified-core/src/routes/iam.rs:10-163、mod.rs:128-136,157；前端方法 <b>55</b> 条（user 26/auth 17/role 8/permission 4）｜apps/web/src/api/iam/*.ts。<br>
+      页面消费：9 文件/4 页（UserManagement/RoleManagement/PermissionManagement/Login/ForgotPassword/Profile/useProfile/AccessLogger/UserManagementApiAdapter）。<br>
+      5维：D1🟡 D2🟡 D3✅ D4🟡 D5🟡｜结论：核心 CRUD+认证主链路完整，auth 扩展 5 方法「有封装无后端无消费」双死。<br>
+      关键发现：预埋 P1 —— /auth/password-policy|security-settings|sessions|sessions/revoke-all（7 方法，api/iam/auth.ts:84-140，全 svc 检索 0 命中）；冗余 R1 —— authApi/iamApi/default 三重别名（api/iam/index.ts:45-49）。
+    </div>
+    <!-- workflow -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">workflow</b> <span style="color:#6B7280;font-size:11px;">unified-core flow.rs → /api/core/flow</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>84</b> 条（svc/unified-core/src/routes/flow.rs 全文，挂载 mod.rs:158）；前端方法 <b>292</b> 条（含测试 80，非测试≈212；task 48/monitor 34/form 23/instance 19 等）。<br>
+      页面消费：13 页面 + 移动端 2 页 + shared Dashboard（WorkflowMonitorPage 直接 import monitor）。<br>
+      5维：D1🟡 D2❌ D3✅ D4✅ D5🟡｜结论：approvals/tasks/instances/templates 主链路完整，monitor 子域被页面消费但后端无路由。<br>
+      关键发现：真实缺口 G1 —— /monitor/analysis|dashboard|logs|performance|realtime|sla-compliance|statistics|instances/{completed,rejected,running,suspended} 无后端（api/workflow/monitor.ts vs flow.rs，后端仅 /monitor/instances/{error,overdue,{id}/retry}）；预埋 P2 —— form/rule/delegate/variable/category/task ≈120 方法无消费；冗余 —— task.ts 48 方法无直接消费、测试文件 80 处 apiClient 直连（api/workflow/__tests__/workflow-api.test.ts）。
+    </div>
+    <!-- file -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">file</b> <span style="color:#6B7280;font-size:11px;">unified-core file.rs → /api/core/file</span> <span style="float:right;font-size:11px;color:#8C8C8C;">综合：⚪ 预埋</span><br>
+      后端路由 <b>25</b> 条（src/routes/file.rs:9-85：/files CRUD+copy/move/share/star、/upload、/preview、/thumbnail、/shares、/stats、/download）；前端方法 <b>48</b> 条（storage 14/scan 12/index 12/image 10）。<br>
+      页面消费：<b>0 直接消费</b>（grep api/file 全空；仅 api/doc/index.ts:124 内部 1 处 upload 间接使用）。<br>
+      5维：D1⚪ D2⚪ D3➖ D4➖ D5❌｜结论：整目录预埋悬空，后端能力空置。<br>
+      关键发现：预埋 P3 —— 48 方法全部悬空；前端 /storage/*、/scan/*、/images/*、/files/shared 后端 0 命中；后端 /files/search、/export 等前端未消费。
+    </div>
+    <!-- doc -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">doc</b> <span style="color:#6B7280;font-size:11px;">unified-core modules/doc/handlers.rs → /api/core/doc</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>20</b> 条（handlers.rs:579-625：/dashboard、/documents、/folders、/templates 系列）；前端方法 <b>55</b> 条（workspace 15/index 14/versionControl 13/collaboration 13）。<br>
+      页面消费：6 页面（Dashboard/DocumentList/DocumentCenter/FileDetail/DocumentsPage/KnowledgeBasePage 静态页）。<br>
+      5维：D1🟡 D2🟡 D3✅ D4➖ D5🟡｜结论：documents/folders/templates/versions 完整，workspaces/协作子路径无后端。<br>
+      关键发现：预埋 P4 —— /workspaces（15 方法）、/documents/my-checkouts、/shared-with-me、collaboration（13 方法）后端 0 命中；upload 实际走 file.rs /upload ✓；KnowledgeBasePage 为静态模板页（无 api 调用）。
+    </div>
+    <!-- migration -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">migration</b> <span style="color:#6B7280;font-size:11px;">unified-core migration.rs</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由 <b>4</b> 条（src/routes/migration.rs:10-23：/api/migrations/services 等）；前端方法 <b>4</b> 条（api/migration/index.ts）。<br>
+      页面消费：MigrationAdminPage（:23 import，:51-205 调用全部 4 个方法）。<br>
+      5维：D1❌ D2❌ D3✅ D4➖ D5🟢｜结论：路径双前缀错位，4 个请求全部 404。<br>
+      关键发现：真实缺口 G2 —— 前端 /api/core/migration/migrations/services（runtime.ts:69）vs 后端经 register_routes_with_legacy_alias 后 /api/core/api/migrations/services（migration.rs:11、lib/shared-core/src/api_version.rs:96-108）。<b>旧报告曾判「migration 为内部 DB 初始化服务、非前端 API」，本次实测被推翻（页面真实消费且 404）。</b>
+    </div>
+    <!-- automation -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">automation</b> <span style="color:#6B7280;font-size:11px;">unified-core automation.rs</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由 <b>6</b> 条（src/routes/automation.rs:78-，<b>全部 handler 返回 501</b>，文件头注明 V66.1 planned 占位）；前端方法 <b>32</b> 条（rules 10/variables 7/runs 7/designer 6/dashboard 2）。<br>
+      页面消费：5 页面全真实消费（Dashboard/Rules/Runs/Variables/Designer*）。<br>
+      5维：D1❌ D2❌ D3✅ D4➖ D5❌｜结论：路由存在但服务不可用，前端全部打到 501。<br>
+      关键发现：真实缺口 G3 —— 501 桩 + 路径不对应（/dashboard/stats≠/dashboard、/designer/resources≠/designer/schema、/runs/purge≠/runs、/webhook/order 无后端）。
+    </div>
+    <!-- admin -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">admin</b> <span style="color:#6B7280;font-size:11px;">复用 unified-core core/audit + erp + monitor</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由：—（复用，无独立）；前端方法 <b>41</b> 条（monitoring 18/systemSetting 8/permissionAudit 8/auditLog 4/operationAudit 3）。<br>
+      页面消费：MonitoringAlertPage、PerformanceMonitorPage、PermissionAuditPage、desktop/AuditLogPage、hooks/UseOperationAuditLog。<br>
+      5维：D1🟡 D2❌ D3✅ D4❌ D5❌｜结论：audit 链路可用，monitor 前缀错位 + systemSetting 无后端。<br>
+      关键发现：真实缺口 G4 —— /api/core/monitor/*（monitoring.ts:13-21）svc/monitor 实际前缀 /api/monitor（main.rs:33），网关重写未取证；真实缺口 G5 —— /api/erp/system/settings CRUD+batch（systemSetting.ts:13-47）全库无路由（仅 settings.rs:17,31,35 smtp）；SystemSettingsPage:21-128 纯静态硬编码。
+    </div>
+    <!-- system -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">system</b> <span style="color:#6B7280;font-size:11px;">unified-core system.rs/feature_flag.rs/audit + erp + master-data</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>34</b> 条（system.rs 10 + feature_flag.rs 4 + audit 20）；前端方法 <b>37</b> 条（index 19/params 10/featureFlag 4/audit 4）。<br>
+      页面消费：6 页面（Dictionary/DatabaseStructure/AuditLog/FeatureFlag/SystemParams/erp DictManagement）。<br>
+      5维：D1🟡 D2❌ D3✅ D4✅ D5🟡｜结论：params/config/cache/dict/feature-flag 完整，audit-logs 为真实缺口。<br>
+      关键发现：真实缺口 G6 —— /system/audit-logs（list/{id}/export/stats，audit.ts:20-62）全 svc 检索 0 命中，被 pages/system/AuditLogPage 真实消费；冗余 —— 审计查询在 unified-core 内 3 套以上 + 前端第 4 套口径。
+    </div>
+    <!-- tenant -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">tenant</b> <span style="color:#6B7280;font-size:11px;">unified-core master.rs 租户段</span> <span style="float:right;font-size:11px;color:#8C8C8C;">综合：⚪ 预埋为主</span><br>
+      后端路由 <b>30</b> 条（master.rs 租户路径全集）；前端方法 <b>75</b> 条（config 22/index 19/security 18/analytics 16，全走 /api/core/tenant/*）。<br>
+      页面消费：6 页面（TenantManagement/TenantDetail/TenantSettings/TenantOnboarding/TenantBilling 静态 mock/InviteMemberDialog）。<br>
+      5维：D1🟡 D2⚪ D3✅ D4🟡 D5❌｜结论：tenant CRUD 完整，settings/security/analytics/billing 子域预埋。<br>
+      关键发现：预埋 P5 —— /tenant/{id}/settings|branding|features|domains|email-config|integrations|security/*|analytics/* ≈56 方法（后端 master.rs 无、无页面消费）；TenantBillingPage:43-54 静态 mock；core_tenant_settings 表存在（tenant/mod.rs:118）但 API 层脱节。
+    </div>
+    <!-- permission -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">permission</b> <span style="color:#6B7280;font-size:11px;">iam.rs /permissions + audit</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 ≈6 条（/permissions CRUD + /iam/permissions/metadata + audit）；前端方法 24 条（iam/permission 4 + admin/permissionAudit 8 + bi/permission 12）。<br>
+      页面消费：PermissionManagementPage（iam）、PermissionAuditPage（admin）；bi/permission 无消费。<br>
+      5维：D1🟡 D2🟡 D3✅ D4➖ D5❌｜结论：基础 CRUD 有后端，权限能力三套前端封装。<br>
+      关键发现：预埋 P9 —— bi/permission.ts 12 方法无页面消费；冗余 R3 —— iam/permission + admin/permissionAudit + bi/permission 三套 + 后端审计路由多处重叠。
+    </div>
+    <!-- master -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">master</b> <span style="color:#6B7280;font-size:11px;">svc/master-data（v51-v60 + schema-registry + dict）</span> <span style="float:right;font-size:11px;color:#8C8C8C;">综合：⚪ 预埋/孤儿</span><br>
+      后端路由 <b>240</b> 条（svc/master-data/src/modules/mod.rs nest：quality-v51/lineage-v52/kg-v53/mdm-v54~v60/schema-registry/dict）；前端方法 <b>933</b> 条（35 文件，922 master + 11 erp）。<br>
+      页面消费：<b>0 直接消费</b>（grep api/master 仅命中 config/runtime.ts、utils/apiPath.ts；MasterDataSelector 走 bff→erp /master-data-refs，另一链路）。<br>
+      5维：D1❌ D2⚪ D3➖ D4➖ D5❌｜结论：整目录无消费，服务成孤儿。<br>
+      关键发现：预埋 P6 —— mdm-v61~v79 共 19 个版本命名空间（≈500+ 方法）后端 0 命中（grep mdm-v6[1-9]|mdm-v7 为空）；冗余 —— master/master-data 双别名（runtime.ts:67-68）、api/master 与 api/bff masterDataApi 两套主数据客户端。
+    </div>
+    <!-- bff -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">bff</b> <span style="color:#6B7280;font-size:11px;">svc/portal 854 + svc/server 15</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般（服务型）</span><br>
+      后端路由 <b>869</b> 条（portal 854：embedded.rs 424 + feature_routes 370 + router_config 50 等；server 15）；前端方法 <b>4</b> 条（getBusinessStats/getUnifiedTodos/masterDataApi + graphql/ws 3 项）。<br>
+      页面消费：getDashboard/completeTodoGql/subscribeServiceHealth（DashboardPage:42,241-244、UseDashboardData:26,217-220 及各域 Dashboard）；getBusinessStats/getUnifiedTodos 无消费；masterDataApi 被 MasterDataSelector 消费。<br>
+      5维：D1🟡 D2⚪ D3➖ D4➖ D5🟡｜结论：GraphQL 主链路可用，REST 聚合端点后端有但前端不消费。<br>
+      关键发现：预埋 P8 —— getBusinessStats/getUnifiedTodos（bff/index.ts:98-110）；冗余 R5 —— DashboardPage 与 UseDashboardData 双实现（各 7 处 useQuery）；R6 —— portal embedded.rs:1-12 双轨重复注册自述。
+    </div>
+    <!-- unified-core -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">unified-core</b> <span style="color:#6B7280;font-size:11px;">unified-core（前端 base /api/core）</span> <span style="float:right;font-size:11px;color:#8C8C8C;">综合：⚪ 预埋</span><br>
+      后端路由 <b>342</b> 条；前端方法 <b>77</b> 条（businessMetric 31/tenant 19/system 19/search 4/iamAuth 4）。<br>
+      页面消费：<b>0 直接消费</b>（grep api/unified-core 全 src 0 命中）。<br>
+      5维：D1❌ D2⚪ D3➖ D4➖ D5❌｜结论：整目录预埋，monitor/search 前缀指向已外迁服务。<br>
+      关键发现：预埋 P7 —— 77 方法全部无消费；/api/core/monitor/*（businessMetric 31）svc/monitor 在 /api/monitor（main.rs:33）、/api/core/search*（search.ts）search 已外迁（mod.rs 注释）；过时路径 R12（runtime.ts:110-123）。
+    </div>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;color:#1A1B1C;">B 组 · ERP / 财务 / CRM（数据源：group-b-erp-finance-crm-raw.md）</h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <!-- erp -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">erp</b> <span style="color:#6B7280;font-size:11px;">svc/erp（/api/erp）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>308</b> 条（grep .route( 计数；modules/mod.rs:117-152 合并 32 模块）；前端方法 <b>241</b> 条（index + core/21 文件 + admin）。<br>
+      页面消费：36 处 import，≥26 页面（pages/erp 23 + pages/asset 2 + pages/mes/oa 等）。<br>
+      5维：D1🟡 D2❌ D3✅ D4🟡 D5❌｜结论：主体可用，批量/统计端点缺口 + mdm 前缀叠加疑不可达。<br>
+      关键发现：真实缺口 G2（customers 批量/统计，customerExtended.ts:25-75 vs customer.rs 仅 2 路由）、G3（sales-orders 批量/统计，salesOrderExtended.ts:34-60）、G4（mdm-v49/master-data-refs 全路径注册→前缀叠加，mdm_v49.rs:40+、master_data_refs.rs:135+）、G5（leave_request 6 路由未 merge，mod.rs:42）；冗余 —— addressbook 双套、assetApi 双实现（erp/index.ts:34 遮蔽）、erp /vouchers 残留（finance.rs:148）、36 个 master_data_* 死模块。
+    </div>
+    <!-- finance -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">finance</b> <span style="color:#6B7280;font-size:11px;">svc/finance（/api/finance）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康</span><br>
+      后端路由 <b>474</b> 条（452 去重；modules/mod.rs:5292-5316 合并 22 模块 + cqrs）；前端方法 <b>222</b> 条（20 文件）。<br>
+      页面消费：42 处 import，≥30 页面（pages/finance 20 + pages/erp 6 + admin 1）。<br>
+      5维：D1✅ D2✅ D3✅ D4✅ D5❌｜结论：全组链路最完整，逐路径比对无真实缺口。<br>
+      关键发现：设置三方一致 —— approvalConfig 前后端 + core_finance_payment_approval_config 表（approval_configs.rs:15,49,83,152,237）且被 payment_workflow.rs:170 消费；冗余 R5 —— v51-v60 版本化模块并行（risk_v54/risk_v59、forecast_v53/forecasting、reports_v57/report_center/financial_reports）；R6 —— voucher_template 0 路由仅文档。
+    </div>
+    <!-- crm -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">crm</b> <span style="color:#6B7280;font-size:11px;">svc/crm（/api/crm）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>96</b> 条（92 去重；modules/mod.rs:84-106 合并 17 模块 + plugins 手工注册 main.rs:114-121）；前端方法 <b>106</b> 条（16 文件）。<br>
+      页面消费：30 处 import，21 页面。<br>
+      5维：D1✅ D2❌ D3✅ D4🟡 D5❌｜结论：业务面完整，crmDashboardApi 与插件路由为死代码/缺口。<br>
+      关键发现：真实缺口 G6（B组）—— crmDashboardApi /dashboard 后端无路由（仅 /dashboard/* 子路径，dashboard.ts:16，无页面消费=预埋）；冗余 R4 —— /plugins/info、/plugins/health 双注册（main.rs:115,117 vs crm_plugin.rs:142-143）；R11 —— CrmDashboardPage 与 DashboardPage 并存；R12 —— crm/index.ts:15-40 内嵌 OpenAPI 元数据块（/crm/ 前缀假路径）。
+    </div>
+    <!-- crmFinance -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">crmFinance</b> <span style="color:#6B7280;font-size:11px;">跨 crm + finance</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由：—（跨服务）；前端方法 <b>19</b> 条（7 crm + 12 finance）。<br>
+      页面消费：hooks/useCrmFinance.ts（19 hook）+ pages/crm/CustomerDetailPage.tsx:55（useCustomerFinanceInfo 真实调用）。<br>
+      5维：D1🟡 D2❌ D3➖ D4➖ D5🟡｜结论：客户财务信息区为真实缺口。<br>
+      关键发现：真实缺口 G1（B组）—— /customers/{id}/finance（crmFinance/index.ts:50,66）svc/crm 全库无此路由；/sales-invoices、/sales-collections、/reports/* 由 finance 承接 ✓（sales_invoice.rs:1215-1225）。
+    </div>
+    <!-- consolidation -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">consolidation</b> <span style="color:#6B7280;font-size:11px;">erp 寄宿</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>23</b> 条（svc/erp/src/modules/consolidation/mod.rs）；前端方法 <b>30</b> 条（全部 apiClient.erp）。<br>
+      页面消费：hooks/useConsolidation → ConsolidationReportsPage、ConsolidationScopePage/(index+组件+hook)、pages/iam/CompanyStructurePage，间接 5 页面。<br>
+      5维：D1🟡 D2✅ D3✅ D4🟡 D5🟢｜结论：跨服务映射有效，模块归属跨服务（部分逐路径比对未取证）。<br>
+      关键发现：无重复封装；finance 菜单承载 erp 后端能力。
+    </div>
+    <!-- asset -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">asset</b> <span style="color:#6B7280;font-size:11px;">erp 寄宿（asset.rs/fixed_asset.rs/asset_category.rs）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康</span><br>
+      后端路由：—（erp 内 /assets、/fixed-assets、asset_category 2 路由）；前端方法 <b>15</b> 条（assetApi 5 + fixedAssetApi 6 + assetCategory 4）。<br>
+      页面消费：5 页面（AssetList/CategoryManagement/Depreciation/Dashboard/Transfer）↔ ASSET_PATHS 5 项一一对应（config.ts:63-123）。<br>
+      5维：D1✅ D2✅ D3✅ D4🟡 D5❌｜结论：5 菜单 5 页面 5 API 全对应。<br>
+      关键发现：冗余 R2 —— assetApi 双实现（api/asset/asset.ts vs api/erp/core/asset.ts，erp/index.ts:34 显式遮蔽）。
+    </div>
+    <!-- addressbook -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">addressbook</b> <span style="color:#6B7280;font-size:11px;">erp 寄宿</span> <span style="float:right;font-size:11px;color:#8C8C8C;">综合：⚪ 预埋/孤儿</span><br>
+      后端路由 <b>5</b> 条（svc/erp/src/modules/addressbook.rs：/addressbook、/{id}、/search、/export 等）；前端方法 <b>57</b> 条（index 5 + group/tag/importExport/favorite）。<br>
+      页面消费：<b>0</b>（全 src 无页面 import；仅 api/index.ts 与 erp/core 再导出）。<br>
+      5维：D1⚪ D2🟡 D3❌ D4➖ D5❌｜结论：孤儿后端模块 + 悬空前端封装。<br>
+      关键发现：预埋 P1/P2（B组）—— 全套 57 调用 0 消费；冗余 R1 —— api/addressbook 与 api/erp/core/addressbook.ts 双套封装指向同一组 erp 路由，全部死代码。
+    </div>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;color:#1A1B1C;">C 组 · 制造 / 质量 / 研发 / 项目管理（数据源：group-c-manufacturing-rd-pm-raw.md）</h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <!-- mes -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">mes</b> <span style="color:#6B7280;font-size:11px;">svc/server → mes（mes_real_module.rs:42 挂载 /api/mes）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康（设置占位）</span><br>
+      后端路由 <b>170</b> 条（.route( 出现 180 次，svc/mes/src）；前端方法 <b>181</b> 次调用 / <b>65</b> 个基础路径（api/mes 8 文件）。<br>
+      页面消费：40 个页面/模块文件（包含 dashboard 与报表静态页）。<br>
+      5维：D1✅ D2✅ D3🟡 D4❌ D5❌｜结论：前端消费路径 100% 有后端对应，无真实缺口；设置页全部占位。<br>
+      关键发现：冗余 R1 —— 空文件 approval.ts/analytics.ts（api/mes）；R2 —— 孤儿页（pages/mes/AuditLogPage 仅 3 个 get 且与业务耦合低）；R3 —— 双菜单（pc+app / workbench+工单）；R4 —— 16 个 .bak 遗留；设置 S1 —— 4 个设置组件本地 mock 无持久化（mesSettings.tsx）；预埋 P3 —— 后端 audit.rs 一组审计路由无前端消费（反向预埋）。
+    </div>
+    <!-- aps -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">aps</b> <span style="color:#6B7280;font-size:11px;">无独立服务；mes 内 aps_scheduling 6 条 + aps_compat 301 重定向</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 过渡态</span><br>
+      后端路由 <b>22</b> 条可达（aps_compat.rs:18-30 对 /api/aps/* → /api/mes/aps/* 301；计划 2026-11-28 移除）；前端方法 <b>42</b> 次调用 / <b>5</b> 个基础路径（api/aps）。<br>
+      页面消费：17 个页面（pages/aps）。<br>
+      5维：D1🟡 D2🟡 D3✅ D4➖ D5❌｜结论：全经 301 兼容链路可用，属归档服务过渡态。<br>
+      关键发现：冗余 R4 —— 双表面（旧页面集合 + 新页面集，APS_PATHS 10 项、页面 17 个 vs 新 4 个）。后端口径：svc/mes 与 svc/aps 无独立服务定义。
+    </div>
+    <!-- qms -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">qms</b> <span style="color:#6B7280;font-size:11px;">svc/server → qms（qms_real_module.rs:43 挂载 /api/qms）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康</span><br>
+      后端路由 <b>99</b> 条（.route( 出现 154 次，svc/qms/src）；前端方法 <b>115</b> 次调用 / <b>26</b> 个基础路径（api/qms 6 文件）。<br>
+      页面消费：26 个页面 + shared Dashboard。<br>
+      5维：D1✅ D2✅ D3✅ D4➖ D5🟡｜结论：26 路径 100% 有后端覆盖，无真实缺口。<br>
+      关键发现：冗余 R5 —— mock.ts 954 行死代码（4 处页面引用被真实 API 替代后遗留）；同路径拆分注册（/audits、/findings 等分块注册）为合法写法非重复。
+    </div>
+    <!-- pdm -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">pdm</b> <span style="color:#6B7280;font-size:11px;">svc/pdm（独立部署 8031）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康（设置占位）</span><br>
+      后端路由 <b>67</b> 条（.route( 出现 77 次，svc/pdm/src）；前端方法 <b>121</b> 次调用 / <b>24</b> 个基础路径（api/pdm 5 文件）。<br>
+      页面消费：16 个页面（pages/pdm）。<br>
+      5维：D1✅ D2✅ D3✅ D4❌ D5🟡｜结论：24 路径全有后端覆盖；设置页占位。<br>
+      关键发现：冗余 R6 —— BomPage 与 PdmBomPage 并存（bom 与 bom 组件双实现）；设置 S2 —— 4 个设置组件本地 mock（pdmSettings.tsx）。
+    </div>
+    <!-- ehs -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">ehs</b> <span style="color:#6B7280;font-size:11px;">svc/server → ehs（ehs_real_module.rs:47 挂载 /api/ehs）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>136</b> 条（.route( 出现 139 次）；前端方法 <b>258</b> 次调用 / <b>49</b> 个基础路径（api/ehs 7 文件）。<br>
+      页面消费：21 个页面（EhsDashboardPage 读取 window.__ehsStats 全局变量占位）。<br>
+      5维：D1❌ D2❌ D3✅ D4➖ D5🟢｜结论：写操作均已补后端，dashboard 为预埋缺口（页面已退化全局变量）。<br>
+      关键发现：真实缺口 G1（C组）—— /dashboard（api/ehs/dashboard.ts:16）后端无路由，无页面消费（预埋级）；预埋 P1（C组）—— ehsDashboardApi 11 方法无页面消费。
+    </div>
+    <!-- lims -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">lims</b> <span style="color:#6B7280;font-size:11px;">svc/server → lims（lims_real_module.rs:45 挂载 /api/lims）</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由 <b>118</b> 条（.route( 出现 120 次）；前端方法 <b>99</b> 次调用 / <b>46</b> 个基础路径（api/lims 5 文件）。<br>
+      页面消费：18 个页面 + AuditLogPage + shared。<br>
+      5维：D1❌ D2❌ D3✅ D4➖ D5🟢｜结论：46 路径中 45 个有后端，1 个页面级真实缺口。<br>
+      关键发现：真实缺口 G2（C组）—— /dashboard（LimsDashboardPage.tsx:23 真实消费，api/lims/dashboard.ts:16）后端 404；其余 45 路径全部命中 ✓。
+    </div>
+    <!-- rd -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">rd</b> <span style="color:#6B7280;font-size:11px;">svc/server → rd（rd_real_module.rs:40 挂载 /api/rd）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>74</b> 条（.route( 出现 82 次）；前端方法 <b>60</b> 次调用 / <b>16</b> 个基础路径（14 rd + 2 erp）。<br>
+      页面消费：23 个页面 + AuditLogPage。<br>
+      5维：D1🟡 D2🟡 D3🟡 D4❌ D5❌｜结论：前端消费路径全有后端（0 真实缺口），后端大量能力无前端消费。<br>
+      关键发现：预埋 P2（C组）—— 后端 ai/change-orders/patents/research-costs/material-tests/members/milestones/phases/documents/reports 无前端消费（反向预埋，未取证具体行号）；冗余 R8 —— RsMilestonePage.tsx.bak 死文件、rd_route.md 存在但 mod.rs 未使用、facade 语义错位（member、team、cost 模块实体 0 定义）；设置 S3 —— RsSettingsPage 纯本地内存 10 行无持久化。
+    </div>
+    <!-- pm -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">pm</b> <span style="color:#6B7280;font-size:11px;">svc/server → pm（pm_real_module.rs:42 挂载 /api/pm）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康</span><br>
+      后端路由 <b>87</b> 条（.route( 出现 89 次）；前端方法 <b>147</b> 次调用 / <b>27</b> 个基础路径（api/pm 6 文件）。<br>
+      页面消费：23 个页面。<br>
+      5维：D1✅ D2✅ D3✅ D4➖ D5🟡｜结论：27 路径全有后端覆盖，无真实缺口。<br>
+      关键发现：冗余 R7 —— 三套项目创建页（CreateProjectDrawer.tsx / components/ProjectFormModal.tsx / ProjectCreatePage.tsx 并存）。
+    </div>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;color:#1A1B1C;">D 组 · 供应链 / 物流 / 人力资源（数据源：group-d-scm-logistics-hrm-raw.md）</h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <!-- scm -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">scm</b> <span style="color:#6B7280;font-size:11px;">svc/scm（/api/scm）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>84</b> 条（82 唯一）；前端方法 <b>134</b> 条（20 文件）。<br>
+      页面消费：15/17 子 API 组被消费（16+2 页面）。<br>
+      5维：D1🟡 D2🟡 D3🟡 D4❌ D5❌｜结论：主体完整，2 处真实缺口 + 2 组预埋。<br>
+      关键发现：真实缺口 D1 —— /abc-classification/{id}/execute（inventoryTurnover.ts:26 vs inventory_turnover.rs:214 为 abc-analysis，2 处消费）；D2 —— /incoming-inspections/{id}/records（incomingInspection.ts vs incoming_inspection.rs:172-183 缺 {id}/records，1 处消费）；预埋 —— syncRecord 7 / inspectionRecord 5 无消费；冗余 —— MRP 双路由（mrp.rs:143-150 重复注册）、price_comparison 绝对路径与相对路径重复、scm/srm 双供应商主数据（supplier_ref_old）。
+    </div>
+    <!-- srm -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">srm</b> <span style="color:#6B7280;font-size:11px;">svc/srm（/api/srm）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>76</b> 条（74 唯一）；前端方法 <b>159</b> 条（index.ts 65 个扁平函数 + 5 文件）。<br>
+      页面消费：18 页面 + shared（消费充分）。<br>
+      5维：D1✅ D2🟡 D3✅ D4➖ D5🟡｜结论：消费充分；供应商 CRUD 路径错位风险（需运行时验证）。<br>
+      关键发现：疑似缺口 D3 —— 供应商 CRUD（api/srm/index.ts:516-532 绝对路径 vs supplier.rs:63-94 相对路径，grep supplier/{id} 0 命中，可达性未取证）；与 scm 双供应商主数据（supplier_ref_old）。
+    </div>
+    <!-- wms -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">wms</b> <span style="color:#6B7280;font-size:11px;">svc/wms（/api/wms）</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 重灾区</span><br>
+      后端路由 <b>136</b> 条（131 唯一）；前端方法 <b>295</b> 条（27 文件）。<br>
+      页面消费：仅 15 个 barrel 导出键被消费；≥12 页面用 useWmsMock 假数据。<br>
+      5维：D1❌ D2🟡 D3🟡 D4❌ D5❌｜结论：重灾区，大量预埋 + mock 假数据 + 死模块。<br>
+      关键发现：真实缺口 D4 —— /slotting/rules 前后端不一致（LocationRulePage.tsx:14 消费 /wms/slotting/rules vs slotting.rs:14-33 为 /slotting/rules CRUD，2 处）；D5 —— /cycle-counts 缺失（InventoryCyclePage.tsx:14 消费 /wms/cycle-counts vs cycle_count.rs 整文件注释化，3 处）；预埋 —— putaway 18/manifest 18/kitting 9/labor 7/picking 16/slotting 10 无消费 + wavePick 10/inventoryMovement 6/discrepancy 6/smartReplenishment 23/sync 9/audit 3；冗余 —— transfer.ts 死代码 12 方法 + cycle_count 死模块 + 双告警体系 + 12 页 mock。
+    </div>
+    <!-- tms -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">tms</b> <span style="color:#6B7280;font-size:11px;">svc/tms（/api/tms）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康</span><br>
+      后端路由 <b>30</b> 条（30 唯一）；前端方法 <b>43</b> 条（3 文件）。<br>
+      页面消费：8 个 barrel 键（17 页面）。<br>
+      5维：D1🟡 D2✅ D3🟡 D4➖ D5🟢｜结论：本组最健康，核心 CRUD 全对应。<br>
+      关键发现：预埋 —— planAssignments/optimizeRoutes/quoteFreight 3 接口（tms.ts:26,68-80）无页面消费；半成品页 —— TransportPlanDetailPage.tsx:17 缺少右侧抽屉。
+    </div>
+    <!-- hrm -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">hrm</b> <span style="color:#6B7280;font-size:11px;">svc/hrm（/api/hrm）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>84</b> 条（84 唯一）；前端方法 <b>147</b> 条（6 文件）。<br>
+      页面消费：28+ 页面（pages/hrm 19 + 组件 9+）。<br>
+      5维：D1🟡 D2🟡 D3🟡 D4❌ D5🟢｜结论：主体完整；setup 双前缀错位、payroll 部分死路由。<br>
+      关键发现：预埋 —— hrmSetup 6 方法（hrmSetup.ts:6-11）无后端无消费；死路由 —— payroll-details/slips/generate-voucher 3 条后端路由无前端（payroll.rs:76-97）；设置占位 —— 4 个设置页面（hrm/settings/*）无持久化。
+    </div>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;color:#1A1B1C;">E 组 · AI / BI / 数据分析 / 监控 / 搜索 / GIS（数据源：group-e-ai-bi-analytics-raw.md）</h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <!-- ai -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">ai</b> <span style="color:#6B7280;font-size:11px;">svc/ai（/api/ai）</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由 <b>162</b> 条（svc/ai/src/routes.rs）；前端方法 <b>142</b> 条（15 文件，generated 28 未计入）。<br>
+      页面消费：14+ 文件（AiChatPage/AiKnowledgeBasePage/...）。<br>
+      5维：D1🟡 D2🟡 D3✅ D4🟡 D5❌｜结论：核心链路可用，会话列表功能不可用。<br>
+      关键发现：真实缺口 G1（E组）—— /conversations（api/ai/chat.ts vs routes.rs 无此路径，AiChatPage:169 真实消费）；假接口 G2 —— /models/usage 恒返回零（model_admin_handlers.rs:378-395）；预埋 P1 —— recommendation 3 方法、P2 —— vector 5 方法、P3 —— chat conversations 6 方法、P4 —— index 3 方法、P5 —— generated 28 方法（无消费）；冗余 —— ai_form 组件未挂载、generated/client.ts 28 死代码。
+    </div>
+    <!-- bi -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">bi</b> <span style="color:#6B7280;font-size:11px;">svc/analytics（前缀 /api/bi）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康</span><br>
+      后端路由 <b>154</b> 条；前端方法 <b>119</b> 条（12 文件）。<br>
+      页面消费：16 文件。<br>
+      5维：D1✅ D2✅ D3✅ D4✅ D5❌｜结论：核心链路全覆盖。<br>
+      关键发现：冗余 R1 —— bi/report.ts 9 方法（/report 单数）与 report 模块（/reports 复数）双套报表体系；R3 —— /summary 双路径（routes.rs:511-568 完整版 vs 单值版）；analytics_compat 空桩（modules/analytics_compat.rs:1-9）被挂载但无 handler；getQuotaStats/approvalConfig 2 方法悬空（复用 finance 侧）。
+    </div>
+    <!-- report -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">report</b> <span style="color:#6B7280;font-size:11px;">复用 svc/analytics（modules/report 子模块）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由：—（复用 bi 154 条内）；前端方法 <b>31</b> 条（api/report/index.ts，全走 apiClient.bi）。<br>
+      页面消费：12 文件。<br>
+      5维：D1🟡 D2✅ D3✅ D4🟡 D5❌｜结论：前后端自洽，但为 bi 平行第二套。<br>
+      关键发现：冗余 R1 —— 与 bi/report.ts 双套（/report 单数 vs /reports 复数，report/index.ts:13,15,30 对应后端 /api/bi/reports）；数据口径需人工确认（未取证）。
+    </div>
+    <!-- monitor -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">monitor</b> <span style="color:#6B7280;font-size:11px;">svc/monitor（/api/monitor）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>49</b> 条；前端方法 <b>113</b> 条（14 文件）。<br>
+      页面消费：9 文件。<br>
+      5维：D1🟡 D2🟡 D3✅ D4❌ D5❌｜结论：核心告警链路完整，封装大量重复。<br>
+      关键发现：真实缺口 G3（E组）—— /metrics/realtime 无后端（api/monitor/dashboard.ts，无页面消费=预埋级）；冗余 R2 —— metrics.ts 三合一（dashboard/serviceHealth/business 混编）、R7 —— alert 双封装（alert.ts vs alerting.ts）；死代码 —— businessMetric 9 方法、slo 10 方法；假设置页 —— 30+ 项设置全 local state 无持久化（dashboard.tsx:238-284）。
+    </div>
+    <!-- search -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">search</b> <span style="color:#6B7280;font-size:11px;">svc/search</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 欠实现</span><br>
+      后端路由 <b>2</b> 条（业务仅 1：main.rs:34-49 /）；前端方法 <b>2</b> 条（api/search/index.ts）。<br>
+      页面消费：全局搜索栏（useGlobalSearch.ts:164 消费 getGlobalSearchResults）。<br>
+      5维：D1❌ D2🟡 D3✅ D4➖ D5🟢｜结论：单端点承载全局搜索，欠实现。<br>
+      关键发现：预埋 P11 —— getSuggestions 1 方法无后端无消费；globalSearch 真实对应 ✓。
+    </div>
+    <!-- gis -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">gis</b> <span style="color:#6B7280;font-size:11px;">svc/gis（/api/gis）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康</span><br>
+      后端路由 <b>65</b> 条；前端方法 <b>51</b> 条（6 文件）。<br>
+      页面消费：5 文件 + bi/GisPage。<br>
+      5维：D1✅ D2✅ D3✅ D4➖ D5🟡｜结论：核心链路真实消费且对应。<br>
+      关键发现：预埋 P10 —— storage.ts 11 方法无页面消费（后端 GIS 存储路由存在）；冗余 R4 —— bi/GisPage 与 pages/gis 重复（bi/GisPage.tsx:34,42,44 未在菜单路由注册）。
+    </div>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;color:#1A1B1C;">F 组 · 通信 / 集成 / 移动 / 插件 / 工单 / OA（数据源：group-f-comm-integration-mobile-raw.md）</h3>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <!-- communication -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">communication</b> <span style="color:#6B7280;font-size:11px;">svc/communication（/api/communication）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>86</b> 条（78 生效 + im_location.rs 8 条死代码；main.rs:45-234）；前端方法 im 36 + notification 210 + mail 15。<br>
+      页面消费：notification 7 页 / mail 1 页 / im 0 页。<br>
+      5维：D1🟡 D2🟡 D3🟡 D4❌ D5❌｜结论：notification/mail 有消费但有缺口，im 全量预埋。<br>
+      关键发现：死代码 —— im_location.rs 8 条路由已挂载但无 handler（未取证运行时报错）；冗余 R6/R7/R8/R9 详见 im/notification/mail 卡。
+    </div>
+    <!-- im -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">im</b> <span style="color:#6B7280;font-size:11px;">svc/communication /im（main.rs:155-219）</span> <span style="float:right;font-size:11px;color:#8C8C8C;">综合：⚪ 预埋</span><br>
+      后端路由 <b>34</b> 条；前端方法 <b>36</b>（api/im/index.ts:133-307，37 调用）。<br>
+      页面消费：<b>0 真实页面</b>（仅测试文件引用）。<br>
+      5维：D1⚪ D2🟡 D3🟡 D4❌ D5❌｜结论：最大预埋悬空模块。<br>
+      关键发现：预埋 P1（F组）—— 36 方法 0 消费；路径/方法错位 —— /im/sessions/{id}/messages 等子路径与 methods.ts:10-90 不匹配；冗余 R7 —— notification/im.ts 30 调用与 api/im 重复（两套 IM 封装）。
+    </div>
+    <!-- notification -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">notification</b> <span style="color:#6B7280;font-size:11px;">svc/communication /notification（main.rs:45-151）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>30</b> 条；前端方法 <b>210</b> 调用（14 文件）。<br>
+      页面消费：7 页面，仅 4 方法（markUnread/markRead/listChannels/get）。<br>
+      5维：D1🟡 D2🟡 D3✅ D4❌ D5❌｜结论：扩展 API ≈120+ 无后端；设置页 listChannels 404。<br>
+      关键发现：真实缺口 G1（F组）—— /notification/channels（api/notification/listChannels vs main.rs:45-151 全仓无 channels 路由，NotificationSettingsPage.tsx:18 真实消费）；预埋 P2（F组）—— preference/pushConfig/channel/group/subscription/digest/delivery/webhook/template 扩展方法全无后端；冗余 R6 —— preference.ts vs pushConfig.ts 双封装重叠（21 vs 18 方法）。
+    </div>
+    <!-- mail -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">mail</b> <span style="color:#6B7280;font-size:11px;">svc/communication /mail（main.rs:223-234）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>10</b> 条；前端方法 <b>15</b>（api/mail/index.ts）。<br>
+      页面消费：MailPage（MailPageHooks.tsx:87-482）。<br>
+      5维：D1🟡 D2🟡 D3🟡 D4➖ D5🟡｜结论：3 个消费方法为真实缺口。<br>
+      关键发现：真实缺口 G2/G3/G4（F组）—— getStats（MailPageHooks.tsx:87）、sendWithTemplate（:211）、resend（:482）后端无路由（main.rs:223-234 无 /stats、/templates、/resend）；冗余 R8 —— mail.ts（mailerApi 10）与 api/mail 双套；R9 —— emailApi/templateApi/mailApi 三对象导出。
+    </div>
+    <!-- integration -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">integration</b> <span style="color:#6B7280;font-size:11px;">svc/integration（routes.rs:26-128 + plugin.rs:98-99 死）</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由 <b>54</b> 条；前端方法 <b>44</b>（integration 5 文件）。<br>
+      页面消费：4 页面（MesErp/WmsScm/LimsQms 消费 sync；Connections/Mappings 消费空后端或 mock）。<br>
+      5维：D1🟡 D2❌ D3🟡 D4❌ D5❌｜结论：sync 类真实；connections/mappings/external-erp 有页面无后端。<br>
+      关键发现：真实缺口 G5 —— /erp/connections（IntegrationConnectionsPage.tsx:131 消费，routes.rs:26-128 无）；G6 —— /erp/mappings（IntegrationMappingsPage.tsx:196 消费，mock 掩盖）；冗余 R2 —— plugin.rs 2 条死代码；R10 —— mappings mock 掩盖真实缺口；静态页 —— ConnectionsPage/MappingsPage 静态硬编码。
+    </div>
+    <!-- external-erp -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">external-erp</b> <span style="color:#6B7280;font-size:11px;">svc/integration（无 /external-erp 路由）</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由：—（无）；前端方法 <b>57</b>（8 文件）。<br>
+      页面消费：IntegrationExternalErpOverviewPage（useExternalErp.ts:25 消费）。<br>
+      5维：D1🟡 D2❌ D3➖ D4➖ D5❌｜结论：13 个路径全部无后端。<br>
+      关键发现：真实缺口 G7（F组）—— /external-erp/* 13 路径全无后端（integration 服务无此前缀路由）。
+    </div>
+    <!-- mobile -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">mobile</b> <span style="color:#6B7280;font-size:11px;">svc/mobile（main.rs:272-537 89 + mobile_plugin 2）</span> <span style="float:right;font-size:11px;color:#D48806;">综合：🟡 一般</span><br>
+      后端路由 <b>91</b> 条；前端方法 <b>312</b>（26 文件）。<br>
+      页面消费：16+ 文件（考勤/任务/推送/扫码等）。<br>
+      5维：D1🟡 D2🟡 D3✅ D4🟡 D5🟡｜结论：主链路健康，扩展链路悬空。<br>
+      关键发现：预埋 P4（F组）—— approvalEnhanced ≈18 方法（main.rs 无对应路由）；冗余 R11 —— approval.ts 与 approvalEnhanced.ts 双套（29 vs 18）；R3 —— /api/plugins 在 mobile/integration/plugin-registry 三处注册；NotificationSettings 纯 localStorage（mobile/notification/settings）。
+    </div>
+    <!-- plugin -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">plugin</b> <span style="color:#6B7280;font-size:11px;">svc/plugin-registry（main.rs 8 + plugin/mod.rs 55+）</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由 <b>63</b> 条；前端 <b>0 apiClient</b>（独立 pluginAxios，10+ 方法）。<br>
+      页面消费：15+ 文件（PluginMarketplacePage/PluginDetailPage/PluginUpgradePage 等）。<br>
+      5维：D1🟡 D2❌ D3✅ D4➖ D5❌｜结论：前缀错位链 —— 前端旧 base /api/core/plugin → unified-core 插件路由已注释 → traefik 只路由 /api/plugin → 页面消费 404。<br>
+      关键发现：真实缺口 G9 —— /api/core/plugin/*（pluginAxios base /api/core/plugin，PluginDetailPage.tsx:69-97 消费 /api/core/plugin/{id}）；G10 —— /navigation-config（pluginManager.ts:542-544）；冗余 R4 —— /health 双注册（main.rs:8 + plugin/mod.rs）；R13 —— 函数+聚合+marketplace/plugin 多重导出；R14 —— plugin 前缀分裂（统一收敛 /api/plugin）。
+    </div>
+    <!-- ticket -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">ticket</b> <span style="color:#6B7280;font-size:11px;">svc/ticket（handlers.rs:1519-1567 + ticket_ext + feedback_compat）</span> <span style="float:right;font-size:11px;color:#52C41A;">综合：🟢 健康（消费面稳）</span><br>
+      后端路由 <b>37</b> 条；前端方法 <b>83</b>（8 文件）。<br>
+      页面消费：2 页面（DashboardPage/TicketCenterPage），消费方法全有后端 ✓。<br>
+      5维：D1🟡 D2🟡 D3✅ D4➖ D5🟡｜结论：消费面小而稳，大量预埋扩展。<br>
+      关键发现：预埋 P6（F组）—— dashboard/* 9 + export/my/search/sla-policies/workflows 等无消费（后端无路由）；冗余 R12 —— feedback_compat 并入 ticket 但前端无消费（feedback 已下线）；孤儿后端 —— knowledge-articles 路由无页面。
+    </div>
+    <!-- oa -->
+    <div style="flex:1 1 100%;min-width:0;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:12px 14px;box-sizing:border-box;font-size:12.5px;line-height:1.7;">
+      <b style="font-size:13.5px;">oa</b> <span style="color:#6B7280;font-size:11px;">无独立服务（依赖 mobile/erp）</span> <span style="float:right;font-size:11px;color:#CF1322;">综合：❌ 缺口</span><br>
+      后端路由 <b>0</b>；前端方法 <b>21</b>（mobile/oa.ts）+ erp/core 若干。<br>
+      页面消费：5 页面（MeetingManagementPage.tsx:9 消费 oaApi）。<br>
+      5维：D1❌ D2❌ D3✅ D4➖ D5🟡｜结论：OA 会议页真实消费但后端全无。<br>
+      关键发现：真实缺口 G8（F组）—— oaApi 21 方法全无后端（/oa/meetings 等，mobile 服务无 /api/oa 挂载）；oa.ts 头注释「统一接口层」与实测不符。
+    </div>
+  </div>
+
+  <!-- ============ 第四部分：缺口/冗余清单 + 与旧报告差异对照 ============ -->
+  <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">第四部分 · 缺口 / 冗余清单 + 与旧报告差异对照</h2>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;">4.1 真实缺口清单（页面在役消费但后端无路由 / 路径错位）· 共 32 项 · 按优先级排序</h3>
+  <div style="font-size:12px;color:#6B7280;margin-bottom:10px;">优先级口径：P0 = 页面在役消费直接打 404 / 501（阻断）→ P1 = 页面在役消费但被 mock/静态掩盖或疑似不可达 → P2 = 有封装无页面消费的缺口（API 级）</div>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow-x:auto;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1000px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:7px 8px;font-weight:600;">#</th>
+        <th style="padding:7px 8px;font-weight:600;">优先级</th>
+        <th style="padding:7px 8px;font-weight:600;">模块</th>
+        <th style="padding:7px 8px;font-weight:600;">缺口描述</th>
+        <th style="padding:7px 8px;font-weight:600;">证据（file:line）</th>
+        <th style="padding:7px 8px;font-weight:600;">影响页面</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">1</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">workflow</td><td style="padding:6px 8px;">monitor 子域 20+ 方法（/monitor/analysis|dashboard|logs|performance|realtime|sla-compliance|statistics|instances/{completed,rejected,running,suspended}）后端无路由</td><td style="padding:6px 8px;">api/workflow/monitor.ts vs svc/unified-core/src/routes/flow.rs（后端仅 /monitor/instances/{error,overdue,{id}/retry}）</td><td style="padding:6px 8px;">WorkflowMonitorPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">2</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">migration</td><td style="padding:6px 8px;">路径双前缀错位：前端 /api/core/migration/migrations/services vs 后端 /api/core/api/migrations/services，4 请求全 404</td><td style="padding:6px 8px;">api/migration/index.ts:18；src/routes/migration.rs:11；lib/shared-core/src/api_version.rs:96-108</td><td style="padding:6px 8px;">MigrationAdminPage (:23, :51-205)</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">3</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">automation</td><td style="padding:6px 8px;">后端 6 路由全部 501 planned 桩，前端 32 方法全部打到 501；另 4 处路径不对应（/dashboard/stats、/designer/resources、/runs/purge、/webhook/order）</td><td style="padding:6px 8px;">src/routes/automation.rs:78-（501）；api/automation/*.ts</td><td style="padding:6px 8px;">Automation* 5 页面</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">4</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">admin</td><td style="padding:6px 8px;">monitor 前缀错位：前端 /api/core/monitor/* vs svc/monitor 实际 /api/monitor（网关重写未取证）</td><td style="padding:6px 8px;">api/admin/monitoring.ts:13-21；svc/monitor/src/main.rs:33</td><td style="padding:6px 8px;">MonitoringAlertPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">5</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">system</td><td style="padding:6px 8px;">/system/audit-logs（list/{id}/export/stats）全库 0 命中</td><td style="padding:6px 8px;">api/system/audit.ts:20-62；全 svc 检索 0 命中</td><td style="padding:6px 8px;">AuditLogPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">6</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">crmFinance</td><td style="padding:6px 8px;">/customers/{id}/finance 无后端路由（invoices/collections 已由 finance 承接 ✓）</td><td style="padding:6px 8px;">api/crmFinance/index.ts:50,66；svc/crm 全库无此路由</td><td style="padding:6px 8px;">CustomerDetailPage (:55)</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">7</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">lims</td><td style="padding:6px 8px;">/dashboard 页面级缺口：页面真实消费，后端 404</td><td style="padding:6px 8px;">LimsDashboardPage.tsx:23；api/lims/dashboard.ts:16 vs lims_real_module 路由集</td><td style="padding:6px 8px;">LimsDashboardPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">8</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">ai</td><td style="padding:6px 8px;">/conversations 无后端路由</td><td style="padding:6px 8px;">api/ai/chat.ts vs svc/ai/src/routes.rs；AiChatPage.tsx:169</td><td style="padding:6px 8px;">AiChatPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">9</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">notification</td><td style="padding:6px 8px;">/notification/channels 后端无路由（旧报告曾判「listChannels 全命中」，被本次推翻）</td><td style="padding:6px 8px;">NotificationSettingsPage.tsx:18；api/notification/listChannels vs svc/communication main.rs:45-151</td><td style="padding:6px 8px;">NotificationSettingsPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">10</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">mail</td><td style="padding:6px 8px;">3 个消费方法无后端：getStats / sendWithTemplate / resend</td><td style="padding:6px 8px;">MailPageHooks.tsx:87,211,482；svc/communication main.rs:223-234 无对应</td><td style="padding:6px 8px;">MailPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">11</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">integration</td><td style="padding:6px 8px;">/erp/connections 无后端路由</td><td style="padding:6px 8px;">IntegrationConnectionsPage.tsx:131；svc/integration routes.rs:26-128</td><td style="padding:6px 8px;">IntegrationConnectionsPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">12</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">integration</td><td style="padding:6px 8px;">/erp/mappings 无后端（mock 掩盖）</td><td style="padding:6px 8px;">IntegrationMappingsPage.tsx:196</td><td style="padding:6px 8px;">IntegrationMappingsPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">13</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">external-erp</td><td style="padding:6px 8px;">/external-erp/* 13 个路径全部无后端</td><td style="padding:6px 8px;">useExternalErp.ts:25；svc/integration 无此前缀</td><td style="padding:6px 8px;">IntegrationExternalErpOverviewPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">14</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">oa</td><td style="padding:6px 8px;">oaApi 21 方法全无后端（/oa/meetings 等）</td><td style="padding:6px 8px;">MeetingManagementPage.tsx:9；apps/web/src/api/mobile/oa.ts（svc 无 /api/oa 挂载）</td><td style="padding:6px 8px;">MeetingManagementPage 等 5 页</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">15</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">plugin</td><td style="padding:6px 8px;">前缀错位链：前端 /api/core/plugin/* → unified-core 插件路由已注释 → traefik 仅路由 /api/plugin → 页面消费 404（旧报告「三方一致已闭环」被推翻）</td><td style="padding:6px 8px;">pluginAxios base /api/core/plugin；PluginDetailPage.tsx:69-97；unified-core 插件路由注释</td><td style="padding:6px 8px;">PluginMarketplacePage / PluginDetailPage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">16</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">P0</span></td><td style="padding:6px 8px;">plugin</td><td style="padding:6px 8px;">/navigation-config 无后端路由</td><td style="padding:6px 8px;">pluginManager.ts:542-544</td><td style="padding:6px 8px;">pluginManager</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">17</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">scm</td><td style="padding:6px 8px;">/abc-classification/{id}/execute 路径错位（后端为 abc-analysis），2 处消费</td><td style="padding:6px 8px;">inventoryTurnover.ts:26 vs inventory_turnover.rs:214</td><td style="padding:6px 8px;">ABC 分析页</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">18</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">scm</td><td style="padding:6px 8px;">/incoming-inspections/{id}/records 缺失</td><td style="padding:6px 8px;">incomingInspection.ts vs incoming_inspection.rs:172-183</td><td style="padding:6px 8px;">来料检验记录区</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">19</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">srm</td><td style="padding:6px 8px;">供应商 CRUD 绝对路径 vs 后端相对路径，疑似不可达（需运行时验证）</td><td style="padding:6px 8px;">api/srm/index.ts:516-532 vs supplier.rs:63-94</td><td style="padding:6px 8px;">供应商管理页</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">20</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">wms</td><td style="padding:6px 8px;">/slotting/rules 前后端不一致（页面消费路径 vs 后端 CRUD 路径）</td><td style="padding:6px 8px;">LocationRulePage.tsx:14 vs slotting.rs:14-33</td><td style="padding:6px 8px;">LocationRulePage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">21</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">wms</td><td style="padding:6px 8px;">/cycle-counts 缺失（后端 cycle_count.rs 整文件注释化）</td><td style="padding:6px 8px;">InventoryCyclePage.tsx:14 vs cycle_count.rs</td><td style="padding:6px 8px;">InventoryCyclePage</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">22</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">admin</td><td style="padding:6px 8px;">/api/erp/system/settings CRUD+batch 全库无路由（仅 smtp 3 条）</td><td style="padding:6px 8px;">api/admin/systemSetting.ts:13-47；svc/erp settings.rs:17,31,35</td><td style="padding:6px 8px;">SystemSettingsPage（静态硬编码 :21-128）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">23</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">ehs</td><td style="padding:6px 8px;">/dashboard 无后端（页面已退化读 window.__ehsStats 全局变量）</td><td style="padding:6px 8px;">api/ehs/dashboard.ts:16 vs ehs_real_module 路由集</td><td style="padding:6px 8px;">EhsDashboardPage（占位）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">24</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">monitor</td><td style="padding:6px 8px;">/metrics/realtime 无后端</td><td style="padding:6px 8px;">api/monitor/dashboard.ts</td><td style="padding:6px 8px;">无页面消费（预埋级）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">25</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">P1</span></td><td style="padding:6px 8px;">ai</td><td style="padding:6px 8px;">/models/usage 假接口恒返回零（非 404 但数据造假）</td><td style="padding:6px 8px;">model_admin_handlers.rs:378-395</td><td style="padding:6px 8px;">AiModelManagementPage（展示假数据）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">26</td><td style="padding:6px 8px;"><span style="color:#8C8C8C;font-weight:600;">P2</span></td><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">customers 批量/统计端点无后端</td><td style="padding:6px 8px;">api/erp/core/customerExtended.ts:25-75 vs customer.rs 仅 2 路由</td><td style="padding:6px 8px;">无页面消费（预埋）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">27</td><td style="padding:6px 8px;"><span style="color:#8C8C8C;font-weight:600;">P2</span></td><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">sales-orders 批量/统计端点无后端</td><td style="padding:6px 8px;">api/erp/core/salesOrderExtended.ts:34-60</td><td style="padding:6px 8px;">无页面消费（预埋）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">28</td><td style="padding:6px 8px;"><span style="color:#8C8C8C;font-weight:600;">P2</span></td><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">mdm-v49/master-data-refs 全路径注册 → 前缀叠加疑不可达</td><td style="padding:6px 8px;">mdm_v49.rs:40+；master_data_refs.rs:135+</td><td style="padding:6px 8px;">MasterDataSelector（走 bff 链路，未取证）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">29</td><td style="padding:6px 8px;"><span style="color:#8C8C8C;font-weight:600;">P2</span></td><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">leave_request 6 端点未挂载（mod.rs:42 声明无 merge）</td><td style="padding:6px 8px;">svc/erp/src/modules/leave_request/mod.rs；modules/mod.rs:42</td><td style="padding:6px 8px;">无页面消费</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">30</td><td style="padding:6px 8px;"><span style="color:#8C8C8C;font-weight:600;">P2</span></td><td style="padding:6px 8px;">crm</td><td style="padding:6px 8px;">crmDashboardApi /dashboard 无后端（仅子路径）</td><td style="padding:6px 8px;">api/crm/dashboard.ts:16</td><td style="padding:6px 8px;">无页面消费（预埋）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">31</td><td style="padding:6px 8px;"><span style="color:#8C8C8C;font-weight:600;">P2</span></td><td style="padding:6px 8px;">search</td><td style="padding:6px 8px;">/suggestions 无后端无消费</td><td style="padding:6px 8px;">api/search/index.ts vs svc/search main.rs:34-49</td><td style="padding:6px 8px;">无页面消费</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">32</td><td style="padding:6px 8px;"><span style="color:#8C8C8C;font-weight:600;">P2</span></td><td style="padding:6px 8px;">admin</td><td style="padding:6px 8px;">/api/core/monitor/* 业务指标 31 方法指向已外迁服务</td><td style="padding:6px 8px;">api/unified-core/businessMetric.ts vs svc/monitor main.rs:33（/api/monitor）</td><td style="padding:6px 8px;">无页面消费</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;">4.2 预埋悬空清单（有封装 / 有后端但无消费）· 43 组 · 按模块分组</h3>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow-x:auto;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1000px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:7px 8px;font-weight:600;">模块</th>
+        <th style="padding:7px 8px;font-weight:600;">预埋内容</th>
+        <th style="padding:7px 8px;font-weight:600;">方法量级</th>
+        <th style="padding:7px 8px;font-weight:600;">证据（file:line）</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">iam</td><td style="padding:6px 8px;">auth 扩展（password-policy / security-settings / sessions / revoke-all）</td><td style="padding:6px 8px;">7 方法</td><td style="padding:6px 8px;">api/iam/auth.ts:84-140；全 svc 0 命中</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">workflow</td><td style="padding:6px 8px;">form / rule / delegate / variable / category / task 子域</td><td style="padding:6px 8px;">≈120 方法</td><td style="padding:6px 8px;">api/workflow/*.ts；flow.rs 无对应</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">file</td><td style="padding:6px 8px;">storage / scan / images / shared 等整目录</td><td style="padding:6px 8px;">48 方法</td><td style="padding:6px 8px;">api/file/*.ts；0 页面消费</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">doc</td><td style="padding:6px 8px;">workspaces / my-checkouts / shared-with-me / collaboration</td><td style="padding:6px 8px;">≈35 方法</td><td style="padding:6px 8px;">api/doc/workspace.ts、collaboration.ts 等</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">tenant</td><td style="padding:6px 8px;">settings / branding / features / domains / email-config / integrations / security / analytics</td><td style="padding:6px 8px;">≈56 方法</td><td style="padding:6px 8px;">api/tenant/*.ts vs master.rs 租户段</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">master</td><td style="padding:6px 8px;">mdm-v61 ~ v79 共 19 个版本命名空间</td><td style="padding:6px 8px;">≈500+ 方法</td><td style="padding:6px 8px;">api/master/**；grep mdm-v6[1-9]|mdm-v7 为空</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">unified-core</td><td style="padding:6px 8px;">businessMetric / tenant / system / search / iamAuth 整目录</td><td style="padding:6px 8px;">77 方法</td><td style="padding:6px 8px;">api/unified-core/*.ts；0 页面消费</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">bff</td><td style="padding:6px 8px;">getBusinessStats / getUnifiedTodos</td><td style="padding:6px 8px;">2 方法</td><td style="padding:6px 8px;">bff/index.ts:98-110</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">permission</td><td style="padding:6px 8px;">bi/permission.ts</td><td style="padding:6px 8px;">12 方法</td><td style="padding:6px 8px;">api/bi/permission.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">admin</td><td style="padding:6px 8px;">systemSetting（API 级缺口）</td><td style="padding:6px 8px;">8 方法</td><td style="padding:6px 8px;">api/admin/systemSetting.ts:13-47</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">customerExtended 7 + salesOrderExtended 7 + mdmRefs/mdmLifecycle + leaveRequestApi</td><td style="padding:6px 8px;">≈20 方法</td><td style="padding:6px 8px;">api/erp/core/customerExtended.ts、salesOrderExtended.ts 等</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">crm</td><td style="padding:6px 8px;">crmDashboardApi</td><td style="padding:6px 8px;">1 方法</td><td style="padding:6px 8px;">api/crm/dashboard.ts:16</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">addressbook</td><td style="padding:6px 8px;">全套封装（0 页面消费）</td><td style="padding:6px 8px;">57 方法</td><td style="padding:6px 8px;">api/addressbook/*.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ehs</td><td style="padding:6px 8px;">ehsDashboardApi（反向：后端 /dashboard 无前端消费）</td><td style="padding:6px 8px;">11 方法</td><td style="padding:6px 8px;">api/ehs/dashboard.ts:16</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">rd</td><td style="padding:6px 8px;">后端 ai / change-orders / patents / research-costs / material-tests / members / milestones / phases / documents / reports（反向预埋）</td><td style="padding:6px 8px;">未取证</td><td style="padding:6px 8px;">svc/rd/src（rd_real_module.rs:40 挂载）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">mes</td><td style="padding:6px 8px;">后端 audit.rs 审计路由无前端消费（反向预埋）</td><td style="padding:6px 8px;">未取证</td><td style="padding:6px 8px;">svc/mes/src/audit.rs</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">scm</td><td style="padding:6px 8px;">syncRecord 7 + inspectionRecord 5</td><td style="padding:6px 8px;">12 方法</td><td style="padding:6px 8px;">api/scm/syncRecord.ts、inspectionRecord.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">wms</td><td style="padding:6px 8px;">putaway 18 / manifest 18 / kitting 9 / labor 7 / picking 16 / slotting 10 + wavePick 10 / inventoryMovement 6 / discrepancy 6 / smartReplenishment 23 / sync 9 / audit 3</td><td style="padding:6px 8px;">≈135 方法</td><td style="padding:6px 8px;">api/wms/**；wms barrel 导出（仅 15 键被消费）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">tms</td><td style="padding:6px 8px;">planAssignments / optimizeRoutes / quoteFreight</td><td style="padding:6px 8px;">3 接口</td><td style="padding:6px 8px;">api/tms/tms.ts:26,68-80</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">hrm</td><td style="padding:6px 8px;">hrmSetup</td><td style="padding:6px 8px;">6 方法</td><td style="padding:6px 8px;">api/hrm/hrmSetup.ts:6-11</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ai</td><td style="padding:6px 8px;">recommendation 3 + vector 5 + chat conversations 6 + index 3 + generated 28</td><td style="padding:6px 8px;">≈45 方法</td><td style="padding:6px 8px;">api/ai/**（含 generated/client.ts）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">bi</td><td style="padding:6px 8px;">report.ts（与 report 模块重复）</td><td style="padding:6px 8px;">9 方法</td><td style="padding:6px 8px;">api/bi/report.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">monitor</td><td style="padding:6px 8px;">dashboard 6 + businessMetric 9 + slo 10</td><td style="padding:6px 8px;">25 方法</td><td style="padding:6px 8px;">api/monitor/dashboard.ts、businessMetric.ts、slo.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">gis</td><td style="padding:6px 8px;">storage</td><td style="padding:6px 8px;">11 方法</td><td style="padding:6px 8px;">api/gis/storage.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">search</td><td style="padding:6px 8px;">getSuggestions</td><td style="padding:6px 8px;">1 方法</td><td style="padding:6px 8px;">api/search/index.ts vs main.rs:34-49</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">im</td><td style="padding:6px 8px;">全套（0 页面消费）</td><td style="padding:6px 8px;">36 方法</td><td style="padding:6px 8px;">api/im/index.ts:133-307</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">notification</td><td style="padding:6px 8px;">preference / pushConfig / channel / group / subscription / digest / delivery / webhook / template 扩展</td><td style="padding:6px 8px;">≈120+ 方法</td><td style="padding:6px 8px;">api/notification/*.ts vs main.rs:45-151</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">integration</td><td style="padding:6px 8px;">connection.ts / mapping.ts（deprecated）+ listEndpoints</td><td style="padding:6px 8px;">≈3 组</td><td style="padding:6px 8px;">api/integration/connection.ts、mapping.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">mobile</td><td style="padding:6px 8px;">approvalEnhanced</td><td style="padding:6px 8px;">≈18 方法</td><td style="padding:6px 8px;">api/mobile/approvalEnhanced.ts vs main.rs 无对应</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ticket</td><td style="padding:6px 8px;">dashboard/* 9 + export / my / search / sla-policies / workflows</td><td style="padding:6px 8px;">≈24 方法</td><td style="padding:6px 8px;">api/ticket/** vs handlers.rs:1519-1567</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">plugin</td><td style="padding:6px 8px;">后端 dev / upgrade / runtime 路由无前端消费（反向预埋）</td><td style="padding:6px 8px;">未取证</td><td style="padding:6px 8px;">svc/plugin-registry/src/plugin/mod.rs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;">4.3 冗余清单 · 64 项 · 按类型分组</h3>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow-x:auto;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1000px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:7px 8px;font-weight:600;">类型</th>
+        <th style="padding:7px 8px;font-weight:600;">冗余项</th>
+        <th style="padding:7px 8px;font-weight:600;">涉及模块</th>
+        <th style="padding:7px 8px;font-weight:600;">证据（file:line）</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td rowspan="9" style="padding:6px 8px;font-weight:600;vertical-align:top;">重复封装（前端）</td><td style="padding:6px 8px;">authApi / iamApi / default 三重别名</td><td style="padding:6px 8px;">iam</td><td style="padding:6px 8px;">api/iam/index.ts:45-49</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">workflow / flow 双 getter</td><td style="padding:6px 8px;">workflow</td><td style="padding:6px 8px;">api/client.ts:630-635</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">权限三套（iam/permission + admin/permissionAudit + bi/permission）</td><td style="padding:6px 8px;">permission</td><td style="padding:6px 8px;">api/iam/permission.ts、api/admin/permissionAudit.ts、api/bi/permission.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">addressbook 双套（api/addressbook 57 vs api/erp/core/addressbook 5）</td><td style="padding:6px 8px;">addressbook</td><td style="padding:6px 8px;">api/addressbook/*.ts；api/erp/core/addressbook.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">assetApi 双实现（api/asset vs api/erp/core/asset）</td><td style="padding:6px 8px;">asset</td><td style="padding:6px 8px;">erp/index.ts:34 显式遮蔽</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">notification/im.ts（30 调用）与 api/im（37 调用）双套</td><td style="padding:6px 8px;">im</td><td style="padding:6px 8px;">api/notification/im.ts vs api/im/index.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">approval.ts 与 approvalEnhanced.ts 双套（29 vs 18）</td><td style="padding:6px 8px;">mobile</td><td style="padding:6px 8px;">api/mobile/approval.ts、approvalEnhanced.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">emailApi / templateApi / mailApi 三对象导出 + mail.ts 双套</td><td style="padding:6px 8px;">mail</td><td style="padding:6px 8px;">api/mail/index.ts；api/notification/mail.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">plugin 函数 + 聚合 + marketplace/plugin 多重导出</td><td style="padding:6px 8px;">plugin</td><td style="padding:6px 8px;">api/plugin/index.ts、marketplace.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td rowspan="9" style="padding:6px 8px;font-weight:600;vertical-align:top;">重复注册 / 双轨（后端）</td><td style="padding:6px 8px;">portal embedded.rs 424 与 router_config/feature_routes 双轨</td><td style="padding:6px 8px;">bff</td><td style="padding:6px 8px;">embedded.rs:1-12 自述</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">CRM plugins 双注册</td><td style="padding:6px 8px;">crm</td><td style="padding:6px 8px;">main.rs:114-121 vs crm_plugin.rs:142-143</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">erp /vouchers 残留</td><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">finance.rs:148</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">finance v51-v60 版本化并行（risk_v54/risk_v59、forecast_v53/forecasting、reports_v57/report_center/financial_reports）</td><td style="padding:6px 8px;">finance</td><td style="padding:6px 8px;">svc/finance/src/modules/**</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">/summary 双路径（完整版 + 单值版）</td><td style="padding:6px 8px;">bi</td><td style="padding:6px 8px;">routes.rs:511-568</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">MRP 双路由 + price_comparison 绝对/相对路径重复</td><td style="padding:6px 8px;">scm</td><td style="padding:6px 8px;">mrp.rs:143-150</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">/api/plugins 在 mobile / integration / plugin-registry 三处注册</td><td style="padding:6px 8px;">mobile/integration/plugin</td><td style="padding:6px 8px;">svc/mobile、svc/integration、svc/plugin-registry</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">plugin-registry /health 双注册</td><td style="padding:6px 8px;">plugin</td><td style="padding:6px 8px;">main.rs:8 vs plugin/mod.rs</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">unified-core 插件路由注释残留（前端旧 base 指向它）</td><td style="padding:6px 8px;">plugin/unified-core</td><td style="padding:6px 8px;">svc/unified-core/src/routes/plugin.rs 注释</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td rowspan="13" style="padding:6px 8px;font-weight:600;vertical-align:top;">死代码 / 死链路 / 假数据</td><td style="padding:6px 8px;">automation 501 全链路（前端 32 方法打桩）</td><td style="padding:6px 8px;">automation</td><td style="padding:6px 8px;">src/routes/automation.rs:78-</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">SystemSettingsPage 静态 + TenantBillingPage mock + KnowledgeBasePage 静态</td><td style="padding:6px 8px;">admin/tenant/doc</td><td style="padding:6px 8px;">SystemSettingsPage:21-128；TenantBillingPage:43-54</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">master-data 孤儿服务 240 路由</td><td style="padding:6px 8px;">master</td><td style="padding:6px 8px;">svc/master-data/src/modules/mod.rs</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">leave_request 死模块（6 路由未挂载）+ 36 个 master_data_* 未挂载</td><td style="padding:6px 8px;">erp</td><td style="padding:6px 8px;">modules/mod.rs:42；svc/erp/src/**/mod.rs 注释</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">wms 12 页面 useWmsMock 假数据 + transfer.ts 死代码 12 方法 + cycle_count 死模块 + 双告警体系</td><td style="padding:6px 8px;">wms</td><td style="padding:6px 8px;">api/wms/transfer.ts；pages/wms/**（useWmsMock）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">qms mock.ts 954 行死代码</td><td style="padding:6px 8px;">qms</td><td style="padding:6px 8px;">api/qms/mock.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">RsMilestonePage.tsx.bak 死文件 + rd_route.md 未使用</td><td style="padding:6px 8px;">rd</td><td style="padding:6px 8px;">pages/rd/RsMilestonePage.tsx.bak</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">mes 空文件 approval.ts/analytics.ts + 2 个孤儿页 + 16 个 .bak</td><td style="padding:6px 8px;">mes</td><td style="padding:6px 8px;">api/mes/approval.ts、analytics.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ai_form 未挂载 + generated/client.ts 28 死 + /models/usage 假接口</td><td style="padding:6px 8px;">ai</td><td style="padding:6px 8px;">model_admin_handlers.rs:378-395</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">analytics_compat 空桩（挂载但无 handler）</td><td style="padding:6px 8px;">bi</td><td style="padding:6px 8px;">modules/analytics_compat.rs:1-9</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">businessMetric / slo 死代码</td><td style="padding:6px 8px;">monitor</td><td style="padding:6px 8px;">api/monitor/businessMetric.ts、slo.ts</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">im_location.rs 8 条死代码路由</td><td style="padding:6px 8px;">communication</td><td style="padding:6px 8px;">svc/communication/src/im_location.rs</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">feedback_compat 并入 ticket 但前端无消费 + knowledge-articles 孤儿路由</td><td style="padding:6px 8px;">ticket</td><td style="padding:6px 8px;">svc/ticket/src（feedback_compat 挂载）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">测试链路</td><td style="padding:6px 8px;">workflow-api.test.ts 80 处 apiClient 真实调用（测试即生产代码）</td><td style="padding:6px 8px;">workflow</td><td style="padding:6px 8px;">api/workflow/__tests__/workflow-api.test.ts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:20px 0 8px;">4.4 与旧报告（frontend-backend-mapping-assessment-2026-09-08.html）结论差异对照</h3>
+  <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;overflow-x:auto;margin-bottom:16px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1000px;">
+      <thead><tr style="background:#FAFAF7;text-align:left;">
+        <th style="padding:7px 8px;font-weight:600;">主题</th>
+        <th style="padding:7px 8px;font-weight:600;">旧报告判定（2026-09-08）</th>
+        <th style="padding:7px 8px;font-weight:600;">本次实测（2026-09-09）</th>
+        <th style="padding:7px 8px;font-weight:600;">结论</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">migration</td><td style="padding:6px 8px;">「内部 DB 初始化服务，非前端 API（已核实）」</td><td style="padding:6px 8px;">MigrationAdminPage 真实消费 4 方法，路径双前缀错位全部 404</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🔴 被推翻</span>（真实缺口 #2）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">plugin 前缀</td><td style="padding:6px 8px;">「三方一致已闭环」</td><td style="padding:6px 8px;">前端 /api/core/plugin → unified-core 已注释 → traefik 仅路由 /api/plugin → 页面 404</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🔴 被推翻</span>（真实缺口 #15/#16）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">notification listChannels</td><td style="padding:6px 8px;">「基础 28 条已通，listChannels 全命中」</td><td style="padding:6px 8px;">后端全仓无 channels 路由，设置页 404</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🔴 被推翻</span>（真实缺口 #9）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">crmFinance</td><td style="padding:6px 8px;">「7 条 known_gap 转 matched 清零，已闭环」</td><td style="padding:6px 8px;">/customers/{id}/finance 仍无后端且 CustomerDetailPage 消费；invoices/collections 确已闭环 ✓</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">🟡 部分被推翻</span>（真实缺口 #6）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">erp MDM</td><td style="padding:6px 8px;">「误报已闭环，全齐」</td><td style="padding:6px 8px;">mdm-v49/master-data-refs 全路径注册 → 前缀叠加疑不可达（网关验证未取证）</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">🟡 部分被推翻</span>（缺口 #28）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">mobile / OA</td><td style="padding:6px 8px;">「业务域已闭环」</td><td style="padding:6px 8px;">主链路健康确认；但 oa.ts 21 方法全无后端且 OA 页真实消费</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 部分确认 + 🆕 新发现</span>（缺口 #14）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">rd CI/CD</td><td style="padding:6px 8px;">「补后端已闭环」</td><td style="padding:6px 8px;">bugs/builds/deploys/tests 已有后端（rd_ci_cd.rs:22-31）且页面消费 ✓</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 确认闭环</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">feedback</td><td style="padding:6px 8px;">「已合并 ticket」</td><td style="padding:6px 8px;">feedback_compat 并入 ticket 但前端无消费</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 确认</span>（冗余项）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">master V61-V79</td><td style="padding:6px 8px;">「预埋确认」</td><td style="padding:6px 8px;">≈500+ 方法 19 个版本命名空间仍预埋、0 消费</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 确认</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">im</td><td style="padding:6px 8px;">「预埋确认」</td><td style="padding:6px 8px;">36 方法 0 页面消费确认</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 确认</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">wms 预埋 6 模块</td><td style="padding:6px 8px;">「预埋确认」</td><td style="padding:6px 8px;">putaway/manifest/kitting/labor/picking 预埋确认；但 slotting 被 LocationRulePage 消费 = 真实缺口；cycle-counts 为新增缺口</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">🟡 部分被推翻</span>（缺口 #20/#21）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ehs</td><td style="padding:6px 8px;">「写操作已闭环」</td><td style="padding:6px 8px;">写操作确认已补；/dashboard 无后端（页面退化 window.__ehsStats）</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 确认 + 🆕 新发现</span>（缺口 #23）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">lims dashboard</td><td style="padding:6px 8px;">旧报告未单列</td><td style="padding:6px 8px;">LimsDashboardPage 真实消费 /dashboard 404（页面级）</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🆕 新发现</span>（缺口 #7）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">ai conversations</td><td style="padding:6px 8px;">「4 方法无后端」</td><td style="padding:6px 8px;">确认，页面级缺口（AiChatPage:169）</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 确认</span>（缺口 #8）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">search</td><td style="padding:6px 8px;">「已改 client 闭环」</td><td style="padding:6px 8px;">globalSearch 真实对应 ✓；/suggestions 仍预埋无后端</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">🟡 部分确认</span>（缺口 #31）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">system audit-logs</td><td style="padding:6px 8px;">旧报告未单列</td><td style="padding:6px 8px;">/system/audit-logs 全库无路由且 AuditLogPage 消费</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🆕 新发现</span>（缺口 #5）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">admin monitor/systemSetting</td><td style="padding:6px 8px;">「已闭环」</td><td style="padding:6px 8px;">monitor 前缀错位仍在；systemSetting 无后端</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🔴 被推翻/复现</span>（缺口 #4/#22）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">workflow monitor</td><td style="padding:6px 8px;">旧报告未单列</td><td style="padding:6px 8px;">monitor 子域 20+ 方法被页面消费但无后端</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🆕 新发现</span>（缺口 #1）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">automation</td><td style="padding:6px 8px;">旧报告未单列</td><td style="padding:6px 8px;">整模块 6 路由 501 桩 + 32 方法消费</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🆕 新发现</span>（缺口 #3）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">scm abc-classification</td><td style="padding:6px 8px;">「路径前缀统一已闭环」</td><td style="padding:6px 8px;">abc-classification vs abc-analysis 仍错位（2 处消费）</td><td style="padding:6px 8px;"><span style="color:#CF1322;font-weight:600;">🔴 复现</span>（缺口 #17）</td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">tms optimization</td><td style="padding:6px 8px;">「API 已补全」</td><td style="padding:6px 8px;">前端 API 已建但 0 页面消费 = 预埋（方向修正）</td><td style="padding:6px 8px;"><span style="color:#D48806;font-weight:600;">🟡 方向修正</span></td></tr>
+        <tr style="border-top:1px solid #E4E3DD;"><td style="padding:6px 8px;">monitor 设置页</td><td style="padding:6px 8px;">「P2 级」</td><td style="padding:6px 8px;">30+ 项设置全 local state 无持久化 = 假设置页</td><td style="padding:6px 8px;"><span style="color:#52C41A;font-weight:600;">🟢 确认</span>（D4❌）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="font-size:12px;color:#6B7280;margin:20px 0 0;padding:14px;background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;box-sizing:border-box;line-height:1.8;">
+    <b>口径与取证说明</b><br>
+    1. 本报告全部数字来自 6 份分组原始报告（group-a~f-raw.md，2026-09-09 实测），证据以 file:line 引用；无法静态取证处标注「未取证」：srm 供应商绝对路径可达性、erp mdm 前缀叠加网关转发、admin monitor 前缀网关重写、consolidation 部分逐路径比对、flow settings/feature_flags/iam 偏好存储表、dead tables（另见 dead-tables-review-2026-09-08.md）。<br>
+    2. 后端路由数为「注册口径」汇总（含重复注册与多服务共享，如 asset/consolidation/addressbook 寄宿 erp、report 复用 analytics、aps 走 mes 兼容层、communication 拆分 im/notification/mail）；前端方法数为 apiClient 调用/方法计数（C 组另给去重基础路径数）。<br>
+    3. 真实缺口 32 项 = 页面级 23 + API/预埋级 9；预埋悬空 43 组（方法级合计 1300+，含反向预埋不计）；冗余 64 项。<br>
+    4. 旧报告对比仅针对其明确结论项；「🆕 新发现」指旧报告未覆盖或未判定的项。<br>
+    5. 6 份原始报告文件未做任何修改。
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+(function(){
+  var el = document.getElementById('chart-dist');
+  if (!el || typeof echarts === 'undefined') return;
+  var chart = echarts.init(el);
+  chart.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { bottom: 0, textStyle: { fontSize: 12 } },
+    grid: { left: 44, right: 20, top: 24, bottom: 64 },
+    xAxis: { type: 'category', data: ['D1 完整度','D2 API对应','D3 菜单覆盖','D4 设置合理','D5 冗余判定'], axisLabel: { fontSize: 11 } },
+    yAxis: { type: 'value', name: '模块数', nameTextStyle: { fontSize: 11 }, minInterval: 1 },
+    series: [
+      { name: '✅ 完整/健康', type: 'bar', stack: 's', itemStyle: { color: '#52C41A' }, data: [10, 11, 32, 4, 7] },
+      { name: '🟡 部分/一般', type: 'bar', stack: 's', itemStyle: { color: '#D48806' }, data: [27, 20, 10, 9, 15] },
+      { name: '❌ 缺口/差', type: 'bar', stack: 's', itemStyle: { color: '#CF1322' }, data: [12, 13, 2, 12, 27] },
+      { name: '⚪ 预埋悬空', type: 'bar', stack: 's', itemStyle: { color: '#8C8C8C' }, data: [0, 5, 0, 0, 0] },
+      { name: '➖ 不适用', type: 'bar', stack: 's', itemStyle: { color: '#D9D9D9' }, data: [0, 0, 5, 24, 0] }
+    ]
+  });
+})();
+</script>
+</body>
+</html>
+
+
