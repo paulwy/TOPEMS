@@ -1,14 +1,34 @@
-import { Chip, Typography, Box, InputLabel, Button } from '@mui/material';
-import React, { useMemo, useCallback } from 'react';
+import {
+  Chip,
+  Typography,
+  Box,
+  InputLabel,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+} from '@mui/material';
+import React, { useMemo, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
-import { Building2, Receipt, Wallet } from 'lucide-react';
+import { Building2, Receipt, Wallet, Download } from 'lucide-react';
 import { crmApi } from '@/api/crm';
 import {
   useCustomerFinanceInfo,
   useSalesInvoices,
   useCollectionRecords,
+  useCreateSalesInvoice,
+  useIssueSalesInvoice,
+  useRedFlushSalesInvoice,
+  useDeleteSalesInvoice,
+  useCreateCollectionRecord,
+  useConfirmCollection,
+  useExportSalesInvoices,
+  useExportCollectionRecords,
 } from '@/hooks/useCrmFinance';
 import type { SalesInvoice, CollectionRecord } from '@/api/crmFinance';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
@@ -45,6 +65,116 @@ const CustomerDetailPage: React.FC = () => {
   const customer =
     customerQuery.data?.success && customerQuery.data.data ? customerQuery.data.data : null;
   const loading = customerQuery.isLoading;
+  // ===== ⑬ 前端 UI 入口：操作状态与 mutations =====
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [collectionDialogOpen, setCollectionDialogOpen] = useState(false);
+  const [redFlushTarget, setRedFlushTarget] = useState<SalesInvoice | null>(null);
+  const [invoiceDraft, setInvoiceDraft] = useState({
+    invoice_date: new Date().toISOString().slice(0, 10),
+    due_date: '',
+    amount: '',
+    tax_rate: '13',
+    invoice_type: 'tax',
+  });
+  const [collectionDraft, setCollectionDraft] = useState({
+    collection_date: new Date().toISOString().slice(0, 10),
+    amount: '',
+    payment_method: 'bank_transfer',
+    remark: '',
+  });
+  const [redFlushReason, setRedFlushReason] = useState('');
+
+  const createInvoiceMutation = useCreateSalesInvoice();
+  const issueInvoiceMutation = useIssueSalesInvoice();
+  const redFlushMutation = useRedFlushSalesInvoice();
+  const deleteInvoiceMutation = useDeleteSalesInvoice();
+  const createCollectionMutation = useCreateCollectionRecord();
+  const confirmCollectionMutation = useConfirmCollection();
+  const exportInvoicesMutation = useExportSalesInvoices();
+  const exportCollectionsMutation = useExportCollectionRecords();
+
+  const downloadBlob = useCallback((blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleCreateInvoice = useCallback(() => {
+    if (!id) return;
+    const amount = Number(invoiceDraft.amount);
+    if (!amount || amount <= 0) return;
+    const taxRate = Number(invoiceDraft.tax_rate || 0) / 100;
+    const taxAmount = Math.round(amount * taxRate * 100) / 100;
+    createInvoiceMutation.mutate(
+      {
+        customer_id: id,
+        customer_name: customer?.name || '',
+        invoice_date: invoiceDraft.invoice_date,
+        due_date: invoiceDraft.due_date || invoiceDraft.invoice_date,
+        amount,
+        tax_amount: taxAmount,
+        total_amount: Math.round((amount + taxAmount) * 100) / 100,
+        invoice_type: invoiceDraft.invoice_type as SalesInvoice['invoice_type'],
+      },
+      {
+        onSuccess: () => {
+          setInvoiceDialogOpen(false);
+          setInvoiceDraft({
+            invoice_date: new Date().toISOString().slice(0, 10),
+            due_date: '',
+            amount: '',
+            tax_rate: '13',
+            invoice_type: 'tax',
+          });
+        },
+      }
+    );
+  }, [id, invoiceDraft, createInvoiceMutation, customer]);
+
+  const handleCreateCollection = useCallback(() => {
+    if (!id) return;
+    const amount = Number(collectionDraft.amount);
+    if (!amount || amount <= 0) return;
+    createCollectionMutation.mutate(
+      {
+        customer_id: id,
+        customer_name: customer?.name || '',
+        collection_date: collectionDraft.collection_date,
+        amount,
+        payment_method: collectionDraft.payment_method as CollectionRecord['payment_method'],
+        remark: collectionDraft.remark || undefined,
+      },
+      {
+        onSuccess: () => {
+          setCollectionDialogOpen(false);
+          setCollectionDraft({
+            collection_date: new Date().toISOString().slice(0, 10),
+            amount: '',
+            payment_method: 'bank_transfer',
+            remark: '',
+          });
+        },
+      }
+    );
+  }, [id, collectionDraft, createCollectionMutation, customer]);
+
+  const handleConfirmRedFlush = useCallback(() => {
+    if (!redFlushTarget) return;
+    redFlushMutation.mutate(
+      { invoiceId: redFlushTarget.id, reason: redFlushReason || undefined },
+      {
+        onSuccess: () => {
+          setRedFlushTarget(null);
+          setRedFlushReason('');
+        },
+      }
+    );
+  }, [redFlushTarget, redFlushReason, redFlushMutation]);
 
   const formatCurrency = useCallback((amount?: number) => {
     if (!amount) return '¥0';
@@ -417,13 +547,31 @@ const CustomerDetailPage: React.FC = () => {
           >
             {t('crm.customerDetail.invoices_title')}
           </Typography>
-          <Button
-            variant='outlined'
-            size='small'
-            startIcon={<Receipt size={16} />}
-          >
-            {t('crm.customerDetail.invoices_new')}
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<Download size={16} />}
+              onClick={() => {
+                exportInvoicesMutation.mutate(
+                  { customer_id: id, format: 'csv' },
+                  {
+                    onSuccess: (blob) => downloadBlob(blob, `invoices-${id}.csv`),
+                  }
+                );
+              }}
+            >
+              {t('crm.customerDetail.invoices_export')}
+            </Button>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<Receipt size={16} />}
+              onClick={() => setInvoiceDialogOpen(true)}
+            >
+              {t('crm.customerDetail.invoices_new')}
+            </Button>
+          </Box>
         </Box>
         {invoiceList.length === 0 ? (
           <Typography
@@ -439,7 +587,7 @@ const CustomerDetailPage: React.FC = () => {
                 key={invoice.id}
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 100px 100px 100px 100px 100px 80px',
+                  gridTemplateColumns: '1fr 100px 100px 100px 100px 100px 80px 150px',
                   gap: 2,
                   p: 1.5,
                   border: 1,
@@ -479,13 +627,57 @@ const CustomerDetailPage: React.FC = () => {
                               : invoice.status
                   }
                 />
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {invoice.status === 'draft' && (
+                    <>
+                      <Button
+                        size='small'
+                        variant='contained'
+                        onClick={() => issueInvoiceMutation.mutate(invoice.id)}
+                        disabled={issueInvoiceMutation.isPending}
+                      >
+                        {t('crm.customerDetail.invoice_issue')}
+                      </Button>
+                      <Button
+                        size='small'
+                        color='error'
+                        onClick={() => deleteInvoiceMutation.mutate(invoice.id)}
+                        disabled={deleteInvoiceMutation.isPending}
+                      >
+                        {t('crm.customerDetail.invoice_delete')}
+                      </Button>
+                    </>
+                  )}
+                  {(invoice.status === 'issued' || invoice.status === 'paid') && (
+                    <Button
+                      size='small'
+                      color='error'
+                      variant='outlined'
+                      onClick={() => {
+                        setRedFlushTarget(invoice);
+                        setRedFlushReason('');
+                      }}
+                    >
+                      {t('crm.customerDetail.invoice_red_flush')}
+                    </Button>
+                  )}
+                </Box>
               </Box>
             ))}
           </Box>
         )}
       </Box>
     );
-  }, [invoicesData, t, formatCurrency]);
+  }, [
+    invoicesData,
+    t,
+    formatCurrency,
+    id,
+    issueInvoiceMutation,
+    deleteInvoiceMutation,
+    exportInvoicesMutation,
+    downloadBlob,
+  ]);
 
   const collectionsContent = useMemo(() => {
     const collectionList = collectionsData?.items || [];
@@ -498,13 +690,31 @@ const CustomerDetailPage: React.FC = () => {
           >
             {t('crm.customerDetail.collections_title')}
           </Typography>
-          <Button
-            variant='outlined'
-            size='small'
-            startIcon={<Wallet size={16} />}
-          >
-            {t('crm.customerDetail.collections_new')}
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<Download size={16} />}
+              onClick={() => {
+                exportCollectionsMutation.mutate(
+                  { customer_id: id, format: 'csv' },
+                  {
+                    onSuccess: (blob) => downloadBlob(blob, `collections-${id}.csv`),
+                  }
+                );
+              }}
+            >
+              {t('crm.customerDetail.collections_export')}
+            </Button>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<Wallet size={16} />}
+              onClick={() => setCollectionDialogOpen(true)}
+            >
+              {t('crm.customerDetail.collections_new')}
+            </Button>
+          </Box>
         </Box>
         {collectionList.length === 0 ? (
           <Typography
@@ -520,7 +730,7 @@ const CustomerDetailPage: React.FC = () => {
                 key={record.id}
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 100px 100px 100px 80px',
+                  gridTemplateColumns: '1fr 100px 100px 100px 80px 130px',
                   gap: 2,
                   p: 1.5,
                   border: 1,
@@ -558,13 +768,31 @@ const CustomerDetailPage: React.FC = () => {
                         : t('crm.customerDetail.collection_cancelled')
                   }
                 />
+                {record.status === 'pending' && (
+                  <Button
+                    size='small'
+                    variant='contained'
+                    onClick={() => confirmCollectionMutation.mutate(record.id)}
+                    disabled={confirmCollectionMutation.isPending}
+                  >
+                    {t('crm.customerDetail.collection_confirm')}
+                  </Button>
+                )}
               </Box>
             ))}
           </Box>
         )}
       </Box>
     );
-  }, [collectionsData, t, formatCurrency]);
+  }, [
+    collectionsData,
+    t,
+    formatCurrency,
+    id,
+    confirmCollectionMutation,
+    exportCollectionsMutation,
+    downloadBlob,
+  ]);
 
   const footerSection = useMemo<SectionConfig>(() => {
     if (!customer) return { id: 'footer', content: null };
@@ -684,6 +912,167 @@ const CustomerDetailPage: React.FC = () => {
     [customer, finInfo, t, formatCurrency]
   );
 
+  // ===== ⑬ 操作 Dialog =====
+  const invoiceDialog = (
+    <Dialog
+      open={invoiceDialogOpen}
+      onClose={() => setInvoiceDialogOpen(false)}
+      maxWidth='sm'
+      fullWidth
+    >
+      <DialogTitle>{t('crm.customerDetail.invoices_new')}</DialogTitle>
+      <DialogContent sx={{ display: 'grid', gap: 2, pt: 2 }}>
+        <TextField
+          label={t('crm.customerDetail.field_invoice_date')}
+          type='date'
+          size='small'
+          value={invoiceDraft.invoice_date}
+          onChange={(e) => setInvoiceDraft({ ...invoiceDraft, invoice_date: e.target.value })}
+          slotProps={{ inputLabel: { shrink: true } } as const}
+        />
+        <TextField
+          label={t('crm.customerDetail.field_due_date')}
+          type='date'
+          size='small'
+          value={invoiceDraft.due_date}
+          onChange={(e) => setInvoiceDraft({ ...invoiceDraft, due_date: e.target.value })}
+          slotProps={{ inputLabel: { shrink: true } } as const}
+        />
+        <TextField
+          label={t('crm.customerDetail.field_amount')}
+          type='number'
+          size='small'
+          value={invoiceDraft.amount}
+          onChange={(e) => setInvoiceDraft({ ...invoiceDraft, amount: e.target.value })}
+        />
+        <TextField
+          label={t('crm.customerDetail.field_tax_rate')}
+          type='number'
+          size='small'
+          value={invoiceDraft.tax_rate}
+          onChange={(e) => setInvoiceDraft({ ...invoiceDraft, tax_rate: e.target.value })}
+          helperText={t('crm.customerDetail.invoice_tax_helper')}
+        />
+        <TextField
+          select
+          label={t('crm.customerDetail.field_invoice_type')}
+          size='small'
+          value={invoiceDraft.invoice_type}
+          onChange={(e) => setInvoiceDraft({ ...invoiceDraft, invoice_type: e.target.value })}
+        >
+          <MenuItem value='tax'>{t('crm.customerDetail.invoice_type_tax')}</MenuItem>
+          <MenuItem value='普通发票'>{t('crm.customerDetail.invoice_type_normal')}</MenuItem>
+          <MenuItem value='专用发票'>{t('crm.customerDetail.invoice_type_special')}</MenuItem>
+        </TextField>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setInvoiceDialogOpen(false)}>
+          {t('crm.customerDetail.cancel')}
+        </Button>
+        <Button
+          variant='contained'
+          onClick={handleCreateInvoice}
+          disabled={createInvoiceMutation.isPending || !Number(invoiceDraft.amount)}
+        >
+          {t('crm.customerDetail.save')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  const collectionDialog = (
+    <Dialog
+      open={collectionDialogOpen}
+      onClose={() => setCollectionDialogOpen(false)}
+      maxWidth='sm'
+      fullWidth
+    >
+      <DialogTitle>{t('crm.customerDetail.collections_new')}</DialogTitle>
+      <DialogContent sx={{ display: 'grid', gap: 2, pt: 2 }}>
+        <TextField
+          label={t('crm.customerDetail.field_collection_date')}
+          type='date'
+          size='small'
+          value={collectionDraft.collection_date}
+          onChange={(e) =>
+            setCollectionDraft({ ...collectionDraft, collection_date: e.target.value })
+          }
+          slotProps={{ inputLabel: { shrink: true } } as const}
+        />
+        <TextField
+          label={t('crm.customerDetail.field_amount')}
+          type='number'
+          size='small'
+          value={collectionDraft.amount}
+          onChange={(e) => setCollectionDraft({ ...collectionDraft, amount: e.target.value })}
+        />
+        <TextField
+          select
+          label={t('crm.customerDetail.field_payment_method')}
+          size='small'
+          value={collectionDraft.payment_method}
+          onChange={(e) =>
+            setCollectionDraft({ ...collectionDraft, payment_method: e.target.value })
+          }
+        >
+          <MenuItem value='bank_transfer'>{t('crm.customerDetail.payment_bank_transfer')}</MenuItem>
+          <MenuItem value='cash'>{t('crm.customerDetail.payment_cash')}</MenuItem>
+          <MenuItem value='check'>{t('crm.customerDetail.payment_check')}</MenuItem>
+          <MenuItem value='other'>{t('crm.customerDetail.payment_other')}</MenuItem>
+        </TextField>
+        <TextField
+          label={t('crm.customerDetail.field_remark')}
+          size='small'
+          value={collectionDraft.remark}
+          onChange={(e) => setCollectionDraft({ ...collectionDraft, remark: e.target.value })}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setCollectionDialogOpen(false)}>
+          {t('crm.customerDetail.cancel')}
+        </Button>
+        <Button
+          variant='contained'
+          onClick={handleCreateCollection}
+          disabled={createCollectionMutation.isPending || !Number(collectionDraft.amount)}
+        >
+          {t('crm.customerDetail.save')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  const redFlushDialog = (
+    <Dialog
+      open={!!redFlushTarget}
+      onClose={() => setRedFlushTarget(null)}
+      maxWidth='sm'
+      fullWidth
+    >
+      <DialogTitle>{t('crm.customerDetail.invoice_red_flush')}</DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <TextField
+          label={t('crm.customerDetail.field_reason')}
+          size='small'
+          fullWidth
+          value={redFlushReason}
+          onChange={(e) => setRedFlushReason(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setRedFlushTarget(null)}>{t('crm.customerDetail.cancel')}</Button>
+        <Button
+          variant='contained'
+          color='error'
+          onClick={handleConfirmRedFlush}
+          disabled={redFlushMutation.isPending}
+        >
+          {t('crm.customerDetail.confirm')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   const sections = useMemo<SectionConfig[]>(() => [footerSection], [footerSection]);
 
   return (
@@ -702,6 +1091,9 @@ const CustomerDetailPage: React.FC = () => {
         tabs={tabs}
         sections={sections}
       />
+      {invoiceDialog}
+      {collectionDialog}
+      {redFlushDialog}
     </PageContainer>
   );
 };
