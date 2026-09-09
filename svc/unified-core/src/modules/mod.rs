@@ -8,6 +8,7 @@
 //! Note: sync module was migrated to integration service (2026-07 方案 C)
 
 pub mod audit;
+pub mod automation;
 // V434: Business Tools module - 统一业务工具, 连接真实服务(CRM/ERP/Finance等)
 pub mod business_tools;
 pub mod communication;
