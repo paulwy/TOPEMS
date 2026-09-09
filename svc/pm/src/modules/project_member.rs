@@ -1,10 +1,11 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -76,6 +77,7 @@ async fn list_members(
 )]
 async fn create_member(
     State(pool): State<PgPool>,
+    Extension(ctx): Extension<TenantContext>,
     Path(project_id): Path<Uuid>,
     Json(req): Json<CreateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
@@ -86,15 +88,16 @@ async fn create_member(
         "pm",
         r#"
         INSERT INTO pm.project_members (
-            id, project_id, user_id, role, responsibilities,
+            id, tenant_id, project_id, user_id, role, responsibilities,
             start_date, end_date, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         ON CONFLICT (project_id, user_id) DO NOTHING
         RETURNING *
         "#
     ))
     .bind(id)
+    .bind(ctx.tenant_id)
     .bind(project_id)
     .bind(&req.user_id)
     .bind(&req.role)

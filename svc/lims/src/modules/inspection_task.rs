@@ -1,14 +1,17 @@
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+const TASK_SELECT_COLS: &str = "id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT";
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -78,10 +81,13 @@ pub struct SubmitResultRequest {
 )]
 pub async fn list_tasks(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
 ) -> Json<ApiResponse<Vec<InspectionTask>>> {
-    let rows = sqlx::query(
-        "SELECT id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT FROM qa_lab_tasks ORDER BY created_at DESC"
-    )
+    let rows = sqlx::query(&format!(
+        "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
+        TASK_SELECT_COLS
+    ))
+    .bind(ctx.tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -131,6 +137,7 @@ pub async fn list_tasks(
 )]
 pub async fn create_task(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
@@ -162,9 +169,11 @@ pub async fn create_task(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let row = sqlx::query(
-        "INSERT INTO qa_lab_tasks (task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT"
-    )
+    let row = sqlx::query(&format!(
+        "INSERT INTO qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING {}",
+        TASK_SELECT_COLS
+    ))
+    .bind(ctx.tenant_id)
     .bind(task_no)
     .bind(sample_id)
     .bind(sample.get::<String, _>("sample_no"))
@@ -221,6 +230,7 @@ pub async fn create_task(
 )]
 pub async fn get_task(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let id = match Uuid::parse_str(&id) {
@@ -228,10 +238,12 @@ pub async fn get_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let row = sqlx::query(
-        "SELECT id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT FROM qa_lab_tasks WHERE deleted_at IS NULL AND id = $1"
-    )
+    let row = sqlx::query(&format!(
+        "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        TASK_SELECT_COLS
+    ))
     .bind(id)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -267,6 +279,7 @@ pub async fn get_task(
 
 pub async fn update_task(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
@@ -280,15 +293,17 @@ pub async fn update_task(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let row = sqlx::query(
-        "UPDATE qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5, actual_start_date), actual_end_date = COALESCE($6, actual_end_date), updated_at = NOW() WHERE id = $1 RETURNING id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT"
-    )
+    let row = sqlx::query(&format!(
+        "UPDATE qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5, actual_start_date), actual_end_date = COALESCE($6, actual_end_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING {}",
+        TASK_SELECT_COLS
+    ))
     .bind(id)
     .bind(&req.status)
     .bind(&req.assigned_to)
     .bind(instrument_id)
     .bind(&req.actual_start_date)
     .bind(&req.actual_end_date)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -324,6 +339,7 @@ pub async fn update_task(
 
 pub async fn submit_result(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<SubmitResultRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
@@ -332,13 +348,15 @@ pub async fn submit_result(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let row = sqlx::query(
-        "UPDATE qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, status = 'completed', actual_end_date = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT"
-    )
+    let row = sqlx::query(&format!(
+        "UPDATE qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, status = 'completed', actual_end_date = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
+        TASK_SELECT_COLS
+    ))
     .bind(id)
     .bind(req.result)
     .bind(&req.conclusion)
     .bind(&req.recorded_by)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -412,6 +430,7 @@ pub async fn submit_result(
 
 pub async fn delete_task(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -419,8 +438,9 @@ pub async fn delete_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let result = sqlx::query("UPDATE qa_lab_tasks SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(ctx.tenant_id)
         .execute(&state.pool)
         .await;
 

@@ -407,10 +407,15 @@ export function subscribeServiceHealth(
 
     ws.onclose = () => {
       if (!closed) {
-        {
-          i18n.t('api.index.k0');
-        }
+        perfLogger.warn(i18n.t('api.index.k0'));
       }
+    };
+
+    ws.onerror = (event) => {
+      perfLogger.warn('Service health WebSocket error', {
+        readyState: ws?.readyState,
+        event,
+      });
     };
   };
 

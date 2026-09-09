@@ -240,6 +240,21 @@ async fn main() -> Result<()> {
         }
     }
 
+    // 16b. 真实 gis 服务接入（P3 feature flag `module-gis` 门控，默认不启用）
+    #[cfg(feature = "module-gis")]
+    {
+        use topems_server::modules::gis_real_module::GisRealModule;
+        match GisRealModule::build().await {
+            Ok(real_gis) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_gis));
+                tracing::info!("✅ 真实 gis 服务已注册（gis-real，含数据库）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 gis 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
     // 17. 真实 ticket 服务接入（feature `module-ticket` 门控，默认启用）
     #[cfg(feature = "module-ticket")]
     {

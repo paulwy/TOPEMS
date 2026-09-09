@@ -1,6 +1,5 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import config from '../../config/runtime';
 
 export interface ChatMessage {
   id: string;
@@ -216,15 +215,14 @@ export const imApi = {
   },
 
   uploadFile: async (formData: FormData): Promise<ApiResponse<UploadFileResponseData>> => {
-    const baseURL = config.services.im;
-    const response = await fetch(`${baseURL}/files/upload`, {
-      method: 'POST',
+    // 走 apiClient.im：复用 401 重试 / CSRF / trace 等拦截器
+    const token = localStorage.getItem('token');
+    return apiClient.im.post<UploadFileResponseData>('/files/upload', formData, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data',
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: formData,
     });
-    return response.json();
   },
 
   getUserOnlineStatus: async (userId: string): Promise<ApiResponse<unknown>> => {

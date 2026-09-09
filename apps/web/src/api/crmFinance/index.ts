@@ -3,7 +3,7 @@
  * 提供客户财务相关的API接口
  */
 
-import { apiClient } from '../client';
+import { apiClient, handleResponse } from '../client';
 import type { PaginatedResponse } from '@topems/shared-types';
 
 // ============================================
@@ -72,19 +72,19 @@ export interface CollectionRecord {
 export const crmFinanceApi = {
   // 获取客户财务信息
   getCustomerFinanceInfo: async (customerId: string) => {
-    const response = await apiClient.crm.get<{ data: CustomerFinanceInfo }>(
+    const response = await apiClient.crm.get<CustomerFinanceInfo>(
       `/customers/${customerId}/finance`
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 更新客户财务信息
   updateCustomerFinanceInfo: async (customerId: string, data: Partial<CustomerFinanceInfo>) => {
-    const response = await apiClient.crm.put<{ data: CustomerFinanceInfo }>(
+    const response = await apiClient.crm.put<CustomerFinanceInfo>(
       `/customers/${customerId}/finance`,
       data
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 获取销售发票列表
@@ -97,64 +97,64 @@ export const crmFinanceApi = {
     page?: number;
     pagesize?: number;
   }) => {
-    const response = await apiClient.crm.get<{ data: PaginatedResponse<SalesInvoice> }>(
+    const response = await apiClient.crm.get<PaginatedResponse<SalesInvoice>>(
       '/invoices',
       { params }
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 获取销售发票详情
   getSalesInvoice: async (invoiceId: string) => {
-    const response = await apiClient.crm.get<{ data: SalesInvoice }>(`/invoices/${invoiceId}`);
-    return response.data;
+    const response = await apiClient.crm.get<SalesInvoice>(`/invoices/${invoiceId}`);
+    return handleResponse(response);
   },
 
   // 创建销售发票
   createSalesInvoice: async (data: Partial<SalesInvoice>) => {
-    const response = await apiClient.crm.post<{ data: SalesInvoice }>('/invoices', data);
-    return response.data;
+    const response = await apiClient.crm.post<SalesInvoice>('/invoices', data);
+    return handleResponse(response);
   },
 
   // 更新销售发票
   updateSalesInvoice: async (invoiceId: string, data: Partial<SalesInvoice>) => {
-    const response = await apiClient.crm.put<{ data: SalesInvoice }>(
+    const response = await apiClient.crm.put<SalesInvoice>(
       `/invoices/${invoiceId}`,
       data
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 删除销售发票
   deleteSalesInvoice: async (invoiceId: string) => {
     const response = await apiClient.crm.delete(`/invoices/${invoiceId}`);
-    return response.data;
+    return handleResponse(response);
   },
 
   // 开具发票
   issueSalesInvoice: async (invoiceId: string) => {
-    const response = await apiClient.crm.post<{ data: SalesInvoice }>(
+    const response = await apiClient.crm.post<SalesInvoice>(
       `/invoices/${invoiceId}/issue`
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 取消发票
   cancelSalesInvoice: async (invoiceId: string, reason: string) => {
-    const response = await apiClient.crm.post<{ data: SalesInvoice }>(
+    const response = await apiClient.crm.post<SalesInvoice>(
       `/invoices/${invoiceId}/cancel`,
       { reason }
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 红冲发票
   redFlushSalesInvoice: async (invoiceId: string, reason?: string) => {
-    const response = await apiClient.crm.post<{ data: SalesInvoice }>(
+    const response = await apiClient.crm.post<SalesInvoice>(
       `/invoices/${invoiceId}/red-flush`,
       { reason }
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 获取收款记录列表
@@ -166,41 +166,39 @@ export const crmFinanceApi = {
     page?: number;
     pagesize?: number;
   }) => {
-    const response = await apiClient.crm.get<{ data: PaginatedResponse<CollectionRecord> }>(
+    const response = await apiClient.crm.get<PaginatedResponse<CollectionRecord>>(
       '/collections',
       { params }
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 获取收款记录详情
   getCollectionRecord: async (recordId: string) => {
-    const response = await apiClient.crm.get<{ data: CollectionRecord }>(
+    const response = await apiClient.crm.get<CollectionRecord>(
       `/collections/${recordId}`
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 创建收款记录
   createCollectionRecord: async (data: Partial<CollectionRecord>) => {
-    const response = await apiClient.crm.post<{ data: CollectionRecord }>('/collections', data);
-    return response.data;
+    const response = await apiClient.crm.post<CollectionRecord>('/collections', data);
+    return handleResponse(response);
   },
 
   // 确认收款
   confirmCollection: async (recordId: string) => {
-    const response = await apiClient.crm.post<{ data: CollectionRecord }>(
+    const response = await apiClient.crm.post<CollectionRecord>(
       `/collections/${recordId}/confirm`
     );
-    return response.data;
+    return handleResponse(response);
   },
 
   // 批量确认收款
   batchConfirmCollections: async (recordIds: string[]) => {
-    const response = await apiClient.crm.post<{
-      data: { success: number; failed: number };
-    }>('/collections/batch-confirm', { record_ids: recordIds });
-    return response.data;
+    const response = await apiClient.crm.post<{ success: number; failed: number }>('/collections/batch-confirm', { record_ids: recordIds });
+    return handleResponse(response);
   },
 
   // 获取应收账龄分析
@@ -212,7 +210,7 @@ export const crmFinanceApi = {
     const response = await apiClient.crm.get('/reports/receivable-aging', {
       params,
     });
-    return response.data;
+    return handleResponse(response);
   },
 
   // 获取客户应收账款汇总
@@ -220,7 +218,7 @@ export const crmFinanceApi = {
     const response = await apiClient.crm.get('/reports/receivable-summary', {
       params: customerId ? { customer_id: customerId } : undefined,
     });
-    return response.data;
+    return handleResponse(response);
   },
 
   // 获取逾期应收账款列表
@@ -234,7 +232,7 @@ export const crmFinanceApi = {
     const response = await apiClient.crm.get('/reports/overdue-receivables', {
       params,
     });
-    return response.data;
+    return handleResponse(response);
   },
 
   // 导出销售发票

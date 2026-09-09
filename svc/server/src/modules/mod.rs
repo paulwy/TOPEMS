@@ -23,6 +23,8 @@ pub mod erp_real_module;
 pub mod finance_module;
 #[cfg(feature = "module-finance")]
 pub mod finance_real_module;
+#[cfg(feature = "module-gis")]
+pub mod gis_real_module;
 #[cfg(feature = "module-hrm")]
 pub mod hrm_real_module;
 #[cfg(feature = "module-lims")]

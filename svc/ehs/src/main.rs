@@ -6,6 +6,7 @@ mod event_handlers;
 mod models;
 mod modules;
 
+mod schema_defense;
 mod shared;
 
 use std::sync::Arc;
@@ -47,6 +48,10 @@ async fn main() -> anyhow::Result<()> {
 
     if let Err(e) = models::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("EHS database init warning: {}", e);
+    }
+    // Schema 防御：增量补列 + 一致性校验（失败不阻塞启动）
+    if let Err(e) = schema_defense::run(&ctx.db).await {
+        tracing::warn!("EHS schema defense 失败（不阻塞启动）: {}", e);
     }
     if let Err(e) =
         event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await

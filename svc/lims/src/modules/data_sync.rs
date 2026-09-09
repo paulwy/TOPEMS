@@ -75,16 +75,16 @@ pub async fn list_sync_records(
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (Some(_), None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         }
     };
 
@@ -143,7 +143,7 @@ pub async fn get_sync_record(
     };
 
     let row = sqlx::query(
-        "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE id = $1"
+        "SELECT id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_lims_sync_records WHERE id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -230,7 +230,7 @@ pub async fn sync_record_to_qms(
     });
 
     let row = sqlx::query(
-        "INSERT INTO qa_lims_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'record_to_qms', $2, 'qms', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO qa_lims_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'record_to_qms', $2, 'qms', $3, $4, $5, $6) RETURNING id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
     )
     .bind(&sync_no)
     .bind(req.record_id)
@@ -278,7 +278,7 @@ pub async fn sync_reagent_to_ehs(
 
     // Fetch reagent data
     let reagent = sqlx::query(
-        "SELECT id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT FROM qa_lab_reagents WHERE id = $1"
+        "SELECT id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT FROM qa_lab_reagents WHERE id = $1"
     )
     .bind(reagent_id)
     .fetch_one(&state.pool)
@@ -329,7 +329,7 @@ pub async fn sync_reagent_to_ehs(
     });
 
     let row = sqlx::query(
-        "INSERT INTO qa_lims_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'reagent_to_ehs', $2, 'ehs', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO qa_lims_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'reagent_to_ehs', $2, 'ehs', $3, $4, $5, $6) RETURNING id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
     )
     .bind(&sync_no)
     .bind(req.reagent_id)
@@ -376,7 +376,7 @@ pub async fn retry_sync(
     };
 
     let row = sqlx::query(
-        "UPDATE qa_lims_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lims_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
     )
     .bind(id)
     .fetch_one(&state.pool)

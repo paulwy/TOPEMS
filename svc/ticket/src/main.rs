@@ -43,6 +43,11 @@ async fn main() -> anyhow::Result<()> {
         .await
         .expect("Failed to init SLA database");
 
+    // ── Schema 防御：增量迁移 + 列一致性校验（7 张 ticket 表）──
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(&ctx.db).await {
+        tracing::warn!("Ticket schema defense 失败（不阻塞启动）: {}", e);
+    }
+
     // ── public_routes（无状态） ──────────────────────────────────────
     let public_routes = Router::new()
         .route("/", get(|| async { "TOPEMS Ticket Service API\n\nTicket management + SLA\n- /health - Health check\n- /api-docs/openapi.json - OpenAPI spec\n" }))

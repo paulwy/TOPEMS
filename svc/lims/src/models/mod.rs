@@ -8,6 +8,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_samples (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             sample_no VARCHAR(64) NOT NULL UNIQUE,
             sample_name VARCHAR(256) NOT NULL,
             sample_type VARCHAR(64),
@@ -30,6 +31,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             task_no VARCHAR(64) NOT NULL UNIQUE,
             sample_id UUID NOT NULL REFERENCES qa_lab_samples(id) ON DELETE CASCADE,
             sample_no VARCHAR(64) NOT NULL,
@@ -56,6 +58,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             record_no VARCHAR(64) NOT NULL UNIQUE,
             task_id UUID NOT NULL REFERENCES qa_lab_tasks(id) ON DELETE CASCADE,
             test_data JSONB NOT NULL,
@@ -74,6 +77,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_instruments (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             instrument_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             model VARCHAR(128),
@@ -95,6 +99,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_reagents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             reagent_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             specification VARCHAR(128),
@@ -117,6 +122,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_processes (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             process_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             description TEXT,
@@ -135,6 +141,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_sample_lifecycle (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             sample_id UUID NOT NULL REFERENCES qa_lab_samples(id) ON DELETE CASCADE,
             sample_no VARCHAR(64) NOT NULL,
             lifecycle_stage VARCHAR(32) NOT NULL,
@@ -153,6 +160,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_calibration_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             instrument_id UUID NOT NULL REFERENCES qa_lab_instruments(id) ON DELETE CASCADE,
             instrument_no VARCHAR(64) NOT NULL,
             instrument_name VARCHAR(256) NOT NULL,
@@ -174,6 +182,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_reagent_alerts (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             reagent_id UUID NOT NULL REFERENCES qa_lab_reagents(id) ON DELETE CASCADE,
             reagent_no VARCHAR(64) NOT NULL,
             reagent_name VARCHAR(256) NOT NULL,
@@ -195,6 +204,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_reagent_history (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             reagent_id UUID NOT NULL REFERENCES qa_lab_reagents(id) ON DELETE CASCADE,
             adjustment_type VARCHAR(16) NOT NULL,
             quantity DECIMAL(12,2) NOT NULL,
@@ -211,6 +221,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lab_inspection_reports (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             report_no VARCHAR(64) NOT NULL UNIQUE,
             sample_id UUID NOT NULL REFERENCES qa_lab_samples(id) ON DELETE CASCADE,
             sample_no VARCHAR(64) NOT NULL,
@@ -294,6 +305,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_sync_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             sync_no VARCHAR(64) NOT NULL UNIQUE,
             sync_type VARCHAR(32) NOT NULL,
             source_id UUID,
@@ -329,6 +341,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_sample_barcodes (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             barcode VARCHAR(128) NOT NULL UNIQUE,
             barcode_type VARCHAR(32) NOT NULL,
             sample_id UUID REFERENCES qa_lab_samples(id) ON DELETE SET NULL,
@@ -352,6 +365,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_barcode_scan_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             barcode_id UUID NOT NULL REFERENCES qa_lims_sample_barcodes(id) ON DELETE CASCADE,
             barcode VARCHAR(128) NOT NULL,
             scan_type VARCHAR(32) NOT NULL,
@@ -371,6 +385,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_rfid_tags (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             tag_id VARCHAR(128) NOT NULL UNIQUE,
             tag_type VARCHAR(32) DEFAULT 'uhf',
             sample_id UUID REFERENCES qa_lab_samples(id) ON DELETE SET NULL,
@@ -391,6 +406,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_method_categories (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             category_code VARCHAR(64) NOT NULL UNIQUE,
             category_name VARCHAR(256) NOT NULL,
             parent_id UUID REFERENCES qa_lims_method_categories(id) ON DELETE CASCADE,
@@ -410,6 +426,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_test_methods (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             method_code VARCHAR(64) NOT NULL UNIQUE,
             method_name VARCHAR(256) NOT NULL,
             category_id UUID REFERENCES qa_lims_method_categories(id) ON DELETE SET NULL,
@@ -441,6 +458,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_method_validations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             method_id UUID NOT NULL REFERENCES qa_lims_test_methods(id) ON DELETE CASCADE,
             method_code VARCHAR(64) NOT NULL,
             method_name VARCHAR(256) NOT NULL,
@@ -464,6 +482,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_method_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             method_id UUID NOT NULL REFERENCES qa_lims_test_methods(id) ON DELETE CASCADE,
             version VARCHAR(32) NOT NULL,
             version_description TEXT,
@@ -481,6 +500,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_pt_plans (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             plan_no VARCHAR(64) NOT NULL UNIQUE,
             plan_name VARCHAR(256) NOT NULL,
             provider VARCHAR(256),
@@ -509,6 +529,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_pt_samples (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             plan_id UUID NOT NULL REFERENCES qa_lims_pt_plans(id) ON DELETE CASCADE,
             plan_no VARCHAR(64) NOT NULL,
             plan_name VARCHAR(256) NOT NULL,
@@ -530,6 +551,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_pt_results (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             plan_id UUID NOT NULL REFERENCES qa_lims_pt_plans(id) ON DELETE CASCADE,
             plan_no VARCHAR(64) NOT NULL,
             sample_id UUID NOT NULL REFERENCES qa_lims_pt_samples(id) ON DELETE CASCADE,
@@ -559,6 +581,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_pt_evaluations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             plan_id UUID NOT NULL REFERENCES qa_lims_pt_plans(id) ON DELETE CASCADE,
             plan_no VARCHAR(64) NOT NULL,
             sample_id UUID NOT NULL REFERENCES qa_lims_pt_samples(id) ON DELETE CASCADE,
@@ -587,6 +610,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_pt_corrective_actions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             plan_id UUID NOT NULL REFERENCES qa_lims_pt_plans(id) ON DELETE CASCADE,
             plan_no VARCHAR(64) NOT NULL,
             evaluation_id UUID NOT NULL REFERENCES qa_lims_pt_evaluations(id) ON DELETE CASCADE,
@@ -611,6 +635,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_uncertainty_projects (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             project_no VARCHAR(64) NOT NULL UNIQUE,
             project_name VARCHAR(256) NOT NULL,
             method_id UUID,
@@ -640,6 +665,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_uncertainty_sources (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             project_id UUID NOT NULL REFERENCES qa_lims_uncertainty_projects(id) ON DELETE CASCADE,
             source_name VARCHAR(256) NOT NULL,
             source_type VARCHAR(32) NOT NULL,
@@ -660,6 +686,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_uncertainty_components (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             project_id UUID NOT NULL REFERENCES qa_lims_uncertainty_projects(id) ON DELETE CASCADE,
             source_id UUID NOT NULL REFERENCES qa_lims_uncertainty_sources(id) ON DELETE CASCADE,
             component_type VARCHAR(16) NOT NULL,
@@ -775,6 +802,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_instrument_data (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             data_no VARCHAR(64) NOT NULL UNIQUE,
             instrument_id UUID REFERENCES qa_lab_instruments(id) ON DELETE SET NULL,
             batch_no VARCHAR(64) NOT NULL,
@@ -800,6 +828,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_collection_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             task_no VARCHAR(64) NOT NULL UNIQUE,
             task_name VARCHAR(256) NOT NULL,
             instrument_id UUID REFERENCES qa_lab_instruments(id) ON DELETE SET NULL,
@@ -828,6 +857,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_parse_rules (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             rule_no VARCHAR(64) NOT NULL UNIQUE,
             rule_name VARCHAR(256) NOT NULL,
             protocol VARCHAR(32) NOT NULL DEFAULT 'JSON',
@@ -889,6 +919,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS qa_lims_audit_logs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
             action VARCHAR(64) NOT NULL,
             entity_type VARCHAR(64),
             entity_id UUID,

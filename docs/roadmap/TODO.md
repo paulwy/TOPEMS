@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V513 | **更新日期**: 2026-09-07 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V514 | **更新日期**: 2026-09-09 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V513 工程卫生全链路收尾：vitest 4.1.10 统一（4 个 rejects 失败根因：@vitest/expect 4.1.9/4.1.10 双版本 chai.use 覆盖）+ TS5090 baseUrl + app-shell TS6 + 库包 dist 产出 + component 高并发 flaky + shared-hooks dist 剔除测试 + mobile 类型链（TS5103/别名抢跑）+ i18n/eslint 门禁全量修复**（详见 V513 章节）；**V512 settlement_center 统一结算模块接线 + OpenAPI 聚合**（详见 V510 章节）；**V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
+> **V514 审计缺陷批量修复（17 项全闭合）**：后端——lims 多租户隔离（test_method 等 10 模块 TenantContext + WHERE tenant_id + INSERT 补列 + UUID `::TEXT`）、pm project_members 契约对齐 + 迁移、ticket 启动自检 + core_tickets RLS 迁移、ehs/gis schema_defense 激活（原为死文件）、server `module-gis` feature 闭合（gis embedded.rs 抽 lib + gis_real_module）、portal 帮助表 tenant_id 可空迁移（全局共享语义）、services.yaml 删 aps 残留；前端——im uploadFile 走 apiClient 拦截器、crmFinance 13 函数统一 handleResponse + 泛型修正（含 CustomerDetailPage 消费端 .data 残留 3 处）、BFF WebSocket onclose/onerror 修复。验证：后端 cargo check 6 组全 0 error；前端 tsc 改动文件 0 新增错误（全量 63 条为预存在缺失模块错误，另列专项）；新增迁移 3 个（20260909090001/0002/0003）（详见 V514 章节）。**V513 工程卫生全链路收尾：vitest 4.1.10 统一（4 个 rejects 失败根因：@vitest/expect 4.1.9/4.1.10 双版本 chai.use 覆盖）+ TS5090 baseUrl + app-shell TS6 + 库包 dist 产出 + component 高并发 flaky + shared-hooks dist 剔除测试 + mobile 类型链（TS5103/别名抢跑）+ i18n/eslint 门禁全量修复**（详见 V513 章节）；**V512 settlement_center 统一结算模块接线 + OpenAPI 聚合**（详见 V510 章节）；**V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -34,6 +34,33 @@
 > **V289 启动**：基于 Architecture Improvement Plan v1.0 与实际代码库差距评估后的真实验收缺口，4轨并行推进。
 
 ---
+
+## V514 审计缺陷批量修复（2026-09-09）
+
+> 状态：✅ 代码修复完成（17/17），已本地编译/类型验证；**未提交/未推送**，3 个新迁移待部署窗口实跑。
+
+**1. 后端高危（H1-H7）**
+- **H1/H2/M1 lims 多租户隔离缺失**：test_method.rs 全部 handler 补 `Extension<TenantContext>`、SELECT/RETURNING UUID 列 `::TEXT`、WHERE 补 tenant_id、INSERT 补 tenant_id；缓存键加租户维度；inspection_task.rs 同范式（TASK_SELECT_COLS 常量）。
+- **H3 lims UUID→String 反序列化**：sample/reagent/instrument（含 calibration_records）/data_sync/inspection_record/process/audit/instrument_data 等表 id/tenant_id/外键列统一 `::TEXT`。
+- **H5 pm project_members 三重不对齐**：schema_defense TABLE_DEFS 改为代码契约列（responsibilities/start_date/end_date；依据前端 pm/team.ts 与 types.ts）；project_member.rs INSERT 补 tenant_id；迁移 `20260909090001_pm_project_members_align.sql`（CREATE TABLE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS + 旧 user_name 列 DROP NOT NULL，幂等）。
+- **H6 ticket 启动缺 schema 自检**：main.rs init_sla_tables 后追加 `run_schema_migration_and_verify(&ctx.db)`（warn 不阻塞）。
+- **H7 ticket.core_tickets 缺 RLS**：迁移 `20260909090002_ticket_core_tickets_rls.sql`——ENABLE + FORCE ROW LEVEL SECURITY + `rls_tenant_isolation` USING/WITH CHECK（与 ticket 其余 6 表同语义：无上下文放行 / 有上下文按租户 / tenant_id IS NULL 共享）；DO 块 + IF EXISTS 幂等。
+
+**2. 后端中等（M2-M4）**
+- **M2/M3 ehs/gis schema_defense 为死文件**：两服务 schema_defense.rs 均未在 main.rs 声明 mod（编译不进产物）→ 补 `mod schema_defense;` + init 后调用 `schema_defense::run(&ctx.db)`（warn 不阻塞启动）。
+- **M4 server module-gis feature 悬空**：Cargo.toml 有 feature/dep 但 mod.rs 无门控、无 gis_real_module.rs。修复：① gis 新增 lib 模块 `embedded.rs`——AppState（pool/auth_state/ws_manager + FromRef）与 `build_business_router(&state)`（公开/受保护全部业务路由 + 鉴权/租户/限流中间件，~380 行自 main.rs 迁入，含 4 个 device_location handler）；② gis lib.rs 补 `pub mod embedded/event_handlers/schema_defense`；③ gis main.rs 删除重复的本地 AppState 与路由组装，改为复用 lib crate（修复 bin/lib 双编译导致的 WebSocketManager 类型身份冲突）；④ server 新增 [gis_real_module.rs](file:///c:/tywork/t0909/topems/svc/server/src/modules/gis_real_module.rs)（P3 feature 门控，建表+schema_defense+路由挂载）、mod.rs 门控、main.rs 注册块（16b）。
+
+**3. 低危（L2/L3）+ 前端（H8/H9/M5）**
+- **L2**：config/services.yaml logistics 与 all 清单删除残留 `- aps`（aps 已并入 mes，服务定义此前已注释），计数修正 30→26。
+- **L3 portal help 种子 INSERT**：核 005-help.sql 中 4 表 tenant_id 为 NOT NULL 但种子数据无租户上下文 → 迁移建库环境种子 INSERT 必失败；帮助内容为平台全局共享（handler 无租户过滤）→ 迁移 `20260909090003_portal_help_shared_tables.sql`：ADD COLUMN IF NOT EXISTS + ALTER DROP NOT NULL（NULL=共享行）；服务侧 4 张建表 DDL 同步补 `tenant_id UUID`（可空）。
+- **H8**：im uploadFile 原生 fetch 绕过 apiClient（无 401 重试/CSRF/trace、token 为 null 发 `Bearer null`、无 response.ok 检查）→ 改 `apiClient.im.post(FormData)`（与 file 模块上传同款），清无用 import。
+- **H9**：crmFinance 13 个 JSON 函数跳过 handleResponse（success:false 不抛错）且泛型双重包装 `<{data:T}>` → 全部改 `handleResponse(response)` + 泛型修正为 T；3 个 blob 导出保持原 responseType 处理；消费端 CustomerDetailPage 三处 `?.data?.items`/`?.data` 残留同步去除（运行时本就返回业务载荷，旧写法导致页面取值 undefined）。
+- **M5**：BFF GraphQL WebSocket onclose 内 `i18n.t(...)` 结果丢弃（死代码）→ `perfLogger.warn(...)`；补 `ws.onerror` 处理器（记录 readyState）。
+
+**4. 验证矩阵（如实记录）**
+- 后端 `cargo check`（SQLX_OFFLINE=true）：lims 0 error；pm+ticket+ehs+portal 0 error（1m55s）；gis 0 error（bin/lib 复用重构后）；server 默认 features 0 error（1m50s）；server `--features module-gis` 0 error（1m47s）。
+- 前端 `tsc --noEmit`（apps/web）：**本轮改动文件 0 新增错误**（H9 消费端类型错误已修复）；全量仍有 63 条**预存在**错误——TS2307 50（`@/utils/graphqlPerformance`、querySharding、edgeCompute、isrManager、queryCostAnalyzer、smartPrefetch、websocketOptimizer 及 utils/zerocode|workflow|ai|a2ui|observability barrel 引用未创建模块）+ TS7006 9 + TS2339 4（前两者的级联），均在本轮未触及文件中，非本次引入 → 列后续"bff 性能工具模块补齐"专项。
+- 迁移：新增 20260909090001/0002/0003 共 3 个，均幂等，**未实跑**（待部署窗口）。
 
 ## V513 工程卫生全链路收尾（2026-09-07）
 

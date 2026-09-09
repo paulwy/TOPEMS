@@ -81,7 +81,8 @@ const CustomerDetailPage: React.FC = () => {
     [t]
   );
 
-  const finInfo = financeInfo?.data;
+  // crmFinanceApi 经 handleResponse 解包后直接返回业务载荷（H9 双重包装修复）
+  const finInfo = financeInfo;
 
   const basicInfoContent = useMemo(() => {
     if (!customer) return null;
@@ -406,7 +407,7 @@ const CustomerDetailPage: React.FC = () => {
   }, [finInfo, t, formatCurrency]);
 
   const invoicesContent = useMemo(() => {
-    const invoiceList = invoicesData?.data?.items || [];
+    const invoiceList = invoicesData?.items || [];
     return (
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -487,7 +488,7 @@ const CustomerDetailPage: React.FC = () => {
   }, [invoicesData, t, formatCurrency]);
 
   const collectionsContent = useMemo(() => {
-    const collectionList = collectionsData?.data?.items || [];
+    const collectionList = collectionsData?.items || [];
     return (
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>

@@ -14,6 +14,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             views BIGINT NOT NULL DEFAULT 0,
             is_active BOOLEAN NOT NULL DEFAULT true,
             sort_order INT NOT NULL DEFAULT 0,
+            -- 平台级全局共享内容：tenant_id NULL = 所有租户可见
+            tenant_id UUID,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
@@ -45,6 +47,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             lessons_count INT NOT NULL DEFAULT 0,
             is_active BOOLEAN NOT NULL DEFAULT true,
             sort_order INT NOT NULL DEFAULT 0,
+            -- 平台级全局共享内容：tenant_id NULL = 所有租户可见
+            tenant_id UUID,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
@@ -75,6 +79,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             duration VARCHAR(50) NOT NULL DEFAULT '5min',
             sort_order INT NOT NULL DEFAULT 0,
             is_active BOOLEAN NOT NULL DEFAULT true,
+            -- 平台级全局共享内容：tenant_id NULL = 所有租户可见
+            tenant_id UUID,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
         "#,
@@ -105,6 +111,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             completed_lessons UUID[] NOT NULL DEFAULT '{}',
             progress INT NOT NULL DEFAULT 0,
             completed_at TIMESTAMPTZ,
+            -- 平台级全局共享内容：tenant_id NULL = 所有租户可见
+            tenant_id UUID,
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             UNIQUE(guide_id, user_id)
         );

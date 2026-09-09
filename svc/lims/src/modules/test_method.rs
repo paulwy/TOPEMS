@@ -1,10 +1,11 @@
 use axum::{
     extract::State,
     routing::{get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -32,8 +33,8 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-fn test_method_cache_key(id: &str) -> String {
-    format!("test_method:{}", id)
+fn test_method_cache_key(tenant_id: &Uuid, id: &str) -> String {
+    format!("test_method:{}:{}", tenant_id, id)
 }
 
 #[derive(Debug, Deserialize)]
@@ -191,155 +192,64 @@ pub struct MethodVersion {
     pub created_at: String,
 }
 
+const METHOD_SELECT_COLS: &str = "m.id::TEXT, m.tenant_id::TEXT, m.method_code, m.method_name, m.category_id::TEXT, c.category_name, m.standard, m.version, m.description, m.principle, m.instruments, m.reagents, m.parameters, m.steps, m.calculation_formula, m.uncertainty_ref, m.status, m.validated, m.validated_at::TEXT, m.validated_by, m.created_by, m.created_at::TEXT, m.updated_at::TEXT";
+
 pub async fn list_methods(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Query(query): axum::extract::Query<TestMethodQuery>,
 ) -> Json<ApiResponse<Vec<TestMethod>>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let base_sql = "SELECT m.id, m.method_code, m.method_name, m.category_id, c.category_name, m.standard, m.version, m.description, m.principle, m.instruments, m.reagents, m.parameters, m.steps, m.calculation_formula, m.uncertainty_ref, m.status, m.validated, m.validated_at::TEXT, m.validated_by, m.created_by, m.created_at::TEXT, m.updated_at::TEXT FROM qa_lims_test_methods m LEFT JOIN qa_lims_method_categories c ON m.category_id = c.id";
-
-    let sql = match (query.status.as_ref(), query.category_id.as_ref(), query.method_name.as_ref(), query.method_code.as_ref()) {
-        (Some(_), Some(_), Some(_), Some(_)) => format!("{} WHERE m.status = $1 AND m.category_id = $2 AND m.method_name LIKE $3 AND m.method_code LIKE $4 ORDER BY m.created_at DESC LIMIT $5 OFFSET $6", base_sql),
-        (Some(_), Some(_), Some(_), None) => format!("{} WHERE m.status = $1 AND m.category_id = $2 AND m.method_name LIKE $3 ORDER BY m.created_at DESC LIMIT $4 OFFSET $5", base_sql),
-        (Some(_), Some(_), None, Some(_)) => format!("{} WHERE m.status = $1 AND m.category_id = $2 AND m.method_code LIKE $3 ORDER BY m.created_at DESC LIMIT $4 OFFSET $5", base_sql),
-        (Some(_), Some(_), None, None) => format!("{} WHERE m.status = $1 AND m.category_id = $2 ORDER BY m.created_at DESC LIMIT $3 OFFSET $4", base_sql),
-        (Some(_), None, Some(_), Some(_)) => format!("{} WHERE m.status = $1 AND m.method_name LIKE $2 AND m.method_code LIKE $3 ORDER BY m.created_at DESC LIMIT $4 OFFSET $5", base_sql),
-        (Some(_), None, Some(_), None) => format!("{} WHERE m.status = $1 AND m.method_name LIKE $2 ORDER BY m.created_at DESC LIMIT $3 OFFSET $4", base_sql),
-        (Some(_), None, None, Some(_)) => format!("{} WHERE m.status = $1 AND m.method_code LIKE $2 ORDER BY m.created_at DESC LIMIT $3 OFFSET $4", base_sql),
-        (Some(_), None, None, None) => format!("{} WHERE m.status = $1 ORDER BY m.created_at DESC LIMIT $2 OFFSET $3", base_sql),
-        (None, Some(_), Some(_), Some(_)) => format!("{} WHERE m.category_id = $1 AND m.method_name LIKE $2 AND m.method_code LIKE $3 ORDER BY m.created_at DESC LIMIT $4 OFFSET $5", base_sql),
-        (None, Some(_), Some(_), None) => format!("{} WHERE m.category_id = $1 AND m.method_name LIKE $2 ORDER BY m.created_at DESC LIMIT $3 OFFSET $4", base_sql),
-        (None, Some(_), None, Some(_)) => format!("{} WHERE m.category_id = $1 AND m.method_code LIKE $2 ORDER BY m.created_at DESC LIMIT $3 OFFSET $4", base_sql),
-        (None, Some(_), None, None) => format!("{} WHERE m.category_id = $1 ORDER BY m.created_at DESC LIMIT $2 OFFSET $3", base_sql),
-        (None, None, Some(_), Some(_)) => format!("{} WHERE m.method_name LIKE $1 AND m.method_code LIKE $2 ORDER BY m.created_at DESC LIMIT $3 OFFSET $4", base_sql),
-        (None, None, Some(_), None) => format!("{} WHERE m.method_name LIKE $1 ORDER BY m.created_at DESC LIMIT $2 OFFSET $3", base_sql),
-        (None, None, None, Some(_)) => format!("{} WHERE m.method_code LIKE $1 ORDER BY m.created_at DESC LIMIT $2 OFFSET $3", base_sql),
-        (None, None, None, None) => format!("{} ORDER BY m.created_at DESC LIMIT $1 OFFSET $2", base_sql),
-    };
-
-    let mut query_builder = sqlx::query(&sql);
-    match (
-        query.status.as_ref(),
-        query.category_id.as_ref(),
-        query.method_name.as_ref(),
-        query.method_code.as_ref(),
-    ) {
-        (Some(st), Some(cid), Some(mn), Some(mc)) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder
-                .bind(st)
-                .bind(cid_uuid)
-                .bind(format!("%{}%", mn))
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (Some(st), Some(cid), Some(mn), None) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder
-                .bind(st)
-                .bind(cid_uuid)
-                .bind(format!("%{}%", mn))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (Some(st), Some(cid), None, Some(mc)) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder
-                .bind(st)
-                .bind(cid_uuid)
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (Some(st), Some(cid), None, None) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder
-                .bind(st)
-                .bind(cid_uuid)
-                .bind(page_size)
-                .bind(offset);
-        }
-        (Some(st), None, Some(mn), Some(mc)) => {
-            query_builder = query_builder
-                .bind(st)
-                .bind(format!("%{}%", mn))
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (Some(st), None, Some(mn), None) => {
-            query_builder = query_builder
-                .bind(st)
-                .bind(format!("%{}%", mn))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (Some(st), None, None, Some(mc)) => {
-            query_builder = query_builder
-                .bind(st)
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (Some(st), None, None, None) => {
-            query_builder = query_builder.bind(st).bind(page_size).bind(offset);
-        }
-        (None, Some(cid), Some(mn), Some(mc)) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder
-                .bind(cid_uuid)
-                .bind(format!("%{}%", mn))
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (None, Some(cid), Some(mn), None) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder
-                .bind(cid_uuid)
-                .bind(format!("%{}%", mn))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (None, Some(cid), None, Some(mc)) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder
-                .bind(cid_uuid)
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (None, Some(cid), None, None) => {
-            let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(cid_uuid).bind(page_size).bind(offset);
-        }
-        (None, None, Some(mn), Some(mc)) => {
-            query_builder = query_builder
-                .bind(format!("%{}%", mn))
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (None, None, Some(mn), None) => {
-            query_builder = query_builder
-                .bind(format!("%{}%", mn))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (None, None, None, Some(mc)) => {
-            query_builder = query_builder
-                .bind(format!("%{}%", mc))
-                .bind(page_size)
-                .bind(offset);
-        }
-        (None, None, None, None) => {
-            query_builder = query_builder.bind(page_size).bind(offset);
-        }
+    let mut where_clauses: Vec<String> = vec![
+        "m.deleted_at IS NULL".to_string(),
+        "m.tenant_id = $1".to_string(),
+    ];
+    let mut param_idx = 2usize;
+    if query.status.is_some() {
+        where_clauses.push(format!("m.status = ${}", param_idx));
+        param_idx += 1;
     }
+    if query.category_id.is_some() {
+        where_clauses.push(format!("m.category_id = ${}", param_idx));
+        param_idx += 1;
+    }
+    if query.method_name.is_some() {
+        where_clauses.push(format!("m.method_name LIKE ${}", param_idx));
+        param_idx += 1;
+    }
+    if query.method_code.is_some() {
+        where_clauses.push(format!("m.method_code LIKE ${}", param_idx));
+        param_idx += 1;
+    }
+    let limit_idx = param_idx;
+    let offset_idx = param_idx + 1;
+
+    let sql = format!(
+        "SELECT {} FROM qa_lims_test_methods m LEFT JOIN qa_lims_method_categories c ON m.category_id = c.id WHERE {} ORDER BY m.created_at DESC LIMIT ${} OFFSET ${}",
+        METHOD_SELECT_COLS,
+        where_clauses.join(" AND "),
+        limit_idx,
+        offset_idx
+    );
+
+    let mut query_builder = sqlx::query(&sql).bind(ctx.tenant_id);
+    if let Some(st) = query.status.as_ref() {
+        query_builder = query_builder.bind(st);
+    }
+    if let Some(cid) = query.category_id.as_ref() {
+        let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
+        query_builder = query_builder.bind(cid_uuid);
+    }
+    if let Some(mn) = query.method_name.as_ref() {
+        query_builder = query_builder.bind(format!("%{}%", mn));
+    }
+    if let Some(mc) = query.method_code.as_ref() {
+        query_builder = query_builder.bind(format!("%{}%", mc));
+    }
+    query_builder = query_builder.bind(page_size).bind(offset);
 
     let methods = query_builder.fetch_all(&state.pool).await.map(|rows| {
         rows.into_iter()
@@ -382,6 +292,7 @@ pub async fn list_methods(
 
 pub async fn create_method(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateTestMethodRequest>,
 ) -> Json<ApiResponse<TestMethod>> {
     let version = "1.0".to_string();
@@ -391,13 +302,13 @@ pub async fn create_method(
         INSERT INTO qa_lims_test_methods (
             method_code, method_name, category_id, standard, version,
             description, principle, instruments, reagents, parameters,
-            steps, calculation_formula, uncertainty_ref, status, validated
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'draft', false)
-        RETURNING id, method_code, method_name, category_id, NULL as category_name,
-                  standard, version, description, principle, instruments, reagents,
-                  parameters, steps, calculation_formula, uncertainty_ref, status,
-                  validated, validated_at::TEXT, validated_by, created_by,
-                  created_at::TEXT, updated_at::TEXT
+            steps, calculation_formula, uncertainty_ref, status, validated, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'draft', false, $14)
+        RETURNING id::TEXT, tenant_id::TEXT, method_code, method_name, category_id::TEXT,
+                  NULL as category_name, standard, version, description, principle,
+                  instruments, reagents, parameters, steps, calculation_formula,
+                  uncertainty_ref, status, validated, validated_at::TEXT, validated_by,
+                  created_by, created_at::TEXT, updated_at::TEXT
         "#,
     )
     .bind(&req.method_code)
@@ -413,6 +324,7 @@ pub async fn create_method(
     .bind(&req.steps)
     .bind(&req.calculation_formula)
     .bind(&req.uncertainty_ref)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -454,6 +366,7 @@ pub async fn create_method(
 
 pub async fn get_method(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TestMethod>> {
     let id = match Uuid::parse_str(&id) {
@@ -461,25 +374,23 @@ pub async fn get_method(
         Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
     };
 
-    let cache_key = test_method_cache_key(&id.to_string());
+    let cache_key = test_method_cache_key(&ctx.tenant_id, &id.to_string());
 
     if let Some(cached) = state.test_method_cache.get(&cache_key) {
         return Json(ApiResponse::success(cached, "从内存缓存获取检测方法成功"));
     }
 
-    let row = sqlx::query(
+    let row = sqlx::query(&format!(
         r#"
-        SELECT m.id, m.method_code, m.method_name, m.category_id, c.category_name,
-               m.standard, m.version, m.description, m.principle, m.instruments,
-               m.reagents, m.parameters, m.steps, m.calculation_formula, m.uncertainty_ref,
-               m.status, m.validated, m.validated_at::TEXT, m.validated_by, m.created_by,
-               m.created_at::TEXT, m.updated_at::TEXT
+        SELECT {}
         FROM qa_lims_test_methods m
         LEFT JOIN qa_lims_method_categories c ON m.category_id = c.id
-        WHERE m.id = $1
+        WHERE m.id = $1 AND m.tenant_id = $2
         "#,
-    )
+        METHOD_SELECT_COLS
+    ))
     .bind(id)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -522,6 +433,7 @@ pub async fn get_method(
 
 pub async fn update_method(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTestMethodRequest>,
 ) -> Json<ApiResponse<TestMethod>> {
@@ -532,7 +444,7 @@ pub async fn update_method(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_test_methods 
+        UPDATE qa_lims_test_methods
         SET method_name = COALESCE($2, method_name),
             category_id = COALESCE($3, category_id),
             standard = COALESCE($4, standard),
@@ -546,12 +458,12 @@ pub async fn update_method(
             uncertainty_ref = COALESCE($12, uncertainty_ref),
             status = COALESCE($13, status),
             updated_at = NOW()
-        WHERE id = $1
-        RETURNING id, method_code, method_name, category_id, NULL as category_name,
-                  standard, version, description, principle, instruments, reagents,
-                  parameters, steps, calculation_formula, uncertainty_ref, status,
-                  validated, validated_at::TEXT, validated_by, created_by,
-                  created_at::TEXT, updated_at::TEXT
+        WHERE id = $1 AND tenant_id = $14
+        RETURNING id::TEXT, tenant_id::TEXT, method_code, method_name, category_id::TEXT,
+                  NULL as category_name, standard, version, description, principle,
+                  instruments, reagents, parameters, steps, calculation_formula,
+                  uncertainty_ref, status, validated, validated_at::TEXT, validated_by,
+                  created_by, created_at::TEXT, updated_at::TEXT
         "#,
     )
     .bind(id)
@@ -567,6 +479,7 @@ pub async fn update_method(
     .bind(&req.calculation_formula)
     .bind(&req.uncertainty_ref)
     .bind(&req.status)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -574,7 +487,7 @@ pub async fn update_method(
         Ok(r) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&id.to_string()));
+                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()));
             Json(ApiResponse::success(
                 TestMethod {
                     id: r.get("id"),
@@ -613,6 +526,7 @@ pub async fn update_method(
 
 pub async fn delete_method(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -620,16 +534,19 @@ pub async fn delete_method(
         Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
     };
 
-    let result = sqlx::query("UPDATE qa_lims_test_methods SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE qa_lims_test_methods SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(ctx.tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&id.to_string()));
+                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()));
             Json(ApiResponse::success(true, "检测方法删除成功"))
         }
         Err(e) => {
@@ -641,14 +558,15 @@ pub async fn delete_method(
 
 pub async fn list_categories(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Query(query): axum::extract::Query<MethodCategoryQuery>,
 ) -> Json<ApiResponse<Vec<MethodCategory>>> {
     let sql = match query.parent_id.as_ref() {
-        Some(_) => "SELECT id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND parent_id = $1 ORDER BY sort_order ASC, created_at DESC",
-        None => "SELECT id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND parent_id = $2 ORDER BY sort_order ASC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sql).bind(ctx.tenant_id);
     if let Some(pid) = query.parent_id.as_ref() {
         let pid_uuid = Uuid::parse_str(pid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(pid_uuid);
@@ -682,15 +600,16 @@ pub async fn list_categories(
 
 pub async fn create_category(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMethodCategoryRequest>,
 ) -> Json<ApiResponse<MethodCategory>> {
     let sort_order = req.sort_order.unwrap_or(0);
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_method_categories (category_code, category_name, parent_id, sort_order, description, status)
-        VALUES ($1, $2, $3, $4, $5, 'active')
-        RETURNING id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT
+        INSERT INTO qa_lims_method_categories (category_code, category_name, parent_id, sort_order, description, status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, 'active', $6)
+        RETURNING id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT
         "#
     )
     .bind(&req.category_code)
@@ -698,6 +617,7 @@ pub async fn create_category(
     .bind(&req.parent_id)
     .bind(sort_order)
     .bind(&req.description)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -726,6 +646,7 @@ pub async fn create_category(
 
 pub async fn update_category(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMethodCategoryRequest>,
 ) -> Json<ApiResponse<MethodCategory>> {
@@ -736,15 +657,15 @@ pub async fn update_category(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_method_categories 
+        UPDATE qa_lims_method_categories
         SET category_name = COALESCE($2, category_name),
             parent_id = COALESCE($3, parent_id),
             sort_order = COALESCE($4, sort_order),
             description = COALESCE($5, description),
             status = COALESCE($6, status),
             updated_at = NOW()
-        WHERE id = $1
-        RETURNING id, category_code, category_name, parent_id, sort_order, description, status, created_at::TEXT, updated_at::TEXT
+        WHERE id = $1 AND tenant_id = $7
+        RETURNING id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT
         "#
     )
     .bind(id)
@@ -753,6 +674,7 @@ pub async fn update_category(
     .bind(req.sort_order)
     .bind(&req.description)
     .bind(&req.status)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -781,6 +703,7 @@ pub async fn update_category(
 
 pub async fn delete_category(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -789,8 +712,9 @@ pub async fn delete_category(
     };
 
     let result =
-        sqlx::query("UPDATE qa_lims_method_categories SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE qa_lims_method_categories SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
+            .bind(ctx.tenant_id)
             .execute(&state.pool)
             .await;
 
@@ -805,14 +729,15 @@ pub async fn delete_category(
 
 pub async fn list_validations(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Query(query): axum::extract::Query<MethodValidationQuery>,
 ) -> Json<ApiResponse<Vec<MethodValidationRecord>>> {
     let sql = match query.method_id.as_ref() {
-        Some(_) => "SELECT id, method_id, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE method_id = $1 ORDER BY validation_date DESC, created_at DESC",
-        None => "SELECT id, method_id, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations ORDER BY validation_date DESC, created_at DESC LIMIT 100",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE method_id = $2 AND tenant_id = $1 ORDER BY validation_date DESC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE tenant_id = $1 ORDER BY validation_date DESC, created_at DESC LIMIT 100",
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sql).bind(ctx.tenant_id);
     if let Some(mid) = query.method_id.as_ref() {
         let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(mid_uuid);
@@ -851,6 +776,7 @@ pub async fn list_validations(
 
 pub async fn create_validation(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMethodValidationRequest>,
 ) -> Json<ApiResponse<MethodValidationRecord>> {
     let method_id = match Uuid::parse_str(&req.method_id) {
@@ -859,9 +785,10 @@ pub async fn create_validation(
     };
 
     let method_row = sqlx::query(
-        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1",
+        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(method_id)
+    .bind(ctx.tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -883,10 +810,10 @@ pub async fn create_validation(
         r#"
         INSERT INTO qa_lims_method_validations (
             method_id, method_code, method_name, version, validation_type,
-            validation_date, validated_by, conclusion, parameters, report_url, notes, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'completed')
-        RETURNING id, method_id, method_code, method_name, version, validation_type,
-                  validation_date::TEXT, validated_by, conclusion, parameters,
+            validation_date, validated_by, conclusion, parameters, report_url, notes, status, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'completed', $12)
+        RETURNING id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version,
+                  validation_type, validation_date::TEXT, validated_by, conclusion, parameters,
                   report_url, notes, status, created_at::TEXT
         "#,
     )
@@ -901,16 +828,18 @@ pub async fn create_validation(
     .bind(&req.parameters)
     .bind(&req.report_url)
     .bind(&req.notes)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     if req.conclusion == "pass" || req.conclusion == "合格" {
         let _ = sqlx::query(
-            "UPDATE qa_lims_test_methods SET validated = true, validated_at = $2, validated_by = $3, updated_at = NOW() WHERE id = $1"
+            "UPDATE qa_lims_test_methods SET validated = true, validated_at = $2, validated_by = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $4"
         )
         .bind(method_id)
         .bind(&validation_date)
         .bind(&req.validated_by)
+        .bind(ctx.tenant_id)
         .execute(&state.pool)
         .await;
     }
@@ -945,6 +874,7 @@ pub async fn create_validation(
 
 pub async fn list_method_versions(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MethodVersion>>> {
     let id = match Uuid::parse_str(&method_id) {
@@ -954,13 +884,14 @@ pub async fn list_method_versions(
 
     let rows = sqlx::query(
         r#"
-        SELECT id, method_id, version, version_description, change_log, is_current, created_by, created_at::TEXT
+        SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, version, version_description, change_log, is_current, created_by, created_at::TEXT
         FROM qa_lims_method_versions
-        WHERE method_id = $1
+        WHERE method_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
         "#
     )
     .bind(id)
+    .bind(ctx.tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -991,6 +922,7 @@ pub async fn list_method_versions(
 
 pub async fn create_new_version(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TestMethod>> {
@@ -1000,9 +932,10 @@ pub async fn create_new_version(
     };
 
     let method_row = sqlx::query(
-        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1",
+        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(ctx.tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -1029,31 +962,33 @@ pub async fn create_new_version(
 
     let _ = sqlx::query(
         r#"
-        INSERT INTO qa_lims_method_versions (method_id, version, version_description, change_log, is_current, created_at)
-        VALUES ($1, $2, $3, $4, false, NOW())
+        INSERT INTO qa_lims_method_versions (method_id, version, version_description, change_log, is_current, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, false, NOW(), $5)
         "#
     )
     .bind(id)
     .bind(&current_version)
     .bind(version_description)
     .bind(change_log)
+    .bind(ctx.tenant_id)
     .execute(&state.pool)
     .await;
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_test_methods 
+        UPDATE qa_lims_test_methods
         SET version = $2, updated_at = NOW()
-        WHERE id = $1
-        RETURNING id, method_code, method_name, category_id, NULL as category_name,
-                  standard, version, description, principle, instruments, reagents,
-                  parameters, steps, calculation_formula, uncertainty_ref, status,
-                  validated, validated_at::TEXT, validated_by, created_by,
-                  created_at::TEXT, updated_at::TEXT
+        WHERE id = $1 AND tenant_id = $3
+        RETURNING id::TEXT, tenant_id::TEXT, method_code, method_name, category_id::TEXT,
+                  NULL as category_name, standard, version, description, principle,
+                  instruments, reagents, parameters, steps, calculation_formula,
+                  uncertainty_ref, status, validated, validated_at::TEXT, validated_by,
+                  created_by, created_at::TEXT, updated_at::TEXT
         "#,
     )
     .bind(id)
     .bind(&new_version)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -1100,19 +1035,22 @@ mod tests {
     // ---- test_method_cache_key ----
     #[test]
     fn cache_key_prefix() {
-        assert_eq!(test_method_cache_key("abc"), "test_method:abc");
+        let tenant = Uuid::nil();
+        assert_eq!(test_method_cache_key(&tenant, "abc"), "test_method:00000000-0000-0000-0000-000000000000:abc");
     }
 
     #[test]
     fn cache_key_empty_id() {
-        assert_eq!(test_method_cache_key(""), "test_method:");
+        let tenant = Uuid::nil();
+        assert_eq!(test_method_cache_key(&tenant, ""), "test_method:00000000-0000-0000-0000-000000000000:");
     }
 
     #[test]
     fn cache_key_with_special_chars() {
+        let tenant = Uuid::nil();
         assert_eq!(
-            test_method_cache_key("tm-001/abc"),
-            "test_method:tm-001/abc"
+            test_method_cache_key(&tenant, "tm-001/abc"),
+            "test_method:00000000-0000-0000-0000-000000000000:tm-001/abc"
         );
     }
 }

@@ -1,3 +1,24 @@
+## V514 审计缺陷批量修复（2026-09-09）✅
+- **范围**：上一轮审计 17 项缺陷（H1-H9 高危 / M1-M5 中 / L2-L3 低）全部修复，未提交（等用户指示）。
+- **后端修复**：
+  - **H1/H2/M1 lims 多租户隔离**：test_method.rs 全部 handler 补 `Extension<TenantContext>` + WHERE tenant_id 过滤 + INSERT 补 tenant_id；UUID 列 SELECT/RETURNING 统一 `::TEXT`（METHOD_SELECT_COLS/TASK_SELECT_COLS 常量）；缓存键加租户隔离；sample/reagent/instrument/inspection_task/data_sync/inspection_record/process/audit/instrument_data 同范式修复。
+  - **H3 lims UUID 转换**：reagent/sample/instrument（含 calibration_records）等主表 id/tenant_id/外键 `::TEXT`。
+  - **H5 pm 项目成员**：schema_defense TABLE_DEFS 对齐前端契约（responsibilities/start_date/end_date）；project_member.rs INSERT 补 tenant_id；迁移 `20260909090001_pm_project_members_align.sql`（幂等建表+补列+旧列 DROP NOT NULL）。
+  - **H6 ticket 启动自检**：main.rs init_sla_tables 后接 `run_schema_migration_and_verify`（warn 不阻塞）。
+  - **H7 ticket.core_tickets RLS**：迁移 `20260909090002_ticket_core_tickets_rls.sql`（ENABLE+FORCE RLS + rls_tenant_isolation 策略，语义与 ticket 其余 6 表一致；DO 块幂等）。
+  - **M2/M3 ehs/gis schema_defense 激活**：两服务 schema_defense.rs 原为死文件（未声明 mod）→ main.rs 补 `mod schema_defense;` + 启动调用 `run(&ctx.db)`（warn 不阻塞）。
+  - **M4 server module-gis feature 闭合**：gis 新增 lib 模块 `embedded.rs`（AppState + build_business_router，~380 行路由组装从 main.rs 迁入，独立部署与 server 嵌入共用）；lib.rs 补 pub mod embedded/event_handlers/schema_defense；gis main.rs 改为复用 lib crate（消除二进制重复编译类型身份冲突）；server 新增 `gis_real_module.rs` + mod.rs 门控 + main.rs 注册块（feature `module-gis`，默认关）。
+  - **L3 portal 帮助中心**：core_faqs/core_guides/core_guide_lessons/core_guide_progress 为平台级全局共享内容（handler 无租户过滤、种子无租户上下文），迁移 `20260909090003_portal_help_shared_tables.sql` 补列 + tenant_id DROP NOT NULL（NULL=共享行语义）；服务侧建表 DDL 同步补 tenant_id（可空）。
+  - **L2 配置清理**：config/services.yaml logistics/all 清单删除残留 `- aps`（aps 已并入 mes），条目计数 30→26。
+- **前端修复**：
+  - **H8 im uploadFile**：原生 fetch 绕过拦截器（无 401 重试/CSRF/trace，`Bearer null`）→ 改 `apiClient.im.post(FormData)`（复用 file 模块同款范式），删除无用 config 导入。
+  - **H9 crmFinance 响应处理**：13 个函数跳过 handleResponse 且泛型双重包装（`<{data:T}>`）→ 统一 `handleResponse(response)` + 修正泛型；同步修消费端 CustomerDetailPage 三处 `.data` 残留（financeInfo/invoicesData/collectionsData 直接为业务载荷）。
+  - **M5 BFF WebSocket**：onclose 死代码（i18n.t 结果丢弃）→ `perfLogger.warn(...)`；补 `ws.onerror` 处理器。
+- **验证（如实记录）**：
+  - 后端 cargo check（SQLX_OFFLINE）：lims 0 error / pm+ticket+ehs+portal 0 error（1m55s）/ gis 0 error / server 默认 features 0 error（1m50s）/ server `--features module-gis` 0 error（1m47s）。
+  - 前端 tsc（--noEmit，全量）：**本次改动文件 0 新增错误**（H9 消费端错误已修复）；全量仍有 **63 条预存在错误**（TS2307 50 个缺失模块文件：`@/utils/graphqlPerformance`/querySharding/edgeCompute/isrManager/queryCostAnalyzer/smartPrefetch/websocketOptimizer 及 zerocode/workflow/ai/a2ui/observability barrel + TS7006 9 / TS2339 4 级联），均在本轮未触及文件中，非本次引入，列后续专项。
+  - 新增迁移 3 个（20260909090001/0002/0003），均未实跑（待部署窗口）。
+
 ## 死表清理（评审 A 方案）
 - 状态：✅ 完成（20260908000012）
 - 删除 90 张（A 组 56 无服务 schema + B 组 34 旧表替代），库表 962→872，全部 rows=0 无数据

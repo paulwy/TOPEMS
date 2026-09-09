@@ -113,7 +113,7 @@ pub async fn create_record(
     };
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id, record_no, task_id, test_data, conclusion, recorded_by, recorded_at::TEXT, created_at::TEXT"
+        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at::TEXT, created_at::TEXT"
     )
     .bind(record_no)
     .bind(task_id)

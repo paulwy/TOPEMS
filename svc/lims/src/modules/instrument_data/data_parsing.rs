@@ -15,7 +15,7 @@ pub async fn parse_instrument_data(
     };
 
     let data_row = sqlx::query(
-        "SELECT id, data_no, protocol, raw_data FROM qa_lims_instrument_data WHERE id = $1",
+        "SELECT id::TEXT, data_no, protocol, raw_data FROM qa_lims_instrument_data WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.pool)

@@ -18,7 +18,7 @@ pub async fn trigger_collection(
     };
 
     let task_row = sqlx::query(
-        "SELECT id, task_no, task_name, instrument_id, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, task_no, task_name, instrument_id::TEXT, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(task_id)
     .fetch_optional(&state.pool)
@@ -85,7 +85,7 @@ pub async fn trigger_collection(
         INSERT INTO qa_lims_instrument_data 
             (id, data_no, instrument_id, batch_no, protocol, raw_data, status, collected_at, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, 'collected', NOW(), 'system')
-        RETURNING id, data_no, instrument_id, batch_no, protocol,
+        RETURNING id::TEXT, data_no, instrument_id::TEXT, batch_no, protocol,
                   raw_data, parsed_data, status, quality_score,
                   error_msg, collected_at::TEXT, parsed_at::TEXT,
                   created_by, created_at::TEXT, updated_at::TEXT
@@ -310,7 +310,7 @@ pub async fn create_collection_task(
             (id, task_no, task_name, instrument_id, protocol, collection_mode,
              cron_expression, interval_minutes, parse_rule_id, status, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'system')
-        RETURNING id, task_no, task_name, instrument_id, protocol,
+        RETURNING id::TEXT, task_no, task_name, instrument_id::TEXT, protocol,
                   collection_mode, cron_expression, interval_minutes,
                   parse_rule_id, status, last_run_at::TEXT, next_run_at::TEXT,
                   total_collections, success_count, failed_count,
@@ -383,7 +383,7 @@ pub async fn update_collection_task(
             parse_rule_id = COALESCE($6, parse_rule_id),
             updated_at = NOW()
         WHERE id = $1
-        RETURNING id, task_no, task_name, instrument_id, protocol,
+        RETURNING id::TEXT, task_no, task_name, instrument_id::TEXT, protocol,
                   collection_mode, cron_expression, interval_minutes,
                   parse_rule_id, status, last_run_at::TEXT, next_run_at::TEXT,
                   total_collections, success_count, failed_count,
