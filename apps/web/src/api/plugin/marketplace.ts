@@ -10,8 +10,8 @@ import type {
   PluginVersion,
 } from './types';
 
-// V64: /api/v1/ 前缀已废弃，统一使用 /api/core/plugin/marketplace（与 moduleMapping 对齐）
-const MARKETPLACE_API = '/api/core/plugin/marketplace';
+// V64: /api/v1/ 前缀已废弃，统一使用 /api/plugin/marketplace（与 moduleMapping 对齐）
+const MARKETPLACE_API = '/api/plugin/marketplace';
 
 const pluginAxios = axios.create({
   baseURL: '',
@@ -69,12 +69,12 @@ export const marketplaceApi = {
   },
 
   getPlugin: async (code: string): Promise<ApiResponse<Plugin>> => {
-    const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}`);
+    const response = await pluginAxios.get(`/api/plugin/plugins/${code}`);
     return response.data;
   },
 
   getVersions: async (code: string): Promise<ApiResponse<PluginVersion[]>> => {
-    const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/versions`);
+    const response = await pluginAxios.get(`/api/plugin/plugins/${code}/versions`);
     return response.data;
   },
 
@@ -89,7 +89,7 @@ export const marketplaceApi = {
       is_verified?: boolean;
     }
   ): Promise<ApiResponse<PluginReviewListResponse>> => {
-    const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/reviews`, {
+    const response = await pluginAxios.get(`/api/plugin/plugins/${code}/reviews`, {
       params,
     });
     return response.data;
@@ -103,7 +103,7 @@ export const marketplaceApi = {
       content?: string;
     }
   ): Promise<ApiResponse<PluginReview>> => {
-    const response = await pluginAxios.post(`/api/core/plugin/plugins/${code}/reviews`, data);
+    const response = await pluginAxios.post(`/api/plugin/plugins/${code}/reviews`, data);
     return response.data;
   },
 };

@@ -228,7 +228,7 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   plugin: {
     service: 'unified-core',
     module: 'plugin',
-    apiBasePath: '/api/core/plugin',
+    apiBasePath: '/api/plugin',
   },
 
   im: {

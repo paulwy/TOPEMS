@@ -539,9 +539,9 @@ export class PluginManager {
     }
 
     try {
-      // V64: 统一使用 /api/core/plugin（去除已废弃的 /v1/ 前缀）
+      // V64: 统一使用 /api/plugin（去除已废弃的 /v1/ 前缀）
       // 必须用带认证拦截器的 pluginAxios（fetch 无 Authorization 头会 401）
-      const response = await pluginAxios.get('/api/core/plugin/navigation-config');
+      const response = await pluginAxios.get('/api/plugin/navigation-config');
       const result = response?.data;
 
       if (result?.success && result?.data?.modules) {

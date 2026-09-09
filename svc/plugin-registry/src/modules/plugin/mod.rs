@@ -25,21 +25,21 @@ pub fn create_routes() -> Router<AppState> {
     // --- Marketplace (read-only) ---
     let marketplace_read = Router::new()
         .route(
-            "/plugin/marketplace",
+            "/api/plugin/marketplace",
             get(marketplace::get_marketplace_summary),
         )
-        .route("/plugin/marketplace/list", get(marketplace::list_plugins))
+        .route("/api/plugin/marketplace/list", get(marketplace::list_plugins))
         .route(
-            "/plugin/marketplace/categories",
+            "/api/plugin/marketplace/categories",
             get(marketplace::list_categories),
         )
-        .route("/plugin/plugins/{code}", get(marketplace::get_plugin))
+        .route("/api/plugin/plugins/{code}", get(marketplace::get_plugin))
         .route(
-            "/plugin/plugins/{plugin_id}/versions",
+            "/api/plugin/plugins/{plugin_id}/versions",
             get(marketplace::get_plugin_versions),
         )
         .route(
-            "/plugin/plugins/{plugin_id}/reviews",
+            "/api/plugin/plugins/{plugin_id}/reviews",
             get(marketplace::get_plugin_reviews),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -49,27 +49,27 @@ pub fn create_routes() -> Router<AppState> {
     // --- Runtime (management) ---
     let runtime = Router::new()
         .route(
-            "/plugin/runtime/list",
+            "/api/plugin/runtime/list",
             get(runtime::list_plugins_with_status),
         )
         .route(
-            "/plugin/runtime/{code}/status",
+            "/api/plugin/runtime/{code}/status",
             get(runtime::get_plugin_status),
         )
         .route(
-            "/plugin/runtime/{code}/register",
+            "/api/plugin/runtime/{code}/register",
             post(runtime::register_plugin),
         )
         .route(
-            "/plugin/runtime/{code}/unregister",
+            "/api/plugin/runtime/{code}/unregister",
             post(runtime::unregister_plugin),
         )
         .route(
-            "/plugin/runtime/{code}/status",
+            "/api/plugin/runtime/{code}/status",
             post(runtime::update_plugin_status),
         )
         .route(
-            "/plugin/navigation-config",
+            "/api/plugin/navigation-config",
             get(runtime::get_navigation_config),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -79,53 +79,53 @@ pub fn create_routes() -> Router<AppState> {
     // --- Tenant plugins ---
     let tenant_read = Router::new()
         .route(
-            "/plugin/tenant/{tenant_id}/plugins",
+            "/api/plugin/tenant/{tenant_id}/plugins",
             get(tenant_plugins::list_tenant_plugins),
         )
         .route(
-            "/plugin/tenant/my/plugins",
+            "/api/plugin/tenant/my/plugins",
             get(tenant_plugins::list_my_plugins),
         )
         .route(
-            "/plugin/tenant/{tenant_id}/available",
+            "/api/plugin/tenant/{tenant_id}/available",
             get(tenant_plugins::get_available_plugins),
         )
-        .route("/plugins/my", get(tenant_plugins::list_my_plugins))
+        .route("/api/plugins/my", get(tenant_plugins::list_my_plugins))
         .layer(axum::middleware::from_fn(require_permission(
             "admin:plugin:read",
         )));
 
     let tenant_write = Router::new()
         .route(
-            "/plugin/tenant/{tenant_id}/plugins/{plugin_code}/install",
+            "/api/plugin/tenant/{tenant_id}/plugins/{plugin_code}/install",
             post(tenant_plugins::install_plugin),
         )
         .route(
-            "/plugin/tenant/{tenant_id}/plugins/{plugin_code}/uninstall",
+            "/api/plugin/tenant/{tenant_id}/plugins/{plugin_code}/uninstall",
             post(tenant_plugins::uninstall_plugin),
         )
         .route(
-            "/plugin/tenant/{tenant_id}/plugins/{plugin_code}/activate",
+            "/api/plugin/tenant/{tenant_id}/plugins/{plugin_code}/activate",
             post(tenant_plugins::activate_plugin),
         )
         .route(
-            "/plugin/tenant/{tenant_id}/plugins/{plugin_code}/deactivate",
+            "/api/plugin/tenant/{tenant_id}/plugins/{plugin_code}/deactivate",
             post(tenant_plugins::deactivate_plugin),
         )
         .route(
-            "/plugin/tenant/my/plugins/{plugin_code}/install",
+            "/api/plugin/tenant/my/plugins/{plugin_code}/install",
             post(tenant_plugins::install_my_plugin),
         )
         .route(
-            "/plugin/tenant/my/plugins/{plugin_code}/uninstall",
+            "/api/plugin/tenant/my/plugins/{plugin_code}/uninstall",
             post(tenant_plugins::uninstall_my_plugin),
         )
         .route(
-            "/plugin/tenant/my/plugins/{plugin_code}/activate",
+            "/api/plugin/tenant/my/plugins/{plugin_code}/activate",
             post(tenant_plugins::activate_my_plugin),
         )
         .route(
-            "/plugin/tenant/my/plugins/{plugin_code}/deactivate",
+            "/api/plugin/tenant/my/plugins/{plugin_code}/deactivate",
             post(tenant_plugins::deactivate_my_plugin),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -134,25 +134,25 @@ pub fn create_routes() -> Router<AppState> {
 
     // --- Dev / plugin owner (publish, upload) ---
     let dev = Router::new()
-        .route("/plugin/dev/plugins", post(tenant_plugins::upload_plugin))
+        .route("/api/plugin/dev/plugins", post(tenant_plugins::upload_plugin))
         .route(
-            "/plugin/dev/plugins/{code}",
+            "/api/plugin/dev/plugins/{code}",
             put(tenant_plugins::update_plugin),
         )
         .route(
-            "/plugin/dev/plugins/{code}/publish",
+            "/api/plugin/dev/plugins/{code}/publish",
             post(tenant_plugins::publish_plugin),
         )
         .route(
-            "/plugin/dev/plugins/{code}/unpublish",
+            "/api/plugin/dev/plugins/{code}/unpublish",
             post(tenant_plugins::unpublish_plugin),
         )
         .route(
-            "/plugin/dev/plugins/{plugin_code}/versions",
+            "/api/plugin/dev/plugins/{plugin_code}/versions",
             post(tenant_plugins::upload_plugin_version),
         )
         .route(
-            "/plugin/plugins/{plugin_id}/reviews",
+            "/api/plugin/plugins/{plugin_id}/reviews",
             post(marketplace::create_review),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -162,19 +162,19 @@ pub fn create_routes() -> Router<AppState> {
     // --- Versioning ---
     let versioning_routes = Router::new()
         .route(
-            "/plugin/plugins/{plugin_code}/versions/compare/{from_version}/{to_version}",
+            "/api/plugin/plugins/{plugin_code}/versions/compare/{from_version}/{to_version}",
             get(versioning::compare_plugin_versions),
         )
         .route(
-            "/plugin/plugins/{plugin_code}/updates",
+            "/api/plugin/plugins/{plugin_code}/updates",
             get(versioning::check_plugin_updates),
         )
         .route(
-            "/plugin/updates/check-all",
+            "/api/plugin/updates/check-all",
             get(versioning::check_all_updates),
         )
         .route(
-            "/plugin/plugins/{plugin_code}/rollback/{target_version}",
+            "/api/plugin/plugins/{plugin_code}/rollback/{target_version}",
             post(versioning::rollback_plugin_version),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -184,19 +184,19 @@ pub fn create_routes() -> Router<AppState> {
     // --- Upgrade workflow ---
     let upgrade_routes = Router::new()
         .route(
-            "/plugin/plugins/{plugin_code}/upgrade",
+            "/api/plugin/plugins/{plugin_code}/upgrade",
             post(upgrade_workflow::start_plugin_upgrade),
         )
         .route(
-            "/plugin/plugins/{plugin_code}/verify/{version}",
+            "/api/plugin/plugins/{plugin_code}/verify/{version}",
             post(upgrade_workflow::verify_plugin_version),
         )
         .route(
-            "/plugin/upgrade/tasks/{task_id}",
+            "/api/plugin/upgrade/tasks/{task_id}",
             get(upgrade_workflow::get_upgrade_task_status),
         )
         .route(
-            "/plugin/upgrade/tasks",
+            "/api/plugin/upgrade/tasks",
             get(upgrade_workflow::list_upgrade_tasks),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -206,31 +206,31 @@ pub fn create_routes() -> Router<AppState> {
     // --- Automated upgrade ---
     let auto_upgrade_routes = Router::new()
         .route(
-            "/plugin/plugins/{plugin_code}/upgrade-schedule",
+            "/api/plugin/plugins/{plugin_code}/upgrade-schedule",
             get(automated_upgrade::get_upgrade_schedule),
         )
         .route(
-            "/plugin/plugins/{plugin_code}/upgrade-schedule",
+            "/api/plugin/plugins/{plugin_code}/upgrade-schedule",
             put(automated_upgrade::configure_upgrade_schedule),
         )
         .route(
-            "/plugin/upgrade/queue",
+            "/api/plugin/upgrade/queue",
             get(automated_upgrade::get_upgrade_queue),
         )
         .route(
-            "/plugin/upgrade/queue",
+            "/api/plugin/upgrade/queue",
             post(automated_upgrade::add_to_upgrade_queue),
         )
         .route(
-            "/plugin/upgrade/queue/{item_id}",
+            "/api/plugin/upgrade/queue/{item_id}",
             post(automated_upgrade::cancel_upgrade_queue_item),
         )
         .route(
-            "/plugin/upgrade/batch",
+            "/api/plugin/upgrade/batch",
             post(automated_upgrade::batch_upgrade),
         )
         .route(
-            "/plugin/plugins/{plugin_code}/upgrade-history",
+            "/api/plugin/plugins/{plugin_code}/upgrade-history",
             get(automated_upgrade::get_upgrade_history),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -240,19 +240,19 @@ pub fn create_routes() -> Router<AppState> {
     // --- Reviews & stats ---
     let reviews_routes = Router::new()
         .route(
-            "/plugin/plugins/{plugin_code}/reviews-by-code",
+            "/api/plugin/plugins/{plugin_code}/reviews-by-code",
             get(reviews_stats::get_plugin_reviews_by_code),
         )
         .route(
-            "/plugin/plugins/{plugin_code}/statistics",
+            "/api/plugin/plugins/{plugin_code}/statistics",
             get(reviews_stats::get_plugin_statistics),
         )
         .route(
-            "/plugin/reviews/statistics",
+            "/api/plugin/reviews/statistics",
             get(reviews_stats::get_review_statistics),
         )
         .route(
-            "/plugin/plugins/{plugin_code}/download-history",
+            "/api/plugin/plugins/{plugin_code}/download-history",
             get(reviews_stats::get_download_history),
         )
         .layer(axum::middleware::from_fn(require_permission(
@@ -262,31 +262,31 @@ pub fn create_routes() -> Router<AppState> {
     // --- Simple API (compatibility shim) ---
     let simple_api_routes = Router::new()
         .route(
-            "/plugins/installed",
+            "/api/plugins/installed",
             get(simple_api::list_installed_plugins),
         )
         .route(
-            "/plugins/tenant-installed",
+            "/api/plugins/tenant-installed",
             get(simple_api::list_tenant_installed_plugins),
         )
         .route(
-            "/plugins/{plugin_code}/details",
+            "/api/plugins/{plugin_code}/details",
             get(simple_api::get_plugin_details),
         )
         .route(
-            "/plugins/{plugin_code}/install",
+            "/api/plugins/{plugin_code}/install",
             post(simple_api::install_plugin_simple),
         )
         .route(
-            "/plugins/{plugin_code}/uninstall",
+            "/api/plugins/{plugin_code}/uninstall",
             post(simple_api::uninstall_plugin_simple),
         )
         .route(
-            "/plugins/{plugin_code}/enable",
+            "/api/plugins/{plugin_code}/enable",
             post(simple_api::enable_plugin_simple),
         )
         .route(
-            "/plugins/{plugin_code}/disable",
+            "/api/plugins/{plugin_code}/disable",
             post(simple_api::disable_plugin_simple),
         )
         .layer(axum::middleware::from_fn(require_auth()));
@@ -294,7 +294,7 @@ pub fn create_routes() -> Router<AppState> {
     // --- R4 registry marker (re-establishes `plugin` prefix in backendModuleSet
     // after B2 rename admin:plugin:*; never routed to in practice, scan-only) ---
     let plugin_prefix_marker = Router::new()
-        .route("/plugins/internal/marker", get(|| async { "ok" }))
+        .route("/api/plugins/internal/marker", get(|| async { "ok" }))
         .layer(axum::middleware::from_fn(require_permission(
             "plugin:dashboard:read",
         )));
