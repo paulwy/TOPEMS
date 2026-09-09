@@ -1,3 +1,4 @@
+// @deprecated 无页面消费（预埋），后端 integration 服务未提供对应路由；保留以兼容存量引用
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type {

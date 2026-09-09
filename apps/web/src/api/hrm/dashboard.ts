@@ -11,6 +11,7 @@ export interface HrmDashboardStats {
   education_distribution?: Array<{ name: string; value: number }>;
 }
 
+// @deprecated 无页面消费（仅测试引用），后端 hrm 无 /dashboard 路由；保留以兼容存量引用
 export const hrmDashboardApi = {
   async getOverview(): Promise<ApiResponse<HrmDashboardStats>> {
     return apiClient.hrm.get<HrmDashboardStats>('/dashboard');

@@ -29,6 +29,7 @@ export const chatApi = {
     return apiClient.ai.post<AIGenerateResponse>('/generate', data);
   },
 
+  // @deprecated 无页面消费（DifyChatPage 走 difyApi），预埋端点；后端未提供 /conversations
   listConversations: async (): Promise<ApiResponse<Conversation[]>> => {
     return apiClient.ai.get<Conversation[]>('/conversations');
   },
