@@ -181,6 +181,10 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/incoming-inspections/{id}/pass", post(inspection_pass))
         .route("/incoming-inspections/{id}/fail", post(inspection_fail))
+        .route(
+            "/incoming-inspections/{id}/records",
+            get(list_inspection_records).post(create_inspection_record),
+        )
 }
 
 fn notice_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {

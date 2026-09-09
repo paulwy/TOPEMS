@@ -404,11 +404,14 @@ describe('SCM inspectionRecordApi', () => {
     });
   });
 
-  it('should call POST /inspection-records for create', async () => {
-    const data = { inspection_id: 'ins1', result: 'pass' };
+  it('should call POST /incoming-inspections/:id/records for create', async () => {
+    const data = { item_name: 'test', result: 'pass', quantity: 10 };
     mockApiClient.post.mockResolvedValue({ success: true, data });
-    await inspectionRecordApi.create(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/inspection-records', data);
+    await inspectionRecordApi.create('inspection1', data);
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/incoming-inspections/inspection1/records',
+      data
+    );
   });
 
   it('should call GET /inspection-records/:id for get', async () => {
