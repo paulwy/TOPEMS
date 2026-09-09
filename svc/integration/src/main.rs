@@ -4,6 +4,7 @@ use topems_shared_boundary::only_own_schema_query;
 mod conversion_rules;
 mod event_bus;
 mod event_handlers;
+mod external_erp;
 mod handlers;
 mod mes_erp_sync;
 mod mes_qms_integration;

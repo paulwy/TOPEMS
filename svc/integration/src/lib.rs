@@ -194,6 +194,7 @@ pub mod crm_scm_sync;
 pub mod erp_wms_sync;
 pub mod event_bus;
 pub mod event_handlers;
+pub mod external_erp;
 pub mod handlers;
 pub mod hrm_finance_sync;
 pub mod mes_erp_sync;

@@ -16,6 +16,7 @@ use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
 use crate::handlers::{conversion_rules, erp_connections, erp_mappings, events, lims_qms, mes_erp, mes_qms, sync, wms_scm};
+use crate::external_erp;
 use crate::models::AppState;
 use crate::plugin;
 
@@ -58,6 +59,8 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/erp/mappings/{id}", get(erp_mappings::get_mapping))
         .route("/erp/mappings/{id}", put(erp_mappings::update_mapping))
         .route("/erp/mappings/{id}", delete(erp_mappings::delete_mapping))
+        // 外部 ERP 集成（缺口#13）
+        .nest("/external-erp", external_erp::create_routes())
         .route("/lims-qms", get(lims_qms::list_lims_qms_sync))
         .route("/lims-qms", post(lims_qms::create_lims_qms_sync))
         .route("/lims-qms/{id}", get(lims_qms::get_lims_qms_sync))
