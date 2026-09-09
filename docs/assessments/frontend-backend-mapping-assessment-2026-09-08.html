@@ -200,7 +200,7 @@
   <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P3 · 可选级（28 项摘要）</h2>
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;font-size:12.5px;line-height:1.9;">
     <b>重复实现（6 组 · 2026-09-09 已治理 5 组）</b>：① consolidation 三方重复——consolidation/(30方法) + consolidation-contract/(25) + erp/core/consolidation.ts(~30)；② voucherTemplate 双方重复——独立 voucherTemplate/(15) 与 finance/voucherTemplate.ts(16)；③ financialReport 重复——financialReport/(8) 与 finance/report.ts(14)；④ risk.ts 与 riskV54.ts 重复——risk.ts(10) 是 riskV54.ts(12) 的子集；⑤ erp/receivablePayable 与 finance/receivablePayable 重叠——都调用 finance 后端 /receivables 和 /payables；⑥ erp/database 与 erp/core/dbStructure 重复。<br><b>治理结果（commit 8db835b1f）</b>：归档 11 文件——consolidation-contract(7)/voucherTemplate(1)/financialReport(1)/finance-risk.ts/riskV59.ts/erp-core-dbStructure.ts/erp-core-consolidation.ts，全库 0 引用（含 @/ 别名与桶 re-export 双模式核验）；③保留方按消费事实修正——api/consolidation 经 hooks/useConsolidation.ts 真实消费故保留、改归档 erp/core/consolidation.ts；⑥保留 erp/database.ts（5 处页面消费）、归档 erp/core/dbStructure.ts；⑤两组均有页面消费（erp 版 5 处、finance 版发票/收据页）→ 归并需页面迁移，标注暂缓；tsc+eslint 0 error。<br>
-    <b>零消费模块（4 个，835 方法悬空）— ✅ 预埋确认（2026-09-09 复核）</b>：master(702)/file(45)/dict(11)/unified-core(77) 无任何页面/组件 import＝预埋式悬空代码，不建端点；如需启用按真实需求立项。<br>
+    <b>零消费模块（4 个，835 方法悬空）— ✅ 治理收敛（2026-09-09）</b>：master(702)/file(45)/dict(11)/unified-core(77) 页面零消费复核成立；治理：dict(11) 已归档（api/dict/dict.ts 0 引用，字典功能由 erp/core/dict 承载、19 处消费在役）；master/file/unified-core 目录维持预埋——其中 file 服务经 api/shared+api/doc 中转在役（upload/attachments）、unified-core 服务在役（apiClient.core＝doc/workflow 前缀 /api/core/*），仅目录级封装文件未被直接引用。<br>
     <b>Mock 数据依赖 — ✅ 已核实</b>：useCrmMock 为显式开关（VITE_ENABLE_CRM_MOCK/topemsDemo 开启、VITE_CRM_DISABLE_MOCK 关闭），非假数据兜底；7 页面已接真实 API，mock 为演示模式。qms/mock.ts、wms/mock.ts 同属演示开关。<br>
     <b>代码质量 / 文档</b>：notification 只读 401 降级机制需文档化；crm/analytics 与各分析模块路由重叠；ticket/knowledge-articles 后端有但前端无；analytics 目录名与 /api/bi 路由前缀不一致（已知 P2）；erp/master-data GraphQL 端点前端无 GraphQL client；erp/hrm_integration_example 示例代码无需前端；WMS 空文件 analytics.ts + approval.ts（0行）；workflow/flow 别名双份实现。
   </div>
@@ -249,7 +249,7 @@
     ⑨ CI 门禁 → 建议保留实施（前端 API 路径须在后端路由注册表，类似 check-schema-boundary），未编码。
     ⑩ 重复实现 6 组 → ✅ 已治理（commit 8db835b1f）：归档 11 文件（行为兼容：全库 0 引用后删除），receivablePayable 两组保留（均有页面消费，归并暂缓）。
     ⑪ 版本化生命周期 → 已标注治理建议：master V61-V79 预埋、finance V51-V60 反向无消费、risk 三份并存，建议建生命周期登记表。
-    ⑫ 零消费模块 835 方法 → ✅ 预埋确认（master/file/dict/unified-core 页面零消费），待产品立项启用。
+    ⑫ 零消费模块 835 方法 → ✅ 已治理（2026-09-09）：dict(11) 已归档（erp 版承载在役），master/file/unified-core 维持预埋（后两者服务在役、仅目录封装未消费）。
   </div>
 
   <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:12.5px;box-sizing:border-box;">
