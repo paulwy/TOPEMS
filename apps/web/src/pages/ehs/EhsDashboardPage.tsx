@@ -20,8 +20,9 @@ const EhsDashboardPage: React.FC = () => {
   const { isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_DASHBOARD_BASE,
     queryFn: async () => {
+      // schema.loader 内部调用 ehsDashboardApi.getOverview() 并填充模块级 ehsStats
       await schema.loader?.();
-      return window.__ehsStats ?? null;
+      return null;
     },
     staleTime: 5 * 60 * 1000,
   });

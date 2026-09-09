@@ -1,5 +1,6 @@
 pub mod accident;
 pub mod data_sync;
+pub mod dashboard;
 pub mod ehs_plugin;
 pub mod emergency_drill;
 pub mod emergency_plan;
@@ -31,6 +32,7 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(health::create_routes())
         .merge(hazard::create_routes())
         .merge(data_sync::create_routes())
+        .merge(dashboard::create_routes())
         .merge(emergency_plan::create_routes())
         .merge(emergency_drill::create_routes())
         .merge(occupational_health::create_routes())

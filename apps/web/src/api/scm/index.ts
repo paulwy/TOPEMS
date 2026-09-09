@@ -18,6 +18,7 @@ import { deliveryAppointmentApi } from './deliveryAppointment';
 import { purchaseRequisitionApi } from './purchaseRequisition';
 import { purchaseContractApi } from './purchaseContract';
 import { supplierAdmissionApi } from './supplierAdmission';
+import { scmSettingsApi } from './settings';
 
 export * from './types';
 
@@ -38,6 +39,7 @@ export { priceComparisonApi } from './priceComparison';
 export { purchaseRequisitionApi } from './purchaseRequisition';
 export { purchaseContractApi } from './purchaseContract';
 export { supplierAdmissionApi } from './supplierAdmission';
+export { scmSettingsApi } from './settings';
 
 export const scmApi = {
   suppliers: supplierApi,
@@ -57,6 +59,7 @@ export const scmApi = {
   purchaseRequisitions: purchaseRequisitionApi,
   purchaseContracts: purchaseContractApi,
   supplierAdmissions: supplierAdmissionApi,
+  settings: scmSettingsApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.scm.get('/health');

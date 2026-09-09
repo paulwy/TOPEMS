@@ -19,6 +19,7 @@ pub mod purchase_item;
 pub mod purchase_order;
 pub mod purchase_requisition;
 pub mod scm_plugin;
+pub mod settings;
 pub mod supplier;
 pub mod supplier_admission;
 pub mod supplier_delivery_appointment;
@@ -71,4 +72,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(supply_chain_dashboard::create_routes())
         .merge(audit::create_routes())
         .merge(data_sync::create_routes())
+        .merge(settings::create_routes())
 }
