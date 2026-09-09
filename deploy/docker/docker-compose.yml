@@ -1036,6 +1036,48 @@ services:
     restart: unless-stopped
 
   # ================================================
+  # 插件注册服务（plugin-registry, 8096）
+  # 前端 /api/plugin/* 经 Traefik router-plugin → svc-plugin 路由至此
+  # ================================================
+  plugin-registry:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-plugin-registry
+        SERVICE_PORT: "8096"
+        PORT_ENV_VAR: PLUGIN_REGISTRY_PORT
+        SERVICE_DIR: plugin-registry
+    container_name: topems-plugin-registry
+    environment:
+      - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
+      - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - PLUGIN_REGISTRY_PORT=8096
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - CONSUL_URL=http://consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - CONSUL_ENABLED=true
+    ports:
+      - "${PLUGIN_REGISTRY_PORT:-8096}:8096"
+    volumes:
+      - ../svc/plugin-registry:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
   # API网关（Traefik 统一入口 + nginx 静态资源）
   # ================================================
   traefik:
