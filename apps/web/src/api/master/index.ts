@@ -1,5 +1,4 @@
 import { schemaRegistryApi } from './schemaRegistry';
-import { dictionaryApi } from './dictionary';
 import { qualityApi } from './quality';
 import { lineageApi } from './lineage';
 import { governanceApi } from './governance';
@@ -34,7 +33,6 @@ import { dataLineageEnhancedApiV77 } from './dataLineageEnhancedV77';
 import { dataWorkflowAutomationApiV78 } from './dataWorkflowAutomationV78';
 import { dataPolicyConfigurationApiV79 } from './dataPolicyConfigurationV79';
 
-export { dictionaryApi } from './dictionary';
 export { qualityApi } from './quality';
 export { governanceApi } from './governance';
 export { aiGovernanceApi } from './aiGovernance';
@@ -69,7 +67,6 @@ export { dataPolicyConfigurationApiV79 } from './dataPolicyConfigurationV79';
 
 const masterApi = {
   schemaRegistry: schemaRegistryApi,
-  dictionary: dictionaryApi,
   quality: qualityApi,
   lineage: lineageApi,
   governance: governanceApi,
