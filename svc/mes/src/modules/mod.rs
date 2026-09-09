@@ -33,6 +33,7 @@ pub mod work_order;
 pub mod work_order_calc;
 pub mod work_report;
 pub mod work_station;
+pub mod settings;
 
 use crate::AppState;
 use axum::Router;
@@ -67,6 +68,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(work_report::create_routes())
         .merge(work_station::create_routes())
         .merge(audit::create_routes())
+        .merge(settings::create_routes())
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
