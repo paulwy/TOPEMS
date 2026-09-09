@@ -781,6 +781,8 @@ docs/
 ├── reports/                       # 技术债务与测试报告
 │   ├── phase21-test-report.md     # Phase21 整合测试报告
 │   └── debt-audit-2026-08-13.md   # 技术债务审计报告
+├── assessments/                   # 评估与审计报告（前后端映射/数据层/RLS/生命周期）
+│   └── README.md                  # 评估报告索引（含主报告 frontend-backend-mapping-assessment）
 ├── benchmarks/                    # 性能基准报告
 │   ├── build-cache-v71.md
 │   ├── vite-build-v71.md
