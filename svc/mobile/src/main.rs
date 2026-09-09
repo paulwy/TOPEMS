@@ -91,6 +91,13 @@ use modules::workbench::get_workbench_data;
 
 use modules::mobile_plugin::create_routes;
 use modules::missing_endpoints::{get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config, update_push_template};
+use modules::oa::{
+    complete_oa_task, create_calendar_event, create_meeting, create_oa_task,
+    delete_calendar_event, delete_meeting, delete_oa_task, get_announcement, get_meeting,
+    get_oa_stats, get_oa_task, join_meeting, leave_meeting, list_announcements,
+    list_calendar_events, list_meetings, list_oa_tasks, mark_announcement_read,
+    update_calendar_event, update_meeting, update_oa_task,
+};
 use shared::AppState;
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
@@ -534,7 +541,21 @@ async fn main() -> Result<()> {
             "/production/work-reports",
             axum::routing::get(list_work_reports).post(submit_work_report),
         )
-        .route("/production/equipment", axum::routing::get(list_equipment));
+        .route("/production/equipment", axum::routing::get(list_equipment))
+        // ===== OA 办公协同（缺口#14） =====
+        .route("/meetings", axum::routing::get(list_meetings).post(create_meeting))
+        .route("/meetings/{id}", axum::routing::get(get_meeting).put(update_meeting).delete(delete_meeting))
+        .route("/meetings/{id}/join", axum::routing::post(join_meeting))
+        .route("/meetings/{id}/leave", axum::routing::post(leave_meeting))
+        .route("/calendar/events", axum::routing::get(list_calendar_events).post(create_calendar_event))
+        .route("/calendar/events/{id}", axum::routing::put(update_calendar_event).delete(delete_calendar_event))
+        .route("/tasks", axum::routing::get(list_oa_tasks).post(create_oa_task))
+        .route("/tasks/{id}", axum::routing::get(get_oa_task).put(update_oa_task).delete(delete_oa_task))
+        .route("/tasks/{id}/complete", axum::routing::post(complete_oa_task))
+        .route("/announcements", axum::routing::get(list_announcements))
+        .route("/announcements/{id}", axum::routing::get(get_announcement))
+        .route("/announcements/{id}/read", axum::routing::post(mark_announcement_read))
+        .route("/oa/stats", axum::routing::get(get_oa_stats));
 
     let openapi_json = serde_json::to_string_pretty(&services::openapi::MobileApiDoc::openapi())
         .unwrap_or_else(|e| {

@@ -7,6 +7,7 @@ pub mod inventory;
 pub mod media;
 pub mod missing_endpoints;
 pub mod mobile_plugin;
+pub mod oa;
 pub mod offline;
 pub mod offline_records;
 pub mod offline_sync;
