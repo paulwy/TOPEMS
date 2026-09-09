@@ -1,17 +1,17 @@
-# 预埋项立项建议清单（READY FOR REVIEW · 2026-09-09，更新 2026-09-09）
+# 预埋项立项建议清单（DECIDED · 2026-09-10 拍板）
 
 > 目的：把 P1-P3 审计中判定"预埋/待立项"且需产品决策的能力项，收敛为**可直接评审拍板**的立项卡。
-> 状态：**READY FOR REVIEW**——每卡已给推荐决策、默认动作与决策期限；产品 5 分钟可拍板，不拍板也有自动退路（见文末决策表），不再无限期挂起。
+> 状态：**DECIDED（2026-09-10 产品分析拍板）**——3 张卡全部拍板，卡 3 已执行改指，卡 1/2 按决策推进。
 > 判定口径：页面零消费 + 后端（或前端）实现存在但不承接；与"真实消费缺口"（P0/P1 已闭环）严格区分。
 > 配套：版本化生命周期登记表 `docs/assessments/version-lifecycle-registry-2026-09-09.md`；主报告 `frontend-backend-mapping-assessment-2026-09-08.html`。
 
-## 拍板问题（TL;DR）
+## 拍板结果（TL;DR · 2026-09-10）
 
-| # | 立项卡 | 现状 | **推荐决策** | 默认动作（未拍板） | 决策期限 | 优先级 |
-|---|---|---|---|---|---|---|
-| 1 | IM 白板 / 呼叫 | 前端 imApi 基础 95 方法在役；白板/呼叫前端无封装、communication 后端无模块（im.rs/im_location.rs 仅基础消息） | **暂缓立项，维持预埋**：场景未定前不做能力投资；以真实需求触发立项（见卡 1 触发条件） | 维持预埋，登记表持续观察；需求出现即按触发条件激活 | 需求驱动（无固定期限） | P2 |
-| 2 | master V61+ 数据治理产品族 | master 前端 21 个 V61-V79 文件 + 后端 10 版本化模块真实挂载（~240 路由），页面零消费 | **试点 dataAssetCatalogV66（数据资产目录）**：依赖最少、是治理入口、可与 ai usage 统计衔接；其余继续预埋 | 试点搁置，登记表按量化条件观察；满 2 个主版本周期无承接 → 评估归档 | 1 个迭代周期（2 周）内 | P3 |
-| 3 | WMS 拣货 6 模块 | 前端 kitting/labor/manifest/picking/putaway/slotting 完整封装（调 `/picking/*` 等路径），后端无对应模块（wave_pick.rs 为已实现的波次拣货，路径 `/wave-picks/*` 与前端不匹配） | **a) 改指复用 wave_pick**（成本最低）：前端 picking.ts 改指 `/wave-picks/*`，复用已实现能力；kitting/labor/manifest/putaway/slotting 维持预埋 | 维持现状（三选一挂起），登记表持续观察；风险：新消费方误指 `/picking/*` 悬空路径 | 1 个迭代周期（2 周）内 | P2 |
+| # | 立项卡 | 现状 | **拍板决策** | 执行状态 | 优先级 |
+|---|---|---|---|---|---|
+| 1 | IM 白板 / 呼叫 | 前端 imApi 基础 95 方法在役；白板/呼叫前后端均无实现 | **暂缓立项，维持预埋**：重基建能力零场景零回报，需求驱动触发 | 维持预埋，登记表观察 | P2 |
+| 2 | master V61+ 数据治理产品族 | 前端 21 文件 + 后端 10 模块 ~240 路由真实挂载，页面零消费 | **试点 dataAssetCatalogV66（数据资产目录）**：治理入口、成本最低、与 ai usage 衔接 | 待实施（1 迭代周期内出前端承接页） | P3 |
+| 3 | WMS 拣货 6 模块 | 前端 6 模块完整封装，后端无对应模块；wave_pick 已实现路径不匹配 | **a) 改指复用 wave_pick**：8 个方法改指 `/wave-picks/*`，9 个无对应路由方法保留预埋 | ✅ 已执行（picking.ts 改指 + 门禁 PASS） | P2 |
 
 ## 立项卡明细
 
@@ -44,6 +44,8 @@
 - **拍板问题**：① 拣货作业是否已有波次流程支撑（wave_pick 是否即拣货的线上形态）；② 若立项，选 a/b；③ kitting/labor/manifest/putaway/slotting 是否同批立项。
 - **依赖**：仓储作业流程定义；wave_pick 与 picking 数据模型归并决策。
 - **推荐决策依据（a 改指复用）**：wave_pick 已实现完整波次拣货（`/wave-picks/*` + picked_items/picked_quantity 模型），前端 picking.ts 改指即可获得真实能力，改动集中在路径对齐 + 字段核对，半天量级；b 需新增后端模块 + 与 wave_pick 做模型归并，成本数倍且可能重复建设；c 维持预埋则 `/picking/*` 悬空路径持续成为新消费方陷阱。**改指后**：门禁重跑（check-api-boundary）+ picking.ts 字段核对（picked_items ↔ 任务模型）。
+
+- **【2026-09-10 执行记录】**：拍板 a) 改指复用 wave_pick。picking.ts 17 个方法中 8 个有对应 wave-pick 路由已改指（listTasks/getTask/createTask/startTask/completeTask/cancelTask/assignTask/listTaskLines），9 个无对应路由方法保留预埋（pickLine/shortPickLine/listLists/createList/getList/createStrategy/listStrategies/getStatistics）。页面零消费（0 处调用），改指不影响现有功能。门禁 check-api-boundary PASS（0 violations，2682 matched + 282 allowlisted）。kitting/labor/manifest/putaway/slotting 维持预埋观察。
 
 ## 不在本清单（已闭环/被动）
 

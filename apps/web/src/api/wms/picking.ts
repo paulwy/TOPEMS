@@ -168,41 +168,41 @@ export const pickingApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<{ items: PickingTask[]; total: number }>> => {
-    return apiClient.wms.get('/picking/tasks', { params });
+    return apiClient.wms.get('/wave-picks', { params });
   },
 
   getTask: async (id: string): Promise<ApiResponse<PickingTask>> => {
-    return apiClient.wms.get(`/picking/tasks/${id}`);
+    return apiClient.wms.get(`/wave-picks/${id}`);
   },
 
   createTask: async (data: CreatePickingTaskRequest): Promise<ApiResponse<PickingTask>> => {
-    return apiClient.wms.post('/picking/tasks', data);
+    return apiClient.wms.post('/wave-picks', data);
   },
 
   startTask: async (id: string): Promise<ApiResponse<PickingTask>> => {
-    return apiClient.wms.post(`/picking/tasks/${id}/start`);
+    return apiClient.wms.post(`/wave-picks/${id}/start`);
   },
 
   completeTask: async (
     id: string,
     data?: { remark?: string }
   ): Promise<ApiResponse<PickingTask>> => {
-    return apiClient.wms.post(`/picking/tasks/${id}/complete`, data || {});
+    return apiClient.wms.post(`/wave-picks/${id}/complete`, data || {});
   },
 
   cancelTask: async (id: string, reason?: string): Promise<ApiResponse<PickingTask>> => {
-    return apiClient.wms.post(`/picking/tasks/${id}/cancel`, { reason });
+    return apiClient.wms.post(`/wave-picks/${id}/cancel`, { reason });
   },
 
   assignTask: async (
     id: string,
     data: AssignPickingTaskRequest
   ): Promise<ApiResponse<PickingTask>> => {
-    return apiClient.wms.post(`/picking/tasks/${id}/assign`, data);
+    return apiClient.wms.post(`/wave-picks/${id}/assign`, data);
   },
 
   listTaskLines: async (taskId: string): Promise<ApiResponse<PickingTaskLine[]>> => {
-    return apiClient.wms.get(`/picking/tasks/${taskId}/lines`);
+    return apiClient.wms.get(`/wave-picks/${taskId}/items`);
   },
 
   pickLine: async (
