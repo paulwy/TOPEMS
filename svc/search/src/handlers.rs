@@ -3,6 +3,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use serde::Deserialize;
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
@@ -392,6 +393,20 @@ pub async fn search_handler(
 
     let (_offset, _total_pages, current_page) = calculate_pagination(page, page_size, total);
 
+    // 记录搜索日志（fire-and-forget，不阻塞响应）
+    let log_query = keyword.clone();
+    let log_pool = pool.clone();
+    let log_result_count = total;
+    tokio::spawn(async move {
+        let _ = sqlx::query(
+            "INSERT INTO public.search_logs (query, result_count) VALUES ($1, $2)",
+        )
+        .bind(log_query)
+        .bind(log_result_count)
+        .execute(&log_pool)
+        .await;
+    });
+
     Json(api_success(SearchResponse {
         items: results,
         total,
@@ -414,6 +429,73 @@ pub async fn search_handler(
 )]
 pub async fn health_handler() -> &'static str {
     "OK"
+}
+
+// ==================== /suggestions ====================
+
+#[derive(Debug, Deserialize)]
+pub struct SuggestionsQuery {
+    pub q: Option<String>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SuggestionsResponse {
+    pub suggestions: Vec<String>,
+}
+
+/// GET /suggestions — 从 search_logs 聚合热门搜索词，支持按前缀过滤
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["search:read"])),
+    path = "/api/search/suggestions",
+    tag = "search",
+    responses(
+        (status = 200, description = "搜索建议"),
+    ),
+)]
+pub async fn suggestions_handler(
+    State(pool): State<PgPool>,
+    Query(params): Query<SuggestionsQuery>,
+) -> Json<ApiResponse<SuggestionsResponse>> {
+    let limit = params.limit.unwrap_or(10).clamp(1, 50);
+
+    let suggestions: Vec<String> = if let Some(q) = params.q.filter(|s| !s.trim().is_empty()) {
+        // 有前缀：匹配历史搜索词中以该前缀开头的，按频次排序
+        match sqlx::query_scalar::<_, String>(
+            "SELECT query FROM public.search_logs
+             WHERE query ILIKE $1
+             GROUP BY query
+             ORDER BY COUNT(*) DESC, MAX(created_at) DESC
+             LIMIT $2",
+        )
+        .bind(format!("{}%", q.trim()))
+        .bind(limit)
+        .fetch_all(&pool)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(_) => Vec::new(),
+        }
+    } else {
+        // 无前缀：返回最近 7 天热门搜索词
+        match sqlx::query_scalar::<_, String>(
+            "SELECT query FROM public.search_logs
+             WHERE created_at >= NOW() - INTERVAL '7 days'
+             GROUP BY query
+             ORDER BY COUNT(*) DESC, MAX(created_at) DESC
+             LIMIT $1",
+        )
+        .bind(limit)
+        .fetch_all(&pool)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(_) => Vec::new(),
+        }
+    };
+
+    Json(api_success(SuggestionsResponse { suggestions }))
 }
 
 #[allow(dead_code)]

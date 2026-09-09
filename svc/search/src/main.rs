@@ -42,6 +42,7 @@ async fn main() -> anyhow::Result<()> {
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
     let protected_routes = Router::new()
         .route("/", get(handlers::search_handler))
+        .route("/suggestions", get(handlers::suggestions_handler))
         .layer(axum::middleware::from_fn(require_permission(
             "search:admin",
         )))
