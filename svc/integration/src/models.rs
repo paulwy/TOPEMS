@@ -146,6 +146,70 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
+// ===== ERP 连接模型（缺口#11） =====
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ErpConnection {
+    pub id: Uuid,
+    pub tenant_id: String,
+    pub name: String,
+    pub r#type: String,
+    pub api_url: String,
+    pub api_version: Option<String>,
+    pub app_key: Option<String>,
+    pub app_secret: Option<String>,
+    pub sync_direction: String,
+    pub sync_mode: String,
+    pub sync_interval: Option<i32>,
+    pub status: String,
+    pub isactive: bool,
+    pub last_sync_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateErpConnectionRequest {
+    pub name: String,
+    pub r#type: Option<String>,
+    pub api_url: String,
+    pub api_version: Option<String>,
+    pub app_key: Option<String>,
+    pub app_secret: Option<String>,
+    pub sync_direction: Option<String>,
+    pub sync_mode: Option<String>,
+    pub sync_interval: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateErpConnectionRequest {
+    pub name: Option<String>,
+    pub api_url: Option<String>,
+    pub api_version: Option<String>,
+    pub app_key: Option<String>,
+    pub app_secret: Option<String>,
+    pub sync_direction: Option<String>,
+    pub sync_mode: Option<String>,
+    pub sync_interval: Option<i32>,
+    pub isactive: Option<bool>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TestConnectionRequest {
+    pub api_url: String,
+    pub app_key: Option<String>,
+    pub app_secret: Option<String>,
+    pub timeout: Option<u64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TestConnectionResponse {
+    pub success: bool,
+    pub response_time_ms: u64,
+    pub error_message: Option<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

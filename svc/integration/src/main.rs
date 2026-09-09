@@ -123,6 +123,9 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     if let Err(e) = init_sync_tables(pool).await {
         tracing::warn!("init_sync_tables warning: {}", e);
     }
+    if let Err(e) = init_erp_connections_table(pool).await {
+        tracing::warn!("init_erp_connections_table warning: {}", e);
+    }
 
     // V69.3 Schema 防御：增量迁移 + 一致性自检（8 表）
     if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
@@ -174,6 +177,44 @@ async fn init_sync_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_source ON core_inter_module_sync(source_module)"),
     )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+/// 初始化 ERP 连接表（缺口#11）
+async fn init_erp_connections_table(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        r#"
+        CREATE TABLE IF NOT EXISTS erp_connections (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
+            name VARCHAR(128) NOT NULL,
+            type VARCHAR(32) NOT NULL DEFAULT 'custom',
+            api_url VARCHAR(512) NOT NULL,
+            api_version VARCHAR(32),
+            app_key VARCHAR(256),
+            app_secret VARCHAR(512),
+            sync_direction VARCHAR(32) DEFAULT 'bidirectional',
+            sync_mode VARCHAR(32) DEFAULT 'manual',
+            sync_interval INTEGER,
+            status VARCHAR(32) DEFAULT 'inactive',
+            isactive BOOLEAN DEFAULT TRUE,
+            last_sync_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!(
+        "integration",
+        "CREATE INDEX IF NOT EXISTS idx_erp_connections_tenant ON erp_connections(tenant_id)"
+    ))
     .execute(pool)
     .await?;
 
