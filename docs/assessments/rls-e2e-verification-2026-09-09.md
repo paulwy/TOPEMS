@@ -182,3 +182,18 @@
 
 - 受限角色 `rls_e2e`（密码 `rls_e2e_secret`）保留，可复测；验证脚本 `/tmp/rls_e2e_verify.sql`。
 - 测试数据：验证过程中无污染写入（INSERT 被拦截、UPDATE 0 行受影响，`t1_name_x=0` 已核）。
+
+---
+
+## RLS 覆盖率专项收尾（2026-09-09）
+
+**盘点结论**：早期"234 张未启用 RLS"判定已过时——迁移 20260908000017/18（rls policy align / rls force）+ 572 条策略落地后，含 `tenant_id`/`org_id` 列的全部 **538 张表已 100% 启用 RLS 且均有策略**（0 张缺失）。
+
+**收尾缺口**：538 张中 312 张已 FORCE，**226 张 RLS 未 FORCE**（表 owner 可绕过策略），按 schema 分布：pm 36 / erp 22 / wms 22 / mobile 18 / mes 18 / ehs 16 / lims 13 / srm 8 / flow 7 / qms 7 / crm 7 / scm 6 / doc_service 6 / ai·bi·integration·portal 各 4 / finance·rs·iam·communication 各 3 / master_data·hrm·ticket·mail 各 2 / core·storage·report·notification 各 1。
+
+**实施（迁移 `20260909000004_rls_force_all.sql`，已应用）**：226 张表 `ALTER TABLE ... FORCE ROW LEVEL SECURITY` 全部执行无错；当前 FORCE 覆盖 **538/538（100%）**。
+
+**验证**：
+- `sqlx migrate info`：99 条全部 installed，0 error/pending
+- 冒烟：带 `app.tenant_id`（UUID）上下文查询返回该租户 0 行（策略生效）；无上下文返回 0 行（FORCE 后 owner 裸查不泄露）
+- crm 服务测试 501 passed（RLS 隔离用例 ok）——服务层不受 FORCE 影响
