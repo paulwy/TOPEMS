@@ -7,7 +7,7 @@
 //! - GET  /models                       — 模型列表（ai.ai_models）
 //! - GET  /models/{id}/config           — 模型运行配置
 //! - PUT  /models/{id}/config           — 更新模型运行配置
-//! - GET  /models/usage                 — 用量统计（无 usage 采集表，返回空结构与 0，待 usage 模块）
+//! - GET  /models/usage                 — 用量统计（ai.model_usage_stats 真实聚合）
 //!
 //! 数据口径：统计类端点只聚合现有真实表（ai.qa_history / ai.documents / ai.analysis_results /
 //! ai.vectors / ai.qa_history）；tokens/active_users/satisfaction_rate/cost 等无数据源字段
@@ -374,18 +374,95 @@ pub struct UsageStats {
     pub breakdown: Vec<UsageBreakdown>,
 }
 
-/// GET /models/usage — 无 usage 采集表（ai 服务尚未接 token 计量），返回空结构与 0，待 usage 模块落地
+/// GET /models/usage — 从 ai.model_usage_stats 真实聚合（按租户/日期/模型过滤）
 pub async fn get_model_usage(
-    State(_state): State<AppState>,
-    Query(_params): Query<UsageStatsQuery>,
-    _claims: Extension<Claims>,
+    State(state): State<AppState>,
+    Query(params): Query<UsageStatsQuery>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<UsageStats>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+
+    // 构建动态 WHERE 子句（$1 始终为 tenant_id）
+    let mut where_clauses: Vec<String> = vec!["(tenant_id IS NULL OR tenant_id = $1)".to_string()];
+    let mut param_idx = 2;
+
+    if let Some(ref sd) = params.start_date {
+        where_clauses.push(format!("date >= ${}::date", param_idx));
+        param_idx += 1;
+    }
+    if let Some(ref ed) = params.end_date {
+        where_clauses.push(format!("date <= ${}::date", param_idx));
+        param_idx += 1;
+    }
+    if params.model_id.is_some() {
+        where_clauses.push(format!("model_id = ${}::uuid", param_idx));
+        param_idx += 1;
+    }
+
+    let where_sql = where_clauses.join(" AND ");
+
+    // 1) 总计聚合
+    let total_sql = format!(
+        "SELECT COALESCE(SUM(token_count), 0) AS total_tokens, \
+                COALESCE(SUM(request_count), 0) AS total_requests \
+         FROM ai.model_usage_stats WHERE {}",
+        where_sql
+    );
+
+    let mut total_query = sqlx::query(&total_sql).bind(tenant_id);
+    if let Some(ref sd) = params.start_date { total_query = total_query.bind(sd); }
+    if let Some(ref ed) = params.end_date { total_query = total_query.bind(ed); }
+    if let Some(mid) = params.model_id { total_query = total_query.bind(mid); }
+
+    let (total_tokens, total_requests) = match total_query.fetch_one(&state.pool).await {
+        Ok(row) => {
+            let tt: i64 = row.try_get("total_tokens").unwrap_or(0);
+            let tr: i64 = row.try_get("total_requests").unwrap_or(0);
+            (tt, tr)
+        }
+        Err(e) => return Json(ApiResponse::<UsageStats>::error(500, &e.to_string())),
+    };
+
+    // 2) 按日期+模型分组的明细
+    let breakdown_sql = format!(
+        "SELECT to_char(date, 'YYYY-MM-DD') AS d, model_id::text AS mid, \
+                SUM(token_count) AS tokens, SUM(request_count) AS requests \
+         FROM ai.model_usage_stats WHERE {} \
+         GROUP BY date, model_id ORDER BY date DESC, model_id",
+        where_sql
+    );
+
+    let mut breakdown_query = sqlx::query(&breakdown_sql).bind(tenant_id);
+    if let Some(ref sd) = params.start_date { breakdown_query = breakdown_query.bind(sd); }
+    if let Some(ref ed) = params.end_date { breakdown_query = breakdown_query.bind(ed); }
+    if let Some(mid) = params.model_id { breakdown_query = breakdown_query.bind(mid); }
+
+    let mut breakdown: Vec<UsageBreakdown> = Vec::new();
+    match breakdown_query.fetch_all(&state.pool).await {
+        Ok(rows) => {
+            for row in rows {
+                let date: String = row.try_get("d").unwrap_or_default();
+                let model_id_str: String = row.try_get("mid").unwrap_or_default();
+                let tokens: i64 = row.try_get("tokens").unwrap_or(0);
+                let requests: i64 = row.try_get("requests").unwrap_or(0);
+                breakdown.push(UsageBreakdown {
+                    date,
+                    model_id: model_id_str,
+                    tokens,
+                    requests,
+                    cost: 0.0, // 暂无单价数据，后续可关联 ai_models.pricing 计算
+                });
+            }
+        }
+        Err(e) => return Json(ApiResponse::<UsageStats>::error(500, &e.to_string())),
+    }
+
     Json(ApiResponse::success(
         UsageStats {
-            total_tokens: 0,
-            total_requests: 0,
+            total_tokens,
+            total_requests,
             total_cost: 0.0,
-            breakdown: Vec::new(),
+            breakdown,
         },
         "Success",
     ))
