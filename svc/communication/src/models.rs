@@ -152,6 +152,65 @@ pub struct UpdateEmailTemplateRequest {
     pub description: Option<String>,
 }
 
+// ===== 通知渠道模型 =====
+
+#[derive(Debug, Deserialize)]
+pub struct ChannelQuery {
+    pub r#type: Option<String>,
+    pub status: Option<String>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateChannelRequest {
+    pub name: String,
+    pub r#type: String,
+    pub provider_id: Option<Uuid>,
+    pub config: Option<serde_json::Value>,
+    pub is_default: Option<bool>,
+    pub rate_limit_per_minute: Option<i32>,
+    pub retry_count: Option<i32>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateChannelRequest {
+    pub name: Option<String>,
+    pub config: Option<serde_json::Value>,
+    pub is_default: Option<bool>,
+    pub rate_limit_per_minute: Option<i32>,
+    pub retry_count: Option<i32>,
+    pub description: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct NotificationChannel {
+    pub id: Uuid,
+    pub tenant_id: String,
+    pub name: String,
+    pub r#type: String,
+    pub status: String,
+    pub provider_id: Option<Uuid>,
+    pub is_default: bool,
+    pub config: serde_json::Value,
+    pub rate_limit_per_minute: Option<i32>,
+    pub retry_count: Option<i32>,
+    pub description: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ChannelMetrics {
+    pub total_sent: i64,
+    pub total_failed: i64,
+    pub success_rate: f64,
+    pub avg_latency_ms: f64,
+    pub by_hour: Vec<serde_json::Value>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

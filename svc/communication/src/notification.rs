@@ -10,8 +10,9 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{
-    ArchiveConfig, BroadcastNotificationRequest, BulkIdsRequest, CreateTemplateRequest,
-    NotificationQuery, SendNotificationRequest, UpdateTemplateRequest,
+    ArchiveConfig, BroadcastNotificationRequest, BulkIdsRequest, ChannelMetrics, ChannelQuery,
+    CreateChannelRequest, CreateTemplateRequest, NotificationChannel, NotificationQuery,
+    SendNotificationRequest, UpdateChannelRequest, UpdateTemplateRequest,
 };
 
 /// 通知优先级枚举
@@ -1912,6 +1913,293 @@ async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -
     }
 
     Ok(())
+}
+
+// ===== 通知渠道 CRUD =====
+
+/// 列出通知渠道
+pub async fn list_channels(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<ChannelQuery>,
+) -> Json<serde_json::Value> {
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+
+    let type_filter = query.r#type.clone();
+    let status_filter = query.status.clone();
+
+    let rows = match sqlx::query_as::<_, NotificationChannel>(
+        "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
+         rate_limit_per_minute, retry_count, description, created_at, updated_at \
+         FROM notification_channels \
+         WHERE tenant_id = $1 \
+           AND ($2::text IS NULL OR type = $2) \
+           AND ($3::text IS NULL OR status = $3) \
+         ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+    )
+    .bind(&tenant_id)
+    .bind(type_filter)
+    .bind(status_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("list_channels error: {}", e);
+            return Json(serde_json::json!({
+                "success": false, "message": format!("查询失败: {}", e), "data": null, "code": 500
+            }));
+        }
+    };
+
+    let total = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM notification_channels \
+         WHERE tenant_id = $1 AND ($2::text IS NULL OR type = $2) AND ($3::text IS NULL OR status = $3)",
+    )
+    .bind(&tenant_id)
+    .bind(query.r#type)
+    .bind(query.status)
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": "ok",
+        "data": {
+            "items": rows,
+            "total": total,
+            "page": page,
+            "page_size": page_size
+        },
+        "code": 200
+    }))
+}
+
+/// 获取单个渠道
+pub async fn get_channel(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    match sqlx::query_as::<_, NotificationChannel>(
+        "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
+         rate_limit_per_minute, retry_count, description, created_at, updated_at \
+         FROM notification_channels WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(&tenant_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(ch)) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": ch, "code": 200
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "渠道不存在", "data": null, "code": 404
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false, "message": format!("查询失败: {}", e), "data": null, "code": 500
+        })),
+    }
+}
+
+/// 创建渠道
+pub async fn create_channel(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateChannelRequest>,
+) -> Json<serde_json::Value> {
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let id = Uuid::new_v4();
+    let config = req.config.unwrap_or_else(|| serde_json::json!({}));
+    let is_default = req.is_default.unwrap_or(false);
+
+    // 如果设为默认，先取消其他默认
+    if is_default {
+        let _ = sqlx::query(
+            "UPDATE notification_channels SET is_default = false, updated_at = NOW() \
+             WHERE tenant_id = $1 AND is_default = true",
+        )
+        .bind(&tenant_id)
+        .execute(&pool)
+        .await;
+    }
+
+    match sqlx::query_as::<_, NotificationChannel>(
+        "INSERT INTO notification_channels \
+         (id, tenant_id, name, type, status, provider_id, is_default, config, \
+          rate_limit_per_minute, retry_count, description, created_at, updated_at) \
+         VALUES ($1,$2,$3,$4,'active',$5,$6,$7,$8,$9,$10,NOW(),NOW()) \
+         RETURNING id, tenant_id, name, type, status, provider_id, is_default, config, \
+         rate_limit_per_minute, retry_count, description, created_at, updated_at",
+    )
+    .bind(id)
+    .bind(&tenant_id)
+    .bind(&req.name)
+    .bind(&req.r#type)
+    .bind(req.provider_id)
+    .bind(is_default)
+    .bind(config)
+    .bind(req.rate_limit_per_minute)
+    .bind(req.retry_count.unwrap_or(3))
+    .bind(req.description)
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(ch) => Json(serde_json::json!({
+            "success": true, "message": "创建成功", "data": ch, "code": 200
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false, "message": format!("创建失败: {}", e), "data": null, "code": 500
+        })),
+    }
+}
+
+/// 更新渠道
+pub async fn update_channel(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateChannelRequest>,
+) -> Json<serde_json::Value> {
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+
+    // 如果设为默认，先取消其他默认
+    if req.is_default.unwrap_or(false) {
+        let _ = sqlx::query(
+            "UPDATE notification_channels SET is_default = false, updated_at = NOW() \
+             WHERE tenant_id = $1 AND is_default = true AND id != $2",
+        )
+        .bind(&tenant_id)
+        .bind(id)
+        .execute(&pool)
+        .await;
+    }
+
+    match sqlx::query_as::<_, NotificationChannel>(
+        "UPDATE notification_channels SET \
+         name = COALESCE($1, name), \
+         config = COALESCE($2, config), \
+         is_default = COALESCE($3, is_default), \
+         rate_limit_per_minute = COALESCE($4, rate_limit_per_minute), \
+         retry_count = COALESCE($5, retry_count), \
+         description = COALESCE($6, description), \
+         status = COALESCE($7, status), \
+         updated_at = NOW() \
+         WHERE id = $8 AND tenant_id = $9 \
+         RETURNING id, tenant_id, name, type, status, provider_id, is_default, config, \
+         rate_limit_per_minute, retry_count, description, created_at, updated_at",
+    )
+    .bind(req.name)
+    .bind(req.config)
+    .bind(req.is_default)
+    .bind(req.rate_limit_per_minute)
+    .bind(req.retry_count)
+    .bind(req.description)
+    .bind(req.status)
+    .bind(id)
+    .bind(&tenant_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(ch)) => Json(serde_json::json!({
+            "success": true, "message": "更新成功", "data": ch, "code": 200
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "渠道不存在", "data": null, "code": 404
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false, "message": format!("更新失败: {}", e), "data": null, "code": 500
+        })),
+    }
+}
+
+/// 删除渠道
+pub async fn delete_channel(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    match sqlx::query("DELETE FROM notification_channels WHERE id = $1 AND tenant_id = $2")
+        .bind(id)
+        .bind(&tenant_id)
+        .execute(&pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() > 0 {
+                Json(serde_json::json!({
+                    "success": true, "message": "删除成功", "data": {"deleted": true}, "code": 200
+                }))
+            } else {
+                Json(serde_json::json!({
+                    "success": false, "message": "渠道不存在", "data": null, "code": 404
+                }))
+            }
+        }
+        Err(e) => Json(serde_json::json!({
+            "success": false, "message": format!("删除失败: {}", e), "data": null, "code": 500
+        })),
+    }
+}
+
+/// 测试渠道连接
+pub async fn test_channel(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    match sqlx::query_as::<_, NotificationChannel>(
+        "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
+         rate_limit_per_minute, retry_count, description, created_at, updated_at \
+         FROM notification_channels WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(&tenant_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(_ch)) => {
+            // 最小可用：标记测试成功（实际发送测试可后续扩展）
+            Json(serde_json::json!({
+                "success": true, "message": "渠道测试通过（模拟）", "data": {"success": true}, "code": 200
+            }))
+        }
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "渠道不存在", "data": null, "code": 404
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false, "message": format!("测试失败: {}", e), "data": null, "code": 500
+        })),
+    }
+}
+
+/// 获取渠道指标
+pub async fn get_channel_metrics(
+    State(_pool): State<PgPool>,
+    Extension(_claims): Extension<Claims>,
+    Path(_id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    // 最小可用：返回空指标结构，避免 404
+    let metrics = ChannelMetrics {
+        total_sent: 0,
+        total_failed: 0,
+        success_rate: 0.0,
+        avg_latency_ms: 0.0,
+        by_hour: vec![],
+    };
+    Json(serde_json::json!({
+        "success": true, "message": "ok", "data": metrics, "code": 200
+    }))
 }
 
 #[cfg(test)]

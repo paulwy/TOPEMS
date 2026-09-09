@@ -78,6 +78,15 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/notification/notification-templates/{id}",
             get(notification::get_template),
+        )
+        .route("/notification/channels", get(notification::list_channels))
+        .route(
+            "/notification/channels/{id}",
+            get(notification::get_channel),
+        )
+        .route(
+            "/notification/channels/{id}/metrics",
+            get(notification::get_channel_metrics),
         );
 
     // ===== 通知写入路由（需要认证） =====
@@ -148,6 +157,19 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/notification/notification-templates/{id}",
             delete(notification::delete_template),
+        )
+        .route("/notification/channels", post(notification::create_channel))
+        .route(
+            "/notification/channels/{id}",
+            put(notification::update_channel),
+        )
+        .route(
+            "/notification/channels/{id}",
+            delete(notification::delete_channel),
+        )
+        .route(
+            "/notification/channels/{id}/test",
+            post(notification::test_channel),
         );
 
     // ===== IM 路由（需要认证） =====
@@ -347,6 +369,37 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
             deleted_at TIMESTAMP
         )
         "#
+    ))
+    .execute(pool)
+    .await?;
+
+    // 通知渠道表
+    sqlx::query(only_own_schema_query!(
+        "communication",
+        r#"
+        CREATE TABLE IF NOT EXISTS notification_channels (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
+            name VARCHAR(128) NOT NULL,
+            type VARCHAR(32) NOT NULL,
+            status VARCHAR(32) NOT NULL DEFAULT 'active',
+            provider_id UUID,
+            is_default BOOLEAN NOT NULL DEFAULT FALSE,
+            config JSONB NOT NULL DEFAULT '{}',
+            rate_limit_per_minute INTEGER,
+            retry_count INTEGER DEFAULT 3,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!(
+        "communication",
+        "CREATE INDEX IF NOT EXISTS idx_notification_channels_tenant ON notification_channels(tenant_id)"
     ))
     .execute(pool)
     .await?;
