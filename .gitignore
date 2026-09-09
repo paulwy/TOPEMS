@@ -297,13 +297,6 @@ apps/web/src/utils/observability/
 # 实验性 hooks
 
 # 实验性 utils
-apps/web/src/utils/edgeCompute.ts
-apps/web/src/utils/graphqlPerformance.ts
-apps/web/src/utils/isrManager.ts
-apps/web/src/utils/queryCostAnalyzer.ts
-apps/web/src/utils/querySharding.ts
-apps/web/src/utils/smartPrefetch.ts
-apps/web/src/utils/websocketOptimizer.ts
 apps/web/src/utils/workflow/
 
 # 生成型 Typed API 文件（实验性）
