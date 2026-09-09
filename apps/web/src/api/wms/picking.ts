@@ -1,16 +1,22 @@
 /**
  * WMS · 高级拣货 (Advanced Picking) API 绑定
  *
- * 后端: svc/wms/src/modules/picking.rs
- * 路由:
- *   GET    /picking/tasks
- *   POST   /picking/tasks
- *   GET    /picking/tasks/{id}
- *   POST   /picking/tasks/{id}/start
- *   POST   /picking/tasks/{id}/complete
- *   POST   /picking/tasks/{id}/cancel
- *   POST   /picking/tasks/{id}/assign
- *   GET    /picking/tasks/{id}/lines
+ * 【2026-09-10 拍板改指】原设计后端 svc/wms/src/modules/picking.rs 未实现，
+ * 实际复用已在役的 wave_pick.rs（波次拣货）。有对应路由的 8 个方法已改指 /wave-picks/*；
+ * 无对应路由的 9 个方法（lists/strategies/statistics/行级 pick/short-pick）保留预埋，
+ * 待真实消费场景出现时再补后端模块。
+ *
+ * 已改指路由（wave_pick.rs）:
+ *   GET    /wave-picks              (原 /picking/tasks)
+ *   POST   /wave-picks              (原 /picking/tasks)
+ *   GET    /wave-picks/{id}         (原 /picking/tasks/{id})
+ *   POST   /wave-picks/{id}/start   (原 /picking/tasks/{id}/start)
+ *   POST   /wave-picks/{id}/complete(原 /picking/tasks/{id}/complete)
+ *   POST   /wave-picks/{id}/cancel  (原 /picking/tasks/{id}/cancel)
+ *   POST   /wave-picks/{id}/assign  (原 /picking/tasks/{id}/assign)
+ *   GET    /wave-picks/{id}/items   (原 /picking/tasks/{id}/lines)
+ *
+ * 预埋路由（后端未实现，页面零消费）:
  *   POST   /picking/tasks/{id}/lines/{line_id}/pick
  *   POST   /picking/tasks/{id}/lines/{line_id}/short-pick
  *   GET    /picking/lists
