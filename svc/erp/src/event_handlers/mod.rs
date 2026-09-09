@@ -545,10 +545,8 @@ impl ErpEventHandlers {
         Ok(())
     }
 
-    /// WorkOrderCompleted → 触发成本核算（V20.1 真实实现）
-    ///
-    /// 解析工单完成事件，根据完成数量写入 erp_cost_allocations 表的成本归集记录。
-    /// 使用 graceful fallback：若表不存在或写入失败，记录警告并继续，不让事件处理失败。
+    /// WorkOrderCompleted → 订阅占位（原成本核算写入 erp_cost_allocations 属死代码已清理；
+    /// 表在库中不存在、无发布方闭环，未来如需成本归集按新功能立项）
     async fn handle_work_order_completed(&self, event: Event) -> HandlerResult {
         let payload: WorkOrderCompletedPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| format!("解析 WorkOrderCompleted payload 失败: {}", e))?;
@@ -559,55 +557,6 @@ impl ErpEventHandlers {
             payload.completed_quantity,
             event.trace_id
         );
-
-        let now = chrono::Utc::now();
-        let period = payload
-            .completed_at
-            .map(|d| d.format("%Y-%m").to_string())
-            .unwrap_or_else(|| now.format("%Y-%m").to_string());
-
-        let allocation_no = format!("COST-WO-{}", payload.work_order_no);
-        let completed_qty = payload.completed_quantity.unwrap_or(0.0);
-        // 简化成本估算：完成数量 * 单位标准成本（1.0）
-        // 真实场景应从 erp.material_standard_costs 查询标准成本
-        let estimated_cost = completed_qty * 1.0;
-
-        let result = sqlx::query(
-            r#"INSERT INTO erp_cost_allocations
-               (allocation_no, period, cost_type, work_order_id, product_id, product_name, amount, status, description, created_at)
-               VALUES ($1, $2, 'work_order_complete', $3, $4, $5, $6, 'posted', $7, $8)
-               ON CONFLICT (allocation_no) DO NOTHING"#,
-        )
-        .bind(&allocation_no)
-        .bind(&period)
-        .bind(payload.work_order_id)
-        .bind(payload.product_id)
-        .bind(payload.product_name.clone().unwrap_or_default())
-        .bind(estimated_cost)
-        .bind(format!(
-            "工单完成自动成本归集 - work_order_no={}, qty={}",
-            payload.work_order_no, completed_qty
-        ))
-        .bind(now)
-        .execute(&self.db)
-        .await;
-
-        match result {
-            Ok(_) => {
-                tracing::info!(
-                    "[erp] 已生成工单完成成本归集记录 - allocation_no={}, work_order_no={}, estimated_cost={}",
-                    allocation_no,
-                    payload.work_order_no,
-                    estimated_cost
-                );
-            }
-            Err(e) => {
-                tracing::warn!(
-                    "[erp] 工单完成成本归集记录创建失败（graceful fallback）: {}",
-                    e
-                );
-            }
-        }
 
         Ok(())
     }
@@ -646,70 +595,32 @@ impl ErpEventHandlers {
         tracing::info!("[erp] 已生成库存入库凭证 {}", voucher_no);
 
         if let Some(reference_order_id) = payload.reference_order_id {
-            tracing::info!(
-                "[erp] 检测到关联订单入库，触发生产成本核算 - inbound_no={}, reference_order_id={:?}",
-                payload.inbound_no,
-                reference_order_id
-            );
-
-            let cost_allocation_no = format!("COST-ALLOC-{}", payload.inbound_no);
-            let quantity = payload.quantity;
-
-            let result = sqlx::query(
-                r#"INSERT INTO erp_cost_allocations
-                   (allocation_no, period, cost_type, work_order_id, product_id, product_name, amount, status, description, created_at)
-                   VALUES ($1, $2, 'production_inbound', $3, $4, $5, $6, 'posted', $7, $8)
-                   ON CONFLICT (allocation_no) DO NOTHING"#,
+            let production_voucher_no = format!("PROD-IN-{}", payload.inbound_no);
+            let pv_result = sqlx::query(
+                r#"INSERT INTO erp.vouchers
+                   (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
+                   VALUES ($1, 'production_inbound', $2, 'draft', $3, $4)
+                   ON CONFLICT (voucher_no) DO NOTHING"#,
             )
-            .bind(&cost_allocation_no)
-            .bind(now.format("%Y-%m").to_string())
-            .bind(reference_order_id)
-            .bind(payload.material_id)
-            .bind(payload.material_name.unwrap_or_default())
-            .bind(quantity)
-            .bind(format!("生产入库自动成本归集 - {}", payload.inbound_no))
+            .bind(&production_voucher_no)
+            .bind(&payload.inbound_no)
             .bind(now)
+            .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&self.db)
             .await;
 
-            match result {
+            match pv_result {
                 Ok(_) => {
                     tracing::info!(
-                        "[erp] 生产成本核算记录已创建 - allocation_no={}",
-                        cost_allocation_no
+                        "[erp] 生产入库凭证已生成 - voucher_no={}",
+                        production_voucher_no
                     );
-
-                    let production_voucher_no = format!("PROD-IN-{}", payload.inbound_no);
-                    let pv_result = sqlx::query(
-                        r#"INSERT INTO erp.vouchers
-                           (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
-                           VALUES ($1, 'production_inbound', $2, 'draft', $3, $4)
-                           ON CONFLICT (voucher_no) DO NOTHING"#,
-                    )
-                    .bind(&production_voucher_no)
-                    .bind(&payload.inbound_no)
-                    .bind(now)
-                    .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
-                    .execute(&self.db)
-                    .await;
-
-                    match pv_result {
-                        Ok(_) => {
-                            tracing::info!(
-                                "[erp] 生产入库凭证已生成 - voucher_no={}",
-                                production_voucher_no
-                            );
-                        }
-                        Err(e) => {
-                            tracing::warn!(
-                                "[erp] 生产入库凭证生成失败（graceful fallback）: {}",
-                                e
-                            );
-                        }
-                    }
                 }
                 Err(e) => {
-                    tracing::warn!("[erp] 生产成本核算记录创建失败（graceful fallback）: {}", e);
+                    tracing::warn!(
+                        "[erp] 生产入库凭证生成失败（graceful fallback）: {}",
+                        e
+                    );
                 }
             }
         }

@@ -170,11 +170,13 @@
 - fin_reconciliations UPDATE 隔离：GUC=t1 同租户命中 ✓；GUC=t2 对 t1 单据 **0 行** ✓
 - `cargo check --workspace` 0 error
 
-**仍遗留（不在本专项范围）**：
-1. **事件消费进程仍不注入 GUC**：隔离由代码层 tenant 绑定兜底，FORCE 表为已设 GUC 连接的后置防线；彻底方案（消费者入口注入）待后续专项。
-2. **erp_cost_allocations 表在库中不存在**：`handle_work_order_completed`/`handle_stock_inbound` 仍写该表（死代码，graceful 失败），待核对补迁移或删代码。
-3. **PaymentMadePayload 无发布方**：全仓无构造点，`erp.handle_payment_made` 订阅可能空转，待核实。
-4. **erp.account_balances 无 tenant 维度**：`handle_inventory_updated` 写账目汇总表（跨租户共享），需单独评估。
+**第三轮（遗留全量评估）已闭环**：
+1. **PaymentMade 事件链修复（原误判"无发布方"）**：实为**事件类型不一致**——finance `create_payment_handler` 发布 `FinancePaymentMade`（FinancePaymentMadePayload），erp 订阅 `PaymentMade`（PaymentMadePayload）→ 应付核销**永远收不到**。修复：finance 改发 `EventType::PaymentMade` + `PaymentMadePayload`（supplier_id=req.supplier_id / payment_method / paid_at / tenant_id 全字段对齐），erp 侧订阅与核销（supplier_id 分支 + tenant 绑定）本已就位。链路现连通。
+2. **erp_cost_allocations 死代码清理**：`handle_work_order_completed` 的成本归集 INSERT 整段删除（handler 保留为订阅占位）；`handle_stock_inbound` 重构——删成本核算段、保留生产入库 PROD-IN 凭证生成（有效写入）。表在库中不存在 + 无发布方闭环，建表无业务意义，未来如需成本归集按新功能立项。
+
+**评估后保留（不做，记录理由）**：
+1. **事件消费进程注入 GUC（纵深防御项，不实施）**：现隔离由代码层 tenant 绑定兜底（所有写 tenant 表路径已全量绑定），**当前无跨租户污染**；消费者入口注入需改造 shared-event 基础设施 + 36 个 handler 签名，ROI 低、风险高。如未来新增 handler 引入未绑写入，属新代码缺陷，由 code review 拦截。
+2. **erp.account_balances 无租户维度（已知设计，不改）**：表为按 material_code 的**全局库存账**（material_code: text + last_movement_*），与共享库存模型一致（物料全局唯一、账目跨租户共享）。若产品未来切换租户隔离库存，需整体物料租户化（大改），单表加列无意义。
 
 ## 七、验证资产
 

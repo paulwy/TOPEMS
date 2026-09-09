@@ -44,7 +44,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
 use topems_shared_auth::get_tenant_id_from_claims;
-use topems_shared_event::event::{EventType, FinancePaymentMadePayload, PaymentReceivedPayload};
+use topems_shared_event::event::{EventType, PaymentMadePayload, PaymentReceivedPayload};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AccountQueryParams {
@@ -998,36 +998,39 @@ pub async fn create_payment_handler(
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
+    let supplier_id = req.supplier_id;
+    let payment_method = req.payment_method.clone();
     match service.create_payment(tenant_id, req, &created_by).await {
         Ok(payment) => {
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 let payment_id = payment.id;
                 let payment_no = payment.payment_no.clone();
-                let invoice_id = None;
                 let amount = payment.total_amount.to_f64().unwrap_or(0.0);
                 let paid_by = Some(created_by.clone());
                 let paid_at = Some(Utc::now());
                 tokio::spawn(async move {
-                    let payload = FinancePaymentMadePayload {
+                    let payload = PaymentMadePayload {
                         payment_id,
                         payment_no,
-                        invoice_id,
+                        order_id: None,
+                        supplier_id,
                         amount,
-                        paid_by,
+                        payment_method: Some(payment_method),
                         paid_at,
+                        tenant_id: Some(tenant_id),
                     };
                     if let Err(e) = publisher
-                        .publish_event(EventType::FinancePaymentMade, payload)
+                        .publish_event(EventType::PaymentMade, payload)
                         .await
                     {
                         tracing::warn!(
-                            "[finance] FinancePaymentMade 事件发布失败（graceful fallback）: {}",
+                            "[finance] PaymentMade 事件发布失败（graceful fallback）: {}",
                             e
                         );
                     } else {
                         tracing::info!(
-                            "[finance] FinancePaymentMade 事件发布成功 - payment_id={}",
+                            "[finance] PaymentMade 事件发布成功 - payment_id={}",
                             payment_id
                         );
                     }
