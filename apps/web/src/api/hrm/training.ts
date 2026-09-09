@@ -92,7 +92,7 @@ export const trainingRecordApi = {
   },
 
   enroll: async (course_id: string, employee_id: string): Promise<ApiResponse<TrainingRecord>> => {
-    return apiClient.hrm.post('/training-records/enroll', {
+    return apiClient.hrm.post(`/training-courses/${course_id}/enroll`, {
       course_id,
       employee_id,
     });

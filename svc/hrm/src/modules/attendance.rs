@@ -21,6 +21,8 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/attendance", get(list_attendance).post(create_attendance))
         .route("/attendance/today-status", get(get_today_status))
+        .route("/attendance/check-in", post(check_in))
+        .route("/attendance/check-out", post(check_out))
         .route(
             "/attendance/{id}",
             get(get_attendance)
@@ -658,5 +660,183 @@ mod tests {
         let json = r#"{"employee_id":"not-a-uuid"}"#;
         let result: Result<TodayStatusParams, _> = serde_json::from_str(json);
         assert!(result.is_err());
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CheckRequest {
+    pub employee_id: Uuid,
+}
+
+/// POST /attendance/check-in —— 移动端打卡上班（当天已有记录则更新时间）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["hrm:write"])),
+    path = "/hrm/attendance/check-in",
+    tag = "HRM",
+    responses(
+        (status = 200, description = "打卡成功", body = ApiResponse<AttendanceRecord>),
+        (status = 500, description = "打卡失败"),
+    ),
+)]
+pub async fn check_in(
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<CheckRequest>,
+) -> Json<ApiResponse<AttendanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if req.employee_id.is_nil() {
+        return Json(api_error(400, "员工ID不能为空"));
+    }
+    let now = Utc::now();
+    let org_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
+
+    let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                  check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+                  status, work_hours::float8 AS work_hours, notes, created_at, updated_at
+           FROM hrm.attendance_records
+           WHERE employee_id = $1 AND date::date = CURRENT_DATE
+           ORDER BY created_at DESC LIMIT 1"#
+    ))
+    .bind(req.employee_id)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match existing {
+        Ok(Some(record)) => {
+            let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+                "hrm",
+                r#"UPDATE hrm.attendance_records
+                   SET check_in_time = $2::TIME, status = COALESCE(status, 'present'), updated_at = now()
+                   WHERE id = $1
+                   RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                             check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+                             status, work_hours::float8 AS work_hours, notes, created_at, updated_at"#
+            ))
+            .bind(record.id)
+            .bind(now)
+            .fetch_one(&mut **txn)
+            .await;
+            match result {
+                Ok(rec) => Json(ApiResponse::success(rec, "上班打卡成功")),
+                Err(e) => {
+                    tracing::error!("上班打卡更新失败: {}", e);
+                    Json(api_error(500, "上班打卡失败"))
+                }
+            }
+        }
+        Ok(None) => {
+            let id = Uuid::new_v4();
+            let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+                "hrm",
+                r#"INSERT INTO hrm.attendance_records (
+                       id, organization_id, tenant_id, employee_id, date, check_in_time, check_out_time,
+                       status, work_hours, notes, created_at, updated_at
+                   ) VALUES ($1, $2, $2, $3, $4, $5::TIME, NULL, 'present', NULL, NULL, $6, $6)
+                   RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                             check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+                             status, work_hours::float8 AS work_hours, notes, created_at, updated_at"#
+            ))
+            .bind(id)
+            .bind(org_id)
+            .bind(req.employee_id)
+            .bind(now)
+            .bind(now)
+            .bind(now)
+            .fetch_one(&mut **txn)
+            .await;
+            match result {
+                Ok(rec) => Json(ApiResponse::success(rec, "上班打卡成功")),
+                Err(e) => {
+                    tracing::error!("上班打卡创建失败: {}", e);
+                    Json(api_error(500, "上班打卡失败"))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("查询当天考勤失败: {}", e);
+            Json(api_error(500, "上班打卡失败"))
+        }
+    }
+}
+
+/// POST /attendance/check-out —— 移动端打卡下班（更新当天记录，计算工时）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["hrm:write"])),
+    path = "/hrm/attendance/check-out",
+    tag = "HRM",
+    responses(
+        (status = 200, description = "打卡成功", body = ApiResponse<AttendanceRecord>),
+        (status = 404, description = "当天无打卡记录"),
+    ),
+)]
+pub async fn check_out(
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<CheckRequest>,
+) -> Json<ApiResponse<AttendanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if req.employee_id.is_nil() {
+        return Json(api_error(400, "员工ID不能为空"));
+    }
+    let now = Utc::now();
+
+    let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                  check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+                  status, work_hours::float8 AS work_hours, notes, created_at, updated_at
+           FROM hrm.attendance_records
+           WHERE employee_id = $1 AND date::date = CURRENT_DATE
+           ORDER BY created_at DESC LIMIT 1"#
+    ))
+    .bind(req.employee_id)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    let record = match existing {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "当天无上班打卡记录，请先打卡上班")),
+        Err(e) => {
+            tracing::error!("查询当天考勤失败: {}", e);
+            return Json(api_error(500, "下班打卡失败"));
+        }
+    };
+
+    let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
+        r#"UPDATE hrm.attendance_records
+           SET check_out_time = $2::TIME,
+               work_hours = EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 3600.0,
+               updated_at = now()
+           WHERE id = $1
+           RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                     check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+                     status, work_hours::float8 AS work_hours, notes, created_at, updated_at"#
+    ))
+    .bind(record.id)
+    .bind(now)
+    .fetch_one(&mut **txn)
+    .await;
+
+    match result {
+        Ok(rec) => Json(ApiResponse::success(rec, "下班打卡成功")),
+        Err(e) => {
+            tracing::error!("下班打卡更新失败: {}", e);
+            Json(api_error(500, "下班打卡失败"))
+        }
     }
 }
