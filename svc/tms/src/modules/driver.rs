@@ -86,7 +86,12 @@ pub async fn list_drivers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -111,7 +116,7 @@ pub async fn list_drivers(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -127,7 +132,7 @@ pub async fn list_drivers(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -160,8 +165,13 @@ pub async fn create_driver(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateDriverRequest>,
 ) -> Json<ApiResponse<Driver>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -183,11 +193,19 @@ pub async fn create_driver(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(driver) => Json(ApiResponse::success(driver, "司机创建成功")),
+        Ok(driver) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(driver, "司机创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建司机失败: {}", e);
             Json(api_error(500, "司机创建失败"))
@@ -212,7 +230,12 @@ pub async fn get_driver(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Driver>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Driver>(
@@ -223,7 +246,7 @@ pub async fn get_driver(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -254,8 +277,13 @@ pub async fn update_driver(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateDriverRequest>,
 ) -> Json<ApiResponse<Driver>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -282,7 +310,7 @@ pub async fn update_driver(
     .bind(req.carrier_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -312,13 +340,18 @@ pub async fn delete_driver(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_drivers WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     match result {
@@ -363,8 +396,13 @@ pub async fn submit_verification(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Driver>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -373,7 +411,7 @@ pub async fn submit_verification(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match current {
@@ -392,7 +430,7 @@ pub async fn submit_verification(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
             match result {
@@ -439,8 +477,13 @@ pub async fn approve_driver(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Driver>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -449,7 +492,7 @@ pub async fn approve_driver(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match current {
@@ -468,7 +511,7 @@ pub async fn approve_driver(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
             match result {
@@ -515,8 +558,13 @@ pub async fn reject_driver(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Driver>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -525,7 +573,7 @@ pub async fn reject_driver(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match current {
@@ -542,7 +590,7 @@ pub async fn reject_driver(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
             match result {

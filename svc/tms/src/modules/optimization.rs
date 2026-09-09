@@ -73,9 +73,11 @@ pub fn assign_orders_to_drivers(
 ) -> AssignmentResult {
     let mut sorted: Vec<OrderCandidate> = orders.to_vec();
     sorted.sort_by(|a, b| {
-        a.priority
-            .cmp(&b.priority)
-            .then(b.weight_kg.partial_cmp(&a.weight_kg).unwrap_or(std::cmp::Ordering::Equal))
+        a.priority.cmp(&b.priority).then(
+            b.weight_kg
+                .partial_cmp(&a.weight_kg)
+                .unwrap_or(std::cmp::Ordering::Equal),
+        )
     });
 
     let mut cap: Vec<(bool, i32)> = drivers.iter().map(|d| (d.available, d.capacity)).collect();
@@ -231,8 +233,13 @@ pub fn calculate_freight(
 pub async fn plan_assignment(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<AssignmentPlanRequest>,
 ) -> Json<ApiResponse<AssignmentResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = assign_orders_to_drivers(&req.drivers, &req.orders);
     Json(ApiResponse::success(result, "订单分配完成"))
 }
@@ -246,8 +253,13 @@ pub async fn plan_assignment(
 pub async fn optimize_route_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RouteOptimizeRequest>,
 ) -> Json<ApiResponse<RouteOptimizeResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.distances.is_empty() {
         return Json(api_error(400, "距离矩阵不能为空"));
     }
@@ -274,9 +286,19 @@ pub async fn optimize_route_handler(
 pub async fn freight_quote_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<FreightQuoteRequest>,
 ) -> Json<ApiResponse<FreightQuote>> {
-    if req.distance_km < 0.0 || req.weight_kg < 0.0 || req.rate_per_km < 0.0 || req.rate_per_kg < 0.0 || req.min_charge < 0.0 {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if req.distance_km < 0.0
+        || req.weight_kg < 0.0
+        || req.rate_per_km < 0.0
+        || req.rate_per_kg < 0.0
+        || req.min_charge < 0.0
+    {
         return Json(api_error(400, "运费参数不能为负"));
     }
     let quote = calculate_freight(
@@ -327,7 +349,10 @@ mod tests {
 
     #[test]
     fn assign_simple_split_by_priority() {
-        let drivers = vec![driver("d1", 10, 1000.0, true), driver("d2", 10, 1000.0, true)];
+        let drivers = vec![
+            driver("d1", 10, 1000.0, true),
+            driver("d2", 10, 1000.0, true),
+        ];
         let orders = vec![order("o1", 1, 10.0), order("o2", 2, 10.0)];
         let r = assign_orders_to_drivers(&drivers, &orders);
         assert_eq!(r.assigned_count, 2);
