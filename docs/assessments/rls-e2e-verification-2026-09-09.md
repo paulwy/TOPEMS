@@ -197,3 +197,45 @@
 - `sqlx migrate info`：99 条全部 installed，0 error/pending
 - 冒烟：带 `app.tenant_id`（UUID）上下文查询返回该租户 0 行（策略生效）；无上下文返回 0 行（FORCE 后 owner 裸查不泄露）
 - crm 服务测试 501 passed（RLS 隔离用例 ok）——服务层不受 FORCE 影响
+
+---
+
+## topems 非 superuser 化 + 服务层端到端受限验证（落地，2026-09-09）
+
+**目标**：服务运行时连接从半管理角色（topems：NOSUPERUSER 但 CREATEDB+CREATEROLE）降为纯受限角色 topems_app；DDL/迁移走 MIGRATE_URL owner 池。
+
+### 一、落地动作
+
+| 项 | 内容 |
+|---|---|
+| 角色 | `CREATE ROLE topems_app LOGIN PASSWORD 'topems_app_secret' NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE`（5432 实例） |
+| 授权 | 全库 875 表 DML + 序列 USAGE/SELECT + schema USAGE，共 921 条 GRANT（幂等，脚本 `scripts/db/grant-topems-app.sql`） |
+| 默认权限 | 15 个业务 schema 的 `ALTER DEFAULT PRIVILEGES FOR ROLE topems`（未来新表自动授权 topems_app） |
+| 连接切换 | `.env`：`DATABASE_URL=topems_app@localhost:5432/topems`（原 5433 容器库未运行，端口对齐实际 5432 实例）；新增 `MIGRATE_URL=topems@localhost:5432/topems`（迁移/DDL owner 池） |
+
+### 二、DB 层受限矩阵（topems_app）
+
+| # | 场景 | 实测 | 结论 |
+|---|---|---|---|
+| 1 | 无租户上下文 SELECT hrm.employees | 8 行（兼容放行） | ✅ |
+| 2 | SET app.tenant_id=T2 | 1 行（仅本租户） | ✅ |
+| 3 | T1 上下文越权读 T2 行 | 0 行 | ✅ |
+| 4 | T2 上下文越权 UPDATE T1 行 | 0 行受影响 | ✅ |
+| 5 | T2 上下文越权 INSERT T1 行 | `new row violates row-level security policy` | ✅ |
+| 6 | CREATE TABLE（DDL） | `permission denied for schema hrm` | ✅ |
+| 7 | 序列 nextval | 正常 | ✅ |
+
+### 三、服务层端到端（finance / ai 代表两类）
+
+| 服务 | 验证点 | 结果 |
+|---|---|---|
+| finance | topems_app 池启动；summary/sales-invoices 读；创建发票写；init_database DDL 走 MIGRATE_URL owner 池（无回退警告） | ✅ 全通过 |
+| ai | topems_app 池启动；MIGRATE_URL 迁移连接池创建 + 数据库迁移完成（DDL 走 owner）；models/dashboard 读；/use 变量渲染 + usage_count 自增 | ✅ 全通过 |
+
+**修复的真实 bug**（受限验证暴露）：ai `prompt_handlers.rs` 将 INT4 `usage_count` 读为 i64 → SQL 层 cast `::bigint`（4 处 SELECT/RETURNING），服务复测通过。
+
+### 四、覆盖面与未尽项
+
+- 抽样验证 finance（复杂业务+DDL init）与 ai（显式 run_migrations）两类代表；其余 20+ 服务共用 shared-bootstrap 同一 pool 机制，理论兼容，随常规启动/CI 持续覆盖。
+- 迁移执行独立于服务连接（sqlx apply / unified-core migration service 用 topems），服务池无 DDL 权限不影响既有迁移流程。
+- 遗留：早期 5433 容器库脚本（`rls-app-grants.sql`/`rls-app-exemption.sql`）保留备用于容器重建；本机开发库以 5432 + 本脚本为准。

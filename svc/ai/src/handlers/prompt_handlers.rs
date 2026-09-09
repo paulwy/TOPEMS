@@ -150,7 +150,7 @@ pub async fn list_prompt_templates(
         "SELECT COUNT(*) FROM ai.ai_prompt_templates WHERE {where_sql}"
     );
     let q_list = format!(
-        "SELECT id, name, description, category, fields, prompt_template, is_favorite, usage_count, created_at, updated_at
+        "SELECT id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
          FROM ai.ai_prompt_templates WHERE {where_sql} ORDER BY updated_at DESC LIMIT $5 OFFSET $6"
     );
 
@@ -214,7 +214,7 @@ pub async fn get_prompt_template(
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match sqlx::query(
-        "SELECT id, name, description, category, fields, prompt_template, is_favorite, usage_count, created_at, updated_at
+        "SELECT id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
          FROM ai.ai_prompt_templates WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)",
     )
     .bind(id)
@@ -241,7 +241,7 @@ pub async fn create_prompt_template(
     match sqlx::query(
         "INSERT INTO ai.ai_prompt_templates (tenant_id, name, description, category, fields, prompt_template)
          VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id, name, description, category, fields, prompt_template, is_favorite, usage_count, created_at, updated_at",
+         RETURNING id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at",
     )
     .bind(tenant_id)
     .bind(&payload.name)
@@ -272,7 +272,7 @@ pub async fn update_prompt_template(
         "UPDATE ai.ai_prompt_templates SET
             name = $3, description = $4, category = $5, fields = $6, prompt_template = $7, updated_at = NOW()
          WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)
-         RETURNING id, name, description, category, fields, prompt_template, is_favorite, usage_count, created_at, updated_at",
+         RETURNING id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at",
     )
     .bind(id)
     .bind(tenant_id)
