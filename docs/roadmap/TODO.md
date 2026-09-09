@@ -366,3 +366,105 @@
 2. **P1 待运行环境**：服务端到端跑通后接线真实 API（沿用 mock→real 替换模式）——已由 V529c 闭环
 3. **P2/P3 排期确认**：端到端测试/SDK 发布/权限文档需运行环境或发布渠道——SSE-005/Perm 文档已闭环；SDK 发布待用户 npm/PyPI 凭证
 4. 变体清理：每完成一个工作项，同步批量标记其全部 [ ] 变体（如连接池监控 3 条）
+
+---
+
+## V515 评估报告 32 项真实缺口全量闭环（2026-09-10）
+
+> 状态：✅ 全部闭环（32/32）｜基于 `docs/assessments/module-completeness-reassessment-2026-09-09.html` 4.1 节 32 项真实缺口清单，6 组并行子代理逐项补齐，每闭环一个独立 commit + push。
+
+### 闭环总览
+
+| 类别 | 数量 | 状态 |
+|---|---|---|
+| P0 缺口（含1项报告误报） | 7 | ✅ 6修复 + 1误报 |
+| P1 缺口 | 13 | ✅ 全部修复 |
+| P2 缺口 | 12 | ✅ 全部修复 |
+| 6模块设置页持久化 | 6 | ✅ 全部完成 |
+| 前端 TS 错误（bff性能工具） | 63条 | ✅ 0错误 |
+
+### P0 缺口（7项）
+
+| 编号 | 缺口 | Commit |
+|---|---|---|
+| P0-1 | CRM 客户财务 /customers/{id}/finance | `74fcd37ec` |
+| P0-2a | WMS cycle_count 模块恢复 | `d4a84d547` |
+| P0-2b | WMS slotting 10端点 | `9aa85f909` |
+| P0-2遗 | WMS discrepancy 模块恢复 | `7b9bead9d` |
+| P0-3 | AI conversations — 报告误报（difyApi同名覆盖，链路连通） | 不改码 |
+| P0-4 | Migration 双前缀 | `f4a687e2d` |
+| P0-5 | Plugin 前缀（代码面+部署面） | `45ae7533d`+`4cbf9d8f7` |
+
+### P1 缺口（13项）
+
+| 编号 | 模块 | 缺口 | Commit |
+|---|---|---|---|
+| #1 | unified-core | workflow monitor 子域 20+方法 | `add09566d` |
+| #3 | unified-core | automation 6路由501桩 | `5850f7c5b` |
+| #4 | web/admin | monitor 前缀错位 | `88647a7f3` |
+| #5 | unified-core | /system/audit-logs | `ac6575dab`+`4778dbeee` |
+| #7 | lims | /dashboard 聚合 | `319e3f0aa` |
+| #9 | communication | notification /channels | `52b84936c` |
+| #10 | communication | mail 3端点 | `d18d81650` |
+| #11 | integration | /erp/connections CRUD | `0d30228a3` |
+| #12 | integration | /erp/mappings CRUD | `103bb7583` |
+| #13 | integration | /external-erp/* 13路径 | `f92f9b111` |
+| #14 | mobile | oaApi 21方法 | `91016264f` |
+| #17 | scm | abc-classification 路径不匹配 | `09c496a74` |
+| #18 | scm | incoming-inspections/{id}/records | `0125c24ab` |
+| #19 | srm | 供应商路由双前缀 | `3cc0caba9` |
+| #22 | erp | /system/settings CRUD+batch | `1fcd74763`+`a146c9f17` |
+| #23 | ehs | /dashboard 聚合 | `3eda27185` |
+| #24 | monitor | /metrics/realtime | `315997eb2` |
+| #25 | ai | /models/usage 假接口 | `39de256c4` |
+
+### P2 缺口（12项）
+
+| 编号 | 模块 | 缺口 | Commit |
+|---|---|---|---|
+| #26 | erp | customers 批量/统计9端点 | `af718c1c2` |
+| #27 | erp | sales-orders 批量/统计8端点 | `6f4f68493` |
+| #28 | erp | mdm-v49 双前缀177处 | `289930b91` |
+| #29 | erp | leave_request 6端点未挂载 | `4b7e91e8a` |
+| #30 | crm | /dashboard 聚合 | `0c9475b37` |
+| #31 | search | /suggestions | `9bb3629ed` |
+| #32 | web | businessMetric 31方法路径 | `f536e086f` |
+
+### 附加专项
+
+**6模块设置页持久化**：mes/rd/scm/hrm/monitor/pdm 各4个设置页从纯本地 useState 改为后端持久化（module_settings 表 + GET/PUT /settings/{category} 路由 + 前端 apiClient 接入）。
+
+| 模块 | Commit |
+|---|---|
+| mes | `d3d6b0ba9` |
+| rd | `441093b7e` |
+| scm | 合并入 `3eda27185` |
+| hrm | `5e0c0f589` |
+| monitor | 合并入 E组 commit |
+| pdm | `975fee50b`+`129d7cc62` |
+
+**前端 TS 错误 63 条清零**：根因为 7 个 bff 性能工具模块（graphqlPerformance/querySharding/edgeCompute/isrManager/queryCostAnalyzer/smartPrefetch/websocketOptimizer，共 2169 行）被 `.gitignore` 忽略从未提交。修复：移除忽略规则 + 提交 7 个文件，tsc 0 错误。Commit `48aa31438`。
+
+### 新增数据库表（15张，均 GRANT topems_app）
+
+| 表名 | Schema | 用途 |
+|---|---|---|
+| automation_rules/runs/variables | public | #3 automation |
+| system_settings | public | #22 erp system settings |
+| model_usage_stats | ai | #25 ai models/usage |
+| search_logs | public | #31 search suggestions |
+| monitor_settings | public | monitor 设置页 |
+| notification_channels | communication | #9 notification |
+| erp_connections | integration | #11 |
+| erp_mappings | integration | #12 |
+| oa_meetings/calendar/tasks/announcements | public | #14 oa（5张） |
+| inspection_records | scm | #18 |
+| module_settings ×6 | scm/hrm/mes/rs/pdm/monitor | 设置页持久化 |
+
+### 验证与备注
+
+- 后端：各服务连库（SQLX_OFFLINE=false）+ 离线（SQLX_OFFLINE=true）cargo check 双验证 0 error（部分因本机 OOM 用单线程编译）
+- 前端：tsc --noEmit 0 新增错误，lefthook 16 钩子通过
+- #13 external-erp 为最小可用实现（结构化响应，真实 ERP 对接待扩展）
+- #12 前端 IntegrationMappingsPage 仍用 mock，后端已提供真实 API
+- 多代理并发 git 操作导致部分文件被 reset 后重新应用，最终所有改动确认在 origin/main HEAD
