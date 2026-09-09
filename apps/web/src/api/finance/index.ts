@@ -14,9 +14,7 @@ import { settlementCenterApi } from './settlementCenter';
 import { expenseApi } from './expense';
 import { budgetApi } from './budget';
 import { reconciliationApi } from './reconciliation';
-import { riskApi } from './risk';
 import { riskV54Api } from './riskV54';
-import { riskV59Api } from './riskV59';
 import { taxApi } from './tax';
 
 export { accountApi } from './account';
@@ -27,10 +25,8 @@ export { counterpartyFinanceApi } from './counterparty';
 export { paymentApi } from './payment';
 export { expenseApprovalApi } from './expenseApproval';
 export { cashFlowApi } from './cashFlow';
-export { voucherTemplateApi } from './voucherTemplate';
 export { expenseApi } from './expense';
 export { budgetApi } from './budget';
-export { riskApi } from './risk';
 export { taxApi } from './tax';
 export { accountingSubjectApi } from './accountingSubject';
 
@@ -75,9 +71,7 @@ export const financeApi = {
   expense: expenseApi,
   budget: budgetApi,
   reconciliation: reconciliationApi,
-  risk: riskApi,
   riskV54: riskV54Api,
-  riskV59: riskV59Api,
   tax: taxApi,
 
   async getDashboard(): Promise<ApiResponse<FinanceDashboardStats>> {

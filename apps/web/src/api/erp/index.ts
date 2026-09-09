@@ -20,10 +20,8 @@ import {
   dictApi,
   openingBalanceApi,
   searchApi,
-  consolidationApi,
   leaveRequestApi,
   hrProxyApi,
-  dbStructureApi,
   mdmRefsApi,
   mdmLifecycleApi,
 } from './core';
@@ -36,11 +34,11 @@ export * from './core';
 export { assetApi } from '../asset/asset';
 
 export { voucherApi } from '../finance/voucher';
-export { receivableApi, payableApi } from './receivablePayable';
 export { budgetApi } from '../finance/budget';
 export { reportApi, financeReportApi } from '../finance/report';
 export { expenseApi } from '../finance/expense';
 export { accountingSubjectApi } from '../finance/accountingSubject';
+export { receivableApi, payableApi } from './receivablePayable';
 export { bankAccountApi } from './bankAccount';
 
 export { officeSupplyApi } from './admin/officeSupplies';
@@ -86,10 +84,8 @@ export const erpApi = {
   dictionary: dictApi,
   openingBalances: openingBalanceApi,
   search: searchApi,
-  consolidation: consolidationApi,
   leaveRequests: leaveRequestApi,
   hr: hrProxyApi,
-  dbStructure: dbStructureApi,
   mdm: mdmRefsApi,
   mdmLifecycle: mdmLifecycleApi,
 

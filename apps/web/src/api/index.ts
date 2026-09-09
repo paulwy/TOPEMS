@@ -41,12 +41,10 @@ export { ticketApi } from './ticket';
 export { tenantApi } from './tenant';
 export { addressbookApi } from './addressbook';
 export { crmFinanceApi } from './crmFinance';
-export { financialReportApi } from './financialReport';
 export { templateApi } from './template';
 export { integrationApi } from './integration';
 export { automationApi } from './automation';
 export { externalErpApi } from './external-erp';
-export { consolidationContractApi as consolidationContract } from './consolidation-contract';
 export * as consolidationApi from './consolidation';
 
 // Domain modules - Platform APIs
