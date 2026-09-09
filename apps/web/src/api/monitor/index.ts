@@ -284,6 +284,33 @@ export const monitorApi = {
   metrics: metricTypedApi,
   threshold: thresholdApi,
   alert: { batch: alertBatchApi },
+
+  settings: {
+    list: async (category?: string): Promise<ApiResponse<Record<string, unknown>>> => {
+      const params = category ? { category } : undefined;
+      return apiClient.monitor.get<Record<string, unknown>>('/settings', { params });
+    },
+    batchUpdate: async (
+      settings: Record<string, unknown>
+    ): Promise<ApiResponse<{ updated: number; total: number }>> => {
+      return apiClient.monitor.put('/settings', { settings });
+    },
+    get: async (
+      key: string
+    ): Promise<ApiResponse<{ key: string; value: unknown; category?: string }>> => {
+      return apiClient.monitor.get(`/settings/${encodeURIComponent(key)}`);
+    },
+    update: async (
+      key: string,
+      value: unknown,
+      category?: string
+    ): Promise<ApiResponse<{ key: string }>> => {
+      return apiClient.monitor.put(`/settings/${encodeURIComponent(key)}`, { value, category });
+    },
+    delete: async (key: string): Promise<ApiResponse<{ key: string }>> => {
+      return apiClient.monitor.delete(`/settings/${encodeURIComponent(key)}`);
+    },
+  },
 };
 
 export default monitorApi;

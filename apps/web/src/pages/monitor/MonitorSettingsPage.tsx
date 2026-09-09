@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Settings, AlertTriangle, Bell, Database, Shield, Plug } from 'lucide-react';
 import { useNotificationStore } from '@/store';
@@ -10,134 +10,187 @@ import {
 import i18n from '@/i18n';
 import { monitorApi } from '@/api/monitor';
 
+// 默认设置值（后端无数据时使用）
+const DEFAULT_GENERAL: Record<string, SettingValueType> = {
+  monitoringEnabled: true,
+  dataRetentionDays: 30,
+  sampleRate: 100,
+  autoDiscovery: false,
+  heartbeatInterval: 60,
+  maxConcurrentChecks: 100,
+  enableMetrics: true,
+  enableLogs: true,
+  enableTraces: false,
+};
+const DEFAULT_ALERT: Record<string, SettingValueType> = {
+  defaultAlertStrategy: 'threshold',
+  enableAutoRecover: true,
+  autoRecoverMinutes: 5,
+  escalationEnabled: true,
+  escalationLevels: 3,
+  escalationInterval: 30,
+  enableSilenceRules: true,
+  maxSilenceDuration: 24,
+  enableDeduplication: true,
+  dedupWindow: 5,
+};
+const DEFAULT_NOTIFICATION: Record<string, SettingValueType> = {
+  emailEnabled: true,
+  smsEnabled: false,
+  pushEnabled: true,
+  wechatEnabled: true,
+  phoneEnabled: false,
+  criticalNotify: true,
+  warningNotify: true,
+  infoNotify: false,
+  defaultTemplate: 'standard',
+  notifyContacts: 'admin,ops',
+};
+const DEFAULT_DATASOURCE: Record<string, SettingValueType> = {
+  primaryDatasource: 'prometheus',
+  connectionTimeout: 30,
+  maxRetries: 3,
+  retryInterval: 10,
+  enableSsl: true,
+  sslVerify: true,
+  batchQueryEnabled: true,
+  batchSize: 100,
+  cacheEnabled: true,
+  cacheTTL: 300,
+};
+const DEFAULT_PERMISSION: Record<string, SettingValueType> = {
+  enableRoleBased: true,
+  enableDeptBased: false,
+  adminCanManageAll: true,
+  allowViewAllDashboards: false,
+  allowCreateAlertRules: true,
+  allowExportData: true,
+  monitorAdminRole: 'monitor_admin',
+  viewerRole: 'monitor_viewer',
+  editorRole: 'monitor_editor',
+};
+const DEFAULT_INTEGRATION: Record<string, SettingValueType> = {
+  prometheusEnabled: true,
+  prometheusUrl: 'http://localhost:9090',
+  grafanaEnabled: true,
+  grafanaUrl: 'http://localhost:3000',
+  grafanaApiKey: '',
+  webhookEnabled: false,
+  webhookUrl: '',
+  webhookSecret: '',
+  enableApiAccess: true,
+  apiRateLimit: 1000,
+};
+
+/** 从后端 key-value map 中提取某个分类的设置，合并默认值 */
+function extractCategory(
+  data: Record<string, unknown> | undefined,
+  prefix: string,
+  defaults: Record<string, SettingValueType>
+): Record<string, SettingValueType> {
+  const result = { ...defaults };
+  if (!data) return result;
+  for (const key of Object.keys(defaults)) {
+    const fullKey = `${prefix}_${key}`;
+    const val = data[fullKey];
+    if (
+      val !== undefined &&
+      val !== null &&
+      (typeof val === 'string' ||
+        typeof val === 'number' ||
+        typeof val === 'boolean' ||
+        Array.isArray(val))
+    ) {
+      result[key] = val as SettingValueType;
+    }
+  }
+  return result;
+}
+
 export const MonitorSettingsPage: React.FC = () => {
-  const {} = useQuery({
-    queryKey: ['monitor', 'settings'],
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  // 从后端加载设置
+  const { data: settingsData, isLoading: settingsLoading } = useQuery({
+    queryKey: ['monitor', 'settings', 'all'],
     queryFn: async () => {
       try {
-        return await monitorApi.threshold.list();
+        const resp = await monitorApi.settings.list();
+        return resp.data ?? {};
       } catch {
         return {};
       }
     },
+    staleTime: 30_000,
   });
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const [generalSettings, setGeneralSettings] = useState({
-    monitoringEnabled: true,
-    dataRetentionDays: 30,
-    sampleRate: 100,
-    autoDiscovery: false,
-    heartbeatInterval: 60,
-    maxConcurrentChecks: 100,
-    enableMetrics: true,
-    enableLogs: true,
-    enableTraces: false,
-  });
-  const [alertSettings, setAlertSettings] = useState({
-    defaultAlertStrategy: 'threshold',
-    enableAutoRecover: true,
-    autoRecoverMinutes: 5,
-    escalationEnabled: true,
-    escalationLevels: 3,
-    escalationInterval: 30,
-    enableSilenceRules: true,
-    maxSilenceDuration: 24,
-    enableDeduplication: true,
-    dedupWindow: 5,
-  });
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailEnabled: true,
-    smsEnabled: false,
-    pushEnabled: true,
-    wechatEnabled: true,
-    phoneEnabled: false,
-    criticalNotify: true,
-    warningNotify: true,
-    infoNotify: false,
-    defaultTemplate: 'standard',
-    notifyContacts: 'admin,ops',
-  });
-  const [datasourceSettings, setDatasourceSettings] = useState({
-    primaryDatasource: 'prometheus',
-    connectionTimeout: 30,
-    maxRetries: 3,
-    retryInterval: 10,
-    enableSsl: true,
-    sslVerify: true,
-    batchQueryEnabled: true,
-    batchSize: 100,
-    cacheEnabled: true,
-    cacheTTL: 300,
-  });
-  const [permissionSettings, setPermissionSettings] = useState({
-    enableRoleBased: true,
-    enableDeptBased: false,
-    adminCanManageAll: true,
-    allowViewAllDashboards: false,
-    allowCreateAlertRules: true,
-    allowExportData: true,
-    monitorAdminRole: 'monitor_admin',
-    viewerRole: 'monitor_viewer',
-    editorRole: 'monitor_editor',
-  });
-  const [integrationSettings, setIntegrationSettings] = useState({
-    prometheusEnabled: true,
-    prometheusUrl: 'http://localhost:9090',
-    grafanaEnabled: true,
-    grafanaUrl: 'http://localhost:3000',
-    grafanaApiKey: '',
-    webhookEnabled: false,
-    webhookUrl: '',
-    webhookSecret: '',
-    enableApiAccess: true,
-    apiRateLimit: 1000,
-  });
+
+  const [generalSettings, setGeneralSettings] =
+    useState<Record<string, SettingValueType>>(DEFAULT_GENERAL);
+  const [alertSettings, setAlertSettings] =
+    useState<Record<string, SettingValueType>>(DEFAULT_ALERT);
+  const [notificationSettings, setNotificationSettings] =
+    useState<Record<string, SettingValueType>>(DEFAULT_NOTIFICATION);
+  const [datasourceSettings, setDatasourceSettings] =
+    useState<Record<string, SettingValueType>>(DEFAULT_DATASOURCE);
+  const [permissionSettings, setPermissionSettings] =
+    useState<Record<string, SettingValueType>>(DEFAULT_PERMISSION);
+  const [integrationSettings, setIntegrationSettings] =
+    useState<Record<string, SettingValueType>>(DEFAULT_INTEGRATION);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // 后端数据到达后合并到本地 state（仅执行一次）
+  useEffect(() => {
+    if (settingsData && !settingsLoaded) {
+      setGeneralSettings(extractCategory(settingsData, 'general', DEFAULT_GENERAL));
+      setAlertSettings(extractCategory(settingsData, 'alert', DEFAULT_ALERT));
+      setNotificationSettings(extractCategory(settingsData, 'notification', DEFAULT_NOTIFICATION));
+      setDatasourceSettings(extractCategory(settingsData, 'datasource', DEFAULT_DATASOURCE));
+      setPermissionSettings(extractCategory(settingsData, 'permission', DEFAULT_PERMISSION));
+      setIntegrationSettings(extractCategory(settingsData, 'integration', DEFAULT_INTEGRATION));
+      setSettingsLoaded(true);
+    }
+  }, [settingsData, settingsLoaded]);
+
   const handleSave = useCallback(
     async (data: Record<string, SettingValueType>) => {
+      // 1. 更新本地 state
       Object.keys(data).forEach((key) => {
         if (key.startsWith('general_')) {
           const settingKey = key.replace('general_', '');
-          setGeneralSettings((prev) => ({
-            ...prev,
-            [settingKey]: data[key],
-          }));
+          setGeneralSettings((prev) => ({ ...prev, [settingKey]: data[key] }));
         } else if (key.startsWith('alert_')) {
           const settingKey = key.replace('alert_', '');
-          setAlertSettings((prev) => ({
-            ...prev,
-            [settingKey]: data[key],
-          }));
+          setAlertSettings((prev) => ({ ...prev, [settingKey]: data[key] }));
         } else if (key.startsWith('notification_')) {
           const settingKey = key.replace('notification_', '');
-          setNotificationSettings((prev) => ({
-            ...prev,
-            [settingKey]: data[key],
-          }));
+          setNotificationSettings((prev) => ({ ...prev, [settingKey]: data[key] }));
         } else if (key.startsWith('datasource_')) {
           const settingKey = key.replace('datasource_', '');
-          setDatasourceSettings((prev) => ({
-            ...prev,
-            [settingKey]: data[key],
-          }));
+          setDatasourceSettings((prev) => ({ ...prev, [settingKey]: data[key] }));
         } else if (key.startsWith('permission_')) {
           const settingKey = key.replace('permission_', '');
-          setPermissionSettings((prev) => ({
-            ...prev,
-            [settingKey]: data[key],
-          }));
+          setPermissionSettings((prev) => ({ ...prev, [settingKey]: data[key] }));
         } else if (key.startsWith('integration_')) {
           const settingKey = key.replace('integration_', '');
-          setIntegrationSettings((prev) => ({
-            ...prev,
-            [settingKey]: data[key],
-          }));
+          setIntegrationSettings((prev) => ({ ...prev, [settingKey]: data[key] }));
         }
       });
-      addNotification({
-        title: i18n.t('monitor.monitor_settings_page.k0'),
-        message: i18n.t('monitor.monitor_settings_page.k1'),
-        type: 'success',
-      });
+
+      // 2. 持久化到后端（批量 upsert）
+      try {
+        await monitorApi.settings.batchUpdate(data as Record<string, unknown>);
+        addNotification({
+          title: i18n.t('monitor.monitor_settings_page.k0'),
+          message: i18n.t('monitor.monitor_settings_page.k1'),
+          type: 'success',
+        });
+      } catch {
+        addNotification({
+          title: i18n.t('monitor.monitor_settings_page.k0'),
+          message: '设置保存失败，请稍后重试',
+          type: 'error',
+        });
+      }
     },
     [addNotification]
   );

@@ -162,22 +162,22 @@ export const monitoringApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
     if (params?.search) queryParams.append('search', params.search);
 
-    return apiClient.core.get<PaginatedAlerts>(`/monitor/alerts?${queryParams.toString()}`);
+    return apiClient.monitor.get<PaginatedAlerts>(`/alerts?${queryParams.toString()}`);
   },
 
   getAlert: async (id: string): Promise<ApiResponse<Alert>> => {
-    return apiClient.core.get<Alert>(`/monitor/alerts/${id}`);
+    return apiClient.monitor.get<Alert>(`/alerts/${id}`);
   },
 
   acknowledgeAlert: async (id: string, data?: { note?: string }): Promise<ApiResponse<Alert>> => {
-    return apiClient.core.post(`/monitor/alerts/acknowledge`, {
+    return apiClient.monitor.post(`/alerts/acknowledge`, {
       alert_ids: [id],
       ...data,
     });
   },
 
   resolveAlert: async (id: string, data?: { note?: string }): Promise<ApiResponse<Alert>> => {
-    return apiClient.core.post(`/monitor/alerts/resolve`, {
+    return apiClient.monitor.post(`/alerts/resolve`, {
       alert_ids: [id],
       ...data,
     });
@@ -187,11 +187,11 @@ export const monitoringApi = {
     id: string,
     data?: { reason?: string; target_users?: string[] }
   ): Promise<ApiResponse<Alert>> => {
-    return apiClient.core.post(`/monitor/alerts/${id}/escalate`, data);
+    return apiClient.monitor.post(`/alerts/${id}/escalate`, data);
   },
 
   dismissAlert: async (id: string, data?: { reason?: string }): Promise<ApiResponse<Alert>> => {
-    return apiClient.core.post(`/monitor/alerts/${id}/dismiss`, data);
+    return apiClient.monitor.post(`/alerts/${id}/dismiss`, data);
   },
 
   getAlertStats: async (params?: {
@@ -202,7 +202,7 @@ export const monitoringApi = {
     if (params?.start_date) queryParams.append('start_date', params.start_date);
     if (params?.end_date) queryParams.append('end_date', params.end_date);
 
-    return apiClient.core.get<AlertStats>(`/monitor/alerts/statistics?${queryParams.toString()}`);
+    return apiClient.monitor.get<AlertStats>(`/alerts/statistics?${queryParams.toString()}`);
   },
 
   exportAlerts: async (params?: AlertQueryParams): Promise<Blob> => {
@@ -215,7 +215,7 @@ export const monitoringApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.core.get(`/monitor/alerts/export?${queryParams.toString()}`, {
+    const response = await apiClient.monitor.get(`/alerts/export?${queryParams.toString()}`, {
       responseType: 'blob',
     });
     return response.data as unknown as Blob;
@@ -237,38 +237,38 @@ export const monitoringApi = {
     if (params?.enabled !== undefined) queryParams.append('enabled', params.enabled.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    return apiClient.core.get(`/monitor/rules?${queryParams.toString()}`);
+    return apiClient.monitor.get(`/rules?${queryParams.toString()}`);
   },
 
   getAlertRule: async (id: string): Promise<ApiResponse<AlertRule>> => {
-    return apiClient.core.get<AlertRule>(`/monitor/rules/${id}`);
+    return apiClient.monitor.get<AlertRule>(`/rules/${id}`);
   },
 
   createAlertRule: async (data: CreateAlertRuleRequest): Promise<ApiResponse<AlertRule>> => {
-    return apiClient.core.post('/monitor/rules', data);
+    return apiClient.monitor.post('/rules', data);
   },
 
   updateAlertRule: async (
     id: string,
     data: UpdateAlertRuleRequest
   ): Promise<ApiResponse<AlertRule>> => {
-    return apiClient.core.put(`/monitor/rules/${id}`, data);
+    return apiClient.monitor.put(`/rules/${id}`, data);
   },
 
   deleteAlertRule: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.core.delete(`/monitor/rules/${id}`);
+    return apiClient.monitor.delete(`/rules/${id}`);
   },
 
   enableAlertRule: async (id: string): Promise<ApiResponse<AlertRule>> => {
-    return apiClient.core.post(`/monitor/rules/${id}/enable`);
+    return apiClient.monitor.post(`/rules/${id}/enable`);
   },
 
   disableAlertRule: async (id: string): Promise<ApiResponse<AlertRule>> => {
-    return apiClient.core.post(`/monitor/rules/${id}/disable`);
+    return apiClient.monitor.post(`/rules/${id}/disable`);
   },
 
   getSystemHealth: async (): Promise<ApiResponse<SystemHealth>> => {
-    return apiClient.core.get('/monitor/health');
+    return apiClient.monitor.get('/health');
   },
 
   getSystemMetrics: async (params?: {
@@ -279,7 +279,7 @@ export const monitoringApi = {
     if (params?.category) queryParams.append('category', params.category);
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    return apiClient.core.get(`/monitor/metrics?${queryParams.toString()}`);
+    return apiClient.monitor.get(`/metrics?${queryParams.toString()}`);
   },
 
   triggerTestAlert: async (data: {
@@ -288,7 +288,7 @@ export const monitoringApi = {
     title: string;
     description: string;
   }): Promise<ApiResponse<Alert>> => {
-    return apiClient.core.post('/monitor/alerts/test', data);
+    return apiClient.monitor.post('/alerts/test', data);
   },
 };
 

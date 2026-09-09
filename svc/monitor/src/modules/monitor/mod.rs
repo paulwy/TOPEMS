@@ -7,6 +7,7 @@ pub mod business_metrics;
 pub mod health_check;
 pub mod metrics;
 pub mod monitor_plugin;
+pub mod settings;
 pub mod slo;
 
 use axum::Router;
@@ -21,4 +22,5 @@ pub fn create_routes() -> Router<AppState> {
         .merge(alert_evaluator::create_routes())
         .merge(business_metrics::create_routes())
         .merge(slo::create_routes())
+        .merge(settings::create_routes())
 }
