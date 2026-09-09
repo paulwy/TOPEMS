@@ -55,12 +55,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Contract Handlers ====================
 
-async fn list_contracts(
+pub async fn list_contracts(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ContractQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -99,7 +104,7 @@ async fn list_contracts(
     .bind(&contract_type_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -121,7 +126,7 @@ async fn list_contracts(
             .bind(&status_filter)
             .bind(supplier_id_filter)
             .bind(&contract_type_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -146,12 +151,17 @@ async fn list_contracts(
     }
 }
 
-async fn create_contract(
+pub async fn create_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -181,7 +191,7 @@ async fn create_contract(
     )
     .bind(tenant_id)
     .bind(supplier_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
@@ -196,7 +206,7 @@ async fn create_contract(
     )
     .bind(tenant_id)
     .bind(&req.contract_no)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing.unwrap_or(0) > 0 {
@@ -270,11 +280,19 @@ async fn create_contract(
     .bind(user_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(contract) => Json(ApiResponse::success(contract, "供应商合同创建成功")),
+        Ok(contract) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(contract, "供应商合同创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建供应商合同失败: {}", e);
             Json(ApiResponse::<SupplierContract>::error(
@@ -285,12 +303,17 @@ async fn create_contract(
     }
 }
 
-async fn get_contract(
+pub async fn get_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -306,7 +329,7 @@ async fn get_contract(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -325,13 +348,18 @@ async fn get_contract(
     }
 }
 
-async fn update_contract(
+pub async fn update_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -344,7 +372,7 @@ async fn update_contract(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -379,7 +407,7 @@ async fn update_contract(
         )
         .bind(tenant_id)
         .bind(supplier_uuid_val)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
@@ -449,11 +477,19 @@ async fn update_contract(
     .bind(remarks)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(contract) => Json(ApiResponse::success(contract, "供应商合同更新成功")),
+        Ok(contract) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(contract, "供应商合同更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新供应商合同失败: {}", e);
             Json(ApiResponse::<SupplierContract>::error(
@@ -464,12 +500,17 @@ async fn update_contract(
     }
 }
 
-async fn delete_contract(
+pub async fn delete_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -477,12 +518,15 @@ async fn delete_contract(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE srm.supplier_contracts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"))
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.supplier_contracts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "srm"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -498,12 +542,17 @@ async fn delete_contract(
 
 // ==================== Contract Terms Handler ====================
 
-async fn get_contract_terms(
+pub async fn get_contract_terms(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ContractTerm>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -516,7 +565,7 @@ async fn get_contract_terms(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if contract_exists.unwrap_or(0) == 0 {
@@ -533,7 +582,7 @@ async fn get_contract_terms(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

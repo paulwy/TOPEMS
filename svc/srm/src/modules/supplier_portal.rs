@@ -48,12 +48,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
-async fn get_supplier_portal_stats(
+pub async fn get_supplier_portal_stats(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -76,7 +81,7 @@ async fn get_supplier_portal_stats(
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
@@ -93,7 +98,7 @@ async fn get_supplier_portal_stats(
     ))
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -102,7 +107,7 @@ async fn get_supplier_portal_stats(
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -111,7 +116,7 @@ async fn get_supplier_portal_stats(
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -120,7 +125,7 @@ async fn get_supplier_portal_stats(
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(Some(0.0))
     .unwrap_or(0.0);
@@ -130,7 +135,7 @@ async fn get_supplier_portal_stats(
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
     .unwrap_or(0.0);
@@ -143,7 +148,7 @@ async fn get_supplier_portal_stats(
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
     .unwrap_or(0.0);
@@ -163,12 +168,17 @@ async fn get_supplier_portal_stats(
     Json(ApiResponse::success(stats, "获取供应商门户统计成功"))
 }
 
-async fn get_supplier_portal_orders(
+pub async fn get_supplier_portal_orders(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<PurchaseOrder>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -196,7 +206,7 @@ async fn get_supplier_portal_orders(
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -211,12 +221,17 @@ async fn get_supplier_portal_orders(
     }
 }
 
-async fn get_supplier_portal_invoices(
+pub async fn get_supplier_portal_invoices(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(_supplier_id): Path<String>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -257,12 +272,17 @@ async fn get_supplier_portal_invoices(
     Json(ApiResponse::success(invoices, "获取供应商发票成功"))
 }
 
-async fn get_supplier_portal_deliveries(
+pub async fn get_supplier_portal_deliveries(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(_supplier_id): Path<String>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -306,11 +326,16 @@ async fn get_supplier_portal_deliveries(
     Json(ApiResponse::success(deliveries, "获取供应商交货信息成功"))
 }
 
-async fn get_supplier_portal_announcements(
+pub async fn get_supplier_portal_announcements(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,

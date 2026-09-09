@@ -172,7 +172,12 @@ pub async fn get_statistics(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -181,7 +186,7 @@ pub async fn get_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -191,7 +196,7 @@ pub async fn get_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -201,7 +206,7 @@ pub async fn get_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -209,7 +214,7 @@ pub async fn get_statistics(
         only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL", "srm"),
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
     .unwrap_or(0.0);
@@ -220,23 +225,27 @@ pub async fn get_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let active_contracts = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_contracts WHERE tenant_id = $1 AND status = 'active'", "srm"),
-    )
+    let active_contracts = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE tenant_id = $1 AND status = 'active'",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let total_products = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_products WHERE tenant_id = $1 AND status = 'active'", "srm"),
-    )
+    let total_products = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_products WHERE tenant_id = $1 AND status = 'active'",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -257,7 +266,12 @@ pub async fn get_detailed_statistics(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -266,7 +280,7 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -276,7 +290,7 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -286,7 +300,7 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -294,7 +308,7 @@ pub async fn get_detailed_statistics(
         only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL", "srm"),
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
     .unwrap_or(0.0);
@@ -305,23 +319,27 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let active_contracts = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_contracts WHERE tenant_id = $1 AND status = 'active'", "srm"),
-    )
+    let active_contracts = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE tenant_id = $1 AND status = 'active'",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let total_products = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_products WHERE tenant_id = $1 AND status = 'active'", "srm"),
-    )
+    let total_products = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_products WHERE tenant_id = $1 AND status = 'active'",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -331,7 +349,7 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -339,24 +357,28 @@ pub async fn get_detailed_statistics(
         only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM srm.purchase_orders WHERE tenant_id = $1 AND status != 'cancelled'", "srm"),
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(Some(0.0))
     .unwrap_or(0.0);
 
-    let pending_orders = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.purchase_orders WHERE tenant_id = $1 AND status = 'pending'", "srm"),
-    )
+    let pending_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.purchase_orders WHERE tenant_id = $1 AND status = 'pending'",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let completed_orders = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.purchase_orders WHERE tenant_id = $1 AND status = 'completed'", "srm"),
-    )
+    let completed_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.purchase_orders WHERE tenant_id = $1 AND status = 'completed'",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -364,7 +386,7 @@ pub async fn get_detailed_statistics(
         only_own_schema_query!("srm", "SELECT category, COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND status != 'deleted' GROUP BY category", "srm"),
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -377,29 +399,33 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
     .into_iter()
     .map(|(status, count)| serde_json::json!({"status": status, "count": count}))
     .collect::<Vec<_>>();
 
-    let contract_by_status = sqlx::query_as::<_, (String, i64)>(
-        only_own_schema_query!("srm", "SELECT status, COUNT(*) FROM srm.supplier_contracts WHERE tenant_id = $1 GROUP BY status", "srm"),
-    )
+    let contract_by_status = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "srm",
+        "SELECT status, COUNT(*) FROM srm.supplier_contracts WHERE tenant_id = $1 GROUP BY status",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
     .into_iter()
     .map(|(status, count)| serde_json::json!({"status": status, "count": count}))
     .collect::<Vec<_>>();
 
-    let order_by_status = sqlx::query_as::<_, (String, i64)>(
-        only_own_schema_query!("srm", "SELECT status, COUNT(*) FROM srm.purchase_orders WHERE tenant_id = $1 GROUP BY status", "srm"),
-    )
+    let order_by_status = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "srm",
+        "SELECT status, COUNT(*) FROM srm.purchase_orders WHERE tenant_id = $1 GROUP BY status",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -424,7 +450,7 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -444,7 +470,7 @@ pub async fn get_detailed_statistics(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -486,14 +512,19 @@ pub async fn get_suppliers_with_stats(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let suppliers = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE tenant_id = $1 AND status != 'deleted' ORDER BY created_at DESC", "srm")
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match suppliers {
@@ -506,7 +537,7 @@ pub async fn get_suppliers_with_stats(
                 )
                 .bind(supplier.id)
                 .bind(tenant_id)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
@@ -515,7 +546,7 @@ pub async fn get_suppliers_with_stats(
                 )
                 .bind(supplier.id)
                 .bind(tenant_id)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
@@ -524,7 +555,7 @@ pub async fn get_suppliers_with_stats(
                 )
                 .bind(supplier.id)
                 .bind(tenant_id)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
@@ -533,7 +564,7 @@ pub async fn get_suppliers_with_stats(
                 )
                 .bind(supplier.id)
                 .bind(tenant_id)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(None);
 

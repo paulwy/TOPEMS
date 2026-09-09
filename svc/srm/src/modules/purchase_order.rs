@@ -51,12 +51,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
-async fn list_purchase_orders(
+pub async fn list_purchase_orders(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseOrderQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -92,7 +97,7 @@ async fn list_purchase_orders(
     .bind(supplier_id_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -112,7 +117,7 @@ async fn list_purchase_orders(
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -137,12 +142,17 @@ async fn list_purchase_orders(
     }
 }
 
-async fn create_purchase_order(
+pub async fn create_purchase_order(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -169,7 +179,7 @@ async fn create_purchase_order(
     )
     .bind(supplier_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
@@ -184,7 +194,7 @@ async fn create_purchase_order(
     )
     .bind(&req.po_no)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing.unwrap_or(0) > 0 {
@@ -234,11 +244,19 @@ async fn create_purchase_order(
     .bind(user_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(order) => Json(ApiResponse::success(order, "采购订单创建成功")),
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(order, "采购订单创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
             Json(ApiResponse::<PurchaseOrder>::error(500, "采购订单创建失败"))
@@ -246,12 +264,17 @@ async fn create_purchase_order(
     }
 }
 
-async fn get_purchase_order(
+pub async fn get_purchase_order(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -267,7 +290,7 @@ async fn get_purchase_order(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -280,13 +303,18 @@ async fn get_purchase_order(
     }
 }
 
-async fn update_purchase_order(
+pub async fn update_purchase_order(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdatePurchaseOrderRequest>,
 ) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -299,7 +327,7 @@ async fn update_purchase_order(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -324,7 +352,7 @@ async fn update_purchase_order(
         )
         .bind(supplier_uuid_val)
         .bind(tenant_id)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
@@ -376,11 +404,19 @@ async fn update_purchase_order(
     .bind(remarks)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(order) => Json(ApiResponse::success(order, "采购订单更新成功")),
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(order, "采购订单更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             Json(ApiResponse::<PurchaseOrder>::error(500, "采购订单更新失败"))
@@ -388,12 +424,17 @@ async fn update_purchase_order(
     }
 }
 
-async fn delete_purchase_order(
+pub async fn delete_purchase_order(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<bool>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -408,7 +449,7 @@ async fn delete_purchase_order(
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {

@@ -135,7 +135,12 @@ pub async fn list_suppliers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -208,7 +213,7 @@ pub async fn list_suppliers(
         .bind(&category_filter)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await;
 
     match result {
@@ -228,7 +233,7 @@ pub async fn list_suppliers(
                 .bind(&search_pattern)
                 .bind(&status_filter)
                 .bind(&category_filter)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await;
 
             let total = count_result.unwrap_or(0);
@@ -268,8 +273,13 @@ pub async fn create_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -291,7 +301,7 @@ pub async fn create_supplier(
     ))
     .bind(tenant_id)
     .bind(&req.supplier_no)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing.unwrap_or(0) > 0 {
@@ -327,11 +337,17 @@ pub async fn create_supplier(
     .bind(user_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(supplier) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             state.supplier_cache.clear();
             tracing::debug!("🗑️ 供应商缓存已清空（创建供应商）");
 
@@ -442,7 +458,12 @@ pub async fn get_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Supplier>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -466,7 +487,7 @@ pub async fn get_supplier(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -503,8 +524,13 @@ pub async fn update_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -517,7 +543,7 @@ pub async fn update_supplier(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -573,7 +599,7 @@ pub async fn update_supplier(
     .bind(risk_level)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -664,7 +690,12 @@ pub async fn delete_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -677,7 +708,7 @@ pub async fn delete_supplier(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let old_values = existing
@@ -692,7 +723,7 @@ pub async fn delete_supplier(
     .bind(id)
     .bind(Utc::now())
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -726,12 +757,17 @@ pub async fn delete_supplier(
 
 // ==================== Supplier Products Handler ====================
 
-async fn get_supplier_products(
+pub async fn get_supplier_products(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<SupplierProduct>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -749,7 +785,7 @@ async fn get_supplier_products(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -766,12 +802,17 @@ async fn get_supplier_products(
 
 // ==================== Supplier Contracts Handler ====================
 
-async fn get_supplier_contracts(
+pub async fn get_supplier_contracts(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<SupplierContract>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -789,7 +830,7 @@ async fn get_supplier_contracts(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -806,12 +847,17 @@ async fn get_supplier_contracts(
 
 // ==================== Supplier Performance Handler ====================
 
-async fn get_supplier_performance(
+pub async fn get_supplier_performance(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierPerformance>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -824,7 +870,7 @@ async fn get_supplier_performance(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db);
+    .fetch_optional(&mut **txn).await;
 
     let order_stats_query = sqlx::query_as::<_, (i64, Option<f64>)>(only_own_schema_query!(
         "srm",
@@ -837,7 +883,8 @@ async fn get_supplier_performance(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db);
+    .fetch_one(&mut **txn)
+    .await;
 
     let eval_stats_query = sqlx::query_as::<
         _,
@@ -868,10 +915,11 @@ async fn get_supplier_performance(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db);
+    .fetch_one(&mut **txn)
+    .await;
 
     let (supplier_result, order_stats, eval_stats) =
-        tokio::join!(supplier_query, order_stats_query, eval_stats_query);
+        (supplier_query, order_stats_query, eval_stats_query);
 
     let supplier = match supplier_result {
         Ok(Some(s)) => s,
@@ -944,7 +992,7 @@ fn diff_json_fields(
     fields
 }
 
-async fn record_audit_log(
+pub async fn record_audit_log(
     db: &PgPool,
     table_name: &str,
     record_id: Uuid,
@@ -992,13 +1040,18 @@ pub struct ApprovalActionRequest {
     pub comment: Option<String>,
 }
 
-async fn start_supplier_approval(
+pub async fn start_supplier_approval(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<StartApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1012,7 +1065,7 @@ async fn start_supplier_approval(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let supplier_ref = match supplier.as_ref() {
@@ -1049,11 +1102,13 @@ async fn start_supplier_approval(
         }
     });
 
-    let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1", "srm"),
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1",
+        "srm"
+    ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     if result.is_ok() {
@@ -1122,13 +1177,18 @@ async fn start_supplier_approval(
     ))
 }
 
-async fn approve_supplier(
+pub async fn approve_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1142,7 +1202,7 @@ async fn approve_supplier(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let supplier_ref = match supplier.as_ref() {
@@ -1159,7 +1219,7 @@ async fn approve_supplier(
         "srm"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     if result.is_ok() {
@@ -1226,13 +1286,18 @@ async fn approve_supplier(
     ))
 }
 
-async fn reject_supplier(
+pub async fn reject_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1246,7 +1311,7 @@ async fn reject_supplier(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let supplier_ref = match supplier.as_ref() {
@@ -1263,7 +1328,7 @@ async fn reject_supplier(
         "srm"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     if result.is_ok() {

@@ -42,11 +42,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
-async fn list_dimensions(
+pub async fn list_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ScoringDimension>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -63,7 +68,7 @@ async fn list_dimensions(
         "#, "srm"),
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -78,11 +83,16 @@ async fn list_dimensions(
     }
 }
 
-async fn list_active_dimensions(
+pub async fn list_active_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ScoringDimension>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -99,7 +109,7 @@ async fn list_active_dimensions(
         "#, "srm"),
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -114,12 +124,17 @@ async fn list_active_dimensions(
     }
 }
 
-async fn get_dimension(
+pub async fn get_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ScoringDimension>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -135,7 +150,7 @@ async fn get_dimension(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -154,12 +169,17 @@ async fn get_dimension(
     }
 }
 
-async fn create_dimension(
+pub async fn create_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateScoringDimensionRequest>,
 ) -> Json<ApiResponse<ScoringDimension>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -200,7 +220,7 @@ async fn create_dimension(
     )
     .bind(&req.code)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing.unwrap_or(0) > 0 {
@@ -234,11 +254,19 @@ async fn create_dimension(
     .bind(user_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(dimension) => Json(ApiResponse::success(dimension, "评分维度创建成功")),
+        Ok(dimension) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(dimension, "评分维度创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建评分维度失败: {}", e);
             Json(ApiResponse::<ScoringDimension>::error(
@@ -249,13 +277,18 @@ async fn create_dimension(
     }
 }
 
-async fn update_dimension(
+pub async fn update_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateScoringDimensionRequest>,
 ) -> Json<ApiResponse<ScoringDimension>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -268,7 +301,7 @@ async fn update_dimension(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -302,7 +335,7 @@ async fn update_dimension(
             .bind(code)
             .bind(id)
             .bind(tenant_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             if exists.unwrap_or(0) > 0 {
@@ -361,11 +394,19 @@ async fn update_dimension(
     .bind(sort_order)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(dimension) => Json(ApiResponse::success(dimension, "评分维度更新成功")),
+        Ok(dimension) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(dimension, "评分维度更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新评分维度失败: {}", e);
             Json(ApiResponse::<ScoringDimension>::error(
@@ -376,12 +417,17 @@ async fn update_dimension(
     }
 }
 
-async fn delete_dimension(
+pub async fn delete_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -389,12 +435,15 @@ async fn delete_dimension(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE srm.scoring_dimensions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"))
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.scoring_dimensions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "srm"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

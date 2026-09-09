@@ -66,12 +66,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Evaluation Handlers ====================
 
-async fn list_evaluations(
+pub async fn list_evaluations(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<EvaluationQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -123,7 +128,7 @@ async fn list_evaluations(
     .bind(end_date)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -147,7 +152,7 @@ async fn list_evaluations(
             .bind(supplier_id_filter)
             .bind(start_date)
             .bind(end_date)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -172,12 +177,17 @@ async fn list_evaluations(
     }
 }
 
-async fn create_evaluation(
+pub async fn create_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -207,7 +217,7 @@ async fn create_evaluation(
     )
     .bind(tenant_id)
     .bind(supplier_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
@@ -222,7 +232,7 @@ async fn create_evaluation(
     )
     .bind(tenant_id)
     .bind(&req.evaluation_no)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing.unwrap_or(0) > 0 {
@@ -268,7 +278,7 @@ async fn create_evaluation(
             "srm"
         ))
         .bind(tenant_id)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
         .unwrap_or_default();
 
@@ -346,11 +356,19 @@ async fn create_evaluation(
     .bind(user_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(evaluation) => Json(ApiResponse::success(evaluation, "供应商评估创建成功")),
+        Ok(evaluation) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(evaluation, "供应商评估创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
             Json(ApiResponse::<SupplierEvaluation>::error(
@@ -361,12 +379,17 @@ async fn create_evaluation(
     }
 }
 
-async fn get_evaluation(
+pub async fn get_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -382,7 +405,7 @@ async fn get_evaluation(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -401,13 +424,18 @@ async fn get_evaluation(
     }
 }
 
-async fn update_evaluation(
+pub async fn update_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -420,7 +448,7 @@ async fn update_evaluation(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -455,7 +483,7 @@ async fn update_evaluation(
         )
         .bind(tenant_id)
         .bind(supplier_uuid_val)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
@@ -527,11 +555,19 @@ async fn update_evaluation(
     .bind(status)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(evaluation) => Json(ApiResponse::success(evaluation, "供应商评估更新成功")),
+        Ok(evaluation) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(evaluation, "供应商评估更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
             Json(ApiResponse::<SupplierEvaluation>::error(
@@ -542,12 +578,17 @@ async fn update_evaluation(
     }
 }
 
-async fn delete_evaluation(
+pub async fn delete_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -555,12 +596,15 @@ async fn delete_evaluation(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE srm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"))
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "srm"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -576,12 +620,17 @@ async fn delete_evaluation(
 
 // ==================== Evaluation History Handler ====================
 
-async fn get_evaluation_history(
+pub async fn get_evaluation_history(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<SupplierEvaluation>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -596,7 +645,7 @@ async fn get_evaluation_history(
     ))
     .bind(tenant_id)
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
@@ -616,7 +665,7 @@ async fn get_evaluation_history(
     )
     .bind(tenant_id)
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -631,12 +680,17 @@ async fn get_evaluation_history(
     }
 }
 
-async fn get_performance_summary(
+pub async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -665,7 +719,7 @@ async fn get_performance_summary(
     ))
     .bind(tenant_id)
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -719,13 +773,18 @@ async fn get_performance_summary(
     }
 }
 
-async fn get_score_trend(
+pub async fn get_score_trend(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<EvaluationQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -769,7 +828,7 @@ async fn get_score_trend(
     .bind(id)
     .bind(start_date)
     .bind(end_date)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -836,11 +895,16 @@ async fn get_score_trend(
     }
 }
 
-async fn get_evaluation_statistics(
+pub async fn get_evaluation_statistics(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -848,39 +912,41 @@ async fn get_evaluation_statistics(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let total_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1", "srm"),
-    )
+    let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let completed_result = sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed'", "srm"),
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let pending_result = sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'pending'", "srm"),
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let avg_score_result = sqlx::query_scalar::<_, f64>(
         only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed' AND overall_score IS NOT NULL", "srm")
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let supplier_count_result = sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1", "srm"),
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let total = total_result.unwrap_or(0);

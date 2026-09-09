@@ -42,10 +42,15 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
-async fn list_quotations(
+pub async fn list_quotations(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListQuotationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<Quotation>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let inquiry_id = params.inquiry_id.and_then(|s| Uuid::parse_str(&s).ok());
 
     let result = if inquiry_id.is_some() {
@@ -62,7 +67,7 @@ async fn list_quotations(
             "#, "srm"),
         )
         .bind(inquiry_id)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, Quotation>(
@@ -77,7 +82,7 @@ async fn list_quotations(
             ORDER BY q.created_at DESC
             "#, "srm"),
         )
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
     };
 
@@ -93,11 +98,16 @@ async fn list_quotations(
     }
 }
 
-async fn create_quotation(
+pub async fn create_quotation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateQuotationRequest>,
 ) -> Json<ApiResponse<Quotation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let inquiry_id = match Uuid::parse_str(&req.inquiry_id) {
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::<Quotation>::error(400, "无效的询价ID")),
@@ -112,7 +122,7 @@ async fn create_quotation(
         only_own_schema_query!("srm", "SELECT inquiry_no FROM srm.inquiries WHERE id = $1", "srm"),
     )
     .bind(inquiry_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(i)) => i,
@@ -127,7 +137,7 @@ async fn create_quotation(
         only_own_schema_query!("srm", "SELECT name FROM srm.suppliers WHERE id = $1", "srm"),
     )
     .bind(supplier_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(n) => n,
@@ -174,11 +184,19 @@ async fn create_quotation(
     .bind(now)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(quotation) => Json(ApiResponse::success(quotation, "报价创建成功")),
+        Ok(quotation) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(quotation, "报价创建成功"))
+        },
         Err(e) => {
             tracing::error!("创建报价失败: {}", e);
             Json(ApiResponse::<Quotation>::error(500, "报价创建失败"))
@@ -186,10 +204,15 @@ async fn create_quotation(
     }
 }
 
-async fn get_quotation(
+pub async fn get_quotation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Quotation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         SELECT q.id, q.quotation_no, q.inquiry_id, i.inquiry_no, q.supplier_id, s.name as supplier_name,
@@ -202,7 +225,7 @@ async fn get_quotation(
         "#, "srm"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -215,11 +238,16 @@ async fn get_quotation(
     }
 }
 
-async fn update_quotation(
+pub async fn update_quotation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateQuotationRequest>,
 ) -> Json<ApiResponse<Quotation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let valid_until = req.valid_until.and_then(|s| {
@@ -255,7 +283,7 @@ async fn update_quotation(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -268,13 +296,18 @@ async fn update_quotation(
     }
 }
 
-async fn delete_quotation(
+pub async fn delete_quotation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<bool>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!("srm", "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1", "srm"))
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     match result {
@@ -287,10 +320,15 @@ async fn delete_quotation(
     }
 }
 
-async fn award_quotation(
+pub async fn award_quotation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Quotation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Quotation>(
@@ -305,7 +343,7 @@ async fn award_quotation(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -318,10 +356,15 @@ async fn award_quotation(
     }
 }
 
-async fn reject_quotation(
+pub async fn reject_quotation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Quotation>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Quotation>(
@@ -336,7 +379,7 @@ async fn reject_quotation(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

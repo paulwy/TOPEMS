@@ -50,12 +50,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Product Handlers ====================
 
-async fn list_products(
+pub async fn list_products(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ProductQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -94,7 +99,7 @@ async fn list_products(
     .bind(&category_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -116,7 +121,7 @@ async fn list_products(
             .bind(&status_filter)
             .bind(supplier_id_filter)
             .bind(&category_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -141,12 +146,17 @@ async fn list_products(
     }
 }
 
-async fn create_product(
+pub async fn create_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierProductRequest>,
 ) -> Json<ApiResponse<SupplierProduct>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -176,7 +186,7 @@ async fn create_product(
     )
     .bind(tenant_id)
     .bind(supplier_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
@@ -191,7 +201,7 @@ async fn create_product(
     )
     .bind(tenant_id)
     .bind(&req.product_no)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing.unwrap_or(0) > 0 {
@@ -250,11 +260,19 @@ async fn create_product(
     .bind(user_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(product) => Json(ApiResponse::success(product, "供应商产品创建成功")),
+        Ok(product) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(product, "供应商产品创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建供应商产品失败: {}", e);
             Json(ApiResponse::<SupplierProduct>::error(
@@ -265,12 +283,17 @@ async fn create_product(
     }
 }
 
-async fn get_product(
+pub async fn get_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierProduct>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -286,7 +309,7 @@ async fn get_product(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -305,13 +328,18 @@ async fn get_product(
     }
 }
 
-async fn update_product(
+pub async fn update_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSupplierProductRequest>,
 ) -> Json<ApiResponse<SupplierProduct>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -324,7 +352,7 @@ async fn update_product(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -359,7 +387,7 @@ async fn update_product(
         )
         .bind(tenant_id)
         .bind(supplier_uuid_val)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
@@ -434,11 +462,19 @@ async fn update_product(
     .bind(specifications)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(product) => Json(ApiResponse::success(product, "供应商产品更新成功")),
+        Ok(product) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(product, "供应商产品更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新供应商产品失败: {}", e);
             Json(ApiResponse::<SupplierProduct>::error(
@@ -449,12 +485,17 @@ async fn update_product(
     }
 }
 
-async fn delete_product(
+pub async fn delete_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -462,12 +503,15 @@ async fn delete_product(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE srm.supplier_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"))
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.supplier_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "srm"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

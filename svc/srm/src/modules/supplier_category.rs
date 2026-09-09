@@ -53,12 +53,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Category Handlers ====================
 
-async fn list_categories(
+pub async fn list_categories(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CategoryQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -94,7 +99,7 @@ async fn list_categories(
     .bind(parent_id_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -114,7 +119,7 @@ async fn list_categories(
             .bind(&search_pattern)
             .bind(is_active_filter)
             .bind(parent_id_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -139,12 +144,17 @@ async fn list_categories(
     }
 }
 
-async fn create_category(
+pub async fn create_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierCategoryRequest>,
 ) -> Json<ApiResponse<SupplierCategory>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -171,7 +181,7 @@ async fn create_category(
     )
     .bind(tenant_id)
     .bind(&req.category_no)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if existing.unwrap_or(0) > 0 {
@@ -197,7 +207,7 @@ async fn create_category(
         )
         .bind(tenant_id)
         .bind(parent_uuid)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if parent_exists.unwrap_or(0) == 0 {
@@ -231,11 +241,19 @@ async fn create_category(
     .bind(user_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(category) => Json(ApiResponse::success(category, "供应商分类创建成功")),
+        Ok(category) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(category, "供应商分类创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建供应商分类失败: {}", e);
             Json(ApiResponse::<SupplierCategory>::error(
@@ -246,12 +264,17 @@ async fn create_category(
     }
 }
 
-async fn get_category(
+pub async fn get_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierCategory>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -267,7 +290,7 @@ async fn get_category(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -286,13 +309,18 @@ async fn get_category(
     }
 }
 
-async fn update_category(
+pub async fn update_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSupplierCategoryRequest>,
 ) -> Json<ApiResponse<SupplierCategory>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -305,7 +333,7 @@ async fn update_category(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -356,7 +384,7 @@ async fn update_category(
         )
         .bind(tenant_id)
         .bind(parent_uuid)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if parent_exists.unwrap_or(0) == 0 {
@@ -395,11 +423,19 @@ async fn update_category(
     .bind(is_active)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(category) => Json(ApiResponse::success(category, "供应商分类更新成功")),
+        Ok(category) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(category, "供应商分类更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新供应商分类失败: {}", e);
             Json(ApiResponse::<SupplierCategory>::error(
@@ -410,12 +446,17 @@ async fn update_category(
     }
 }
 
-async fn delete_category(
+pub async fn delete_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -428,7 +469,7 @@ async fn delete_category(
     )
     .bind(tenant_id)
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if child_count.unwrap_or(0) > 0 {
@@ -443,7 +484,7 @@ async fn delete_category(
     )
     .bind(tenant_id)
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     if supplier_count.unwrap_or(0) > 0 {
@@ -453,12 +494,15 @@ async fn delete_category(
         ));
     }
 
-    let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE srm.supplier_categories SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"))
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.supplier_categories SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "srm"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

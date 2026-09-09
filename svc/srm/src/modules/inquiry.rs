@@ -44,10 +44,15 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
-async fn list_inquiries(
+pub async fn list_inquiries(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListInquiryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -75,7 +80,7 @@ async fn list_inquiries(
         .bind(&category_filter)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await;
 
     match result {
@@ -93,7 +98,7 @@ async fn list_inquiries(
                 .bind(&search_pattern)
                 .bind(&status_filter)
                 .bind(&category_filter)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
@@ -117,11 +122,16 @@ async fn list_inquiries(
     }
 }
 
-async fn create_inquiry(
+pub async fn create_inquiry(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateInquiryRequest>,
 ) -> Json<ApiResponse<Inquiry>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.inquiry_no.is_empty() || req.title.is_empty() {
         return Json(ApiResponse::<Inquiry>::error(400, "询价编号和标题不能为空"));
     }
@@ -130,7 +140,7 @@ async fn create_inquiry(
         only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.inquiries WHERE deleted_at IS NULL AND inquiry_no = $1", "srm"),
     )
     .bind(&req.inquiry_no)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -166,11 +176,19 @@ async fn create_inquiry(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(inquiry) => Json(ApiResponse::success(inquiry, "询价创建成功")),
+        Ok(inquiry) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(inquiry, "询价创建成功"))
+        },
         Err(e) => {
             tracing::error!("创建询价失败: {}", e);
             Json(ApiResponse::<Inquiry>::error(500, "询价创建失败"))
@@ -178,10 +196,15 @@ async fn create_inquiry(
     }
 }
 
-async fn get_inquiry(
+pub async fn get_inquiry(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Inquiry>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Inquiry>(
         only_own_schema_query!("srm", r#"
         SELECT id, inquiry_no, title, description, category, urgency, status, published_at, deadline,
@@ -190,7 +213,7 @@ async fn get_inquiry(
         "#, "srm"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -203,11 +226,16 @@ async fn get_inquiry(
     }
 }
 
-async fn update_inquiry(
+pub async fn update_inquiry(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateInquiryRequest>,
 ) -> Json<ApiResponse<Inquiry>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let deadline = req.deadline.and_then(|s| {
@@ -240,11 +268,19 @@ async fn update_inquiry(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(inquiry) => Json(ApiResponse::success(inquiry, "询价更新成功")),
+        Ok(inquiry) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(inquiry, "询价更新成功"))
+        },
         Err(e) => {
             tracing::error!("更新询价失败: {}", e);
             Json(ApiResponse::<Inquiry>::error(500, "询价更新失败"))
@@ -252,13 +288,18 @@ async fn update_inquiry(
     }
 }
 
-async fn delete_inquiry(
+pub async fn delete_inquiry(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<bool>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!("srm", "UPDATE srm.inquiries SET deleted_at = NOW() WHERE id = $1", "srm"))
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     match result {
@@ -271,10 +312,15 @@ async fn delete_inquiry(
     }
 }
 
-async fn publish_inquiry(
+pub async fn publish_inquiry(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Inquiry>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Inquiry>(
@@ -289,7 +335,7 @@ async fn publish_inquiry(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -302,10 +348,15 @@ async fn publish_inquiry(
     }
 }
 
-async fn close_inquiry(
+pub async fn close_inquiry(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Inquiry>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Inquiry>(
@@ -319,7 +370,7 @@ async fn close_inquiry(
     )
     .bind(id)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {

@@ -47,10 +47,15 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
-async fn list_biddings(
+pub async fn list_biddings(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListBiddingParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -79,7 +84,7 @@ async fn list_biddings(
         .bind(&category_filter)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await;
 
     match result {
@@ -97,7 +102,7 @@ async fn list_biddings(
                 .bind(&search_pattern)
                 .bind(&status_filter)
                 .bind(&category_filter)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
@@ -121,11 +126,16 @@ async fn list_biddings(
     }
 }
 
-async fn create_bidding(
+pub async fn create_bidding(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateBiddingRequest>,
 ) -> Json<ApiResponse<Bidding>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.bidding_no.is_empty() || req.title.is_empty() {
         return Json(ApiResponse::<Bidding>::error(400, "招标编号和标题不能为空"));
     }
@@ -134,7 +144,7 @@ async fn create_bidding(
         only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.biddings WHERE deleted_at IS NULL AND bidding_no = $1", "srm"),
     )
     .bind(&req.bidding_no)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -181,11 +191,19 @@ async fn create_bidding(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => Json(ApiResponse::success(bidding, "招标创建成功")),
+        Ok(bidding) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(bidding, "招标创建成功"))
+        },
         Err(e) => {
             tracing::error!("创建招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "招标创建失败"))
@@ -193,10 +211,15 @@ async fn create_bidding(
     }
 }
 
-async fn get_bidding(
+pub async fn get_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Bidding>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
         SELECT id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
@@ -206,7 +229,7 @@ async fn get_bidding(
         "#, "srm"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -219,11 +242,16 @@ async fn get_bidding(
     }
 }
 
-async fn update_bidding(
+pub async fn update_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateBiddingRequest>,
 ) -> Json<ApiResponse<Bidding>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let bid_deadline = req.bid_deadline.and_then(|s| {
@@ -269,11 +297,19 @@ async fn update_bidding(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => Json(ApiResponse::success(bidding, "招标更新成功")),
+        Ok(bidding) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(bidding, "招标更新成功"))
+        },
         Err(e) => {
             tracing::error!("更新招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "更新招标失败"))
@@ -281,13 +317,18 @@ async fn update_bidding(
     }
 }
 
-async fn delete_bidding(
+pub async fn delete_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<bool>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!("srm", "UPDATE srm.biddings SET deleted_at = NOW() WHERE id = $1", "srm"))
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     match result {
@@ -300,10 +341,15 @@ async fn delete_bidding(
     }
 }
 
-async fn publish_bidding(
+pub async fn publish_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Bidding>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Bidding>(
@@ -318,11 +364,19 @@ async fn publish_bidding(
     .bind(id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => Json(ApiResponse::success(bidding, "招标发布成功")),
+        Ok(bidding) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(bidding, "招标发布成功"))
+        },
         Err(e) => {
             tracing::error!("发布招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "发布招标失败"))
@@ -330,10 +384,15 @@ async fn publish_bidding(
     }
 }
 
-async fn open_bidding(
+pub async fn open_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Bidding>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Bidding>(
@@ -348,11 +407,19 @@ async fn open_bidding(
     .bind(id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => Json(ApiResponse::success(bidding, "开标成功")),
+        Ok(bidding) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(bidding, "开标成功"))
+        },
         Err(e) => {
             tracing::error!("开标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "开标失败"))
@@ -360,10 +427,15 @@ async fn open_bidding(
     }
 }
 
-async fn evaluate_bidding(
+pub async fn evaluate_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Bidding>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Bidding>(
@@ -377,11 +449,19 @@ async fn evaluate_bidding(
     )
     .bind(id)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => Json(ApiResponse::success(bidding, "评标完成")),
+        Ok(bidding) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(bidding, "评标完成"))
+        },
         Err(e) => {
             tracing::error!("评标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "评标失败"))
@@ -389,11 +469,16 @@ async fn evaluate_bidding(
     }
 }
 
-async fn award_bidding(
+pub async fn award_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<AwardBiddingRequest>,
 ) -> Json<ApiResponse<Bidding>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
@@ -404,7 +489,7 @@ async fn award_bidding(
     let supplier_name: Option<String> =
         sqlx::query_scalar(only_own_schema_query!("srm", "SELECT name FROM srm.suppliers WHERE id = $1", "srm"))
             .bind(supplier_id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await
             .unwrap_or(None);
 
@@ -422,11 +507,19 @@ async fn award_bidding(
     .bind(supplier_id)
     .bind(supplier_name)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => Json(ApiResponse::success(bidding, "中标结果已确定")),
+        Ok(bidding) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(bidding, "中标结果已确定"))
+        },
         Err(e) => {
             tracing::error!("确定中标结果失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "确定中标结果失败"))
@@ -434,10 +527,15 @@ async fn award_bidding(
     }
 }
 
-async fn list_bidding_suppliers(
+pub async fn list_bidding_suppliers(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, (Uuid, String)>(
         only_own_schema_query!("srm", r#"
         SELECT s.id, s.name FROM srm.suppliers s
@@ -446,7 +544,7 @@ async fn list_bidding_suppliers(
         "#, "srm"),
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

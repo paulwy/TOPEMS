@@ -65,12 +65,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
-async fn get_performance_reports(
+pub async fn get_performance_reports(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -178,7 +183,7 @@ async fn get_performance_reports(
     .bind(min_score)
     .bind(max_score)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -214,7 +219,7 @@ async fn get_performance_reports(
             .bind(end_date)
             .bind(min_score)
             .bind(max_score)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -239,12 +244,17 @@ async fn get_performance_reports(
     }
 }
 
-async fn get_performance_report(
+pub async fn get_performance_report(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -264,7 +274,7 @@ async fn get_performance_report(
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
 
     let (supplier_name, category, status, contact_person) = match supplier_info {
@@ -342,7 +352,7 @@ async fn get_performance_report(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let performance = match performance {
@@ -373,7 +383,7 @@ async fn get_performance_report(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -399,7 +409,7 @@ async fn get_performance_report(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -417,7 +427,7 @@ async fn get_performance_report(
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await
         .unwrap_or_default();
 
@@ -438,12 +448,17 @@ async fn get_performance_report(
     Json(ApiResponse::success(result, "获取供应商绩效详情成功"))
 }
 
-async fn compare_supplier_performance(
+pub async fn compare_supplier_performance(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -531,7 +546,7 @@ async fn compare_supplier_performance(
         query_builder = query_builder.bind(*id);
     }
 
-    let result = query_builder.fetch_all(&state.db).await;
+    let result = query_builder.fetch_all(&mut **txn).await;
 
     match result {
         Ok(performances) => {
@@ -562,12 +577,17 @@ async fn compare_supplier_performance(
     }
 }
 
-async fn get_performance_trend(
+pub async fn get_performance_trend(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -624,7 +644,7 @@ async fn get_performance_trend(
     .bind(tenant_id)
     .bind(supplier_id)
     .bind(interval)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -664,11 +684,16 @@ async fn get_performance_trend(
     }
 }
 
-async fn get_top_suppliers(
+pub async fn get_top_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -716,7 +741,7 @@ async fn get_top_suppliers(
         "#, "srm"),
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -760,7 +785,7 @@ async fn get_top_suppliers(
         "#, "srm"),
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -772,12 +797,17 @@ async fn get_top_suppliers(
     Json(ApiResponse::success(result, "获取TOP供应商成功"))
 }
 
-async fn export_performance_report(
+pub async fn export_performance_report(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -860,7 +890,7 @@ async fn export_performance_report(
     .bind(end_date)
     .bind(min_score)
     .bind(max_score)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -893,11 +923,16 @@ async fn export_performance_report(
     }
 }
 
-async fn get_score_level_distribution(
+pub async fn get_score_level_distribution(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -929,7 +964,7 @@ async fn get_score_level_distribution(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -966,11 +1001,16 @@ async fn get_score_level_distribution(
     Json(ApiResponse::success(result, "获取评分等级分布成功"))
 }
 
-async fn get_performance_summary(
+pub async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -984,15 +1024,17 @@ async fn get_performance_summary(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
-    let evaluated_suppliers = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE tenant_id = $1", "srm"),
-    )
+    let evaluated_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE tenant_id = $1",
+        "srm"
+    ))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -1000,7 +1042,7 @@ async fn get_performance_summary(
         only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL", "srm"),
     )
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
     .unwrap_or(0.0);
@@ -1019,7 +1061,7 @@ async fn get_performance_summary(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
 
@@ -1037,7 +1079,7 @@ async fn get_performance_summary(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
 
@@ -1054,7 +1096,7 @@ async fn get_performance_summary(
         "srm"
     ))
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
