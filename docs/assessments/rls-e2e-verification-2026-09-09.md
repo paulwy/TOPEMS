@@ -66,6 +66,26 @@
 
 验证期间无污染残留（清理后计数已核）。
 
+## 四·C、真实进程 + JWT + HTTP 全链路（新增，hrm 服务 8020）
+
+启动真实 `topems-hrm`（`DATABASE_URL=…5432/topems` + 非默认 `JWT_SECRET`，redis 在线）；自签 HS256 JWT（Claims 含 `permissions:["hrm:admin"]`，与启动 secret 一致）；经 `curl http://localhost:8020/api/hrm/employees` 走完整中间件链：`auth_middleware`（验签+注入 Claims）→ `require_permission("hrm:admin")`（Claims 检查）→ `tenant_middleware`（begin + set_config + txn 注入）→ handler。
+
+| 场景 | 期望 | 实测 | 结论 |
+|---|---|---|---|
+| T1 token GET | 仅 T1（6 行） | total=6 | ✅ |
+| T2 token GET | 仅 T2（1 行） | total=1 | ✅ |
+| 无 token | 401 | 401 | ✅ |
+| 越权写：T1 token + body tenant_id=T2 | 不允许写入 T2 | 200 成功，**落库强制 T1**（body 被忽略） | ✅ 业务层正确 |
+| service token GET | （见下注） | total=0 | ⚠️ 非 RLS 问题 |
+
+> service token 注：`list_employees` handler 用 `get_tenant_id(claims, headers)`（service 无 tenant_id → 随机 UUID）作显式 `WHERE tenant_id=$5` → 0 行。此为 handler 业务行为，非 RLS 缺陷；service 身份的"RLS 层豁免"在 handler 显式过滤下不体现。
+
+**关键发现（写路径 RLS 兜底缺口，已核实）**：
+- `create_employee` handler 已注入 txn（Extension txn_arc + guard），但业务写入经 `EmployeeService::new(state.db, …)` → `self.db`（**PgPool 直连，无 GUC → RLS 全放行**）→ **写路径无 RLS 二次防护**。
+- 隔离当前由业务层保证：service INSERT 用 `self.tenant_id`（来自 claims），body 的 tenant_id 被忽略（实测落 T1）——**无越权写漏洞**，但 A 方案"RLS 兜底"在该封装路径未生效。
+- hrm 分布：16 模块 201 处 `&mut **txn` 直查（RLS 生效）；employee.rs 的 EmployeeService 封装路径属豁免形态（employee.rs 仅 3 处 txn 直查）。对照 erp 284 处 txn 直查。
+- 修复选项（待拍板）：A=EmployeeService 方法穿透 txn（&mut PgConnection）；B=全仓盘点"txn 白拿"handler 批量穿透；C=接受现状（业务层已保证），RLS 兜底列入后续。
+
 ## 五、结论
 
 - **A 方案隔离生效**：受限角色在 `app.tenant_id` 注入下读写均被 RLS 约束；越权读=0 行、越权 UPDATE=0 行受影响（静默）、越权 INSERT=WITH CHECK 报错。
@@ -76,7 +96,7 @@
 
 ## 六、剩余缺口（未做，如需可继续）
 
-1. **真实进程 + 登录链路**：启动完整服务栈 + 网关 + 登录换取带租户 JWT，经真实 HTTP 端口逐 handler 验证（当前已覆盖：生产 `tenant_middleware` 函数 → handler 全链路于 §四·A；仅差进程监听与 JWT 签发）。
+1. **service 封装路径的 RLS 兜底**：见 §四·C 关键发现——写路径（如 hrm `EmployeeService`）走 PgPool 直连、无 RLS 上下文；业务层已保证隔离，RLS 纵深防御待 A/B/C 拍板后实施。
 2. **跨服务事件链路**：erp/crm/finance 等事件驱动写路径在受限角色下的隔离（当前 DB 层验证未覆盖事件消费者）。
 
 ## 七、验证资产
