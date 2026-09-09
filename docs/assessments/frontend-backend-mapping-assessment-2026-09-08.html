@@ -192,7 +192,7 @@
     <b>前后端都有但页面未消费（悬空 API）</b>：finance/settlementCenter（10方法）、finance/riskV54（12）+riskV59（22）、consolidation-contract/（25方法）、WMS/replenishment.ts（与 smartReplenishment 重复）、scm/factory.ts、monitor/metricTyped.ts+ruleTyped.ts。<br>
     <b>后端有前端无</b>：WMS/dashboard 独立路由；TMS/optimization；scm/dashboard/real-time-status；ai 大量 DSH 高级能力（KG/RAG/Multi-agent/MCP/Workflows/Multimodal/Connectors 约 50 条路由）；gis/geodata+spatial+devices 完整 CRUD（~25条）；pm/statistics+project-types+service-integrations+tasks（~15条）；plugin/dev+upgrade+runtime（~22条）；integration/mes-qms+sync（~19条）；lims 疑似 /lims/* 前缀重复注册 ~30条。<br>
     <b>后端重复/冲突</b>：WMS/transfer.rs 与 transfer_order.rs 重复注册 /transfers（后注册覆盖先注册）；WMS/inventory_alert 同时注册 /alerts/* 和 /inventory-alerts/* 双路径；lims main.rs 与 modules/ 疑似重复注册。<br>
-    <b>其他</b>：im 核心功能前后端都有但无页面入口（仅组件层，pages/im/ 无聊天页面）；feedback 后端有（ticket兼容）但前端无独立目录；addressbook 走 ERP 后端归属待验证；migration unified-core 承载待验证。
+    <b>其他</b>：im 核心功能前后端都有但无页面入口（仅组件层，pages/im/ 无聊天页面）；feedback 后端有（ticket兼容）但前端无独立目录；addressbook 走 ERP 后端归属＝已核实（erp /addressbook 全套）；migration＝unified-core 内部 DB 初始化服务（已核实，非前端 API）。
   </div>
 
   <!-- P3 发现 -->
@@ -245,10 +245,15 @@
     ⑦ 路径前缀 → 部分闭环：mobile 双 /mobile/ 前缀 233 处已修复（commit dbadf6e3b，后端 api_prefix=/api/mobile 且路由无 /mobile/ 段，修复前必然 404）；WMS/SCM sync 核查已统一为 /sync-records RESTful（无缺口）；finance/reconciliation → ✅ 已闭环（commit 9d227b01f，③A 决策）：新模块 reconcile_orders.rs 补齐 /reconcile 全 10 方法真实现（list/get/create/auto/confirm/dispute/cancel/updateItem/getItems，迁移 0005：finance.reconcile_orders + reconcile_items），移除 mod.rs 桩 handler；原 reconciliation.rs session 模型保留（/reconciliation/* 与 /reconcile 并行）。<br>
     ⑧ ehs 写操作 → ✅ 核查已闭环：hazardous_material/occupational_disease/occupational_health/training/environmental_compliance 均有 POST/PUT/DELETE，accident.rs 含 /incidents 全套（报告原判缺口不成立）。<br>
     ⑬ 补全高价值后端能力的前端 → ✅ 已闭环：finance 版本化模块前端已覆盖（19 个 API 文件：account/voucher/budget/report/reconciliation/riskV54/riskV59 等）；ai DSH 前端已覆盖（dshAgent/businessIntelligence/governanceDashboard/businessCopilot）；pm kanban-board/timeline 前端 API + 页面消费已确认（project.ts:53/143 + ProjectTaskKanbanPage）；TMS optimization 3 条路由 API 补全（commit f80ea03d6：新增 src/api/tms/optimization.ts，/assignments/plan、/routes/optimize、/freight/quote，eslint/tsc 0 error）。UI 页面入口留待后续专项。<br>
+    第三批执行状态（2026-09-09）：
+    ⑨ CI 门禁 → 建议保留实施（前端 API 路径须在后端路由注册表，类似 check-schema-boundary），未编码。
+    ⑩ 重复实现 6 组 → 已确认存在（P3 标注），治理项：consolidation 三方/voucherTemplate 双份/risk 三份并存 等，未删除（行为兼容优先）。
+    ⑪ 版本化生命周期 → 已标注治理建议：master V61-V79 预埋、finance V51-V60 反向无消费、risk 三份并存，建议建生命周期登记表。
+    ⑫ 零消费模块 835 方法 → ✅ 预埋确认（master/file/dict/unified-core 页面零消费），待产品立项启用。
   </div>
 
   <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:12.5px;box-sizing:border-box;">
-    <b>口径说明</b>：本报告由 6 个分片审计代理并行完成（核心平台/ERP财务/CRM通信/HR制造/供应链分析/新兴技术），覆盖 31 个活跃后端服务、57 个前端 API 目录、42 个页面模块。后端路由通过 axum Router 注册点 grep 提取，前端 API 方法通过 apiClient 调用点提取，页面消费通过 import 语句 grep 验证。所有 P0/P1 级缺口均附文件:行证据并标记"已核实"；少量标记"待验证"的项（migration unified-core 承载、addressbook 后端归属、plugin 网关路由）建议结合运行时配置进一步确认。本报告与 architecture-assessment-2026-09-07.html 衔接，不含该报告中已闭环的架构治理项。
+    <b>口径说明</b>：本报告由 6 个分片审计代理并行完成（核心平台/ERP财务/CRM通信/HR制造/供应链分析/新兴技术），覆盖 31 个活跃后端服务、57 个前端 API 目录、42 个页面模块。后端路由通过 axum Router 注册点 grep 提取，前端 API 方法通过 apiClient 调用点提取，页面消费通过 import 语句 grep 验证。所有 P0/P1 级缺口均附文件:行证据并标记"已核实"；三个"待验证"项已于 2026-09-09 复核关闭：addressbook 后端归属＝erp 承载（/addressbook 全套已核实）；migration＝unified-core 内部 DB 初始化服务（建 core_migration_history，非前端 API）；plugin 网关路由＝主题一①已核实三方一致。本报告与 architecture-assessment-2026-09-07.html 衔接，不含该报告中已闭环的架构治理项。
   </div>
 
 </div>
