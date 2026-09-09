@@ -624,6 +624,51 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("tenant_id", "UUID"),
         ],
     ),
+    // ===== V514-2: slotting 库位优化（P0-2 缺口补实现，对齐前端 slotting.ts 契约）=====
+    (
+        "slotting_suggestions",
+        &[
+            ("tenant_id", "UUID"),
+            ("warehouse_id", "UUID NOT NULL"),
+            ("material_id", "UUID"),
+            ("material_code", "VARCHAR(100) NOT NULL DEFAULT ''"),
+            ("material_name", "VARCHAR(255) NOT NULL DEFAULT ''"),
+            ("current_location_id", "UUID"),
+            ("suggested_location_id", "UUID"),
+            ("suggested_location_name", "VARCHAR(255)"),
+            ("reason", "TEXT NOT NULL DEFAULT ''"),
+            ("score", "NUMERIC(8, 4) NOT NULL DEFAULT 0"),
+            ("expected_improvement", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("applied_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "slotting_zones",
+        &[
+            ("tenant_id", "UUID"),
+            ("warehouse_id", "UUID NOT NULL"),
+            ("name", "VARCHAR(100) NOT NULL"),
+            ("zone_type", "VARCHAR(50) NOT NULL DEFAULT 'bulk'"),
+            ("location_ids", "JSONB NOT NULL DEFAULT '[]'"),
+            ("is_active", "BOOLEAN NOT NULL DEFAULT TRUE"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "slotting_rules",
+        &[
+            ("tenant_id", "UUID"),
+            ("warehouse_id", "UUID NOT NULL"),
+            ("rule_type", "VARCHAR(50) NOT NULL DEFAULT 'velocity_class'"),
+            ("priority", "INTEGER NOT NULL DEFAULT 10"),
+            ("conditions", "JSONB NOT NULL DEFAULT '[]'"),
+            ("actions", "JSONB NOT NULL DEFAULT '[]'"),
+            ("is_active", "BOOLEAN NOT NULL DEFAULT TRUE"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
     (
         "discrepancy_records",
         &[

@@ -13,6 +13,8 @@ pub mod discrepancy_logic;
 pub mod replenishment_logic;
 // V514-2: 恢复此前被注释的已实现模块（InventoryCyclePage 前端真实消费 /cycle-counts）
 pub mod cycle_count;
+// V514-2: 新增 slotting 模块（LocationRulePage 前端真实消费 /slotting/rules，此前后端无实现）
+pub mod slotting;
 // discrepancy.rs 存量编译错误（E0308 类型不匹配×3）未修复前保持注释，待后续单独收口
 // pub mod discrepancy;
 pub mod data_sync;
@@ -76,6 +78,8 @@ where
         .merge(wave_pick::create_routes())
         // V514-2: 恢复 cycle_count 挂载（模块实现完整，此前仅注册被注释）
         .merge(cycle_count::create_routes())
+        // V514-2: slotting 库位优化（P0-2 缺口补实现）
+        .merge(slotting::create_routes())
         // discrepancy 待修复后恢复（见 mod 声明处注释）
         .merge(audit::create_routes())
         .merge(data_sync::create_routes())
