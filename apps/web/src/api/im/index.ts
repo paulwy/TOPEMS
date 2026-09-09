@@ -148,6 +148,15 @@ export const imApi = {
   listChatMessages: async (chatId: string): Promise<ApiResponse<unknown>> => {
     return apiClient.im.get<unknown>(`/rooms/${chatId}/messages`);
   },
+  // 消息搜索：后端路由 GET /rooms/{id}/messages/search（响应 data 为消息数组）
+  searchChatMessages: async (
+    chatRoomId: string,
+    keyword: string
+  ): Promise<ApiResponse<unknown>> => {
+    return apiClient.im.get<unknown>(`/rooms/${chatRoomId}/messages/search`, {
+      params: { keyword },
+    });
+  },
   createChatMessage: async (data: CreateChatMessageRequest): Promise<ApiResponse<ChatMessage>> => {
     return apiClient.im.post<ChatMessage>(`/rooms/${data.chat_id}/messages`, data);
   },

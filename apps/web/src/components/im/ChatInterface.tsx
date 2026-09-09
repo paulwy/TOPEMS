@@ -195,12 +195,17 @@ export const ChatInterface: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
-        `/im/api/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`
-      );
-      const data = await response.json();
-      if (data.success && data.data) {
-        setFilteredMessages(data.data.messages || []);
+      // 走 apiClient.im（统一拦截器/鉴权/CSRF），实际路由 GET /api/communication/im/rooms/{id}/messages/search
+      const response = await imApi.searchChatMessages(selectedRoom.id, keyword);
+      if (response.success && response.data) {
+        // 兼容两种响应形状：data 直接为数组（当前后端桩），或 data.messages 为数组
+        const payload = response.data;
+        const messages = Array.isArray(payload)
+          ? payload
+          : ((payload as { messages?: unknown[] }).messages ?? []);
+        setFilteredMessages(messages as ChatMessage[]);
+      } else {
+        setFilteredMessages([]);
       }
     } catch (error: unknown) {
       logger.error('Failed to search messages:', error);

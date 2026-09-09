@@ -130,6 +130,11 @@ impl TicketSlaService {
                         .and_utc();
                 }
 
+                // 调整到上班整点后必须重新取当前时间，否则下方仍用上班前的陈旧小时数
+                // 计算当日剩余工时（会把 9:00 之前的非工作时间算成可用工时，高估最多 1 小时）
+                let naive = current.naive_utc();
+                let current_hour = naive.hour() as i32;
+
                 if current_hour >= end_hour {
                     current += Duration::days(1);
                     current = current
@@ -953,5 +958,58 @@ mod tests {
     #[test]
     fn test_ticket_age_with_offset() {
         assert_eq!(ticket_age_days(86400, 86400 * 4), 3);
+    }
+
+    // ========== calculate_due_time（工作时间模式） ==========
+
+    use chrono::TimeZone;
+
+    #[test]
+    fn test_due_time_before_business_hours() {
+        // 周一 2024-01-01 08:30（上班时间 9:00 之前）创建，SLA 2 个工作小时
+        // 时钟应从 9:00 起算，到期时间 = 11:00（修复前错误地从 8:30 起算得到 10:30）
+        let start = Utc.with_ymd_and_hms(2024, 1, 1, 8, 30, 0).unwrap();
+        let due = TicketSlaService::calculate_due_time(
+            start,
+            2.0,
+            true,
+            Some("09:00"),
+            Some("18:00"),
+            false,
+        );
+        assert_eq!(due, Utc.with_ymd_and_hms(2024, 1, 1, 11, 0, 0).unwrap());
+    }
+
+    #[test]
+    fn test_due_time_before_business_hours_crosses_day() {
+        // 周一 2024-01-01 08:30 创建，SLA 9.5 个工作小时：
+        // 当日 9:00-18:00 共 9 小时，余 0.5 小时顺延至次日 9:00 起算 -> 2024-01-02 09:30
+        let start = Utc.with_ymd_and_hms(2024, 1, 1, 8, 30, 0).unwrap();
+        let due = TicketSlaService::calculate_due_time(
+            start,
+            9.5,
+            true,
+            Some("09:00"),
+            Some("18:00"),
+            false,
+        );
+        assert_eq!(due, Utc.with_ymd_and_hms(2024, 1, 2, 9, 30, 0).unwrap());
+    }
+
+    #[test]
+    fn test_due_time_weekend_skipped() {
+        // 周六 2024-01-06 10:00 创建，SLA 2 个工作小时且排除周末
+        // 跳过周六、周日，周一 2024-01-08 09:00 起算 -> 11:00
+        let start = Utc.with_ymd_and_hms(2024, 1, 6, 10, 0, 0).unwrap();
+        assert_eq!(start.naive_utc().weekday(), Weekday::Sat);
+        let due = TicketSlaService::calculate_due_time(
+            start,
+            2.0,
+            true,
+            Some("09:00"),
+            Some("18:00"),
+            true,
+        );
+        assert_eq!(due, Utc.with_ymd_and_hms(2024, 1, 8, 11, 0, 0).unwrap());
     }
 }

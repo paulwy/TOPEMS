@@ -46,7 +46,6 @@ impl From<Ticket> for FeedbackCompat {
         FeedbackCompat {
             id: t.id,
             user_id: t.reporter_id.map(|u| u.to_string()).unwrap_or_default(),
-            type_: t.ticket_type,
             title: t.title,
             description: t.description.unwrap_or_default(),
             screenshots: meta
@@ -63,6 +62,12 @@ impl From<Ticket> for FeedbackCompat {
                 .and_then(|v| v.as_i64())
                 .map(|v| v as i32)
                 .unwrap_or(3),
+            // 反馈类型存储在 metadata.type；缺失时回退为 ticket_type
+            type_: meta
+                .get("type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or(t.ticket_type),
             status: t.status,
             response: meta
                 .get("response")
@@ -114,7 +119,10 @@ pub async fn create_feedback(
     Json(payload): Json<CreateFeedbackRequest>,
 ) -> Json<ApiResponse<FeedbackCompat>> {
     let ticket_no = generate_ticket_number("FB", Utc::now().timestamp_millis() as u64);
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let metadata = serde_json::json!({
+        "type": payload.type_,
         "screenshots": payload.screenshots.unwrap_or_default(),
         "satisfaction": payload.satisfaction.unwrap_or(3),
         "response": "",
@@ -126,7 +134,7 @@ pub async fn create_feedback(
            RETURNING id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata"#,
     )
     .bind(ticket_no)
-    .bind(Uuid::nil())
+    .bind(tenant_id)
     .bind(&payload.title)
     .bind(&payload.description)
     .bind(Uuid::parse_str(&claims.sub).ok())
@@ -179,6 +187,12 @@ pub async fn list_feedbacks(
 
     let mut conditions = vec!["ticket_type = 'customer_feedback'".to_string()];
     let mut args: Vec<String> = Vec::new();
+
+    // 租户隔离：与 ticket 主流程 list_tickets 一致，始终按当前租户过滤
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    conditions.push(format!("tenant_id = ${}::uuid", args.len() + 1));
+    args.push(tenant_id.to_string());
 
     if let Some(type_) = params.type_ {
         conditions.push(format!("metadata->>'type' = ${}", args.len() + 1));
