@@ -258,6 +258,7 @@ pub async fn create_sales_order(
                     customer_name: Some(sales_order.customer_name.clone()),
                     total_amount: sales_order.total_amount.to_f64(),
                     payable_amount: sales_order.payable_amount.to_f64(),
+                    status: Some(sales_order.status.clone()),
                     created_by: Some(claims.sub.clone()),
                     tenant_id,
                 };

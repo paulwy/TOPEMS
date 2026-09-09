@@ -549,6 +549,8 @@ pub struct SalesOrderCreatedPayload {
     pub customer_name: Option<String>,
     pub total_amount: Option<f64>,
     pub payable_amount: Option<f64>,
+    /// 订单状态（erp 侧 sales_orders.status：draft/confirmed/shipped/completed/cancelled）
+    pub status: Option<String>,
     pub created_by: Option<String>,
     pub tenant_id: Option<Uuid>,
 }
@@ -1690,7 +1692,9 @@ mod tests {
             customer_name: Some("Topems Inc".into()),
             total_amount: Some(12500.00),
             payable_amount: Some(10000.00),
+            status: Some("confirmed".into()),
             created_by: Some("alice".into()),
+            tenant_id: None,
         };
         let json = serde_json::to_string(&p).unwrap();
         let back: SalesOrderCreatedPayload = serde_json::from_str(&json).unwrap();
@@ -1710,6 +1714,7 @@ mod tests {
             payment_method: Some("bank_transfer".into()),
             received_at: Some(Utc::now()),
             customer_name: None,
+            tenant_id: None,
         };
         let json = serde_json::to_string(&p).unwrap();
         let back: PaymentReceivedPayload = serde_json::from_str(&json).unwrap();
@@ -1747,6 +1752,7 @@ mod tests {
             reference_order_id: None,
             received_by: Some("carol".into()),
             received_at: Some(Utc::now()),
+            tenant_id: None,
         };
         let json = serde_json::to_string(&p).unwrap();
         let back: StockInboundPayload = serde_json::from_str(&json).unwrap();

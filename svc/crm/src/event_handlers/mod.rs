@@ -12,7 +12,7 @@ use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMaster
 use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event, EventResult, EventSubscriber,
     EventType, MasterDataAction, MasterDataDomain, MasterDataEvent, OpportunityWonPayload,
-    PaymentReceivedPayload, ShippingOrderRequestedPayload,
+    PaymentReceivedPayload, SalesOrderCreatedPayload, ShippingOrderRequestedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -40,6 +40,7 @@ impl CrmEventHandlers {
         let h6 = self.clone();
         let h7 = self.clone();
         let h8 = self.clone();
+        let h9 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::AfterSalesTicketCreated], move |event| {
@@ -79,6 +80,14 @@ impl CrmEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_payment_received(event).await {
                         tracing::error!("[crm] handle_payment_received 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::SalesOrderCreated], move |event| {
+                let h = h9.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_sales_order_created(event).await {
+                        tracing::error!("[crm] handle_sales_order_created 失败: {}", e);
                     }
                 })
             })
@@ -665,7 +674,76 @@ impl CrmEventHandlers {
 
         Ok(())
     }
+    /// SalesOrderCreated → 客户订单台账（customer_orders 写入方接通，遗留⑥收口）
+    ///
+    /// 数据源：erp 创建销售订单发布（svc/erp/src/modules/sales_order.rs），
+    /// 幂等按 order_no+tenant_id 去重；order_amount 取应付金额（payable_amount，含税口径），
+    /// status 透传 erp 侧真实状态（draft/confirmed/...），tenant_id 优先事件载荷、回退连接上下文。
+    async fn handle_sales_order_created(&self, event: Event) -> HandlerResult {
+        let payload: SalesOrderCreatedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 SalesOrderCreated payload 失败: {}", e))?;
+
+        // 幂等：同租户同单号已同步则跳过
+        let order_no = payload.order_no.clone();
+        let payload_tenant = payload.tenant_id;
+        let existing: Option<(uuid::Uuid,)> =
+            sqlx::query_as("SELECT id FROM crm.customer_orders WHERE order_no = $1 AND tenant_id = $2")
+                .bind(&order_no)
+                .bind(payload_tenant)
+                .fetch_optional(&self.db)
+                .await
+                .map_err(|e| format!("查询客户订单失败: {}", e))?;
+
+        if existing.is_some() {
+            tracing::debug!("[crm] 客户订单已同步（跳过）- order_no={}", order_no);
+            return Ok(());
+        }
+
+        let tenant_id = if payload_tenant.is_some() {
+            payload_tenant
+        } else {
+            sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+                .fetch_optional(&self.db)
+                .await
+                .ok()
+                .flatten()
+        };
+        let Some(tenant_id) = tenant_id else {
+            tracing::warn!("[crm] 跳过客户订单同步（无租户上下文）- order_no={}", order_no);
+            return Ok(());
+        };
+
+        // 状态透传：erp 侧真实订单状态；缺失时按 CRM 台账语义记 confirmed（进入台账视为已确认）
+        let status = payload.status.clone().unwrap_or_else(|| "confirmed".to_string());
+        let order_amount = payload.payable_amount.unwrap_or_else(|| payload.total_amount.unwrap_or(0.0));
+        let customer_id = payload.customer_id;
+
+        let result = sqlx::query(
+            r#"INSERT INTO crm.customer_orders
+               (tenant_id, customer_id, order_no, order_date, order_amount, status, created_at, updated_at)
+               VALUES ($1, $2, $3, CURRENT_DATE, $4, $5, NOW(), NOW())"#,
+        )
+        .bind(tenant_id)
+        .bind(customer_id)
+        .bind(&order_no)
+        .bind(order_amount)
+        .bind(&status)
+        .execute(&self.db)
+        .await;
+
+        match result {
+            Ok(_) => tracing::info!(
+                "[crm] 客户订单台账已同步 - order_no={}, amount={}, status={}",
+                order_no,
+                order_amount,
+                status
+            ),
+            Err(e) => tracing::warn!("[crm] 客户订单同步失败（graceful fallback）: {}", e),
+        }
+        Ok(())
+    }
 }
+
 
 /// 启动 CRM 服务的事件订阅
 pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
