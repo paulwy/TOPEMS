@@ -142,6 +142,8 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(master_data_refs::create_routes())
         .merge(mdm_v49::create_routes())
         .merge(inventory::create_routes())
+        // #29: leave_request 6 端点挂载（原仅声明未 merge）
+        .merge(leave_request::create_routes())
         .merge(customer::create_routes())
         .merge(supplier::create_routes())
         .merge(sales_order::create_routes())
