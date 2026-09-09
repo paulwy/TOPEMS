@@ -158,7 +158,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, tenant_id)
+            .ask(&prompt, None, 5, tenant_id, None)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response
@@ -224,7 +224,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, tenant_id)
+            .ask(&prompt, None, 5, tenant_id, None)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response
@@ -315,7 +315,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil())
+            .ask(&prompt, None, 5, Uuid::nil(), None)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response
@@ -715,7 +715,7 @@ impl RecommendationService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 3, Uuid::nil())
+            .ask(&prompt, None, 3, Uuid::nil(), None)
             .await
             .map(|r| r.0)?;
         let cleaned: String = response

@@ -11,9 +11,36 @@ pub struct Database {
 
 impl Database {
     pub async fn new(database_url: &str) -> Result<Self, sqlx::Error> {
+        // 单租户部署（MULTI_TENANT_ENABLED != true）且配置 DEFAULT_TENANT_ID 时，
+        // 连接建立即固定租户上下文：FORCE RLS 下 ai 业务查询（stats/dashboard 等
+        // 不经 tenant_middleware txn 的直查路径）仍能按默认租户读到数据。
+        // 多租户部署保持逐请求隔离；请求级 txn（set_config(..., true)）可覆盖。
+        let default_tenant = std::env::var("DEFAULT_TENANT_ID")
+            .ok()
+            .filter(|_| {
+                !std::env::var("MULTI_TENANT_ENABLED")
+                    .map(|v| v == "true" || v == "1")
+                    .unwrap_or(false)
+            })
+            .and_then(|t| t.parse::<uuid::Uuid>().ok())
+            .map(|u| u.to_string());
+
         let pool = PgPoolOptions::new()
             .max_connections(10)
             .acquire_timeout(Duration::from_secs(30))
+            .after_connect(move |conn, _meta| {
+                let dt = default_tenant.clone();
+                Box::pin(async move {
+                    if let Some(t) = dt {
+                        tracing::debug!("[ai-db] setting default tenant context: {}", t);
+                        sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                            .bind(&t)
+                            .execute(&mut *conn)
+                            .await?;
+                    }
+                    Ok(())
+                })
+            })
             .connect(database_url)
             .await?;
 

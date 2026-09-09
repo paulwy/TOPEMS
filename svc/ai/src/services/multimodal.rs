@@ -261,7 +261,7 @@ impl MultimodalService {
 
         let response = self
             .qa_service
-            .ask(&prompt_text, None, 5, Uuid::nil())
+            .ask(&prompt_text, None, 5, Uuid::nil(), None)
             .await
             .map(|r| r.0)?;
 
@@ -283,7 +283,7 @@ impl MultimodalService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil())
+            .ask(&prompt, None, 5, Uuid::nil(), None)
             .await
             .map(|r| r.0)?;
 
@@ -352,7 +352,7 @@ impl MultimodalService {
         );
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil())
+            .ask(&prompt, None, 5, Uuid::nil(), None)
             .await
             .map(|r| r.0)?;
 
@@ -625,7 +625,7 @@ impl MultimodalService {
 
         let ai_comparison = self
             .qa_service
-            .ask(&prompt, None, 3, Uuid::nil())
+            .ask(&prompt, None, 3, Uuid::nil(), None)
             .await
             .map(|r| r.0)
             .unwrap_or_default();

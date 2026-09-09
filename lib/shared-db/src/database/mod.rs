@@ -28,18 +28,44 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         .idle_timeout(Duration::from_secs(idle_timeout))
         .max_lifetime(Duration::from_secs(max_lifetime));
 
+    // 单租户部署（MULTI_TENANT_ENABLED != true）且配置 DEFAULT_TENANT_ID 时，
+    // 连接建立即固定租户上下文：FORCE RLS 下 service 层业务查询（不经 tenant_middleware txn）
+    // 仍能按默认租户读到数据；多租户部署保持逐请求隔离，请求级 txn（set_config(..., true)）可覆盖。
+    let default_tenant = std::env::var("DEFAULT_TENANT_ID")
+        .ok()
+        .filter(|_| {
+            !std::env::var("MULTI_TENANT_ENABLED")
+                .map(|v| v == "true" || v == "1")
+                .unwrap_or(false)
+        })
+        .and_then(|t| t.parse::<uuid::Uuid>().ok())
+        .map(|u| u.to_string());
+
     let options = options.after_connect(move |conn, _meta| {
         let search_path = search_path.clone();
+        let default_tenant = default_tenant.clone();
         Box::pin(async move {
             debug!("after_connect: setting search_path to {}", search_path);
             let result = sqlx::query("SELECT set_config('search_path', $1, false)")
                 .bind(&search_path)
-                .execute(conn)
+                .execute(&mut *conn)
                 .await;
             result.map_err(|e| {
                 error!("Failed to set search path: {}", e);
                 e
             })?;
+            if let Some(t) = default_tenant {
+                debug!("after_connect: setting default tenant context to {}", t);
+                if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                    .bind(&t)
+                    .execute(&mut *conn)
+                    .await
+                {
+                    error!("Failed to set default tenant context: {}", e);
+                }
+            } else {
+                debug!("after_connect: no default tenant context (DEFAULT_TENANT_ID missing or multi-tenant)");
+            }
             Ok(())
         })
     });

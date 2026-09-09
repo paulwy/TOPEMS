@@ -75,19 +75,22 @@ pub async fn get_dashboard_stats(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let pool = &state.pool;
 
-    let (documents, qa_count, conv_trend, msg_trend): (i64, i64, i64, i64) =
+    let (documents, qa_count, conv_trend, msg_trend, total_tokens, trend_tokens, active_users): (i64, i64, i64, i64, i64, i64, i64) =
         match sqlx::query(
             "SELECT
                 (SELECT COUNT(*) FROM ai.documents WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)),
                 (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)),
                 (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '7 days'),
-                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '7 days')",
+                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '7 days'),
+                (SELECT COALESCE(SUM(COALESCE(tokens_in, 0)) + SUM(COALESCE(tokens_out, 0)), 0) FROM ai.usage_logs WHERE tenant_id IS NULL OR tenant_id = $1),
+                (SELECT COALESCE(SUM(COALESCE(tokens_in, 0)) + SUM(COALESCE(tokens_out, 0)), 0) FROM ai.usage_logs WHERE (tenant_id IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '7 days'),
+                (SELECT COUNT(DISTINCT user_id) FROM public.audit_logs WHERE action LIKE 'ask%' AND (tenant_id IS NULL OR tenant_id = $1))",
         )
         .bind(tenant_id)
         .fetch_one(pool)
         .await
         {
-            Ok(row) => (row.get(0), row.get(1), row.get(2), row.get(3)),
+            Ok(row) => (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)),
             Err(e) => return Json(ApiResponse::<DashboardStats>::error(500, &e.to_string())),
         };
 
@@ -96,13 +99,13 @@ pub async fn get_dashboard_stats(
             total_conversations: qa_count,
             total_messages: qa_count,
             total_documents: documents,
-            total_tokens: 0,      // 无 usage 采集表
-            active_users: 0,      // qa_history 无用户列
+            total_tokens,
+            active_users,
             satisfaction_rate: 0.0,
             trend: TrendSummary {
                 conversations: conv_trend,
                 messages: msg_trend,
-                tokens: 0,
+                tokens: trend_tokens,
             },
         },
         "Success",
@@ -122,18 +125,22 @@ pub async fn get_activity_trend(
     let mut points: Vec<TrendPoint> = Vec::new();
     let sql = match group_by {
         "hour" => {
-            "SELECT to_char(date_trunc('hour', created_at), 'YYYY-MM-DD\"T\"HH24:00') AS d, COUNT(*)
-             FROM ai.qa_history
-             WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)
-               AND created_at >= NOW() - make_interval(days => $2::int)
-             GROUP BY date_trunc('hour', created_at) ORDER BY d"
+            "SELECT to_char(date_trunc('hour', q.created_at), 'YYYY-MM-DD\"T\"HH24:00') AS d, COUNT(*) AS count,
+                    COALESCE(SUM(COALESCE(u.tokens_in, 0)) + SUM(COALESCE(u.tokens_out, 0)), 0) AS tokens
+             FROM ai.qa_history q
+             LEFT JOIN ai.usage_logs u ON u.qa_id = q.id
+             WHERE q.deleted_at IS NULL AND (q.tenant_id IS NULL OR q.tenant_id = $1)
+               AND q.created_at >= NOW() - make_interval(days => $2::int)
+             GROUP BY date_trunc('hour', q.created_at) ORDER BY d"
         }
         _ => {
-            "SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS d, COUNT(*)
-             FROM ai.qa_history
-             WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)
-               AND created_at >= NOW() - make_interval(days => $2::int)
-             GROUP BY date_trunc('day', created_at) ORDER BY d"
+            "SELECT to_char(date_trunc('day', q.created_at), 'YYYY-MM-DD') AS d, COUNT(*) AS count,
+                    COALESCE(SUM(COALESCE(u.tokens_in, 0)) + SUM(COALESCE(u.tokens_out, 0)), 0) AS tokens
+             FROM ai.qa_history q
+             LEFT JOIN ai.usage_logs u ON u.qa_id = q.id
+             WHERE q.deleted_at IS NULL AND (q.tenant_id IS NULL OR q.tenant_id = $1)
+               AND q.created_at >= NOW() - make_interval(days => $2::int)
+             GROUP BY date_trunc('day', q.created_at) ORDER BY d"
         }
     };
 
@@ -142,11 +149,12 @@ pub async fn get_activity_trend(
             for row in rows {
                 let date: String = row.get("d");
                 let count: i64 = row.get("count");
+                let tokens: i64 = row.try_get("tokens").unwrap_or(0);
                 points.push(TrendPoint {
                     date,
                     conversations: count,
                     messages: count,
-                    tokens: 0,
+                    tokens,
                 });
             }
         }

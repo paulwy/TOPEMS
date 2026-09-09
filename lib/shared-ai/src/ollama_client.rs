@@ -48,6 +48,10 @@ struct ChatMessage {
 #[derive(Debug, Deserialize)]
 struct ChatResponse {
     message: ChatMessageResponse,
+    #[serde(default)]
+    prompt_eval_count: Option<u64>,
+    #[serde(default)]
+    eval_count: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -124,6 +128,11 @@ impl OllamaClient {
 
     /// 聊天
     pub async fn chat(&self, prompt: &str) -> Result<String> {
+        Ok(self.chat_with_usage(prompt).await?.0)
+    }
+
+    /// 聊天并返回 token 用量（Ollama 响应缺省时 tokens 为 None，诚实不填 0）
+    pub async fn chat_with_usage(&self, prompt: &str) -> Result<(String, Option<(u64, u64)>)> {
         let url = format!("{}/api/chat", self.base_url);
 
         let request = ChatRequest {
@@ -145,7 +154,12 @@ impl OllamaClient {
 
         let chat_response: ChatResponse = response.json().await?;
 
-        Ok(chat_response.message.content)
+        let usage = match (chat_response.prompt_eval_count, chat_response.eval_count) {
+            (Some(i), Some(o)) => Some((i, o)),
+            _ => None,
+        };
+
+        Ok((chat_response.message.content, usage))
     }
 
     /// 获取模型信息

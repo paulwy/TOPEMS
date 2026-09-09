@@ -509,15 +509,36 @@ impl ServiceBootstrap {
 
         let search_path = env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
 
+        // 单租户部署（MULTI_TENANT_ENABLED != true）且配置了 DEFAULT_TENANT_ID 时，
+        // 连接建立即固定租户上下文：FORCE RLS 下业务查询（service 层自建 pool，
+        // 不经 tenant_middleware txn）仍能按默认租户读到数据；多租户部署保持逐请求隔离。
+        // 显式请求级 txn（set_config(..., true)）优先级更高，可覆盖该默认值。
+        let default_tenant = env::var("DEFAULT_TENANT_ID")
+            .ok()
+            .filter(|_| {
+                !env::var("MULTI_TENANT_ENABLED")
+                    .map(|v| v == "true" || v == "1")
+                    .unwrap_or(false)
+            })
+            .and_then(|t| t.parse::<uuid::Uuid>().ok())
+            .map(|u| u.to_string());
+
         let pool = PgPoolOptions::new()
             .max_connections(max_connections)
             .after_connect(move |conn, _meta| {
                 let sp = search_path.clone();
+                let dt = default_tenant.clone();
                 Box::pin(async move {
                     sqlx::query("SELECT set_config('search_path', $1, false)")
                         .bind(&sp)
-                        .execute(conn)
+                        .execute(&mut *conn)
                         .await?;
+                    if let Some(t) = dt {
+                        sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                            .bind(&t)
+                            .execute(&mut *conn)
+                            .await?;
+                    }
                     Ok(())
                 })
             })

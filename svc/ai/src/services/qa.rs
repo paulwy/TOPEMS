@@ -163,6 +163,7 @@ impl QAService {
         context: Option<&str>,
         _top_k: usize,
         tenant_id: Uuid,
+        user_name: Option<&str>,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
         // 构建提示词
         let prompt = if let Some(ctx) = context {
@@ -177,8 +178,10 @@ impl QAService {
             )
         };
 
-        // 调用 AI API
-        let answer = self.call_ai_api(&prompt).await?;
+        // 调用 AI API（含 token 用量）
+        let started = std::time::Instant::now();
+        let (answer, tokens) = self.call_ai_api_with_usage(&prompt).await?;
+        let duration_ms = started.elapsed().as_millis().min(i32::MAX as u128) as i32;
 
         // 计算置信度（基于答案长度和内容质量）
         let confidence = self.calculate_confidence(&answer);
@@ -194,6 +197,10 @@ impl QAService {
             )
             .await?;
 
+        let _ = self
+            .save_usage_log(qa_id, user_name, tenant_id, "success", duration_ms, tokens)
+            .await;
+
         Ok((answer, vec![], qa_id, confidence))
     }
 
@@ -204,6 +211,7 @@ impl QAService {
         document_ids: &[Uuid],
         context_chunks: &[SearchResult],
         tenant_id: Uuid,
+        user_name: Option<&str>,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
         // 构建上下文
         let context = context_chunks
@@ -226,8 +234,10 @@ impl QAService {
             context, question
         );
 
-        // 调用 AI API
-        let answer = self.call_ai_api(&prompt).await?;
+        // 调用 AI API（含 token 用量）
+        let started = std::time::Instant::now();
+        let (answer, tokens) = self.call_ai_api_with_usage(&prompt).await?;
+        let duration_ms = started.elapsed().as_millis().min(i32::MAX as u128) as i32;
 
         // 计算置信度
         let confidence = self.calculate_confidence(&answer);
@@ -242,6 +252,10 @@ impl QAService {
                 tenant_id,
             )
             .await?;
+
+        let _ = self
+            .save_usage_log(qa_id, user_name, tenant_id, "success", duration_ms, tokens)
+            .await;
 
         Ok((answer, context_chunks.to_vec(), qa_id, confidence))
     }
@@ -467,11 +481,70 @@ impl QAService {
 
     /// 调用 AI API（使用统一客户端）
     async fn call_ai_api(&self, prompt: &str) -> Result<String, String> {
+        Ok(self.call_ai_api_with_usage(prompt).await?.0)
+    }
+
+    /// 调用 AI API 并返回 token 用量（provider 未返回时 None，诚实不填 0）
+    async fn call_ai_api_with_usage(
+        &self,
+        prompt: &str,
+    ) -> Result<(String, Option<(u64, u64)>), String> {
         let messages = vec![ChatMessage::user(prompt)];
         self.ai_client
-            .chat(messages)
+            .chat_with_usage(messages)
             .await
             .map_err(|e| format!("调用 AI API 失败: {}", e))
+    }
+
+    /// 写入 usage 日志（token/延迟；失败仅告警，不影响主流程）
+    async fn save_usage_log(
+        &self,
+        qa_id: Uuid,
+        user_name: Option<&str>,
+        tenant_id: Uuid,
+        status: &str,
+        duration_ms: i32,
+        tokens: Option<(u64, u64)>,
+    ) -> Result<(), String> {
+        let (tokens_in, tokens_out) = match tokens {
+            Some((i, o)) => (Some(i as i64), Some(o as i64)),
+            None => (None, None),
+        };
+        let mut txn = self
+            .db
+            .pool()
+            .begin()
+            .await
+            .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+        // 显式设置租户上下文（与 save_qa_history 一致，保证 RLS 租户隔离正确）
+        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(tenant_id.to_string())
+            .execute(&mut *txn)
+            .await
+            .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+        let result = sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"
+            INSERT INTO ai.usage_logs (tenant_id, qa_id, user_name, status, duration_ms, tokens_in, tokens_out)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            "#,
+            "plugin_ai"
+        ))
+        .bind(tenant_id)
+        .bind(qa_id)
+        .bind(user_name)
+        .bind(status)
+        .bind(duration_ms)
+        .bind(tokens_in)
+        .bind(tokens_out)
+        .execute(&mut *txn)
+        .await
+        .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+        txn.commit()
+            .await
+            .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+        let _ = result;
+        Ok(())
     }
 
     /// 计算置信度
@@ -772,6 +845,18 @@ impl QAService {
         sources: Option<&[SearchResult]>,
         tenant_id: Uuid,
     ) -> Result<Uuid, String> {
+        let mut txn = self
+            .db
+            .pool()
+            .begin()
+            .await
+            .map_err(|e| format!("保存问答历史失败: {}", e))?;
+        // 显式设置租户上下文（连接池共享连接，避免残留/缺失 GUC 触发 RLS 误判）
+        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(tenant_id.to_string())
+            .execute(&mut *txn)
+            .await
+            .map_err(|e| format!("保存问答历史失败: {}", e))?;
         let id: Uuid = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -786,9 +871,12 @@ impl QAService {
         .bind(answer)
         .bind(context)
         .bind(sources.map(|s| serde_json::to_value(s).unwrap_or(serde_json::json!([]))))
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut *txn)
         .await
         .map_err(|e| format!("保存问答历史失败: {}", e))?;
+        txn.commit()
+            .await
+            .map_err(|e| format!("保存问答历史失败: {}", e))?;
 
         Ok(id)
     }

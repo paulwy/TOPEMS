@@ -160,6 +160,29 @@ impl UnifiedAIClient {
         }
     }
 
+    /// 聊天并返回 token 用量（provider 未返回 usage 时 None，诚实不填 0）
+    pub async fn chat_with_usage(
+        &self,
+        messages: Vec<ChatMessage>,
+    ) -> Result<(String, Option<(u64, u64)>), AIClientError> {
+        let request = self.create_chat_request(messages);
+        let response = match self {
+            UnifiedAIClient::OpenAI(client) => client.chat_completion(request).await,
+            UnifiedAIClient::Gemini(client) => client.chat_completion(request).await,
+            UnifiedAIClient::Ollama(client) => client.chat_completion(request).await,
+            UnifiedAIClient::AzureOpenAI(client) => client.chat_completion(request).await,
+        }?;
+
+        if let Some(choice) = response.choices.first() {
+            let usage = response
+                .usage
+                .map(|u| (u.prompt_tokens as u64, u.completion_tokens as u64));
+            Ok((choice.message.content.clone(), usage))
+        } else {
+            Err(AIClientError::ApiError("No response choices".to_string()))
+        }
+    }
+
     /// 简单流式聊天接口
     pub async fn chat_stream(&self, messages: Vec<ChatMessage>) -> Result<AIStream, AIClientError> {
         let request = self.create_streaming_chat_request(messages);

@@ -80,7 +80,11 @@ impl QaApi {
         Json(req): Json<AskRequest>,
     ) -> Json<ApiResponse<AskResponse>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
-        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+        // user_id 优先取 x-username（显示名/调用方标识），缺失回退 token sub（真实身份）
+        let user_id = headers
+            .get("x-username")
+            .and_then(|v| v.to_str().ok())
+            .or(Some(claims.sub.as_str()));
         let top_k = req.top_k.unwrap_or(5);
         let details = Some(serde_json::json!({"question": req.question, "top_k": top_k}));
 
@@ -110,7 +114,7 @@ impl QaApi {
         // 调用 QA 服务
         match state
             .qa_service
-            .ask(&req.question, context.as_deref(), top_k, tenant_id)
+            .ask(&req.question, context.as_deref(), top_k, tenant_id, user_id)
             .await
         {
             Ok((answer, sources, qa_id, confidence)) => {
@@ -163,9 +167,15 @@ impl QaApi {
     pub async fn ask_with_context(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
+        headers: HeaderMap,
         Json(req): Json<AskWithContextRequest>,
     ) -> Json<ApiResponse<AskResponse>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
+        // user_id 优先取 x-username（显示名/调用方标识），缺失回退 token sub（真实身份）
+        let user_id = headers
+            .get("x-username")
+            .and_then(|v| v.to_str().ok())
+            .or(Some(claims.sub.as_str()));
         let top_k = req.top_k.unwrap_or(5);
 
         // 获取指定文档的上下文
@@ -194,7 +204,7 @@ impl QaApi {
         // 调用 QA 服务
         match state
             .qa_service
-            .ask_with_context(&req.question, &req.document_ids, &context_chunks, tenant_id)
+            .ask_with_context(&req.question, &req.document_ids, &context_chunks, tenant_id, user_id)
             .await
         {
             Ok((answer, sources, qa_id, confidence)) => Json(ApiResponse::success(

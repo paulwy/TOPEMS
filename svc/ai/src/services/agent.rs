@@ -223,7 +223,7 @@ impl AgentService {
 
         let response = self
             .qa_service
-            .ask(&prompt, None, 5, Uuid::nil())
+            .ask(&prompt, None, 5, Uuid::nil(), None)
             .await
             .map(|r| r.0)?;
 
@@ -326,7 +326,7 @@ impl AgentService {
             .and_then(|v| v.as_str())
             .unwrap_or_default();
 
-        let result = self.qa_service.ask(question, None, 5, Uuid::nil()).await;
+        let result = self.qa_service.ask(question, None, 5, Uuid::nil(), None).await;
 
         match result {
             Ok(response) => ToolResult {
@@ -700,7 +700,7 @@ impl AgentService {
         );
 
         self.qa_service
-            .ask(&prompt, None, 5, Uuid::nil())
+            .ask(&prompt, None, 5, Uuid::nil(), None)
             .await
             .map(|r| r.0)
     }
@@ -1168,7 +1168,7 @@ impl WorkflowOrchestrator {
             // Direct QA without tool
             self.agent_service
                 .qa_service
-                .ask(&prompt, None, 5, Uuid::nil())
+                .ask(&prompt, None, 5, Uuid::nil(), None)
                 .await
                 .map(|r| r.0)
         }
