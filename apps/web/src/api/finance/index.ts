@@ -79,4 +79,6 @@ export const financeApi = {
   },
 };
 
+export { receivableApi, payableApi } from './receivablePayable';
+export type { Receivable, Payable } from '../erp/types';
 export default financeApi;

@@ -38,7 +38,6 @@ export { budgetApi } from '../finance/budget';
 export { reportApi, financeReportApi } from '../finance/report';
 export { expenseApi } from '../finance/expense';
 export { accountingSubjectApi } from '../finance/accountingSubject';
-export { receivableApi, payableApi } from './receivablePayable';
 export { bankAccountApi } from './bankAccount';
 
 export { officeSupplyApi } from './admin/officeSupplies';
