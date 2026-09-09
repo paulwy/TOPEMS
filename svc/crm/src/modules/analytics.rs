@@ -48,6 +48,7 @@ fn empty_with_mock<T: Default + Serialize>(note: &str) -> (StatusCode, Json<serd
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/dashboard", get(dashboard_aggregate))
         .route("/dashboard/overview", get(dashboard_overview))
         .route("/analytics/funnel", get(analytics_funnel))
         .route("/analytics/scoring", get(analytics_scoring))
@@ -64,6 +65,99 @@ pub async fn dashboard_overview(
     empty_with_mock::<Vec<serde_json::Value>>(
         "聚合算法待深度 C 交付，前端走 useCrmMock seed=42 fallback",
     )
+}
+
+// ============ #30: /dashboard 真实聚合端点 ============
+
+#[derive(Debug, Serialize)]
+pub struct CrmDashboardStats {
+    pub total_opportunities: i64,
+    pub won_amount: f64,
+    pub conversion_rate: f64,
+    pub average_cycle: f64,
+    pub opportunity_stages: Vec<NameValue>,
+    pub monthly_performance: Vec<NameValue>,
+    pub industries: Vec<NameValue>,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct NameValue {
+    pub name: String,
+    pub value: i64,
+}
+
+/// GET /dashboard — CRM 仪表盘聚合统计（真实数据）
+pub async fn dashboard_aggregate(
+    State(state): State<ApiState>,
+) -> impl IntoResponse {
+    let db = &state.db;
+
+    let total_opportunities: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL",
+    )
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
+
+    let won_amount: f64 = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND value IS NOT NULL",
+    )
+    .fetch_one(db)
+    .await
+    .unwrap_or(0.0);
+
+    let won_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
+    )
+    .fetch_one(db)
+    .await
+    .unwrap_or(0);
+
+    let conversion_rate = if total_opportunities > 0 {
+        (won_count as f64 / total_opportunities as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let average_cycle: f64 = sqlx::query_scalar(
+        "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
+    )
+    .fetch_one(db)
+    .await
+    .unwrap_or(0.0);
+
+    let opportunity_stages: Vec<NameValue> = sqlx::query_as(
+        "SELECT stage AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL GROUP BY stage ORDER BY value DESC",
+    )
+    .fetch_all(db)
+    .await
+    .unwrap_or_default();
+
+    let monthly_performance: Vec<NameValue> = sqlx::query_as(
+        "SELECT TO_CHAR(created_at, 'YYYY-MM') AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months' GROUP BY name ORDER BY name ASC",
+    )
+    .fetch_all(db)
+    .await
+    .unwrap_or_default();
+
+    let industries: Vec<NameValue> = sqlx::query_as(
+        "SELECT COALESCE(industry, 'unknown') AS name, COUNT(*) AS value FROM crm.customers WHERE deleted_at IS NULL GROUP BY name ORDER BY value DESC LIMIT 10",
+    )
+    .fetch_all(db)
+    .await
+    .unwrap_or_default();
+
+    let stats = CrmDashboardStats {
+        total_opportunities,
+        won_amount,
+        conversion_rate,
+        average_cycle,
+        opportunity_stages,
+        monthly_performance,
+        industries,
+    };
+
+    (StatusCode::OK, Json(json!(stats))).into_response()
 }
 
 pub async fn analytics_funnel(
