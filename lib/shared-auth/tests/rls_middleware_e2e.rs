@@ -78,7 +78,8 @@ async fn seed_and_build(pool: &PgPool) -> (Uuid, Uuid) {
         .execute(pool)
         .await
         .unwrap();
-    sqlx::query("CREATE POLICY rls_tenant_isolation ON rls_e2e_items USING (
+    sqlx::query(
+        "CREATE POLICY rls_tenant_isolation ON rls_e2e_items USING (
            current_setting('app.tenant_id', true) IS NULL
            OR current_setting('app.tenant_id', true) = ''
            OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
@@ -90,7 +91,8 @@ async fn seed_and_build(pool: &PgPool) -> (Uuid, Uuid) {
            OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
            OR tenant_id IS NULL
            OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
-         )")
+         )",
+    )
     .execute(pool)
     .await
     .unwrap();
@@ -116,17 +118,25 @@ fn build_app(pool: PgPool) -> Router {
     Router::new()
         .route("/items", get(list_items))
         .with_state(pool.clone())
-        .layer(middleware::from_fn_with_state(pool.clone(), tenant_middleware()))
+        .layer(middleware::from_fn_with_state(
+            pool.clone(),
+            tenant_middleware(),
+        ))
 }
 
 async fn get_body(app: &Router, claims: Option<Claims>) -> (StatusCode, Value) {
-    let mut req = Request::builder().uri("/items").body(Body::empty()).unwrap();
+    let mut req = Request::builder()
+        .uri("/items")
+        .body(Body::empty())
+        .unwrap();
     if let Some(c) = claims {
         req.extensions_mut().insert(c);
     }
     let resp = app.clone().oneshot(req).await.unwrap();
     let status = resp.status();
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: Value = serde_json::from_slice(&body).unwrap_or(Value::Null);
     (status, v)
 }
@@ -136,12 +146,28 @@ async fn tenant_middleware_filters_by_claims_tenant(pool: PgPool) {
     let (t1, t2) = seed_and_build(&pool).await;
     let app = build_app(pool);
 
-    let (status, body) = get_body(&app, Some(make_claims(Some(t1.to_string().as_str()), "123e4567-e89b-12d3-a456-426614174001", "user"))).await;
+    let (status, body) = get_body(
+        &app,
+        Some(make_claims(
+            Some(t1.to_string().as_str()),
+            "123e4567-e89b-12d3-a456-426614174001",
+            "user",
+        )),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["count"], 1, "T1 上下文应仅见本租户行");
     assert_eq!(body["rows"][0][1], "t1-item");
 
-    let (status, body) = get_body(&app, Some(make_claims(Some(t2.to_string().as_str()), "123e4567-e89b-12d3-a456-426614174002", "user"))).await;
+    let (status, body) = get_body(
+        &app,
+        Some(make_claims(
+            Some(t2.to_string().as_str()),
+            "123e4567-e89b-12d3-a456-426614174002",
+            "user",
+        )),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["count"], 1, "T2 上下文应仅见本租户行");
     assert_eq!(body["rows"][0][1], "t2-item");
@@ -153,8 +179,15 @@ async fn tenant_middleware_service_claims_full_access(pool: PgPool) {
     let app = build_app(pool);
 
     // service 身份：无 tenant_id，中间件置 nil UUID 上下文 → RLS 策略豁免 → 全量
-    let (status, body) =
-        get_body(&app, Some(make_claims(None, "00000000-0000-0000-0000-000000000000", "service"))).await;
+    let (status, body) = get_body(
+        &app,
+        Some(make_claims(
+            None,
+            "00000000-0000-0000-0000-000000000000",
+            "service",
+        )),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["count"], 2, "service 身份应全量访问（nil 豁免）");
 }

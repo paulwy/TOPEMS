@@ -1,4 +1,4 @@
-﻿//! 真实 Ticket 服务接入模块（TicketRealModule）—— 模块化单体剩余服务接入
+//! 真实 Ticket 服务接入模块（TicketRealModule）—— 模块化单体剩余服务接入
 //!
 //! 将真实 `topems-ticket` 服务（lib 形态）作为模块接入统一入口。
 //! ticket 使用 `handlers::ticket_routes() -> Router<PgPool>`（无 ApiState，简化模式），
@@ -62,7 +62,9 @@ impl TicketRealModule {
         // 3. 业务路由（权限中间件 + 开发验证模拟认证）
         let protected_routes = handlers::ticket_routes()
             .merge(feedback_compat::feedback_compat_routes())
-            .layer(axum::middleware::from_fn(require_permission("ticket:admin")))
+            .layer(axum::middleware::from_fn(require_permission(
+                "ticket:admin",
+            )))
             .with_state(ctx.db.clone());
 
         let routes = axum::Router::new()

@@ -237,18 +237,16 @@ mod tests {
             SubscriptionStatus::from_str("active"),
             Some(SubscriptionStatus::Active)
         );
-        assert_eq!(SubscriptionStatus::from_str("expired"), Some(SubscriptionStatus::Expired));
+        assert_eq!(
+            SubscriptionStatus::from_str("expired"),
+            Some(SubscriptionStatus::Expired)
+        );
         assert_eq!(SubscriptionStatus::from_str("unknown"), None);
     }
 
     #[test]
     fn modules_disable_for_tier() {
-        let enabled = vec![
-            "module-core",
-            "module-finance",
-            "module-qms",
-            "module-ai",
-        ];
+        let enabled = vec!["module-core", "module-finance", "module-qms", "module-ai"];
         let to_disable = modules_to_disable_for_tier(Tier::Basic, &enabled);
         assert_eq!(
             to_disable,

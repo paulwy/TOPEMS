@@ -27,7 +27,10 @@ async fn stream_publish_smoke() {
         .await
         .unwrap();
     let after = publisher.stream_length(&event_type).await.unwrap();
-    assert!(after > before, "发布后 stream 长度应增长（{before} → {after}）");
+    assert!(
+        after > before,
+        "发布后 stream 长度应增长（{before} → {after}）"
+    );
     let _ = publisher.delete_stream(&event_type).await;
 }
 

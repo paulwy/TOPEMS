@@ -1,4 +1,4 @@
-﻿//! 真实 QMS 服务接入模块（QmsRealModule）—— Phase B3 扩展
+//! 真实 QMS 服务接入模块（QmsRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-qms` 服务（lib 形态）作为模块接入统一入口。
 //! 与 FinanceRealModule / ErpRealModule 相同模式：
@@ -59,7 +59,8 @@ impl QmsRealModule {
 
         // 3. 工作流服务客户端
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
-        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "qms-module", &["workflow:read"]))
+        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+            .and_then(|c| c.with_service_token(&jwt_secret, "qms-module", &["workflow:read"]))
             .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
 
         // 4. 构建业务 AppState

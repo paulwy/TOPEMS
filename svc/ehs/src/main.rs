@@ -14,7 +14,9 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared::ApiResponse;
-use topems_shared_bootstrap::{bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 

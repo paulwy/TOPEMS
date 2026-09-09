@@ -6,8 +6,8 @@
 //! - 文档处理流程（解析 → 分块 → 向量化 → 入库）
 //! - 问答历史与反馈
 
-use topems_shared_boundary::only_own_schema_query;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 
 use sqlx::PgPool;
 use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType, UnifiedAIClient};
@@ -60,8 +60,9 @@ pub async fn list_knowledge_bases(
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
 
-    let items: Vec<KnowledgeBase> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT id, tenant_id, name, description, kb_type, status,
+    let items: Vec<KnowledgeBase> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT id, tenant_id, name, description, kb_type, status,
                   document_count, created_by, created_at, updated_at
            FROM core.knowledge_bases
            WHERE tenant_id = $1
@@ -69,8 +70,9 @@ pub async fn list_knowledge_bases(
              AND ($3::text IS NULL OR status = $3)
              AND ($4::text IS NULL OR name ILIKE $4)
            ORDER BY created_at DESC
-           LIMIT $5 OFFSET $6"#, "core"),
-    )
+           LIMIT $5 OFFSET $6"#,
+        "core"
+    ))
     .bind(tenant_id)
     .bind(&query.kb_type)
     .bind(&query.status)
@@ -89,12 +91,14 @@ pub async fn get_knowledge_base(
     tenant_id: Uuid,
     kb_id: Uuid,
 ) -> Result<Option<KnowledgeBase>, sqlx::Error> {
-    let item: Option<KnowledgeBase> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT id, tenant_id, name, description, kb_type, status,
+    let item: Option<KnowledgeBase> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT id, tenant_id, name, description, kb_type, status,
                   document_count, created_by, created_at, updated_at
            FROM core.knowledge_bases
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(kb_id)
     .bind(tenant_id)
     .fetch_optional(pool)
@@ -110,13 +114,15 @@ pub async fn create_knowledge_base(
     req: &CreateKbRequest,
     created_by: Uuid,
 ) -> Result<KnowledgeBase, sqlx::Error> {
-    let item: KnowledgeBase = sqlx::query_as(
-        only_own_schema_query!("ai", r#"INSERT INTO core.knowledge_bases
+    let item: KnowledgeBase = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"INSERT INTO core.knowledge_bases
             (tenant_id, name, description, kb_type, status, document_count, created_by)
            VALUES ($1, $2, $3, $4, 'active', 0, $5)
            RETURNING id, tenant_id, name, description, kb_type, status,
-                     document_count, created_by, created_at, updated_at"#, "core"),
-    )
+                     document_count, created_by, created_at, updated_at"#,
+        "core"
+    ))
     .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.description)
@@ -141,8 +147,9 @@ pub async fn update_knowledge_base(
         return Ok(None);
     }
 
-    let item: KnowledgeBase = sqlx::query_as(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_bases
+    let item: KnowledgeBase = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_bases
            SET name = COALESCE($3, name),
                description = COALESCE($4, description),
                kb_type = COALESCE($5, kb_type),
@@ -150,8 +157,9 @@ pub async fn update_knowledge_base(
                updated_at = NOW()
            WHERE id = $1 AND tenant_id = $2
            RETURNING id, tenant_id, name, description, kb_type, status,
-                     document_count, created_by, created_at, updated_at"#, "core"),
-    )
+                     document_count, created_by, created_at, updated_at"#,
+        "core"
+    ))
     .bind(kb_id)
     .bind(tenant_id)
     .bind(&req.name)
@@ -170,10 +178,12 @@ pub async fn delete_knowledge_base(
     tenant_id: Uuid,
     kb_id: Uuid,
 ) -> Result<bool, sqlx::Error> {
-    let result = sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_bases SET deleted_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_bases SET deleted_at = NOW()
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(kb_id)
     .bind(tenant_id)
     .execute(pool)
@@ -197,8 +207,9 @@ pub async fn list_documents(
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
 
-    let items: Vec<KnowledgeDocument> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT id, tenant_id, kb_id, title, content, doc_type, file_path,
+    let items: Vec<KnowledgeDocument> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT id, tenant_id, kb_id, title, content, doc_type, file_path,
                   file_size, chunk_count, status, error_message, created_by,
                   created_at, updated_at
            FROM core.knowledge_documents
@@ -208,8 +219,9 @@ pub async fn list_documents(
              AND ($4::text IS NULL OR doc_type = $4)
              AND ($5::text IS NULL OR title ILIKE $5)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#, "core"),
-    )
+           LIMIT $6 OFFSET $7"#,
+        "core"
+    ))
     .bind(tenant_id)
     .bind(query.kb_id)
     .bind(&query.status)
@@ -229,13 +241,15 @@ pub async fn get_document_detail(
     tenant_id: Uuid,
     document_id: Uuid,
 ) -> Result<Option<DocumentDetail>, sqlx::Error> {
-    let document: Option<KnowledgeDocument> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT id, tenant_id, kb_id, title, content, doc_type, file_path,
+    let document: Option<KnowledgeDocument> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT id, tenant_id, kb_id, title, content, doc_type, file_path,
                   file_size, chunk_count, status, error_message, created_by,
                   created_at, updated_at
            FROM core.knowledge_documents
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .fetch_optional(pool)
@@ -245,13 +259,15 @@ pub async fn get_document_detail(
         return Ok(None);
     };
 
-    let chunks: Vec<KnowledgeChunk> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT id, tenant_id, document_id, kb_id, chunk_index, content,
+    let chunks: Vec<KnowledgeChunk> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT id, tenant_id, document_id, kb_id, chunk_index, content,
                   token_count, metadata, created_at
            FROM core.knowledge_chunks
            WHERE document_id = $1 AND tenant_id = $2
-           ORDER BY chunk_index"#, "core"),
-    )
+           ORDER BY chunk_index"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .fetch_all(pool)
@@ -278,15 +294,17 @@ pub async fn create_document_from_content(
     }
 
     // 插入文档记录
-    let document: KnowledgeDocument = sqlx::query_as(
-        only_own_schema_query!("ai", r#"INSERT INTO core.knowledge_documents
+    let document: KnowledgeDocument = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"INSERT INTO core.knowledge_documents
             (tenant_id, kb_id, title, content, doc_type, file_size,
              chunk_count, status, created_by)
            VALUES ($1, $2, $3, $4, $5, $6, 0, 'pending', $7)
            RETURNING id, tenant_id, kb_id, title, content, doc_type, file_path,
                      file_size, chunk_count, status, error_message, created_by,
-                     created_at, updated_at"#, "core"),
-    )
+                     created_at, updated_at"#,
+        "core"
+    ))
     .bind(tenant_id)
     .bind(req.kb_id)
     .bind(&req.title)
@@ -320,15 +338,17 @@ pub async fn create_document_from_file(
         return Err(sqlx::Error::RowNotFound);
     }
 
-    let document: KnowledgeDocument = sqlx::query_as(
-        only_own_schema_query!("ai", r#"INSERT INTO core.knowledge_documents
+    let document: KnowledgeDocument = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"INSERT INTO core.knowledge_documents
             (tenant_id, kb_id, title, content, doc_type, file_path, file_size,
              chunk_count, status, created_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'pending', $8)
            RETURNING id, tenant_id, kb_id, title, content, doc_type, file_path,
                      file_size, chunk_count, status, error_message, created_by,
-                     created_at, updated_at"#, "core"),
-    )
+                     created_at, updated_at"#,
+        "core"
+    ))
     .bind(tenant_id)
     .bind(kb_id)
     .bind(title)
@@ -360,8 +380,9 @@ pub async fn update_document(
 
     let content_changed = req.content.is_some();
 
-    let item: KnowledgeDocument = sqlx::query_as(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_documents
+    let item: KnowledgeDocument = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_documents
            SET title = COALESCE($3, title),
                content = COALESCE($4, content),
                kb_id = COALESCE($5, kb_id),
@@ -374,8 +395,9 @@ pub async fn update_document(
            WHERE id = $1 AND tenant_id = $2
            RETURNING id, tenant_id, kb_id, title, content, doc_type, file_path,
                      file_size, chunk_count, status, error_message, created_by,
-                     created_at, updated_at"#, "core"),
-    )
+                     created_at, updated_at"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .bind(&req.title)
@@ -386,10 +408,12 @@ pub async fn update_document(
     .await?;
 
     if content_changed {
-        let _ = sqlx::query(
-            only_own_schema_query!("ai", r#"UPDATE core.knowledge_chunks SET deleted_at = NOW()
-               WHERE document_id = $1 AND tenant_id = $2"#, "core"),
-        )
+        let _ = sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"UPDATE core.knowledge_chunks SET deleted_at = NOW()
+               WHERE document_id = $1 AND tenant_id = $2"#,
+            "core"
+        ))
         .bind(document_id)
         .bind(tenant_id)
         .execute(pool)
@@ -399,27 +423,31 @@ pub async fn update_document(
     if let Some(new_kb_id) = req.kb_id {
         let old_kb_id = existing.as_ref().unwrap().document.kb_id;
         if old_kb_id != new_kb_id {
-            let _ = sqlx::query(
-                only_own_schema_query!("ai", r#"UPDATE core.knowledge_bases
+            let _ = sqlx::query(only_own_schema_query!(
+                "ai",
+                r#"UPDATE core.knowledge_bases
                    SET document_count = (
                        SELECT COUNT(*) FROM core.knowledge_documents
                        WHERE kb_id = $1 AND tenant_id = $2 AND status = 'ready'
                    )
-                   WHERE id = $1 AND tenant_id = $2"#, "core"),
-            )
+                   WHERE id = $1 AND tenant_id = $2"#,
+                "core"
+            ))
             .bind(old_kb_id)
             .bind(tenant_id)
             .execute(pool)
             .await;
 
-            let _ = sqlx::query(
-                only_own_schema_query!("ai", r#"UPDATE core.knowledge_bases
+            let _ = sqlx::query(only_own_schema_query!(
+                "ai",
+                r#"UPDATE core.knowledge_bases
                    SET document_count = (
                        SELECT COUNT(*) FROM core.knowledge_documents
                        WHERE kb_id = $1 AND tenant_id = $2 AND status = 'ready'
                    )
-                   WHERE id = $1 AND tenant_id = $2"#, "core"),
-            )
+                   WHERE id = $1 AND tenant_id = $2"#,
+                "core"
+            ))
             .bind(new_kb_id)
             .bind(tenant_id)
             .execute(pool)
@@ -437,10 +465,12 @@ pub async fn delete_document(
     document_id: Uuid,
 ) -> Result<bool, sqlx::Error> {
     // 先获取文档，以便后续更新知识库的 document_count
-    let doc: Option<(Uuid,)> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT kb_id FROM core.knowledge_documents
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+    let doc: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT kb_id FROM core.knowledge_documents
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .fetch_optional(pool)
@@ -450,10 +480,12 @@ pub async fn delete_document(
         return Ok(false);
     };
 
-    let result = sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_documents SET deleted_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_documents SET deleted_at = NOW()
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .execute(pool)
@@ -461,14 +493,16 @@ pub async fn delete_document(
 
     if result.rows_affected() > 0 {
         // 更新知识库的 document_count
-        let _ = sqlx::query(
-            only_own_schema_query!("ai", r#"UPDATE core.knowledge_bases
+        let _ = sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"UPDATE core.knowledge_bases
                SET document_count = (
                    SELECT COUNT(*) FROM core.knowledge_documents
                    WHERE kb_id = $1 AND tenant_id = $2
                )
-               WHERE id = $1 AND tenant_id = $2"#, "core"),
-        )
+               WHERE id = $1 AND tenant_id = $2"#,
+            "core"
+        ))
         .bind(kb_id)
         .bind(tenant_id)
         .execute(pool)
@@ -502,27 +536,32 @@ pub async fn process_document(
     document_id: Uuid,
 ) -> Result<(), ProcessorError> {
     // 1. 标记为 processing
-    let _ = sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_documents
+    let _ = sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_documents
            SET status = 'processing', error_message = NULL, updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .execute(pool)
     .await;
 
     // 2. 读取文档
-    let doc: Option<(Uuid, String, Option<String>, String)> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT kb_id, title, content, doc_type
+    let doc: Option<(Uuid, String, Option<String>, String)> =
+        sqlx::query_as(only_own_schema_query!(
+            "ai",
+            r#"SELECT kb_id, title, content, doc_type
            FROM core.knowledge_documents
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
-    .bind(document_id)
-    .bind(tenant_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| ProcessorError::ParseError(format!("读取文档失败: {}", e)))?;
+           WHERE id = $1 AND tenant_id = $2"#,
+            "core"
+        ))
+        .bind(document_id)
+        .bind(tenant_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| ProcessorError::ParseError(format!("读取文档失败: {}", e)))?;
 
     let Some((kb_id, title, content_opt, _doc_type)) = doc else {
         return Err(ProcessorError::InvalidInput("文档不存在".to_string()));
@@ -567,10 +606,12 @@ pub async fn process_document(
     }
 
     // 5. 删除旧分块（重新处理场景）
-    let _ = sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_chunks SET deleted_at = NOW()
-           WHERE document_id = $1 AND tenant_id = $2"#, "core"),
-    )
+    let _ = sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_chunks SET deleted_at = NOW()
+           WHERE document_id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .execute(pool)
@@ -590,12 +631,14 @@ pub async fn process_document(
             "token_count": chunk.token_count,
         });
 
-        sqlx::query(
-            only_own_schema_query!("ai", r#"INSERT INTO core.knowledge_chunks
+        sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"INSERT INTO core.knowledge_chunks
                 (tenant_id, document_id, kb_id, chunk_index, content,
                  token_count, embedding, metadata, created_at)
-               VALUES ($1, $2, $3, $4, $5, $6, $7::vector, $8, NOW())"#, "core"),
-        )
+               VALUES ($1, $2, $3, $4, $5, $6, $7::vector, $8, NOW())"#,
+            "core"
+        ))
         .bind(tenant_id)
         .bind(document_id)
         .bind(kb_id)
@@ -611,12 +654,14 @@ pub async fn process_document(
 
     // 7. 更新文档状态为 ready 与 chunk_count
     let chunk_count = chunks.len() as i32;
-    sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_documents
+    sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_documents
            SET status = 'ready', chunk_count = $3, error_message = NULL,
                updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .bind(chunk_count)
@@ -629,14 +674,16 @@ pub async fn process_document(
         .map_err(|e| ProcessorError::EmbeddingError(format!("提交事务失败: {}", e)))?;
 
     // 8. 更新知识库 document_count
-    let _ = sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_bases
+    let _ = sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_bases
            SET document_count = (
                SELECT COUNT(*) FROM core.knowledge_documents
                WHERE kb_id = $1 AND tenant_id = $2 AND status = 'ready'
            )
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(kb_id)
     .bind(tenant_id)
     .execute(pool)
@@ -647,11 +694,13 @@ pub async fn process_document(
 
 /// 标记文档处理失败
 async fn mark_document_failed(pool: &PgPool, tenant_id: Uuid, document_id: Uuid, error_msg: &str) {
-    let _ = sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_documents
+    let _ = sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_documents
            SET status = 'failed', error_message = $3, updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(document_id)
     .bind(tenant_id)
     .bind(error_msg)
@@ -674,16 +723,18 @@ pub async fn list_qa_history(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let items: Vec<QaHistory> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT id, tenant_id, kb_id, question, answer, sources, feedback,
+    let items: Vec<QaHistory> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT id, tenant_id, kb_id, question, answer, sources, feedback,
                   user_id, created_at
            FROM core.knowledge_qa_history
            WHERE tenant_id = $1
              AND ($2::uuid IS NULL OR kb_id = $2)
              AND ($3::uuid IS NULL OR user_id = $3)
            ORDER BY created_at DESC
-           LIMIT $4 OFFSET $5"#, "core"),
-    )
+           LIMIT $4 OFFSET $5"#,
+        "core"
+    ))
     .bind(tenant_id)
     .bind(query.kb_id)
     .bind(user_id)
@@ -706,11 +757,13 @@ pub async fn update_qa_feedback(
         return Ok(false);
     }
 
-    let result = sqlx::query(
-        only_own_schema_query!("ai", r#"UPDATE core.knowledge_qa_history
+    let result = sqlx::query(only_own_schema_query!(
+        "ai",
+        r#"UPDATE core.knowledge_qa_history
            SET feedback = $3
-           WHERE id = $1 AND tenant_id = $2"#, "core"),
-    )
+           WHERE id = $1 AND tenant_id = $2"#,
+        "core"
+    ))
     .bind(qa_id)
     .bind(tenant_id)
     .bind(feedback)

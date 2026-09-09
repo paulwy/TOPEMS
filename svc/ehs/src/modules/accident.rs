@@ -249,10 +249,10 @@ pub async fn report_accident(
         economic_loss: req.economic_loss.or(Some(0.0)),
         status: "reported".to_string(),
         reported_by: req.reported_by,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        };
+        created_at: Some(chrono::Utc::now().to_rfc3339()),
+        updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        tenant_id,
+    };
 
     // 发布端补全：EhsAccidentReported（→ integration → LIMS 建样/任务联动）
     if let Some(ref publisher) = state.event_publisher {

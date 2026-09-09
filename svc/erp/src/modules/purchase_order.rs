@@ -244,6 +244,12 @@ pub async fn create_purchase_order(
     };
 
     if let Some(ref publisher) = state.event_publisher {
+        let tenant_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+                .fetch_optional(&mut **txn)
+                .await
+                .ok()
+                .flatten();
         let payload = PurchaseOrderCreatedPayload {
             order_id: purchase_order.id,
             order_no: purchase_order.order_no.clone(),
@@ -252,6 +258,7 @@ pub async fn create_purchase_order(
             total_amount: Some(purchase_order.total_amount),
             payable_amount: Some(purchase_order.payable_amount),
             created_by: Some(claims.sub.clone()),
+            tenant_id,
         };
         match publisher.publish_purchase_order_created(payload).await {
             Ok(_) => tracing::info!(
@@ -435,6 +442,13 @@ pub async fn approve_purchase_order(
                     tracing::error!("事务提交失败: {}", e);
                     return Json(api_error(500, "事务提交失败"));
                 }
+                let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+                )
+                .fetch_optional(&mut **txn)
+                .await
+                .ok()
+                .flatten();
             }
             if let Some(ref publisher) = state.event_publisher {
                 let payload = PurchaseOrderApprovedPayload {
@@ -446,6 +460,7 @@ pub async fn approve_purchase_order(
                     payable_amount: Some(order.payable_amount),
                     approved_by: Some(claims.sub.clone()),
                     approved_at: Some(Utc::now()),
+                    tenant_id,
                 };
                 match publisher.publish_purchase_order_approved(payload).await {
                     Ok(_) => tracing::info!(

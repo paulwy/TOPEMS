@@ -258,10 +258,7 @@ pub async fn export_audit_logs(
                 (header::CONTENT_TYPE, "application/x-ndjson".to_string()),
                 (
                     header::CONTENT_DISPOSITION,
-                    format!(
-                        "attachment; filename=\"audit_logs_{}.ndjson\"",
-                        timestamp
-                    ),
+                    format!("attachment; filename=\"audit_logs_{}.ndjson\"", timestamp),
                 ),
             ],
             body,
@@ -292,8 +289,7 @@ pub async fn export_audit_logs(
 
     if query.compressed {
         use std::io::Write;
-        let mut encoder =
-            flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
         if let Err(e) = encoder.write_all(payload.as_bytes()) {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -505,8 +501,7 @@ mod tests {
     fn test_gzip_roundtrip() {
         use std::io::Read;
         let payload = "tenant_id,user_id,role\n";
-        let mut encoder =
-            flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
         std::io::Write::write_all(&mut encoder, payload.as_bytes()).unwrap();
         let gz = encoder.finish().unwrap();
 

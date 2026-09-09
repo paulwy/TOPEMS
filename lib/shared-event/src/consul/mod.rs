@@ -539,7 +539,10 @@ pub async fn try_register_service(
     let register_address =
         env::var("CONSUL_REGISTER_ADDRESS").unwrap_or_else(|_| service_name.to_string());
     // 健康检查必须传完整 URL（consul 不会自动拼接 address/port 到相对路径上）
-    let health_url = format!("http://{}:{}{}", register_address, service_port, health_check_path);
+    let health_url = format!(
+        "http://{}:{}{}",
+        register_address, service_port, health_check_path
+    );
     let registration = ServiceRegistration::new(service_id.clone(), service_name, service_port)
         .with_address(register_address)
         .with_health_check(health_url)

@@ -124,7 +124,10 @@ impl ServiceCallMonitor {
                     .filter(|s| !s.is_empty())
                     .collect()
             } else {
-                DEFAULT_KNOWN_SERVICES.iter().map(|s| s.to_string()).collect()
+                DEFAULT_KNOWN_SERVICES
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect()
             };
 
         Self {

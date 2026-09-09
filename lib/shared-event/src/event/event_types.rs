@@ -306,6 +306,8 @@ pub struct HrmPayrollVoucherRequestedPayload {
     pub net_salary: f64,
     pub employee_count: i32,
     pub entries: Vec<HrmPayrollVoucherEntryPayload>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 // --- PM Events ---
@@ -558,6 +560,8 @@ pub struct SalesOrderApprovedPayload {
     pub payable_amount: Option<f64>,
     pub approved_by: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -571,6 +575,8 @@ pub struct PaymentReceivedPayload {
     pub amount: f64,
     pub payment_method: Option<String>,
     pub received_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 // --- ERP Purchase Events ---
@@ -584,6 +590,8 @@ pub struct PurchaseOrderCreatedPayload {
     pub total_amount: Option<f64>,
     pub payable_amount: Option<f64>,
     pub created_by: Option<String>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -596,6 +604,8 @@ pub struct PurchaseOrderApprovedPayload {
     pub payable_amount: Option<f64>,
     pub approved_by: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -607,6 +617,8 @@ pub struct PaymentMadePayload {
     pub amount: f64,
     pub payment_method: Option<String>,
     pub paid_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 // --- SRM↔SCM Supplier Sync Events ---
@@ -652,6 +664,8 @@ pub struct WorkOrderCompletedPayload {
     pub completed_quantity: Option<f64>,
     pub completed_by: Option<String>,
     pub completed_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -678,6 +692,8 @@ pub struct StockInboundPayload {
     pub reference_order_id: Option<Uuid>,
     pub received_by: Option<String>,
     pub received_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -692,6 +708,8 @@ pub struct StockOutboundPayload {
     pub reference_order_id: Option<Uuid>,
     pub issued_by: Option<String>,
     pub issued_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -851,6 +869,8 @@ pub struct ShippingOrderRequestedPayload {
     pub shipping_id: Uuid,
     pub shipping_order_number: String,
     pub requested_at: DateTime<Utc>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 /// SCM→WMS 入库单创建请求事件 Payload
@@ -866,6 +886,8 @@ pub struct InboundOrderRequestedPayload {
     pub purchase_order_id: Uuid,
     pub purchase_order_number: String,
     pub requested_at: DateTime<Utc>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 // --- QMS Extended Events ---
@@ -966,6 +988,8 @@ pub struct AfterSalesTicketCreatedPayload {
     pub customer_name: Option<String>,
     pub priority: Option<String>,
     pub created_by: Option<String>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1005,6 +1029,8 @@ pub struct OpportunityWonPayload {
     pub amount: Option<f64>,
     pub won_by: Option<String>,
     pub won_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
 }
 
 // --- PDM Events ---

@@ -289,6 +289,13 @@ pub async fn create_inbound_from_purchase_internal(
     match result {
         Ok(_) => {
             if let Some(ref publisher) = state.event_publisher {
+                let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+                )
+                .fetch_optional(&mut **txn)
+                .await
+                .ok()
+                .flatten();
                 let payload = InboundOrderRequestedPayload {
                     inbound_order_id: inbound_id,
                     inbound_order_number: inbound_order_number.clone(),
@@ -297,6 +304,7 @@ pub async fn create_inbound_from_purchase_internal(
                     purchase_order_id,
                     purchase_order_number: purchase_order.order_number.clone(),
                     requested_at: now,
+                    tenant_id,
                 };
                 if let Err(e) = publisher
                     .publish_event(EventType::InboundOrderRequested, payload)
@@ -1156,6 +1164,14 @@ pub async fn batch_sync_purchase_to_wms(
                 .execute(&mut **txn)
                 .await;
 
+                let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+                )
+                .fetch_optional(&mut **txn)
+                .await
+                .ok()
+                .flatten();
+
                 match result {
                     Ok(_) => {
                         if let Some(ref publisher) = state.event_publisher {
@@ -1167,6 +1183,7 @@ pub async fn batch_sync_purchase_to_wms(
                                 purchase_order_id: po.id,
                                 purchase_order_number: po.order_number.clone(),
                                 requested_at: now,
+                                tenant_id,
                             };
                             if let Err(e) = publisher
                                 .publish_event(EventType::InboundOrderRequested, payload)

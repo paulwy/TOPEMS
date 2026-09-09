@@ -198,14 +198,14 @@
 pub mod cache;
 pub mod cluster;
 pub mod config_center;
-pub mod etcd;
 pub mod consul;
-pub mod zookeeper;
+pub mod etcd;
 pub mod event;
 pub mod messaging;
 pub mod redis;
 pub mod saga;
 pub mod service_discovery;
+pub mod zookeeper;
 
 /// 通用测试辅助工具（Redis Pub/Sub 两阶段订阅 API、事件模拟等）。
 ///

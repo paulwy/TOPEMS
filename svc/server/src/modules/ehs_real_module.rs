@@ -1,4 +1,4 @@
-﻿//! 真实 EHS 服务接入模块（EhsRealModule）—— Phase B3 扩展
+//! 真实 EHS 服务接入模块（EhsRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-ehs` 服务（lib 形态，AppState 直传模式）作为模块接入统一入口。
 //! ehs 的 `modules::create_api_routes() -> Router<AppState>` 无参，
@@ -65,7 +65,9 @@ impl EhsRealModule {
 
         // 4. 工作流服务客户端（构造失败则 ehs 模块本次不注册，降级跳过）
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
-        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "ehs-module", &["workflow:read"])) {
+        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default()
+            .and_then(|c| c.with_service_token(&jwt_secret, "ehs-module", &["workflow:read"]))
+        {
             Ok(c) => c,
             Err(e) => {
                 tracing::warn!("⚠️ 工作流服务客户端初始化失败，EHS 模块本次不注册: {e}");

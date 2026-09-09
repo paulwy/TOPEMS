@@ -25,7 +25,8 @@ pub type StreamEventHandler =
 
 /// MDM 主数据事件处理器回调类型（返回 Result，失败时会触发重试）
 pub type StreamMdmEventHandler = Arc<
-    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send
+    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>>
+        + Send
         + Sync,
 >;
 
@@ -153,8 +154,7 @@ impl StreamEventSubscriber {
         F: Fn(MasterDataEvent) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = Result<(), String>> + Send + 'static,
     {
-        let handler_arc: StreamMdmEventHandler =
-            Arc::new(move |event| Box::pin(handler(event)));
+        let handler_arc: StreamMdmEventHandler = Arc::new(move |event| Box::pin(handler(event)));
 
         self.mdm_handlers
             .entry(domain)
@@ -513,21 +513,24 @@ impl StreamEventSubscriber {
                                             e, message_id
                                         );
                                         // 解析失败，直接 ACK，避免重复处理
-                                        let _ =
-                                            self.ack_message(&stream_key, &message_id).await;
+                                        let _ = self.ack_message(&stream_key, &message_id).await;
                                     }
                                 }
                             } else {
                                 match serde_json::from_str::<Event>(&payload_json) {
                                     Ok(event) => {
-                                        if let Err(e) =
-                                            self.process_message(event, &message_id, &stream_key).await
+                                        if let Err(e) = self
+                                            .process_message(event, &message_id, &stream_key)
+                                            .await
                                         {
                                             error!("处理消息时出错: {}", e);
                                         }
                                     }
                                     Err(e) => {
-                                        error!("解析事件 JSON 错误: {:?}, 消息ID: {}", e, message_id);
+                                        error!(
+                                            "解析事件 JSON 错误: {:?}, 消息ID: {}",
+                                            e, message_id
+                                        );
                                         // 解析失败，直接 ACK，避免重复处理
                                         let _ = self.ack_message(&stream_key, &message_id).await;
                                     }
@@ -780,9 +783,7 @@ mod tests {
             return;
         };
 
-        use crate::event::master_data::{
-            MasterDataAction, MasterDataDomain, MasterDataEvent,
-        };
+        use crate::event::master_data::{MasterDataAction, MasterDataDomain, MasterDataEvent};
         use serde_json::json;
         use uuid::Uuid;
 
@@ -870,9 +871,7 @@ mod tests {
                         .get("payload")
                         .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
                         .unwrap_or_default();
-                    if let Ok(mdm_event) =
-                        serde_json::from_str::<MasterDataEvent>(&payload_json)
-                    {
+                    if let Ok(mdm_event) = serde_json::from_str::<MasterDataEvent>(&payload_json) {
                         let _ = subscriber
                             .process_mdm_message(mdm_event, &message.id, &stream.key)
                             .await;

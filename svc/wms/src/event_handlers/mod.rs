@@ -84,6 +84,7 @@ impl WmsEventHandlers {
             "pending",
             None,
             None,
+            payload.tenant_id,
         )
         .await;
         Ok(())
@@ -109,6 +110,7 @@ impl WmsEventHandlers {
             "approved",
             payload.approved_by,
             payload.approved_at,
+            payload.tenant_id,
         )
         .await;
         Ok(())
@@ -129,8 +131,8 @@ impl WmsEventHandlers {
         sqlx::query(
             r#"INSERT INTO wms.inbound_orders
                 (id, order_number, warehouse_id, supplier_id,
-                 order_type, status, received_at, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, 'purchase', 'pending', NULL, $5, $5)
+                 order_type, status, received_at, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, 'purchase', 'pending', NULL, $5, $5, $6)
             ON CONFLICT (id) DO NOTHING"#,
         )
         .bind(payload.inbound_order_id)
@@ -138,6 +140,7 @@ impl WmsEventHandlers {
         .bind(payload.warehouse_id)
         .bind(payload.supplier_id)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
         .map_err(|e| format!("创建入库单失败: {}", e))?;
@@ -378,13 +381,14 @@ async fn store_po_snapshot(
     status: &str,
     approved_by: Option<String>,
     approved_at: Option<chrono::DateTime<chrono::Utc>>,
+    tenant_id: Option<uuid::Uuid>,
 ) {
     let now = chrono::Utc::now();
     let result = sqlx::query(
         r#"INSERT INTO wms.purchase_order_snapshots
            (id, order_number, supplier_id, supplier_name, total_amount, payable_amount,
-            status, approved_by, approved_at, synced_at, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            status, approved_by, approved_at, synced_at, created_at, updated_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
            ON CONFLICT (id) DO UPDATE
            SET order_number = EXCLUDED.order_number,
                supplier_id = EXCLUDED.supplier_id,
@@ -409,6 +413,7 @@ async fn store_po_snapshot(
     .bind(now)
     .bind(now)
     .bind(now)
+    .bind(tenant_id.unwrap_or(uuid::Uuid::nil()))
     .execute(db)
     .await;
 

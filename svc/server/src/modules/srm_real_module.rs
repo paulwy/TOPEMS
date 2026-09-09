@@ -1,4 +1,4 @@
-﻿//! 真实 SRM 服务接入模块（SrmRealModule）—— feature flag 控制
+//! 真实 SRM 服务接入模块（SrmRealModule）—— feature flag 控制
 //!
 //! 将真实 `topems-srm` 服务（lib 形态）作为模块接入统一入口。
 //! srm 各业务模块 create_routes 自行管理内部状态（Router<()>），server 侧合并 + 认证。
@@ -66,7 +66,8 @@ impl SrmRealModule {
                 Duration::from_secs(300),
             ));
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
-        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "srm-module", &["workflow:read"]))
+        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+            .and_then(|c| c.with_service_token(&jwt_secret, "srm-module", &["workflow:read"]))
             .map_err(|e| anyhow::anyhow!("SRM 工作流客户端初始化失败: {e}"))?;
 
         let db = ctx.db.clone();

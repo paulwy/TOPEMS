@@ -20,7 +20,9 @@ use axum::{
 use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
 

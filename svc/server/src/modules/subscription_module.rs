@@ -1,4 +1,4 @@
-﻿//! 订阅管理模块（SubscriptionModule）—— P5 商业化支撑
+//! 订阅管理模块（SubscriptionModule）—— P5 商业化支撑
 //!
 //! 提供订阅制存储与 API：
 //! - `public.subscriptions` 表（tenant 唯一）
@@ -24,9 +24,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_auth::tier::{
-    resolve_effective_tier, SubscriptionStatus, Tier,
-};
+use topems_shared_auth::tier::{resolve_effective_tier, SubscriptionStatus, Tier};
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -68,7 +66,8 @@ pub struct SubscriptionState {
 
 // ==================== Handlers ====================
 
-const SUB_RETURN: &str = r#"id, tenant_id, tier, status, started_at, expires_at, created_at, updated_at"#;
+const SUB_RETURN: &str =
+    r#"id, tenant_id, tier, status, started_at, expires_at, created_at, updated_at"#;
 
 /// 查询当前订阅 + 生效 tier（订阅过期/取消 → 降级 free）
 pub async fn get_current_subscription(
@@ -91,7 +90,8 @@ pub async fn get_current_subscription(
     match sub {
         Ok(Some(s)) => {
             let subscribed = Tier::from_str(&s.tier).unwrap_or(Tier::Free);
-            let status = SubscriptionStatus::from_str(&s.status).unwrap_or(SubscriptionStatus::Expired);
+            let status =
+                SubscriptionStatus::from_str(&s.status).unwrap_or(SubscriptionStatus::Expired);
             let effective = resolve_effective_tier(subscribed, status);
             Json(ApiResponse::success(
                 EffectiveSubscription {
@@ -201,7 +201,10 @@ pub async fn cancel_subscription(
 
     match result {
         Ok(Some(s)) => Json(ApiResponse::success(s, "订阅已取消")),
-        Ok(None) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "订阅不存在")),
+        Ok(None) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "订阅不存在",
+        )),
         Err(e) => Json(ApiResponse::error(
             StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
             &format!("取消订阅失败: {}", e),
@@ -251,7 +254,9 @@ impl SubscriptionModule {
         .execute(&ctx.db)
         .await?;
 
-        let state = SubscriptionState { pool: ctx.db.clone() };
+        let state = SubscriptionState {
+            pool: ctx.db.clone(),
+        };
         // 权限分层：读（current）需 subscription:read（tier_permissions 自动关联），写（upsert/cancel）需 subscription:admin
         let read_routes = Router::new()
             .route("/current", get(get_current_subscription))
@@ -264,9 +269,7 @@ impl SubscriptionModule {
             .layer(axum::middleware::from_fn(require_permission(
                 "subscription:admin",
             )));
-        let protected = read_routes
-            .merge(write_routes)
-            .with_state(state);
+        let protected = read_routes.merge(write_routes).with_state(state);
 
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected)

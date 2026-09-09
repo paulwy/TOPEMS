@@ -3434,7 +3434,10 @@ pub async fn create_collection_handler(
                     .and_then(|v| v.as_str())
                     .unwrap_or_default()
                     .to_string();
-                let customer_name = data.get("customer_name").and_then(|v| v.as_str()).map(String::from);
+                let customer_name = data
+                    .get("customer_name")
+                    .and_then(|v| v.as_str())
+                    .map(String::from);
                 let amount = data.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
                 let payment_no_log = payment_no.clone();
                 tokio::spawn(async move {
@@ -3447,6 +3450,7 @@ pub async fn create_collection_handler(
                         amount,
                         payment_method: Some("collection".to_string()),
                         received_at: Some(Utc::now()),
+                        tenant_id: Some(tenant_id),
                     };
                     if let Err(e) = publisher
                         .publish_event(EventType::PaymentReceived, payload)

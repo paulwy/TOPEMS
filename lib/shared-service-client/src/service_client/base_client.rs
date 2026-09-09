@@ -60,7 +60,8 @@ impl BaseServiceClient {
 
     /// 客户端实时运行监控快照（请求量 / 在途 / 成功率 / 平均耗时 / 熔断拦截）。
     pub fn metrics(&self) -> ClientMetricsSnapshot {
-        self.metrics.snapshot(self.breaker.is_open(), &self.base_url)
+        self.metrics
+            .snapshot(self.breaker.is_open(), &self.base_url)
     }
 
     fn build_url(&self, path: &str) -> String {

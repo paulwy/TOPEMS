@@ -523,7 +523,10 @@ fn make_audit_log(action: &str, status: &str) -> AuditLog {
 fn csv_empty_logs_still_have_header() {
     let csv = generate_csv(&[]);
     // QuoteStyle::Always → 每个字段都被引号包裹
-    assert!(csv.starts_with("\"ID\",\"操作\",\"实体类型\""), "header should be quoted: {csv}");
+    assert!(
+        csv.starts_with("\"ID\",\"操作\",\"实体类型\""),
+        "header should be quoted: {csv}"
+    );
     let lines: Vec<&str> = csv.lines().collect();
     assert_eq!(lines.len(), 1);
     assert_eq!(lines[0].split(',').count(), 12);
@@ -544,7 +547,10 @@ fn csv_single_log_contains_all_fields() {
     assert!(row.contains("sample"), "entity_type should appear in row");
     assert!(row.contains("tester"), "user_name should appear in row");
     assert!(row.contains("10.0.0.1"), "ip should appear in row");
-    assert!(row.contains("2026-01-02T03:04:05"), "timestamp should appear in row");
+    assert!(
+        row.contains("2026-01-02T03:04:05"),
+        "timestamp should appear in row"
+    );
 }
 
 #[test]
@@ -554,7 +560,10 @@ fn csv_none_fields_are_empty_placeholders() {
     let row = csv.lines().nth(1).unwrap();
     let cols: Vec<&str> = row.split(',').collect();
     assert_eq!(cols.len(), 12, "row should have 12 columns");
-    assert_eq!(cols[2], "\"\"", "entity_type None should be empty placeholder");
+    assert_eq!(
+        cols[2], "\"\"",
+        "entity_type None should be empty placeholder"
+    );
 }
 
 #[test]
@@ -562,7 +571,10 @@ fn csv_request_details_json_serialized() {
     let mut log = make_audit_log("sample.update", "success");
     log.request_details = Some(serde_json::json!({"key": "val", "n": 1}));
     let csv = generate_csv(&[log]);
-    assert!(csv.contains("\"{\"\"key\"\":\"\"val\"\",\"\"n\"\":1}\""), "request details should be serialized & escaped");
+    assert!(
+        csv.contains("\"{\"\"key\"\":\"\"val\"\",\"\"n\"\":1}\""),
+        "request details should be serialized & escaped"
+    );
     assert!(csv.contains("sample.update"), "action should be present");
 }
 
@@ -582,6 +594,8 @@ fn csv_field_with_comma_is_quoted() {
     let mut log = make_audit_log("create", "ok");
     log.error_message = Some("contains,comma".to_string());
     let csv = generate_csv(&[log]);
-    assert!(csv.contains("\"contains,comma\""), "comma field should stay quoted as one column");
+    assert!(
+        csv.contains("\"contains,comma\""),
+        "comma field should stay quoted as one column"
+    );
 }
-

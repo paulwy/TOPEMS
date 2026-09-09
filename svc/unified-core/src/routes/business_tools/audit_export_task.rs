@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 use std::future::Future;
 use std::pin::Pin;
@@ -21,7 +21,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use chrono::Utc;
 
-use crate::routes::business_tools::audit_archiver::{AuditLogArchiver, ArchiveError};
+use crate::routes::business_tools::audit_archiver::{ArchiveError, AuditLogArchiver};
 use crate::routes::business_tools::permission_audit_log::{
     AuditLogEntry, AuditLogQuery, AuditLogStore,
 };
@@ -356,9 +356,7 @@ pub trait AuditExportControl {
     fn trigger_once(&self) -> Pin<Box<dyn Future<Output = ExportRunResult> + Send + '_>>;
 }
 
-impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> AuditExportControl
-    for AuditExportTask<S>
-{
+impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> AuditExportControl for AuditExportTask<S> {
     fn start(&mut self) {
         <AuditExportTask<S>>::start(self);
     }
@@ -504,9 +502,7 @@ impl AuditExportControl for NoopExportControl {
 mod tests {
     use super::*;
     use crate::routes::business_tools::audit_archiver::ArchiveConfig;
-    use crate::routes::business_tools::mock_audit_store::{
-        make_test_entry, MockAuditLogStore,
-    };
+    use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
     use tempfile::TempDir;
 
     fn make_task() -> (

@@ -30,7 +30,9 @@ async fn make_client() -> Option<EurekaServiceDiscovery> {
 
 #[tokio::test]
 async fn test_register_discover_watch() {
-    let Some(client) = make_client().await else { return; };
+    let Some(client) = make_client().await else {
+        return;
+    };
 
     let name = format!("eureka-it-{}", uuid::Uuid::new_v4().simple());
     let reg = ServiceRegistration::new(name.as_str(), "http://127.0.0.1:7201");
@@ -40,9 +42,10 @@ async fn test_register_discover_watch() {
     assert!(discovered.is_some(), "应能发现刚注册的服务");
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<usize>(8);
-    let _watch = client.spawn_service_watch(name.clone(), move |instances: Vec<ServiceRegistration>| {
-        let _ = tx.try_send(instances.len());
-    });
+    let _watch =
+        client.spawn_service_watch(name.clone(), move |instances: Vec<ServiceRegistration>| {
+            let _ = tx.try_send(instances.len());
+        });
     let initial = tokio::time::timeout(Duration::from_secs(35), rx.recv()).await;
     assert!(initial.is_ok(), "watch 应推送初始快照");
 

@@ -70,7 +70,7 @@ impl SimpleConfigStore {
         // In a real implementation, this would query the database
         let mut cache = self.cache.write().await;
         cache.clear();
-        
+
         info!("Configuration cache initialized");
         Ok(())
     }
@@ -84,18 +84,17 @@ impl SimpleConfigStore {
     /// Set a configuration value (simplified - would persist to DB in real implementation)
     pub async fn set(&self, key: ConfigKey, value: &serde_json::Value) -> Result<(), sqlx::Error> {
         let key_str = key.as_str();
-        let value_str = serde_json::to_string(value)
-            .map_err(|e| {
-                error!("Failed to serialize config value: {}", e);
-                sqlx::Error::config(e)
-            })?;
+        let value_str = serde_json::to_string(value).map_err(|e| {
+            error!("Failed to serialize config value: {}", e);
+            sqlx::Error::config(e)
+        })?;
 
         // Update cache
         let mut cache = self.cache.write().await;
         cache.insert(key_str.to_string(), value_str.clone());
 
         info!("Configuration updated in cache: {}", key_str);
-        
+
         // In a real implementation, this would save to the database
         // For now, we'll just cache it
         Ok(())
@@ -104,27 +103,27 @@ impl SimpleConfigStore {
     /// Get audit retention policy from store
     pub async fn get_audit_retention_policy(&self) -> Result<Option<RetentionPolicy>, sqlx::Error> {
         match self.get(&ConfigKey::AuditRetentionPolicy).await {
-            Some(value_str) => {
-                match serde_json::from_str(&value_str) {
-                    Ok(policy) => Ok(Some(policy)),
-                    Err(e) => {
-                        error!("Failed to deserialize audit retention policy: {}", e);
-                        Ok(None)
-                    }
+            Some(value_str) => match serde_json::from_str(&value_str) {
+                Ok(policy) => Ok(Some(policy)),
+                Err(e) => {
+                    error!("Failed to deserialize audit retention policy: {}", e);
+                    Ok(None)
                 }
-            }
+            },
             None => Ok(None),
         }
     }
 
     /// Set audit retention policy in store
-    pub async fn set_audit_retention_policy(&self, policy: &RetentionPolicy) -> Result<(), sqlx::Error> {
-        let value = serde_json::to_value(policy)
-            .map_err(|e| {
-                error!("Failed to serialize audit retention policy: {}", e);
-                sqlx::Error::config(e)
-            })?;
-        
+    pub async fn set_audit_retention_policy(
+        &self,
+        policy: &RetentionPolicy,
+    ) -> Result<(), sqlx::Error> {
+        let value = serde_json::to_value(policy).map_err(|e| {
+            error!("Failed to serialize audit retention policy: {}", e);
+            sqlx::Error::config(e)
+        })?;
+
         self.set(ConfigKey::AuditRetentionPolicy, &value).await
     }
 
@@ -186,7 +185,10 @@ impl ConfigStoreService {
     }
 
     /// Save audit retention policy and update cache
-    pub async fn save_audit_retention_policy(&self, policy: &RetentionPolicy) -> Result<(), sqlx::Error> {
+    pub async fn save_audit_retention_policy(
+        &self,
+        policy: &RetentionPolicy,
+    ) -> Result<(), sqlx::Error> {
         self.store.set_audit_retention_policy(policy).await
     }
 }
@@ -197,15 +199,27 @@ mod tests {
 
     #[test]
     fn test_config_key_as_str() {
-        assert_eq!(ConfigKey::AuditRetentionPolicy.as_str(), "audit_retention_policy");
+        assert_eq!(
+            ConfigKey::AuditRetentionPolicy.as_str(),
+            "audit_retention_policy"
+        );
         assert_eq!(ConfigKey::Custom("test".to_string()).as_str(), "test");
     }
 
     #[test]
     fn test_config_key_equality() {
-        assert_eq!(ConfigKey::AuditRetentionPolicy, ConfigKey::AuditRetentionPolicy);
-        assert_ne!(ConfigKey::AuditRetentionPolicy, ConfigKey::Custom("test".to_string()));
-        assert_eq!(ConfigKey::Custom("test".to_string()), ConfigKey::Custom("test".to_string()));
+        assert_eq!(
+            ConfigKey::AuditRetentionPolicy,
+            ConfigKey::AuditRetentionPolicy
+        );
+        assert_ne!(
+            ConfigKey::AuditRetentionPolicy,
+            ConfigKey::Custom("test".to_string())
+        );
+        assert_eq!(
+            ConfigKey::Custom("test".to_string()),
+            ConfigKey::Custom("test".to_string())
+        );
     }
 
     #[test]
@@ -225,6 +239,9 @@ mod tests {
         assert_eq!(policy.retention_days, deserialized.retention_days);
         assert_eq!(policy.archive_enabled, deserialized.archive_enabled);
         assert_eq!(policy.batch_size, deserialized.batch_size);
-        assert_eq!(policy.cleanup_interval_hours, deserialized.cleanup_interval_hours);
+        assert_eq!(
+            policy.cleanup_interval_hours,
+            deserialized.cleanup_interval_hours
+        );
     }
 }

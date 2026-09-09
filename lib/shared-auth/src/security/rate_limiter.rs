@@ -1,9 +1,9 @@
+use crate::middleware::service_identity::ServiceIdentity;
 use axum::{
     http::{HeaderName, HeaderValue, Request, StatusCode},
     middleware::Next,
     response::Response,
 };
-use crate::middleware::service_identity::ServiceIdentity;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;

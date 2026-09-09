@@ -34,7 +34,10 @@ pub fn create_routes() -> Router<AppState> {
                 .delete(delete_material_plan),
         )
         .route("/material-plans/{id}/submit", post(submit_material_plan))
-        .route("/material-plans/{id}/requisition", post(requisition_material_plan))
+        .route(
+            "/material-plans/{id}/requisition",
+            post(requisition_material_plan),
+        )
         .route("/material-plans/{id}/cancel", post(cancel_material_plan))
 }
 
@@ -110,7 +113,8 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_material_plans(
     State(state): State<AppState>,
     Query(params): Query<ListMaterialPlansQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
@@ -172,7 +176,8 @@ pub async fn list_material_plans(
 pub async fn get_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let row = sqlx::query(
         "SELECT id, plan_no, plan_id, material_id, material_code, material_name, \
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
@@ -202,7 +207,8 @@ pub async fn get_material_plan(
 pub async fn create_material_plan(
     State(state): State<AppState>,
     Json(req): Json<CreateMaterialPlanRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let required_qty = req.required_quantity.unwrap_or(0.0);
     let available_qty = req.available_quantity.unwrap_or(0.0);
     let shortfall = (required_qty - available_qty).max(0.0);
@@ -250,7 +256,8 @@ pub async fn update_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialPlanRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let required_date = parse_datetime(&req.required_date);
 
     let row = sqlx::query(
@@ -303,7 +310,8 @@ pub async fn update_material_plan(
 pub async fn delete_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let result = sqlx::query("DELETE FROM mes.material_plans WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
@@ -350,7 +358,8 @@ async fn transition_status(
 pub async fn submit_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let row = transition_status(&state, id, "requisitioned").await;
     match row {
         Ok(Some(row)) => Ok(Json(ApiResponse::success(
@@ -371,7 +380,8 @@ pub async fn submit_material_plan(
 pub async fn requisition_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let row = transition_status(&state, id, "sourced").await;
     match row {
         Ok(Some(row)) => Ok(Json(ApiResponse::success(
@@ -392,7 +402,8 @@ pub async fn requisition_material_plan(
 pub async fn cancel_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let row = transition_status(&state, id, "cancelled").await;
     match row {
         Ok(Some(row)) => Ok(Json(ApiResponse::success(
@@ -412,5 +423,9 @@ pub async fn cancel_material_plan(
 
 /// 解析 ISO8601 字符串为 TIMESTAMPTZ 绑定值
 fn parse_datetime(s: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
-    s.as_deref().and_then(|v| chrono::DateTime::parse_from_rfc3339(v).ok().map(|d| d.with_timezone(&chrono::Utc)))
+    s.as_deref().and_then(|v| {
+        chrono::DateTime::parse_from_rfc3339(v)
+            .ok()
+            .map(|d| d.with_timezone(&chrono::Utc))
+    })
 }

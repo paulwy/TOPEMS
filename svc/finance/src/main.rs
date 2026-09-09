@@ -12,8 +12,10 @@ use axum::routing::get;
 use utoipa::OpenApi;
 
 use crate::models::*;
+use crate::modules::settlement_center::{
+    handlers as settlement_handlers, models as settlement_models,
+};
 use crate::modules::*;
-use crate::modules::settlement_center::{handlers as settlement_handlers, models as settlement_models};
 use crate::shared::AppState;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
@@ -297,8 +299,13 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = create_standard_health_routes(health_state).route("/", get(home));
 
     // 业务路由
-    let protected_routes = modules::create_routes().with_state(state)
-        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
+    let protected_routes =
+        modules::create_routes()
+            .with_state(state)
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ));
 
     // OpenAPI 文档
     let openapi_json = Some(

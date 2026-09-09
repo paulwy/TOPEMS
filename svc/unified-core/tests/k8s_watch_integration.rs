@@ -33,12 +33,17 @@ async fn make_client() -> Option<K8sServiceDiscovery> {
 
 #[tokio::test]
 async fn test_watch_initial_snapshot() {
-    let Some(client) = make_client().await else { return; };
+    let Some(client) = make_client().await else {
+        return;
+    };
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<usize>(8);
-    let _watch = client.spawn_service_watch("k8s-it-watch".to_string(), move |instances: Vec<ServiceRegistration>| {
-        let _ = tx.try_send(instances.len());
-    });
+    let _watch = client.spawn_service_watch(
+        "k8s-it-watch".to_string(),
+        move |instances: Vec<ServiceRegistration>| {
+            let _ = tx.try_send(instances.len());
+        },
+    );
     // 初始快照（服务不存在时为 0；watch 在 NoNode 情形推送空快照）
     let initial = tokio::time::timeout(Duration::from_secs(15), rx.recv()).await;
     assert!(initial.is_ok(), "watch 应推送初始快照");

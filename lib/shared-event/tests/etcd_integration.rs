@@ -8,14 +8,17 @@ use std::collections::HashMap;
 use std::env;
 use std::time::Duration;
 
-use topems_shared_event::etcd::{
-    EtcdClient, EtcdConfig, ServiceRegistration,
-};
+use topems_shared_event::etcd::{EtcdClient, EtcdConfig, ServiceRegistration};
 
 fn test_endpoints() -> Option<Vec<String>> {
     env::var("ETCD_TEST_ENDPOINTS")
         .ok()
-        .map(|s| s.split(',').map(|x| x.trim().to_string()).filter(|x| !x.is_empty()).collect())
+        .map(|s| {
+            s.split(',')
+                .map(|x| x.trim().to_string())
+                .filter(|x| !x.is_empty())
+                .collect()
+        })
         .filter(|v: &Vec<String>| !v.is_empty())
 }
 
@@ -81,14 +84,14 @@ async fn test_register_discover_deregister() {
     );
 
     // 注销（撤销租约后实例应消失）
-    guard
-        .deregister()
-        .await
-        .expect("注销失败");
+    guard.deregister().await.expect("注销失败");
     // 等待租约回收（etcd 删除绑定 key 是异步的，短暂轮询）
     let mut gone = false;
     for _ in 0..10 {
-        let remaining = client.discover_service("topems-erp").await.unwrap_or_default();
+        let remaining = client
+            .discover_service("topems-erp")
+            .await
+            .unwrap_or_default();
         if remaining.is_empty() {
             gone = true;
             break;
@@ -124,10 +127,7 @@ async fn test_lease_keep_alive() {
     tokio::time::sleep(Duration::from_secs(5)).await;
 
     let mut kv = client.kv_client();
-    let resp = kv
-        .get(key.clone(), None)
-        .await
-        .expect("get 失败");
+    let resp = kv.get(key.clone(), None).await.expect("get 失败");
     assert!(
         !resp.kvs().is_empty(),
         "keep-alive 后 key 应仍然存在（TTL 3s，已过 5s）"
@@ -161,15 +161,13 @@ async fn test_multi_instance_discovery() {
     // 注册 2 个同服务实例
     let mut g1 = client
         .register_service(
-            ServiceRegistration::new("wms-a", "topems-wms", 9001)
-                .with_address("10.0.0.1"),
+            ServiceRegistration::new("wms-a", "topems-wms", 9001).with_address("10.0.0.1"),
         )
         .await
         .expect("g1 注册失败");
     let mut g2 = client
         .register_service(
-            ServiceRegistration::new("wms-b", "topems-wms", 9002)
-                .with_address("10.0.0.2"),
+            ServiceRegistration::new("wms-b", "topems-wms", 9002).with_address("10.0.0.2"),
         )
         .await
         .expect("g2 注册失败");
@@ -187,7 +185,10 @@ async fn test_multi_instance_discovery() {
     g1.deregister().await.expect("注销失败");
     let mut one_left = false;
     for _ in 0..10 {
-        let remaining = client.discover_service("topems-wms").await.unwrap_or_default();
+        let remaining = client
+            .discover_service("topems-wms")
+            .await
+            .unwrap_or_default();
         if remaining.len() == 1 {
             one_left = true;
             break;

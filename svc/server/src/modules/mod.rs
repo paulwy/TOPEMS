@@ -10,6 +10,8 @@
 //! 真实服务接入模板：见 `real_service_adapter.rs` 与两个真实模块实现。
 
 // [V2026.08 已合并] aps_real_module 已移除（aps 合并至 mes，由 module-mes 承载）
+#[cfg(feature = "module-advanced")]
+pub mod analytics_real_module;
 #[cfg(feature = "module-crm")]
 pub mod crm_real_module;
 pub mod dashboard_module;
@@ -25,31 +27,29 @@ pub mod finance_real_module;
 pub mod hrm_real_module;
 #[cfg(feature = "module-lims")]
 pub mod lims_real_module;
+#[cfg(feature = "module-advanced")]
+pub mod master_data_real_module;
 #[cfg(feature = "module-mes")]
 pub mod mes_real_module;
 #[cfg(feature = "module-pm")]
 pub mod pm_real_module;
+#[cfg(feature = "module-portal")]
+pub mod portal_real_module;
 #[cfg(feature = "module-qms")]
 pub mod qms_real_module;
+#[cfg(feature = "module-rd")]
+pub mod rd_real_module;
 pub mod real_service_adapter;
 #[cfg(feature = "module-scm")]
 pub mod scm_real_module;
-#[cfg(feature = "module-subscription")]
-pub mod subscription_module;
-#[cfg(feature = "module-tms")]
-pub mod tms_real_module;
-#[cfg(feature = "module-ticket")]
-pub mod ticket_real_module;
-#[cfg(feature = "module-rd")]
-pub mod rd_real_module;
 #[cfg(feature = "module-srm")]
 pub mod srm_real_module;
-#[cfg(feature = "module-advanced")]
-pub mod analytics_real_module;
-#[cfg(feature = "module-advanced")]
-pub mod master_data_real_module;
-#[cfg(feature = "module-portal")]
-pub mod portal_real_module;
+#[cfg(feature = "module-subscription")]
+pub mod subscription_module;
+#[cfg(feature = "module-ticket")]
+pub mod ticket_real_module;
+#[cfg(feature = "module-tms")]
+pub mod tms_real_module;
 
 #[cfg(feature = "module-wms")]
 pub mod wms_real_module;

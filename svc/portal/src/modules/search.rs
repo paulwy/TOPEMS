@@ -66,7 +66,6 @@ fn resolve_service_url(env_var: &str, fallback: &'static str, service_label: &st
     }
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct SearchResult {
     pub id: String,
@@ -129,12 +128,7 @@ pub async fn global_search(
 
     let token = extract_bearer_token(&headers);
 
-    let (
-        notif_results,
-        hrm_results,
-        workflow_results,
-        mes_results,
-    ) = tokio::join!(
+    let (notif_results, hrm_results, workflow_results, mes_results) = tokio::join!(
         search_notifications(&state, &query, token.as_deref()),
         search_hrm_employees(&state, &query, token.as_deref()),
         search_workflow_instances(&state, &query, token.as_deref()),
@@ -189,12 +183,7 @@ pub async fn search_suggestions(
 
     let token = extract_bearer_token(&headers);
 
-    let (
-        notif_results,
-        hrm_results,
-        workflow_results,
-        mes_results,
-    ) = tokio::join!(
+    let (notif_results, hrm_results, workflow_results, mes_results) = tokio::join!(
         search_notifications(&state, &query, token.as_deref()),
         search_hrm_employees(&state, &query, token.as_deref()),
         search_workflow_instances(&state, &query, token.as_deref()),

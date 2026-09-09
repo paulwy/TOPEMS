@@ -34,9 +34,8 @@ use topems_shared_service_client::service_client::{
 use db::repository::*;
 use models::*;
 use modules::approval::{
-    approve_approval_task, delegate_approval_task, get_approval_history,
-    get_approval_task, get_pending_approval_tasks, list_approval_tasks,
-    reject_approval_task,
+    approve_approval_task, delegate_approval_task, get_approval_history, get_approval_task,
+    get_pending_approval_tasks, list_approval_tasks, reject_approval_task,
 };
 use modules::attendance::{
     apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
@@ -129,7 +128,9 @@ async fn main() -> Result<()> {
     } else {
         tracing::info!("✅ 数据库表初始化完成");
     }
-    if let Err(e) = modules::offline_records::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+    if let Err(e) =
+        modules::offline_records::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
+    {
         tracing::warn!("离线记录表初始化警告: {}", e);
     }
 
@@ -272,11 +273,8 @@ async fn main() -> Result<()> {
 
     // Protected routes
     let protected_routes = Router::new()
-    // Approval Routes（V68.1 挂载：原 modules/approval.rs 已实现但未注册，前端 mobile/approval.ts 7 方法据此对齐）
-        .route(
-            "/approvals",
-            axum::routing::get(list_approval_tasks),
-        )
+        // Approval Routes（V68.1 挂载：原 modules/approval.rs 已实现但未注册，前端 mobile/approval.ts 7 方法据此对齐）
+        .route("/approvals", axum::routing::get(list_approval_tasks))
         .route(
             "/approvals/pending",
             axum::routing::get(get_pending_approval_tasks),
@@ -285,10 +283,7 @@ async fn main() -> Result<()> {
             "/approvals/history",
             axum::routing::get(get_approval_history),
         )
-        .route(
-            "/approvals/{id}",
-            axum::routing::get(get_approval_task),
-        )
+        .route("/approvals/{id}", axum::routing::get(get_approval_task))
         .route(
             "/approvals/{id}/approve",
             axum::routing::post(approve_approval_task),

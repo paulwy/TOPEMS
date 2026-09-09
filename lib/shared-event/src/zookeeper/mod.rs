@@ -20,7 +20,7 @@ use tracing::{info, warn};
 
 use uuid::Uuid;
 
-use zookeeper::{Acl, CreateMode, WatchedEvent, Watcher, ZooKeeper, ZkState};
+use zookeeper::{Acl, CreateMode, WatchedEvent, Watcher, ZkState, ZooKeeper};
 
 /// ZooKeeper 配置
 #[derive(Debug, Clone)]
@@ -194,7 +194,11 @@ impl ZkClient {
     async fn ensure_path(&self, path: &str) -> Result<(), ZkError> {
         // 递归创建路径中的每个层级（zookeeper 不支持递归 create）
         let mut current = String::new();
-        for part in path.trim_start_matches('/').split('/').filter(|p| !p.is_empty()) {
+        for part in path
+            .trim_start_matches('/')
+            .split('/')
+            .filter(|p| !p.is_empty())
+        {
             current.push('/');
             current.push_str(part);
             let exists = {
@@ -225,10 +229,11 @@ impl ZkClient {
         registration: ServiceRegistration,
     ) -> Result<ZkRegistrationGuard, ZkError> {
         let path = self.instance_path(&registration.name, &registration.id);
-        self.ensure_path(&self.service_path(&registration.name)).await?;
+        self.ensure_path(&self.service_path(&registration.name))
+            .await?;
 
-        let value = serde_json::to_string(&registration)
-            .map_err(|e| ZkError::Serialize(e.to_string()))?;
+        let value =
+            serde_json::to_string(&registration).map_err(|e| ZkError::Serialize(e.to_string()))?;
         let acl = Acl::open_unsafe().clone();
         let create_path = path.clone();
 
@@ -264,11 +269,9 @@ impl ZkClient {
     pub async fn deregister_service(&self, name: &str, id: &str) -> Result<(), ZkError> {
         let path = self.instance_path(name, id);
         let zk = self.inner.clone();
-        let result = tokio::task::spawn_blocking(move || {
-            zk.lock().unwrap().delete(&path, None)
-        })
-        .await
-        .map_err(|e| ZkError::Task(e.to_string()))?;
+        let result = tokio::task::spawn_blocking(move || zk.lock().unwrap().delete(&path, None))
+            .await
+            .map_err(|e| ZkError::Task(e.to_string()))?;
 
         // 节点不存在视为已注销（幂等）
         match result {
@@ -277,10 +280,7 @@ impl ZkClient {
             Err(e) => return Err(ZkError::DeregistrationFailed(e.to_string())),
         }
 
-        self.registered
-            .write()
-            .await
-            .retain(|(sid, _)| sid != id);
+        self.registered.write().await.retain(|(sid, _)| sid != id);
 
         info!("✅ 服务已从 ZooKeeper 注销: id={}", id);
         Ok(())
@@ -290,12 +290,11 @@ impl ZkClient {
     pub async fn discover_service(&self, name: &str) -> Result<Vec<ServiceInstance>, ZkError> {
         let path = self.service_path(name);
         let zk = self.inner.clone();
-        let children = tokio::task::spawn_blocking(move || {
-            zk.lock().unwrap().get_children(&path, false)
-        })
-        .await
-        .map_err(|e| ZkError::Task(e.to_string()))?
-        .map_err(|e| ZkError::DiscoveryFailed(e.to_string()))?;
+        let children =
+            tokio::task::spawn_blocking(move || zk.lock().unwrap().get_children(&path, false))
+                .await
+                .map_err(|e| ZkError::Task(e.to_string()))?
+                .map_err(|e| ZkError::DiscoveryFailed(e.to_string()))?;
 
         let mut instances = Vec::new();
         for child in children {
@@ -310,11 +309,9 @@ impl ZkClient {
     async fn get_instance(&self, name: &str, id: &str) -> Result<Option<ServiceInstance>, ZkError> {
         let path = self.instance_path(name, id);
         let zk = self.inner.clone();
-        let data = tokio::task::spawn_blocking(move || {
-            zk.lock().unwrap().get_data(&path, false)
-        })
-        .await
-        .map_err(|e| ZkError::Task(e.to_string()))?;
+        let data = tokio::task::spawn_blocking(move || zk.lock().unwrap().get_data(&path, false))
+            .await
+            .map_err(|e| ZkError::Task(e.to_string()))?;
 
         match data {
             Ok((bytes, _stat)) => {
@@ -356,11 +353,10 @@ impl ZkClient {
         for name in names {
             let path = format!("{}{}", prefix_path, name);
             let zk = self.inner.clone();
-            let ids = tokio::task::spawn_blocking(move || {
-                zk.lock().unwrap().get_children(&path, false)
-            })
-            .await
-            .map_err(|e| ZkError::Task(e.to_string()))?;
+            let ids =
+                tokio::task::spawn_blocking(move || zk.lock().unwrap().get_children(&path, false))
+                    .await
+                    .map_err(|e| ZkError::Task(e.to_string()))?;
             if let Ok(ids) = ids {
                 services.insert(name, ids);
             }
@@ -387,11 +383,7 @@ impl ZkClient {
     ///
     /// 循环设置一次性 watch（ZK watch 语义），事件触发时回调 `on_event` 并自动重设。
     /// 返回句柄，调用 `cancel()` 或 Drop 后停止。
-    pub fn spawn_service_watch<F>(
-        &self,
-        service_name: String,
-        on_event: F,
-    ) -> ZkWatchHandle
+    pub fn spawn_service_watch<F>(&self, service_name: String, on_event: F) -> ZkWatchHandle
     where
         F: Fn(Vec<ServiceInstance>) + Send + Sync + 'static,
     {

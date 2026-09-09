@@ -1,10 +1,10 @@
 pub mod agent;
 pub mod ai_form;
+pub mod ai_knowledge;
 pub mod ai_math_calc;
 pub mod ai_plugin;
 pub mod ai_search_calc;
 pub mod ai_text_calc;
-pub mod ai_knowledge;
 pub mod analysis;
 pub mod code_assistant;
 pub mod document;

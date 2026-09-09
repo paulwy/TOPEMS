@@ -187,13 +187,15 @@ impl VectorService {
         chunk: &SaveChunkRequest,
         tenant_id: Uuid,
     ) -> Result<Uuid, sqlx::Error> {
-        let id: Uuid = sqlx::query_scalar(
-            only_own_schema_query!("ai", r#"
+        let id: Uuid = sqlx::query_scalar(only_own_schema_query!(
+            "ai",
+            r#"
             INSERT INTO ai.document_chunks (tenant_id, document_id, chunk_index, content, metadata)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id
-            "#, "plugin_ai"),
-        )
+            "#,
+            "plugin_ai"
+        ))
         .bind(tenant_id)
         .bind(chunk.document_id)
         .bind(chunk.chunk_index)
@@ -520,12 +522,15 @@ impl VectorService {
 
     /// 删除向量记录
     pub async fn delete_vector(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
-        let result =
-            sqlx::query(only_own_schema_query!("ai", "UPDATE ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "plugin_ai"))
-                .bind(id)
-                .bind(tenant_id)
-                .execute(self.db.pool())
-                .await?;
+        let result = sqlx::query(only_own_schema_query!(
+            "ai",
+            "UPDATE ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            "plugin_ai"
+        ))
+        .bind(id)
+        .bind(tenant_id)
+        .execute(self.db.pool())
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }

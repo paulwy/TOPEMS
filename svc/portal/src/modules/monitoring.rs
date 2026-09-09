@@ -21,10 +21,11 @@ fn build_client(
     state: &AppState,
 ) -> TypedServiceClient<MonitorApi> {
     let client = base.clone();
-    match client
-        .clone()
-        .with_service_token(&state.auth_state.jwt_secret, "portal-service", &["monitor:read"])
-    {
+    match client.clone().with_service_token(
+        &state.auth_state.jwt_secret,
+        "portal-service",
+        &["monitor:read"],
+    ) {
         Ok(c) => c,
         Err(_) => client,
     }

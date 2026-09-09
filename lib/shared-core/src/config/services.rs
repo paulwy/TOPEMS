@@ -485,7 +485,6 @@ mod tests {
         }
     }
 
-
     #[test]
     fn get_service_strip_prefix_then_apiprefix() {
         let r = ServiceRegistry::new();

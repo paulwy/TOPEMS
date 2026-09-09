@@ -48,7 +48,10 @@ async fn service_available() -> bool {
 #[tokio::test]
 async fn test_sse_connect_receives_endpoint_event() {
     if !service_available().await {
-        eprintln!("SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试", API_URL);
+        eprintln!(
+            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
+            API_URL
+        );
         return;
     }
     let client = create_client();
@@ -138,7 +141,10 @@ async fn test_sse_connect_receives_endpoint_event() {
 #[tokio::test]
 async fn test_sse_session_request_sends_event() {
     if !service_available().await {
-        eprintln!("SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试", API_URL);
+        eprintln!(
+            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
+            API_URL
+        );
         return;
     }
     let client = create_client();
@@ -215,7 +221,10 @@ async fn test_sse_session_request_sends_event() {
 #[tokio::test]
 async fn test_sse_session_not_found() {
     if !service_available().await {
-        eprintln!("SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试", API_URL);
+        eprintln!(
+            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
+            API_URL
+        );
         return;
     }
     let client = create_client();
@@ -258,7 +267,10 @@ async fn test_sse_session_not_found() {
 #[tokio::test]
 async fn test_sse_heartbeat() {
     if !service_available().await {
-        eprintln!("SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试", API_URL);
+        eprintln!(
+            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
+            API_URL
+        );
         return;
     }
     let client = create_client();
@@ -354,7 +366,10 @@ async fn read_sse_event(
 #[tokio::test]
 async fn test_sse_full_session_roundtrip() {
     if !service_available().await {
-        eprintln!("SKIP: unified-core 服务未运行（{}），跳过 SSE 完整会话闭环测试", API_URL);
+        eprintln!(
+            "SKIP: unified-core 服务未运行（{}），跳过 SSE 完整会话闭环测试",
+            API_URL
+        );
         return;
     }
     let client = create_client();
@@ -412,7 +427,10 @@ async fn test_sse_full_session_roundtrip() {
 
     let echoed: Value = serde_json::from_str(&resp_data).expect("响应事件应为合法 JSON");
     assert_eq!(echoed["type"], "echo", "响应应回显请求 data.type");
-    assert_eq!(echoed["content"], "roundtrip-ok", "响应应回显请求 data.content");
+    assert_eq!(
+        echoed["content"], "roundtrip-ok",
+        "响应应回显请求 data.content"
+    );
 
     println!(
         "SSE 完整会话闭环通过: session_id={} → 响应事件 {}: {}",

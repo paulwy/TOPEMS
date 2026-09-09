@@ -63,7 +63,9 @@ static SERVICE_CALL_MONITOR: OnceLock<ServiceCallMonitor> = OnceLock::new();
 
 /// 记录一次服务间调用（按调用方服务名打点），并执行异常告警检测。
 pub fn record_service_call(service_name: &str) {
-    service_calls_metric().with_label_values(&[service_name]).inc();
+    service_calls_metric()
+        .with_label_values(&[service_name])
+        .inc();
     SERVICE_CALL_MONITOR
         .get_or_init(ServiceCallMonitor::from_env)
         .record(service_name);

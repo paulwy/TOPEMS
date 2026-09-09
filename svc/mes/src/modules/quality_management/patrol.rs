@@ -1,7 +1,10 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{BigDecimal, Uuid}, Row};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    Row,
+};
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -592,7 +595,9 @@ pub async fn add_patrol_item(
         patrol_uuid,
         body.item_name,
         body.standard,
-        body.actual_value.as_deref().and_then(|s| s.parse::<BigDecimal>().ok()),
+        body.actual_value
+            .as_deref()
+            .and_then(|s| s.parse::<BigDecimal>().ok()),
         body.status.clone().unwrap_or_else(|| "pending".to_string()),
         body.remark,
     )
@@ -661,7 +666,9 @@ pub async fn update_patrol_item(
         "#,
         body.item_name,
         body.standard,
-        body.actual_value.as_deref().and_then(|s| s.parse::<BigDecimal>().ok()),
+        body.actual_value
+            .as_deref()
+            .and_then(|s| s.parse::<BigDecimal>().ok()),
         body.status,
         body.remark,
         uuid,

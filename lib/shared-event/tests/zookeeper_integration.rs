@@ -7,9 +7,7 @@
 use std::env;
 use std::time::Duration;
 
-use topems_shared_event::zookeeper::{
-    ServiceInstance, ServiceRegistration, ZkClient, ZkConfig,
-};
+use topems_shared_event::zookeeper::{ServiceInstance, ServiceRegistration, ZkClient, ZkConfig};
 
 fn test_connect_string() -> Option<String> {
     env::var("ZK_TEST_CONNECT_STRING")
@@ -76,10 +74,7 @@ async fn test_register_discover_deregister() {
     );
 
     // 注销
-    guard
-        .deregister()
-        .await
-        .expect("注销失败");
+    guard.deregister().await.expect("注销失败");
     let remaining = client
         .discover_service("topems-erp")
         .await
@@ -96,15 +91,13 @@ async fn test_multi_instance_discovery() {
 
     let mut g1 = client
         .register_service(
-            ServiceRegistration::new("wms-a", "topems-wms", 9001)
-                .with_address("10.0.0.1"),
+            ServiceRegistration::new("wms-a", "topems-wms", 9001).with_address("10.0.0.1"),
         )
         .await
         .expect("g1 注册失败");
     let _g2 = client
         .register_service(
-            ServiceRegistration::new("wms-b", "topems-wms", 9002)
-                .with_address("10.0.0.2"),
+            ServiceRegistration::new("wms-b", "topems-wms", 9002).with_address("10.0.0.2"),
         )
         .await
         .expect("g2 注册失败");
@@ -135,9 +128,12 @@ async fn test_watcher_service_change() {
 
     // 订阅服务目录变更（一次性 watch 循环重设）
     let (tx, mut rx) = tokio::sync::mpsc::channel::<usize>(16);
-    let _watch = client.spawn_service_watch("topems-ai".to_string(), move |instances: Vec<ServiceInstance>| {
-        let _ = tx.try_send(instances.len());
-    });
+    let _watch = client.spawn_service_watch(
+        "topems-ai".to_string(),
+        move |instances: Vec<ServiceInstance>| {
+            let _ = tx.try_send(instances.len());
+        },
+    );
 
     // 消费初始快照（可能为空）
     let _initial = rx.recv().await;
@@ -145,8 +141,7 @@ async fn test_watcher_service_change() {
     // 注册新实例 → watch 应触发并推送含实例的快照
     let _guard = client
         .register_service(
-            ServiceRegistration::new("ai-1", "topems-ai", 7001)
-                .with_address("127.0.0.1"),
+            ServiceRegistration::new("ai-1", "topems-ai", 7001).with_address("127.0.0.1"),
         )
         .await
         .expect("注册失败");

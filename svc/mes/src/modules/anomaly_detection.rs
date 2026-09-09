@@ -841,7 +841,11 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let completed: f64 = row.get::<i32, _>("completed_quantity") as f64;
 
             let days_delay = if let Some(pe) = planned_end {
-                Utc::now().naive_utc().date().signed_duration_since(pe).num_days()
+                Utc::now()
+                    .naive_utc()
+                    .date()
+                    .signed_duration_since(pe)
+                    .num_days()
             } else {
                 0
             };

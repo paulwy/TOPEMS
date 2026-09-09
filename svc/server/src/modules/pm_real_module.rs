@@ -1,4 +1,4 @@
-﻿//! 真实 PM 服务接入模块（PmRealModule）—— Phase B3 扩展
+//! 真实 PM 服务接入模块（PmRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-pm` 服务（lib 形态，pool 直传模式）作为模块接入统一入口。
 //! 与 Aps/Wms 不同：pm 的 create_routes 直接接收 (pool, event_publisher, workflow_client)。
@@ -65,7 +65,9 @@ impl PmRealModule {
 
         // 3. 工作流服务客户端（构造失败则 pm 模块降级跳过）
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
-        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "pm-module", &["workflow:read"])) {
+        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default()
+            .and_then(|c| c.with_service_token(&jwt_secret, "pm-module", &["workflow:read"]))
+        {
             Ok(c) => c,
             Err(e) => {
                 tracing::warn!("⚠️ 工作流服务客户端初始化失败，PM 模块本次不注册: {e}");

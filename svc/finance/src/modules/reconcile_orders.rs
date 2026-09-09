@@ -25,12 +25,21 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/reconcile", get(list_reconcile_orders).post(create_reconcile_order))
+        .route(
+            "/reconcile",
+            get(list_reconcile_orders).post(create_reconcile_order),
+        )
         .route("/reconcile/auto", post(auto_reconcile))
         .route("/reconcile/{order_id}", get(get_reconcile_order))
         .route("/reconcile/{order_id}/items", get(get_reconcile_items))
-        .route("/reconcile/{order_id}/confirm", post(confirm_reconcile_order))
-        .route("/reconcile/{order_id}/dispute", post(dispute_reconcile_order))
+        .route(
+            "/reconcile/{order_id}/confirm",
+            post(confirm_reconcile_order),
+        )
+        .route(
+            "/reconcile/{order_id}/dispute",
+            post(dispute_reconcile_order),
+        )
         .route("/reconcile/{order_id}/cancel", post(cancel_reconcile_order))
         .route(
             "/reconcile/{order_id}/items/{item_id}",
@@ -87,7 +96,8 @@ fn not_found(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
 }
 
 fn parse_date(s: &Option<String>) -> Option<NaiveDate> {
-    s.as_deref().and_then(|v| NaiveDate::parse_from_str(v, "%Y-%m-%d").ok())
+    s.as_deref()
+        .and_then(|v| NaiveDate::parse_from_str(v, "%Y-%m-%d").ok())
 }
 
 fn order_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
@@ -131,26 +141,29 @@ fn item_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_reconcile_orders(
     State(state): State<AppState>,
     Query(params): Query<ListReconcileQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
 
     let keyword = params.keyword.clone();
 
-    let total: i64 = match sqlx::query(only_own_schema_query!("finance",
+    let total: i64 = match sqlx::query(only_own_schema_query!(
+        "finance",
         "SELECT COUNT(*) FROM finance.reconcile_orders \
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::uuid IS NULL OR counterparty_id = $2) \
            AND ($3::text IS NULL OR period = $3) \
            AND ($4::text IS NULL OR order_no ILIKE '%' || $4 || '%' \
-             OR counterparty_name ILIKE '%' || $4 || '%')"))
-        .bind(&params.status)
-        .bind(params.counterparty_id)
-        .bind(&params.period)
-        .bind(&keyword)
-        .fetch_one(&state.pool)
-        .await
+             OR counterparty_name ILIKE '%' || $4 || '%')"
+    ))
+    .bind(&params.status)
+    .bind(params.counterparty_id)
+    .bind(&params.period)
+    .bind(&keyword)
+    .fetch_one(&state.pool)
+    .await
     {
         Ok(row) => row.get::<i64, _>(0),
         Err(e) => {
@@ -159,7 +172,8 @@ pub async fn list_reconcile_orders(
         }
     };
 
-    let rows = match sqlx::query(only_own_schema_query!("finance",
+    let rows =
+        match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                 total_amount, matched_amount, unmatched_amount, status, created_at, updated_at \
          FROM finance.reconcile_orders \
@@ -177,13 +191,13 @@ pub async fn list_reconcile_orders(
         .bind(offset)
         .fetch_all(&state.pool)
         .await
-    {
-        Ok(rows) => rows,
-        Err(e) => {
-            tracing::error!("查询对账订单失败: {}", e);
-            return Err(internal_error("查询对账订单失败"));
-        }
-    };
+        {
+            Ok(rows) => rows,
+            Err(e) => {
+                tracing::error!("查询对账订单失败: {}", e);
+                return Err(internal_error("查询对账订单失败"));
+            }
+        };
 
     let items: Vec<serde_json::Value> = rows.iter().map(order_to_json).collect();
     Ok(Json(ApiResponse::success(
@@ -195,22 +209,24 @@ pub async fn list_reconcile_orders(
 pub async fn get_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
-    let row = match sqlx::query(only_own_schema_query!("finance",
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let row =
+        match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                 total_amount, matched_amount, unmatched_amount, status, created_at, updated_at \
          FROM finance.reconcile_orders WHERE id = $1"))
         .bind(order_id)
         .fetch_optional(&state.pool)
         .await
-    {
-        Ok(Some(row)) => row,
-        Ok(None) => return Err(not_found("对账订单不存在")),
-        Err(e) => {
-            tracing::error!("查询对账订单失败: {}", e);
-            return Err(internal_error("查询对账订单失败"));
-        }
-    };
+        {
+            Ok(Some(row)) => row,
+            Ok(None) => return Err(not_found("对账订单不存在")),
+            Err(e) => {
+                tracing::error!("查询对账订单失败: {}", e);
+                return Err(internal_error("查询对账订单失败"));
+            }
+        };
 
     let mut data = match order_to_json(&row) {
         serde_json::Value::Object(map) => map,
@@ -247,7 +263,8 @@ pub async fn get_reconcile_order(
 pub async fn get_reconcile_items(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let rows = match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                 matched, match_id, match_amount, difference, status, remark, created_at, updated_at \
@@ -273,7 +290,8 @@ pub async fn get_reconcile_items(
 pub async fn create_reconcile_order(
     State(state): State<AppState>,
     Json(req): Json<CreateReconcileRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let counterparty_ids: Vec<Uuid> = req
         .counterparty_ids
         .clone()
@@ -285,7 +303,10 @@ pub async fn create_reconcile_order(
     if counterparty_ids.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::error(400, "缺少 counterparty_id 或 counterparty_ids")),
+            Json(ApiResponse::error(
+                400,
+                "缺少 counterparty_id 或 counterparty_ids",
+            )),
         ));
     }
 
@@ -295,7 +316,11 @@ pub async fn create_reconcile_order(
     // 每个 counterparty 生成一个对账订单
     let mut orders = Vec::new();
     for cid in counterparty_ids {
-        let order_no = format!("RC-{:X}{:04}", Uuid::new_v4().as_u128() % 0xFFFF_FFFF, rand_suffix());
+        let order_no = format!(
+            "RC-{:X}{:04}",
+            Uuid::new_v4().as_u128() % 0xFFFF_FFFF,
+            rand_suffix()
+        );
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
              (order_no, counterparty_id, period, start_date, end_date, status) \
@@ -330,7 +355,8 @@ pub async fn create_reconcile_order(
 pub async fn auto_reconcile(
     State(state): State<AppState>,
     Json(req): Json<CreateReconcileRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let start_date = parse_date(&req.start_date);
     let end_date = parse_date(&req.end_date);
 
@@ -344,7 +370,11 @@ pub async fn auto_reconcile(
 
     let mut orders = Vec::new();
     for cid in counterparty_ids {
-        let order_no = format!("RC-AUTO-{:X}{:04}", Uuid::new_v4().as_u128() % 0xFFFF_FFFF, rand_suffix());
+        let order_no = format!(
+            "RC-AUTO-{:X}{:04}",
+            Uuid::new_v4().as_u128() % 0xFFFF_FFFF,
+            rand_suffix()
+        );
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
              (order_no, counterparty_id, period, start_date, end_date, status) \
@@ -381,15 +411,18 @@ pub async fn auto_reconcile(
 pub async fn confirm_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
-    let row = match sqlx::query(only_own_schema_query!("finance",
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let row = match sqlx::query(only_own_schema_query!(
+        "finance",
         "UPDATE finance.reconcile_orders SET status = 'confirmed', updated_at = NOW() \
          WHERE id = $1 \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
-                   total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
-        .bind(order_id)
-        .fetch_optional(&state.pool)
-        .await
+                   total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
+    ))
+    .bind(order_id)
+    .fetch_optional(&state.pool)
+    .await
     {
         Ok(Some(row)) => row,
         Ok(None) => return Err(not_found("对账订单不存在")),
@@ -399,23 +432,29 @@ pub async fn confirm_reconcile_order(
         }
     };
 
-    Ok(Json(ApiResponse::success(order_to_json(&row), "确认对账订单成功")))
+    Ok(Json(ApiResponse::success(
+        order_to_json(&row),
+        "确认对账订单成功",
+    )))
 }
 
 pub async fn dispute_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
     Json(req): Json<DisputeReconcileRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let _remark = req.reason;
-    let row = match sqlx::query(only_own_schema_query!("finance",
+    let row = match sqlx::query(only_own_schema_query!(
+        "finance",
         "UPDATE finance.reconcile_orders SET status = 'disputed', updated_at = NOW() \
          WHERE id = $1 \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
-                   total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
-        .bind(order_id)
-        .fetch_optional(&state.pool)
-        .await
+                   total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
+    ))
+    .bind(order_id)
+    .fetch_optional(&state.pool)
+    .await
     {
         Ok(Some(row)) => row,
         Ok(None) => return Err(not_found("对账订单不存在")),
@@ -425,19 +464,25 @@ pub async fn dispute_reconcile_order(
         }
     };
 
-    Ok(Json(ApiResponse::success(order_to_json(&row), "对账订单已标记争议")))
+    Ok(Json(ApiResponse::success(
+        order_to_json(&row),
+        "对账订单已标记争议",
+    )))
 }
 
 pub async fn cancel_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
-    let result = sqlx::query(only_own_schema_query!("finance",
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
         "UPDATE finance.reconcile_orders SET status = 'cancelled', updated_at = NOW() \
-         WHERE id = $1 AND status NOT IN ('confirmed', 'cancelled')"))
-        .bind(order_id)
-        .execute(&state.pool)
-        .await;
+         WHERE id = $1 AND status NOT IN ('confirmed', 'cancelled')"
+    ))
+    .bind(order_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(res) => {
@@ -460,7 +505,8 @@ pub async fn update_reconcile_item(
     State(state): State<AppState>,
     Path((order_id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateItemRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
     let source_date = parse_date(&req.source_date);
     let matched = req.matched;
     let match_amount = req.match_amount;
@@ -518,7 +564,10 @@ pub async fn update_reconcile_item(
         .execute(&state.pool)
         .await;
 
-    Ok(Json(ApiResponse::success(item_to_json(&row), "更新对账明细成功")))
+    Ok(Json(ApiResponse::success(
+        item_to_json(&row),
+        "更新对账明细成功",
+    )))
 }
 
 fn rand_suffix() -> u16 {

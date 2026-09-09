@@ -590,70 +590,70 @@ impl PermissionChangeNotifier {
     }
 }
 
-    // ===== Permission Change Notifier tests (V530f) =====
+// ===== Permission Change Notifier tests (V530f) =====
 
-    #[tokio::test]
-    async fn test_notifier_publish_and_receive() {
-        let notifier = PermissionChangeNotifier::new();
-        let mut rx = notifier.subscribe();
+#[tokio::test]
+async fn test_notifier_publish_and_receive() {
+    let notifier = PermissionChangeNotifier::new();
+    let mut rx = notifier.subscribe();
+    assert_eq!(notifier.subscriber_count(), 1);
+
+    notifier.publish(PermissionChangeEvent {
+        action: PermissionChangeAction::BulkCreate,
+        tenant_id: "t1".to_string(),
+        user_id: "u1".to_string(),
+        at: chrono::Utc::now(),
+    });
+
+    let event = rx.recv().await.expect("event should be delivered");
+    assert_eq!(event.action, PermissionChangeAction::BulkCreate);
+    assert_eq!(event.tenant_id, "t1");
+    assert_eq!(event.user_id, "u1");
+}
+
+#[tokio::test]
+async fn test_notifier_prunes_dropped_subscribers() {
+    let notifier = PermissionChangeNotifier::new();
+    {
+        let _rx = notifier.subscribe();
         assert_eq!(notifier.subscriber_count(), 1);
-
-        notifier.publish(PermissionChangeEvent {
-            action: PermissionChangeAction::BulkCreate,
-            tenant_id: "t1".to_string(),
-            user_id: "u1".to_string(),
-            at: chrono::Utc::now(),
-        });
-
-        let event = rx.recv().await.expect("event should be delivered");
-        assert_eq!(event.action, PermissionChangeAction::BulkCreate);
-        assert_eq!(event.tenant_id, "t1");
-        assert_eq!(event.user_id, "u1");
     }
+    // Subscriber dropped: publish prunes it.
+    notifier.publish(PermissionChangeEvent {
+        action: PermissionChangeAction::Delete,
+        tenant_id: "t2".to_string(),
+        user_id: "u2".to_string(),
+        at: chrono::Utc::now(),
+    });
+    assert_eq!(notifier.subscriber_count(), 0);
+}
 
-    #[tokio::test]
-    async fn test_notifier_prunes_dropped_subscribers() {
-        let notifier = PermissionChangeNotifier::new();
-        {
-            let _rx = notifier.subscribe();
-            assert_eq!(notifier.subscriber_count(), 1);
-        }
-        // Subscriber dropped: publish prunes it.
-        notifier.publish(PermissionChangeEvent {
-            action: PermissionChangeAction::Delete,
-            tenant_id: "t2".to_string(),
-            user_id: "u2".to_string(),
-            at: chrono::Utc::now(),
-        });
-        assert_eq!(notifier.subscriber_count(), 0);
-    }
+#[tokio::test]
+async fn test_bulk_create_skips_existing() {
+    let store = InMemoryPermissionStore::with_defaults();
+    // "default"/"admin" already exists via with_defaults.
+    let result = store
+        .bulk_create_permissions(vec![
+            TenantPermission::owner("default", "admin"),
+            TenantPermission::member("t1", "u1"),
+        ])
+        .await
+        .unwrap();
+    assert_eq!(result.total, 2);
+    assert_eq!(result.succeeded, 1);
+    assert_eq!(result.skipped, 1);
+}
 
-    #[tokio::test]
-    async fn test_bulk_create_skips_existing() {
-        let store = InMemoryPermissionStore::with_defaults();
-        // "default"/"admin" already exists via with_defaults.
-        let result = store
-            .bulk_create_permissions(vec![
-                TenantPermission::owner("default", "admin"),
-                TenantPermission::member("t1", "u1"),
-            ])
-            .await
-            .unwrap();
-        assert_eq!(result.total, 2);
-        assert_eq!(result.succeeded, 1);
-        assert_eq!(result.skipped, 1);
-    }
-
-    #[tokio::test]
-    async fn test_bulk_delete_skips_missing() {
-        let store = InMemoryPermissionStore::with_defaults();
-        let result = store
-            .bulk_delete_permissions(vec![
-                ("default".to_string(), "admin".to_string()),
-                ("missing".to_string(), "u9".to_string()),
-            ])
-            .await
-            .unwrap();
-        assert_eq!(result.succeeded, 1);
-        assert_eq!(result.skipped, 1);
-    }
+#[tokio::test]
+async fn test_bulk_delete_skips_missing() {
+    let store = InMemoryPermissionStore::with_defaults();
+    let result = store
+        .bulk_delete_permissions(vec![
+            ("default".to_string(), "admin".to_string()),
+            ("missing".to_string(), "u9".to_string()),
+        ])
+        .await
+        .unwrap();
+    assert_eq!(result.succeeded, 1);
+    assert_eq!(result.skipped, 1);
+}

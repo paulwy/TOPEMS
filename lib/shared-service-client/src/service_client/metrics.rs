@@ -64,12 +64,14 @@ impl ClientMetrics {
 
     pub(crate) fn record_success(&self, duration_ns: u64) {
         self.success_requests.fetch_add(1, Ordering::Relaxed);
-        self.total_duration_ns.fetch_add(duration_ns, Ordering::Relaxed);
+        self.total_duration_ns
+            .fetch_add(duration_ns, Ordering::Relaxed);
     }
 
     pub(crate) fn record_failure(&self, duration_ns: u64) {
         self.failure_requests.fetch_add(1, Ordering::Relaxed);
-        self.total_duration_ns.fetch_add(duration_ns, Ordering::Relaxed);
+        self.total_duration_ns
+            .fetch_add(duration_ns, Ordering::Relaxed);
     }
 
     pub(crate) fn record_circuit_block(&self) {

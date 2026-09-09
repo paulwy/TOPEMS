@@ -4,8 +4,7 @@ use serde::Serialize;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, build_detailed_service_health,
-    prometheus_metrics_handler,
-    build_simple_status_response, run, Application, ServiceConfig,
+    build_simple_status_response, prometheus_metrics_handler, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::Config;
 use topems_shared_core::response::ApiResponse;
@@ -113,7 +112,10 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn(require_permission("rd:admin")))
         .with_state(api_state.clone())
-        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ));
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────
     let openapi_json = Some(

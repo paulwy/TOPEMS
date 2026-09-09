@@ -246,7 +246,10 @@ async fn main() -> Result<()> {
         use topems_server::modules::ticket_real_module::TicketRealModule;
         match TicketRealModule::build().await {
             Ok(real_ticket) => {
-                registry.lock().unwrap().register_boxed(Box::new(real_ticket));
+                registry
+                    .lock()
+                    .unwrap()
+                    .register_boxed(Box::new(real_ticket));
                 tracing::info!("✅ 真实 ticket 服务已注册（ticket-real，含数据库/事件总线）");
             }
             Err(e) => {
@@ -292,7 +295,9 @@ async fn main() -> Result<()> {
         match MasterDataRealModule::build().await {
             Ok(real_md) => {
                 registry.lock().unwrap().register_boxed(Box::new(real_md));
-                tracing::info!("✅ 真实 master-data 服务已注册（master-data-real，含数据库/事件总线）");
+                tracing::info!(
+                    "✅ 真实 master-data 服务已注册（master-data-real，含数据库/事件总线）"
+                );
             }
             Err(e) => {
                 tracing::error!("⚠️ 真实 master-data 服务构建失败（降级运行）: {:#}", e);
@@ -323,8 +328,13 @@ async fn main() -> Result<()> {
         use topems_server::modules::portal_real_module::PortalRealModule;
         match PortalRealModule::build().await {
             Ok(real_portal) => {
-                registry.lock().unwrap().register_boxed(Box::new(real_portal));
-                tracing::info!("✅ 真实 portal 服务已注册（portal-real，含数据库/GraphQL 聚合层/事件总线）");
+                registry
+                    .lock()
+                    .unwrap()
+                    .register_boxed(Box::new(real_portal));
+                tracing::info!(
+                    "✅ 真实 portal 服务已注册（portal-real，含数据库/GraphQL 聚合层/事件总线）"
+                );
             }
             Err(e) => {
                 tracing::error!("⚠️ 真实 portal 服务构建失败（降级运行）: {:#}", e);

@@ -535,6 +535,13 @@ pub async fn approve_order(
     .fetch_one(&mut **txn)
     .await;
 
+    let event_tenant_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
+
     let (response, status_str, error_msg) = match &result {
         Ok(order) => {
             if let Some(t) = guard.take() {
@@ -551,6 +558,7 @@ pub async fn approve_order(
                 let total_amount = order.total_amount;
                 let approver_name_val = req.approver_name.clone().or(Some(claims.username.clone()));
                 let now_val = Utc::now();
+                let tenant_id = event_tenant_id;
                 tokio::spawn(async move {
                     let payload = PurchaseOrderApprovedPayload {
                         order_id,
@@ -561,6 +569,7 @@ pub async fn approve_order(
                         payable_amount: None,
                         approved_by: approver_name_val,
                         approved_at: Some(now_val),
+                        tenant_id,
                     };
                     if let Err(e) = publisher
                         .publish_event(EventType::PurchaseOrderApproved, payload)

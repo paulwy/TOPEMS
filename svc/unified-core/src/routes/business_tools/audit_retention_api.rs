@@ -133,7 +133,11 @@ pub async fn update_retention_policy(
     }
 
     // Update the policy in RetentionManager and persist to config store
-    if let Err(e) = state.config_store.save_audit_retention_policy(&policy).await {
+    if let Err(e) = state
+        .config_store
+        .save_audit_retention_policy(&policy)
+        .await
+    {
         tracing::error!("Failed to persist audit retention policy: {}", e);
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -143,8 +147,8 @@ pub async fn update_retention_policy(
             }),
         ));
     }
-    
-    // Note: In a real implementation, we would need to redesign RetentionManager 
+
+    // Note: In a real implementation, we would need to redesign RetentionManager
     // to support policy updates through Arc, or use a different approach
     tracing::info!("Audit retention policy updated and persisted");
 

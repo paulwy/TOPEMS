@@ -748,7 +748,7 @@ mod tests {
         };
         // Just-created cache entry should not be expired
         assert!(cached.cached_at.elapsed() < Duration::from_secs(300));
-}
+    }
 
     // ===== Metrics & Health tests (V530e) =====
 

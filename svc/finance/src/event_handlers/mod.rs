@@ -107,6 +107,7 @@ impl FinanceEventHandlers {
         source_type: &str,
         source_id: uuid::Uuid,
         created_by: Option<&str>,
+        tenant_id: uuid::Uuid,
     ) -> Result<Option<uuid::Uuid>, String> {
         let now = Utc::now();
         let period = format!("{:04}{:02}", now.year(), now.month());
@@ -115,7 +116,7 @@ impl FinanceEventHandlers {
 
         let voucher_id = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_type, source_id, created_by)
-             VALUES ('00000000-0000-0000-0000-000000000000', $1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
+             VALUES ($11, $1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
              ON CONFLICT (tenant_id, source_type, source_id) DO NOTHING
              RETURNING id"),
         )
@@ -129,6 +130,7 @@ impl FinanceEventHandlers {
         .bind(source_type)
         .bind(source_id)
         .bind(created_by)
+        .bind(tenant_id)
         .fetch_optional(&self.db)
         .await
         .map_err(|e| format!("创建凭证失败: {}", e))?;
@@ -174,8 +176,13 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot("sales_order", payload.order_id, payable_amount)
-                .await;
+            self.store_source_amount_snapshot(
+                "sales_order",
+                payload.order_id,
+                payable_amount,
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            )
+            .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -200,6 +207,7 @@ impl FinanceEventHandlers {
                 "sales_order_created",
                 payload.order_id,
                 payload.created_by.as_deref(),
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
             )
             .await
         {
@@ -241,8 +249,13 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot("sales_order", payload.order_id, payable_amount)
-                .await;
+            self.store_source_amount_snapshot(
+                "sales_order",
+                payload.order_id,
+                payable_amount,
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            )
+            .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -267,6 +280,7 @@ impl FinanceEventHandlers {
                 "sales_order",
                 payload.order_id,
                 payload.approved_by.as_deref(),
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
             )
             .await
         {
@@ -308,8 +322,13 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot("purchase_order", payload.order_id, payable_amount)
-                .await;
+            self.store_source_amount_snapshot(
+                "purchase_order",
+                payload.order_id,
+                payable_amount,
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            )
+            .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -334,6 +353,7 @@ impl FinanceEventHandlers {
                 "purchase_order",
                 payload.order_id,
                 payload.approved_by.as_deref(),
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
             )
             .await
         {
@@ -393,6 +413,7 @@ impl FinanceEventHandlers {
                 "payment_received",
                 payload.payment_id,
                 None,
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
             )
             .await
         {
@@ -452,6 +473,7 @@ impl FinanceEventHandlers {
                 "payment_made",
                 payload.payment_id,
                 None,
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
             )
             .await
         {
@@ -478,13 +500,14 @@ impl FinanceEventHandlers {
         source_type: &str,
         source_id: uuid::Uuid,
         payable_amount: f64,
+        tenant_id: uuid::Uuid,
     ) {
         let now = Utc::now();
         let result = sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.source_amount_snapshots
-               (source_type, source_id, payable_amount, updated_at)
-               VALUES ($1, $2, $3, $4)
+               (source_type, source_id, payable_amount, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, $5)
                ON CONFLICT (source_type, source_id) DO UPDATE
                SET payable_amount = EXCLUDED.payable_amount,
                    updated_at = EXCLUDED.updated_at"#
@@ -493,6 +516,7 @@ impl FinanceEventHandlers {
         .bind(source_id)
         .bind(payable_amount)
         .bind(now)
+        .bind(tenant_id)
         .execute(&self.db)
         .await;
 
@@ -526,8 +550,13 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot("purchase_order", payload.order_id, payable_amount)
-                .await;
+            self.store_source_amount_snapshot(
+                "purchase_order",
+                payload.order_id,
+                payable_amount,
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
+            )
+            .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -552,6 +581,7 @@ impl FinanceEventHandlers {
                 "purchase_order_created",
                 payload.order_id,
                 payload.created_by.as_deref(),
+                payload.tenant_id.unwrap_or(uuid::Uuid::nil()),
             )
             .await
         {
@@ -741,11 +771,12 @@ impl FinanceEventHandlers {
                    approved_at = $2,
                    updated_at = NOW(),
                    synced_at = NOW()
-               WHERE id = $3"#
+               WHERE id = $3 AND tenant_id = $4"#
         ))
         .bind(&payload.approved_by)
         .bind(payload.approved_at)
         .bind(payload.id)
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await
         .map_err(|e| format!("审批对账快照失败: {}", e))?;
@@ -803,11 +834,12 @@ impl FinanceEventHandlers {
                    approved_at = $2,
                    updated_at = NOW(),
                    synced_at = NOW()
-               WHERE id = $3"#
+               WHERE id = $3 AND tenant_id = $4"#
         ))
         .bind(&payload.approved_by)
         .bind(payload.approved_at)
         .bind(payload.id)
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await
         .map_err(|e| format!("审批结算快照失败: {}", e))?;
@@ -824,9 +856,10 @@ impl FinanceEventHandlers {
                SET status = 'rejected',
                    updated_at = NOW(),
                    synced_at = NOW()
-               WHERE id = $1"#
+               WHERE id = $1 AND tenant_id = $2"#
         ))
         .bind(payload.id)
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await
         .map_err(|e| format!("拒绝结算快照失败: {}", e))?;

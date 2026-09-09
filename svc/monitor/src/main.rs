@@ -4,6 +4,7 @@ use std::time::Instant;
 
 use axum::{extract::State, routing::get, Json, Router};
 
+use crate::modules::monitor::monitor_plugin;
 use topems_shared::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
@@ -12,7 +13,6 @@ use topems_shared_bootstrap::{
 use topems_shared_core::health::{
     simple_health_check, ServiceHealth, SimpleHealthConfig, SystemMetrics,
 };
-use crate::modules::monitor::monitor_plugin;
 
 mod shared;
 
@@ -56,7 +56,10 @@ async fn main() -> anyhow::Result<()> {
             "monitor:admin",
         )))
         .with_state(app_state.clone())
-        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ));
 
     // monitor 暂未独立生成 OpenAPI 文档
     let openapi_json = None::<String>;
@@ -78,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
         app.port
     );
 
-        // ── 启动时自动注册到统一核心 ──────────────────────────────────────
+    // ── 启动时自动注册到统一核心 ──────────────────────────────────────
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         monitor_plugin::auto_register_to_core(core_url.as_deref()).await;

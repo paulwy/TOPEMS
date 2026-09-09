@@ -93,8 +93,9 @@ async fn test_qms_001_list_inspections() {
     tracing::info!("测试 QMS-001: 管理员查看质量检查列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    let (status, body) =
-        auth_request(&client, &token, "/api/qms/checks").await.expect("请求失败");
+    let (status, body) = auth_request(&client, &token, "/api/qms/checks")
+        .await
+        .expect("请求失败");
     assert_eq!(status, 200, "状态码应为 200，实际 {}", status);
     assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
     tracing::info!("QMS-001 测试通过");
@@ -107,7 +108,9 @@ async fn test_qms_001_list_inspections() {
 async fn test_qms_002_no_token_rejected() {
     tracing::info!("测试 QMS-002: 无 token 访问质量检查列表应 401");
     let client = create_client();
-    let status = no_auth_request(&client, "/api/qms/checks").await.expect("请求失败");
+    let status = no_auth_request(&client, "/api/qms/checks")
+        .await
+        .expect("请求失败");
     assert_eq!(status, 401, "无 token 应 401，实际 {}", status);
     tracing::info!("QMS-002 测试通过");
 }
@@ -138,7 +141,9 @@ async fn test_qms_003_list_issues() {
 async fn test_qms_004_no_token_issues_rejected() {
     tracing::info!("测试 QMS-004: 无 token 访问问题列表应 401");
     let client = create_client();
-    let status = no_auth_request(&client, "/api/qms/issues").await.expect("请求失败");
+    let status = no_auth_request(&client, "/api/qms/issues")
+        .await
+        .expect("请求失败");
     assert_eq!(status, 401, "无 token 应 401，实际 {}", status);
     tracing::info!("QMS-004 测试通过");
 }
@@ -169,8 +174,9 @@ async fn test_qms_006_view_audit_plan() {
     tracing::info!("测试 QMS-006: 管理员查看审核计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    let (status, body) =
-        auth_request(&client, &token, "/api/qms/audit-plans").await.expect("请求失败");
+    let (status, body) = auth_request(&client, &token, "/api/qms/audit-plans")
+        .await
+        .expect("请求失败");
     assert_eq!(status, 200, "状态码应为 200，实际 {}", status);
     assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
     tracing::info!("QMS-006 测试通过");

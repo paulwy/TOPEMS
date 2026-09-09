@@ -402,6 +402,13 @@ async fn update_sales_order_status(
         Ok(Some(sales_order)) => {
             if status == "approved" {
                 if let Some(ref publisher) = state.event_publisher {
+                    let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                        "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+                    )
+                    .fetch_optional(&mut **txn)
+                    .await
+                    .ok()
+                    .flatten();
                     let payload = SalesOrderApprovedPayload {
                         order_id: sales_order.id,
                         order_no: sales_order.order_no.clone(),
@@ -411,6 +418,7 @@ async fn update_sales_order_status(
                         payable_amount: sales_order.payable_amount.to_f64(),
                         approved_by: Some(claims.sub.clone()),
                         approved_at: Some(Utc::now()),
+                        tenant_id,
                     };
                     match publisher.publish_sales_order_approved(payload).await {
                         Ok(_) => tracing::info!(

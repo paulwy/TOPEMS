@@ -317,7 +317,9 @@ pub async fn get_inspection(
                 inspection_type: r.inspection_type.unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity.unwrap_or_default()),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity.unwrap_or_default()),
-                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity.unwrap_or_default()),
+                unqualified_quantity: big_decimal_to_f64(
+                    r.unqualified_quantity.unwrap_or_default(),
+                ),
                 qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
@@ -435,7 +437,9 @@ pub async fn create_inspection(
                 inspection_type: r.inspection_type.unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity.unwrap_or_default()),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity.unwrap_or_default()),
-                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity.unwrap_or_default()),
+                unqualified_quantity: big_decimal_to_f64(
+                    r.unqualified_quantity.unwrap_or_default(),
+                ),
                 qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
@@ -543,7 +547,9 @@ pub async fn update_inspection(
                 inspection_type: r.inspection_type.unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity.unwrap_or_default()),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity.unwrap_or_default()),
-                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity.unwrap_or_default()),
+                unqualified_quantity: big_decimal_to_f64(
+                    r.unqualified_quantity.unwrap_or_default(),
+                ),
                 qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),

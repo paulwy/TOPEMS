@@ -49,8 +49,8 @@ pub async fn service_identity_middleware(req: Request<Body>, next: Next) -> Resp
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::service::issue_service_token;
     use crate::auth::verify_jwt_token;
+    use crate::service::issue_service_token;
     use axum::{body::Body, http::Request, routing::get, Router};
     use tower::ServiceExt;
 
@@ -67,7 +67,10 @@ mod tests {
         let token = issue_service_token(TEST_SECRET, "erp-service", &["wms:admin"], None).unwrap();
         let claims = verify_jwt_token(&token, TEST_SECRET).unwrap();
         let app = build_app();
-        let mut req = Request::builder().uri("/protected").body(Body::empty()).unwrap();
+        let mut req = Request::builder()
+            .uri("/protected")
+            .body(Body::empty())
+            .unwrap();
         req.extensions_mut().insert(claims);
         let resp = app.oneshot(req).await.unwrap();
         assert_eq!(resp.status(), 200);
@@ -76,21 +79,32 @@ mod tests {
     #[tokio::test]
     async fn test_service_identity_extension_injected() {
         // 通过中间件注入后，内部处理器读取 ServiceIdentity（简化：直接验证日志分支不 panic）
-        let token = issue_service_token(TEST_SECRET, "portal-service", &["erp:read"], None).unwrap();
+        let token =
+            issue_service_token(TEST_SECRET, "portal-service", &["erp:read"], None).unwrap();
         let claims = verify_jwt_token(&token, TEST_SECRET).unwrap();
         let app = Router::new()
             .route(
                 "/protected",
-                get(|ext: axum::extract::Extension<ServiceIdentity>| async move {
-                    format!("{}:{}", ext.service_name, ext.permissions.join(","))
-                }),
+                get(
+                    |ext: axum::extract::Extension<ServiceIdentity>| async move {
+                        format!("{}:{}", ext.service_name, ext.permissions.join(","))
+                    },
+                ),
             )
             .layer(axum::middleware::from_fn(service_identity_middleware));
-        let mut req = Request::builder().uri("/protected").body(Body::empty()).unwrap();
+        let mut req = Request::builder()
+            .uri("/protected")
+            .body(Body::empty())
+            .unwrap();
         req.extensions_mut().insert(claims);
         let resp = app.oneshot(req).await.unwrap();
         assert_eq!(resp.status(), 200);
-        let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
-        assert_eq!(String::from_utf8(body.to_vec()).unwrap(), "portal-service:erp:read");
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        assert_eq!(
+            String::from_utf8(body.to_vec()).unwrap(),
+            "portal-service:erp:read"
+        );
     }
 }

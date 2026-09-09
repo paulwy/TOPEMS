@@ -684,7 +684,9 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
     operation_id = "detailed_health",
     responses((status = 200, description = "OK")),
 )]
-pub async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn detailed_health(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
     use topems_shared_bootstrap::build_detailed_health_response;
     let modules = serde_json::json!({ "bi": "active", "report": "active" });
     let resp = build_detailed_health_response(

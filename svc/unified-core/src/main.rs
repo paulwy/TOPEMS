@@ -500,9 +500,11 @@ async fn main() -> anyhow::Result<()> {
                     .unwrap_or(24);
 
                 let mut policy =
-                    crate::routes::business_tools::audit_retention::RetentionPolicy::new(retention_days)
-                        .with_batch_size(batch_size)
-                        .with_cleanup_interval(cleanup_interval);
+                    crate::routes::business_tools::audit_retention::RetentionPolicy::new(
+                        retention_days,
+                    )
+                    .with_batch_size(batch_size)
+                    .with_cleanup_interval(cleanup_interval);
                 if archive_enabled {
                     if let Some(path) = archive_path {
                         policy = policy.with_archive(path);
@@ -510,7 +512,7 @@ async fn main() -> anyhow::Result<()> {
                         policy.archive_enabled = true;
                     }
                 }
-                
+
                 tracing::info!(
                     retention_days = policy.retention_days,
                     archive_enabled = policy.archive_enabled,
@@ -520,7 +522,11 @@ async fn main() -> anyhow::Result<()> {
                 );
 
                 // Save default policy to config store
-                if let Err(e) = config_store.store().set_audit_retention_policy(&policy).await {
+                if let Err(e) = config_store
+                    .store()
+                    .set_audit_retention_policy(&policy)
+                    .await
+                {
                     tracing::error!("Failed to save default audit retention policy: {}", e);
                 }
 
@@ -529,19 +535,26 @@ async fn main() -> anyhow::Result<()> {
             Err(e) => {
                 tracing::error!("Failed to load audit retention policy: {}", e);
                 // Use defaults as fallback
-                let policy = crate::routes::business_tools::audit_retention::RetentionPolicy::default();
+                let policy =
+                    crate::routes::business_tools::audit_retention::RetentionPolicy::default();
                 policy
             }
         };
 
         let policy_mutex = std::sync::Arc::new(tokio::sync::Mutex::new(policy.clone()));
-        let retention_manager: std::sync::Arc<crate::routes::business_tools::audit_retention::RetentionManager<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore + Send + Sync>> = std::sync::Arc::new(
+        let retention_manager: std::sync::Arc<
+            crate::routes::business_tools::audit_retention::RetentionManager<
+                dyn crate::routes::business_tools::permission_audit_log::AuditLogStore
+                    + Send
+                    + Sync,
+            >,
+        > = std::sync::Arc::new(
             crate::routes::business_tools::audit_retention::RetentionManager::new(
                 policy.clone(),
                 audit_logger.clone(),
-            )
+            ),
         );
-        
+
         (policy_mutex, retention_manager)
     };
 
@@ -609,20 +622,16 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|s| s.parse().ok())
             .unwrap_or(24);
-        let export_config = std::sync::Arc::new(tokio::sync::Mutex::new(
-            ExportTaskConfig::new(export_interval_hours * 3600),
-        ));
+        let export_config = std::sync::Arc::new(tokio::sync::Mutex::new(ExportTaskConfig::new(
+            export_interval_hours * 3600,
+        )));
         let archive_config = ArchiveConfig {
             archive_dir: std::path::PathBuf::from("data/audit-export"),
             ..Default::default()
         };
-        let archiver =
-            std::sync::Arc::new(AuditLogArchiver::new(archive_config));
-        let mut export_task = AuditExportTask::new(
-            export_config,
-            state.audit_logger.clone(),
-            archiver,
-        );
+        let archiver = std::sync::Arc::new(AuditLogArchiver::new(archive_config));
+        let mut export_task =
+            AuditExportTask::new(export_config, state.audit_logger.clone(), archiver);
         export_task.start();
         tracing::info!(
             interval_hours = export_interval_hours,

@@ -55,7 +55,9 @@ async fn main() -> anyhow::Result<()> {
     if let Err(e) = modules::bi::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
         tracing::warn!("BI module database init warning: {}", e);
     }
-    if let Err(e) = modules::report::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+    if let Err(e) =
+        modules::report::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
+    {
         tracing::warn!("Report module database init warning: {}", e);
     }
 
@@ -74,13 +76,15 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // ── public_routes（无状态路由：不需要 State<AppState>） ──────────
-    let public_routes = Router::new().route("/", get(home)).route(
-        "/api/plugins/info",
-        get(modules::bi::plugin::get_plugin_info),
-    )
-    // /metrics 放 build_application 内（prometheus_layer 包裹），请求被 layer
-    // 记录 → GLOBAL_METRIC_HANDLE.render() 含 axum 指标（避免 registry 空）
-    .route("/metrics", get(prometheus_metrics_handler));
+    let public_routes = Router::new()
+        .route("/", get(home))
+        .route(
+            "/api/plugins/info",
+            get(modules::bi::plugin::get_plugin_info),
+        )
+        // /metrics 放 build_application 内（prometheus_layer 包裹），请求被 layer
+        // 记录 → GLOBAL_METRIC_HANDLE.render() 含 axum 指标（避免 registry 空）
+        .route("/metrics", get(prometheus_metrics_handler));
 
     // ── protected_routes（业务路由：需要 State<AppState>） ────────────
     // 中间件层（auth / rls / rate_limit）由 build_application 统一处理

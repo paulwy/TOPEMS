@@ -5,8 +5,8 @@
 //! - `generate_answer`：基于检索结果生成答案
 //! - `ask_question`：完整 RAG 流程（检索 → 生成 → 记录历史）
 
-use topems_shared_boundary::only_own_schema_query;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 
 use sqlx::PgPool;
 use topems_shared_ai::ai_client::{ChatMessage, UnifiedAIClient};
@@ -54,8 +54,9 @@ pub async fn retrieve_relevant_chunks(
     // 2. 使用 pgvector 余弦距离查询
     // <=>：余弦距离（0=完全相同，2=完全相反）
     // 相似度 = 1 - 距离
-    let rows: Vec<(Uuid, Uuid, String, String, f64)> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"SELECT
+    let rows: Vec<(Uuid, Uuid, String, String, f64)> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"SELECT
             c.id AS chunk_id,
             c.document_id AS document_id,
             d.title AS document_title,
@@ -68,8 +69,9 @@ pub async fn retrieve_relevant_chunks(
              AND c.embedding IS NOT NULL
              AND d.status = 'ready'
            ORDER BY c.embedding <=> $1::vector
-           LIMIT $4"#, "core"),
-    )
+           LIMIT $4"#,
+        "core"
+    ))
     .bind(&vector_str)
     .bind(tenant_id)
     .bind(kb_id)
@@ -212,12 +214,14 @@ pub async fn ask_question(
     let sources_json = serde_json::to_value(&sources).unwrap_or(serde_json::Value::Null);
 
     // 6. 记录问答历史
-    let history_row: Option<(Uuid,)> = sqlx::query_as(
-        only_own_schema_query!("ai", r#"INSERT INTO core.knowledge_qa_history
+    let history_row: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
+        "ai",
+        r#"INSERT INTO core.knowledge_qa_history
             (tenant_id, kb_id, question, answer, sources, user_id, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, NOW())
-           RETURNING id"#, "core"),
-    )
+           RETURNING id"#,
+        "core"
+    ))
     .bind(tenant_id)
     .bind(kb_id)
     .bind(question)

@@ -202,10 +202,7 @@ pub async fn create_task(
     }
 }
 
-pub async fn get_task(
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Task>> {
+pub async fn get_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Task>> {
     let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {TASK_RETURN} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL"
     ))
@@ -215,7 +212,10 @@ pub async fn get_task(
 
     match result {
         Ok(Some(task)) => Json(ApiResponse::success(task, "任务获取成功")),
-        Ok(None) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "任务不存在")),
+        Ok(None) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "任务不存在",
+        )),
         Err(e) => Json(ApiResponse::error(
             StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
             &format!("获取任务失败: {}", e),
@@ -278,7 +278,10 @@ pub async fn update_task(
 
     match result {
         Ok(Some(task)) => Json(ApiResponse::success(task, "任务更新成功")),
-        Ok(None) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "任务不存在")),
+        Ok(None) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "任务不存在",
+        )),
         Err(e) => Json(ApiResponse::error(
             StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
             &format!("更新任务失败: {}", e),
@@ -290,15 +293,21 @@ pub async fn delete_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query("UPDATE pm.pm_tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL")
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE pm.pm_tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .execute(&pool)
+    .await;
     match result {
-        Ok(res) if res.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({"deleted": true}), "任务已删除"))
-        }
-        Ok(_) => Json(ApiResponse::error(StatusCode::NOT_FOUND.as_u16(), "任务不存在")),
+        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"deleted": true}),
+            "任务已删除",
+        )),
+        Ok(_) => Json(ApiResponse::error(
+            StatusCode::NOT_FOUND.as_u16(),
+            "任务不存在",
+        )),
         Err(e) => Json(ApiResponse::error(
             StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
             &format!("删除任务失败: {}", e),

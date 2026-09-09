@@ -123,16 +123,14 @@ impl EventSubscriber {
                         for domain in domains {
                             // 适配：将返回 () 的 MDM handler 包装为返回 Result<(), String>
                             let handler_clone = handler.clone();
-                            stream_sub = stream_sub.subscribe_master_data(
-                                *domain,
-                                move |mdm_event| {
+                            stream_sub =
+                                stream_sub.subscribe_master_data(*domain, move |mdm_event| {
                                     let handler_clone = handler_clone.clone();
                                     async move {
                                         handler_clone(mdm_event).await;
                                         Ok(())
                                     }
-                                },
-                            );
+                                });
                         }
                     }
 

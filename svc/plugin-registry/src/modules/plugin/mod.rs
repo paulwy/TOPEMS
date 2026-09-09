@@ -495,9 +495,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_category ON core.core_plugins(category)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_plugins_category ON core.core_plugins(category)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_tenant ON core.core_tenant_plugins(tenant_id)")
         .execute(pool)
         .await?;

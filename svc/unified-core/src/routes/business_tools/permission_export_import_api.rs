@@ -738,41 +738,41 @@ mod tests {
     }
 }
 
-    // ===== CSV rendering tests (V530f) =====
+// ===== CSV rendering tests (V530f) =====
 
-    #[test]
-    fn test_csv_escape_plain() {
-        assert_eq!(csv_escape("plain"), "plain");
-    }
+#[test]
+fn test_csv_escape_plain() {
+    assert_eq!(csv_escape("plain"), "plain");
+}
 
-    #[test]
-    fn test_csv_escape_quotes_and_commas() {
-        assert_eq!(csv_escape("a,b"), "\"a,b\"");
-        assert_eq!(csv_escape("say \"hi\""), "\"say \"\"hi\"\"\"");
-    }
+#[test]
+fn test_csv_escape_quotes_and_commas() {
+    assert_eq!(csv_escape("a,b"), "\"a,b\"");
+    assert_eq!(csv_escape("say \"hi\""), "\"say \"\"hi\"\"\"");
+}
 
-    #[test]
-    fn test_export_format_csv_parse() {
-        assert_eq!("csv".parse::<ExportFormat>().unwrap(), ExportFormat::Csv);
-        assert_eq!("JSON".parse::<ExportFormat>().unwrap(), ExportFormat::Json);
-        assert!("xml".parse::<ExportFormat>().is_err());
-    }
+#[test]
+fn test_export_format_csv_parse() {
+    assert_eq!("csv".parse::<ExportFormat>().unwrap(), ExportFormat::Csv);
+    assert_eq!("JSON".parse::<ExportFormat>().unwrap(), ExportFormat::Json);
+    assert!("xml".parse::<ExportFormat>().is_err());
+}
 
-    #[test]
-    fn test_render_permissions_csv_header_and_row() {
-        let item = PermissionExportItem {
-            tenant_id: "t1".to_string(),
-            user_id: "u1".to_string(),
-            role: "owner".to_string(),
-            active: true,
-            tool_permissions: vec![ToolPermissionExportItem {
-                tool: "query".to_string(),
-                max_permission: "all".to_string(),
-                allowed_operations: Vec::new(),
-                denied_operations: Vec::new(),
-            }],
-        };
-        let csv = render_permissions_csv(std::slice::from_ref(&item));
-        assert!(csv.starts_with("tenant_id,user_id,role,active,tool_permissions"));
-        assert!(csv.contains("t1,u1,owner,true,query:all"));
-    }
+#[test]
+fn test_render_permissions_csv_header_and_row() {
+    let item = PermissionExportItem {
+        tenant_id: "t1".to_string(),
+        user_id: "u1".to_string(),
+        role: "owner".to_string(),
+        active: true,
+        tool_permissions: vec![ToolPermissionExportItem {
+            tool: "query".to_string(),
+            max_permission: "all".to_string(),
+            allowed_operations: Vec::new(),
+            denied_operations: Vec::new(),
+        }],
+    };
+    let csv = render_permissions_csv(std::slice::from_ref(&item));
+    assert!(csv.starts_with("tenant_id,user_id,role,active,tool_permissions"));
+    assert!(csv.contains("t1,u1,owner,true,query:all"));
+}

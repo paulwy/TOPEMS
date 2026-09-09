@@ -559,7 +559,10 @@ pub async fn create_work_report(
         .execute(&mut *tx)
         .await
     {
-        tracing::error!("Failed to set nil RLS context for create_work_report: {}", e);
+        tracing::error!(
+            "Failed to set nil RLS context for create_work_report: {}",
+            e
+        );
         return Json(ApiResponse::error(500, "创建工报失败"));
     }
 
@@ -654,31 +657,31 @@ pub async fn create_work_report(
                 });
             }
             Json(ApiResponse::success(
-            WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no,
-                work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
-                work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
-                shift: r.shift,
-                output_quantity: big_decimal_to_f64(r.output_quantity),
-                defect_quantity: big_decimal_to_f64(r.defect_quantity),
-                labor_hours: big_decimal_to_f64(r.labor_hours),
-                remark: r.remark,
-                status: r.status.unwrap_or_default(),
-                approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|t| t.naive_utc())),
-                approval_remark: r.approval_remark,
-                created_at: datetime_to_string(Some(r.created_at.naive_utc())),
-                updated_at: datetime_to_string(Some(r.updated_at.naive_utc())),
-            },
-            "创建工报成功",
-        ))
+                WorkReportResponse {
+                    id: r.id.to_string(),
+                    report_no: r.report_no,
+                    work_order_id: r.work_order_id.map(|u| u.to_string()),
+                    work_order_no: r.work_order_no,
+                    order_id: r.order_id.map(|u| u.to_string()),
+                    order_no: r.order_no,
+                    work_station_id: r.work_station_id.map(|u| u.to_string()),
+                    work_station_name: r.work_station_name,
+                    reporter_name: r.reporter_name,
+                    report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                    shift: r.shift,
+                    output_quantity: big_decimal_to_f64(r.output_quantity),
+                    defect_quantity: big_decimal_to_f64(r.defect_quantity),
+                    labor_hours: big_decimal_to_f64(r.labor_hours),
+                    remark: r.remark,
+                    status: r.status.unwrap_or_default(),
+                    approved_by: r.approved_by.map(|u| u.to_string()),
+                    approved_at: opt_datetime_to_string(r.approved_at.map(|t| t.naive_utc())),
+                    approval_remark: r.approval_remark,
+                    created_at: datetime_to_string(Some(r.created_at.naive_utc())),
+                    updated_at: datetime_to_string(Some(r.updated_at.naive_utc())),
+                },
+                "创建工报成功",
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to create work report: {}", e);

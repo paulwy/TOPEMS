@@ -185,7 +185,6 @@ pub async fn get_current_user(
     }
 }
 
-
 /// 调用 portal 偏好接口（service token 认证）。
 ///
 /// 拆分前置（database-split-plan §3 前置条件 2）：unified-core IAM 聚合用户偏好
@@ -234,4 +233,3 @@ async fn call_portal_preferences(
         _ => (false, None),
     }
 }
-

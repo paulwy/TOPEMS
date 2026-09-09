@@ -184,7 +184,11 @@ pub async fn create_announcement(
         "priority": data.priority,
         "expire_at": data.expires_at,
     });
-    match erp_auth(state.http_client.post(&url), &state).json(&body).send().await {
+    match erp_auth(state.http_client.post(&url), &state)
+        .json(&body)
+        .send()
+        .await
+    {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
@@ -218,7 +222,11 @@ pub async fn update_announcement(
         "priority": data.priority,
         "expire_at": data.expires_at,
     });
-    match erp_auth(state.http_client.put(&url), &state).json(&body).send().await {
+    match erp_auth(state.http_client.put(&url), &state)
+        .json(&body)
+        .send()
+        .await
+    {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
@@ -245,7 +253,10 @@ pub async fn delete_announcement(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
-    match erp_auth(state.http_client.delete(&url), &state).send().await {
+    match erp_auth(state.http_client.delete(&url), &state)
+        .send()
+        .await
+    {
         Ok(_) => Json(ApiResponse::success(
             serde_json::json!({ "id": id, "deleted": true }),
             "公告删除成功",

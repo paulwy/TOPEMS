@@ -1099,7 +1099,9 @@ mod tests {
         v.0.get("code").and_then(|c| c.as_i64()).unwrap_or(-1)
     }
     fn success(v: &Json<Value>) -> bool {
-        v.0.get("success").and_then(|s| s.as_bool()).unwrap_or(false)
+        v.0.get("success")
+            .and_then(|s| s.as_bool())
+            .unwrap_or(false)
     }
     fn data(v: &Json<Value>) -> &Value {
         v.0.get("data").expect("data field present")
@@ -1107,10 +1109,25 @@ mod tests {
 
     #[tokio::test]
     async fn module_dispatch_known_aliases_all_resolve() {
-        for alias in ["development", "rs", "quality", "qms", "production", "pdm",
-                      "laboratory", "lims", "ehs", "srm"] {
+        for alias in [
+            "development",
+            "rs",
+            "quality",
+            "qms",
+            "production",
+            "pdm",
+            "laboratory",
+            "lims",
+            "ehs",
+            "srm",
+        ] {
             let r = get_module_analytics(Path(alias.to_string())).await;
-            assert_eq!(code(&r), 0, "alias '{}' should dispatch to a known module", alias);
+            assert_eq!(
+                code(&r),
+                0,
+                "alias '{}' should dispatch to a known module",
+                alias
+            );
             assert!(success(&r), "alias '{}' should return success", alias);
         }
     }
@@ -1126,7 +1143,10 @@ mod tests {
         let r = get_summary_analytics().await;
         assert_eq!(code(&r), 0);
         let d = data(&r);
-        let km = d.get("key_metrics").and_then(|x| x.as_array()).expect("key_metrics array");
+        let km = d
+            .get("key_metrics")
+            .and_then(|x| x.as_array())
+            .expect("key_metrics array");
         assert_eq!(km.len(), 4);
         for m in km {
             for key in ["title", "value", "unit", "change", "change_type", "icon"] {
@@ -1144,14 +1164,24 @@ mod tests {
         let d = data(&r);
         assert_eq!(d.get("total_projects").and_then(|x| x.as_i64()), Some(156));
         assert_eq!(d.get("active_projects").and_then(|x| x.as_i64()), Some(42));
-        assert_eq!(d.get("completed_projects").and_then(|x| x.as_i64()), Some(98));
-        let sdist = d.get("project_status_distribution").expect("status distribution");
+        assert_eq!(
+            d.get("completed_projects").and_then(|x| x.as_i64()),
+            Some(98)
+        );
+        let sdist = d
+            .get("project_status_distribution")
+            .expect("status distribution");
         for key in ["in_progress", "pending_approval", "completed", "cancelled"] {
             assert!(sdist.get(key).is_some(), "missing '{}'", key);
         }
-        let monthly = d.get("monthly_new_projects").and_then(|x| x.as_array()).expect("monthly array");
+        let monthly = d
+            .get("monthly_new_projects")
+            .and_then(|x| x.as_array())
+            .expect("monthly array");
         assert_eq!(monthly.len(), 6);
-        let ptype = d.get("project_type_distribution").expect("type distribution");
+        let ptype = d
+            .get("project_type_distribution")
+            .expect("type distribution");
         for key in ["research", "development", "improvement"] {
             assert!(ptype.get(key).is_some(), "missing '{}'", key);
         }
@@ -1163,10 +1193,22 @@ mod tests {
         assert_eq!(code(&r), 0);
         let d = data(&r);
         assert_eq!(d.get("pass_rate").and_then(|x| x.as_f64()), Some(96.8));
-        assert_eq!(d.get("total_inspections").and_then(|x| x.as_i64()), Some(1248));
-        assert_eq!(d.get("passed_inspections").and_then(|x| x.as_i64()), Some(1208));
-        assert_eq!(d.get("failed_inspections").and_then(|x| x.as_i64()), Some(40));
-        let trend = d.get("quality_trend").and_then(|x| x.as_array()).expect("quality trend");
+        assert_eq!(
+            d.get("total_inspections").and_then(|x| x.as_i64()),
+            Some(1248)
+        );
+        assert_eq!(
+            d.get("passed_inspections").and_then(|x| x.as_i64()),
+            Some(1208)
+        );
+        assert_eq!(
+            d.get("failed_inspections").and_then(|x| x.as_i64()),
+            Some(40)
+        );
+        let trend = d
+            .get("quality_trend")
+            .and_then(|x| x.as_array())
+            .expect("quality trend");
         assert_eq!(trend.len(), 6);
         let defects = d.get("defect_types").expect("defect types");
         for key in ["material", "process", "equipment", "other"] {
@@ -1179,11 +1221,26 @@ mod tests {
         let r = get_production_analytics().await;
         assert_eq!(code(&r), 0);
         let d = data(&r);
-        assert_eq!(d.get("total_production_batches").and_then(|x| x.as_i64()), Some(256));
-        assert_eq!(d.get("completed_batches").and_then(|x| x.as_i64()), Some(198));
-        assert_eq!(d.get("in_progress_batches").and_then(|x| x.as_i64()), Some(58));
-        assert_eq!(d.get("production_efficiency").and_then(|x| x.as_f64()), Some(87.5));
-        let daily = d.get("daily_output").and_then(|x| x.as_array()).expect("daily output");
+        assert_eq!(
+            d.get("total_production_batches").and_then(|x| x.as_i64()),
+            Some(256)
+        );
+        assert_eq!(
+            d.get("completed_batches").and_then(|x| x.as_i64()),
+            Some(198)
+        );
+        assert_eq!(
+            d.get("in_progress_batches").and_then(|x| x.as_i64()),
+            Some(58)
+        );
+        assert_eq!(
+            d.get("production_efficiency").and_then(|x| x.as_f64()),
+            Some(87.5)
+        );
+        let daily = d
+            .get("daily_output")
+            .and_then(|x| x.as_array())
+            .expect("daily output");
         assert_eq!(daily.len(), 6);
         let plu = d.get("product_line_usage").expect("product line usage");
         for key in ["line_a", "line_b", "line_c"] {
@@ -1199,8 +1256,13 @@ mod tests {
         assert_eq!(d.get("total_samples").and_then(|x| x.as_i64()), Some(856));
         assert_eq!(d.get("completed_tests").and_then(|x| x.as_i64()), Some(724));
         assert_eq!(d.get("pending_tests").and_then(|x| x.as_i64()), Some(132));
-        assert_eq!(d.get("instrument_usage_rate").and_then(|x| x.as_f64()), Some(82.5));
-        let ttype = d.get("test_type_distribution").expect("test type distribution");
+        assert_eq!(
+            d.get("instrument_usage_rate").and_then(|x| x.as_f64()),
+            Some(82.5)
+        );
+        let ttype = d
+            .get("test_type_distribution")
+            .expect("test type distribution");
         for key in ["chemical", "physical", "microbiological", "other"] {
             assert!(ttype.get(key).is_some(), "missing '{}'", key);
         }
@@ -1219,11 +1281,15 @@ mod tests {
             assert!(d.get(key).is_some(), "missing '{}'", key);
         }
         assert_eq!(
-            d.get("development").and_then(|x| x.get("active_projects")).and_then(|x| x.as_i64()),
+            d.get("development")
+                .and_then(|x| x.get("active_projects"))
+                .and_then(|x| x.as_i64()),
             Some(42)
         );
         assert_eq!(
-            d.get("quality").and_then(|x| x.get("pass_rate")).and_then(|x| x.as_f64()),
+            d.get("quality")
+                .and_then(|x| x.get("pass_rate"))
+                .and_then(|x| x.as_f64()),
             Some(96.8)
         );
     }

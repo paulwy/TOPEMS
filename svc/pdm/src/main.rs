@@ -14,7 +14,8 @@ use utoipa::OpenApi;
 use topems_shared::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, default_init_db, prometheus_metrics_handler, run, ServiceConfig,
+    bootstrap_service, build_application, default_init_db, prometheus_metrics_handler, run,
+    ServiceConfig,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 

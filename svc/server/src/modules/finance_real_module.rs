@@ -1,4 +1,4 @@
-﻿//! 真实财务服务接入模块（FinanceRealModule）—— Phase B3
+//! 真实财务服务接入模块（FinanceRealModule）—— Phase B3
 //!
 //! 将真实 `topems-finance` 服务（lib 形态）作为模块接入统一入口。
 //! 与演示版 `FinanceModule` 不同，这里使用**真实业务代码**：
@@ -64,7 +64,8 @@ impl FinanceRealModule {
 
         // 3. 工作流服务客户端
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
-        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "finance-module", &["workflow:read"]))
+        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+            .and_then(|c| c.with_service_token(&jwt_secret, "finance-module", &["workflow:read"]))
             .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
 
         // 4. 构建业务 AppState
@@ -79,7 +80,9 @@ impl FinanceRealModule {
         //    开发验证模式：注入模拟 Claims（生产环境应叠加真实 auth_middleware）
         let protected_routes = topems_finance::modules::create_routes()
             .with_state(state.clone())
-            .layer(axum::middleware::from_fn(require_permission("finance:admin")));
+            .layer(axum::middleware::from_fn(require_permission(
+                "finance:admin",
+            )));
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
             .layer(axum::middleware::from_fn(inject_dev_claims));

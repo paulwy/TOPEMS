@@ -32,7 +32,9 @@ async fn make_client() -> Option<NacosServiceDiscovery> {
 
 #[tokio::test]
 async fn test_register_discover_watch() {
-    let Some(client) = make_client().await else { return; };
+    let Some(client) = make_client().await else {
+        return;
+    };
 
     let name = format!("nacos-it-{}", uuid::Uuid::new_v4().simple());
     let reg = ServiceRegistration::new(name.as_str(), "http://127.0.0.1:7101");
@@ -43,9 +45,10 @@ async fn test_register_discover_watch() {
 
     // watch：轮询感知到实例
     let (tx, mut rx) = tokio::sync::mpsc::channel::<usize>(8);
-    let _watch = client.spawn_service_watch(name.clone(), move |instances: Vec<ServiceRegistration>| {
-        let _ = tx.try_send(instances.len());
-    });
+    let _watch =
+        client.spawn_service_watch(name.clone(), move |instances: Vec<ServiceRegistration>| {
+            let _ = tx.try_send(instances.len());
+        });
     let initial = tokio::time::timeout(Duration::from_secs(30), rx.recv()).await;
     assert!(initial.is_ok(), "watch 应推送初始快照");
 
@@ -54,16 +57,19 @@ async fn test_register_discover_watch() {
 
 #[tokio::test]
 async fn test_watch_deregister_change() {
-    let Some(client) = make_client().await else { return; };
+    let Some(client) = make_client().await else {
+        return;
+    };
 
     let name = format!("nacos-it-{}", uuid::Uuid::new_v4().simple());
     let reg = ServiceRegistration::new(name.as_str(), "http://127.0.0.1:7102");
     let _guard = client.register(reg).await.expect("注册失败");
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<usize>(8);
-    let _watch = client.spawn_service_watch(name.clone(), move |instances: Vec<ServiceRegistration>| {
-        let _ = tx.try_send(instances.len());
-    });
+    let _watch =
+        client.spawn_service_watch(name.clone(), move |instances: Vec<ServiceRegistration>| {
+            let _ = tx.try_send(instances.len());
+        });
     let _first = tokio::time::timeout(Duration::from_secs(30), rx.recv()).await;
 
     // 注销后轮询应感知实例消失（快照为空）

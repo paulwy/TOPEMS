@@ -165,8 +165,11 @@ impl TypedServiceClient<ErpApi> {
         &self,
         data: &serde_json::Value,
     ) -> ServiceClientResult<serde_json::Value> {
-        self.post(&self.build_path("/production-orders/sync/mes-progress"), data)
-            .await
+        self.post(
+            &self.build_path("/production-orders/sync/mes-progress"),
+            data,
+        )
+        .await
     }
 }
 

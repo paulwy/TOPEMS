@@ -503,7 +503,8 @@ pub async fn get_audit_log_stats(
             stats.failure_total = stats.total - stats.success_total;
 
             stats.by_action =
-                load_top_by_column(&state, "public.audit_logs", "action", start_date, end_date).await;
+                load_top_by_column(&state, "public.audit_logs", "action", start_date, end_date)
+                    .await;
             stats.by_user = load_audit_top_users(&state).await;
         }
     }

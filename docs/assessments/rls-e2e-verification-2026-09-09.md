@@ -127,7 +127,38 @@
 ## 六、剩余缺口（未做，如需可继续）
 
 1. ~~service 封装路径的 RLS 兜底~~：**已闭环**（B 方案，见 §四·D）——hrm EmployeeService、srm/scm data_sync 写路径全部穿透 txn + 补 commit，写路径真白拿归零；读路径豁免清单与依据已记录。
-2. **跨服务事件链路**：erp/crm/finance 等事件驱动写路径在受限角色下的隔离（当前 DB 层验证未覆盖事件消费者）。
+2. ~~跨服务事件链路~~：**已闭环**（B 方案事件链隔离，commit 见下）。
+
+## 六·A、事件链路隔离专项（2026-09-09，B 方案闭环）
+
+### 1. 排查结论（改动前）
+- 事件消费者全部走 `&self.db` PgPool 直连（**无 GUC 注入**）→ RLS 兼容模式全放行，隔离完全靠业务层 tenant 过滤。
+- **🔴 高风险**：`crm.handle_payment_received`、`erp.handle_payment_received/made` 核销 UPDATE 无租户条件，兜底分支 `WHERE status='pending' AND amount=$N [LIMIT 1]` 可能命中他租户最早 pending 单据；根因是 `PaymentReceivedPayload/PaymentMadePayload` 无 tenant_id 字段。
+- **🟡 中风险**：约 13 个事件消费者 INSERT 不带 tenant_id → 孤儿行（tenant_id=NULL），租户查询不可见。
+- **🟠 表设计**：crm.sales_orders、erp.vouchers、erp.voucher_items、wms.purchase_order_snapshots 无 tenant_id 列、RLS 未启用。
+
+### 2. 实施（本专项提交）
+- **payload 层**：13 个事件 payload struct 增加 `tenant_id: Option<Uuid>`（`#[serde(default)]` 兼容旧事件）：PaymentReceived / PaymentMade / ShippingOrderRequested / InboundOrderRequested / SalesOrderApproved / PurchaseOrderApproved / PurchaseOrderCreated / StockInbound / StockOutbound / AfterSalesTicketCreated / OpportunityWon / HrmPayrollVoucherRequested / WorkOrderCompleted（`lib/shared-event/src/event/event_types.rs`）。
+- **发布点层**：8 处发布点统一在 txn 内读取 GUC `app.tenant_id` 并填充 payload：wms data_sync（shipping）/inbound_order、scm purchase_order（approve）/data_sync（inbound+batch）、erp purchase_order（create+approve）/sales_order、finance create_collection_handler（已有 tenant 变量直接复用）。
+- **核销链 tenant 化**（crm+erp 三 handler，统一模式）：`match payload.tenant_id { Some(tid) => 全部 SQL 加 AND tenant_id=$N，None => Ok(None) }`——**无租户时禁用兜底匹配（宁缺勿乱）**，从根上堵死跨租户乱配。
+- **孤儿 INSERT 全量绑定**：crm 3 处（interactions/sales_orders×2）、erp 10 处（receivables/payables/financial_vouchers×4/vouchers×3/….）、wms 3 处（inbound_orders/purchase_order_snapshots×2）、finance 7 处（core_finance_vouchers 硬编码 nil 租户改为真实 tenant、source_amount_snapshots×4、快照审批/拒绝 UPDATE 加 tenant 条件）——统一 `.bind(tenant.unwrap_or(Uuid::nil()))`，存量事件（无 tenant）落 nil 租户而非 NULL。
+- **B-2 迁移** `database/migrations/20260909000001_rls_event_chain_tenant.sql`（已实跑 5432）：4 张无租户表加 tenant_id 列 + 索引 + `rls_tenant_isolation` 策略；crm.sales_orders / erp.vouchers / wms.purchase_order_snapshots 三表 **FORCE RLS**（写方均已绑定）；erp.voucher_items 仅 ENABLE 不 FORCE（HTTP 明细写入未绑 tenant，待绑定后补 FORCE，见 §六·B）。
+
+### 3. 验证（本机 5432 实跑）
+- **静态核对**：发布点 GUC 读取 8/8；核销 handler `match payload.tenant_id` 3/3；孤儿 INSERT 绑定 23 处（crm 3 + erp 10 + wms 3 + finance 7）；`cargo check --workspace` 0 error。
+- **FORCE 语义实测（topems 设 GUC）**：
+  - crm.sales_orders：GUC=t1 + tenant=t1 插入 ✓；GUC=t1 + tenant=t2 插入 **被 RLS 拒绝** ✓；未设 GUC 插入放行（事件消费进程现状，符合宽松策略设计）。
+  - erp.vouchers：GUC=t1 + 本租户 ✓ / 跨租户被拒 ✓。
+  - 核销 UPDATE 隔离：GUC=t1 更新 tenant_id=t1 单据命中（pending→paid）✓；GUC=t2 对 tenant_id=t1 条件 0 行 ✓。
+- **零污染**：全部测试行已清理（sales_orders/vouchers/billing_records 均回到 0 行）。
+
+## 六·B、遗留（不在本专项范围，已记录）
+
+1. **事件消费者进程未注入 GUC**：消费进程 PgPool 直连无 GUC → RLS 宽松策略下 FORCE 拦不住（本专项靠**代码层 tenant 绑定**保证隔离，RLS 为已设 GUC 连接的兜底）。更彻底方案：事件消费入口统一注入 `app.tenant_id`（后续专项）。
+2. **erp HTTP 创建凭证（POST /api/erp/vouchers）不填 tenant_id**：financial_vouchers/voucher_items 写入 tenant_id=NULL（宽松策略放行）→ 该凭证对所有租户可见。属既有 HTTP 路径漏洞，未擅改，建议后续专项。
+3. **erp.voucher_items 未 FORCE**：事件明细 INSERT 未绑 tenant，待绑定后补 FORCE。
+4. **erp_cost_allocations 表在库中不存在**：`handle_work_order_completed`/`handle_stock_inbound` 仍写该表（死代码，graceful 失败），待核对补迁移或删代码。
+5. **PaymentMadePayload 疑似无发布方**：全仓无构造点，`erp.handle_payment_made` 订阅可能空转（与历史 PaymentReceived 同类问题），待核实。
 
 ## 七、验证资产
 

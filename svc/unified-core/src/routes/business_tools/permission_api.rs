@@ -582,11 +582,15 @@ pub async fn bulk_create_permissions(
 ) -> Result<(StatusCode, Json<BulkPermissionResponse>), (StatusCode, Json<ErrorResponse>)> {
     let mut permissions = Vec::with_capacity(request.permissions.len());
     for req in &request.permissions {
-        let permission = TenantPermission::try_from(req)
-            .map_err(|msg| (StatusCode::BAD_REQUEST, Json(ErrorResponse {
-                error: msg,
-                code: Some("INVALID_REQUEST".to_string()),
-            })))?;
+        let permission = TenantPermission::try_from(req).map_err(|msg| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: msg,
+                    code: Some("INVALID_REQUEST".to_string()),
+                }),
+            )
+        })?;
         permissions.push(permission);
     }
 
@@ -600,11 +604,7 @@ pub async fn bulk_create_permissions(
         .iter()
         .map(|p| (p.tenant_id.clone(), p.user_id.clone()))
         .collect();
-    publish_events(
-        &state,
-        &[PermissionChangeAction::BulkCreate],
-        &keys,
-    );
+    publish_events(&state, &[PermissionChangeAction::BulkCreate], &keys);
 
     let _ = ActorInfo::from_headers(&headers);
     Ok((
@@ -632,11 +632,15 @@ pub async fn bulk_update_permissions(
 ) -> Result<Json<BulkPermissionResponse>, (StatusCode, Json<ErrorResponse>)> {
     let mut permissions = Vec::with_capacity(request.permissions.len());
     for req in &request.permissions {
-        let permission = TenantPermission::try_from(req)
-            .map_err(|msg| (StatusCode::BAD_REQUEST, Json(ErrorResponse {
-                error: msg,
-                code: Some("INVALID_REQUEST".to_string()),
-            })))?;
+        let permission = TenantPermission::try_from(req).map_err(|msg| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: msg,
+                    code: Some("INVALID_REQUEST".to_string()),
+                }),
+            )
+        })?;
         permissions.push(permission);
     }
 
@@ -650,11 +654,7 @@ pub async fn bulk_update_permissions(
         .iter()
         .map(|p| (p.tenant_id.clone(), p.user_id.clone()))
         .collect();
-    publish_events(
-        &state,
-        &[PermissionChangeAction::BulkUpdate],
-        &keys,
-    );
+    publish_events(&state, &[PermissionChangeAction::BulkUpdate], &keys);
 
     Ok(Json(BulkPermissionResponse {
         total: result.total,
@@ -688,11 +688,7 @@ pub async fn bulk_delete_permissions(
         .await
         .map_err(map_store_error)?;
 
-    publish_events(
-        &state,
-        &[PermissionChangeAction::BulkDelete],
-        &keys,
-    );
+    publish_events(&state, &[PermissionChangeAction::BulkDelete], &keys);
 
     Ok(Json(BulkPermissionResponse {
         total: result.total,

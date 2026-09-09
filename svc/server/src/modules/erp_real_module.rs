@@ -1,4 +1,4 @@
-﻿//! 真实 ERP 服务接入模块（ErpRealModule）—— Phase B3 扩展
+//! 真实 ERP 服务接入模块（ErpRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-erp` 服务（lib 形态）作为模块接入统一入口。
 //! 与 FinanceRealModule 相同模式：
@@ -21,8 +21,7 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
-    api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi,
-    TypedServiceClient,
+    api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi, TypedServiceClient,
 };
 
 /// 真实 ERP 模块：持有数据库连接池 + 完整业务路由
@@ -78,7 +77,8 @@ impl ErpRealModule {
         ));
 
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
-        let hrm_client = TypedServiceClient::<HrmApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "erp-module", &["hrm:admin"]))
+        let hrm_client = TypedServiceClient::<HrmApi>::from_env_default()
+            .and_then(|c| c.with_service_token(&jwt_secret, "erp-module", &["hrm:admin"]))
             .map(Arc::new)
             .unwrap_or_else(|e| {
                 tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
@@ -91,7 +91,8 @@ impl ErpRealModule {
                 )
             });
 
-        let finance_client = TypedServiceClient::<FinanceApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "erp-module", &["finance:read"]))
+        let finance_client = TypedServiceClient::<FinanceApi>::from_env_default()
+            .and_then(|c| c.with_service_token(&jwt_secret, "erp-module", &["finance:read"]))
             .map(Arc::new)
             .unwrap_or_else(|e| {
                 tracing::warn!("Finance服务客户端初始化失败: {}, 将使用mock模式", e);

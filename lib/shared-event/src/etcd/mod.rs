@@ -160,7 +160,9 @@ impl EtcdClient {
         let mut options = etcd_client::ConnectOptions::new()
             .with_connect_timeout(Duration::from_secs(5))
             .with_timeout(Duration::from_secs(10));
-        if let (Some(username), Some(password)) = (config.username.as_ref(), config.password.as_ref()) {
+        if let (Some(username), Some(password)) =
+            (config.username.as_ref(), config.password.as_ref())
+        {
             options = options.with_user(username.clone(), password.clone());
         }
 
@@ -200,9 +202,7 @@ impl EtcdClient {
         let key = self.instance_key(&registration.name, &registration.id);
 
         // 1. 申请租约
-        let lease_id = self
-            .grant_lease(self.config.lease_ttl_secs)
-            .await?;
+        let lease_id = self.grant_lease(self.config.lease_ttl_secs).await?;
 
         // 2. 写入服务信息（绑定租约）
         let value = serde_json::to_string(&registration)
@@ -297,7 +297,11 @@ impl EtcdClient {
                     }
                 }
                 Err(e) => {
-                    warn!("etcd keep-alive 建立失败: {}，{} 秒后重试", e, reconnect.as_secs());
+                    warn!(
+                        "etcd keep-alive 建立失败: {}，{} 秒后重试",
+                        e,
+                        reconnect.as_secs()
+                    );
                 }
             }
             tokio::select! {
@@ -308,7 +312,11 @@ impl EtcdClient {
     }
 
     /// 注销服务（撤销租约 + 删除 key）
-    pub async fn deregister_service(&self, service_name: &str, lease_id: i64) -> Result<(), EtcdError> {
+    pub async fn deregister_service(
+        &self,
+        service_name: &str,
+        lease_id: i64,
+    ) -> Result<(), EtcdError> {
         // 撤销租约会自动删除绑定的 key
         self.revoke_lease(lease_id).await?;
         self.registered_services
@@ -316,7 +324,10 @@ impl EtcdClient {
             .await
             .retain(|id| id != service_name);
 
-        info!("✅ 服务已从 etcd 注销: name={}, lease={}", service_name, lease_id);
+        info!(
+            "✅ 服务已从 etcd 注销: name={}, lease={}",
+            service_name, lease_id
+        );
         Ok(())
     }
 
@@ -334,7 +345,10 @@ impl EtcdClient {
         let prefix = self.instance_key(name, "");
         let mut kv = self.inner.kv_client();
         let resp = kv
-            .get(prefix, Some(etcd_client::GetOptions::default().with_prefix()))
+            .get(
+                prefix,
+                Some(etcd_client::GetOptions::default().with_prefix()),
+            )
             .await
             .map_err(|e| EtcdError::Kv(e.to_string()))?;
 
@@ -380,7 +394,10 @@ impl EtcdClient {
             let mut parts = rest.split('/');
             if let Some(name) = parts.next() {
                 if let Some(id) = parts.next() {
-                    services.entry(name.to_string()).or_default().push(id.to_string());
+                    services
+                        .entry(name.to_string())
+                        .or_default()
+                        .push(id.to_string());
                 }
             }
         }

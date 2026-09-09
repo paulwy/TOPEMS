@@ -20,12 +20,11 @@
 use sqlx::{PgPool, Row};
 use topems_shared_event::event::{
     EmployeeOnboardedPayload, Event, EventResult, EventSubscriber, EventType,
-    HrmPayrollVoucherRequestedPayload, InventoryUpdatedPayload, MasterDataAction,
-    MasterDataDomain, MasterDataEvent,
-    OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
-    PmProjectSettledPayload, PurchaseOrderApprovedPayload, ReconciliationApprovedPayload,
-    ReconciliationCreatedPayload, ReconciliationUpdatedPayload, ReturnCompletedPayload,
-    SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
+    HrmPayrollVoucherRequestedPayload, InventoryUpdatedPayload, MasterDataAction, MasterDataDomain,
+    MasterDataEvent, OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload,
+    PmProjectCompletedPayload, PmProjectSettledPayload, PurchaseOrderApprovedPayload,
+    ReconciliationApprovedPayload, ReconciliationCreatedPayload, ReconciliationUpdatedPayload,
+    ReturnCompletedPayload, SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
     WorkOrderCompletedPayload,
 };
 
@@ -279,8 +278,8 @@ impl ErpEventHandlers {
 
             let receivable_result = sqlx::query(
                 r#"INSERT INTO erp.receivables
-                   (invoice_number, customer_id, customer_name, source_order_id, amount, status, invoice_date, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $7)
+                   (invoice_number, customer_id, customer_name, source_order_id, amount, status, invoice_date, created_at, updated_at, tenant_id)
+                   VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $7, $8)
                    ON CONFLICT (invoice_number) DO NOTHING"#,
             )
             .bind(&receivable_no)
@@ -290,6 +289,7 @@ impl ErpEventHandlers {
             .bind(amount)
             .bind(order_date)
             .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&mut *tx)
             .await;
 
@@ -324,8 +324,8 @@ impl ErpEventHandlers {
 
                 sqlx::query(
                     r#"INSERT INTO erp.financial_vouchers
-                       (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
-                       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'sales_order', $7, $8, $8)"#,
+                       (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
+                       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'sales_order', $7, $8, $8, $9)"#,
                 )
                 .bind(voucher_id)
                 .bind(&voucher_no)
@@ -335,6 +335,7 @@ impl ErpEventHandlers {
                 .bind(amount)
                 .bind(payload.order_id.to_string())
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| format!("创建销售凭证失败: {}", e))?;
@@ -427,8 +428,8 @@ impl ErpEventHandlers {
 
             let payable_result = sqlx::query(
                 r#"INSERT INTO erp.payables
-                   (invoice_number, supplier_id, supplier_name, source_order_id, amount, status, invoice_date, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $7)
+                   (invoice_number, supplier_id, supplier_name, source_order_id, amount, status, invoice_date, created_at, updated_at, tenant_id)
+                   VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $7, $8)
                    ON CONFLICT (invoice_number) DO NOTHING"#,
             )
             .bind(&payable_no)
@@ -438,6 +439,7 @@ impl ErpEventHandlers {
             .bind(amount)
             .bind(order_date)
             .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&mut *tx)
             .await;
 
@@ -473,7 +475,7 @@ impl ErpEventHandlers {
                 sqlx::query(
                     r#"INSERT INTO erp.financial_vouchers
                        (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
-                       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'purchase_order', $7, $8, $8)"#,
+                       VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'purchase_order', $7, $8, $8, $9)"#,
                 )
                 .bind(voucher_id)
                 .bind(&voucher_no)
@@ -483,6 +485,7 @@ impl ErpEventHandlers {
                 .bind(amount)
                 .bind(payload.order_id.to_string())
                 .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| format!("创建采购凭证失败: {}", e))?;
@@ -624,13 +627,14 @@ impl ErpEventHandlers {
 
         sqlx::query(
             r#"INSERT INTO erp.vouchers
-               (voucher_no, voucher_type, reference_no, status, created_at)
-               VALUES ($1, 'stock_inbound', $2, 'draft', $3)
+               (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
+               VALUES ($1, 'stock_inbound', $2, 'draft', $3, $4)
                ON CONFLICT (voucher_no) DO NOTHING"#,
         )
         .bind(&voucher_no)
         .bind(&payload.inbound_no)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
         .map_err(|e| format!("创建入库凭证失败: {}", e))?;
@@ -674,13 +678,14 @@ impl ErpEventHandlers {
                     let production_voucher_no = format!("PROD-IN-{}", payload.inbound_no);
                     let pv_result = sqlx::query(
                         r#"INSERT INTO erp.vouchers
-                           (voucher_no, voucher_type, reference_no, status, created_at)
-                           VALUES ($1, 'production_inbound', $2, 'draft', $3)
+                           (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
+                           VALUES ($1, 'production_inbound', $2, 'draft', $3, $4)
                            ON CONFLICT (voucher_no) DO NOTHING"#,
                     )
                     .bind(&production_voucher_no)
                     .bind(&payload.inbound_no)
                     .bind(now)
+                    .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                     .execute(&self.db)
                     .await;
 
@@ -726,13 +731,14 @@ impl ErpEventHandlers {
 
         sqlx::query(
             r#"INSERT INTO erp.vouchers
-               (voucher_no, voucher_type, reference_no, status, created_at)
-               VALUES ($1, 'stock_outbound', $2, 'draft', $3)
+               (voucher_no, voucher_type, reference_no, status, created_at, tenant_id)
+               VALUES ($1, 'stock_outbound', $2, 'draft', $3, $4)
                ON CONFLICT (voucher_no) DO NOTHING"#,
         )
         .bind(&voucher_no)
         .bind(&payload.outbound_no)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
         .map_err(|e| format!("创建出库凭证失败: {}", e))?;
@@ -1258,8 +1264,8 @@ impl ErpEventHandlers {
         // 创建销售订单（状态为 draft）
         let result = sqlx::query(
             r#"INSERT INTO erp.sales_orders
-               (id, order_no, customer_id, customer_name, order_date, total_amount, status, remark, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $8)"#,
+               (id, order_no, customer_id, customer_name, order_date, total_amount, status, remark, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $8, $9)"#,
         )
         .bind(order_id)
         .bind(&order_no)
@@ -1269,6 +1275,7 @@ impl ErpEventHandlers {
         .bind(payload.amount.unwrap_or(0.0))
         .bind(format!("from_crm_opportunity:{}", payload.opportunity_id))
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await;
 
@@ -1506,56 +1513,67 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
 
-        // 根据 customer_name（收款单无 customer_id，2026-09-08 新增字段）→ customer_id → 金额匹配
-        // 若均无，回退到金额匹配（取最早一笔 pending 的）
-        let result = if let Some(customer_name) = payload.customer_name.as_deref() {
-            sqlx::query(
-                r#"UPDATE erp.receivables
-                   SET status = 'paid',
-                       received_amount = received_amount + $1,
-                       updated_at = $2
-                   WHERE customer_name = $3
-                     AND status = 'pending'
-                     AND amount = $1
-                   RETURNING invoice_number"#,
-            )
-            .bind(payload.amount)
-            .bind(now)
-            .bind(customer_name)
-            .fetch_optional(&self.db)
-            .await
-        } else if let Some(customer_id) = payload.customer_id {
-            sqlx::query(
-                r#"UPDATE erp.receivables
-                   SET status = 'paid',
-                       received_amount = received_amount + $1,
-                       updated_at = $2
-                   WHERE customer_id = $3
-                     AND status = 'pending'
-                     AND amount = $1
-                   RETURNING invoice_number"#,
-            )
-            .bind(payload.amount)
-            .bind(now)
-            .bind(customer_id)
-            .fetch_optional(&self.db)
-            .await
-        } else {
-            sqlx::query(
-                r#"UPDATE erp.receivables
-                   SET status = 'paid',
-                       received_amount = received_amount + $1,
-                       updated_at = $2
-                   WHERE status = 'pending'
-                     AND amount = $1
-                   ORDER BY invoice_date ASC
-                   LIMIT 1
-                   RETURNING invoice_number"#,
-            )
-            .bind(payload.amount)
-            .bind(now)
-            .fetch_optional(&self.db)
-            .await
+        // 根据 customer_name（收款单无 customer_id，2026-09-08 新增字段）→ customer_id → 金额匹配。
+        // RLS 事件链路隔离（2026-09-09）：仅在有租户上下文时核销；无租户时禁用兜底（宁缺勿乱）。
+        let result = match payload.tenant_id {
+            Some(tenant_id) => {
+                if let Some(customer_name) = payload.customer_name.as_deref() {
+                    sqlx::query(
+                        r#"UPDATE erp.receivables
+                           SET status = 'paid',
+                               received_amount = received_amount + $1,
+                               updated_at = $2
+                           WHERE customer_name = $3
+                             AND tenant_id = $4
+                             AND status = 'pending'
+                             AND amount = $1
+                           RETURNING invoice_number"#,
+                    )
+                    .bind(payload.amount)
+                    .bind(now)
+                    .bind(customer_name)
+                    .bind(tenant_id)
+                    .fetch_optional(&self.db)
+                    .await
+                } else if let Some(customer_id) = payload.customer_id {
+                    sqlx::query(
+                        r#"UPDATE erp.receivables
+                           SET status = 'paid',
+                               received_amount = received_amount + $1,
+                               updated_at = $2
+                           WHERE customer_id = $3
+                             AND tenant_id = $4
+                             AND status = 'pending'
+                             AND amount = $1
+                           RETURNING invoice_number"#,
+                    )
+                    .bind(payload.amount)
+                    .bind(now)
+                    .bind(customer_id)
+                    .bind(tenant_id)
+                    .fetch_optional(&self.db)
+                    .await
+                } else {
+                    sqlx::query(
+                        r#"UPDATE erp.receivables
+                           SET status = 'paid',
+                               received_amount = received_amount + $1,
+                               updated_at = $2
+                           WHERE status = 'pending'
+                             AND tenant_id = $3
+                             AND amount = $1
+                           ORDER BY invoice_date ASC
+                           LIMIT 1
+                           RETURNING invoice_number"#,
+                    )
+                    .bind(payload.amount)
+                    .bind(now)
+                    .bind(tenant_id)
+                    .fetch_optional(&self.db)
+                    .await
+                }
+            }
+            None => Ok(None),
         };
 
         match result {
@@ -1612,39 +1630,49 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
 
-        // 根据 supplier_id 和 amount 匹配应付账款并核销
-        let result = if let Some(supplier_id) = payload.supplier_id {
-            sqlx::query(
-                r#"UPDATE erp.payables
-                   SET status = 'paid',
-                       paid_amount = paid_amount + $1,
-                       updated_at = $2
-                   WHERE supplier_id = $3
-                     AND status = 'pending'
-                     AND amount = $1
-                   RETURNING invoice_number"#,
-            )
-            .bind(payload.amount)
-            .bind(now)
-            .bind(supplier_id)
-            .fetch_optional(&self.db)
-            .await
-        } else {
-            sqlx::query(
-                r#"UPDATE erp.payables
-                   SET status = 'paid',
-                       paid_amount = paid_amount + $1,
-                       updated_at = $2
-                   WHERE status = 'pending'
-                     AND amount = $1
-                   ORDER BY invoice_date ASC
-                   LIMIT 1
-                   RETURNING invoice_number"#,
-            )
-            .bind(payload.amount)
-            .bind(now)
-            .fetch_optional(&self.db)
-            .await
+        // 根据 supplier_id 和 amount 匹配应付账款并核销。
+        // RLS 事件链路隔离（2026-09-09）：仅在有租户上下文时核销；无租户时禁用兜底（宁缺勿乱）。
+        let result = match payload.tenant_id {
+            Some(tenant_id) => {
+                if let Some(supplier_id) = payload.supplier_id {
+                    sqlx::query(
+                        r#"UPDATE erp.payables
+                           SET status = 'paid',
+                               paid_amount = paid_amount + $1,
+                               updated_at = $2
+                           WHERE supplier_id = $3
+                             AND tenant_id = $4
+                             AND status = 'pending'
+                             AND amount = $1
+                           RETURNING invoice_number"#,
+                    )
+                    .bind(payload.amount)
+                    .bind(now)
+                    .bind(supplier_id)
+                    .bind(tenant_id)
+                    .fetch_optional(&self.db)
+                    .await
+                } else {
+                    sqlx::query(
+                        r#"UPDATE erp.payables
+                           SET status = 'paid',
+                               paid_amount = paid_amount + $1,
+                               updated_at = $2
+                           WHERE status = 'pending'
+                             AND tenant_id = $3
+                             AND amount = $1
+                           ORDER BY invoice_date ASC
+                           LIMIT 1
+                           RETURNING invoice_number"#,
+                    )
+                    .bind(payload.amount)
+                    .bind(now)
+                    .bind(tenant_id)
+                    .fetch_optional(&self.db)
+                    .await
+                }
+            }
+            None => Ok(None),
         };
 
         match result {
@@ -1974,8 +2002,8 @@ impl ErpEventHandlers {
         sqlx::query(
             r#"INSERT INTO erp.financial_vouchers
                (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status,
-                total_debit, total_credit, source_system, source_id, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12)"#,
+                total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12, $13)"#,
         )
         .bind(voucher_id)
         .bind(&payload.voucher_number)
@@ -1989,6 +2017,7 @@ impl ErpEventHandlers {
         .bind(payload.payroll_run_id.to_string())
         .bind(now)
         .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
         .map_err(|e| format!("创建 erp.financial_vouchers 失败: {}", e))?;

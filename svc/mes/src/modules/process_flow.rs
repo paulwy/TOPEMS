@@ -413,7 +413,9 @@ pub async fn create_process_flow(
         body.code,
         body.name,
         body.description,
-        body.version.and_then(|v| v.parse::<i32>().ok()).unwrap_or(0),
+        body.version
+            .and_then(|v| v.parse::<i32>().ok())
+            .unwrap_or(0),
         route_id,
         body.production_line,
         capacity,
@@ -495,7 +497,9 @@ pub async fn update_process_flow(
         "#,
         body.name,
         body.description,
-        body.version.and_then(|v| v.parse::<i32>().ok()).unwrap_or(0),
+        body.version
+            .and_then(|v| v.parse::<i32>().ok())
+            .unwrap_or(0),
         route_id,
         body.production_line,
         capacity,

@@ -48,7 +48,9 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // 初始化数据库表 + Schema 防御（V69.3）
-    if let Err(e) = modules::plugin::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+    if let Err(e) =
+        modules::plugin::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
+    {
         tracing::error!("Failed to init plugin-registry database: {:?}", e);
     }
 
@@ -71,7 +73,10 @@ async fn main() -> anyhow::Result<()> {
             shared::middleware::jwt_auth_middleware,
         ))
         .with_state(app_state.clone())
-        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ));
 
     // plugin-registry 暂未独立生成 OpenAPI 文档
     let openapi_json = None::<String>;

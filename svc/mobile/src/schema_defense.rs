@@ -195,7 +195,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("synced_at", "TIMESTAMPTZ"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -209,7 +209,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -228,7 +228,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("sent_at", "TIMESTAMPTZ"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -244,7 +244,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -259,7 +259,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -283,7 +283,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("uploaded_at", "TIMESTAMPTZ"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -298,7 +298,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("is_active", "BOOLEAN NOT NULL DEFAULT true"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -315,7 +315,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("tags", "TEXT[]"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -332,7 +332,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("scanned_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -347,7 +347,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("completed_at", "TIMESTAMPTZ"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -366,7 +366,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -383,7 +383,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
@@ -397,7 +397,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("location_lng", "DOUBLE PRECISION"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT now()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ")
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
 ];

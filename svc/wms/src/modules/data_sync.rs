@@ -199,6 +199,12 @@ pub async fn create_shipping_from_outbound_internal(
     let now = Utc::now();
     let shipping_order_number = format!("SHP-{}", outbound_order.order_number);
 
+    let tenant_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
     let payload = ShippingOrderRequestedPayload {
         outbound_order_id,
         outbound_order_number: outbound_order.order_number.clone(),
@@ -208,6 +214,7 @@ pub async fn create_shipping_from_outbound_internal(
         shipping_id,
         shipping_order_number: shipping_order_number.clone(),
         requested_at: now,
+        tenant_id,
     };
 
     if let Some(ref publisher) = state.event_publisher {

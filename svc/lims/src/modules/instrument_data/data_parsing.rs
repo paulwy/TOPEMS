@@ -656,7 +656,10 @@ mod tests {
         let items = r.test_items.unwrap();
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].result.as_deref(), Some(">10"));
-        assert_eq!(items[0].numeric_result, None, "non-numeric result should not parse to f64");
+        assert_eq!(
+            items[0].numeric_result, None,
+            "non-numeric result should not parse to f64"
+        );
         assert_eq!(items[0].unit.as_deref(), Some("10^9/L"));
     }
 
@@ -669,7 +672,6 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].test_item, "GLU");
     }
-
 
     #[test]
     fn hl7_empty_segments_yields_no_items() {
@@ -725,5 +727,4 @@ mod tests {
         assert_eq!(items[0].status.as_deref(), Some("abnormal"));
         assert_eq!(items[0].abnormal_flag.as_deref(), Some("H"));
     }
-
 }

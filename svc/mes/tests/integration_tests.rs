@@ -217,10 +217,7 @@ mod tests {
             "更新后的产品名称"
         );
         assert_eq!(updated_order.get::<String, _>("status"), "released");
-        assert_eq!(
-            updated_order.get::<i32, _>("completed_quantity"),
-            500
-        );
+        assert_eq!(updated_order.get::<i32, _>("completed_quantity"), 500);
 
         let delete_result = sqlx::query(
             r#"
@@ -309,7 +306,10 @@ mod tests {
         assert!(update_result.is_ok(), "设备更新应该成功");
 
         let updated = update_result.unwrap();
-        assert_eq!(updated.get::<String, _>("equipment_name"), "更新后的设备名称");
+        assert_eq!(
+            updated.get::<String, _>("equipment_name"),
+            "更新后的设备名称"
+        );
         assert_eq!(updated.get::<String, _>("status"), "maintenance");
 
         let delete_result = sqlx::query(
@@ -325,11 +325,12 @@ mod tests {
         assert!(delete_result.is_ok(), "设备删除应该成功");
         assert!(delete_result.unwrap().rows_affected() > 0, "应该有行被删除");
 
-        let verify_delete =
-            sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM mes.equipment WHERE id = $1"#)
-                .bind(equipment_id)
-                .fetch_one(&pool)
-                .await;
+        let verify_delete = sqlx::query_scalar::<_, Option<i64>>(
+            r#"SELECT COUNT(*) FROM mes.equipment WHERE id = $1"#,
+        )
+        .bind(equipment_id)
+        .fetch_one(&pool)
+        .await;
 
         assert_eq!(verify_delete.unwrap().unwrap_or(0), 0, "设备应该已被删除");
     }
@@ -720,14 +721,8 @@ mod tests {
         assert!(create_result.is_ok(), "生产记录创建应该成功");
 
         let created = create_result.unwrap();
-        assert_eq!(
-            created.get::<i32, _>("completed_quantity"),
-            100
-        );
-        assert_eq!(
-            created.get::<i32, _>("rejected_quantity"),
-            5
-        );
+        assert_eq!(created.get::<i32, _>("completed_quantity"), 100);
+        assert_eq!(created.get::<i32, _>("rejected_quantity"), 5);
 
         let update_result = sqlx::query(
             r#"
@@ -747,14 +742,8 @@ mod tests {
         assert!(update_result.is_ok(), "生产记录更新应该成功");
 
         let updated = update_result.unwrap();
-        assert_eq!(
-            updated.get::<i32, _>("completed_quantity"),
-            200
-        );
-        assert_eq!(
-            updated.get::<i32, _>("rejected_quantity"),
-            10
-        );
+        assert_eq!(updated.get::<i32, _>("completed_quantity"), 200);
+        assert_eq!(updated.get::<i32, _>("rejected_quantity"), 10);
         assert_eq!(updated.get::<String, _>("status"), "completed");
 
         let delete_result = sqlx::query(

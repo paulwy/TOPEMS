@@ -1,4 +1,4 @@
-﻿//! 真实 MES 服务接入模块（MesRealModule）—— Phase B3 扩展
+//! 真实 MES 服务接入模块（MesRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-mes` 服务（lib 形态，AppState 直传模式）作为模块接入统一入口。
 //! mes 的 `modules::create_routes() -> Router<AppState>` 无参（与 pm 不同），
@@ -17,9 +17,7 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_event::event::EventPublisher;
-use topems_shared_service_client::service_client::{
-    api::erp_api::ErpApi, TypedServiceClient,
-};
+use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedServiceClient};
 
 /// 真实 MES 模块：持有数据库连接池 + 完整业务路由
 pub struct MesRealModule {
@@ -82,11 +80,7 @@ impl MesRealModule {
             // 生产执行闭环：ERP 服务客户端（报工后回传生产进度，service token erp:admin；失败优雅降级）
             erp_client: TypedServiceClient::<ErpApi>::from_env_default()
                 .and_then(|c| {
-                    c.with_service_token(
-                        &ctx.auth_state.jwt_secret,
-                        "mes-module",
-                        &["erp:admin"],
-                    )
+                    c.with_service_token(&ctx.auth_state.jwt_secret, "mes-module", &["erp:admin"])
                 })
                 .map(Arc::new)
                 .ok(),

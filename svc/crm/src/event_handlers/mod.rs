@@ -142,8 +142,8 @@ impl CrmEventHandlers {
 
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
-               (id, org_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at)
-               VALUES ($1, $2, $3, 'aftersales_ticket', $4, $5, 'in_progress', $6, $7, $7)
+               (id, org_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, 'aftersales_ticket', $4, $5, 'in_progress', $6, $7, $7, $8)
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
@@ -153,6 +153,7 @@ impl CrmEventHandlers {
         .bind(&content)
         .bind(now)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await;
 
@@ -330,39 +331,50 @@ impl CrmEventHandlers {
 
         let now = chrono::Utc::now();
 
-        // 优先 customer_name 匹配；无则金额匹配最早 pending
-        let result = if let Some(name) = payload.customer_name.as_deref() {
-            sqlx::query(
-                r#"UPDATE crm.billing_records
-                   SET status = 'paid',
-                       paid_at = $1,
-                       updated_at = $1
-                   WHERE customer_name = $2
-                     AND status = 'pending'
-                     AND amount = $3
-                   RETURNING invoice_no"#,
-            )
-            .bind(now)
-            .bind(name)
-            .bind(payload.amount)
-            .fetch_optional(&self.db)
-            .await
-        } else {
-            sqlx::query(
-                r#"UPDATE crm.billing_records
-                   SET status = 'paid',
-                       paid_at = $1,
-                       updated_at = $1
-                   WHERE status = 'pending'
-                     AND amount = $2
-                   ORDER BY created_at ASC
-                   LIMIT 1
-                   RETURNING invoice_no"#,
-            )
-            .bind(now)
-            .bind(payload.amount)
-            .fetch_optional(&self.db)
-            .await
+        // 优先 customer_name 匹配；无则金额匹配最早 pending。
+        // RLS 事件链路隔离（2026-09-09）：仅在有租户上下文时执行核销；
+        // 无租户时禁用兜底匹配，避免跨租户误核销（宁缺勿乱）。
+        let result = match payload.tenant_id {
+            Some(tenant_id) => {
+                if let Some(name) = payload.customer_name.as_deref() {
+                    sqlx::query(
+                        r#"UPDATE crm.billing_records
+                           SET status = 'paid',
+                               paid_at = $1,
+                               updated_at = $1
+                           WHERE customer_name = $2
+                             AND tenant_id = $4
+                             AND status = 'pending'
+                             AND amount = $3
+                           RETURNING invoice_no"#,
+                    )
+                    .bind(now)
+                    .bind(name)
+                    .bind(payload.amount)
+                    .bind(tenant_id)
+                    .fetch_optional(&self.db)
+                    .await
+                } else {
+                    sqlx::query(
+                        r#"UPDATE crm.billing_records
+                           SET status = 'paid',
+                               paid_at = $1,
+                               updated_at = $1
+                           WHERE status = 'pending'
+                             AND tenant_id = $3
+                             AND amount = $2
+                           ORDER BY created_at ASC
+                           LIMIT 1
+                           RETURNING invoice_no"#,
+                    )
+                    .bind(now)
+                    .bind(payload.amount)
+                    .bind(tenant_id)
+                    .fetch_optional(&self.db)
+                    .await
+                }
+            }
+            None => Ok(None),
         };
 
         match result {
@@ -568,8 +580,8 @@ impl CrmEventHandlers {
         let result = sqlx::query(
             r#"INSERT INTO crm.sales_orders 
                (id, order_number, customer_id, order_date, 
-                total_amount, status, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7)
+                total_amount, status, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8)
                ON CONFLICT (order_number) DO NOTHING"#,
         )
         .bind(payload.shipping_id)
@@ -579,6 +591,7 @@ impl CrmEventHandlers {
         .bind(payload.total_amount)
         .bind(now)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await;
 

@@ -216,18 +216,17 @@ pub async fn create_reagent(
                             let stock = reagent.quantity.map(|q| q as i32);
                             let expiry = Some(expired.to_string());
                             tokio::spawn(async move {
-                                let payload =
-                                    topems_shared_event::event::LimsReagentAlertPayload {
-                                        reagent_id: rid,
-                                        reagent_no: rno,
-                                        reagent_name: rname,
-                                        alert_type: Some("expired".to_string()),
-                                        severity: Some("high".to_string()),
-                                        description: Some("试剂已过期".to_string()),
-                                        current_stock: stock,
-                                        min_stock: None,
-                                        expiry_date: expiry,
-                                    };
+                                let payload = topems_shared_event::event::LimsReagentAlertPayload {
+                                    reagent_id: rid,
+                                    reagent_no: rno,
+                                    reagent_name: rname,
+                                    alert_type: Some("expired".to_string()),
+                                    severity: Some("high".to_string()),
+                                    description: Some("试剂已过期".to_string()),
+                                    current_stock: stock,
+                                    min_stock: None,
+                                    expiry_date: expiry,
+                                };
                                 if let Err(e) = publisher
                                     .publish_event(
                                         topems_shared_event::event::EventType::LimsReagentAlert,
@@ -244,7 +243,7 @@ pub async fn create_reagent(
             }
 
             Json(ApiResponse::success(reagent, "试剂创建成功"))
-        },
+        }
         Err(e) => {
             tracing::error!("Failed to create reagent: {}", e);
             Json(ApiResponse::error(500, "试剂创建失败"))

@@ -92,7 +92,10 @@ async fn main() -> anyhow::Result<()> {
 
     // 运行迁移（RLS 受限用户无 DDL 权限，失败仅告警不阻塞启动；表结构由 owner/migration 维护）
     if let Err(e) = db.run_migrations().await {
-        tracing::warn!("⚠️ AI 迁移失败（表已存在则跳过，RLS 受限用户无 DDL 权限）: {}", e);
+        tracing::warn!(
+            "⚠️ AI 迁移失败（表已存在则跳过，RLS 受限用户无 DDL 权限）: {}",
+            e
+        );
     }
     tracing::info!("✅ 数据库表结构已就绪");
 

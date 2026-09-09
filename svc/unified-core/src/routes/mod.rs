@@ -154,10 +154,7 @@ pub fn create_routes(
     // ===== Core API protected routes (dual-rail: /api/core/ + /api/v1/core/) =====
     let core_protected_routes = iam::iam_routes(state)
         // VXX: JWT 校验端点（API 网关 Traefik jwt-auth forwardAuth 目标，任意方法）
-        .route(
-            "/iam/auth/verify",
-            any(modules::iam::auth::verify_token),
-        )
+        .route("/iam/auth/verify", any(modules::iam::auth::verify_token))
         .nest("/flow", flow::flow_routes(state))
         .merge(file::file_routes(state))
         .merge(master::master_routes(state))

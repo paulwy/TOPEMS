@@ -168,8 +168,8 @@ fn strip_html_tags(html: &str) -> String {
     let script_re = Regex::new(r"(?is)<script[^>]*>.*?</script>")
         .expect("hardcoded regex should always compile");
     let html = script_re.replace_all(html, "");
-    let style_re = Regex::new(r"(?is)<style[^>]*>.*?</style>")
-        .expect("hardcoded regex should always compile");
+    let style_re =
+        Regex::new(r"(?is)<style[^>]*>.*?</style>").expect("hardcoded regex should always compile");
     let html = style_re.replace_all(&html, "");
 
     // 移除 HTML 注释

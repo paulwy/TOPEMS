@@ -13,7 +13,9 @@ use utoipa::OpenApi;
 
 use topems_shared::{ApiResponse, AuthState};
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
@@ -98,7 +100,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn(require_permission("qms:admin")))
         .with_state(api_state.clone())
-        .layer(axum::middleware::from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware()));
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ));
 
     let openapi_json =
         serde_json::to_string_pretty(&openapi::QmsApiDoc::openapi()).unwrap_or_default();

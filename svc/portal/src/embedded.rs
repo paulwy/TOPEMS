@@ -15,10 +15,8 @@ use axum::{
     Router,
 };
 use std::sync::Arc;
-use topems_shared::{
-    create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,
-};
 use topems_shared::auth::auth_middleware;
+use topems_shared::{create_api_info_router, create_cors_layer, register_routes_with_legacy_alias};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_core::logging::request_context_middleware;
@@ -28,13 +26,12 @@ use topems_shared_observability::telemetry::telemetry_middleware;
 
 use crate::models;
 use crate::modules;
+use crate::shared::AppState;
 use crate::ApiDoc;
 use utoipa::OpenApi;
-use crate::shared::AppState;
 
 /// V38.0: WebSocket 活跃连接数计数器（嵌入式与独立部署共用；独立部署 main.rs 另有同名单份）
-static WS_CONNECTION_COUNT: std::sync::atomic::AtomicUsize =
-    std::sync::atomic::AtomicUsize::new(0);
+static WS_CONNECTION_COUNT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 pub fn get_ws_connection_count() -> usize {
     WS_CONNECTION_COUNT.load(std::sync::atomic::Ordering::Relaxed)

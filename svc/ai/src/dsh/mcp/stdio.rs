@@ -8,8 +8,8 @@ use std::io;
 use serde_json::{json, Value};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use super::server::McpServer;
+use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 
 /// Default maximum JSON-RPC line length (1 MiB).
 const MAX_LINE_BYTES: usize = 1024 * 1024;
@@ -49,7 +49,8 @@ where
         let request: JsonRpcRequest = match serde_json::from_str(&line) {
             Ok(req) => req,
             Err(e) => {
-                let err = parse_error_response(json!({"message": format!("invalid JSON-RPC: {}", e)}));
+                let err =
+                    parse_error_response(json!({"message": format!("invalid JSON-RPC: {}", e)}));
                 write_line(&mut writer, &err).await?;
                 continue;
             }

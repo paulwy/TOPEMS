@@ -258,6 +258,13 @@ pub async fn create_inbound_order(
                 let wh_id = order.warehouse_id;
                 let total = order.total_amount.unwrap_or(0.0);
                 let now_val = Utc::now();
+                let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+                )
+                .fetch_optional(&mut **txn)
+                .await
+                .ok()
+                .flatten();
                 tokio::spawn(async move {
                     let payload = StockInboundPayload {
                         inbound_id: oid,
@@ -270,6 +277,7 @@ pub async fn create_inbound_order(
                         reference_order_id: None,
                         received_by: None,
                         received_at: Some(now_val),
+                        tenant_id,
                     };
                     if let Err(e) = publisher
                         .publish_event(EventType::StockInbound, payload)
