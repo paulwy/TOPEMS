@@ -3,7 +3,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
@@ -35,6 +35,19 @@ pub fn create_routes() -> Router<ApiState> {
                 .put(update_customer)
                 .delete(delete_customer),
         )
+        // #26: 批量/统计端点
+        .route("/customers/batch-list", post(batch_list_customers))
+        .route(
+            "/customers/batch",
+            post(batch_create_customers)
+                .put(batch_update_customers)
+                .delete(batch_delete_customers),
+        )
+        .route("/customers/batch/status", post(batch_change_status))
+        .route("/customers/batch/category", post(batch_change_category))
+        .route("/customers/{id}/status", put(change_customer_status))
+        .route("/customers/stats", get(get_customer_stats))
+        .route("/customers/recent", get(list_recent_customers))
 }
 
 #[utoipa::path(
@@ -342,6 +355,350 @@ pub async fn delete_customer(
             Json(api_error(500, "删除客户失败"))
         }
     }
+}
+
+// ============ #26: 批量/统计端点 ============
+
+#[derive(Debug, Deserialize)]
+struct BatchListRequest {
+    ids: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BatchCreateRequest {
+    customers: Vec<CreateCustomerRequest>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BatchUpdateItem {
+    id: Uuid,
+    payload: UpdateCustomerRequest,
+}
+
+#[derive(Debug, Deserialize)]
+struct BatchUpdateRequest {
+    updates: Vec<BatchUpdateItem>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BatchDeleteRequest {
+    ids: Vec<Uuid>,
+}
+
+#[derive(Debug, Deserialize)]
+struct StatusUpdateRequest {
+    status: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct BatchStatusRequest {
+    ids: Vec<Uuid>,
+    status: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct BatchCategoryRequest {
+    ids: Vec<Uuid>,
+    category: Option<String>,
+    industry: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RecentParams {
+    limit: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+struct CustomerStatsResponse {
+    total: i64,
+    active: i64,
+    inactive: i64,
+    blacklisted: i64,
+    by_category: Vec<CategoryCount>,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+struct CategoryCount {
+    category: String,
+    count: i64,
+}
+
+#[derive(Debug, Serialize)]
+struct CustomerRecentResponse {
+    customers: Vec<Customer>,
+    total: i64,
+    page: i64,
+    pagesize: i64,
+}
+
+const CUSTOMER_SELECT_COLS: &str = "id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at";
+
+async fn batch_list_customers(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<BatchListRequest>,
+) -> Json<ApiResponse<Vec<Customer>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+    if body.ids.is_empty() {
+        return Json(ApiResponse::success(vec![], "批量查询成功"));
+    }
+    let uuids: Vec<Uuid> = body.ids.iter().filter_map(|s| Uuid::parse_str(s).ok()).collect();
+    if uuids.is_empty() {
+        return Json(ApiResponse::success(vec![], "批量查询成功"));
+    }
+    let placeholders: Vec<String> = (1..=uuids.len()).map(|i| format!("${}", i)).collect();
+    let sql = format!(
+        "SELECT {} FROM erp.customers WHERE deleted_at IS NULL AND id = ANY(array[{}]::uuid[])",
+        CUSTOMER_SELECT_COLS,
+        placeholders.join(",")
+    );
+    let mut query = sqlx::query_as::<_, Customer>(&sql);
+    for id in &uuids { query = query.bind(id); }
+    match query.fetch_all(&mut **txn).await {
+        Ok(customers) => Json(ApiResponse::success(customers, "批量查询成功")),
+        Err(e) => { tracing::error!("批量查询客户失败: {}", e); Json(api_error(500, "批量查询客户失败")) }
+    }
+}
+
+async fn batch_create_customers(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<BatchCreateRequest>,
+) -> Json<ApiResponse<Vec<Customer>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+    let mut created = Vec::new();
+    for req in &body.customers {
+        let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
+            "erp",
+            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"
+        ))
+        .bind(&req.code).bind(&req.name).bind(&req.short_name).bind(&req.contact_person)
+        .bind(&req.contact_phone).bind(&req.email).bind(&req.address).bind(&req.province)
+        .bind(&req.city).bind(&req.district).bind(&req.customer_type).bind(&req.industry)
+        .bind(&req.scale).bind(default_credit_limit(req.credit_limit))
+        .bind(default_customer_status(req.status.clone()))
+        .fetch_optional(&mut **txn).await;
+        if let Ok(Some(c)) = result { created.push(c); }
+    }
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+    }
+    Json(ApiResponse::success(created, "批量创建成功"))
+}
+
+async fn batch_update_customers(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<BatchUpdateRequest>,
+) -> Json<ApiResponse<Vec<Customer>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+    let mut updated = Vec::new();
+    for item in &body.updates {
+        let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
+            "erp",
+            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW() WHERE id = $15 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"
+        ))
+        .bind(&item.payload.name).bind(&item.payload.short_name).bind(&item.payload.contact_person)
+        .bind(&item.payload.contact_phone).bind(&item.payload.email).bind(&item.payload.address)
+        .bind(&item.payload.province).bind(&item.payload.city).bind(&item.payload.district)
+        .bind(&item.payload.customer_type).bind(&item.payload.industry).bind(&item.payload.scale)
+        .bind(item.payload.credit_limit).bind(&item.payload.status).bind(item.id)
+        .fetch_optional(&mut **txn).await;
+        if let Ok(Some(c)) = result { updated.push(c); }
+    }
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+    }
+    Json(ApiResponse::success(updated, "批量更新成功"))
+}
+
+async fn batch_delete_customers(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<BatchDeleteRequest>,
+) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+    if body.ids.is_empty() {
+        return Json(ApiResponse::success("".to_string(), "批量删除成功"));
+    }
+    let placeholders: Vec<String> = (1..=body.ids.len()).map(|i| format!("${}", i)).collect();
+    let sql = format!(
+        "UPDATE erp.customers SET deleted_at = NOW(), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL",
+        placeholders.join(",")
+    );
+    let mut query = sqlx::query(&sql);
+    for id in &body.ids { query = query.bind(id); }
+    match query.execute(&mut **txn).await {
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+            }
+            Json(ApiResponse::success(format!("已删除 {} 条客户记录", r.rows_affected()), "批量删除成功"))
+        }
+        Err(e) => { tracing::error!("批量删除客户失败: {}", e); Json(api_error(500, "批量删除客户失败")) }
+    }
+}
+
+async fn change_customer_status(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<StatusUpdateRequest>,
+) -> Json<ApiResponse<Customer>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+    let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"
+    ))
+    .bind(&body.status).bind(id).fetch_optional(&mut **txn).await;
+    match result {
+        Ok(Some(customer)) => {
+            if let Some(t) = guard.take() { let _ = t.commit().await; }
+            Json(ApiResponse::success(customer, "客户状态更新成功"))
+        }
+        Ok(None) => Json(api_error(404, "客户不存在")),
+        Err(e) => { tracing::error!("更新客户状态失败: {}", e); Json(api_error(500, "更新客户状态失败")) }
+    }
+}
+
+async fn batch_change_status(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<BatchStatusRequest>,
+) -> Json<ApiResponse<Vec<Customer>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+    if body.ids.is_empty() {
+        return Json(ApiResponse::success(vec![], "批量状态更新成功"));
+    }
+    let placeholders: Vec<String> = (2..=body.ids.len() + 1).map(|i| format!("${}", i)).collect();
+    let sql = format!(
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at",
+        placeholders.join(",")
+    );
+    let mut query = sqlx::query_as::<_, Customer>(&sql);
+    query = query.bind(&body.status);
+    for id in &body.ids { query = query.bind(id); }
+    match query.fetch_all(&mut **txn).await {
+        Ok(customers) => {
+            if let Some(t) = guard.take() { let _ = t.commit().await; }
+            Json(ApiResponse::success(customers, "批量状态更新成功"))
+        }
+        Err(e) => { tracing::error!("批量更新客户状态失败: {}", e); Json(api_error(500, "批量更新客户状态失败")) }
+    }
+}
+
+async fn batch_change_category(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<BatchCategoryRequest>,
+) -> Json<ApiResponse<Vec<Customer>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+    if body.ids.is_empty() {
+        return Json(ApiResponse::success(vec![], "批量分类更新成功"));
+    }
+    let placeholders: Vec<String> = (3..=body.ids.len() + 2).map(|i| format!("${}", i)).collect();
+    let sql = format!(
+        "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at",
+        placeholders.join(",")
+    );
+    let mut query = sqlx::query_as::<_, Customer>(&sql);
+    query = query.bind(&body.category).bind(&body.industry);
+    for id in &body.ids { query = query.bind(id); }
+    match query.fetch_all(&mut **txn).await {
+        Ok(customers) => {
+            if let Some(t) = guard.take() { let _ = t.commit().await; }
+            Json(ApiResponse::success(customers, "批量分类更新成功"))
+        }
+        Err(e) => { tracing::error!("批量更新客户分类失败: {}", e); Json(api_error(500, "批量更新客户分类失败")) }
+    }
+}
+
+async fn get_customer_stats(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<CustomerStatsResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+    let total: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL")).fetch_one(&mut **txn).await.unwrap_or(0);
+    let active: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'active'")).fetch_one(&mut **txn).await.unwrap_or(0);
+    let inactive: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'inactive'")).fetch_one(&mut **txn).await.unwrap_or(0);
+    let blacklisted: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'blacklisted'")).fetch_one(&mut **txn).await.unwrap_or(0);
+    let by_category: Vec<CategoryCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT customer_type AS category, COUNT(*) AS count FROM erp.customers WHERE deleted_at IS NULL GROUP BY customer_type ORDER BY count DESC")).fetch_all(&mut **txn).await.unwrap_or_default();
+    Json(ApiResponse::success(CustomerStatsResponse { total, active, inactive, blacklisted, by_category }, "获取客户统计成功"))
+}
+
+async fn list_recent_customers(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<RecentParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<CustomerRecentResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+    let limit = params.limit.unwrap_or(20).clamp(1, 100);
+    let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).fetch_all(&mut **txn).await.unwrap_or_default();
+    let total: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL")).fetch_one(&mut **txn).await.unwrap_or(0);
+    Json(ApiResponse::success(CustomerRecentResponse { customers, total, page: 1, pagesize: limit }, "获取最近客户成功"))
 }
 
 #[cfg(test)]
