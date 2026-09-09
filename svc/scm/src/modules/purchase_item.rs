@@ -35,11 +35,16 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_items(
+pub async fn list_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseItemQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -64,7 +69,7 @@ async fn list_items(
     .bind(params.order_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -79,7 +84,7 @@ async fn list_items(
             ))
             .bind(&search_pattern)
             .bind(params.order_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -101,12 +106,17 @@ async fn list_items(
     }
 }
 
-async fn create_item(
+pub async fn create_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -133,7 +143,7 @@ async fn create_item(
     .bind(req.amount)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -177,11 +187,16 @@ async fn create_item(
     response
 }
 
-async fn get_item(
+pub async fn get_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -193,7 +208,7 @@ async fn get_item(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -206,13 +221,18 @@ async fn get_item(
     }
 }
 
-async fn update_item(
+pub async fn update_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -223,7 +243,7 @@ async fn update_item(
         only_own_schema_query!("scm", "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM scm.purchase_items WHERE id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -258,7 +278,7 @@ async fn update_item(
     .bind(unit_price)
     .bind(amount)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -302,12 +322,17 @@ async fn update_item(
     response
 }
 
-async fn delete_item(
+pub async fn delete_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -317,7 +342,7 @@ async fn delete_item(
         "DELETE FROM scm.purchase_items WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {

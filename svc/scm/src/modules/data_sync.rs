@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     routing::post,
     Json, Router,
 };
@@ -86,10 +86,15 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sync/consistency-check", post(check_consistency))
 }
 
-async fn purchase_to_inbound(
+pub async fn purchase_to_inbound(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<PurchaseToInboundRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let purchase_order_id = match Uuid::parse_str(&req.purchase_order_id) {
         Ok(id) => id,
         Err(_) => {
@@ -115,14 +120,19 @@ async fn purchase_to_inbound(
         .await
 }
 
-async fn create_inbound_from_purchase(
+pub async fn create_inbound_from_purchase(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     create_inbound_from_purchase_internal(&state, id, None, None).await
 }
 
-async fn create_inbound_from_purchase_internal(
+pub async fn create_inbound_from_purchase_internal(
     state: &ApiState,
     purchase_order_id: Uuid,
     warehouse_id: Option<Uuid>,
@@ -392,7 +402,10 @@ async fn create_inbound_from_purchase_internal(
     }
 }
 
-async fn get_retry_count(state: &ApiState, purchase_order_id: Uuid) -> Result<i32, sqlx::Error> {
+pub async fn get_retry_count(
+    state: &ApiState,
+    purchase_order_id: Uuid,
+) -> Result<i32, sqlx::Error> {
     let count: Option<i32> = sqlx::query_scalar(only_own_schema_query!(
         "scm",
         "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1"
@@ -404,10 +417,15 @@ async fn get_retry_count(state: &ApiState, purchase_order_id: Uuid) -> Result<i3
     Ok(count.unwrap_or(0))
 }
 
-async fn sync_supplier_from_srm(
+pub async fn sync_supplier_from_srm(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<SyncSupplierRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
         Err(_) => {
@@ -445,13 +463,19 @@ async fn sync_supplier_from_srm(
         "#),
     )
     .bind(supplier_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (id, name, legal_name, contact_person, phone, email, address, tax_number, _website, status) =
         match srm_supplier {
             Ok(Some(s)) => s,
             Ok(None) => {
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed: {}", e);
+                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    }
+                }
                 return Json(ApiResponse::success(
                     serde_json::json!({
                         "success": false,
@@ -473,7 +497,7 @@ async fn sync_supplier_from_srm(
         "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1"
     ))
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -508,7 +532,7 @@ async fn sync_supplier_from_srm(
         .bind(id)
         .bind(now)
         .bind(now)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
         match result {
@@ -584,7 +608,7 @@ async fn sync_supplier_from_srm(
         .bind(now)
         .bind(now)
         .bind(now)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
         match result {
@@ -639,9 +663,14 @@ async fn sync_supplier_from_srm(
     }
 }
 
-async fn sync_all_suppliers_from_srm(
+pub async fn sync_all_suppliers_from_srm(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let srm_suppliers = sqlx::query_as::<
         _,
         (
@@ -663,7 +692,7 @@ async fn sync_all_suppliers_from_srm(
         WHERE status != 'deleted' AND deleted_at IS NULL
         "#),
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let srm_suppliers = match srm_suppliers {
@@ -698,7 +727,7 @@ async fn sync_all_suppliers_from_srm(
             "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1"
         ))
         .bind(id)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
         if existing.unwrap_or(0) > 0 {
@@ -725,7 +754,7 @@ async fn sync_all_suppliers_from_srm(
             .bind(id)
             .bind(now)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             if result.is_ok() {
@@ -757,7 +786,7 @@ async fn sync_all_suppliers_from_srm(
             .bind(now)
             .bind(now)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
             if result.is_ok() {
@@ -788,10 +817,15 @@ pub struct SyncLogsRequest {
     pub page_size: Option<i64>,
 }
 
-async fn get_sync_logs(
+pub async fn get_sync_logs(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<SyncLogsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -815,7 +849,7 @@ async fn get_sync_logs(
     .bind(&req.source_module)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match rows {
@@ -856,10 +890,15 @@ async fn get_sync_logs(
     }
 }
 
-async fn retry_failed_syncs(
+pub async fn retry_failed_syncs(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RetryFailedRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let sync_type_filter = req.sync_type.clone();
     let max_retries = req.max_retries.unwrap_or(3);
     let now = Utc::now();
@@ -878,7 +917,7 @@ async fn retry_failed_syncs(
     ))
     .bind(sync_type_filter)
     .bind(max_retries as i64)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match failed_syncs {
@@ -907,7 +946,7 @@ async fn retry_failed_syncs(
                 .bind(new_retry_count)
                 .bind(now + Duration::seconds((new_retry_count * 60).into()))
                 .bind(now)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
 
                 if update_result.is_ok() {
@@ -926,7 +965,7 @@ async fn retry_failed_syncs(
                             .bind(source_id)
                             .bind(new_retry_count)
                             .bind(now)
-                            .execute(&state.db)
+                            .execute(&mut **txn)
                             .await;
                         }
                     }
@@ -952,12 +991,19 @@ async fn retry_failed_syncs(
     }
 }
 
-async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<SyncStatistics>> {
+pub async fn get_sync_statistics(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<SyncStatistics>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let total_syncs: i64 = sqlx::query_scalar(only_own_schema_query!(
         "scm",
         "SELECT COUNT(*) FROM scm.sync_logs"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -965,7 +1011,7 @@ async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<
         "scm",
         "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'success'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -973,7 +1019,7 @@ async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<
         "scm",
         "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'failed'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -981,7 +1027,7 @@ async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<
         "scm",
         "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'pending'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -989,7 +1035,7 @@ async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<
         "scm",
         "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'in_progress'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -1000,7 +1046,7 @@ async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<
         WHERE status = 'pending' AND next_retry_at IS NOT NULL AND next_retry_at <= NOW()
         "#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -1016,9 +1062,14 @@ async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<
     Json(ApiResponse::success(statistics, "获取同步统计成功"))
 }
 
-async fn batch_sync_purchase_to_wms(
+pub async fn batch_sync_purchase_to_wms(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<BatchSyncResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let approved_po = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
@@ -1027,7 +1078,7 @@ async fn batch_sync_purchase_to_wms(
         ORDER BY created_at ASC
         "#),
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match approved_po {
@@ -1045,7 +1096,7 @@ async fn batch_sync_purchase_to_wms(
                     "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE order_number = $1"
                 ))
                 .bind(&po.order_number)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await
                 .unwrap_or(0);
 
@@ -1055,7 +1106,7 @@ async fn batch_sync_purchase_to_wms(
                     )
                     .bind(po.id)
                     .bind(now)
-                    .execute(&state.db)
+                    .execute(&mut **txn)
                     .await;
                     success_count += 1;
                     continue;
@@ -1081,7 +1132,7 @@ async fn batch_sync_purchase_to_wms(
                 .bind(po.id)
                 .bind(&po.order_number)
                 .bind(now)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
 
                 match result {
@@ -1122,7 +1173,7 @@ async fn batch_sync_purchase_to_wms(
                         .bind(inbound_id)
                         .bind(&inbound_order_number)
                         .bind(now)
-                        .execute(&state.db)
+                        .execute(&mut **txn)
                         .await;
 
                         let _ = record_sync_log(
@@ -1150,7 +1201,7 @@ async fn batch_sync_purchase_to_wms(
                             "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1"
                         ))
                         .bind(po.id)
-                        .fetch_one(&state.db)
+                        .fetch_one(&mut **txn)
                         .await
                         .unwrap_or(0);
 
@@ -1193,7 +1244,7 @@ async fn batch_sync_purchase_to_wms(
                             .bind(e.to_string())
                             .bind(new_retry_count)
                             .bind(now)
-                            .execute(&state.db)
+                            .execute(&mut **txn)
                             .await;
 
                             let _ = record_sync_log(
@@ -1254,21 +1305,28 @@ pub struct InconsistencyDetail {
     pub description: String,
 }
 
-async fn check_consistency(
+pub async fn check_consistency(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ConsistencyCheckResult>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let mut results: Vec<ConsistencyCheckResult> = Vec::new();
 
-    let purchase_inbound_result = check_purchase_inbound_consistency(&state).await;
+    let purchase_inbound_result = check_purchase_inbound_consistency(&mut *txn).await;
     results.push(purchase_inbound_result);
 
-    let supplier_sync_result = check_supplier_sync_consistency(&state).await;
+    let supplier_sync_result = check_supplier_sync_consistency(&mut *txn).await;
     results.push(supplier_sync_result);
 
     Json(ApiResponse::success(results, "一致性检查完成"))
 }
 
-async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyCheckResult {
+pub async fn check_purchase_inbound_consistency(
+    db: &mut sqlx::PgConnection,
+) -> ConsistencyCheckResult {
     let rows = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
@@ -1282,7 +1340,7 @@ async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyChec
         ORDER BY po.created_at DESC
         "#
     ))
-    .fetch_all(&state.db)
+    .fetch_all(&mut *db)
     .await;
 
     let mut details: Vec<InconsistencyDetail> = Vec::new();
@@ -1333,7 +1391,9 @@ async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyChec
     }
 }
 
-async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckResult {
+pub async fn check_supplier_sync_consistency(
+    db: &mut sqlx::PgConnection,
+) -> ConsistencyCheckResult {
     let rows = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
@@ -1346,7 +1406,7 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
         ORDER BY COALESCE(s.created_at, ssn.synced_at) DESC
         "#
     ))
-    .fetch_all(&state.db)
+    .fetch_all(&mut *db)
     .await;
 
     let mut details: Vec<InconsistencyDetail> = Vec::new();
@@ -1410,7 +1470,7 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
     }
 }
 
-async fn record_sync_log(
+pub async fn record_sync_log(
     state: &ApiState,
     sync_type: &str,
     source_module: &str,

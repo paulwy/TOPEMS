@@ -233,11 +233,16 @@ fn inspection_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     })
 }
 
-async fn list_notices(
+pub async fn list_notices(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -267,7 +272,7 @@ async fn list_notices(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -282,7 +287,7 @@ async fn list_notices(
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -319,12 +324,17 @@ pub struct CreateIncomingNoticeRequest {
     pub remarks: Option<String>,
 }
 
-async fn create_notice(
+pub async fn create_notice(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateIncomingNoticeRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -364,7 +374,7 @@ async fn create_notice(
     .bind(&req.remarks)
     .bind(now.naive_utc())
     .bind(now.naive_utc())
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -407,11 +417,16 @@ async fn create_notice(
     response
 }
 
-async fn get_notice(
+pub async fn get_notice(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -427,7 +442,7 @@ async fn get_notice(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -450,13 +465,18 @@ pub struct UpdateIncomingNoticeRequest {
     pub remarks: Option<String>,
 }
 
-async fn update_notice(
+pub async fn update_notice(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateIncomingNoticeRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -472,7 +492,7 @@ async fn update_notice(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -506,7 +526,7 @@ async fn update_notice(
     .bind(req.actual_arrival_date)
     .bind(&req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -553,7 +573,12 @@ pub async fn list_inspections(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -584,7 +609,7 @@ pub async fn list_inspections(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -598,7 +623,7 @@ pub async fn list_inspections(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -640,8 +665,13 @@ pub async fn create_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateInspectionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -656,7 +686,7 @@ pub async fn create_inspection(
         "SELECT notice_number FROM scm.incoming_notices WHERE id = $1"
     ))
     .bind(req.notice_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let notice_number: Option<String> = notice_info
@@ -696,7 +726,7 @@ pub async fn create_inspection(
     .bind(&req.remarks)
     .bind(now.naive_utc())
     .bind(now.naive_utc())
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -743,7 +773,12 @@ pub async fn get_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -761,7 +796,7 @@ pub async fn get_inspection(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -790,8 +825,13 @@ pub async fn update_inspection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateInspectionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -804,7 +844,7 @@ pub async fn update_inspection(
         "SELECT id, status FROM scm.incoming_inspections WHERE id = $1"
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -842,7 +882,7 @@ pub async fn update_inspection(
     .bind(&req.inspection_items)
     .bind(&req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -898,8 +938,13 @@ pub async fn inspection_pass(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<InspectionResultRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -912,7 +957,7 @@ pub async fn inspection_pass(
         "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1"
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -961,7 +1006,7 @@ pub async fn inspection_pass(
     .bind(&req.inspector_name)
     .bind(&req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
@@ -1009,8 +1054,13 @@ pub async fn inspection_fail(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<InspectionResultRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1023,7 +1073,7 @@ pub async fn inspection_fail(
         "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1"
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -1073,7 +1123,7 @@ pub async fn inspection_fail(
     .bind(&req.inspector_name)
     .bind(&req.remarks)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {

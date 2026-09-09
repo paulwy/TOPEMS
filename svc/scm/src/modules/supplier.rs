@@ -129,7 +129,12 @@ pub async fn list_suppliers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -172,7 +177,7 @@ pub async fn list_suppliers(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -186,7 +191,7 @@ pub async fn list_suppliers(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -233,8 +238,13 @@ pub async fn create_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -261,7 +271,7 @@ pub async fn create_supplier(
     .bind(&req.tax_number)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status, error_msg) = match &result {
@@ -379,7 +389,12 @@ pub async fn get_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Supplier>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -413,7 +428,7 @@ pub async fn get_supplier(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -457,8 +472,13 @@ pub async fn update_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -469,7 +489,7 @@ pub async fn update_supplier(
         only_own_schema_query!("scm", "SELECT id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at FROM scm.suppliers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -508,7 +528,7 @@ pub async fn update_supplier(
     .bind(&tax_number)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -629,7 +649,12 @@ pub async fn delete_supplier(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -639,7 +664,7 @@ pub async fn delete_supplier(
         "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -740,7 +765,7 @@ pub async fn delete_supplier(
     response
 }
 
-async fn clear_supplier_redis_caches(cache: &Option<Arc<RedisCacheService>>) {
+pub async fn clear_supplier_redis_caches(cache: &Option<Arc<RedisCacheService>>) {
     if let Some(cache) = cache {
         let _ = cache.delete(&format!("{}:*", CACHE_PREFIX_SUPPLIER)).await;
         let _ = cache

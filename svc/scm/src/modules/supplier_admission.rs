@@ -41,7 +41,12 @@ pub async fn list_admissions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierAdmissionQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -56,14 +61,14 @@ pub async fn list_admissions(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
         "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -87,8 +92,13 @@ pub async fn list_admissions(
 pub async fn create_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<CreateSupplierAdmissionRequest>,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -123,11 +133,19 @@ pub async fn create_admission(
     .bind(&data.supplier_category)
     .bind(&data.applicant)
     .bind(&data.remarks)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "创建供应商准入成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "创建供应商准入成功"))
+        }
         Err(e) => {
             tracing::error!("创建供应商准入失败: {}", e);
             Json(api_error(500, "创建供应商准入失败"))
@@ -139,7 +157,12 @@ pub async fn get_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -154,7 +177,7 @@ pub async fn get_admission(
         only_own_schema_query!("scm", "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(admission_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
@@ -171,8 +194,13 @@ pub async fn update_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<UpdateSupplierAdmissionRequest>,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -226,11 +254,19 @@ pub async fn update_admission(
     .bind(&data.status)
     .bind(&data.remarks)
     .bind(admission_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "更新供应商准入成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "更新供应商准入成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(404, "供应商准入不存在")),
         Err(e) => {
             tracing::error!("更新供应商准入失败: {}", e);
@@ -243,7 +279,12 @@ pub async fn delete_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -258,7 +299,7 @@ pub async fn delete_admission(
         only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(admission_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -273,12 +314,17 @@ pub async fn delete_admission(
     }
 }
 
-async fn submit_admission(
+pub async fn submit_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -299,11 +345,19 @@ async fn submit_admission(
     )
     .bind(remarks)
     .bind(admission_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "提交供应商准入成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "提交供应商准入成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法提交")),
         Err(e) => {
             tracing::error!("提交供应商准入失败: {}", e);
@@ -312,12 +366,17 @@ async fn submit_admission(
     }
 }
 
-async fn approve_admission(
+pub async fn approve_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -346,11 +405,19 @@ async fn approve_admission(
     .bind(&claims.sub)
     .bind(remarks)
     .bind(admission_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "审批通过供应商准入成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "审批通过供应商准入成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法审批")),
         Err(e) => {
             tracing::error!("审批供应商准入失败: {}", e);
@@ -359,12 +426,17 @@ async fn approve_admission(
     }
 }
 
-async fn reject_admission(
+pub async fn reject_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -393,11 +465,19 @@ async fn reject_admission(
     .bind(&claims.sub)
     .bind(remarks)
     .bind(admission_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "拒绝供应商准入成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "拒绝供应商准入成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法拒绝")),
         Err(e) => {
             tracing::error!("拒绝供应商准入失败: {}", e);
@@ -406,12 +486,17 @@ async fn reject_admission(
     }
 }
 
-async fn audit_admission(
+pub async fn audit_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<AuditRequest>,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -436,7 +521,7 @@ async fn audit_admission(
         .bind(&item.audit_result)
         .bind(&claims.sub)
         .bind(&item.remarks)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
     }
 
@@ -458,11 +543,19 @@ async fn audit_admission(
     .bind(approval_status)
     .bind(&claims.sub)
     .bind(admission_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "审核供应商准入成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "审核供应商准入成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(404, "供应商准入不存在")),
         Err(e) => {
             tracing::error!("审核供应商准入失败: {}", e);
@@ -471,11 +564,16 @@ async fn audit_admission(
     }
 }
 
-async fn activate_supplier(
+pub async fn activate_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierAdmission>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -490,11 +588,19 @@ async fn activate_supplier(
         only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
     )
     .bind(admission_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "激活供应商成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "激活供应商成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法激活")),
         Err(e) => {
             tracing::error!("激活供应商失败: {}", e);

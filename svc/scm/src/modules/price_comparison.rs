@@ -352,11 +352,16 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/comparisons/{id}/approve", post(approve_comparison))
 }
 
-async fn list_inquiries(
+pub async fn list_inquiries(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -383,7 +388,7 @@ async fn list_inquiries(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -399,7 +404,7 @@ async fn list_inquiries(
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -418,11 +423,16 @@ async fn list_inquiries(
     }
 }
 
-async fn create_inquiry(
+pub async fn create_inquiry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePurchaseInquiryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -446,7 +456,7 @@ async fn create_inquiry(
     .bind(req.deadline)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -466,13 +476,19 @@ async fn create_inquiry(
                 .bind(item.quantity)
                 .bind(item.target_price)
                 .bind(&item.remarks)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await
                 {
                     tracing::error!("插入询价单条目失败: {}", e);
                 }
             }
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(
                 serde_json::json!(inquiry),
                 "创建询价单成功",
@@ -482,11 +498,16 @@ async fn create_inquiry(
     }
 }
 
-async fn get_inquiry(
+pub async fn get_inquiry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -499,7 +520,7 @@ async fn get_inquiry(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -513,7 +534,7 @@ async fn get_inquiry(
                 "#
             ))
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -521,7 +542,7 @@ async fn get_inquiry(
                 only_own_schema_query!("scm", "SELECT COUNT(*) FROM scm.supplier_quotes WHERE inquiry_id = $1 AND deleted_at IS NULL"),
             )
             .bind(id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
@@ -539,11 +560,16 @@ async fn get_inquiry(
     }
 }
 
-async fn delete_inquiry(
+pub async fn delete_inquiry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -558,7 +584,7 @@ async fn delete_inquiry(
     ))
     .bind(Utc::now())
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -571,11 +597,16 @@ async fn delete_inquiry(
     }
 }
 
-async fn publish_inquiry(
+pub async fn publish_inquiry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -590,7 +621,7 @@ async fn publish_inquiry(
     ))
     .bind(Utc::now())
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -603,11 +634,16 @@ async fn publish_inquiry(
     }
 }
 
-async fn list_quotes(
+pub async fn list_quotes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -639,7 +675,7 @@ async fn list_quotes(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -656,7 +692,7 @@ async fn list_quotes(
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -675,11 +711,16 @@ async fn list_quotes(
     }
 }
 
-async fn create_quote(
+pub async fn create_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -705,7 +746,7 @@ async fn create_quote(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -717,11 +758,16 @@ async fn create_quote(
     }
 }
 
-async fn get_quote(
+pub async fn get_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -739,7 +785,7 @@ async fn get_quote(
         "#
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -755,7 +801,7 @@ async fn get_quote(
                 "#
             ))
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -772,12 +818,17 @@ async fn get_quote(
     }
 }
 
-async fn update_quote(
+pub async fn update_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -796,7 +847,7 @@ async fn update_quote(
     .bind(&req.remarks)
     .bind(Utc::now())
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -809,11 +860,16 @@ async fn update_quote(
     }
 }
 
-async fn submit_quote(
+pub async fn submit_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -828,7 +884,7 @@ async fn submit_quote(
     ))
     .bind(Utc::now())
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -845,7 +901,12 @@ pub async fn list_comparisons(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -874,7 +935,7 @@ pub async fn list_comparisons(
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -888,7 +949,7 @@ pub async fn list_comparisons(
                 "#
             ))
             .bind(&search_pattern)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -910,8 +971,13 @@ pub async fn list_comparisons(
 pub async fn create_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePriceComparisonRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -946,7 +1012,7 @@ pub async fn create_comparison(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -976,7 +1042,7 @@ pub async fn create_comparison(
                 .bind(item_total)
                 .bind(rank)
                 .bind(&item.remarks)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
 
                 rank += 1;
@@ -995,7 +1061,12 @@ pub async fn get_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1014,7 +1085,7 @@ pub async fn get_comparison(
         "#),
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -1032,7 +1103,7 @@ pub async fn get_comparison(
                 "#
             ))
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -1053,7 +1124,12 @@ pub async fn approve_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1072,7 +1148,7 @@ pub async fn approve_comparison(
     .bind(now_str)
     .bind(now)
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {

@@ -339,7 +339,12 @@ pub async fn list_appointments(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierDeliveryAppointmentQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -377,7 +382,7 @@ pub async fn list_appointments(
         .bind(params.end_date)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await;
 
     match result {
@@ -396,7 +401,7 @@ pub async fn list_appointments(
                 .bind(params.supplier_id)
                 .bind(params.start_date)
                 .bind(params.end_date)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await;
             let total = count_result.unwrap_or(0);
 
@@ -427,8 +432,13 @@ pub async fn create_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSupplierDeliveryAppointmentRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -486,7 +496,7 @@ pub async fn create_appointment(
         .bind(&req.remarks)
         .bind(now)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -534,7 +544,12 @@ pub async fn get_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -550,7 +565,7 @@ pub async fn get_appointment(
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(&query)
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
 
     match result {
@@ -568,8 +583,13 @@ pub async fn update_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateSupplierDeliveryAppointmentRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -586,7 +606,7 @@ pub async fn update_appointment(
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
@@ -651,7 +671,7 @@ pub async fn update_appointment(
         .bind(&status)
         .bind(&remarks)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -700,7 +720,12 @@ pub async fn delete_appointment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -717,7 +742,7 @@ pub async fn delete_appointment(
         "UPDATE scm.supplier_delivery_appointments SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -775,13 +800,18 @@ pub struct ApprovalBody {
     pub remarks: Option<String>,
 }
 
-async fn approve_appointment(
+pub async fn approve_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalBody>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -797,7 +827,7 @@ async fn approve_appointment(
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
@@ -839,7 +869,7 @@ async fn approve_appointment(
         .bind(&approver)
         .bind(now)
         .bind(&new_remarks)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -884,13 +914,18 @@ async fn approve_appointment(
     response
 }
 
-async fn reject_appointment(
+pub async fn reject_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ApprovalBody>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -906,7 +941,7 @@ async fn reject_appointment(
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
@@ -951,7 +986,7 @@ async fn reject_appointment(
         .bind(now)
         .bind(&reject_reason)
         .bind(&new_remarks)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -996,13 +1031,18 @@ async fn reject_appointment(
     response
 }
 
-async fn confirm_arrival(
+pub async fn confirm_arrival(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<ArrivalConfirmRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -1018,7 +1058,7 @@ async fn confirm_arrival(
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
@@ -1059,7 +1099,7 @@ async fn confirm_arrival(
         .bind(actual_arrival)
         .bind(&new_remarks)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -1104,13 +1144,18 @@ async fn confirm_arrival(
     response
 }
 
-async fn complete_appointment(
+pub async fn complete_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CompleteRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -1126,7 +1171,7 @@ async fn complete_appointment(
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
@@ -1164,7 +1209,7 @@ async fn complete_appointment(
         .bind(id)
         .bind(&new_remarks)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -1209,13 +1254,18 @@ async fn complete_appointment(
     response
 }
 
-async fn cancel_appointment(
+pub async fn cancel_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CancelRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -1231,7 +1281,7 @@ async fn cancel_appointment(
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
@@ -1266,7 +1316,7 @@ async fn cancel_appointment(
         .bind(id)
         .bind(&new_remarks)
         .bind(now)
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -1311,11 +1361,16 @@ async fn cancel_appointment(
     response
 }
 
-async fn appointment_stats(
+pub async fn appointment_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -1336,14 +1391,14 @@ async fn appointment_stats(
         GROUP BY status
         "#
     ))
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
         "SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -1356,7 +1411,7 @@ async fn appointment_stats(
         "#
     ))
     .bind(today)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -1368,7 +1423,7 @@ async fn appointment_stats(
         "#
     ))
     .bind(today)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 

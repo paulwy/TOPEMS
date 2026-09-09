@@ -246,7 +246,12 @@ pub async fn calculate_turnover(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
     Query(pagination): Query<PaginationParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -337,7 +342,7 @@ pub async fn calculate_turnover(
     .bind(params.warehouse_id)
     .bind(&params.category)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -355,7 +360,7 @@ pub async fn calculate_turnover(
             .bind(params.warehouse_id)
             .bind(&params.category)
             .bind(&search_pattern)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -402,7 +407,12 @@ pub async fn turnover_days(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -458,7 +468,7 @@ pub async fn turnover_days(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -507,7 +517,12 @@ pub async fn abc_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -581,7 +596,7 @@ pub async fn abc_analysis(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -619,7 +634,12 @@ pub async fn turnover_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -680,7 +700,7 @@ pub async fn turnover_trend(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

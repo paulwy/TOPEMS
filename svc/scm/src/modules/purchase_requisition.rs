@@ -54,7 +54,12 @@ pub async fn list_requisitions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseRequisitionQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -69,14 +74,14 @@ pub async fn list_requisitions(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
         "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -100,8 +105,13 @@ pub async fn list_requisitions(
 pub async fn create_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<CreatePurchaseRequisitionRequest>,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -149,11 +159,19 @@ pub async fn create_requisition(
     .bind(&data.priority)
     .bind(supplier_id)
     .bind(&data.remarks)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
-        Ok(item) => Json(ApiResponse::success(item, "创建采购申请成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "创建采购申请成功"))
+        }
         Err(e) => {
             tracing::error!("创建采购申请失败: {}", e);
             Json(api_error(500, "创建采购申请失败"))
@@ -165,7 +183,12 @@ pub async fn get_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -180,7 +203,7 @@ pub async fn get_requisition(
         only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(requisition_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
@@ -197,8 +220,13 @@ pub async fn update_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<UpdatePurchaseRequisitionRequest>,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -241,11 +269,19 @@ pub async fn update_requisition(
     .bind(&data.status)
     .bind(&data.remarks)
     .bind(requisition_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
-        Ok(item) => Json(ApiResponse::success(item, "更新采购申请成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "更新采购申请成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购申请不存在")),
         Err(e) => {
             tracing::error!("更新采购申请失败: {}", e);
@@ -258,7 +294,12 @@ pub async fn delete_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -273,7 +314,7 @@ pub async fn delete_requisition(
         only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(requisition_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -288,12 +329,17 @@ pub async fn delete_requisition(
     }
 }
 
-async fn submit_requisition(
+pub async fn submit_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -314,11 +360,19 @@ async fn submit_requisition(
     )
     .bind(remarks)
     .bind(requisition_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
-        Ok(item) => Json(ApiResponse::success(item, "提交采购申请成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "提交采购申请成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法提交")),
         Err(e) => {
             tracing::error!("提交采购申请失败: {}", e);
@@ -327,12 +381,17 @@ async fn submit_requisition(
     }
 }
 
-async fn approve_requisition(
+pub async fn approve_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -361,11 +420,19 @@ async fn approve_requisition(
     .bind(&claims.sub)
     .bind(remarks)
     .bind(requisition_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
-        Ok(item) => Json(ApiResponse::success(item, "审批通过采购申请成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "审批通过采购申请成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法审批")),
         Err(e) => {
             tracing::error!("审批采购申请失败: {}", e);
@@ -374,12 +441,17 @@ async fn approve_requisition(
     }
 }
 
-async fn reject_requisition(
+pub async fn reject_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -408,11 +480,19 @@ async fn reject_requisition(
     .bind(&claims.sub)
     .bind(remarks)
     .bind(requisition_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
-        Ok(item) => Json(ApiResponse::success(item, "拒绝采购申请成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "拒绝采购申请成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法拒绝")),
         Err(e) => {
             tracing::error!("拒绝采购申请失败: {}", e);
@@ -421,12 +501,17 @@ async fn reject_requisition(
     }
 }
 
-async fn cancel_requisition(
+pub async fn cancel_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -447,11 +532,19 @@ async fn cancel_requisition(
     )
     .bind(remarks)
     .bind(requisition_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
-        Ok(item) => Json(ApiResponse::success(item, "取消采购申请成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "取消采购申请成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法取消")),
         Err(e) => {
             tracing::error!("取消采购申请失败: {}", e);
@@ -460,11 +553,16 @@ async fn cancel_requisition(
     }
 }
 
-async fn convert_to_order(
+pub async fn convert_to_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseRequisition>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -479,11 +577,19 @@ async fn convert_to_order(
         only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
     )
     .bind(requisition_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match requisition {
-        Ok(item) => Json(ApiResponse::success(item, "转换为采购订单成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "转换为采购订单成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法转换")),
         Err(e) => {
             tracing::error!("转换采购申请失败: {}", e);

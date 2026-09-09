@@ -42,7 +42,12 @@ pub async fn list_contracts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseContractQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -57,14 +62,14 @@ pub async fn list_contracts(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
         "SELECT COUNT(*) FROM scm.purchase_contracts WHERE deleted_at IS NULL"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -88,8 +93,13 @@ pub async fn list_contracts(
 pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<CreatePurchaseContractRequest>,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -119,7 +129,7 @@ pub async fn create_contract(
     .bind(&data.delivery_terms)
     .bind(&data.signed_by)
     .bind(&data.remarks)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -145,8 +155,14 @@ pub async fn create_contract(
                     .bind(item_data.unit_price)
                     .bind(&item_data.delivery_date)
                     .bind(&item_data.remarks)
-                    .execute(&state.db)
+                    .execute(&mut **txn)
                     .await;
+                }
+            }
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "创建采购合同成功"))
@@ -162,7 +178,12 @@ pub async fn get_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -177,7 +198,7 @@ pub async fn get_contract(
         only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL"),
     )
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -186,7 +207,7 @@ pub async fn get_contract(
                 only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, item_code, item_name, specification, quantity, unit, unit_price, total_amount, tax_rate, delivery_date, status, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 ORDER BY line_number"),
             )
             .bind(contract_id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
@@ -210,8 +231,13 @@ pub async fn update_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<UpdatePurchaseContractRequest>,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -255,7 +281,7 @@ pub async fn update_contract(
     .bind(&data.status)
     .bind(&data.remarks)
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -266,7 +292,7 @@ pub async fn update_contract(
                     "DELETE FROM scm.purchase_contract_items WHERE contract_id = $1"
                 ))
                 .bind(contract_id)
-                .execute(&state.db)
+                .execute(&mut **txn)
                 .await;
 
                 for (idx, item_data) in items.iter().enumerate() {
@@ -289,7 +315,7 @@ pub async fn update_contract(
                     .bind(item_data.unit_price)
                     .bind(&item_data.delivery_date)
                     .bind(&item_data.remarks)
-                    .execute(&state.db)
+                    .execute(&mut **txn)
                     .await;
                 }
             }
@@ -307,7 +333,12 @@ pub async fn delete_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -323,7 +354,7 @@ pub async fn delete_contract(
         "UPDATE scm.purchase_contracts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(contract_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -338,12 +369,17 @@ pub async fn delete_contract(
     }
 }
 
-async fn submit_contract(
+pub async fn submit_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -364,7 +400,7 @@ async fn submit_contract(
     )
     .bind(remarks)
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -377,12 +413,17 @@ async fn submit_contract(
     }
 }
 
-async fn approve_contract(
+pub async fn approve_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -411,7 +452,7 @@ async fn approve_contract(
     .bind(&claims.sub)
     .bind(remarks)
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -424,12 +465,17 @@ async fn approve_contract(
     }
 }
 
-async fn reject_contract(
+pub async fn reject_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -458,7 +504,7 @@ async fn reject_contract(
     .bind(&claims.sub)
     .bind(remarks)
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -471,12 +517,17 @@ async fn reject_contract(
     }
 }
 
-async fn cancel_contract(
+pub async fn cancel_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -497,7 +548,7 @@ async fn cancel_contract(
     )
     .bind(remarks)
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -510,12 +561,17 @@ async fn cancel_contract(
     }
 }
 
-async fn terminate_contract(
+pub async fn terminate_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -536,7 +592,7 @@ async fn terminate_contract(
     )
     .bind(remarks)
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {
@@ -549,11 +605,16 @@ async fn terminate_contract(
     }
 }
 
-async fn renew_contract(
+pub async fn renew_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PurchaseContract>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -568,7 +629,7 @@ async fn renew_contract(
         only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'draft' WHERE id = $1 AND deleted_at IS NULL AND status IN ('expired', 'terminated') RETURNING *"),
     )
     .bind(contract_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match contract {

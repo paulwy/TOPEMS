@@ -35,7 +35,12 @@ pub async fn overview(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -67,7 +72,7 @@ pub async fn overview(
     ))
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let supplier_stats = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -76,7 +81,7 @@ pub async fn overview(
         SELECT COUNT(*) FROM scm.suppliers WHERE status = 'active'
         "#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let inventory_stats = sqlx::query(
@@ -91,7 +96,7 @@ pub async fn overview(
         "#),
     )
     .bind(params.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let inbound_stats = sqlx::query(only_own_schema_query!(
@@ -112,7 +117,7 @@ pub async fn overview(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let outbound_stats = sqlx::query(only_own_schema_query!(
@@ -133,7 +138,7 @@ pub async fn overview(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let mut overview_data = serde_json::json!({
@@ -196,7 +201,12 @@ pub async fn purchase_inbound_outbound_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -226,7 +236,7 @@ pub async fn purchase_inbound_outbound_stats(
     ))
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let inbound_trend = sqlx::query(only_own_schema_query!(
@@ -248,7 +258,7 @@ pub async fn purchase_inbound_outbound_stats(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let outbound_trend = sqlx::query(only_own_schema_query!(
@@ -270,7 +280,7 @@ pub async fn purchase_inbound_outbound_stats(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let format_trend = |rows: Result<Vec<sqlx::postgres::PgRow>, sqlx::Error>,
@@ -334,7 +344,12 @@ pub async fn supplier_performance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(
         &state.db,
         &claims,
@@ -411,7 +426,7 @@ pub async fn supplier_performance(
     ))
     .bind(&start_date)
     .bind(&end_date)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -459,7 +474,7 @@ pub async fn supplier_performance(
             ))
             .bind(&start_date)
             .bind(&end_date)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await;
 
             let category_stats: Vec<serde_json::Value> = match category_distribution {
@@ -498,11 +513,16 @@ pub async fn supplier_performance(
     }
 }
 
-async fn real_time_status(
+pub async fn real_time_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -512,7 +532,7 @@ async fn real_time_status(
         "scm",
         "SELECT COUNT(*) FROM scm.purchase_orders WHERE status = 'pending'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -526,7 +546,7 @@ async fn real_time_status(
         "#
     ))
     .bind(params.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -540,7 +560,7 @@ async fn real_time_status(
         "#
     ))
     .bind(params.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -553,7 +573,7 @@ async fn real_time_status(
         "#
     ))
     .bind(params.warehouse_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -561,7 +581,7 @@ async fn real_time_status(
         "scm",
         "SELECT COUNT(*) FROM scm.incoming_inspections WHERE status = 'pending'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -571,7 +591,7 @@ async fn real_time_status(
         SELECT COUNT(*) FROM scm.wms_replenishment_suggestion_snapshots WHERE status = 'draft'
         "#
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -579,7 +599,7 @@ async fn real_time_status(
         "scm",
         "SELECT COUNT(*) FROM scm.mrp_suggestions WHERE status = 'draft'"
     ))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
