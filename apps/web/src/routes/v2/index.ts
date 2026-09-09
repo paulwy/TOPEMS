@@ -69,6 +69,9 @@ const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleCo
     import('@/modules/ticket/config').then((m) => ({
       ticketModuleConfig: m.ticketModuleConfig,
     })),
+  // 主数据治理模块（V66 数据资产目录试点，2026-09-10）
+  master: () =>
+    import('@/modules/master/config').then((m) => ({ masterModuleConfig: m.masterModuleConfig })),
 };
 
 const loadedModules = new Map<string, RouteModuleConfig>();

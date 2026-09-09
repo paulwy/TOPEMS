@@ -1,15 +1,50 @@
+/**
+ * 数据资产目录 V66 (Data Asset Catalog) API 绑定
+ *
+ * 【2026-09-10 卡2试点对齐】原设计后端 /mdm-v66/* 未实现，
+ * 实际复用已在役的 master-data V60 metadata 模块（/mdm-v60/metadata + /mdm-v60/lineage + /mdm-v60/lifecycle）。
+ * 核心方法已改指 V60 路由；高级方法（bulk/import/export/maps/categories/columns）保留预埋，待 V66 后端实现后切换。
+ *
+ * 已改指路由（V60 metadata_v60.rs）:
+ *   GET    /mdm-v60/metadata                (原 /mdm-v66/assets)
+ *   POST   /mdm-v60/metadata                (原 /mdm-v66/assets)
+ *   GET    /mdm-v60/metadata/{id}           (原 /mdm-v66/assets/{id})
+ *   PUT    /mdm-v60/metadata/{id}           (原 /mdm-v66/assets/{id})
+ *   DELETE /mdm-v60/metadata/{id}           (原 /mdm-v66/assets/{id})
+ *   GET    /mdm-v60/metadata/search         (原 /mdm-v66/search)
+ *   GET    /mdm-v60/metadata/stats          (原 /mdm-v66/dashboard)
+ *   GET    /mdm-v60/lineage/{id}/upstream   (原 /mdm-v66/lineage/upstream)
+ *   GET    /mdm-v60/lineage/{id}/downstream (原 /mdm-v66/lineage/downstream)
+ *
+ * 预埋路由（V66 后端未实现，页面零消费）:
+ *   POST   /mdm-v66/assets/bulk
+ *   POST   /mdm-v66/assets/bulk-delete
+ *   POST   /mdm-v66/assets/import
+ *   GET    /mdm-v66/assets/export
+ *   GET    /mdm-v66/assets/{id}/columns
+ *   PUT    /mdm-v66/assets/{id}/columns
+ *   POST   /mdm-v66/assets/{id}/tags
+ *   DELETE /mdm-v66/assets/{id}/tags
+ *   GET    /mdm-v66/lineage (graph/column/refresh)
+ *   GET    /mdm-v66/tags/*
+ *   GET    /mdm-v66/categories/*
+ *   GET    /mdm-v66/maps/*
+ *   GET    /mdm-v66/dashboard/recent
+ *   GET    /mdm-v66/dashboard/orphans
+ */
+
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-type AssetType = 'table' | 'view' | 'function' | 'api' | 'file' | 'report' | 'dashboard';
-type AssetStatus = 'active' | 'deprecated' | 'archived' | 'development';
-type AssetSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
+export type AssetType = 'table' | 'view' | 'function' | 'api' | 'file' | 'report' | 'dashboard';
+export type AssetStatus = 'active' | 'deprecated' | 'archived' | 'development';
+export type AssetSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
 type LineageDirection = 'upstream' | 'downstream' | 'both';
 type LineageDepth = 1 | 2 | 3;
 
-interface DataAsset {
+export interface DataAsset {
   id: string;
   name: string;
   display_name?: string;
@@ -129,7 +164,7 @@ interface AssetSearchResult {
   suggestions?: string[];
 }
 
-interface AssetCatalogDashboard {
+export interface AssetCatalogDashboard {
   total_assets: number;
   active_assets: number;
   deprecated_assets: number;
@@ -253,11 +288,11 @@ interface CreateDataMapRequest {
 export const dataAssetCatalogApiV66 = {
   // ===== 数据资产编目 CRUD =====
   async createAsset(data: CreateDataAssetRequest): Promise<ApiResponse<DataAsset>> {
-    return apiClient.master.post<DataAsset>('/mdm-v66/assets', data);
+    return apiClient.master.post<DataAsset>('/mdm-v60/metadata', data);
   },
 
   async getAsset(id: string): Promise<ApiResponse<DataAsset>> {
-    return apiClient.master.get<DataAsset>(`/mdm-v66/assets/${id}`);
+    return apiClient.master.get<DataAsset>(`/mdm-v60/metadata/${id}`);
   },
 
   async listAssets(
@@ -279,16 +314,16 @@ export const dataAssetCatalogApiV66 = {
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{ items: DataAsset[]; total: number }>(
-      `/mdm-v66/assets${s ? `?${s}` : ''}`
+      `/mdm-v60/metadata${s ? `?${s}` : ''}`
     );
   },
 
   async updateAsset(id: string, data: UpdateDataAssetRequest): Promise<ApiResponse<DataAsset>> {
-    return apiClient.master.put<DataAsset>(`/mdm-v66/assets/${id}`, data);
+    return apiClient.master.put<DataAsset>(`/mdm-v60/metadata/${id}`, data);
   },
 
   async deleteAsset(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
-    return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v66/assets/${id}`);
+    return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v60/metadata/${id}`);
   },
 
   async getAssetColumns(id: string): Promise<ApiResponse<AssetColumn[]>> {
@@ -367,9 +402,9 @@ export const dataAssetCatalogApiV66 = {
     depth?: LineageDepth
   ): Promise<ApiResponse<AssetLineageGraph>> {
     const qs = new URLSearchParams();
-    qs.set('asset_id', assetId);
     if (depth) qs.set('depth', String(depth));
-    return apiClient.master.get<AssetLineageGraph>(`/mdm-v66/lineage/upstream?${qs.toString()}`);
+    const s = qs.toString();
+    return apiClient.master.get<AssetLineageGraph>(`/mdm-v60/lineage/${assetId}/upstream${s ? `?${s}` : ''}`);
   },
 
   async getLineageDownstream(
@@ -377,9 +412,9 @@ export const dataAssetCatalogApiV66 = {
     depth?: LineageDepth
   ): Promise<ApiResponse<AssetLineageGraph>> {
     const qs = new URLSearchParams();
-    qs.set('asset_id', assetId);
     if (depth) qs.set('depth', String(depth));
-    return apiClient.master.get<AssetLineageGraph>(`/mdm-v66/lineage/downstream?${qs.toString()}`);
+    const s = qs.toString();
+    return apiClient.master.get<AssetLineageGraph>(`/mdm-v60/lineage/${assetId}/downstream${s ? `?${s}` : ''}`);
   },
 
   async getLineageByColumn(
@@ -529,14 +564,19 @@ export const dataAssetCatalogApiV66 = {
 
   // ===== 资产搜索 =====
   async searchAssets(data: SearchAssetsRequest): Promise<ApiResponse<AssetSearchResult>> {
-    return apiClient.master.post<AssetSearchResult>('/mdm-v66/search', data);
+    const qs = new URLSearchParams();
+    if (data.query) qs.set('q', data.query);
+    if (data.page !== undefined) qs.set('page', String(data.page));
+    if (data.pageSize !== undefined) qs.set('pagesize', String(data.pageSize));
+    const s = qs.toString();
+    return apiClient.master.get<AssetSearchResult>(`/mdm-v60/metadata/search${s ? `?${s}` : ''}`);
   },
 
   async quickSearch(query: string, limit?: number): Promise<ApiResponse<AssetSearchResult>> {
     const qs = new URLSearchParams();
     qs.set('q', query);
     if (limit !== undefined) qs.set('limit', String(limit));
-    return apiClient.master.get<AssetSearchResult>(`/mdm-v66/search/quick?${qs.toString()}`);
+    return apiClient.master.get<AssetSearchResult>(`/mdm-v60/metadata/search?${qs.toString()}`);
   },
 
   async getSearchSuggestions(prefix: string): Promise<ApiResponse<string[]>> {
@@ -547,7 +587,7 @@ export const dataAssetCatalogApiV66 = {
 
   // ===== 仪表盘 =====
   async getDashboard(): Promise<ApiResponse<AssetCatalogDashboard>> {
-    return apiClient.master.get<AssetCatalogDashboard>('/mdm-v66/dashboard');
+    return apiClient.master.get<AssetCatalogDashboard>('/mdm-v60/metadata/stats');
   },
 
   async getRecentAssets(limit?: number): Promise<ApiResponse<DataAsset[]>> {
