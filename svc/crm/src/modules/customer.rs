@@ -3,8 +3,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::Utc;
-use serde::Deserialize;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -59,6 +59,11 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/customers/{id}/approval/approve", post(approve_customer))
         .route("/customers/{id}/approval/reject", post(reject_customer))
+        // P0-1: 客户财务信息（前端 CustomerDetailPage 真实消费 GET/PUT /customers/{id}/finance）
+        .route(
+            "/customers/{id}/finance",
+            get(get_customer_finance).put(update_customer_finance),
+        )
 }
 
 #[utoipa::path(
@@ -879,6 +884,397 @@ async fn reject_customer(
         }),
         "客户审批已驳回",
     ))
+}
+
+// ========== 客户财务信息（P0-1 补实现：前端 CustomerDetailPage 真实消费 GET/PUT /customers/{id}/finance） ==========
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct CustomerFinanceInfo {
+    pub customer_id: Uuid,
+    pub customer_name: String,
+    pub credit_limit: f64,
+    pub credit_used: f64,
+    pub credit_available: f64,
+    pub credit_term_days: i64,
+    pub receivable_balance: f64,
+    pub accounts_receivable: f64,
+    pub overdue_amount: f64,
+    pub overdue_receivable: f64,
+    pub avg_collection_days: i64,
+    pub total_sales: f64,
+    pub total_received: f64,
+    pub last_transaction_date: Option<DateTime<Utc>>,
+    pub payment_terms: String,
+    pub risklevel: String,
+    pub status: String,
+    pub bank_name: Option<String>,
+    pub bank_account: Option<String>,
+    pub account_name: Option<String>,
+    pub tax_number: Option<String>,
+}
+
+impl CustomerFinanceInfo {
+    fn default_for(customer_id: Uuid, customer_name: String) -> Self {
+        Self {
+            customer_id,
+            customer_name,
+            credit_limit: 0.0,
+            credit_used: 0.0,
+            credit_available: 0.0,
+            credit_term_days: 0,
+            receivable_balance: 0.0,
+            accounts_receivable: 0.0,
+            overdue_amount: 0.0,
+            overdue_receivable: 0.0,
+            avg_collection_days: 0,
+            total_sales: 0.0,
+            total_received: 0.0,
+            last_transaction_date: None,
+            payment_terms: String::new(),
+            risklevel: "low".to_string(),
+            status: "active".to_string(),
+            bank_name: None,
+            bank_account: None,
+            account_name: None,
+            tax_number: None,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateCustomerFinanceRequest {
+    pub credit_limit: Option<f64>,
+    pub credit_used: Option<f64>,
+    pub credit_available: Option<f64>,
+    pub credit_term_days: Option<i64>,
+    pub receivable_balance: Option<f64>,
+    pub accounts_receivable: Option<f64>,
+    pub overdue_amount: Option<f64>,
+    pub overdue_receivable: Option<f64>,
+    pub avg_collection_days: Option<i64>,
+    pub total_sales: Option<f64>,
+    pub total_received: Option<f64>,
+    pub last_transaction_date: Option<DateTime<Utc>>,
+    pub payment_terms: Option<String>,
+    pub risklevel: Option<String>,
+    pub status: Option<String>,
+    pub bank_name: Option<String>,
+    pub bank_account: Option<String>,
+    pub account_name: Option<String>,
+    pub tax_number: Option<String>,
+}
+
+/// NUMERIC → f64（sqlx query! 下 NUMERIC 为 Option<BigDecimal>）
+fn num_f64(v: sqlx::types::BigDecimal) -> f64 {
+    v.to_string().parse::<f64>().unwrap_or(0.0)
+}
+
+/// f64 → NUMERIC（query! 写 NUMERIC 列需要 BigDecimal）
+fn to_bd(v: f64) -> sqlx::types::BigDecimal {
+    use std::str::FromStr;
+    sqlx::types::BigDecimal::from_str(&format!("{:.2}", v)).unwrap_or_default()
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer:read"])),
+    path = "/api/crm/customers/{id}/finance",
+    params(("id" = Uuid, Path, description = "Customer id")),
+    responses((status = 200, body = CustomerFinanceInfo)),
+    tag = "customer"
+)]
+async fn get_customer_finance(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
+) -> Json<ApiResponse<CustomerFinanceInfo>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let row = sqlx::query!(
+        r#"
+        SELECT cf.customer_id, cf.customer_name, cf.credit_limit, cf.credit_used,
+               cf.credit_available, cf.credit_term_days, cf.receivable_balance,
+               cf.accounts_receivable, cf.overdue_amount, cf.overdue_receivable,
+               cf.avg_collection_days, cf.total_sales, cf.total_received,
+               cf.last_transaction_date, cf.payment_terms, cf.risklevel, cf.status,
+               cf.bank_name, cf.bank_account, cf.account_name, cf.tax_number,
+               COALESCE(c.name, cf.customer_name) AS resolved_name
+        FROM crm.customer_finance cf
+        LEFT JOIN crm.customers c ON c.id = cf.customer_id
+        WHERE cf.customer_id = $1 AND cf.tenant_id = $2
+        "#,
+        id,
+        tenant_id,
+    )
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match row {
+        Ok(Some(r)) => Json(ApiResponse::success(
+            CustomerFinanceInfo {
+                customer_id: r.customer_id,
+                customer_name: r.resolved_name.unwrap_or_default(),
+                credit_limit: num_f64(r.credit_limit),
+                credit_used: num_f64(r.credit_used),
+                credit_available: num_f64(r.credit_available),
+                credit_term_days: r.credit_term_days as i64,
+                receivable_balance: num_f64(r.receivable_balance),
+                accounts_receivable: num_f64(r.accounts_receivable),
+                overdue_amount: num_f64(r.overdue_amount),
+                overdue_receivable: num_f64(r.overdue_receivable),
+                avg_collection_days: r.avg_collection_days as i64,
+                total_sales: num_f64(r.total_sales),
+                total_received: num_f64(r.total_received),
+                last_transaction_date: r.last_transaction_date,
+                payment_terms: r.payment_terms,
+                risklevel: r.risklevel,
+                status: r.status,
+                bank_name: r.bank_name,
+                bank_account: r.bank_account,
+                account_name: r.account_name,
+                tax_number: r.tax_number,
+            },
+            "获取客户财务信息成功",
+        )),
+        Ok(None) => {
+            // 无财务记录：返回默认财务信息（前端依赖默认展示，不 404）
+            let name = sqlx::query!(
+                "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+                id,
+                tenant_id,
+            )
+            .fetch_optional(&mut **txn)
+            .await;
+            let customer_name = match name {
+                Ok(Some(n)) => n.name,
+                _ => String::new(),
+            };
+            Json(ApiResponse::success(
+                CustomerFinanceInfo::default_for(id, customer_name),
+                "获取客户财务信息成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取客户财务信息失败: {}", e);
+            Json(api_error(500, "获取客户财务信息失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["crm:customer:write"])),
+    path = "/api/crm/customers/{id}/finance",
+    params(("id" = Uuid, Path, description = "Customer id")),
+    request_body = UpdateCustomerFinanceRequest,
+    responses((status = 200, body = CustomerFinanceInfo)),
+    tag = "customer"
+)]
+async fn update_customer_finance(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<UpdateCustomerFinanceRequest>,
+) -> Json<ApiResponse<CustomerFinanceInfo>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    // 读取现值（无则默认），与请求合并
+    let cur = {
+        let row = sqlx::query!(
+            r#"
+            SELECT cf.credit_limit, cf.credit_used, cf.credit_available,
+                   cf.credit_term_days, cf.receivable_balance, cf.accounts_receivable,
+                   cf.overdue_amount, cf.overdue_receivable, cf.avg_collection_days,
+                   cf.total_sales, cf.total_received, cf.last_transaction_date,
+                   cf.payment_terms, cf.risklevel, cf.status, cf.bank_name,
+                   cf.bank_account, cf.account_name, cf.tax_number, cf.customer_name,
+                   COALESCE(c.name, cf.customer_name) AS resolved_name
+            FROM crm.customer_finance cf
+            LEFT JOIN crm.customers c ON c.id = cf.customer_id
+            WHERE cf.customer_id = $1 AND cf.tenant_id = $2
+            "#,
+            id,
+            tenant_id,
+        )
+        .fetch_optional(&mut **txn)
+        .await;
+        match row {
+            Ok(Some(r)) => CustomerFinanceInfo {
+                customer_id: id,
+                customer_name: r.resolved_name.unwrap_or_default(),
+                credit_limit: num_f64(r.credit_limit),
+                credit_used: num_f64(r.credit_used),
+                credit_available: num_f64(r.credit_available),
+                credit_term_days: r.credit_term_days as i64,
+                receivable_balance: num_f64(r.receivable_balance),
+                accounts_receivable: num_f64(r.accounts_receivable),
+                overdue_amount: num_f64(r.overdue_amount),
+                overdue_receivable: num_f64(r.overdue_receivable),
+                avg_collection_days: r.avg_collection_days as i64,
+                total_sales: num_f64(r.total_sales),
+                total_received: num_f64(r.total_received),
+                last_transaction_date: r.last_transaction_date,
+                payment_terms: r.payment_terms,
+                risklevel: r.risklevel,
+                status: r.status,
+                bank_name: r.bank_name,
+                bank_account: r.bank_account,
+                account_name: r.account_name,
+                tax_number: r.tax_number,
+            },
+            Ok(None) => {
+                let name = sqlx::query!(
+                    "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+                    id,
+                    tenant_id,
+                )
+                .fetch_optional(&mut **txn)
+                .await;
+                let customer_name = match name {
+                    Ok(Some(n)) => n.name,
+                    _ => String::new(),
+                };
+                CustomerFinanceInfo::default_for(id, customer_name)
+            }
+            Err(e) => {
+                tracing::error!("读取客户财务现值失败: {}", e);
+                return Json(api_error(500, "更新客户财务信息失败"));
+            }
+        }
+    };
+
+    let merged = CustomerFinanceInfo {
+        credit_limit: req.credit_limit.unwrap_or(cur.credit_limit),
+        credit_used: req.credit_used.unwrap_or(cur.credit_used),
+        credit_available: req.credit_available.unwrap_or(cur.credit_available),
+        credit_term_days: req.credit_term_days.unwrap_or(cur.credit_term_days),
+        receivable_balance: req.receivable_balance.unwrap_or(cur.receivable_balance),
+        accounts_receivable: req.accounts_receivable.unwrap_or(cur.accounts_receivable),
+        overdue_amount: req.overdue_amount.unwrap_or(cur.overdue_amount),
+        overdue_receivable: req.overdue_receivable.unwrap_or(cur.overdue_receivable),
+        avg_collection_days: req.avg_collection_days.unwrap_or(cur.avg_collection_days),
+        total_sales: req.total_sales.unwrap_or(cur.total_sales),
+        total_received: req.total_received.unwrap_or(cur.total_received),
+        last_transaction_date: req.last_transaction_date.or(cur.last_transaction_date),
+        payment_terms: req.payment_terms.unwrap_or(cur.payment_terms),
+        risklevel: req.risklevel.unwrap_or(cur.risklevel),
+        status: req.status.unwrap_or(cur.status),
+        bank_name: req.bank_name.or(cur.bank_name),
+        bank_account: req.bank_account.or(cur.bank_account),
+        account_name: req.account_name.or(cur.account_name),
+        tax_number: req.tax_number.or(cur.tax_number),
+        ..cur
+    };
+
+    // upsert：先 UPDATE，0 行受影响则 INSERT
+    let updated = sqlx::query!(
+        r#"
+        UPDATE crm.customer_finance
+        SET customer_name = $3, credit_limit = $4, credit_used = $5, credit_available = $6,
+            credit_term_days = $7, receivable_balance = $8, accounts_receivable = $9,
+            overdue_amount = $10, overdue_receivable = $11, avg_collection_days = $12,
+            total_sales = $13, total_received = $14, last_transaction_date = $15,
+            payment_terms = $16, risklevel = $17, status = $18, bank_name = $19,
+            bank_account = $20, account_name = $21, tax_number = $22, updated_at = NOW()
+        WHERE customer_id = $1 AND tenant_id = $2
+        "#,
+        id,
+        tenant_id,
+        merged.customer_name,
+        to_bd(merged.credit_limit),
+        to_bd(merged.credit_used),
+        to_bd(merged.credit_available),
+        merged.credit_term_days as i32,
+        to_bd(merged.receivable_balance),
+        to_bd(merged.accounts_receivable),
+        to_bd(merged.overdue_amount),
+        to_bd(merged.overdue_receivable),
+        merged.avg_collection_days as i32,
+        to_bd(merged.total_sales),
+        to_bd(merged.total_received),
+        merged.last_transaction_date,
+        merged.payment_terms,
+        merged.risklevel,
+        merged.status,
+        merged.bank_name,
+        merged.bank_account,
+        merged.account_name,
+        merged.tax_number,
+    )
+    .execute(&mut **txn)
+    .await;
+
+    match updated {
+        Ok(res) if res.rows_affected() == 0 => {
+            let inserted = sqlx::query!(
+                r#"
+                INSERT INTO crm.customer_finance
+                    (customer_id, tenant_id, customer_name, credit_limit, credit_used,
+                     credit_available, credit_term_days, receivable_balance, accounts_receivable,
+                     overdue_amount, overdue_receivable, avg_collection_days, total_sales,
+                     total_received, last_transaction_date, payment_terms, risklevel, status,
+                     bank_name, bank_account, account_name, tax_number)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                "#,
+                id,
+                tenant_id,
+                merged.customer_name,
+                to_bd(merged.credit_limit),
+                to_bd(merged.credit_used),
+                to_bd(merged.credit_available),
+                merged.credit_term_days as i32,
+                to_bd(merged.receivable_balance),
+                to_bd(merged.accounts_receivable),
+                to_bd(merged.overdue_amount),
+                to_bd(merged.overdue_receivable),
+                merged.avg_collection_days as i32,
+                to_bd(merged.total_sales),
+                to_bd(merged.total_received),
+                merged.last_transaction_date,
+                merged.payment_terms,
+                merged.risklevel,
+                merged.status,
+                merged.bank_name,
+                merged.bank_account,
+                merged.account_name,
+                merged.tax_number,
+            )
+            .execute(&mut **txn)
+            .await;
+            match inserted {
+                Ok(_) => Json(ApiResponse::success(merged, "更新客户财务信息成功")),
+                Err(e) => {
+                    tracing::error!("插入客户财务信息失败: {}", e);
+                    Json(api_error(500, "更新客户财务信息失败"))
+                }
+            }
+        }
+        Ok(_) => Json(ApiResponse::success(merged, "更新客户财务信息成功")),
+        Err(e) => {
+            tracing::error!("更新客户财务信息失败: {}", e);
+            Json(api_error(500, "更新客户财务信息失败"))
+        }
+    }
 }
 
 #[cfg(test)]
