@@ -67,7 +67,9 @@ const config: RuntimeConfig = {
     /** @deprecated 推荐使用标准名 `master-data`，master 将在后续版本移除 */
     master: getEnv('VITE_MASTER_SERVICE_URL', '/api/master-data'),
     'master-data': getEnv('VITE_MASTER_SERVICE_URL', '/api/master-data'),
-    migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/api/core/migration'),
+    // V514-2: 后端实际注册 /api/core/api/migrations/*（migration_routes 自身带 /api 前缀 + unified-core nest /api/core），
+    // 旧值 /api/core/migration 导致 /api/core/migration/migrations/* 404，已对齐
+    migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/api/core/api'),
 
     // === Group 2: 独立进程服务（独立 deployment/port，路径格式 /api/{svc}） ===
     // Communication 独立服务（端口 8084，从 unified-core 外迁）

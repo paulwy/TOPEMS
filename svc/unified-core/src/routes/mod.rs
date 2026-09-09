@@ -159,6 +159,9 @@ pub fn create_routes(
         .merge(file::file_routes(state))
         .merge(master::master_routes(state))
         .merge(feature_flag::feature_flag_routes(state))
+        // V514-2: migration 路由此前定义未挂载（migration_routes 未进 merge 链），前端 /api/core/migration/migrations/* 404。
+        // 实际路径 = /api/core + /api/migrations/*（register_routes_with_legacy_alias 双轨 /api/core + /api/v1/core）。
+        .merge(migration::migration_routes(state))
         // V68.1 A2.2: plugin 路由已迁移至 svc/plugin-registry（端口 8096），后续用服务发现/代理
         // .merge(plugin::plugin_routes(state))
         // V68.1 A2.4.2: help 路由已迁移至 svc/portal（/api/portal/help/*）
