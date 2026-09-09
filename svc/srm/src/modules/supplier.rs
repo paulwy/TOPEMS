@@ -61,37 +61,37 @@ pub async fn create_routes(
 
     let app = Router::new()
         .route(
-            "/api/srm/suppliers",
+            "/suppliers",
             get(list_suppliers).post(create_supplier),
         )
         .route(
-            "/api/srm/suppliers/{id}",
+            "/suppliers/{id}",
             get(get_supplier)
                 .put(update_supplier)
                 .delete(delete_supplier),
         )
         .route(
-            "/api/srm/suppliers/{id}/products",
+            "/suppliers/{id}/products",
             get(get_supplier_products),
         )
         .route(
-            "/api/srm/suppliers/{id}/contracts",
+            "/suppliers/{id}/contracts",
             get(get_supplier_contracts),
         )
         .route(
-            "/api/srm/suppliers/{id}/performance",
+            "/suppliers/{id}/performance",
             get(get_supplier_performance),
         )
         .route(
-            "/api/srm/suppliers/{id}/approval/start",
+            "/suppliers/{id}/approval/start",
             post(start_supplier_approval),
         )
         .route(
-            "/api/srm/suppliers/{id}/approval/approve",
+            "/suppliers/{id}/approval/approve",
             post(approve_supplier),
         )
         .route(
-            "/api/srm/suppliers/{id}/approval/reject",
+            "/suppliers/{id}/approval/reject",
             post(reject_supplier),
         )
         .with_state(state);
@@ -124,7 +124,7 @@ fn suppliers_list_cache_key(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers",
+    path = "/suppliers",
     responses(
         (status = 200, description = "list_suppliers OK")
     ),
@@ -262,7 +262,7 @@ pub async fn list_suppliers(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers",
+    path = "/suppliers",
     request_body = CreateSupplierRequest,
     responses(
         (status = 200, description = "create_supplier OK")
@@ -443,7 +443,7 @@ pub async fn create_supplier(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers/{id}",
+    path = "/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
     ),
@@ -508,7 +508,7 @@ pub async fn get_supplier(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers/{id}",
+    path = "/suppliers/{id}",
     request_body = UpdateSupplierRequest,
     params(
         ("id" = Uuid, Path, description = "id")
@@ -675,7 +675,7 @@ pub async fn update_supplier(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers/{id}",
+    path = "/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
     ),
