@@ -37,87 +37,87 @@ pub fn create_routes() -> axum::Router<ApiState> {
     axum::Router::new()
         // V49 AC-21: 生命周期实体
         .route(
-            "/api/erp/mdm-v49/lifecycle/entities",
+            "/mdm-v49/lifecycle/entities",
             get(list_lifecycle_entities).post(create_lifecycle_entity),
         )
         .route(
-            "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
+            "/mdm-v49/lifecycle/entities/{master_data_id}",
             get(get_lifecycle_entity).post(transition_lifecycle_stage),
         )
         .route(
-            "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/tasks/{task_id}",
+            "/mdm-v49/lifecycle/entities/{master_data_id}/tasks/{task_id}",
             post(update_lifecycle_task),
         )
         .route(
-            "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/events",
+            "/mdm-v49/lifecycle/entities/{master_data_id}/events",
             get(get_lifecycle_events),
         )
         // V49 AC-22: 退役管理
         .route(
-            "/api/erp/mdm-v49/retirement/plans",
+            "/mdm-v49/retirement/plans",
             get(list_retirement_plans).post(create_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/{plan_id}",
+            "/mdm-v49/retirement/plans/{plan_id}",
             get(get_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/{plan_id}/assess",
+            "/mdm-v49/retirement/plans/{plan_id}/assess",
             post(assess_impact),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/{plan_id}/notify",
+            "/mdm-v49/retirement/plans/{plan_id}/notify",
             post(notify_stakeholders),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/{plan_id}/confirm",
+            "/mdm-v49/retirement/plans/{plan_id}/confirm",
             post(confirm_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/{plan_id}/execute",
+            "/mdm-v49/retirement/plans/{plan_id}/execute",
             post(execute_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/{plan_id}/rollback",
+            "/mdm-v49/retirement/plans/{plan_id}/rollback",
             post(rollback_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/{plan_id}/cancel",
+            "/mdm-v49/retirement/plans/{plan_id}/cancel",
             post(cancel_retirement_plan),
         )
         // V49 AC-23: 归档策略
         .route(
-            "/api/erp/mdm-v49/archive/policies",
+            "/mdm-v49/archive/policies",
             get(list_archive_policies).post(create_archive_policy),
         )
         .route(
-            "/api/erp/mdm-v49/archive/policies/{policy_id}",
+            "/mdm-v49/archive/policies/{policy_id}",
             get(get_archive_policy)
                 .put(update_archive_policy)
                 .delete(delete_archive_policy),
         )
         .route(
-            "/api/erp/mdm-v49/archive/records",
+            "/mdm-v49/archive/records",
             get(list_archive_records),
         )
         .route(
-            "/api/erp/mdm-v49/archive/records/{record_id}",
+            "/mdm-v49/archive/records/{record_id}",
             get(get_archive_record),
         )
         .route(
-            "/api/erp/mdm-v49/archive/records/{record_id}/restore",
+            "/mdm-v49/archive/records/{record_id}/restore",
             post(restore_archive_record),
         )
-        .route("/api/erp/mdm-v49/archive/run", post(run_archive))
+        .route("/mdm-v49/archive/run", post(run_archive))
         // 统计仪表盘
-        .route("/api/erp/mdm-v49/stats/lifecycle", get(get_lifecycle_stats))
-        .route("/api/erp/mdm-v49/stats/archive", get(get_archive_stats))
+        .route("/mdm-v49/stats/lifecycle", get(get_lifecycle_stats))
+        .route("/mdm-v49/stats/archive", get(get_archive_stats))
         .route(
-            "/api/erp/mdm-v49/stats/retirement",
+            "/mdm-v49/stats/retirement",
             get(get_retirement_stats),
         )
-        .route("/api/erp/mdm-v49/sla/check", post(run_sla_check))
-        .route("/api/erp/mdm-v49/dashboard", get(get_lifecycle_dashboard))
+        .route("/mdm-v49/sla/check", post(run_sla_check))
+        .route("/mdm-v49/dashboard", get(get_lifecycle_dashboard))
 }
 
 #[cfg(test)]

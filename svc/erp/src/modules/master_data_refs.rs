@@ -132,626 +132,626 @@ use super::ApiState;
 pub fn create_routes() -> axum::Router<ApiState> {
     use axum::routing::{delete, get, post};
     axum::Router::new()
-        .route("/api/erp/master-data-refs", get(list_master_data_refs))
+        .route("/master-data-refs", get(list_master_data_refs))
         .route(
-            "/api/erp/master-data-refs/{master_data_id}",
+            "/master-data-refs/{master_data_id}",
             get(get_master_data_ref),
         )
         .route(
-            "/api/erp/master-data-refs/by-code/{domain}/{code}",
+            "/master-data-refs/by-code/{domain}/{code}",
             get(get_master_data_ref_by_code),
         )
         // V35.0 AC-7: 审计追踪
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/audit-trail",
+            "/master-data-refs/{master_data_id}/audit-trail",
             get(get_audit_trail),
         )
         .route(
-            "/api/erp/master-data-refs/audit-trail",
+            "/master-data-refs/audit-trail",
             post(record_audit_event),
         )
         // V35.0 AC-7: 数据血缘
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/lineage",
+            "/master-data-refs/{master_data_id}/lineage",
             get(get_data_lineage),
         )
         // V36.0 AC-8: 版本管理
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/versions",
+            "/master-data-refs/{master_data_id}/versions",
             get(get_versions).post(record_version),
         )
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/versions/{version_id}",
+            "/master-data-refs/{master_data_id}/versions/{version_id}",
             get(get_version),
         )
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/versions/{version_id}/rollback",
+            "/master-data-refs/{master_data_id}/versions/{version_id}/rollback",
             post(rollback_to_version),
         )
         // V37.0 AC-9: 冲突检测 + 自动合并
         .route(
-            "/api/erp/master-data-refs/conflicts/detect",
+            "/master-data-refs/conflicts/detect",
             post(detect_conflicts),
         )
-        .route("/api/erp/master-data-refs/conflicts", get(list_conflicts))
+        .route("/master-data-refs/conflicts", get(list_conflicts))
         .route(
-            "/api/erp/master-data-refs/conflicts/{conflict_id}",
+            "/master-data-refs/conflicts/{conflict_id}",
             get(get_conflict),
         )
         .route(
-            "/api/erp/master-data-refs/conflicts/{conflict_id}/resolve",
+            "/master-data-refs/conflicts/{conflict_id}/resolve",
             post(resolve_conflict),
         )
         .route(
-            "/api/erp/master-data-refs/conflicts/{conflict_id}/auto-merge",
+            "/master-data-refs/conflicts/{conflict_id}/auto-merge",
             post(auto_merge_conflict),
         )
         // V38.0 AC-10: 主数据生命周期管理
-        .route("/api/erp/master-data-refs/archived", get(list_archived))
+        .route("/master-data-refs/archived", get(list_archived))
         .route(
-            "/api/erp/master-data-refs/pending-destruction",
+            "/master-data-refs/pending-destruction",
             get(list_pending_destruction),
         )
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/archive",
+            "/master-data-refs/{master_data_id}/archive",
             post(archive_master_data_ref),
         )
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/restore",
+            "/master-data-refs/{master_data_id}/restore",
             post(restore_master_data_ref),
         )
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/schedule-destruction",
+            "/master-data-refs/{master_data_id}/schedule-destruction",
             post(schedule_destruction),
         )
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/cancel-destruction",
+            "/master-data-refs/{master_data_id}/cancel-destruction",
             post(cancel_destruction),
         )
         .route(
-            "/api/erp/master-data-refs/{master_data_id}/destroy",
+            "/master-data-refs/{master_data_id}/destroy",
             post(destroy_master_data_ref),
         )
         // V39.0 AC-11: 主数据质量规则引擎
         .route(
-            "/api/erp/master-data-refs/quality-rules",
+            "/master-data-refs/quality-rules",
             get(list_quality_rules).post(create_quality_rule),
         )
         .route(
-            "/api/erp/master-data-refs/quality-rules/{rule_id}",
+            "/master-data-refs/quality-rules/{rule_id}",
             get(get_quality_rule)
                 .put(update_quality_rule)
                 .delete(delete_quality_rule),
         )
         .route(
-            "/api/erp/master-data-refs/quality-check",
+            "/master-data-refs/quality-check",
             post(run_quality_check),
         )
         .route(
-            "/api/erp/master-data-refs/quality-report",
+            "/master-data-refs/quality-report",
             get(get_quality_report),
         )
         // V40.0 AC-12: 主数据治理仪表盘
         .route(
-            "/api/erp/master-data-refs/governance/dashboard",
+            "/master-data-refs/governance/dashboard",
             get(get_governance_dashboard),
         )
         // V40.0 AC-12: 数据资产目录
         .route(
-            "/api/erp/master-data-refs/governance/assets",
+            "/master-data-refs/governance/assets",
             get(list_data_assets),
         )
         .route(
-            "/api/erp/master-data-refs/governance/assets/{domain}",
+            "/master-data-refs/governance/assets/{domain}",
             get(get_data_asset_detail),
         )
         // V40.0 AC-12: 血缘可视化
         .route(
-            "/api/erp/master-data-refs/governance/lineage",
+            "/master-data-refs/governance/lineage",
             get(get_lineage_graph),
         )
         .route(
-            "/api/erp/master-data-refs/governance/lineage/{id}/upstream",
+            "/master-data-refs/governance/lineage/{id}/upstream",
             get(get_lineage_upstream),
         )
         .route(
-            "/api/erp/master-data-refs/governance/lineage/{id}/downstream",
+            "/master-data-refs/governance/lineage/{id}/downstream",
             get(get_lineage_downstream),
         )
         // V40.0 AC-12: 质量趋势
         .route(
-            "/api/erp/master-data-refs/governance/quality-trend",
+            "/master-data-refs/governance/quality-trend",
             get(get_quality_trend),
         )
         // V41.0 AC-13: 主数据同步编排
         .route(
-            "/api/erp/master-data/sync/jobs",
+            "/master-data/sync/jobs",
             post(create_sync_job).get(list_sync_jobs),
         )
-        .route("/api/erp/master-data/sync/jobs/{id}", get(get_sync_job))
+        .route("/master-data/sync/jobs/{id}", get(get_sync_job))
         .route(
-            "/api/erp/master-data/sync/jobs/{id}/retry",
+            "/master-data/sync/jobs/{id}/retry",
             post(retry_sync_job),
         )
         .route(
-            "/api/erp/master-data/sync/jobs/{id}/cancel",
+            "/master-data/sync/jobs/{id}/cancel",
             post(cancel_sync_job),
         )
         .route(
-            "/api/erp/master-data/sync/jobs/{id}/compensate",
+            "/master-data/sync/jobs/{id}/compensate",
             post(trigger_compensation),
         )
-        .route("/api/erp/master-data/sync/stats", get(get_sync_stats))
+        .route("/master-data/sync/stats", get(get_sync_stats))
         .route(
-            "/api/erp/master-data/sync/dead-letters",
+            "/master-data/sync/dead-letters",
             get(list_dead_letters),
         )
         .route(
-            "/api/erp/master-data/sync/dead-letters/{id}/replay",
+            "/master-data/sync/dead-letters/{id}/replay",
             post(replay_dead_letter),
         )
         .route(
-            "/api/erp/master-data/sync/dead-letters/batch-replay",
+            "/master-data/sync/dead-letters/batch-replay",
             post(batch_replay_dead_letters),
         )
         .route(
-            "/api/erp/master-data/sync/dead-letters/{id}",
+            "/master-data/sync/dead-letters/{id}",
             delete(delete_dead_letter),
         )
         // V42.0 AC-14: 质量闭环管理 — 质量工单
         .route(
-            "/api/erp/master-data/quality/tickets",
+            "/master-data/quality/tickets",
             post(create_quality_ticket).get(list_quality_tickets),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}",
+            "/master-data/quality/tickets/{id}",
             get(get_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/assign",
+            "/master-data/quality/tickets/{id}/assign",
             post(assign_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/start",
+            "/master-data/quality/tickets/{id}/start",
             post(start_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/submit",
+            "/master-data/quality/tickets/{id}/submit",
             post(submit_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/verify",
+            "/master-data/quality/tickets/{id}/verify",
             post(verify_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/close",
+            "/master-data/quality/tickets/{id}/close",
             post(close_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/reject",
+            "/master-data/quality/tickets/{id}/reject",
             post(reject_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/history",
+            "/master-data/quality/tickets/{id}/history",
             get(get_quality_ticket_history),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/{id}/escalate",
+            "/master-data/quality/tickets/{id}/escalate",
             post(escalate_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/loop-stats",
+            "/master-data/quality/loop-stats",
             get(get_quality_loop_stats),
         )
         // V42.0 AC-14: 自动修复工作流
         .route(
-            "/api/erp/master-data/quality/repair-workflows",
+            "/master-data/quality/repair-workflows",
             post(create_repair_workflow).get(list_repair_workflows),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/{id}",
+            "/master-data/quality/repair-workflows/{id}",
             get(get_repair_workflow),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/{id}/execute",
+            "/master-data/quality/repair-workflows/{id}/execute",
             post(execute_repair_workflow),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/{id}/approve",
+            "/master-data/quality/repair-workflows/{id}/approve",
             post(approve_repair_workflow),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/{id}/verify",
+            "/master-data/quality/repair-workflows/{id}/verify",
             post(verify_repair),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/{id}/steps/{step_index}/execute",
+            "/master-data/quality/repair-workflows/{id}/steps/{step_index}/execute",
             post(execute_repair_step),
         )
         // V42.0 AC-14: 数据所有权管理
         .route(
-            "/api/erp/master-data/domains",
+            "/master-data/domains",
             post(create_data_domain).get(list_data_domains),
         )
         .route(
-            "/api/erp/master-data/domains/{id}",
+            "/master-data/domains/{id}",
             get(get_data_domain).put(update_data_domain),
         )
         .route(
-            "/api/erp/master-data/ownership-matrix/{entity_type}",
+            "/master-data/ownership-matrix/{entity_type}",
             get(get_ownership_matrix).put(set_ownership_matrix),
         )
         .route(
-            "/api/erp/master-data/entities/{entity_type}/owner",
+            "/master-data/entities/{entity_type}/owner",
             get(get_entity_owner),
         )
         // V43.0 AC-15: 主数据图谱
-        .route("/api/erp/master-data/graph", get(get_master_data_graph))
+        .route("/master-data/graph", get(get_master_data_graph))
         .route(
-            "/api/erp/master-data/graph/nodes/{node_id}",
+            "/master-data/graph/nodes/{node_id}",
             get(get_graph_node),
         )
         .route(
-            "/api/erp/master-data/graph/nodes/{node_id}/neighbors",
+            "/master-data/graph/nodes/{node_id}/neighbors",
             get(get_node_neighbors),
         )
         .route(
-            "/api/erp/master-data/graph/shortest-path",
+            "/master-data/graph/shortest-path",
             get(get_shortest_path),
         )
         .route(
-            "/api/erp/master-data/graph/nodes/{node_id}/multi-hop",
+            "/master-data/graph/nodes/{node_id}/multi-hop",
             get(multi_hop_traversal),
         )
-        .route("/api/erp/master-data/graph/stats", get(get_graph_stats))
+        .route("/master-data/graph/stats", get(get_graph_stats))
         // V43.0 AC-15: 知识图谱
         .route(
-            "/api/erp/master-data/knowledge/concepts",
+            "/master-data/knowledge/concepts",
             get(list_concepts),
         )
         .route(
-            "/api/erp/master-data/knowledge/concepts/{concept_id}",
+            "/master-data/knowledge/concepts/{concept_id}",
             get(get_concept),
         )
-        .route("/api/erp/master-data/knowledge/triples", get(list_triples))
+        .route("/master-data/knowledge/triples", get(list_triples))
         .route(
-            "/api/erp/master-data/knowledge/inference-rules",
+            "/master-data/knowledge/inference-rules",
             get(list_inference_rules),
         )
         .route(
-            "/api/erp/master-data/knowledge/inference",
+            "/master-data/knowledge/inference",
             post(run_inference),
         )
         // V43.0 AC-15: 智能推荐
         .route(
-            "/api/erp/master-data/recommendations/similar",
+            "/master-data/recommendations/similar",
             get(get_similar_entities),
         )
         .route(
-            "/api/erp/master-data/recommendations/associations",
+            "/master-data/recommendations/associations",
             get(get_association_recommendations),
         )
         .route(
-            "/api/erp/master-data/recommendations/completions",
+            "/master-data/recommendations/completions",
             get(get_completion_suggestions),
         )
         // V44.0 AC-16: MDM GraphQL API
-        .route("/api/erp/master-data/graphql", post(graphql_endpoint))
+        .route("/master-data/graphql", post(graphql_endpoint))
         // V44.0 AC-16: 同步编排引擎 V2
         .route(
-            "/api/erp/master-data/sync/v2/jobs",
+            "/master-data/sync/v2/jobs",
             post(create_sync_job_v2).get(list_sync_jobs_v2),
         )
         .route(
-            "/api/erp/master-data/sync/v2/jobs/{id}",
+            "/master-data/sync/v2/jobs/{id}",
             get(get_sync_job_v2),
         )
         .route(
-            "/api/erp/master-data/sync/v2/dead-letters/{id}/retry",
+            "/master-data/sync/v2/dead-letters/{id}/retry",
             post(retry_dead_letter_v2),
         )
         .route(
-            "/api/erp/master-data/sync/v2/dead-letters/batch-retry",
+            "/master-data/sync/v2/dead-letters/batch-retry",
             post(batch_retry_dead_letters),
         )
         .route(
-            "/api/erp/master-data/sync/v2/stats",
+            "/master-data/sync/v2/stats",
             get(sync_engine_stats_v2),
         )
         // V44.0 AC-16: MDM 服务注册与健康检查
         .route(
-            "/api/erp/master-data/services/register",
+            "/master-data/services/register",
             post(mdm_service_register),
         )
         .route(
-            "/api/erp/master-data/services/{service_id}/deregister",
+            "/master-data/services/{service_id}/deregister",
             post(mdm_service_deregister),
         )
         .route(
-            "/api/erp/master-data/services/{service_id}/heartbeat",
+            "/master-data/services/{service_id}/heartbeat",
             post(mdm_service_heartbeat),
         )
-        .route("/api/erp/master-data/services", get(mdm_service_list))
+        .route("/master-data/services", get(mdm_service_list))
         .route(
-            "/api/erp/master-data/services/{service_id}/health",
+            "/master-data/services/{service_id}/health",
             get(mdm_service_health),
         )
         // V44.0 AC-16: MDM API 网关层
         .route(
-            "/api/erp/master-data/gateway/route",
+            "/master-data/gateway/route",
             post(mdm_gateway_route),
         )
         .route(
-            "/api/erp/master-data/gateway/batch",
+            "/master-data/gateway/batch",
             post(mdm_gateway_batch),
         )
         .route(
-            "/api/erp/master-data/gateway/aggregate",
+            "/master-data/gateway/aggregate",
             post(mdm_gateway_aggregate),
         )
-        .route("/api/erp/master-data/gateway/stats", get(mdm_gateway_stats))
+        .route("/master-data/gateway/stats", get(mdm_gateway_stats))
         // V45.0 AC-17: 主数据质量 AI
         .route(
-            "/api/erp/master-data/quality-ai/score/{id}",
+            "/master-data/quality-ai/score/{id}",
             post(quality_ai_score_entity),
         )
         .route(
-            "/api/erp/master-data/quality-ai/batch-score",
+            "/master-data/quality-ai/batch-score",
             post(quality_ai_batch_score),
         )
         .route(
-            "/api/erp/master-data/quality-ai/anomalies",
+            "/master-data/quality-ai/anomalies",
             get(quality_ai_get_anomalies),
         )
         .route(
-            "/api/erp/master-data/quality-ai/predict/{id}",
+            "/master-data/quality-ai/predict/{id}",
             post(quality_ai_predict_quality),
         )
         .route(
-            "/api/erp/master-data/quality-ai/stats",
+            "/master-data/quality-ai/stats",
             get(quality_ai_get_stats),
         )
         // V45.0 AC-17: 智能匹配
         .route(
-            "/api/erp/master-data/matching/find-matches/{id}",
+            "/master-data/matching/find-matches/{id}",
             post(matching_find_matches),
         )
         .route(
-            "/api/erp/master-data/matching/duplicates",
+            "/master-data/matching/duplicates",
             get(matching_find_duplicates),
         )
         .route(
-            "/api/erp/master-data/matching/duplicate-groups",
+            "/master-data/matching/duplicate-groups",
             get(matching_get_duplicate_groups),
         )
         .route(
-            "/api/erp/master-data/matching/suggest-merge",
+            "/master-data/matching/suggest-merge",
             post(matching_suggest_merge),
         )
         // V45.0 AC-17: 自动分类
         .route(
-            "/api/erp/master-data/classification/classify/{id}",
+            "/master-data/classification/classify/{id}",
             post(classification_classify_entity),
         )
         .route(
-            "/api/erp/master-data/classification/batch-classify",
+            "/master-data/classification/batch-classify",
             post(classification_batch_classify),
         )
         .route(
-            "/api/erp/master-data/classification/suggest-tags/{id}",
+            "/master-data/classification/suggest-tags/{id}",
             get(classification_suggest_tags),
         )
         .route(
-            "/api/erp/master-data/classification/categories",
+            "/master-data/classification/categories",
             get(classification_list_categories),
         )
         .route(
-            "/api/erp/master-data/classification/learn-rule",
+            "/master-data/classification/learn-rule",
             post(classification_learn_rule),
         )
         .route(
-            "/api/erp/master-data/classification/stats",
+            "/master-data/classification/stats",
             get(classification_get_stats),
         )
         // V46.0 AC-18: 数据血缘溯源
         .route(
-            "/api/erp/master-data-refs/lineage/trace",
+            "/master-data-refs/lineage/trace",
             get(trace_lineage_handler),
         )
         .route(
-            "/api/erp/master-data-refs/lineage/trace/{id}/upstream",
+            "/master-data-refs/lineage/trace/{id}/upstream",
             get(trace_upstream_handler),
         )
         .route(
-            "/api/erp/master-data-refs/lineage/trace/{id}/downstream",
+            "/master-data-refs/lineage/trace/{id}/downstream",
             get(trace_downstream_handler),
         )
         .route(
-            "/api/erp/master-data-refs/lineage/origin/{id}",
+            "/master-data-refs/lineage/origin/{id}",
             get(find_data_origin_handler),
         )
         // V46.0 AC-18: 影响分析
         .route(
-            "/api/erp/master-data-refs/impact/analyze",
+            "/master-data-refs/impact/analyze",
             post(analyze_impact_handler),
         )
         .route(
-            "/api/erp/master-data-refs/impact/report/{entity_id}",
+            "/master-data-refs/impact/report/{entity_id}",
             get(get_impact_report_handler),
         )
         // V46.0 AC-18: 数据血缘图谱
         .route(
-            "/api/erp/master-data-refs/lineage/graph",
+            "/master-data-refs/lineage/graph",
             get(get_lineage_graph_handler),
         )
         .route(
-            "/api/erp/master-data-refs/lineage/graph/stats",
+            "/master-data-refs/lineage/graph/stats",
             get(get_graph_stats_handler),
         )
         .route(
-            "/api/erp/master-data-refs/lineage/critical-paths",
+            "/master-data-refs/lineage/critical-paths",
             get(get_critical_paths_handler),
         )
         .route(
-            "/api/erp/master-data-refs/lineage/circular-deps",
+            "/master-data-refs/lineage/circular-deps",
             get(detect_circular_deps_handler),
         )
         // V47.0 AC-19: 主数据治理成熟度评估
         .route(
-            "/api/erp/master-data-refs/maturity/assess",
+            "/master-data-refs/maturity/assess",
             get(assess_maturity_handler),
         )
         .route(
-            "/api/erp/master-data-refs/maturity/history",
+            "/master-data-refs/maturity/history",
             get(get_maturity_history_handler),
         )
         .route(
-            "/api/erp/master-data-refs/maturity/compare",
+            "/master-data-refs/maturity/compare",
             post(compare_assessments_handler),
         )
         .route(
-            "/api/erp/master-data-refs/maturity/improvement-plan",
+            "/master-data-refs/maturity/improvement-plan",
             get(get_improvement_plan_handler),
         )
         // V47.0 AC-19: Data Catalog（数据目录）
         .route(
-            "/api/erp/master-data-refs/catalog/search",
+            "/master-data-refs/catalog/search",
             get(search_catalog_handler),
         )
         .route(
-            "/api/erp/master-data-refs/catalog/stats",
+            "/master-data-refs/catalog/stats",
             get(get_catalog_stats_handler),
         )
         .route(
-            "/api/erp/master-data-refs/catalog/popular",
+            "/master-data-refs/catalog/popular",
             get(get_popular_entries_handler),
         )
         .route(
-            "/api/erp/master-data-refs/catalog",
+            "/master-data-refs/catalog",
             post(create_catalog_entry_handler),
         )
         .route(
-            "/api/erp/master-data-refs/catalog/{entry_id}",
+            "/master-data-refs/catalog/{entry_id}",
             get(get_catalog_entry_handler)
                 .put(update_catalog_entry_handler)
                 .delete(delete_catalog_entry_handler),
         )
         // V47.0 AC-19: 元数据管理
         .route(
-            "/api/erp/master-data-refs/metadata/schemas",
+            "/master-data-refs/metadata/schemas",
             post(create_schema_handler).get(list_schemas_handler),
         )
         .route(
-            "/api/erp/master-data-refs/metadata/schemas/{schema_id}",
+            "/master-data-refs/metadata/schemas/{schema_id}",
             get(get_schema_handler).put(update_schema_handler),
         )
         .route(
-            "/api/erp/master-data-refs/metadata/validate",
+            "/master-data-refs/metadata/validate",
             post(validate_record_handler),
         )
         .route(
-            "/api/erp/master-data-refs/metadata/records",
+            "/master-data-refs/metadata/records",
             post(upsert_record_handler).get(query_records_handler),
         )
         .route(
-            "/api/erp/master-data-refs/metadata/records/{record_id}",
+            "/master-data-refs/metadata/records/{record_id}",
             get(get_record_handler),
         )
         .route(
-            "/api/erp/master-data-refs/metadata/relations",
+            "/master-data-refs/metadata/relations",
             post(create_relation_handler).get(get_relations_handler),
         )
         .route(
-            "/api/erp/master-data-refs/metadata/stats",
+            "/master-data-refs/metadata/stats",
             get(get_metadata_stats_handler),
         )
         // V48.0 AC-20: 主数据可视化仪表盘
         .route(
-            "/api/erp/master-data-refs/dashboard",
+            "/master-data-refs/dashboard",
             post(create_dashboard_handler),
         )
         .route(
-            "/api/erp/master-data-refs/dashboard/kpi/summary",
+            "/master-data-refs/dashboard/kpi/summary",
             get(get_kpi_summary_handler),
         )
         .route(
-            "/api/erp/master-data-refs/dashboard/stats",
+            "/master-data-refs/dashboard/stats",
             get(get_dashboard_stats_handler),
         )
         .route(
-            "/api/erp/master-data-refs/dashboard/{dashboard_id}",
+            "/master-data-refs/dashboard/{dashboard_id}",
             get(get_dashboard_handler)
                 .put(update_dashboard_handler)
                 .delete(delete_dashboard_handler),
         )
         .route(
-            "/api/erp/master-data-refs/dashboard/{dashboard_id}/data",
+            "/master-data-refs/dashboard/{dashboard_id}/data",
             get(get_dashboard_data_handler),
         )
         .route(
-            "/api/erp/master-data-refs/dashboard/{dashboard_id}/refresh",
+            "/master-data-refs/dashboard/{dashboard_id}/refresh",
             post(refresh_dashboard_handler),
         )
         // V48.0 AC-20: 治理报告自动化
         .route(
-            "/api/erp/master-data-refs/reports/templates",
+            "/master-data-refs/reports/templates",
             get(list_report_templates_handler).post(create_report_template_handler),
         )
         .route(
-            "/api/erp/master-data-refs/reports/templates/{template_id}",
+            "/master-data-refs/reports/templates/{template_id}",
             get(get_report_template_handler),
         )
         .route(
-            "/api/erp/master-data-refs/reports/generate",
+            "/master-data-refs/reports/generate",
             post(generate_report_handler),
         )
         .route(
-            "/api/erp/master-data-refs/reports/generated",
+            "/master-data-refs/reports/generated",
             get(list_generated_reports_handler),
         )
         .route(
-            "/api/erp/master-data-refs/reports/generated/{report_id}",
+            "/master-data-refs/reports/generated/{report_id}",
             get(get_generated_report_handler),
         )
         .route(
-            "/api/erp/master-data-refs/reports/schedule",
+            "/master-data-refs/reports/schedule",
             post(schedule_report_handler),
         )
         .route(
-            "/api/erp/master-data-refs/reports/schedule/{template_id}",
+            "/master-data-refs/reports/schedule/{template_id}",
             get(get_report_schedule_handler),
         )
         .route(
-            "/api/erp/master-data-refs/reports/stats",
+            "/master-data-refs/reports/stats",
             get(get_report_automation_stats_handler),
         )
         // V48.0 AC-20: 合规审计
         .route(
-            "/api/erp/master-data-refs/audit/rules",
+            "/master-data-refs/audit/rules",
             get(list_compliance_rules_handler).post(create_compliance_rule_handler),
         )
         .route(
-            "/api/erp/master-data-refs/audit/check",
+            "/master-data-refs/audit/check",
             post(run_compliance_check_handler),
         )
         .route(
-            "/api/erp/master-data-refs/audit/findings",
+            "/master-data-refs/audit/findings",
             get(get_audit_findings_handler),
         )
         .route(
-            "/api/erp/master-data-refs/audit/findings/{finding_id}/resolve",
+            "/master-data-refs/audit/findings/{finding_id}/resolve",
             post(resolve_finding_handler),
         )
         .route(
-            "/api/erp/master-data-refs/audit/report",
+            "/master-data-refs/audit/report",
             get(generate_audit_report_handler),
         )
         .route(
-            "/api/erp/master-data-refs/audit/scorecard",
+            "/master-data-refs/audit/scorecard",
             get(get_audit_scorecard_handler),
         )
         .route(
-            "/api/erp/master-data-refs/audit/stats",
+            "/master-data-refs/audit/stats",
             get(get_compliance_audit_stats_handler),
         )
 }
