@@ -32,11 +32,16 @@ pub async fn create_phase(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<CreatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     match check_project_permission(
-        &state.db,
+        &mut **txn,
         &claims,
         &payload.project_id,
         &ProjectPermission::ManagePhases,
@@ -95,14 +100,14 @@ pub async fn create_phase(
     .bind(payload.predecessor_id)
     .bind(None::<i32>)
     .bind(None::<i32>)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
 
     match result {
         Ok(phase) => {
-            let _ = project_progress::update_project_progress(&state.db, payload.project_id).await;
+            let _ = project_progress::update_project_progress(&mut **txn, payload.project_id).await;
             invalidate_project_cache(&payload.project_id.to_string()).await;
 
             tracing::info!(
@@ -111,6 +116,12 @@ pub async fn create_phase(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目阶段成功"
             );
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(phase, "项目阶段创建成功"))
         }
         Err(SqlxError::Database(db_err)) => {
@@ -143,9 +154,14 @@ pub async fn get_project_phases(
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
-    match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::Read).await
+    match check_project_permission(&mut **txn, &claims, &project_id, &ProjectPermission::Read).await
     {
         Ok(_) => {}
         Err(e) => return e,
@@ -177,7 +193,7 @@ pub async fn get_project_phases(
     )
     .bind(project_id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
@@ -212,15 +228,20 @@ pub async fn update_phase(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<UpdatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let project_id = match sqlx::query_scalar::<_, Uuid>(
         "SELECT project_id FROM rs.project_phases WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(pid)) => pid,
@@ -232,7 +253,7 @@ pub async fn update_phase(
     };
 
     match check_project_permission(
-        &state.db,
+        &mut **txn,
         &claims,
         &project_id,
         &ProjectPermission::ManagePhases,
@@ -292,14 +313,14 @@ pub async fn update_phase(
     .bind(payload.weight)
     .bind(payload.predecessor_id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
 
     match result {
         Ok(phase) => {
-            let _ = project_progress::update_project_progress(&state.db, phase.project_id).await;
+            let _ = project_progress::update_project_progress(&mut **txn, phase.project_id).await;
             invalidate_project_cache(&phase.project_id.to_string()).await;
 
             tracing::info!(
@@ -308,6 +329,12 @@ pub async fn update_phase(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目阶段成功"
             );
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(phase, "项目阶段更新成功"))
         }
         Err(SqlxError::RowNotFound) => {
@@ -347,7 +374,12 @@ pub async fn delete_phase(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -363,7 +395,7 @@ pub async fn delete_phase(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await
     {
         Ok(Some(pid)) => pid,
@@ -375,7 +407,7 @@ pub async fn delete_phase(
     };
 
     match check_project_permission(
-        &state.db,
+        &mut **txn,
         &claims,
         &project_id,
         &ProjectPermission::ManagePhases,
@@ -393,7 +425,7 @@ pub async fn delete_phase(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let maybe_project_id = match get_result {
@@ -417,7 +449,7 @@ pub async fn delete_phase(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
@@ -425,7 +457,7 @@ pub async fn delete_phase(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             if let Some(project_id) = maybe_project_id {
-                let _ = project_progress::update_project_progress(&state.db, project_id).await;
+                let _ = project_progress::update_project_progress(&mut **txn, project_id).await;
                 invalidate_project_cache(&project_id.to_string()).await;
             }
             tracing::info!(

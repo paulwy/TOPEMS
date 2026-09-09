@@ -40,12 +40,17 @@ pub fn create_routes() -> Router<super::ApiState> {
         .route("/formulas/{id}/approve", post(approve_formula))
 }
 
-async fn list_formulas(
+pub async fn list_formulas(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
@@ -72,7 +77,7 @@ async fn list_formulas(
     .bind(params.project_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -90,7 +95,7 @@ async fn list_formulas(
             .bind(&params.base.search)
             .bind(&params.status)
             .bind(params.project_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -112,12 +117,17 @@ async fn list_formulas(
     }
 }
 
-async fn create_formula(
+pub async fn create_formula(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "配方名称不能为空"));
@@ -171,7 +181,7 @@ async fn create_formula(
     .bind(&req_name)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -216,12 +226,17 @@ async fn create_formula(
     response
 }
 
-async fn get_formula(
+pub async fn get_formula(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Formula>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, Formula>(
         r#"
@@ -234,7 +249,7 @@ async fn get_formula(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -247,13 +262,18 @@ async fn get_formula(
     }
 }
 
-async fn update_formula(
+pub async fn update_formula(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Formula>(
         r#"
@@ -266,7 +286,7 @@ async fn update_formula(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -313,7 +333,7 @@ async fn update_formula(
     .bind(properties)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -357,18 +377,23 @@ async fn update_formula(
     response
 }
 
-async fn delete_formula(
+pub async fn delete_formula(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result =
         sqlx::query("UPDATE rs.formulas SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -417,12 +442,17 @@ async fn delete_formula(
     response
 }
 
-async fn get_formula_versions(
+pub async fn get_formula_versions(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<FormulaVersion>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
@@ -436,7 +466,7 @@ async fn get_formula_versions(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -448,13 +478,18 @@ async fn get_formula_versions(
     }
 }
 
-async fn create_formula_version(
+pub async fn create_formula_version(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateFormulaVersionRequest>,
 ) -> Json<ApiResponse<FormulaVersion>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let version_id = Uuid::new_v4();
     let now = Utc::now();
@@ -470,7 +505,7 @@ async fn create_formula_version(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing_formula = match existing_formula {
@@ -506,7 +541,7 @@ async fn create_formula_version(
     .bind(&existing_formula.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -523,10 +558,16 @@ async fn create_formula_version(
             .bind(serde_json::to_value(ingredients).unwrap_or(serde_json::Value::Array(vec![])))
             .bind(&req.process_steps)
             .bind(now)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await
             .ok();
 
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(version, "配方版本创建成功"))
         }
         Err(e) => {
@@ -536,13 +577,18 @@ async fn create_formula_version(
     }
 }
 
-async fn approve_formula(
+pub async fn approve_formula(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(_req): Json<crate::models::ApproveFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -564,11 +610,19 @@ async fn approve_formula(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(formula) => Json(ApiResponse::success(formula, "配方审批成功")),
+        Ok(formula) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(formula, "配方审批成功"))
+        }
         Err(e) => {
             tracing::error!("审批配方失败: {}", e);
             Json(ApiResponse::error(500, "审批配方失败"))

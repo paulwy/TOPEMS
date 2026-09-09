@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{
+    extract::{Extension, State},
+    routing::get,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 
 use topems_shared_core::response::ApiResponse;
@@ -29,73 +33,78 @@ pub fn create_routes() -> Router<super::ApiState> {
 
 pub async fn get_statistics(
     State(state): State<super::ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<RsStatistics>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let total_projects: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_projects")
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await
         .unwrap_or((0,));
 
     let pending_projects: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'pending'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let in_progress_projects: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'in_progress'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let completed_projects: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'completed'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let cancelled_projects: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'cancelled'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let total_experiments: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_experiments")
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await
         .unwrap_or((0,));
 
     let pending_experiments: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_experiments WHERE status = 'pending'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let in_progress_experiments: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_experiments WHERE status = 'in_progress'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let completed_experiments: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_experiments WHERE status = 'completed'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let total_formulas: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_formulas")
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await
         .unwrap_or((0,));
 
     let draft_formulas: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_formulas WHERE status = 'draft'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let approved_formulas: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM rs_formulas WHERE approval_status = 'approved'")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 

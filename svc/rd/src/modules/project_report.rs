@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::get,
     Json, Router,
 };
@@ -73,7 +73,12 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn get_project_summary(
     State(state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ProjectSummary>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(30))
             .format("%Y-%m-%d")
@@ -100,7 +105,7 @@ pub async fn get_project_summary(
     )
     .bind(format!("{} 00:00:00", start_date))
     .bind(format!("{} 23:59:59", end_date))
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -112,7 +117,7 @@ pub async fn get_project_summary(
                 WHERE status = 'active'
                 "#,
             )
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await
             .map(|r| r.get("total_members"))
             .unwrap_or(0);
@@ -141,7 +146,12 @@ pub async fn get_project_summary(
 pub async fn get_project_trends(
     State(state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<TrendData>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(90))
             .format("%Y-%m-%d")
@@ -164,7 +174,7 @@ pub async fn get_project_trends(
         "#,
     )
     .bind(format!("{} 00:00:00", start_date))
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -195,7 +205,12 @@ pub async fn get_project_trends(
 
 pub async fn get_project_type_stats(
     State(state): State<super::ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ProjectTypeStats>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(
         r#"
         SELECT 
@@ -208,7 +223,7 @@ pub async fn get_project_type_stats(
         ORDER BY count DESC
         "#,
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -234,7 +249,12 @@ pub async fn get_project_type_stats(
 
 pub async fn get_performance_metrics(
     State(state): State<super::ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<PerformanceMetrics>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let on_time_result = sqlx::query(
         r#"
         SELECT 
@@ -244,7 +264,7 @@ pub async fn get_performance_metrics(
         WHERE status = 'completed' AND end_date IS NOT NULL
         "#,
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let budget_result = sqlx::query(
@@ -256,7 +276,7 @@ pub async fn get_performance_metrics(
         WHERE status = 'completed' AND budget IS NOT NULL AND actual_cost IS NOT NULL
         "#,
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let duration_result = sqlx::query(
@@ -266,7 +286,7 @@ pub async fn get_performance_metrics(
         WHERE status = 'completed' AND start_date IS NOT NULL
         "#,
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let utilization_result = sqlx::query(
@@ -278,7 +298,7 @@ pub async fn get_performance_metrics(
         WHERE status = 'active'
         "#,
     )
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match (
@@ -343,7 +363,12 @@ pub struct ProjectDetailReport {
 pub async fn get_project_detail_report(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ProjectDetailReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let project = sqlx::query_as::<_, ProjectDetailReport>(
         r#"
         SELECT 
@@ -362,7 +387,7 @@ pub async fn get_project_detail_report(
         "#
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match project {

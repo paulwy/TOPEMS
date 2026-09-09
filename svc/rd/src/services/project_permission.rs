@@ -50,7 +50,7 @@ impl std::fmt::Display for ProjectPermission {
 }
 
 pub async fn get_project_role(
-    db: &PgPool,
+    db: &mut sqlx::PgConnection,
     user_id: &Uuid,
     project_id: &Uuid,
 ) -> Result<ProjectRole, sqlx::Error> {
@@ -60,7 +60,7 @@ pub async fn get_project_role(
         "#,
     )
     .bind(project_id)
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await?;
 
     if let Some(row) = result {
@@ -77,7 +77,7 @@ pub async fn get_project_role(
     )
     .bind(project_id)
     .bind(user_id.to_string())
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await?;
 
     if let Some(row) = member_result {
@@ -117,7 +117,7 @@ pub fn has_project_permission(role: &ProjectRole, permission: &ProjectPermission
 }
 
 pub async fn check_project_permission<T>(
-    db: &PgPool,
+    db: &mut sqlx::PgConnection,
     claims: &Claims,
     project_id: &Uuid,
     permission: &ProjectPermission,
@@ -137,7 +137,7 @@ pub async fn check_project_permission<T>(
         return Ok(());
     }
 
-    let role = match get_project_role(db, &user_id, project_id).await {
+    let role = match get_project_role(&mut *db, &user_id, project_id).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询项目角色失败: {}", e);
@@ -166,7 +166,7 @@ pub async fn check_project_permission<T>(
 }
 
 pub async fn check_project_owner<T>(
-    db: &PgPool,
+    db: &mut sqlx::PgConnection,
     claims: &Claims,
     project_id: &Uuid,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
@@ -185,7 +185,7 @@ pub async fn check_project_owner<T>(
         return Ok(());
     }
 
-    let role = match get_project_role(db, &user_id, project_id).await {
+    let role = match get_project_role(&mut *db, &user_id, project_id).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询项目角色失败: {}", e);

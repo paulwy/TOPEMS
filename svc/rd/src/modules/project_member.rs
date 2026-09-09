@@ -27,8 +27,13 @@ pub async fn create_member(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<CreateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -71,13 +76,19 @@ pub async fn create_member(
     .bind(allocation)
     .bind(payload.join_date)
     .bind(status)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
 
     match result {
         Ok(member) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             tracing::info!(
                 request_id = %request_id,
                 member_id = %member.id,
@@ -118,7 +129,12 @@ pub async fn get_project_members(
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -135,7 +151,7 @@ pub async fn get_project_members(
     )
     .bind(project_id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
@@ -169,8 +185,13 @@ pub async fn update_member(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<UpdateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -213,13 +234,19 @@ pub async fn update_member(
     .bind(payload.leave_date)
     .bind(payload.status.map(|s| s.to_string()))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
 
     match result {
         Ok(member) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             tracing::info!(
                 request_id = %request_id,
                 member_id = %member.id,
@@ -265,7 +292,12 @@ pub async fn delete_member(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -279,7 +311,7 @@ pub async fn delete_member(
     let result = sqlx::query(r#"DELETE FROM rs.project_members WHERE id = $1 AND tenant_id = $2"#)
         .bind(id)
         .bind(tenant_id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     let duration = Utc::now() - start_time;

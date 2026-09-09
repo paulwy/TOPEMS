@@ -10,7 +10,7 @@
 //! - POST /change-requests/{id}/change-orders（仅 Approved 可建变更单）、GET /change-orders
 
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
@@ -150,8 +150,13 @@ const CHANGE_ORDER_RETURN: &str = r#"id, change_request_id, title, execution_pla
 
 pub async fn create_change_request(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateChangeRequest>,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let tenant_id = Uuid::nil();
     let now = Utc::now();
@@ -160,15 +165,13 @@ pub async fn create_change_request(
     let scope_phases = req.scope_phases.unwrap_or(0).max(0);
     let impact_score = assess_change_impact(&priority, scope_docs as u32, scope_phases as u32);
 
-    let result: Result<ChangeRequest, sqlx::Error> = sqlx::query_as(
-        &format!(
-            r#"INSERT INTO rs.change_requests
+    let result: Result<ChangeRequest, sqlx::Error> = sqlx::query_as(&format!(
+        r#"INSERT INTO rs.change_requests
             (id, tenant_id, project_id, title, description, change_type, priority, status,
              impact_score, scope_docs, scope_phases, proposed_by, created_at, updated_at)
             VALUES ($1,$2,$3,$4,$5,$6,$7,'submitted',$8,$9,$10,$11,$12,$12)
             RETURNING {CHANGE_REQUEST_RETURN}"#
-        ),
-    )
+    ))
     .bind(id)
     .bind(tenant_id)
     .bind(req.project_id)
@@ -181,7 +184,7 @@ pub async fn create_change_request(
     .bind(scope_phases)
     .bind(&req.proposed_by)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -202,8 +205,17 @@ pub async fn create_change_request(
 pub async fn list_change_requests(
     State(state): State<ApiState>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
-    let page = params.get("page").and_then(|v| v.as_i64()).unwrap_or(1).max(1);
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let page = params
+        .get("page")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(1)
+        .max(1);
     let page_size = params
         .get("page_size")
         .and_then(|v| v.as_i64())
@@ -223,12 +235,12 @@ pub async fn list_change_requests(
     .bind(status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let total: Result<i64, sqlx::Error> =
         sqlx::query_scalar("SELECT COUNT(*) FROM rs.change_requests")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
     match (result, total) {
@@ -252,12 +264,17 @@ pub async fn list_change_requests(
 pub async fn get_change_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests WHERE id = $1"
     ))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -282,8 +299,13 @@ pub async fn get_change_request(
 pub async fn update_change_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateChangeRequest>,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
     let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
         r#"UPDATE rs.change_requests SET
@@ -313,7 +335,7 @@ pub async fn update_change_request(
     .bind(req.scope_phases)
     .bind(&req.proposed_by)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -338,19 +360,30 @@ pub async fn update_change_request(
 pub async fn delete_change_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     match sqlx::query("DELETE FROM rs.change_requests WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await
     {
         Ok(res) if res.rows_affected() > 0 => (
             StatusCode::OK,
-            Json(ApiResponse::success(serde_json::json!({"deleted": true}), "变更请求已删除")),
+            Json(ApiResponse::success(
+                serde_json::json!({"deleted": true}),
+                "变更请求已删除",
+            )),
         ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<serde_json::Value>::error(404, "变更请求不存在")),
+            Json(ApiResponse::<serde_json::Value>::error(
+                404,
+                "变更请求不存在",
+            )),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -365,12 +398,17 @@ pub async fn delete_change_request(
 pub async fn transition_change_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<TransitionRequest>,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let current: Result<Option<String>, sqlx::Error> =
         sqlx::query_scalar("SELECT status FROM rs.change_requests WHERE id = $1")
             .bind(id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
     let current = match current {
@@ -410,14 +448,25 @@ pub async fn transition_change_request(
     .bind(id)
     .bind(&req.to)
     .bind(now)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(Some(cr)) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(cr, "状态流转成功")),
-        ),
+        Ok(Some(cr)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "提交事务失败")),
+                    );
+                }
+            }
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(cr, "状态流转成功")),
+            )
+        }
         Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::<ChangeRequest>::error(404, "变更请求不存在")),
@@ -435,13 +484,18 @@ pub async fn transition_change_request(
 pub async fn create_change_order(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateChangeOrder>,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     // 仅 Approved 状态可创建变更单
     let status: Result<Option<String>, sqlx::Error> =
         sqlx::query_scalar("SELECT status FROM rs.change_requests WHERE id = $1")
             .bind(id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut **txn)
             .await;
 
     let approved = match status {
@@ -487,7 +541,7 @@ pub async fn create_change_order(
     .bind(&req.executed_by)
     .bind(&req.notes)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -507,11 +561,16 @@ pub async fn create_change_order(
 
 pub async fn list_change_orders(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result: Result<Vec<ChangeOrder>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {CHANGE_ORDER_RETURN} FROM rs.change_orders ORDER BY created_at DESC"
     ))
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -531,7 +590,10 @@ pub async fn list_change_orders(
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/change-requests", get(list_change_requests).post(create_change_request))
+        .route(
+            "/change-requests",
+            get(list_change_requests).post(create_change_request),
+        )
         .route(
             "/change-requests/{id}",
             get(get_change_request)

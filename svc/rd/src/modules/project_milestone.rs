@@ -33,8 +33,13 @@ pub async fn create_milestone(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<CreateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -73,7 +78,7 @@ pub async fn create_milestone(
     .bind(payload.description.as_deref())
     .bind(payload.target_date)
     .bind("pending")
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
@@ -88,6 +93,12 @@ pub async fn create_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目里程碑成功"
             );
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(milestone, "项目里程碑创建成功"))
         }
         Err(SqlxError::Database(db_err)) => {
@@ -120,7 +131,12 @@ pub async fn get_project_milestones(
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -151,7 +167,7 @@ pub async fn get_project_milestones(
     )
     .bind(project_id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
@@ -188,8 +204,13 @@ pub async fn update_milestone(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(payload): Json<UpdateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -232,7 +253,7 @@ pub async fn update_milestone(
     .bind(payload.actual_date)
     .bind(payload.status.map(|s| s.to_string()))
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;
@@ -243,12 +264,12 @@ pub async fn update_milestone(
 
             if milestone.status == "achieved" {
                 let _ = project_progress::on_milestone_achieved(
-                    &state.db,
+                    &mut **txn,
                     milestone.project_id,
                     milestone.id,
                 )
                 .await;
-                let _ = project_progress::update_project_progress(&state.db, milestone.project_id)
+                let _ = project_progress::update_project_progress(&mut **txn, milestone.project_id)
                     .await;
             }
 
@@ -258,6 +279,12 @@ pub async fn update_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目里程碑成功"
             );
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(milestone, "项目里程碑更新成功"))
         }
         Err(SqlxError::RowNotFound) => {
@@ -297,7 +324,12 @@ pub async fn delete_milestone(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -313,7 +345,7 @@ pub async fn delete_milestone(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let result = sqlx::query(
@@ -324,7 +356,7 @@ pub async fn delete_milestone(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let duration = Utc::now() - start_time;

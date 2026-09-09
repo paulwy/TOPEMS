@@ -5,7 +5,7 @@
 // 表：rd.bugs / rd.builds / rd.deploys / rd.test_cases（迁移 20260908000004）
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
@@ -20,13 +20,19 @@ use super::ApiState;
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/bugs", get(list_bugs).post(create_bug))
-        .route("/bugs/{id}", get(get_bug).put(update_bug).delete(delete_bug))
+        .route(
+            "/bugs/{id}",
+            get(get_bug).put(update_bug).delete(delete_bug),
+        )
         .route("/builds", get(list_builds).post(create_build))
         .route("/builds/{id}", get(get_build))
         .route("/deploys", get(list_deploys).post(create_deploy))
         .route("/deploys/{id}", get(get_deploy))
         .route("/tests", get(list_tests).post(create_test))
-        .route("/tests/{id}", get(get_test).put(update_test).delete(delete_test))
+        .route(
+            "/tests/{id}",
+            get(get_test).put(update_test).delete(delete_test),
+        )
 }
 
 fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
@@ -84,7 +90,7 @@ fn bug_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 }
 
 async fn list_typed(
-    state: &ApiState,
+    db: &mut sqlx::PgConnection,
     table: &str,
     search_cols: &str,
     params: &ListBugsQuery,
@@ -96,7 +102,11 @@ async fn list_typed(
     // 仅内部生成 SQL；表名/列名来自本模块常量，非外部输入
     let search_sql = format!(
         "({} ILIKE '%' || $2 || '%')",
-        search_cols.split(',').map(|c| format!("{} ILIKE '%' || $2 || '%'", c)).collect::<Vec<_>>().join(" OR ")
+        search_cols
+            .split(',')
+            .map(|c| format!("{} ILIKE '%' || $2 || '%'", c))
+            .collect::<Vec<_>>()
+            .join(" OR ")
     );
     let count_sql = format!(
         "SELECT COUNT(*) FROM rd.{} WHERE ($1::text IS NULL OR status = $1) AND ($2::text IS NULL OR {})",
@@ -110,7 +120,7 @@ async fn list_typed(
     let total: i64 = sqlx::query_scalar(&count_sql)
         .bind(&params.status)
         .bind(&params.search)
-        .fetch_one(&state.db)
+        .fetch_one(&mut *db)
         .await?;
 
     let rows = sqlx::query(&list_sql)
@@ -118,7 +128,7 @@ async fn list_typed(
         .bind(&params.search)
         .bind(pagesize)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut *db)
         .await?;
 
     Ok((total, rows))
@@ -127,10 +137,16 @@ async fn list_typed(
 pub async fn list_bugs(
     State(state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let (total, rows) = match list_typed(&state, "bugs", "bug_no,bug_title", &params).await {
+    let (total, rows) = match list_typed(&mut *txn, "bugs", "bug_no,bug_title", &params).await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询缺陷列表失败: {}", e);
@@ -147,10 +163,16 @@ pub async fn list_bugs(
 pub async fn get_bug(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let row = sqlx::query("SELECT * FROM rd.bugs WHERE id = $1")
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     match row {
         Ok(Some(r)) => Ok(Json(ApiResponse::success(bug_to_json(&r), "获取缺陷成功"))),
@@ -164,8 +186,14 @@ pub async fn get_bug(
 
 pub async fn create_bug(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateBugRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let severity = req.severity.unwrap_or_else(|| "medium".to_string());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let bug_no = format!("BUG-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
@@ -179,7 +207,7 @@ pub async fn create_bug(
     .bind(&severity)
     .bind(&priority)
     .bind(&req.description)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
     match row {
         Ok(r) => Ok(Json(ApiResponse::success(bug_to_json(&r), "创建缺陷成功"))),
@@ -193,8 +221,14 @@ pub async fn create_bug(
 pub async fn update_bug(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateBugRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let row = sqlx::query(
         "UPDATE rd.bugs SET \
          bug_title = COALESCE($2, bug_title), \
@@ -213,7 +247,7 @@ pub async fn update_bug(
     .bind(&req.status)
     .bind(&req.assignee)
     .bind(&req.description)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
     match row {
         Ok(Some(r)) => Ok(Json(ApiResponse::success(bug_to_json(&r), "更新缺陷成功"))),
@@ -228,10 +262,16 @@ pub async fn update_bug(
 pub async fn delete_bug(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query("DELETE FROM rd.bugs WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
     match result {
         Ok(res) if res.rows_affected() > 0 => Ok(Json(ApiResponse::success(
@@ -278,16 +318,23 @@ fn build_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_builds(
     State(state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let (total, rows) = match list_typed(&state, "builds", "build_no,branch,commit_hash", &params).await {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("查询构建列表失败: {}", e);
-            return Err(internal_error("查询构建列表失败"));
-        }
-    };
+    let (total, rows) =
+        match list_typed(&mut *txn, "builds", "build_no,branch,commit_hash", &params).await {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询构建列表失败: {}", e);
+                return Err(internal_error("查询构建列表失败"));
+            }
+        };
     let items: Vec<serde_json::Value> = rows.iter().map(build_to_json).collect();
     Ok(Json(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
@@ -298,13 +345,22 @@ pub async fn list_builds(
 pub async fn get_build(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let row = sqlx::query("SELECT * FROM rd.builds WHERE id = $1")
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(build_to_json(&r), "获取构建成功"))),
+        Ok(Some(r)) => Ok(Json(ApiResponse::success(
+            build_to_json(&r),
+            "获取构建成功",
+        ))),
         Ok(None) => Err(not_found("构建不存在")),
         Err(e) => {
             tracing::error!("查询构建失败: {}", e);
@@ -315,8 +371,14 @@ pub async fn get_build(
 
 pub async fn create_build(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateBuildRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let build_type = req.build_type.unwrap_or_else(|| "ci".to_string());
     let trigger_type = req.trigger_type.unwrap_or_else(|| "manual".to_string());
     let build_no = format!("BUILD-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
@@ -331,10 +393,13 @@ pub async fn create_build(
     .bind(&req.commit_hash)
     .bind(&build_type)
     .bind(&trigger_type)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
     match row {
-        Ok(r) => Ok(Json(ApiResponse::success(build_to_json(&r), "创建构建成功"))),
+        Ok(r) => Ok(Json(ApiResponse::success(
+            build_to_json(&r),
+            "创建构建成功",
+        ))),
         Err(e) => {
             tracing::error!("创建构建失败: {}", e);
             Err(internal_error("创建构建失败"))
@@ -380,16 +445,23 @@ fn deploy_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_deploys(
     State(state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let (total, rows) = match list_typed(&state, "deploys", "deploy_no,app_name,version", &params).await {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("查询部署列表失败: {}", e);
-            return Err(internal_error("查询部署列表失败"));
-        }
-    };
+    let (total, rows) =
+        match list_typed(&mut *txn, "deploys", "deploy_no,app_name,version", &params).await {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询部署列表失败: {}", e);
+                return Err(internal_error("查询部署列表失败"));
+            }
+        };
     let items: Vec<serde_json::Value> = rows.iter().map(deploy_to_json).collect();
     Ok(Json(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
@@ -400,13 +472,22 @@ pub async fn list_deploys(
 pub async fn get_deploy(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let row = sqlx::query("SELECT * FROM rd.deploys WHERE id = $1")
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(deploy_to_json(&r), "获取部署成功"))),
+        Ok(Some(r)) => Ok(Json(ApiResponse::success(
+            deploy_to_json(&r),
+            "获取部署成功",
+        ))),
         Ok(None) => Err(not_found("部署不存在")),
         Err(e) => {
             tracing::error!("查询部署失败: {}", e);
@@ -417,8 +498,14 @@ pub async fn get_deploy(
 
 pub async fn create_deploy(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateDeployRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let deploy_type = req.deploy_type.unwrap_or_else(|| "rolling".to_string());
     let deploy_no = format!("DEPLOY-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
     let row = sqlx::query(
@@ -435,10 +522,13 @@ pub async fn create_deploy(
     .bind(&req.environment)
     .bind(&req.app_name)
     .bind(&req.version)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
     match row {
-        Ok(r) => Ok(Json(ApiResponse::success(deploy_to_json(&r), "创建部署成功"))),
+        Ok(r) => Ok(Json(ApiResponse::success(
+            deploy_to_json(&r),
+            "创建部署成功",
+        ))),
         Err(e) => {
             tracing::error!("创建部署失败: {}", e);
             Err(internal_error("创建部署失败"))
@@ -481,16 +571,23 @@ fn test_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_tests(
     State(state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let (total, rows) = match list_typed(&state, "test_cases", "case_no,case_name", &params).await {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("查询测试用例列表失败: {}", e);
-            return Err(internal_error("查询测试用例列表失败"));
-        }
-    };
+    let (total, rows) =
+        match list_typed(&mut *txn, "test_cases", "case_no,case_name", &params).await {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询测试用例列表失败: {}", e);
+                return Err(internal_error("查询测试用例列表失败"));
+            }
+        };
     let items: Vec<serde_json::Value> = rows.iter().map(test_to_json).collect();
     Ok(Json(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
@@ -501,13 +598,22 @@ pub async fn list_tests(
 pub async fn get_test(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let row = sqlx::query("SELECT * FROM rd.test_cases WHERE id = $1")
         .bind(id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut **txn)
         .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(test_to_json(&r), "获取测试用例成功"))),
+        Ok(Some(r)) => Ok(Json(ApiResponse::success(
+            test_to_json(&r),
+            "获取测试用例成功",
+        ))),
         Ok(None) => Err(not_found("测试用例不存在")),
         Err(e) => {
             tracing::error!("查询测试用例失败: {}", e);
@@ -518,8 +624,14 @@ pub async fn get_test(
 
 pub async fn create_test(
     State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateTestCaseRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let case_type = req.case_type.unwrap_or_else(|| "function".to_string());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let case_no = format!("TC-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
@@ -533,10 +645,13 @@ pub async fn create_test(
     .bind(&case_type)
     .bind(&priority)
     .bind(&req.related_requirement)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
     match row {
-        Ok(r) => Ok(Json(ApiResponse::success(test_to_json(&r), "创建测试用例成功"))),
+        Ok(r) => Ok(Json(ApiResponse::success(
+            test_to_json(&r),
+            "创建测试用例成功",
+        ))),
         Err(e) => {
             tracing::error!("创建测试用例失败: {}", e);
             Err(internal_error("创建测试用例失败"))
@@ -547,8 +662,14 @@ pub async fn create_test(
 pub async fn update_test(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateTestCaseRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let row = sqlx::query(
         "UPDATE rd.test_cases SET \
          case_name = COALESCE($2, case_name), \
@@ -565,10 +686,13 @@ pub async fn update_test(
     .bind(&req.priority)
     .bind(&req.status)
     .bind(&req.related_requirement)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(test_to_json(&r), "更新测试用例成功"))),
+        Ok(Some(r)) => Ok(Json(ApiResponse::success(
+            test_to_json(&r),
+            "更新测试用例成功",
+        ))),
         Ok(None) => Err(not_found("测试用例不存在")),
         Err(e) => {
             tracing::error!("更新测试用例失败: {}", e);
@@ -580,10 +704,16 @@ pub async fn update_test(
 pub async fn delete_test(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query("DELETE FROM rd.test_cases WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
     match result {
         Ok(res) if res.rows_affected() > 0 => Ok(Json(ApiResponse::success(

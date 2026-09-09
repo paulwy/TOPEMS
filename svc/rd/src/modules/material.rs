@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::get,
     Json, Router,
@@ -75,10 +75,15 @@ pub fn create_routes() -> Router<super::ApiState> {
         )
 }
 
-async fn list_material_tests(
+pub async fn list_material_tests(
     State(state): State<super::ApiState>,
     Query(params): Query<ListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -100,7 +105,7 @@ async fn list_material_tests(
     .bind(params.experiment_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -116,7 +121,7 @@ async fn list_material_tests(
             .bind(&params.base.search)
             .bind(params.project_id)
             .bind(params.experiment_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -138,10 +143,15 @@ async fn list_material_tests(
     }
 }
 
-async fn list_by_project(
+pub async fn list_by_project(
     State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
@@ -152,7 +162,7 @@ async fn list_by_project(
         "#,
     )
     .bind(project_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -164,10 +174,15 @@ async fn list_by_project(
     }
 }
 
-async fn list_by_experiment(
+pub async fn list_by_experiment(
     State(state): State<super::ApiState>,
     Path(experiment_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
@@ -178,7 +193,7 @@ async fn list_by_experiment(
         "#,
     )
     .bind(experiment_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -190,11 +205,16 @@ async fn list_by_experiment(
     }
 }
 
-async fn create_material_test(
+pub async fn create_material_test(
     State(state): State<super::ApiState>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.material_name.is_empty() {
         return Json(ApiResponse::error(400, "原料名称不能为空"));
     }
@@ -230,11 +250,17 @@ async fn create_material_test(
     .bind(&req.tested_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             let response_data = serde_json::to_value(&record).ok();
             log_audit_event(
                 &state.db,
@@ -275,10 +301,15 @@ async fn create_material_test(
     }
 }
 
-async fn get_material_test(
+pub async fn get_material_test(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<MaterialTest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
@@ -287,7 +318,7 @@ async fn get_material_test(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -300,17 +331,22 @@ async fn get_material_test(
     }
 }
 
-async fn update_material_test(
+pub async fn update_material_test(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, MaterialTest>(
         "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM rs.material_tests WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -348,11 +384,17 @@ async fn update_material_test(
     .bind(batch_number)
     .bind(test_results)
     .bind(conclusion)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             let response_data = serde_json::to_value(&record).ok();
             log_audit_event(
                 &state.db,
@@ -393,14 +435,19 @@ async fn update_material_test(
     }
 }
 
-async fn delete_material_test(
+pub async fn delete_material_test(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query("UPDATE rs.material_tests SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     let (response, status_str, error_msg) = match &result {

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -97,7 +97,14 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
 async fn list_analyses(
     State(state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<AiAnalysisQuery>,
+
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let offset = ((page - 1) * page_size) as i64;
@@ -110,11 +117,11 @@ async fn list_analyses(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar("SELECT COUNT(*) FROM rs.ai_analyses")
-        .fetch_one(&state.db)
+        .fetch_one(&mut **txn)
         .await;
 
     match (result, total) {
@@ -137,8 +144,14 @@ async fn list_analyses(
 
 async fn create_analysis(
     State(state): State<super::ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+
     let ai_service_url = resolve_ai_service_url();
 
     let ai_response = match call_ai_service(&request.prompt, &ai_service_url).await {
@@ -167,11 +180,20 @@ async fn create_analysis(
     .bind(&ai_service_url)
     .bind(&request.created_by)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(analysis) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "提交事务失败")),
+                    );
+                }
+            }
             let response = ApiResponse::success(analysis, "AI分析创建成功");
             (StatusCode::CREATED, Json(response))
         }
@@ -185,13 +207,20 @@ async fn create_analysis(
 async fn get_analysis(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+
     let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM rs.ai_analyses WHERE id = $1"
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -228,7 +257,14 @@ async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
 async fn get_entity_analyses(
     State(state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
+
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+
     let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
          FROM rs.ai_analyses
@@ -237,7 +273,7 @@ async fn get_entity_analyses(
     )
     .bind(entity_type)
     .bind(entity_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {

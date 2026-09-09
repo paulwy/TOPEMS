@@ -4,7 +4,10 @@ use tracing::instrument;
 use uuid::Uuid;
 
 #[instrument(level = "info", skip(db))]
-pub async fn calculate_project_progress(db: &PgPool, project_id: Uuid) -> Result<i32, sqlx::Error> {
+pub async fn calculate_project_progress(
+    db: &mut sqlx::PgConnection,
+    project_id: Uuid,
+) -> Result<i32, sqlx::Error> {
     let phase_stats = sqlx::query(
         r#"
         SELECT 
@@ -18,7 +21,7 @@ pub async fn calculate_project_progress(db: &PgPool, project_id: Uuid) -> Result
         "#
     )
     .bind(project_id)
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await?;
 
     let total_phases: i64 = phase_stats.get("total_phases");
@@ -45,8 +48,11 @@ pub async fn calculate_project_progress(db: &PgPool, project_id: Uuid) -> Result
 }
 
 #[instrument(level = "info", skip(db, project_id))]
-pub async fn update_project_progress(db: &PgPool, project_id: Uuid) -> Result<i32, sqlx::Error> {
-    let progress = calculate_project_progress(db, project_id).await?;
+pub async fn update_project_progress(
+    db: &mut sqlx::PgConnection,
+    project_id: Uuid,
+) -> Result<i32, sqlx::Error> {
+    let progress = calculate_project_progress(&mut *db, project_id).await?;
 
     sqlx::query(
         r#"
@@ -57,7 +63,7 @@ pub async fn update_project_progress(db: &PgPool, project_id: Uuid) -> Result<i3
     )
     .bind(progress)
     .bind(project_id)
-    .execute(db)
+    .execute(&mut *db)
     .await?;
 
     tracing::info!(project_id = %project_id, progress = progress, "项目进度已更新");
@@ -67,7 +73,7 @@ pub async fn update_project_progress(db: &PgPool, project_id: Uuid) -> Result<i3
 
 #[instrument(level = "info", skip(db, project_id, milestone_id))]
 pub async fn on_milestone_achieved(
-    db: &PgPool,
+    db: &mut sqlx::PgConnection,
     project_id: Uuid,
     milestone_id: Uuid,
 ) -> Result<(), sqlx::Error> {
@@ -77,13 +83,13 @@ pub async fn on_milestone_achieved(
         "#,
     )
     .bind(milestone_id)
-    .fetch_optional(db)
+    .fetch_optional(&mut *db)
     .await?;
 
     if let Some(row) = phase_result {
         let phase_id: Option<Uuid> = row.get("phase_id");
         if let Some(pid) = phase_id {
-            check_phase_completion(db, project_id, pid).await?;
+            check_phase_completion(&mut *db, project_id, pid).await?;
         }
     }
 
@@ -92,7 +98,7 @@ pub async fn on_milestone_achieved(
 
 #[instrument(level = "info", skip(db, _project_id, phase_id))]
 pub async fn check_phase_completion(
-    db: &PgPool,
+    db: &mut sqlx::PgConnection,
     _project_id: Uuid,
     phase_id: Uuid,
 ) -> Result<bool, sqlx::Error> {
@@ -106,7 +112,7 @@ pub async fn check_phase_completion(
         "#,
     )
     .bind(phase_id)
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await?;
 
     let total_milestones: i64 = milestone_stats.get("total_milestones");
@@ -121,7 +127,7 @@ pub async fn check_phase_completion(
             "#,
         )
         .bind(phase_id)
-        .execute(db)
+        .execute(&mut *db)
         .await?;
 
         tracing::info!(phase_id = %phase_id, "阶段已自动完成");
@@ -135,7 +141,7 @@ pub async fn check_phase_completion(
 // 项目时间线：聚合阶段/里程碑/交付物完整时间轴
 // 当前为未连接路由的预实现，后续 /projects/{id}/timeline 端点将调用此函数。
 pub async fn get_project_timeline(
-    db: &PgPool,
+    db: &mut sqlx::PgConnection,
     project_id: Uuid,
 ) -> Result<Vec<(DateTime<Utc>, String, String)>, sqlx::Error> {
     let mut timeline: Vec<(DateTime<Utc>, String, String)> = Vec::new();
@@ -149,7 +155,7 @@ pub async fn get_project_timeline(
         "#,
     )
     .bind(project_id)
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await?;
 
     for row in phases {
@@ -172,7 +178,7 @@ pub async fn get_project_timeline(
         "#,
     )
     .bind(project_id)
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await?;
 
     for row in milestones {

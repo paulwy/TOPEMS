@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::get,
     Json, Router,
 };
@@ -85,10 +85,15 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/research-costs/statistics", get(get_cost_statistics))
 }
 
-async fn list_costs(
+pub async fn list_costs(
     State(state): State<super::ApiState>,
     Query(params): Query<ListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -133,12 +138,12 @@ async fn list_costs(
         .bind(search_like(&params.base.search))
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await;
 
     match result {
         Ok(costs) => {
-            let total = count_costs(&state.db, &params).await;
+            let total = count_costs(&mut **txn, &params).await;
             Json(ApiResponse::success(
                 serde_json::json!({
                     "costs": costs,
@@ -156,7 +161,7 @@ async fn list_costs(
     }
 }
 
-async fn count_costs(state: &sqlx::PgPool, params: &ListParams) -> i64 {
+pub async fn count_costs(db: &mut sqlx::PgConnection, params: &ListParams) -> i64 {
     let mut query =
         String::from("SELECT COUNT(*) FROM rs.research_costs WHERE deleted_at IS NULL AND 1=1");
 
@@ -186,7 +191,7 @@ async fn count_costs(state: &sqlx::PgPool, params: &ListParams) -> i64 {
         .bind(&params.start_date)
         .bind(&params.end_date)
         .bind(search_like(&params.base.search))
-        .fetch_one(state)
+        .fetch_one(&mut *db)
         .await
         .unwrap_or(0)
 }
@@ -195,10 +200,15 @@ fn search_like(search: &Option<String>) -> Option<String> {
     search.as_ref().map(|s| format!("%{}%", s))
 }
 
-async fn create_cost(
+pub async fn create_cost(
     State(state): State<super::ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateResearchCostRequest>,
 ) -> Json<ApiResponse<ResearchCost>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     if req.amount <= 0.0 {
         return Json(ApiResponse::error(400, "费用金额必须大于0"));
     }
@@ -241,11 +251,19 @@ async fn create_cost(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(cost) => Json(ApiResponse::success(cost, "研发费用创建成功")),
+        Ok(cost) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(cost, "研发费用创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建研发费用失败: {}", e);
             Json(ApiResponse::error(500, "创建研发费用失败"))
@@ -253,10 +271,15 @@ async fn create_cost(
     }
 }
 
-async fn get_cost(
+pub async fn get_cost(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ResearchCost>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
         SELECT id, project_id, category, sub_category, amount, currency,
@@ -266,7 +289,7 @@ async fn get_cost(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -279,11 +302,16 @@ async fn get_cost(
     }
 }
 
-async fn update_cost(
+pub async fn update_cost(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateResearchCostRequest>,
 ) -> Json<ApiResponse<ResearchCost>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, ResearchCost>(
         r#"
         SELECT id, project_id, category, sub_category, amount, currency,
@@ -293,7 +321,7 @@ async fn update_cost(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -348,11 +376,19 @@ async fn update_cost(
     .bind(&receipt_no)
     .bind(&status)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(cost) => Json(ApiResponse::success(cost, "研发费用更新成功")),
+        Ok(cost) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(cost, "研发费用更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新研发费用失败: {}", e);
             Json(ApiResponse::error(500, "更新研发费用失败"))
@@ -360,13 +396,18 @@ async fn update_cost(
     }
 }
 
-async fn delete_cost(
+pub async fn delete_cost(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query("UPDATE rs.research_costs SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     match result {
@@ -381,10 +422,15 @@ async fn delete_cost(
     }
 }
 
-async fn list_costs_by_project(
+pub async fn list_costs_by_project(
     State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<ResearchCost>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
         SELECT id, project_id, category, sub_category, amount, currency,
@@ -396,7 +442,7 @@ async fn list_costs_by_project(
         "#,
     )
     .bind(project_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -408,10 +454,15 @@ async fn list_costs_by_project(
     }
 }
 
-async fn get_cost_statistics(
+pub async fn get_cost_statistics(
     State(state): State<super::ApiState>,
     Query(params): Query<ListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let mut query = String::from(
         r#"
         SELECT 
@@ -443,7 +494,7 @@ async fn get_cost_statistics(
         .bind(&params.start_date)
         .bind(&params.end_date)
         .bind(&params.status)
-        .fetch_all(&state.db)
+        .fetch_all(&mut **txn)
         .await;
 
     match result {

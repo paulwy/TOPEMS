@@ -47,12 +47,17 @@ pub fn create_routes() -> Router<super::ApiState> {
         .route("/batch-trace/{batch_number}", get(trace_batch))
 }
 
-async fn list_experiments(
+pub async fn list_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
@@ -81,7 +86,7 @@ async fn list_experiments(
     .bind(&params.experiment_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -101,7 +106,7 @@ async fn list_experiments(
             .bind(&params.status)
             .bind(params.project_id)
             .bind(&params.experiment_type)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -123,12 +128,17 @@ async fn list_experiments(
     }
 }
 
-async fn create_experiment(
+pub async fn create_experiment(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "试验名称不能为空"));
@@ -178,7 +188,7 @@ async fn create_experiment(
     .bind(&req.experimenter)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -223,12 +233,17 @@ async fn create_experiment(
     response
 }
 
-async fn get_experiment(
+pub async fn get_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Experiment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -241,7 +256,7 @@ async fn get_experiment(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -254,20 +269,25 @@ async fn get_experiment(
     }
 }
 
-async fn update_experiment(
+pub async fn update_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Experiment>(
         "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -311,7 +331,7 @@ async fn update_experiment(
     .bind(scale_unit)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -355,19 +375,24 @@ async fn update_experiment(
     response
 }
 
-async fn delete_experiment(
+pub async fn delete_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
         "UPDATE rs.experiments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -416,12 +441,17 @@ async fn delete_experiment(
     response
 }
 
-async fn get_experiment_records(
+pub async fn get_experiment_records(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
@@ -444,7 +474,7 @@ async fn get_experiment_records(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -462,13 +492,18 @@ async fn get_experiment_records(
     }
 }
 
-async fn create_experiment_record(
+pub async fn create_experiment_record(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateRecordRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let _tenant_id = get_tenant_id(&claims, &headers);
     let record_id = Uuid::new_v4();
     let now = Utc::now();
@@ -487,7 +522,7 @@ async fn create_experiment_record(
     .bind(serde_json::to_value(req.attachments).unwrap_or(serde_json::json!([])))
     .bind(&req.recorded_by)
     .bind(now)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -505,12 +540,17 @@ async fn create_experiment_record(
     }
 }
 
-async fn list_lab_experiments(
+pub async fn list_lab_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
@@ -536,7 +576,7 @@ async fn list_lab_experiments(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -553,7 +593,7 @@ async fn list_lab_experiments(
             .bind(tenant_id)
             .bind(&params.base.search)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -575,12 +615,17 @@ async fn list_lab_experiments(
     }
 }
 
-async fn list_pilot_experiments(
+pub async fn list_pilot_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
@@ -606,7 +651,7 @@ async fn list_pilot_experiments(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -623,7 +668,7 @@ async fn list_pilot_experiments(
             .bind(tenant_id)
             .bind(&params.base.search)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -645,12 +690,17 @@ async fn list_pilot_experiments(
     }
 }
 
-async fn list_scaleup_experiments(
+pub async fn list_scaleup_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
@@ -676,7 +726,7 @@ async fn list_scaleup_experiments(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -693,7 +743,7 @@ async fn list_scaleup_experiments(
             .bind(tenant_id)
             .bind(&params.base.search)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -715,20 +765,25 @@ async fn list_scaleup_experiments(
     }
 }
 
-async fn advance_phase(
+pub async fn advance_phase(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<AdvancePhaseRequest>,
 ) -> Json<ApiResponse<Experiment>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Experiment>(
         "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -760,11 +815,19 @@ async fn advance_phase(
     .bind(req.new_status.unwrap_or("in_progress".to_string()))
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(experiment) => Json(ApiResponse::success(experiment, "试验阶段推进成功")),
+        Ok(experiment) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(experiment, "试验阶段推进成功"))
+        }
         Err(e) => {
             tracing::error!("推进试验阶段失败: {}", e);
             Json(ApiResponse::error(500, "推进试验阶段失败"))
@@ -772,12 +835,17 @@ async fn advance_phase(
     }
 }
 
-async fn trace_batch(
+pub async fn trace_batch(
     State(state): State<super::ApiState>,
     Path(batch_number): Path<String>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
@@ -802,7 +870,7 @@ async fn trace_batch(
     )
     .bind(batch_number)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {

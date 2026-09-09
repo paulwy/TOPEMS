@@ -85,12 +85,17 @@ pub fn create_routes() -> Router<super::ApiState> {
         ("bearer_auth" = [])
     )
 )]
-async fn list_projects(
+pub async fn list_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListProjectsQuery>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -115,7 +120,7 @@ async fn list_projects(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -131,7 +136,7 @@ async fn list_projects(
             .bind(tenant_id)
             .bind(&params.search)
             .bind(&params.status)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -167,12 +172,17 @@ async fn list_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn create_project(
+pub async fn create_project(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -215,7 +225,7 @@ async fn create_project(
     .bind(serde_json::Value::Array(vec![]))
     .bind(None::<Uuid>)
     .bind(None::<Uuid>)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, project_id) = match &result {
@@ -318,14 +328,19 @@ async fn create_project(
         ("bearer_auth" = [])
     )
 )]
-async fn get_project(
+pub async fn get_project(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Project>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
-    match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Read).await {
+    match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Read).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -347,7 +362,7 @@ async fn get_project(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -381,15 +396,20 @@ async fn get_project(
         ("bearer_auth" = [])
     )
 )]
-async fn update_project(
+pub async fn update_project(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
-    match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Update).await {
+    match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Update).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -399,7 +419,7 @@ async fn update_project(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing {
@@ -441,7 +461,7 @@ async fn update_project(
     .bind(progress)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -505,14 +525,19 @@ async fn update_project(
         ("bearer_auth" = [])
     )
 )]
-async fn delete_project(
+pub async fn delete_project(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
-    match check_project_owner(&state.db, &claims, &id).await {
+    match check_project_owner(&mut **txn, &claims, &id).await {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -521,7 +546,7 @@ async fn delete_project(
         sqlx::query("UPDATE projects SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
     let (response, status_str, error_msg) = match &result {
@@ -586,12 +611,17 @@ async fn delete_project(
         ("bearer_auth" = [])
     )
 )]
-async fn batch_create_projects(
+pub async fn batch_create_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<BatchCreateRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut success = 0;
     let mut errors = Vec::new();
@@ -673,6 +703,13 @@ async fn batch_create_projects(
     }
 
     let total = req.projects.len();
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     let result = BatchOperationResult {
         total,
         success,
@@ -728,12 +765,17 @@ async fn batch_create_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn batch_delete_projects(
+pub async fn batch_delete_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     if req.ids.is_empty() {
         return Json(ApiResponse::error(400, "未提供要删除的项目 ID"));
@@ -744,11 +786,17 @@ async fn batch_delete_projects(
     )
     .bind(&req.ids)
     .bind(tenant_id)
-    .execute(&state.db)
+    .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             let affected = r.rows_affected() as usize;
             let total = req.ids.len();
             let result = BatchOperationResult {
@@ -828,11 +876,16 @@ async fn batch_delete_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn export_projects(
+pub async fn export_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Response {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, Project>(
         r#"
@@ -846,7 +899,7 @@ async fn export_projects(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -1045,12 +1098,17 @@ async fn export_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn import_projects(
+pub async fn import_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     bytes: Bytes,
 ) -> Json<ApiResponse<BatchOperationResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut rdr = csv::Reader::from_reader(&bytes[..]);
     let _ = match rdr.headers() {
@@ -1167,7 +1225,7 @@ async fn import_projects(
                 .bind(serde_json::Value::Array(vec![]))
                 .bind(None::<Uuid>)
                 .bind(None::<Uuid>)
-                .fetch_one(&state.db)
+                .fetch_one(&mut **txn)
                 .await;
 
                 match insert_result {
@@ -1255,12 +1313,17 @@ pub struct ProjectDashboardResponse {
         ("bearer_auth" = [])
     )
 )]
-async fn get_project_dashboard(
+pub async fn get_project_dashboard(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let project_result = sqlx::query_as::<_, Project>(
         r#"
@@ -1273,7 +1336,7 @@ async fn get_project_dashboard(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let project = match project_result {
@@ -1288,7 +1351,7 @@ async fn get_project_dashboard(
     let phases_result =
         sqlx::query(r#"SELECT status, progress FROM rs.project_phases WHERE project_id = $1"#)
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await;
 
     let phases = phases_result.unwrap_or_default();
@@ -1326,7 +1389,7 @@ async fn get_project_dashboard(
         r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#,
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let members: Vec<serde_json::Value> = members_result
@@ -1343,7 +1406,7 @@ async fn get_project_dashboard(
     let milestones_result =
         sqlx::query(r#"SELECT status FROM rs.project_milestones WHERE project_id = $1"#)
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut **txn)
             .await;
 
     let milestones = milestones_result.unwrap_or_default();
@@ -1447,12 +1510,17 @@ pub struct ProjectGanttResponse {
         ("bearer_auth" = [])
     )
 )]
-async fn get_project_gantt(
+pub async fn get_project_gantt(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let phases_result = sqlx::query_as::<_, crate::models::ProjectPhase>(
         r#"
@@ -1464,7 +1532,7 @@ async fn get_project_gantt(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let phases = match phases_result {
@@ -1498,7 +1566,7 @@ async fn get_project_gantt(
         "#,
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let milestones = match milestones_result {
@@ -1524,7 +1592,7 @@ async fn get_project_gantt(
         r#"SELECT employee_id as user_id, role FROM rs.project_members WHERE project_id = $1"#,
     )
     .bind(id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let gantt_resources: Vec<GanttResource> = members_result

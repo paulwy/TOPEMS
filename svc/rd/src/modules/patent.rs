@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::get,
     Json, Router,
@@ -112,10 +112,15 @@ fn row_to_patent(row: sqlx::postgres::PgRow) -> Patent {
     }
 }
 
-async fn list_patents(
+pub async fn list_patents(
     State(state): State<crate::modules::ApiState>,
     Query(params): Query<ListParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -138,7 +143,7 @@ async fn list_patents(
     .bind(params.project_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -155,7 +160,7 @@ async fn list_patents(
             .bind(&params.base.search)
             .bind(&params.status)
             .bind(params.project_id)
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -177,10 +182,15 @@ async fn list_patents(
     }
 }
 
-async fn list_patents_by_project(
+pub async fn list_patents_by_project(
     State(state): State<crate::modules::ApiState>,
     Path(project_id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Vec<Patent>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(
         r#"
         SELECT id, project_id, name, patent_number, application_date, grant_date,
@@ -192,7 +202,7 @@ async fn list_patents_by_project(
         "#,
     )
     .bind(project_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -207,10 +217,15 @@ async fn list_patents_by_project(
     }
 }
 
-async fn create_patent(
+pub async fn create_patent(
     State(state): State<crate::modules::ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreatePatentRequest>,
 ) -> Json<ApiResponse<Patent>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -241,11 +256,19 @@ async fn create_patent(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(patent) => Json(ApiResponse::success(patent, "专利创建成功")),
+        Ok(patent) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(patent, "专利创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建专利失败: {}", e);
             Json(ApiResponse::error(500, "专利创建失败"))
@@ -253,10 +276,15 @@ async fn create_patent(
     }
 }
 
-async fn get_patent(
+pub async fn get_patent(
     State(state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<Patent>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(
         r#"
         SELECT id, project_id, name, patent_number, application_date, grant_date,
@@ -266,7 +294,7 @@ async fn get_patent(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -279,17 +307,22 @@ async fn get_patent(
     }
 }
 
-async fn update_patent(
+pub async fn update_patent(
     State(state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdatePatentRequest>,
 ) -> Json<ApiResponse<Patent>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let existing_result = sqlx::query(
         "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM rs.patents WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     let existing = match existing_result {
@@ -332,7 +365,7 @@ async fn update_patent(
     .bind(description)
     .bind(abstract_text)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -344,13 +377,18 @@ async fn update_patent(
     }
 }
 
-async fn delete_patent(
+pub async fn delete_patent(
     State(state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> Json<ApiResponse<String>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query("UPDATE rs.patents SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut **txn)
         .await;
 
     match result {

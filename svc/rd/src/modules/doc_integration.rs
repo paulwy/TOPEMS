@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -63,10 +63,15 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
         )
 }
 
-async fn list_documents(
+pub async fn list_documents(
     State(state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<DocRelationQuery>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let offset = ((page - 1) * page_size) as i64;
@@ -79,12 +84,12 @@ async fn list_documents(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     let total: Result<i64, sqlx::Error> =
         sqlx::query_scalar("SELECT COUNT(*) FROM rs.document_relations")
-            .fetch_one(&state.db)
+            .fetch_one(&mut **txn)
             .await;
 
     match (result, total) {
@@ -105,10 +110,15 @@ async fn list_documents(
     }
 }
 
-async fn create_document_relation(
+pub async fn create_document_relation(
     State(state): State<super::ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(request): Json<CreateDocumentRelationRequest>,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -131,11 +141,20 @@ async fn create_document_relation(
     .bind(&request.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.db)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(document) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "提交事务失败")),
+                    );
+                }
+            }
             let response = ApiResponse::success(document, "文档关联创建成功");
             (StatusCode::CREATED, Json(response))
         }
@@ -147,16 +166,21 @@ async fn create_document_relation(
     }
 }
 
-async fn get_document_relation(
+pub async fn get_document_relation(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result: Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
          FROM rs.document_relations WHERE id = $1"
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -176,14 +200,19 @@ async fn get_document_relation(
     }
 }
 
-async fn delete_document_relation(
+pub async fn delete_document_relation(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> =
         sqlx::query("DELETE FROM rs.document_relations WHERE id = $1")
             .bind(id)
-            .execute(&state.db)
+            .execute(&mut **txn)
             .await;
 
     match result {
@@ -202,10 +231,15 @@ async fn delete_document_relation(
     }
 }
 
-async fn get_entity_documents(
+pub async fn get_entity_documents(
     State(state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
     let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
          FROM rs.document_relations
@@ -214,7 +248,7 @@ async fn get_entity_documents(
     )
     .bind(entity_type)
     .bind(entity_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
