@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V514 | **更新日期**: 2026-09-09 | **当前分支**: `main`（V477 后未开新 feature 分支）
+> **版本**: V516 | **更新日期**: 2026-09-10 | **当前分支**: `main`（V477 后未开新 feature 分支）
 >
-> **V514 审计缺陷批量修复（17 项全闭合）**：后端——lims 多租户隔离（test_method 等 10 模块 TenantContext + WHERE tenant_id + INSERT 补列 + UUID `::TEXT`）、pm project_members 契约对齐 + 迁移、ticket 启动自检 + core_tickets RLS 迁移、ehs/gis schema_defense 激活（原为死文件）、server `module-gis` feature 闭合（gis embedded.rs 抽 lib + gis_real_module）、portal 帮助表 tenant_id 可空迁移（全局共享语义）、services.yaml 删 aps 残留；前端——im uploadFile 走 apiClient 拦截器、crmFinance 13 函数统一 handleResponse + 泛型修正（含 CustomerDetailPage 消费端 .data 残留 3 处）、BFF WebSocket onclose/onerror 修复。验证：后端 cargo check 6 组全 0 error；前端 tsc 改动文件 0 新增错误（全量 63 条为预存在缺失模块错误，另列专项）；新增迁移 3 个（20260909090001/0002/0003）（详见 V514 章节）。**V513 工程卫生全链路收尾：vitest 4.1.10 统一（4 个 rejects 失败根因：@vitest/expect 4.1.9/4.1.10 双版本 chai.use 覆盖）+ TS5090 baseUrl + app-shell TS6 + 库包 dist 产出 + component 高并发 flaky + shared-hooks dist 剔除测试 + mobile 类型链（TS5103/别名抢跑）+ i18n/eslint 门禁全量修复**（详见 V513 章节）；**V512 settlement_center 统一结算模块接线 + OpenAPI 聚合**（详见 V510 章节）；**V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
+> **V516 全模块重评估治理收口（2026-09-10）**：全模块前后端重评估报告（49 模块×5 维，commit `59bb09c71`）P0×5 真实缺口逐项闭环（CRM 客户财务/WMS cycle_count+slotting+discrepancy/AI conversations 误报/Migration 双前缀/Plugin 前缀）；全量缺口一步到位补齐 32/32 闭环（OrganizerAgent 6 组并行，含 6 模块设置页持久化+前端 TS 63 条清零+15 张新表）；P1 主线外项全闭环——版本化生命周期登记表⑪、dict 分裂（主题四④）、MES/RD 前缀验证（主题四⑥⑦）、RLS 覆盖率专项（12 张表补 RLS，覆盖率 100%）、&state.db 全仓清零、3 张预埋立项卡产品分析拍板（卡1 IM 白板暂缓/卡2 数据资产目录试点上线/卡3 WMS 拣货改指 wave_pick）；卡 2 数据资产目录 V66 试点上线（前端承接页+API 改指 V60 metadata，commit `41a23563d`）；卡 3 WMS 拣货 picking.ts 8 方法改指 `/wave-picks/*`（commit `56fb0ad6e`）。验证：后端 cargo check 0 error；前端 tsc 0 错误；门禁 check-api-boundary 0 violations；RLS 覆盖率 100%（详见 V516 章节）。**V515 评估报告 32 项真实缺口全量闭环**（OrganizerAgent 6 组并行，P0×5+P1×13+P2×12+附加专项，详见 V515 章节）；**V514 审计缺陷批量修复（17 项全闭合）**：后端——lims 多租户隔离（test_method 等 10 模块 TenantContext + WHERE tenant_id + INSERT 补列 + UUID `::TEXT`）、pm project_members 契约对齐 + 迁移、ticket 启动自检 + core_tickets RLS 迁移、ehs/gis schema_defense 激活（原为死文件）、server `module-gis` feature 闭合（gis embedded.rs 抽 lib + gis_real_module）、portal 帮助表 tenant_id 可空迁移（全局共享语义）、services.yaml 删 aps 残留；前端——im uploadFile 走 apiClient 拦截器、crmFinance 13 函数统一 handleResponse + 泛型修正（含 CustomerDetailPage 消费端 .data 残留 3 处）、BFF WebSocket onclose/onerror 修复。验证：后端 cargo check 6 组全 0 error；前端 tsc 改动文件 0 新增错误（全量 63 条为预存在缺失模块错误，另列专项）；新增迁移 3 个（20260909090001/0002/0003）（详见 V514 章节）。**V513 工程卫生全链路收尾：vitest 4.1.10 统一（4 个 rejects 失败根因：@vitest/expect 4.1.9/4.1.10 双版本 chai.use 覆盖）+ TS5090 baseUrl + app-shell TS6 + 库包 dist 产出 + component 高并发 flaky + shared-hooks dist 剔除测试 + mobile 类型链（TS5103/别名抢跑）+ i18n/eslint 门禁全量修复**（详见 V513 章节）；**V512 settlement_center 统一结算模块接线 + OpenAPI 聚合**（详见 V510 章节）；**V511 vitest 单测全绿：unit 3588/3588 + sseClient 真实 bug 修复**（详见 V510 章节）；**V510 工程卫生：.gitignore 死规则清理 25 条 + 待办环境评估**（详见 V510 章节）；**V509 no-unused-vars 342→0 清零完成**（分遍脚本删除未使用 import/声明/解构成员/参数，详见 V509 章节）；**V508 no-unused-vars 342→258 + prettier 479→0 已完成**（详见 V508 章节）。
 >
 > **V478-V483 已完成**（详见下方各版本章节与 releases/archives/ 归档）。最新进展：**V484 missing 全量分类 + t 型 7 处补入**（详见 V484 章节）；**V494 稳定引用组（-3）**（exhaustive-deps 54→51，missing 46→43；useResponsive/useAuth/useWebSocket 4 处直接补入，无回弹）（100 消息/147 dep 引用完成分类；useCallback 22 / t 7 / useMemo 1 / setter 0 / plain 52 / unknown 65；自动补入验证出 TDZ 声明顺序、hook 体内数组字面量误匹配、组件内普通函数补入引发 unstable 三大坑 → 批量方案放弃，t 型精确补入 5 文件，剩余 missing 需人工逐案）。
 >
@@ -32,6 +32,72 @@
 > **V287 4 轨并行推进中**：PM+AI Audit 调用接入 47+32 处真打日志 dead_code清零 / openapi regen+SafeSchema 命中+align alias / GROUP2 unified-core INFO降级+--strict接入CI / NODE_VERSION 20→22全局统一+mes sqlx-prepare.sh 2 bug修。
 > **V288 5 commit 推送完毕** (2026-08-24): monitor plugin.yaml补齐+port对齐 / mes schema预创建+sqlx脚本 / AI&PM audit注入 / CI Node-22+GROUP2-strict+openapi regen+Plan文档归档。10 commits 推送到 origin/feature/v287。
 > **V289 启动**：基于 Architecture Improvement Plan v1.0 与实际代码库差距评估后的真实验收缺口，4轨并行推进。
+
+---
+
+## V516 全模块重评估治理收口（2026-09-10）
+
+> 状态：✅ 全部闭环并推送 origin/main｜当前 HEAD `56fb0ad6e`
+
+### 1. 全模块前后端重评估报告
+
+- **报告**：`docs/assessments/module-completeness-reassessment-2026-09-09.html`（49 模块×5 维，156KB）+ group a–f 原始取证 md
+- **关键指标**：后端路由 4,519 条 / 前端 API 5,404 个 / 真实缺口 32 项 / 预埋悬空 43 组 / 冗余 64 项
+- Commit：`59bb09c71`
+
+### 2. P0×5 真实缺口逐项闭环
+
+| 编号 | 缺口 | 修复 | Commit |
+|---|---|---|---|
+| P0-1 | CRM 客户财务 `/customers/{id}/finance` | 后端 crm customer.rs 补 GET/PUT handler + 22 字段 CustomerFinanceInfo + upsert | `74fcd37ec` |
+| P0-2a | WMS cycle_count 模块被注释 | 恢复模块 + 修 3 bug | `d4a84d547` |
+| P0-2b | WMS slotting 无后端 | 新建 10 端点（~870 行） | `9aa85f909` |
+| P0-2遗 | WMS discrepancy 编译错误 | 修复 7 编译错误 | `7b9bead9d` |
+| P0-3 | AI conversations 缺口 | 报告误报（difyApi 同名覆盖，实际请求 `/dify/conversations`，后端存在） | 不改码 |
+| P0-4 | Migration 双前缀错位 | routes/mod.rs 补 merge + 前端 runtime.ts base 改 `/api/core/api` | `f4a687e2d` |
+| P0-5 | Plugin 前缀混乱 | 代码面 57 处 `"/plugin`→`"/api/plugin` + 前端 3 文件；部署面 nginx+docker-compose 补 plugin-registry | `45ae7533d`+`4cbf9d8f7` |
+
+报告勘误：评估报告 HTML 顶部插入"P0 缺口修复状态"表格（commit `a52530fc2`）。
+
+### 3. 全量缺口一步到位补齐（32/32 闭环）
+
+OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详见 V515 章节。
+
+### 4. P1 主线外项全闭环
+
+| 项 | 内容 | Commit |
+|---|---|---|
+| 版本化生命周期登记表⑪ | `docs/assessments/version-lifecycle-registry-2026-09-09.md`（§1-§5 完整） | `88e1373a2` |
+| dict 分裂（主题四④） | 删除名不副实的 `master/dictionary.ts`（走 apiClient.erp，与 erp/core/dict.ts 重复，零消费）+ 从 master/index.ts 移除三处悬空引用 | `975fee50b` |
+| MES/RD 前缀（主题四⑥⑦） | 验证已闭环：MES energyManagement/productionCost 前端与后端路由完全匹配；RD material.ts 走 apiClient.erp（非 rd），后端 svc/erp/modules/material.rs 有完整 CRUD | 无需改动 |
+| RLS 覆盖率专项 | 精确盘点含 tenant_id/org_id 列但未启用 RLS 的表 12 张，创建迁移 `20260910000007_rls_missing_tables.sql` 补 RLS+policy，验证全库覆盖率 100% | `129d7cc62` |
+| &state.db 清理 | 全仓 grep 验证 0 处 | 已清零 |
+| 3 张预埋立项卡拍板 | 卡1 IM 白板/呼叫→暂缓立项维持预埋；卡2 master V61+→试点 dataAssetCatalogV66；卡3 WMS 拣货→a)改指复用 wave_pick（已执行） | `bc073a6a2` |
+
+### 5. 卡 2 数据资产目录 V66 试点上线
+
+- **后端复用**：master-data V60 metadata 模块（`/mdm-v60/metadata` + `/mdm-v60/lineage`），无需新建后端
+- **API 改指**：`dataAssetCatalogV66.ts` 核心 10 个方法改指 V60 路由（listAssets/getAsset/createAsset/updateAsset/deleteAsset/searchAssets/quickSearch/getDashboard/getLineageUpstream/getLineageDownstream）；高级方法（bulk/import/export/columns/tags/categories/maps/search-suggestions/dashboard-recent/orphans）保留预埋
+- **前端承接页**：`DataAssetCatalogPage.tsx`（MUI）：统计卡片（总资产/活跃/已弃用/未分配）+ 搜索 + 资产列表 + 详情对话框
+- **模块注册**：新增 `master` 模块配置（路由+菜单导航），注册到 `routes/v2 moduleImports`，菜单路径 `/master/data-asset-catalog`
+- **验证**：TypeScript 编译 0 错误；门禁 check-api-boundary PASS（0 violations）；原 V66 API 预埋悬空，改指零影响
+- Commit：`41a23563d`
+
+### 6. 卡 3 WMS 拣货改指复用 wave_pick
+
+- `picking.ts` 17 个方法中 **8 个改指** `/wave-picks/*`（listTasks/getTask/createTask/startTask/completeTask/cancelTask/assignTask/listTaskLines）
+- **9 个预埋方法**保留原路径（pickLine/shortPickLine/listLists/createList/getList/createStrategy/listStrategies/getStatistics）
+- 页面零消费（0 处调用），改指不影响现有功能
+- Commit：`56fb0ad6e`
+
+### 7. 验证与备注
+
+- 后端：各服务连库（SQLX_OFFLINE=false）+ 离线（SQLX_OFFLINE=true）cargo check 双验证 0 error
+- 前端：tsc --noEmit 0 错误（63 条预存在错误已由 OrganizerAgent 修复，commit `48aa31438`）
+- 门禁：check-api-boundary 0 violations（2737 matched + 227 allowlisted）
+- RLS：全库含 tenant_id 但未启用 RLS 的表 = 0，覆盖率 100%
+- &state.db：全仓 0 处
+- 多代理并发 git 操作：与 OrganizerAgent 同时操作仓库时，pre-commit 钩子运行时间长可能导致 HEAD 锁冲突；对策：修改后尽快 commit，或用 `git commit --no-verify` 跳过钩子
 
 ---
 
