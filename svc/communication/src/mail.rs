@@ -1456,6 +1456,127 @@ pub fn get_queue_stats() -> serde_json::Value {
     })
 }
 
+// ===== 缺口#10: mail stats / send-with-template / resend =====
+
+/// GET /mail/emails/stats
+pub async fn get_stats(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("mail get_stats by user: {}", claims.username);
+    let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!("public",
+        "SELECT COUNT(*) FROM core_emails WHERE deleted_at IS NULL"))
+        .fetch_one(&pool).await.unwrap_or(0);
+    let sent_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!("public",
+        "SELECT COUNT(*) FROM core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"))
+        .fetch_one(&pool).await.unwrap_or(0);
+    let pending_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!("public",
+        "SELECT COUNT(*) FROM core_emails WHERE sent_at IS NULL AND deleted_at IS NULL"))
+        .fetch_one(&pool).await.unwrap_or(0);
+    let today_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!("public",
+        "SELECT COUNT(*) FROM core_emails WHERE sent_at::date = CURRENT_DATE AND deleted_at IS NULL"))
+        .fetch_one(&pool).await.unwrap_or(0);
+    let last_sent_at: Option<chrono::DateTime<chrono::Utc>> = sqlx::query_scalar(only_own_schema_query!("public",
+        "SELECT MAX(sent_at) FROM core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"))
+        .fetch_optional(&pool).await.unwrap_or(None);
+    Json(serde_json::json!({
+        "success": true, "message": "ok", "code": 200,
+        "data": { "total": total, "sent_count": sent_count, "failed_count": 0,
+            "pending_count": pending_count, "today_count": today_count, "last_sent_at": last_sent_at }
+    }))
+}
+
+/// POST /mail/emails/send-with-template
+pub async fn send_with_template_by_code(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("mail send_with_template_by_code by user: {}", claims.username);
+    let template_code = match payload.get("template_code").and_then(|v| v.as_str()) {
+        Some(c) => c.to_string(),
+        None => return Json(serde_json::json!({"success":false,"message":"缺少 template_code","data":null,"code":400})),
+    };
+    let to_addresses: Vec<String> = payload.get("to_addresses").and_then(|v| v.as_array())
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default();
+    if to_addresses.is_empty() {
+        return Json(serde_json::json!({"success":false,"message":"收件人不能为空","data":null,"code":400}));
+    }
+    let cc_addresses: Option<Vec<String>> = payload.get("cc_addresses").and_then(|v| v.as_array())
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect());
+    let bcc_addresses: Option<Vec<String>> = payload.get("bcc_addresses").and_then(|v| v.as_array())
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect());
+    let template_data = payload.get("template_data").cloned().unwrap_or(serde_json::json!({}));
+
+    let result = sqlx::query(only_own_schema_query!("public",
+        "SELECT subject_template, body_template FROM core_email_templates WHERE name = $1 AND deleted_at IS NULL LIMIT 1"))
+        .bind(&template_code).fetch_optional(&pool).await;
+    let (subject_template, body_template) = match result {
+        Ok(Some(row)) => (row.get::<String,_>("subject_template"), row.get::<String,_>("body_template")),
+        Ok(None) => return Json(serde_json::json!({"success":false,"message":format!("模板 '{}' 不存在",template_code),"data":null,"code":404})),
+        Err(e) => return Json(serde_json::json!({"success":false,"message":format!("查询模板失败: {}",e),"data":null,"code":500})),
+    };
+    let hb = Handlebars::new();
+    let subject = hb.render_template(&subject_template, &template_data).unwrap_or_else(|_| subject_template.clone());
+    let body = hb.render_template(&body_template, &template_data).unwrap_or_else(|_| body_template);
+    let to = to_addresses.join(",");
+    match send_email_with_lettre("system@topems.io", &to, &subject, &body, None, cc_addresses.as_ref(), bcc_addresses.as_ref()) {
+        Ok(_) => {
+            let email_id = Uuid::new_v4();
+            let _ = sqlx::query(only_own_schema_query!("public",
+                "INSERT INTO core_emails (id, from_email, to_email, subject, body, sent_at) VALUES ($1,$2,$3,$4,$5,NOW())"))
+                .bind(email_id).bind("system@topems.io").bind(&to).bind(&subject).bind(&body).execute(&pool).await;
+            Json(serde_json::json!({"success":true,"message":"模板邮件发送成功","code":200,
+                "data":{"id":email_id.to_string(),"to":to,"subject":subject}}))
+        }
+        Err(e) => Json(serde_json::json!({"success":false,"message":format!("发送失败: {}",e),"data":null,"code":500})),
+    }
+}
+
+/// POST /mail/emails/resend
+pub async fn resend_emails(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("mail resend_emails by user: {}", claims.username);
+    let email_ids: Vec<String> = payload.get("email_ids").and_then(|v| v.as_array())
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default();
+    if email_ids.is_empty() {
+        return Json(serde_json::json!({"success":false,"message":"email_ids 不能为空","data":null,"code":400}));
+    }
+    let mut success = 0i64;
+    let mut failed = 0i64;
+    let mut failed_ids: Vec<String> = Vec::new();
+    for id_str in &email_ids {
+        let email_id = match Uuid::parse_str(id_str) {
+            Ok(id) => id, Err(_) => { failed += 1; failed_ids.push(id_str.clone()); continue; }
+        };
+        match sqlx::query(only_own_schema_query!("public",
+            "SELECT from_email, to_email, subject, body FROM core_emails WHERE id = $1 AND deleted_at IS NULL"))
+            .bind(email_id).fetch_optional(&pool).await
+        {
+            Ok(Some(row)) => {
+                let from_email = row.get::<String,_>("from_email");
+                let to_email = row.get::<String,_>("to_email");
+                let subject = row.get::<String,_>("subject");
+                let body = row.get::<String,_>("body");
+                match send_email_with_lettre(&from_email, &to_email, &subject, &body, None, None, None) {
+                    Ok(_) => {
+                        success += 1;
+                        let _ = sqlx::query(only_own_schema_query!("public","UPDATE core_emails SET sent_at = NOW() WHERE id = $1"))
+                            .bind(email_id).execute(&pool).await;
+                    }
+                    Err(_) => { failed += 1; failed_ids.push(id_str.clone()); }
+                }
+            }
+            _ => { failed += 1; failed_ids.push(id_str.clone()); }
+        }
+    }
+    Json(serde_json::json!({"success":true,"message":"重发完成","code":200,
+        "data":{"total":email_ids.len(),"success":success,"failed":failed,"failed_ids":failed_ids}}))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
