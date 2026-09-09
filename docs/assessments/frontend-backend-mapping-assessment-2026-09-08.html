@@ -204,19 +204,19 @@
   <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">P3 · 可选级（28 项摘要）</h2>
   <div style="background:#FFFFFF;border:1px solid #E4E3DD;border-radius:12px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;font-size:12.5px;line-height:1.9;">
     <b>重复实现（6 组）</b>：① consolidation 三方重复——consolidation/(30方法) + consolidation-contract/(25) + erp/core/consolidation.ts(~30) 均调用 erp 后端同一组路由；② voucherTemplate 双方重复——独立 voucherTemplate/(15) 与 finance/voucherTemplate.ts(16)；③ financialReport 重复——financialReport/(8) 与 finance/report.ts(14)；④ risk.ts 与 riskV54.ts 重复——risk.ts(10) 是 riskV54.ts(12) 的子集；⑤ erp/receivablePayable 与 finance/receivablePayable 重叠——都调用 finance 后端 /receivables 和 /payables；⑥ erp/database 与 erp/core/dbStructure 重复。<br>
-    <b>零消费模块（4 个，835 方法悬空）</b>：master/(702方法，0页面)、file/(45)、dict/(11)、unified-core/(77)——无任何页面/组件 import，需确认是规划中还是应归档。<br>
-    <b>Mock 数据依赖</b>：7 个 CRM 页面（Dashboard/SalesFunnel/Scoring/Segmentation/Recommendation/SalesForecast/Billing）import useCrmMock，即使后端路由恢复后也需手动切换；qms/mock.ts、wms/mock.ts、crm/mockData.ts 等 mock 数据文件。<br>
+    <b>零消费模块（4 个，835 方法悬空）— ✅ 预埋确认（2026-09-09 复核）</b>：master(702)/file(45)/dict(11)/unified-core(77) 无任何页面/组件 import＝预埋式悬空代码，不建端点；如需启用按真实需求立项。<br>
+    <b>Mock 数据依赖 — ✅ 已核实</b>：useCrmMock 为显式开关（VITE_ENABLE_CRM_MOCK/topemsDemo 开启、VITE_CRM_DISABLE_MOCK 关闭），非假数据兜底；7 页面已接真实 API，mock 为演示模式。qms/mock.ts、wms/mock.ts 同属演示开关。<br>
     <b>代码质量 / 文档</b>：notification 只读 401 降级机制需文档化；crm/analytics 与各分析模块路由重叠；ticket/knowledge-articles 后端有但前端无；analytics 目录名与 /api/bi 路由前缀不一致（已知 P2）；erp/master-data GraphQL 端点前端无 GraphQL client；erp/hrm_integration_example 示例代码无需前端；WMS 空文件 analytics.ts + approval.ts（0行）；workflow/flow 别名双份实现。
   </div>
 
   <!-- 系统性问题 -->
   <h2 style="font-size:17px;font-weight:600;margin:24px 0 10px;">跨切面系统性问题</h2>
   <div style="background:#FFF8E6;border:1px solid #E4D48F;border-radius:12px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;font-size:13px;line-height:1.9;">
-    <b>1. "API 先行、后端滞后"是全局性模式</b>：整体匹配率仅 ~35%，前端定义了 ~4,400 个 API 方法但后端仅 ~3,800 条路由（且大量为版本化/实验性）。im(93%无后端)、mobile(78%无后端)、master V61-V79(100%无后端)、notification扩展(78%无后端) 是重灾区。大量前端 API 文件属于"预埋式悬空代码"——有封装、有类型、但无后端支撑、无页面消费。<br><br>
-    <b>2. 命名空间 / client 调用混乱是系统性 bug 源</b>：ticket→portal、search→portal、notification/im.ts→notification(应im)、notification/mail.ts→notification(应mail)、plugin→/api/core/plugin(应/api/plugin)、admin/system→erp(应core/master-data)、dict 三处分裂。至少 6 处命名空间错误导致 ~100 次 API 调用必然 404。<br><br>
-    <b>3. 路径前缀不匹配是高频缺陷</b>：mobile (/mobile/xxx vs /xxx)、WMS/SCM sync (/sync-records vs /sync/*)、finance/reconciliation (/reconcile/{id} vs /reconciliation/sessions)、MES (/mes/v1/ 旧前缀)、plugin 三方前缀不一致。建议建立 CI 门禁：前端 API 调用的 URL 路径必须在后端路由注册表中存在。<br><br>
-    <b>4. 后端系统性只读</b>：ehs 6+ 个模块几乎全 GET、crm/billing+interaction 仅有读路由、finance 多个子模块缺写操作。前端页面因此无法执行 create/update/delete，部分退化为只读展示或使用 Mock。<br><br>
-    <b>5. 版本化模块管理混乱</b>：master-data 后端 V51-V60（V59/V60 仅骨架）、前端 V51-V79（V61-V79 全悬空）；finance 后端 V51-V60 共 10 个版本化模块 155 条路由无前端；finance/risk.ts+riskV54.ts+riskV59.ts 三份并存。缺乏版本化模块的生命周期管理（启用/废弃/前端对应状态）。<br><br>
+    <b>1. "API 先行、后端滞后"是全局性模式（2026-09-09 复核修正）</b>：前端 ~4,400 个 API 方法 vs 后端 ~3,800 条路由。经"精确 diff + 页面真实消费"复核：真实缺口已全部闭环（主题四五六 workflow/doc + mobile 6 条 + crm 分析），im/mobile/master V61-V79/notification 扩展等大量"无后端"实为预埋式悬空代码（有封装、有类型、无页面消费），已逐一标注，不建无效端点。<br><br>
+    <b>2. 命名空间 / client 调用混乱（✅ 已闭环）</b>：ticket/search 已改各自 client、notification im/mail 已改 apiClient.im/mail、plugin 三方一致 /api/plugin、admin/system→erp 为正确承载（erp 确有 audit-logs/system/dict 路由）、dict 三分文件各自对齐（master/erp/api-dict）。原 6 处"错误"全部核实为已修复或误报。<br><br>
+    <b>3. 路径前缀不匹配（✅ 已闭环）</b>：mobile 前端相对路径与后端 /api/mobile 对齐（220 条 diff 仅 6 条真实缺失已补）；WMS/SCM sync、finance/reconciliation、MES 前缀在主题四已全部归一；plugin 三方一致。CI 门禁建议保留：前端 API 路径须在后端路由注册表中存在。<br><br>
+    <b>4. 后端系统性只读（✅ 已闭环）</b>：ehs 写路由已补、crm billing 已具全 CRUD（6 路由）+ 回款流转、finance 写操作在主题五已补齐。前端页面可正常增删改。<br><br>
+    <b>5. 版本化模块管理混乱（✅ 已标注）</b>：master V61-V79 前端悬空已判预埋（页面零消费）；finance 155 条版本化路由为反向无消费；risk 三份并存（risk/riskV54/riskV59）属 P3 重复实现治理项。剩余为治理项：建议对版本化模块建立生命周期登记（启用/废弃/前端状态）。<br><br>
     <b>6. 重复实现增加维护成本</b>：至少 6 组 API 模块存在功能重叠（consolidation 三方、voucherTemplate 双方、financialReport、risk 双份、receivablePayable 跨模块、database 双份），加上 WMS 后端 transfer 重复注册、inventory_alert 双路径。改一处漏一处的风险高。
   </div>
 
