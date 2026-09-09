@@ -160,13 +160,13 @@ interface CostForecastResponse {
 
 export const productionCostApi = {
   calculateWorkOrderCost: (workOrderId: string) =>
-    apiClient.get<WorkOrderCostResult>(`/mes/v1/cost/work-order/${workOrderId}`),
+    apiClient.mes.get<WorkOrderCostResult>(`/cost/work-order/${workOrderId}`),
 
   getWorkOrderCostDetail: (workOrderId: string) =>
-    apiClient.get<WorkOrderCostDetail>(`/mes/v1/cost/work-order/${workOrderId}/detail`),
+    apiClient.mes.get<WorkOrderCostDetail>(`/cost/work-order/${workOrderId}/detail`),
 
   calculateProductionOrderCost: (orderId: string) =>
-    apiClient.get<ProductionOrderCostResult>(`/mes/v1/cost/production-order/${orderId}`),
+    apiClient.mes.get<ProductionOrderCostResult>(`/cost/production-order/${orderId}`),
 
   getPeriodCostReport: (params?: {
     period_type?: 'month' | 'quarter' | 'year';
@@ -174,20 +174,20 @@ export const productionCostApi = {
     end_date?: string;
     product_id?: string;
     workshop_id?: string;
-  }) => apiClient.get<PeriodCostReport>('/mes/v1/cost/period', { params }),
+  }) => apiClient.mes.get<PeriodCostReport>('/cost/period', { params }),
 
   getCostTrend: (params?: {
     start_date?: string;
     end_date?: string;
     period_type?: 'week' | 'month';
     product_id?: string;
-  }) => apiClient.get<CostTrendResponse>('/mes/v1/cost/trend', { params }),
+  }) => apiClient.mes.get<CostTrendResponse>('/cost/trend', { params }),
 
   getCostComparison: (data: {
     compare_type: 'period' | 'product' | 'workshop';
     items: { id: string; name: string; type: string }[];
-  }) => apiClient.post<CostComparisonResponse>('/mes/v1/cost/comparison', data),
+  }) => apiClient.mes.post<CostComparisonResponse>('/cost/comparison', data),
 
   getCostForecast: (params?: { months?: number; product_id?: string }) =>
-    apiClient.get<CostForecastResponse>('/mes/v1/cost/forecast', { params }),
+    apiClient.mes.get<CostForecastResponse>('/cost/forecast', { params }),
 };

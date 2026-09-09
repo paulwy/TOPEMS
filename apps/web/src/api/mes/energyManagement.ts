@@ -100,23 +100,23 @@ interface EnergyAlertsResponse {
 }
 
 export const energyManagementApi = {
-  getRealTimeConsumption: () => apiClient.get<RealTimeConsumption[]>('/mes/v1/energy/realtime'),
+  getRealTimeConsumption: () => apiClient.mes.get<RealTimeConsumption[]>('/energy/realtime'),
 
   getConsumptionHistory: (params?: {
     start_date?: string;
     end_date?: string;
     equipment_id?: string;
     workshop_id?: string;
-  }) => apiClient.get<EnergyConsumptionRecord[]>('/mes/v1/energy/history', { params }),
+  }) => apiClient.mes.get<EnergyConsumptionRecord[]>('/energy/history', { params }),
 
   getEnergyReport: (params?: { period_type?: string; start_date?: string; end_date?: string }) =>
-    apiClient.get<EnergyReportResponse>('/mes/v1/energy/report', { params }),
+    apiClient.mes.get<EnergyReportResponse>('/energy/report', { params }),
 
   getEnergyForecast: (params?: { months?: number; equipment_id?: string }) =>
-    apiClient.get<EnergyForecastResponse>('/mes/v1/energy/forecast', { params }),
+    apiClient.mes.get<EnergyForecastResponse>('/energy/forecast', { params }),
 
   getEnergyAlerts: (params?: { start_date?: string; end_date?: string }) =>
-    apiClient.get<EnergyAlertsResponse>('/mes/v1/energy/alerts', { params }),
+    apiClient.mes.get<EnergyAlertsResponse>('/energy/alerts', { params }),
 
   getEquipmentConsumption: (
     equipmentId: string,
@@ -124,9 +124,8 @@ export const energyManagementApi = {
       start_date?: string;
       end_date?: string;
     }
-  ) =>
-    apiClient.get<EnergyConsumptionRecord[]>(`/mes/v1/energy/equipment/${equipmentId}`, { params }),
+  ) => apiClient.mes.get<EnergyConsumptionRecord[]>(`/energy/equipment/${equipmentId}`, { params }),
 
   exportEnergyReport: (params?: { period_type?: string; start_date?: string; end_date?: string }) =>
-    apiClient.get('/mes/v1/energy/export', { params }),
+    apiClient.mes.get('/energy/export', { params }),
 };

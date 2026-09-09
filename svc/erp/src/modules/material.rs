@@ -26,6 +26,7 @@ pub struct MaterialListParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/materials", get(list_materials).post(create_material))
+        .route("/materials/import", post(import_materials))
         .route(
             "/materials/{id}",
             get(get_material)
@@ -329,4 +330,78 @@ pub async fn delete_material(
             Json(api_error(500, "删除物料失败"))
         }
     }
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct MaterialImportResult {
+    pub succeeded: i64,
+    pub failed: i64,
+}
+
+/// POST /materials/import —— 批量创建物料（JSON 数组，来自 RD 物料导入页）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/erp/materials/import",
+    tag = "ERP",
+    responses(
+        (status = 200, description = "导入完成", body = ApiResponse<MaterialImportResult>),
+        (status = 500, description = "导入失败"),
+    ),
+)]
+pub async fn import_materials(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(body): Json<Vec<CreateMaterialRequest>>,
+) -> Json<ApiResponse<MaterialImportResult>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let mut succeeded = 0i64;
+    let mut failed = 0i64;
+    for item in &body {
+        if item.code.trim().is_empty() || item.name.trim().is_empty() {
+            failed += 1;
+            continue;
+        }
+        let result = sqlx::query(
+            only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) ON CONFLICT (code) DO NOTHING"),
+        )
+        .bind(&item.code)
+        .bind(&item.name)
+        .bind(&item.specification)
+        .bind(&item.unit)
+        .bind(&item.category)
+        .bind(&item.brand)
+        .bind(&item.model)
+        .bind(&item.barcode)
+        .bind(item.safety_stock.unwrap_or(0.0))
+        .bind(item.unit_price.unwrap_or(0.0))
+        .bind(item.tax_rate.unwrap_or(0.0))
+        .bind(&item.description)
+        .bind(item.status.as_deref().unwrap_or("active"))
+        .execute(&mut **txn)
+        .await;
+        match result {
+            Ok(r) => {
+                if r.rows_affected() > 0 {
+                    succeeded += 1;
+                } else {
+                    failed += 1;
+                }
+            }
+            Err(_) => failed += 1,
+        }
+    }
+
+    Json(ApiResponse::success(
+        MaterialImportResult { succeeded, failed },
+        "物料导入完成",
+    ))
 }
