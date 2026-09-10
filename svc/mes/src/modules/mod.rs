@@ -1,4 +1,5 @@
 pub mod anomaly_detection;
+pub mod analytics;
 pub mod approval_common;
 pub mod aps_compat;
 pub mod aps_scheduling;
@@ -42,6 +43,7 @@ use sqlx::PgPool;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .merge(anomaly_detection::create_routes())
+        .merge(analytics::create_routes())
         .merge(aps_scheduling::create_routes())
         .merge(capacity::create_routes())
         .merge(demand_forecast::create_routes())
