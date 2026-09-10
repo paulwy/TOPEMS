@@ -58,6 +58,10 @@ export default function QmsApqpProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<ApqpProject | null>(null);
+  const [phases, setPhases] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [risks, setRisks] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,11 +75,21 @@ export default function QmsApqpProjectDetailPage() {
     setLoading(true);
     setError(null);
 
-    apqpApi
-      .getApqpProject(id)
-      .then((res) => {
+    // 并行加载项目详情和关联数据
+    Promise.all([
+      apqpApi.getApqpProject(id),
+      apqpApi.listApqpPhases(id),
+      apqpApi.listApqpTasks({ project_id: id }),
+      apqpApi.listApqpRisks({ project_id: id }),
+      apqpApi.listApqpApprovals(id),
+    ])
+      .then(([projectRes, phasesRes, tasksRes, risksRes, approvalsRes]) => {
         if (!cancelled) {
-          setProject(res.data ?? null);
+          setProject(projectRes.data ?? null);
+          setPhases(phasesRes.data ?? []);
+          setTasks(tasksRes.data ?? []);
+          setRisks(risksRes.data ?? []);
+          setApprovals(approvalsRes.data ?? []);
           setLoading(false);
         }
       })
@@ -90,12 +104,6 @@ export default function QmsApqpProjectDetailPage() {
       cancelled = true;
     };
   }, [id]);
-
-  // 关联数据待后续对接 API，暂时使用空数组
-  const phases: any[] = [];
-  const tasks: any[] = [];
-  const risks: any[] = [];
-  const approvals: any[] = [];
 
   const radarData = useMemo(
     () =>

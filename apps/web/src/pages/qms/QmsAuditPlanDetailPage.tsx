@@ -55,6 +55,8 @@ export default function QmsAuditPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<AuditPlan | null>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [findings, setFindings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,13 +70,30 @@ export default function QmsAuditPlanDetailPage() {
     setLoading(true);
     setError(null);
 
-    auditApi
-      .getAuditPlan(id)
-      .then((res) => {
-        if (!cancelled) {
-          setPlan(res.data ?? null);
-          setLoading(false);
+    // 先并行获取 plan 和 tasks
+    Promise.all([
+      auditApi.getAuditPlan(id),
+      auditApi.listAuditTasks(id),
+    ])
+      .then(([planRes, tasksRes]) => {
+        if (cancelled) return;
+        const taskList = tasksRes.data ?? [];
+        setPlan(planRes.data ?? null);
+        setTasks(taskList);
+
+        // 根据 tasks 的 id 获取所有 findings
+        if (taskList.length > 0) {
+          return Promise.all(
+            taskList.map((task) => auditApi.listAuditFindings(task.id))
+          );
         }
+        return [];
+      })
+      .then((findingsResults) => {
+        if (cancelled) return;
+        const allFindings = (findingsResults ?? []).flatMap((res) => res.data ?? []);
+        setFindings(allFindings);
+        setLoading(false);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -87,10 +106,6 @@ export default function QmsAuditPlanDetailPage() {
       cancelled = true;
     };
   }, [id]);
-
-  // 关联数据待后续对接 API，暂时使用空数组
-  const tasks: any[] = [];
-  const findings: any[] = [];
 
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;

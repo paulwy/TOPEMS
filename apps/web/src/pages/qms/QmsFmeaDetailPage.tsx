@@ -133,6 +133,7 @@ export default function QmsFmeaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<FmeaAnalysis | null>(null);
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -146,11 +147,15 @@ export default function QmsFmeaDetailPage() {
     setLoading(true);
     setError(null);
 
-    fmeaApi
-      .getFmeaAnalysis(id)
-      .then((res) => {
+    // 并行加载分析详情和 items
+    Promise.all([
+      fmeaApi.getFmeaAnalysis(id),
+      fmeaApi.listFmeaItems(id),
+    ])
+      .then(([analysisRes, itemsRes]) => {
         if (!cancelled) {
-          setAnalysis(res.data ?? null);
+          setAnalysis(analysisRes.data ?? null);
+          setItems(itemsRes.data ?? []);
           setLoading(false);
         }
       })
@@ -165,9 +170,6 @@ export default function QmsFmeaDetailPage() {
       cancelled = true;
     };
   }, [id]);
-
-  // 关联数据待后续对接 API，暂时使用空数组
-  const items: any[] = [];
 
   const distribution = useMemo(() => {
     const buckets = { high: 0, medium: 0, low: 0 };
