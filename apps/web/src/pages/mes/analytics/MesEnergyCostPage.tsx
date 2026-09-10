@@ -1,43 +1,13 @@
 import { useMemo, useState } from 'react';
 import { FormControl, Select, MenuItem } from '@mui/material';
 import i18n from '@/i18n';
-import type { EnergyCostData } from '@/api/mes/types';
 import {
   StatsPageTemplate,
   type StatCard,
   type ChartConfig,
 } from '@/components/templates/StatsPageTemplate';
-
-function useEnergyMock(): EnergyCostData {
-  return useMemo(() => {
-    const workshops = [
-      i18n.t('mes.mes_energy_cost_page.k5'),
-      i18n.t('mes.mes_energy_cost_page.k4'),
-      i18n.t('mes.mes_energy_cost_page.k3'),
-      i18n.t('mes.mes_energy_cost_page.k2'),
-      i18n.t('mes.mes_energy_cost_page.k1'),
-      i18n.t('mes.mes_energy_cost_page.k0'),
-    ];
-    return {
-      per_unit_trend: Array.from({ length: 30 }, (_, i) => ({
-        date: `D${i + 1}`,
-        kwh_per_unit: Number((2.4 + Math.sin(i / 4) * 0.4 + (i % 7) * 0.03).toFixed(2)),
-      })),
-      energy_mix: [
-        { type: i18n.t('mes.mes_energy_cost_page.k6'), percentage: 62, cost: 184000 },
-        { type: i18n.t('mes.mes_energy_cost_page.k7'), percentage: 21, cost: 62000 },
-        { type: i18n.t('mes.mes_energy_cost_page.k8'), percentage: 11, cost: 33000 },
-        { type: i18n.t('mes.mes_energy_cost_page.k9'), percentage: 6, cost: 18000 },
-      ],
-      workshop_top_n: workshops
-        .map((w, i) => ({
-          workshop: w,
-          cost: Math.round(50000 - i * 6000 + Math.cos(i) * 4000),
-        }))
-        .sort((a, b) => b.cost - a.cost),
-    };
-  }, []);
-}
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { mesAnalyticsApi } from '@/api/mes/analytics';
 
 const getStackedTrend = () =>
   Array.from({ length: 12 }, (_, i) => ({
@@ -49,8 +19,22 @@ const getStackedTrend = () =>
   }));
 
 export default function MesEnergyCostPage() {
-  const data = useEnergyMock();
+  const { data: analyticsData, loading } = useAnalyticsData({
+    fetcher: () => mesAnalyticsApi.getEnergyCost({ days: 30 }),
+    deps: [],
+  });
   const [energyType, setEnergyType] = useState('all');
+
+  // 适配后端字段名：energy_type → type
+  const data = useMemo(() => ({
+    per_unit_trend: analyticsData?.per_unit_trend ?? [],
+    energy_mix: (analyticsData?.energy_mix ?? []).map((item) => ({
+      type: item.energy_type,
+      percentage: item.percentage,
+      cost: item.cost,
+    })),
+    workshop_top_n: analyticsData?.workshop_top_n ?? [],
+  }), [analyticsData]);
 
   const statCards: StatCard[] = useMemo(() => {
     const totalCost = data.energy_mix.reduce((sum, item) => sum + item.cost, 0);

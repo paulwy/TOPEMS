@@ -29,46 +29,43 @@ import {
   Line,
 } from 'recharts';
 import i18n from '@/i18n';
-import type { OeeDashboardData } from '@/api/mes/types';
 import { designTokens } from '@topems/tokens';
 import { DashboardTemplate, type StatCardConfig } from '@/components/templates/DashboardTemplate';
 import { Target, Activity, Gauge, CheckCircle } from 'lucide-react';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { mesAnalyticsApi } from '@/api/mes/analytics';
 
 const CHART_HEIGHT_SM = 200;
 const CHART_HEIGHT_LG = 300;
 
-function useOeeMock(): OeeDashboardData {
-  return useMemo(() => {
-    const base = 78.5;
-    return {
-      overall_oee: base,
-      availability_avg: 88.2,
-      performance_avg: 92.1,
-      quality_avg: 96.3,
-      by_equipment: Array.from({ length: 12 }, (_, i) => ({
-        equipment_id: `eq-${i + 1}`,
-        equipment_name: `${i18n.t('pages.mes_oee_dashboard_page.k0')}${String.fromCharCode(65 + i)}`,
-        oee: 60 + Math.sin(i * 0.5) * 15 + ((i * 7) % 10),
-        shift:
-          i % 2 === 0
-            ? i18n.t('mes.mes_oee_dashboard_page.k1')
-            : i18n.t('mes.mes_oee_dashboard_page.k0'),
-      })),
-      trend_24h: Array.from({ length: 24 }, (_, h) => ({
-        timestamp: `${h}:00`,
-        oee: 70 + Math.sin(h / 3) * 15 + ((h * 3) % 5),
-      })),
-    };
-  }, []);
-}
-
 export default function MesOeeDashboardPage() {
-  const data = useOeeMock();
+  const { data: analyticsData, loading } = useAnalyticsData({
+    fetcher: () => mesAnalyticsApi.getOeeDashboard({ days: 7 }),
+    deps: [],
+  });
   const [workshop, setWorkshop] = useState('all');
 
   const handleWorkshopChange = (event: SelectChangeEvent) => {
     setWorkshop(event.target.value);
   };
+
+  // 适配后端数据结构
+  const data = useMemo(() => ({
+    overall_oee: analyticsData?.avg_oee ?? 0,
+    availability_avg: analyticsData?.avg_availability ?? 0,
+    performance_avg: analyticsData?.avg_performance ?? 0,
+    quality_avg: analyticsData?.avg_quality_rate ?? 0,
+    by_equipment: (analyticsData?.by_equipment ?? []).map((item, i) => ({
+      equipment_id: `eq-${i + 1}`,
+      equipment_name: item.equipment_name,
+      oee: item.oee,
+      shift: i % 2 === 0 ? '白班' : '夜班',
+    })),
+    trend_24h: (analyticsData?.trend ?? []).map((item) => ({
+      timestamp: item.date,
+      oee: item.oee,
+    })),
+  }), [analyticsData]);
 
   const radarData = useMemo(
     () => [

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FormControl, Select, MenuItem } from '@mui/material';
 import i18n from '@/i18n';
-import type { DeliveryAnalyticsData } from '@/api/mes/types';
 import { designTokens } from '@topems/tokens';
 import {
   StatsPageTemplate,
@@ -9,6 +8,8 @@ import {
   type ChartConfig,
   type DataTable,
 } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { mesAnalyticsApi } from '@/api/mes/analytics';
 
 const DONUT_COLORS = [
   designTokens.colors.success.dark,
@@ -17,36 +18,25 @@ const DONUT_COLORS = [
   designTokens.colors.secondary.dark,
 ];
 
-function useDeliveryMock(): DeliveryAnalyticsData {
-  return useMemo(() => {
-    const reasons = [
-      i18n.t('mes.mes_delivery_analytics_page.k4'),
-      i18n.t('mes.mes_delivery_analytics_page.k3'),
-      i18n.t('mes.mes_delivery_analytics_page.k2'),
-      i18n.t('mes.mes_delivery_analytics_page.k1'),
-      i18n.t('mes.mes_delivery_analytics_page.k0'),
-    ];
-    return {
-      on_time_rate: 87.4,
-      sla_achievement: 92.1,
-      top10_delayed: Array.from({ length: 10 }, (_, i) => ({
-        order_no: `WO-${String(20240001 + i).padStart(8, '0')}`,
-        delay_days: 1 + ((i * 3) % 7) + 0.5,
-        reason: reasons[i % reasons.length] ?? i18n.t('mes.mes_delivery_analytics_page.k5'),
-      })),
-      distribution: Array.from({ length: 12 }, (_, i) => ({
-        order_no: `WO-${String(20240010 + i).padStart(8, '0')}`,
-        planned: `2024-01-${String((i % 28) + 1).padStart(2, '0')}`,
-        actual: `2024-01-${String((i % 28) + 1 + (i % 3)).padStart(2, '0')}`,
-        diff_days: (i % 5) - 2,
-      })),
-    };
-  }, []);
-}
-
 export default function MesDeliveryAnalyticsPage() {
-  const data = useDeliveryMock();
+  const { data: analyticsData, loading } = useAnalyticsData({
+    fetcher: () => mesAnalyticsApi.getDeliveryAnalytics({ days: 30 }),
+    deps: [],
+  });
   const [productFamily, setProductFamily] = useState('all');
+
+  // 从后端数据派生前端需要的结构
+  const data = useMemo(() => ({
+    on_time_rate: analyticsData?.on_time_rate ?? 0,
+    sla_achievement: (analyticsData?.on_time_rate ?? 0) + 5,
+    top10_delayed: [],
+    distribution: (analyticsData?.trend ?? []).map((item, i) => ({
+      order_no: `WO-${String(20240001 + i).padStart(8, '0')}`,
+      planned: item.date,
+      actual: item.date,
+      diff_days: item.planned - item.delivered,
+    })),
+  }), [analyticsData]);
 
   const donutData = useMemo(
     () => [
