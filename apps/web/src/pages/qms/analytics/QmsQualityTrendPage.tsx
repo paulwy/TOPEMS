@@ -1,10 +1,10 @@
 /**
  * 质量趋势分析页
  *
- * 使用 recharts LineChart 展示月度质量趋势：
+ * 使用 recharts LineChart 展示质量趋势：
  * - 合格率（左 Y 轴，%）
  * - 问题数 / 缺陷数（右 Y 轴，计数）
- * 数据来自 useQmsMock 的 qualityTrend。
+ * 数据来自 qualityDashboardApi.getQualityTrend。
  */
 import { useMemo, useState } from 'react';
 import {
@@ -18,22 +18,34 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, Alert } from '@mui/material';
 import i18n from '@/i18n';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { qualityDashboardApi, type QualityTrendItem } from '@/api/qms/dashboard';
 
 export default function QmsQualityTrendPage() {
-  const { data } = useQmsMock<QmsMockShape>();
   const { t } = useTranslation('qms');
   const [range, setRange] = useState<'6m' | '12m'>('12m');
+  const days = range === '6m' ? 180 : 365;
+
+  const { data: trendData, loading, error, reload } = useAnalyticsData<QualityTrendItem[]>({
+    fetcher: () => qualityDashboardApi.getQualityTrend({ days }),
+    deps: [days],
+  });
 
   const trend = useMemo(() => {
-    const list = data.qualityTrend ?? [];
-    return range === '6m' ? list.slice(-6) : list;
-  }, [data.qualityTrend, range]);
+    const list = (trendData ?? []).map((item: QualityTrendItem) => ({
+      date: item.period,
+      passRate: item.qualification_rate,
+      defectCount: item.total_count - item.qualified_count,
+      issueCount: item.issue_count,
+      inspectionCount: item.total_count,
+    }));
+    return list;
+  }, [trendData]);
 
   const avgPassRate = useMemo(() => {
     if (trend.length === 0) return 0;
@@ -64,7 +76,7 @@ export default function QmsQualityTrendPage() {
     {
       id: 'trendLength',
       title: t('qms.qms_quality_trend_page.k6'),
-      value: i18n.t('pages.qms_quality_trend_page.trendlength_0'),
+      value: `${trend.length} 天`,
       color: 'primary' as const,
     },
   ];
@@ -82,7 +94,14 @@ export default function QmsQualityTrendPage() {
       showRefresh={false}
       showCharts={false}
       showTables={false}
+      loading={loading}
     >
+      {error && (
+        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+          加载失败：{error}
+        </Alert>
+      )}
+
       <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
         <Typography
           variant='subtitle1'
@@ -90,79 +109,86 @@ export default function QmsQualityTrendPage() {
         >
           {t('qms.qms_quality_trend_page.y_7')}
         </Typography>
-        <Box sx={{ width: '100%', height: 340 }}>
-          <ResponsiveContainer
-            width='100%'
-            height={340}
-          >
-            <LineChart
-              data={trend}
-              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+        <Box sx={{ width: '100%', height: 340, position: 'relative' }}>
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <CircularProgress />
+            </Box>
+          )}
+          {!loading && (
+            <ResponsiveContainer
+              width='100%'
+              height={340}
             >
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='date'
-                fontSize={11}
-              />
-              <YAxis
-                yAxisId='left'
-                domain={[70, 100]}
-                unit='%'
-                fontSize={11}
-                label={{
-                  value: t('qms.qms_quality_trend_page.k8'),
-                  angle: -90,
-                  position: 'insideLeft',
-                }}
-              />
-              <YAxis
-                yAxisId='right'
-                orientation='right'
-                fontSize={11}
-                label={{
-                  value: t('qms.qms_quality_trend_page.k9'),
-                  angle: 90,
-                  position: 'insideRight',
-                }}
-              />
-              <Tooltip />
-              <Legend />
-              <ReferenceLine
-                yAxisId='left'
-                y={95}
-                stroke={designTokens.colors.success.dark}
-                strokeDasharray='4 4'
-                label={t('qms.qms_quality_trend_page.95_10')}
-              />
-              <Line
-                yAxisId='left'
-                type='monotone'
-                dataKey='passRate'
-                name={t('qms.qms_quality_trend_page.k11')}
-                stroke={designTokens.colors.success.dark}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-              <Line
-                yAxisId='right'
-                type='monotone'
-                dataKey='defectCount'
-                name={t('qms.qms_quality_trend_page.k12')}
-                stroke={designTokens.colors.error.main}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-              <Line
-                yAxisId='right'
-                type='monotone'
-                dataKey='issueCount'
-                name={t('qms.qms_quality_trend_page.k13')}
-                stroke={designTokens.colors.warning.main}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+              <LineChart
+                data={trend}
+                margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis
+                  dataKey='date'
+                  fontSize={11}
+                />
+                <YAxis
+                  yAxisId='left'
+                  domain={[0, 100]}
+                  unit='%'
+                  fontSize={11}
+                  label={{
+                    value: t('qms.qms_quality_trend_page.k8'),
+                    angle: -90,
+                    position: 'insideLeft',
+                  }}
+                />
+                <YAxis
+                  yAxisId='right'
+                  orientation='right'
+                  fontSize={11}
+                  label={{
+                    value: t('qms.qms_quality_trend_page.k9'),
+                    angle: 90,
+                    position: 'insideRight',
+                  }}
+                />
+                <Tooltip />
+                <Legend />
+                <ReferenceLine
+                  yAxisId='left'
+                  y={95}
+                  stroke={designTokens.colors.success.dark}
+                  strokeDasharray='4 4'
+                  label={t('qms.qms_quality_trend_page.95_10')}
+                />
+                <Line
+                  yAxisId='left'
+                  type='monotone'
+                  dataKey='passRate'
+                  name={t('qms.qms_quality_trend_page.k11')}
+                  stroke={designTokens.colors.success.dark}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+                <Line
+                  yAxisId='right'
+                  type='monotone'
+                  dataKey='defectCount'
+                  name={t('qms.qms_quality_trend_page.k12')}
+                  stroke={designTokens.colors.error.main}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+                <Line
+                  yAxisId='right'
+                  type='monotone'
+                  dataKey='issueCount'
+                  name={t('qms.qms_quality_trend_page.k13')}
+                  stroke={designTokens.colors.warning.main}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </Box>
       </Paper>
 

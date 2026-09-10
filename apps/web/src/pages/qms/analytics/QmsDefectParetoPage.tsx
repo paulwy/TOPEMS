@@ -4,7 +4,7 @@
  * 使用 recharts ComposedChart（Bar + Line）展示缺陷帕累托图：
  * - 柱状图：缺陷数量（降序）
  * - 折线图：累积占比（80/20 分析基准线）
- * 数据来自 useQmsMock 的 defectDistribution。
+ * 数据来自 qualityDashboardApi.getDefectDistribution。
  */
 import { useMemo } from 'react';
 import {
@@ -18,6 +18,9 @@ import {
   TableHead,
   TableRow,
   Typography,
+  CircularProgress,
+  Box,
+  Alert,
 } from '@mui/material';
 import {
   ResponsiveContainer,
@@ -32,15 +35,20 @@ import {
   ReferenceLine,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { qualityDashboardApi, type QualityDefectDistribution } from '@/api/qms/dashboard';
 
 export default function QmsDefectParetoPage() {
-  const { data } = useQmsMock<QmsMockShape>();
+  const { data: defectData, loading, error, reload } = useAnalyticsData<QualityDefectDistribution[]>({
+    fetcher: () => qualityDashboardApi.getDefectDistribution(),
+    deps: [],
+  });
+
   const defectDistribution = useMemo(
-    () => data.defectDistribution ?? [],
-    [data.defectDistribution]
+    () => (defectData ?? []) as QualityDefectDistribution[],
+    [defectData]
   );
 
   const paretoData = useMemo(() => {
@@ -101,7 +109,14 @@ export default function QmsDefectParetoPage() {
       showRefresh={false}
       showCharts={false}
       showTables={false}
+      loading={loading}
     >
+      {error && (
+        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+          加载失败：{error}
+        </Alert>
+      )}
+
       <Grid
         container
         spacing={3}
@@ -114,70 +129,79 @@ export default function QmsDefectParetoPage() {
             >
               {i18n.t('qms.analytics.defectPareto.k1')}
             </Typography>
-            <ResponsiveContainer
-              width='100%'
-              height={360}
-            >
-              <ComposedChart
-                data={paretoData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-              >
-                <CartesianGrid strokeDasharray='3 3' />
-                <XAxis
-                  dataKey='category'
-                  fontSize={11}
-                  angle={-15}
-                  textAnchor='end'
-                  height={60}
-                />
-                <YAxis
-                  yAxisId='left'
-                  fontSize={11}
-                  label={{
-                    value: i18n.t('pages.qms_defect_pareto_page.k4'),
-                    angle: -90,
-                    position: 'insideLeft',
-                  }}
-                />
-                <YAxis
-                  yAxisId='right'
-                  orientation='right'
-                  domain={[0, 100]}
-                  unit='%'
-                  fontSize={11}
-                  label={{
-                    value: i18n.t('pages.qms_defect_pareto_page.k5'),
-                    angle: 90,
-                    position: 'insideRight',
-                  }}
-                />
-                <Tooltip />
-                <Legend />
-                <ReferenceLine
-                  yAxisId='right'
-                  y={80}
-                  stroke={designTokens.colors.error.main}
-                  strokeDasharray='4 4'
-                  label={i18n.t('pages.qms_defect_pareto_page.80_0')}
-                />
-                <Bar
-                  yAxisId='left'
-                  dataKey='count'
-                  name={i18n.t('pages.qms_defect_pareto_page.k6')}
-                  fill={designTokens.colors.secondary.dark}
-                  barSize={36}
-                />
-                <Line
-                  yAxisId='right'
-                  type='monotone'
-                  dataKey='cumulativePct'
-                  name={i18n.t('pages.qms_defect_pareto_page.k7')}
-                  stroke={designTokens.colors.error.main}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+            <Box sx={{ width: '100%', height: 360, position: 'relative' }}>
+              {loading && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <CircularProgress />
+                </Box>
+              )}
+              {!loading && (
+                <ResponsiveContainer
+                  width='100%'
+                  height={360}
+                >
+                  <ComposedChart
+                    data={paretoData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray='3 3' />
+                    <XAxis
+                      dataKey='category'
+                      fontSize={11}
+                      angle={-15}
+                      textAnchor='end'
+                      height={60}
+                    />
+                    <YAxis
+                      yAxisId='left'
+                      fontSize={11}
+                      label={{
+                        value: i18n.t('pages.qms_defect_pareto_page.k4'),
+                        angle: -90,
+                        position: 'insideLeft',
+                      }}
+                    />
+                    <YAxis
+                      yAxisId='right'
+                      orientation='right'
+                      domain={[0, 100]}
+                      unit='%'
+                      fontSize={11}
+                      label={{
+                        value: i18n.t('pages.qms_defect_pareto_page.k5'),
+                        angle: 90,
+                        position: 'insideRight',
+                      }}
+                    />
+                    <Tooltip />
+                    <Legend />
+                    <ReferenceLine
+                      yAxisId='right'
+                      y={80}
+                      stroke={designTokens.colors.error.main}
+                      strokeDasharray='4 4'
+                      label={i18n.t('pages.qms_defect_pareto_page.80_0')}
+                    />
+                    <Bar
+                      yAxisId='left'
+                      dataKey='count'
+                      name={i18n.t('pages.qms_defect_pareto_page.k6')}
+                      fill={designTokens.colors.secondary.dark}
+                      barSize={36}
+                    />
+                    <Line
+                      yAxisId='right'
+                      type='monotone'
+                      dataKey='cumulativePct'
+                      name={i18n.t('pages.qms_defect_pareto_page.k7')}
+                      stroke={designTokens.colors.error.main}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </Box>
           </Paper>
         </Grid>
 
@@ -203,39 +227,22 @@ export default function QmsDefectParetoPage() {
                     <TableCell align='right'>
                       {i18n.t('pages.qms_defect_pareto_page.k12')}
                     </TableCell>
-                    <TableCell>{i18n.t('pages.qms_defect_pareto_page.k13')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paretoData.map((d) => (
-                    <TableRow key={d.category}>
-                      <TableCell sx={{ fontWeight: 500 }}>{d.category}</TableCell>
-                      <TableCell align='right'>{d.count}</TableCell>
-                      <TableCell align='right'>{d.percentage}%</TableCell>
-                      <TableCell align='right'>{d.cumulativePct}%</TableCell>
+                  {paretoData.map((row, idx) => (
+                    <TableRow key={row.category} hover>
                       <TableCell>
-                        {d.cumulativePct <= 80 ? (
-                          <Chip
-                            label={i18n.t('pages.qms_defect_pareto_page.k1')}
-                            size='small'
-                            sx={{
-                              bgcolor: designTokens.colors.error[100],
-                              color: designTokens.colors.error.dark,
-                              fontWeight: 500,
-                            }}
-                          />
-                        ) : (
-                          <Chip
-                            label={i18n.t('pages.qms_defect_pareto_page.k2')}
-                            size='small'
-                            sx={{
-                              bgcolor: designTokens.colors.grey[100],
-                              color: designTokens.colors.grey[600],
-                              fontWeight: 500,
-                            }}
-                          />
-                        )}
+                        <Chip
+                          label={row.category}
+                          size='small'
+                          color={row.cumulativePct <= 80 ? 'error' : 'default'}
+                          variant={row.cumulativePct <= 80 ? 'filled' : 'outlined'}
+                        />
                       </TableCell>
+                      <TableCell align='right'>{row.count}</TableCell>
+                      <TableCell align='right'>{row.percentage.toFixed(1)}%</TableCell>
+                      <TableCell align='right'>{row.cumulativePct.toFixed(1)}%</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
