@@ -51,3 +51,5 @@ export { leaveRequestApi } from './leaveRequest';
 export { hrProxyApi } from './hrProxy';
 export { mdmRefsApi } from './mdmRefs';
 export { mdmLifecycleApi } from './mdmLifecycle';
+export * as consolidationApi from '../../consolidation';
+export { dbStructureApi } from '../../system';

@@ -1038,10 +1038,10 @@ describe('HRM trainingRecordApi', () => {
     expect(mockApiClient.delete).toHaveBeenCalledWith('/training-records/1');
   });
 
-  it('should call POST /training-records/enroll for enroll', async () => {
+  it('should call POST /training-courses/:courseId/enroll for enroll', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: {} });
     await trainingRecordApi.enroll('COURSE001', 'EMP001');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/training-records/enroll', {
+    expect(mockApiClient.post).toHaveBeenCalledWith('/training-courses/COURSE001/enroll', {
       course_id: 'COURSE001',
       employee_id: 'EMP001',
     });

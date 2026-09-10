@@ -107,13 +107,13 @@ describe('V138 ERP - announcementApi', () => {
   it('should publish announcement', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'A-001' } });
     await announcementApi.publish('A-001');
-    expect(mockClient.post).toHaveBeenCalledWith('/announcements/A-001/publish', {});
+    expect(mockClient.post).toHaveBeenCalledWith('/announcements/A-001/publish');
   });
 
   it('should unpublish announcement', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'A-001' } });
     await announcementApi.unpublish('A-001');
-    expect(mockClient.post).toHaveBeenCalledWith('/announcements/A-001/unpublish', {});
+    expect(mockClient.post).toHaveBeenCalledWith('/announcements/A-001/unpublish');
   });
 });
 

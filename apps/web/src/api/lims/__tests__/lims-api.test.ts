@@ -245,13 +245,13 @@ describe('LIMS Module API Tests', () => {
       expect(apiClient.lims.delete).toHaveBeenCalledWith('/instruments/inst-001');
     });
 
-    it('calibrate should call POST /instruments/:id/calibrate with data', async () => {
+    it('calibrate should call POST /instruments/:id/calibration with data', async () => {
       const { instrumentApi } = await import('../instrument');
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { calibration_date: '2024-01-15', technician: 'John' };
       await instrumentApi.calibrate('inst-001', data as unknown as CreateCalibrationRequest);
-      expect(apiClient.lims.post).toHaveBeenCalledWith('/instruments/inst-001/calibrate', data);
+      expect(apiClient.lims.post).toHaveBeenCalledWith('/instruments/inst-001/calibration', data);
     });
 
     it('listCalibrationRecords should call GET /instruments/:id/calibrations', async () => {

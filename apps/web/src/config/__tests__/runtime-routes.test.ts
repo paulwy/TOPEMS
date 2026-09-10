@@ -6,7 +6,8 @@ const GROUP1_SERVICES: Record<string, string> = {
   workflow: '/api/core/flow',
   flow: '/api/core/flow',
   file: '/api/core/file',
-  migration: '/api/core/migration',
+  // V514-2: 后端实际注册 /api/core/api/migrations/*，已对齐
+  migration: '/api/core/api',
   // doc 仍由 unified-core 承载（虚拟服务），路径含 /api/core 前缀
   doc: '/api/core/doc',
   // automation 初期落地 unified-core，路径 /api/core/automation
@@ -48,8 +49,7 @@ const GROUP2_SERVICES = [
   // V68.1 拆分服务
   'plugin-registry',
   'ticket',
-  'feedback',
-  // [V2026.08 已移除] lowcode 空壳占位服务
+  // [V2026.08 已合并] feedback 已合并至 ticket（customer_feedback 类型）
   // master-data 已从 unified-core 外迁，路径 /api/master-data（无 /core 前缀）
   'master',
   'master-data',

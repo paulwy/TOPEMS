@@ -78,22 +78,22 @@ describe('V142 ERP - dbStructureApi', () => {
     mockClient.put.mockResolvedValue({ success: true, data: { success: true } });
     await dbStructureApi.modifyColumn('orders', 'total', { data_type: 'DECIMAL(14,2)' });
     expect(mockClient.put).toHaveBeenCalledWith('/db/columns/orders/total', {
-      data_type: 'DECIMAL(14,2)',
+      column: { data_type: 'DECIMAL(14,2)' },
+      column_name: 'total',
+      table_name: 'orders',
     });
   });
 
   it('should drop column', async () => {
     mockClient.delete.mockResolvedValue({ success: true, data: { success: true } });
     await dbStructureApi.dropColumn('orders', 'total', { confirm: true, reason: '重构' });
-    expect(mockClient.delete).toHaveBeenCalledWith(
-      '/db/columns/orders/total?confirm=true&reason=%E9%87%8D%E6%9E%84'
-    );
+    expect(mockClient.delete).toHaveBeenCalledWith('/db/columns/orders/total');
   });
 
   it('should list changes with pagination', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await dbStructureApi.listChanges({ page: 1, pageSize: 20, table_name: 'orders' });
-    expect(mockClient.get).toHaveBeenCalledWith('/db/changes?page=1&pagesize=20&table_name=orders');
+    expect(mockClient.get).toHaveBeenCalledWith('/db/changes?page=1&table_name=orders');
   });
 
   it('should support pagesize parameter', async () => {

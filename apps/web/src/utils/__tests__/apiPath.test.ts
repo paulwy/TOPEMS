@@ -30,7 +30,7 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         'tenant',
       ].forEach((svc) => expect(GROUP1_CORE_SERVICES.has(svc)).toBe(true));
     });
-    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/oa/asset/master-data/search/communication/ticket/feedback/mail/im/notification/comm（独立 K8s deployment）', () => {
+    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/master-data/search/communication/ticket（独立 K8s deployment）', () => {
       [
         'erp',
         'finance',
@@ -39,11 +39,13 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         'pm',
         'crm',
         'mes',
+        'manufacturing',
         'pdm',
         'scm',
         'wms',
         'srm',
         'qms',
+        'qualityAssurance',
         'lims',
         'ehs',
         'rd',
@@ -53,21 +55,15 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         'mobile',
         'gis',
         'integration',
-        // [V2026.08 已移除] lowcode 空壳占位服务
-        'oa',
-        'asset',
         // 主数据（独立进程 8090）
         'master-data',
         // V66 扩展外迁服务（8082/8084-8088）
         'search',
         'communication',
         'ticket',
-        'feedback',
-        // communication 子模块（仍归 Group2）
-        'mail',
-        'im',
-        'notification',
-        'comm',
+        // [V2026.08 已合并] mail/im/notification/comm 已合并至 communication
+        // [V2026.08 已合并] feedback 已合并至 ticket
+        // [V2026.08 已移除] oa/asset 空壳占位服务
       ].forEach((svc) => expect(GROUP2_INDEPENDENT_SERVICES.has(svc)).toBe(true));
     });
     it('Group1 与 Group2 集合无交集', () => {
