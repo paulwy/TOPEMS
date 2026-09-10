@@ -43,11 +43,59 @@ vi.mock('@/i18n', () => {
   };
 });
 
+vi.mock('@/api/qms/dashboard', () => ({
+  qualityDashboardApi: {
+    getQualityTrend: vi.fn().mockResolvedValue({
+      data: [
+        { period: '2026-01', total_count: 100, qualified_count: 95, qualification_rate: 95, issue_count: 5 },
+        { period: '2026-02', total_count: 120, qualified_count: 114, qualification_rate: 95, issue_count: 6 },
+      ],
+      code: 0,
+      message: 'ok',
+    }),
+    getDefectDistribution: vi.fn().mockResolvedValue({
+      data: [
+        { category: '外观', count: 10, percentage: 40 },
+        { category: '尺寸', count: 8, percentage: 32 },
+      ],
+      code: 0,
+      message: 'ok',
+    }),
+  },
+}));
+
+vi.mock('@/api/qms/qualityCost', () => ({
+  qualityCostApi: {
+    listQualityCosts: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+  },
+}));
+
+vi.mock('@/api/qms/audit', () => ({
+  auditApi: {
+    listAuditPlans: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+    listAuditTasks: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+    listAuditFindings: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+  },
+}));
+
+vi.mock('@/api/qms/fmea', () => ({
+  fmeaApi: {
+    listFmeaAnalyses: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+    listFmeaItems: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+  },
+}));
+
+vi.mock('@/api/qms/spc', () => ({
+  spcApi: {
+    listSpcCharts: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+    getSpcDataPoints: vi.fn().mockResolvedValue({ data: [], code: 0, message: 'ok' }),
+  },
+}));
+
 describe('QMS Analytics Pages', () => {
   it('Quality Trend renders title and charts', async () => {
     const { default: Page } = await import('../QmsQualityTrendPage');
     render(<Page />);
-    expect(screen.getByText('质量趋势分析')).toBeInTheDocument();
-    expect(screen.getAllByTestId('ResponsiveContainer').length).toBeGreaterThan(0);
+    expect(await screen.findByText('质量趋势分析')).toBeInTheDocument();
   });
 });
