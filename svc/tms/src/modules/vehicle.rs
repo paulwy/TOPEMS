@@ -79,7 +79,7 @@ where
     tag = "TMS - Vehicle"
 )]
 pub async fn list_vehicles(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
@@ -159,7 +159,7 @@ pub async fn list_vehicles(
     tag = "TMS - Vehicle"
 )]
 pub async fn create_vehicle(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -223,7 +223,7 @@ pub async fn create_vehicle(
     tag = "TMS - Vehicle"
 )]
 pub async fn get_vehicle(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -270,7 +270,7 @@ pub async fn get_vehicle(
     tag = "TMS - Vehicle"
 )]
 pub async fn update_vehicle(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -333,7 +333,7 @@ pub async fn update_vehicle(
     tag = "TMS - Vehicle"
 )]
 pub async fn delete_vehicle(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -387,7 +387,7 @@ pub struct ApprovalRequest {
     tag = "TMS - Vehicle"
 )]
 pub async fn submit_inspection(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -470,7 +470,7 @@ pub async fn submit_inspection(
     tag = "TMS - Vehicle"
 )]
 pub async fn approve_vehicle(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -566,7 +566,7 @@ pub async fn approve_vehicle(
     tag = "TMS - Vehicle"
 )]
 pub async fn reject_vehicle(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

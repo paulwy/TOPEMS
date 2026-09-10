@@ -117,7 +117,7 @@ pub fn create_routes() -> Router<ApiState> {
 const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
 pub async fn get_init_progress(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -186,7 +186,7 @@ pub async fn get_init_progress(
 }
 
 pub async fn setup_company_info(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -304,7 +304,7 @@ pub struct Company {
 }
 
 pub async fn setup_departments(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -417,7 +417,7 @@ pub struct Department {
 }
 
 pub async fn setup_positions(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -524,7 +524,7 @@ pub struct Position {
 }
 
 pub async fn setup_admin_user(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -640,7 +640,7 @@ pub struct Employee {
 }
 
 pub async fn complete_initialization(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

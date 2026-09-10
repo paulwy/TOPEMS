@@ -76,7 +76,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 }
 
 pub async fn list_material_tests(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -144,7 +144,7 @@ pub async fn list_material_tests(
 }
 
 pub async fn list_by_project(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -175,7 +175,7 @@ pub async fn list_by_project(
 }
 
 pub async fn list_by_experiment(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(experiment_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -302,7 +302,7 @@ pub async fn create_material_test(
 }
 
 pub async fn get_material_test(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

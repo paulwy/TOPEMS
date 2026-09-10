@@ -7,7 +7,6 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
@@ -55,7 +54,7 @@ pub struct VersionQuery {
     responses((status = 200, description = "OK")),
 )]
 pub async fn record_version(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -138,7 +137,7 @@ pub async fn record_version(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_versions(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Query(params): Query<VersionQuery>,
     Extension(txn_arc): Extension<
@@ -217,7 +216,7 @@ pub async fn get_versions(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_version(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -285,7 +284,7 @@ pub async fn get_version(
     responses((status = 200, description = "OK")),
 )]
 pub async fn rollback_to_version(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path((master_data_id, version_id)): Path<(String, String)>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

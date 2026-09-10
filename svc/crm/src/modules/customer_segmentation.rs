@@ -259,7 +259,7 @@ async fn delete_segment(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "客户分群删除成功"))
         }
-        Ok(r) => {
+        Ok(_r) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);

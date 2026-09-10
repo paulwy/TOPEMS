@@ -7,7 +7,6 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
@@ -177,7 +176,7 @@ pub fn get_domain_fields(domain: &str) -> Vec<DataAssetField> {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_data_assets(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<DataAssetQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -293,7 +292,7 @@ async fn calculate_domain_quality_score(db: &mut sqlx::PgConnection, domain: &st
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_data_asset_detail(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(domain): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

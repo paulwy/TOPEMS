@@ -14,7 +14,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::modules::ApiState;
-use topems_shared::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -52,7 +51,7 @@ pub struct CreateVoucherResponse {
 }
 
 pub async fn create_voucher(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

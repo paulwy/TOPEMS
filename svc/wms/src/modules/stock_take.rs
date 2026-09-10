@@ -910,7 +910,7 @@ pub async fn count_stock_take(
     Json(items): Json<Vec<CountItemRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1448,7 +1448,7 @@ pub async fn adjust_stock_take(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,

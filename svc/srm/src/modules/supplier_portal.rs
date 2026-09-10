@@ -231,7 +231,7 @@ pub async fn get_supplier_portal_invoices(
     >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -282,7 +282,7 @@ pub async fn get_supplier_portal_deliveries(
     >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -335,7 +335,7 @@ pub async fn get_supplier_portal_announcements(
     >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,

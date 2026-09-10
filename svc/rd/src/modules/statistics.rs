@@ -32,7 +32,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 }
 
 pub async fn get_statistics(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

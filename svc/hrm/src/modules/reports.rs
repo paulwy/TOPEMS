@@ -95,7 +95,7 @@ pub struct EmployeeSummaryResponse {
 }
 
 pub async fn employee_summary(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ReportParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -235,7 +235,7 @@ struct DepartmentSummaryRow {
 }
 
 pub async fn department_summary(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -296,7 +296,7 @@ pub struct ContractSummaryResponse {
 }
 
 pub async fn contract_summary(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -384,7 +384,7 @@ pub struct TrainingSummaryResponse {
 }
 
 pub async fn training_summary(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -487,7 +487,7 @@ pub struct AttendanceSummaryResponse {
 }
 
 pub async fn attendance_summary(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ReportParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -585,7 +585,7 @@ pub struct PayrollSummaryResponse {
 }
 
 pub async fn payroll_summary(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ReportParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

@@ -7,7 +7,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     http::StatusCode,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use serde::Deserialize;
@@ -135,7 +135,7 @@ async fn list_typed(
 }
 
 pub async fn list_bugs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -161,7 +161,7 @@ pub async fn list_bugs(
 }
 
 pub async fn get_bug(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -185,7 +185,7 @@ pub async fn get_bug(
 }
 
 pub async fn create_bug(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -219,7 +219,7 @@ pub async fn create_bug(
 }
 
 pub async fn update_bug(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -260,7 +260,7 @@ pub async fn update_bug(
 }
 
 pub async fn delete_bug(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -316,7 +316,7 @@ fn build_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 }
 
 pub async fn list_builds(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -343,7 +343,7 @@ pub async fn list_builds(
 }
 
 pub async fn get_build(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -370,7 +370,7 @@ pub async fn get_build(
 }
 
 pub async fn create_build(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -443,7 +443,7 @@ fn deploy_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 }
 
 pub async fn list_deploys(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -470,7 +470,7 @@ pub async fn list_deploys(
 }
 
 pub async fn get_deploy(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -497,7 +497,7 @@ pub async fn get_deploy(
 }
 
 pub async fn create_deploy(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -569,7 +569,7 @@ fn test_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 }
 
 pub async fn list_tests(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -596,7 +596,7 @@ pub async fn list_tests(
 }
 
 pub async fn get_test(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -623,7 +623,7 @@ pub async fn get_test(
 }
 
 pub async fn create_test(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -660,7 +660,7 @@ pub async fn create_test(
 }
 
 pub async fn update_test(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -702,7 +702,7 @@ pub async fn update_test(
 }
 
 pub async fn delete_test(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

@@ -57,7 +57,7 @@ pub struct DepartmentPaginationParams {
     ),
 )]
 pub async fn list_departments(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<DepartmentPaginationParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -140,7 +140,7 @@ pub async fn list_departments(
     ),
 )]
 pub async fn create_department(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -244,7 +244,7 @@ pub async fn create_department(
     ),
 )]
 pub async fn get_department(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -288,7 +288,7 @@ pub async fn get_department(
     ),
 )]
 pub async fn update_department(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -402,7 +402,7 @@ pub async fn update_department(
     ),
 )]
 pub async fn delete_department(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<

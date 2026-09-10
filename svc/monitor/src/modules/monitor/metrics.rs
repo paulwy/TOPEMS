@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::AppState;

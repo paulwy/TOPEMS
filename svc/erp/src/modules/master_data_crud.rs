@@ -3,7 +3,6 @@
 use axum::extract::{Extension, Json, Path, Query, State};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared::ApiResponse;
@@ -171,7 +170,7 @@ impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for MasterDataRow {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_master_data_refs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<MasterDataRefQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -244,7 +243,7 @@ pub async fn list_master_data_refs(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_master_data_ref(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -283,7 +282,7 @@ pub async fn get_master_data_ref(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_master_data_ref_by_code(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path((domain, code)): Path<(String, String)>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

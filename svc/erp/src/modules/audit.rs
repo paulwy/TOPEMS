@@ -6,7 +6,6 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
-use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -55,7 +54,7 @@ pub struct ListAuditLogsQuery {
     responses((status = 200, description = "获取审计日志列表成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_audit_logs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -146,7 +145,7 @@ pub async fn list_audit_logs(
     responses((status = 200, description = "获取审计日志详情成功", body = ApiResponse<AuditLog>))
 )]
 pub async fn get_audit_log(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

@@ -20,7 +20,7 @@ use super::ApiState;
     responses((status = 200, description = "获取公司关系列表成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_company_relations(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -59,7 +59,7 @@ pub async fn list_company_relations(
     responses((status = 200, description = "获取公司架构树成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_company_tree(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -282,7 +282,7 @@ pub async fn get_company_financial_data(
     >,
 ) -> Json<ApiResponse<CompanyFinancialData>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     Json(ApiResponse::success(
         CompanyFinancialData {
             company_id,

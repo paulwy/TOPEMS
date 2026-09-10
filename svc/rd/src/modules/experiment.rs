@@ -48,7 +48,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 }
 
 pub async fn list_experiments(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
@@ -234,7 +234,7 @@ pub async fn create_experiment(
 }
 
 pub async fn get_experiment(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -442,7 +442,7 @@ pub async fn delete_experiment(
 }
 
 pub async fn get_experiment_records(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -493,7 +493,7 @@ pub async fn get_experiment_records(
 }
 
 pub async fn create_experiment_record(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -541,7 +541,7 @@ pub async fn create_experiment_record(
 }
 
 pub async fn list_lab_experiments(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
@@ -616,7 +616,7 @@ pub async fn list_lab_experiments(
 }
 
 pub async fn list_pilot_experiments(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
@@ -691,7 +691,7 @@ pub async fn list_pilot_experiments(
 }
 
 pub async fn list_scaleup_experiments(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
@@ -766,7 +766,7 @@ pub async fn list_scaleup_experiments(
 }
 
 pub async fn advance_phase(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -836,7 +836,7 @@ pub async fn advance_phase(
 }
 
 pub async fn trace_batch(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(batch_number): Path<String>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,

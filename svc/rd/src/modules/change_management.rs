@@ -149,7 +149,7 @@ const CHANGE_ORDER_RETURN: &str = r#"id, change_request_id, title, execution_pla
 // ==================== Handlers ====================
 
 pub async fn create_change_request(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -203,7 +203,7 @@ pub async fn create_change_request(
 }
 
 pub async fn list_change_requests(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -262,7 +262,7 @@ pub async fn list_change_requests(
 }
 
 pub async fn get_change_request(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -297,7 +297,7 @@ pub async fn get_change_request(
 }
 
 pub async fn update_change_request(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -358,7 +358,7 @@ pub async fn update_change_request(
 }
 
 pub async fn delete_change_request(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -396,7 +396,7 @@ pub async fn delete_change_request(
 }
 
 pub async fn transition_change_request(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -482,7 +482,7 @@ pub async fn transition_change_request(
 }
 
 pub async fn create_change_order(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -560,7 +560,7 @@ pub async fn create_change_order(
 }
 
 pub async fn list_change_orders(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

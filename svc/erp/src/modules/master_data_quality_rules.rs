@@ -253,7 +253,7 @@ fn is_valid_identifier(s: &str) -> bool {
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_quality_rule(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -330,7 +330,7 @@ pub async fn create_quality_rule(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_quality_rules(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListQualityRulesQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -426,7 +426,7 @@ pub async fn list_quality_rules(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_quality_rule(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -469,7 +469,7 @@ pub async fn get_quality_rule(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_quality_rule(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -578,7 +578,7 @@ pub async fn update_quality_rule(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_quality_rule(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(rule_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -637,7 +637,7 @@ pub async fn delete_quality_rule(
     responses((status = 200, description = "OK")),
 )]
 pub async fn run_quality_check(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -738,7 +738,7 @@ pub async fn run_quality_check(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_quality_report(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QualityReportQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1010,7 +1010,7 @@ pub fn check_range(rule: &QualityRule, records: &[MasterDataRef]) -> Vec<Quality
 
 /// Uniqueness: 唯一性校验（检查 records 集合内的重复值）
 async fn check_uniqueness(
-    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    _txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     rule: &QualityRule,
     records: &[MasterDataRef],
 ) -> Vec<QualityIssue> {

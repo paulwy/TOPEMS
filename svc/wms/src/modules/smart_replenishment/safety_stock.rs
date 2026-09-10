@@ -355,7 +355,7 @@ pub async fn calculate_safety_stock(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
         Err(e) => return e,

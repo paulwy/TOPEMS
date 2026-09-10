@@ -13,7 +13,7 @@ export const pdmSettingsApi = {
 
   async updateSettings(
     category: string,
-    settings: Record<string, string>,
+    settings: Record<string, string>
   ): Promise<ApiResponse<PdmSettingsResponse>> {
     return apiClient.pdm.put<PdmSettingsResponse>(`/settings/${category}`, { settings });
   },

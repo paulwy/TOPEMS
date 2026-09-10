@@ -381,7 +381,7 @@ pub async fn delete_purchase_order(
     .await;
 
     match result {
-        Ok(r) => {
+        Ok(_r) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);

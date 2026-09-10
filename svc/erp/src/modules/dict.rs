@@ -392,7 +392,7 @@ pub async fn create_dict_type(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_dict_type(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -638,7 +638,7 @@ pub async fn delete_dict_type(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_dict_items(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
     Query(params): Query<DictItemQueryParams>,
     Extension(txn_arc): Extension<
@@ -802,7 +802,7 @@ pub async fn create_dict_item(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_dict_item(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1123,7 +1123,7 @@ pub async fn batch_create_dict_items(
     responses((status = 200, description = "OK")),
 )]
 pub async fn export_dict_items(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

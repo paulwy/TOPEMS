@@ -113,7 +113,7 @@ fn row_to_patent(row: sqlx::postgres::PgRow) -> Patent {
 }
 
 pub async fn list_patents(
-    State(state): State<crate::modules::ApiState>,
+    State(_state): State<crate::modules::ApiState>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -183,7 +183,7 @@ pub async fn list_patents(
 }
 
 pub async fn list_patents_by_project(
-    State(state): State<crate::modules::ApiState>,
+    State(_state): State<crate::modules::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -218,7 +218,7 @@ pub async fn list_patents_by_project(
 }
 
 pub async fn create_patent(
-    State(state): State<crate::modules::ApiState>,
+    State(_state): State<crate::modules::ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -277,7 +277,7 @@ pub async fn create_patent(
 }
 
 pub async fn get_patent(
-    State(state): State<crate::modules::ApiState>,
+    State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -308,7 +308,7 @@ pub async fn get_patent(
 }
 
 pub async fn update_patent(
-    State(state): State<crate::modules::ApiState>,
+    State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -378,7 +378,7 @@ pub async fn update_patent(
 }
 
 pub async fn delete_patent(
-    State(state): State<crate::modules::ApiState>,
+    State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

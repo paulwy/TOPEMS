@@ -741,7 +741,7 @@ pub async fn sync_all_suppliers_to_scm(
 }
 
 pub async fn get_sync_logs(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<

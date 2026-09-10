@@ -88,7 +88,7 @@ pub fn create_routes() -> Router<ApiState> {
     responses((status = 200, description = "获取期初余额列表成功"))
 )]
 pub async fn list_opening_balances(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<OpeningBalanceParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -274,7 +274,7 @@ pub async fn create_opening_balance(
     responses((status = 200, description = "获取期初余额成功"))
 )]
 pub async fn get_opening_balance(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

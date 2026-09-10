@@ -20,7 +20,7 @@ use super::ApiState;
     responses((status = 200, description = "获取内部交易列表成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_internal_transactions(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -84,7 +84,7 @@ pub async fn list_internal_transactions(
     responses((status = 200, description = "获取内部交易详情成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_internal_transaction(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(transaction_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

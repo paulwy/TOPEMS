@@ -30,7 +30,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 }
 
 pub async fn create_milestone(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -127,7 +127,7 @@ pub async fn create_milestone(
 }
 
 pub async fn get_project_milestones(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -200,7 +200,7 @@ pub async fn get_project_milestones(
 }
 
 pub async fn update_milestone(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -320,7 +320,7 @@ pub async fn update_milestone(
 }
 
 pub async fn delete_milestone(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,

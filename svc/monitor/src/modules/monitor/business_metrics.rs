@@ -5,6 +5,7 @@
 
 use axum::{
     extract::{Extension, Query, State},
+    response::IntoResponse,
     routing::get,
     Json, Router,
 };

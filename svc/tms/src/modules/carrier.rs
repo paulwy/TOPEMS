@@ -79,7 +79,7 @@ where
     tag = "TMS - Carrier"
 )]
 pub async fn list_carriers(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
@@ -159,7 +159,7 @@ pub async fn list_carriers(
     tag = "TMS - Carrier"
 )]
 pub async fn create_carrier(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -222,7 +222,7 @@ pub async fn create_carrier(
     tag = "TMS - Carrier"
 )]
 pub async fn get_carrier(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -269,7 +269,7 @@ pub async fn get_carrier(
     tag = "TMS - Carrier"
 )]
 pub async fn update_carrier(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -330,7 +330,7 @@ pub async fn update_carrier(
     tag = "TMS - Carrier"
 )]
 pub async fn delete_carrier(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -386,7 +386,7 @@ const CARRIER_RETURN: &str = r#"id, carrier_no, name, contact_person, contact_ph
     tag = "TMS - Carrier"
 )]
 pub async fn submit_qualification(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -441,7 +441,7 @@ pub async fn submit_qualification(
     tag = "TMS - Carrier"
 )]
 pub async fn approve_carrier(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -524,7 +524,7 @@ pub async fn approve_carrier(
     tag = "TMS - Carrier"
 )]
 pub async fn reject_carrier(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

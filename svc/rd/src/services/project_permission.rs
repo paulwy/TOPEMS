@@ -1,4 +1,4 @@
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;

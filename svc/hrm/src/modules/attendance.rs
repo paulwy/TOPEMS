@@ -38,7 +38,7 @@ pub struct TodayStatusParams {
 }
 
 pub async fn get_today_status(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<TodayStatusParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -393,7 +393,7 @@ pub async fn create_attendance(
     security(("bearerAuth" = []))
 )]
 pub async fn get_attendance(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -447,7 +447,7 @@ pub async fn get_attendance(
     security(("bearerAuth" = []))
 )]
 pub async fn update_attendance(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -781,7 +781,7 @@ pub async fn check_in(
     ),
 )]
 pub async fn check_out(
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

@@ -95,7 +95,7 @@ pub async fn list_employees(
     >,
 ) -> Json<ApiResponse<ListResponse<Employee>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
@@ -145,7 +145,7 @@ pub async fn get_employee(
     >,
 ) -> Json<ApiResponse<Employee>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
@@ -299,7 +299,7 @@ pub async fn create_employee(
     axum::extract::Json(req): axum::extract::Json<CreateEmployeeRequest>,
 ) -> Json<ApiResponse<Employee>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
         return e;
     }

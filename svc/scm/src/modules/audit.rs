@@ -32,7 +32,7 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 pub async fn list_audit_logs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -113,7 +113,7 @@ pub async fn list_audit_logs(
 }
 
 pub async fn get_audit_log(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

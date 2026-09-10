@@ -21,7 +21,7 @@ use super::ApiState;
     responses((status = 200, description = "获取合并范围公司成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_scope_companies(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

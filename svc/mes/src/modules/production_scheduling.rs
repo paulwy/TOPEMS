@@ -1035,7 +1035,7 @@ async fn transition_schedule(
         return Json(ApiResponse::error(404, "排产单不存在"));
     };
 
-    if let Err(e) = schedule_can_transition(&current_status, to_status) {
+    if let Err(_e) = schedule_can_transition(&current_status, to_status) {
         return Json(ApiResponse::error(
             409,
             &format!("当前状态 {} 不允许切换到 {}", current_status, to_status),

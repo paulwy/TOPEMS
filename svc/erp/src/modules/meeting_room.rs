@@ -52,7 +52,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "ERP/meeting-room"
 )]
 pub async fn list_rooms(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -224,7 +224,7 @@ pub async fn create_room(
     tag = "ERP/meeting-room"
 )]
 pub async fn get_room(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -467,7 +467,7 @@ pub async fn delete_room(
     tag = "ERP/meeting-room"
 )]
 pub async fn list_bookings(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -671,7 +671,7 @@ pub async fn create_booking(
     tag = "ERP/meeting-room"
 )]
 pub async fn get_booking(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -913,7 +913,7 @@ pub async fn delete_booking(
     tag = "ERP/meeting-room"
 )]
 pub async fn get_room_bookings(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

@@ -59,7 +59,7 @@ pub fn create_routes() -> Router<ApiState> {
     responses((status = 200, description = "获取数据库表列表成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_tables(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<TableQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -100,7 +100,7 @@ pub async fn list_tables(
     responses((status = 200, description = "获取数据库表详情成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_table_detail(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(table_name): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -171,7 +171,7 @@ pub async fn preview_add_column(
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<SqlPreview>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     let column = &req.column;
     let data_type = build_data_type(
         &column.data_type,
@@ -540,7 +540,7 @@ pub async fn execute_drop_column(
     responses((status = 200, description = "获取数据库变更列表成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_db_changes(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<DbChangeQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

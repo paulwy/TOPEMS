@@ -100,7 +100,7 @@ async fn count_table_with_status(
     responses((status = 200, description = "获取 ERP 仪表盘统计成功"))
 )]
 pub async fn get_dashboard(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

@@ -62,7 +62,7 @@ pub fn create_routes() -> Router<ApiState> {
     ),
 )]
 pub async fn list_production_orders(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ProductionOrderListParams>,
     Extension(txn_arc): Extension<
@@ -143,7 +143,7 @@ pub async fn list_production_orders(
     ),
 )]
 pub async fn create_production_order(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -225,7 +225,7 @@ pub async fn create_production_order(
     ),
 )]
 pub async fn get_production_order(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -272,7 +272,7 @@ pub async fn get_production_order(
     ),
 )]
 pub async fn update_production_order(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -340,7 +340,7 @@ pub async fn update_production_order(
     ),
 )]
 pub async fn delete_production_order(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -392,7 +392,7 @@ pub async fn delete_production_order(
     ),
 )]
 pub async fn update_production_progress(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -564,7 +564,7 @@ pub async fn receive_mes_progress(
     Json(req): Json<MesProgressUpdate>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     // 服务间调用（service token）：事务内设置 nil 租户上下文，确保同连接（RLS 放行）
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,

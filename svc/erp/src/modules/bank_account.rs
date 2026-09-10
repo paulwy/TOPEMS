@@ -7,13 +7,11 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     http::StatusCode,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use sqlx::Row;
-use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -90,7 +88,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 }
 
 pub async fn list_bank_accounts(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ListBankAccountsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -158,7 +156,7 @@ pub async fn list_bank_accounts(
 }
 
 pub async fn get_bank_account(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -194,7 +192,7 @@ pub async fn get_bank_account(
 }
 
 pub async fn create_bank_account(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -238,7 +236,7 @@ pub async fn create_bank_account(
 }
 
 pub async fn update_bank_account(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -294,7 +292,7 @@ pub async fn update_bank_account(
 }
 
 pub async fn delete_bank_account(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

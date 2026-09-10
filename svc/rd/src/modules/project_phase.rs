@@ -29,7 +29,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 }
 
 pub async fn create_phase(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -150,7 +150,7 @@ pub async fn create_phase(
 }
 
 pub async fn get_project_phases(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -224,7 +224,7 @@ pub async fn get_project_phases(
 }
 
 pub async fn update_phase(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -370,7 +370,7 @@ pub async fn update_phase(
 }
 
 pub async fn delete_phase(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,

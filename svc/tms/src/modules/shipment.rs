@@ -105,7 +105,7 @@ where
     tag = "TMS - Shipment"
 )]
 pub async fn list_shipments(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
@@ -187,7 +187,7 @@ pub async fn list_shipments(
     tag = "TMS - Shipment"
 )]
 pub async fn create_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -260,7 +260,7 @@ pub async fn create_shipment(
     tag = "TMS - Shipment"
 )]
 pub async fn get_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -309,7 +309,7 @@ pub async fn get_shipment(
     tag = "TMS - Shipment"
 )]
 pub async fn update_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -382,7 +382,7 @@ pub async fn update_shipment(
     tag = "TMS - Shipment"
 )]
 pub async fn delete_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -425,7 +425,7 @@ pub async fn delete_shipment(
     tag = "TMS - Shipment"
 )]
 pub async fn dispatch_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -500,7 +500,7 @@ pub async fn dispatch_shipment(
     tag = "TMS - Shipment"
 )]
 pub async fn arrive_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -575,7 +575,7 @@ pub async fn arrive_shipment(
     tag = "TMS - Shipment"
 )]
 pub async fn cancel_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -661,7 +661,7 @@ const SHIPMENT_RETURN: &str = r#"id, shipment_no, order_id, carrier_id, vehicle_
     tag = "TMS - Shipment"
 )]
 pub async fn submit_approval(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -742,7 +742,7 @@ pub async fn submit_approval(
     tag = "TMS - Shipment"
 )]
 pub async fn approve_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -828,7 +828,7 @@ pub async fn approve_shipment(
     tag = "TMS - Shipment"
 )]
 pub async fn reject_shipment(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

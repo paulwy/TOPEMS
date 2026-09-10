@@ -86,7 +86,7 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 pub async fn list_costs(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -201,7 +201,7 @@ fn search_like(search: &Option<String>) -> Option<String> {
 }
 
 pub async fn create_cost(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -272,7 +272,7 @@ pub async fn create_cost(
 }
 
 pub async fn get_cost(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -303,7 +303,7 @@ pub async fn get_cost(
 }
 
 pub async fn update_cost(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -397,7 +397,7 @@ pub async fn update_cost(
 }
 
 pub async fn delete_cost(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -423,7 +423,7 @@ pub async fn delete_cost(
 }
 
 pub async fn list_costs_by_project(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -455,7 +455,7 @@ pub async fn list_costs_by_project(
 }
 
 pub async fn get_cost_statistics(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

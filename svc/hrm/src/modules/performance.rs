@@ -136,7 +136,7 @@ pub fn create_routes() -> Router<ApiState> {
     security(("bearerAuth" = []))
 )]
 pub async fn list_reviews(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -290,7 +290,7 @@ pub async fn create_review(
 }
 
 pub async fn get_review(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -322,7 +322,7 @@ pub async fn get_review(
 }
 
 pub async fn update_review(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -442,7 +442,7 @@ pub async fn delete_review(
 }
 
 pub async fn submit_review(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -482,7 +482,7 @@ pub async fn submit_review(
 }
 
 pub async fn approve_review(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -522,7 +522,7 @@ pub async fn approve_review(
 }
 
 pub async fn list_goals(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -674,7 +674,7 @@ pub async fn create_goal(
 }
 
 pub async fn get_goal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -703,7 +703,7 @@ pub async fn get_goal(
 }
 
 pub async fn update_goal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -820,7 +820,7 @@ pub async fn delete_goal(
 }
 
 pub async fn get_employee_reviews(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -854,7 +854,7 @@ pub async fn get_employee_reviews(
 }
 
 pub async fn get_employee_goals(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

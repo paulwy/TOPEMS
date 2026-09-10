@@ -41,28 +41,25 @@ export const DocApprovalFlowPage: React.FC = () => {
     loadSettings();
   }, [loadSettings]);
 
-  const handleSave = useCallback(
-    async (data: Record<string, SettingValueType>) => {
-      setSaving(true);
-      setSuccess('');
-      try {
-        const stringData: Record<string, string> = {};
-        Object.entries(data).forEach(([k, v]) => {
-          stringData[k] = String(v ?? '');
-        });
-        await pdmSettingsApi.updateSettings(CATEGORY, stringData);
-        setSettings(stringData);
-        setSuccess('文档审批流程设置保存成功');
-        setTimeout(() => setSuccess(''), 3000);
-      } catch (e) {
-        console.error('[DocApprovalFlow] 保存设置失败:', e);
-        throw e;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [],
-  );
+  const handleSave = useCallback(async (data: Record<string, SettingValueType>) => {
+    setSaving(true);
+    setSuccess('');
+    try {
+      const stringData: Record<string, string> = {};
+      Object.entries(data).forEach(([k, v]) => {
+        stringData[k] = String(v ?? '');
+      });
+      await pdmSettingsApi.updateSettings(CATEGORY, stringData);
+      setSettings(stringData);
+      setSuccess('文档审批流程设置保存成功');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (e) {
+      console.error('[DocApprovalFlow] 保存设置失败:', e);
+      throw e;
+    } finally {
+      setSaving(false);
+    }
+  }, []);
 
   const sections: SettingSection[] = [
     {

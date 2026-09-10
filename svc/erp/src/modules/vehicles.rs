@@ -58,7 +58,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "ERP/vehicles"
 )]
 pub async fn list_vehicles(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -235,7 +235,7 @@ pub async fn create_vehicle(
     tag = "ERP/vehicles"
 )]
 pub async fn get_vehicle(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -482,7 +482,7 @@ pub async fn delete_vehicle(
     tag = "ERP/vehicle-requests"
 )]
 pub async fn list_vehicle_requests(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -688,7 +688,7 @@ pub async fn create_vehicle_request(
     tag = "ERP/vehicle-requests"
 )]
 pub async fn get_vehicle_request(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -928,7 +928,7 @@ pub async fn delete_vehicle_request(
     tag = "ERP/vehicle-requests"
 )]
 pub async fn get_vehicle_requests(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

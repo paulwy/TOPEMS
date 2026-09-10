@@ -693,7 +693,7 @@ pub async fn sync_supplier_from_srm(
 }
 
 pub async fn sync_all_suppliers_from_srm(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -847,7 +847,7 @@ pub struct SyncLogsRequest {
 }
 
 pub async fn get_sync_logs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -920,7 +920,7 @@ pub async fn get_sync_logs(
 }
 
 pub async fn retry_failed_syncs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -1021,7 +1021,7 @@ pub async fn retry_failed_syncs(
 }
 
 pub async fn get_sync_statistics(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -1344,7 +1344,7 @@ pub struct InconsistencyDetail {
 }
 
 pub async fn check_consistency(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

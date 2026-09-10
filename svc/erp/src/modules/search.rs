@@ -5,7 +5,6 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::repository::ListQueryParams;
@@ -40,7 +39,7 @@ pub struct SearchResult {
     ),
 )]
 async fn global_search(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<SearchParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

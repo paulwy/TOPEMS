@@ -20,7 +20,7 @@ use super::ApiState;
     responses((status = 200, description = "获取合并报表列表成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_reports(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -94,7 +94,7 @@ pub async fn list_reports(
     responses((status = 200, description = "获取合并报表详情成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_report(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -247,7 +247,7 @@ pub async fn generate_report(
     responses((status = 200, description = "获取合并报表行项目成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_report_lines(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -281,7 +281,7 @@ pub async fn get_report_lines(
     ),
 )]
 pub async fn export_report(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

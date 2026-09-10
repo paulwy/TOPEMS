@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use tracing::instrument;
 use uuid::Uuid;
 

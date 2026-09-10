@@ -129,7 +129,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 /// 插件健康检查
 pub async fn plugin_health_check(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

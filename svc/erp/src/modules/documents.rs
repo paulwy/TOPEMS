@@ -10,7 +10,6 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 use crate::utils::validate_required_field;
-use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
@@ -44,7 +43,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "ERP/documents"
 )]
 pub async fn list_documents(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     _headers: HeaderMap,
     Query(params): Query<DocumentQueryParams>,
     Extension(txn_arc): Extension<
@@ -115,7 +114,7 @@ pub async fn list_documents(
     tag = "ERP/documents"
 )]
 pub async fn create_document(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     _headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -164,7 +163,7 @@ pub async fn create_document(
     tag = "ERP/documents"
 )]
 pub async fn get_document(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -197,7 +196,7 @@ pub async fn get_document(
     tag = "ERP/documents"
 )]
 pub async fn update_document(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -260,7 +259,7 @@ pub async fn update_document(
     tag = "ERP/documents"
 )]
 pub async fn delete_document(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     _headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<

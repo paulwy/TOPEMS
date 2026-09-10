@@ -104,7 +104,7 @@ pub fn create_routes() -> Router<ApiState> {
     security(("bearerAuth" = []))
 )]
 pub async fn list_positions(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -301,7 +301,7 @@ pub async fn create_position(
     security(("bearerAuth" = []))
 )]
 pub async fn get_position(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -343,7 +343,7 @@ pub async fn get_position(
     security(("bearerAuth" = []))
 )]
 pub async fn update_position(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

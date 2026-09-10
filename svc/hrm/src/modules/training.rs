@@ -60,7 +60,7 @@ pub fn create_routes() -> Router<ApiState> {
     security(("bearerAuth" = []))
 )]
 pub async fn list_plans(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -126,7 +126,7 @@ pub async fn list_plans(
 }
 
 pub async fn create_plan(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -181,7 +181,7 @@ pub async fn create_plan(
 }
 
 pub async fn get_plan(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -239,7 +239,7 @@ pub async fn get_plan(
 }
 
 pub async fn update_plan(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -288,7 +288,7 @@ pub async fn update_plan(
 }
 
 pub async fn delete_plan(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -335,7 +335,7 @@ pub async fn delete_plan(
     security(("bearerAuth" = []))
 )]
 pub async fn list_courses(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -410,7 +410,7 @@ pub async fn list_courses(
 }
 
 pub async fn create_course(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -474,7 +474,7 @@ pub async fn create_course(
 }
 
 pub async fn get_course(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -506,7 +506,7 @@ pub async fn get_course(
 }
 
 pub async fn update_course(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -566,7 +566,7 @@ pub async fn update_course(
 }
 
 pub async fn delete_course(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -613,7 +613,7 @@ pub async fn delete_course(
     security(("bearerAuth" = []))
 )]
 pub async fn list_records(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -688,7 +688,7 @@ pub async fn list_records(
 }
 
 pub async fn create_record(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -741,7 +741,7 @@ pub async fn create_record(
 }
 
 pub async fn enroll_course(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -797,7 +797,7 @@ pub struct EnrollRequest {
 }
 
 pub async fn get_record(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -832,7 +832,7 @@ pub async fn get_record(
 }
 
 pub async fn update_record(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -885,7 +885,7 @@ pub async fn update_record(
 }
 
 pub async fn delete_record(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -914,7 +914,7 @@ pub async fn delete_record(
 }
 
 pub async fn get_course_records(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
     Extension(txn_arc): Extension<
@@ -976,7 +976,7 @@ pub async fn get_course_records(
 }
 
 pub async fn get_employee_records(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Query(params): Query<RecordPaginationParams>,
     Extension(txn_arc): Extension<

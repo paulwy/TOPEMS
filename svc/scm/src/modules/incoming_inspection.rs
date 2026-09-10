@@ -1169,3 +1169,157 @@ pub async fn inspection_fail(
 
     response
 }
+
+// =============================================================================
+// Inspection Records (检验记录明细)
+// =============================================================================
+
+/// 检验记录行转 JSON
+fn inspection_record_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
+    serde_json::json!({
+        "id": row.try_get::<Uuid, _>("id").ok(),
+        "inspection_id": row.try_get::<Uuid, _>("inspection_id").ok(),
+        "item_code": row.try_get::<Option<String>, _>("item_code").ok().flatten(),
+        "item_name": row.try_get::<String, _>("item_name").ok(),
+        "specification": row.try_get::<Option<String>, _>("specification").ok().flatten(),
+        "unit": row.try_get::<Option<String>, _>("unit").ok().flatten(),
+        "batch_no": row.try_get::<Option<String>, _>("batch_no").ok().flatten(),
+        "quantity": row.try_get::<Option<f64>, _>("quantity").ok().flatten(),
+        "samplesize": row.try_get::<Option<f64>, _>("samplesize").ok().flatten(),
+        "inspectionitems": row.try_get::<Option<String>, _>("inspectionitems").ok().flatten(),
+        "inspection_method": row.try_get::<Option<String>, _>("inspection_method").ok().flatten(),
+        "inspection_standard": row.try_get::<Option<String>, _>("inspection_standard").ok().flatten(),
+        "result": row.try_get::<String, _>("result").ok(),
+        "defect_details": row.try_get::<Option<String>, _>("defect_details").ok().flatten(),
+        "created_at": row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at").ok().flatten(),
+        "updated_at": row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at").ok().flatten(),
+    })
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct CreateInspectionRecordRequest {
+    pub item_code: Option<String>,
+    pub item_name: String,
+    pub specification: Option<String>,
+    pub unit: Option<String>,
+    pub batch_no: Option<String>,
+    pub quantity: Option<f64>,
+    pub samplesize: Option<f64>,
+    pub inspectionitems: Option<String>,
+    pub inspection_method: Option<String>,
+    pub inspection_standard: Option<String>,
+    pub result: String,
+    pub defect_details: Option<String>,
+}
+
+/// GET /incoming-inspections/{id}/records — 列出检验单的检验记录明细
+pub async fn list_inspection_records(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        SELECT id, inspection_id, item_code, item_name, specification, unit,
+               batch_no, quantity, samplesize, inspectionitems, inspection_method,
+               inspection_standard, result, defect_details, created_at, updated_at
+        FROM scm.inspection_records
+        WHERE inspection_id = $1
+        ORDER BY created_at DESC
+        "#
+    ))
+    .bind(id)
+    .fetch_all(&mut **txn)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let records: Vec<serde_json::Value> =
+                rows.iter().map(inspection_record_row_to_json).collect();
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "inspection_id": id,
+                    "records": records,
+                    "total": records.len(),
+                }),
+                "获取检验记录明细成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取检验记录明细失败: {}", e);
+            Json(api_error(500, "获取检验记录明细失败"))
+        }
+    }
+}
+
+/// POST /incoming-inspections/{id}/records — 创建检验记录明细
+pub async fn create_inspection_record(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<CreateInspectionRecordRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = claims.tenant_id.clone();
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        INSERT INTO scm.inspection_records
+            (tenant_id, inspection_id, item_code, item_name, specification, unit,
+             batch_no, quantity, samplesize, inspectionitems, inspection_method,
+             inspection_standard, result, defect_details)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING id, inspection_id, item_code, item_name, specification, unit,
+                  batch_no, quantity, samplesize, inspectionitems, inspection_method,
+                  inspection_standard, result, defect_details, created_at, updated_at
+        "#
+    ))
+    .bind(tenant_id)
+    .bind(id)
+    .bind(req.item_code)
+    .bind(&req.item_name)
+    .bind(req.specification)
+    .bind(req.unit)
+    .bind(req.batch_no)
+    .bind(req.quantity)
+    .bind(req.samplesize)
+    .bind(req.inspectionitems)
+    .bind(req.inspection_method)
+    .bind(req.inspection_standard)
+    .bind(&req.result)
+    .bind(req.defect_details)
+    .fetch_one(&mut **txn)
+    .await;
+
+    match result {
+        Ok(row) => {
+            let record = inspection_record_row_to_json(&row);
+            Json(ApiResponse::success(record, "创建检验记录明细成功"))
+        }
+        Err(e) => {
+            tracing::error!("创建检验记录明细失败: {}", e);
+            Json(api_error(500, "创建检验记录明细失败"))
+        }
+    }
+}

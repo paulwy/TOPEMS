@@ -169,7 +169,7 @@ pub fn create_routes(db: PgPool) -> Router {
 }
 
 pub async fn get_statistics(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
@@ -263,7 +263,7 @@ pub async fn get_statistics(
 }
 
 pub async fn get_detailed_statistics(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
@@ -509,7 +509,7 @@ pub async fn get_detailed_statistics(
 }
 
 pub async fn get_suppliers_with_stats(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<

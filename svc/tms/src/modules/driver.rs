@@ -82,7 +82,7 @@ where
     tag = "TMS - Driver"
 )]
 pub async fn list_drivers(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
@@ -162,7 +162,7 @@ pub async fn list_drivers(
     tag = "TMS - Driver"
 )]
 pub async fn create_driver(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -226,7 +226,7 @@ pub async fn create_driver(
     tag = "TMS - Driver"
 )]
 pub async fn get_driver(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -273,7 +273,7 @@ pub async fn get_driver(
     tag = "TMS - Driver"
 )]
 pub async fn update_driver(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -336,7 +336,7 @@ pub async fn update_driver(
     tag = "TMS - Driver"
 )]
 pub async fn delete_driver(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -392,7 +392,7 @@ const DRIVER_RETURN: &str = r#"id, driver_no, name, phone, license_no, license_t
     tag = "TMS - Driver"
 )]
 pub async fn submit_verification(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -473,7 +473,7 @@ pub async fn submit_verification(
     tag = "TMS - Driver"
 )]
 pub async fn approve_driver(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -554,7 +554,7 @@ pub async fn approve_driver(
     tag = "TMS - Driver"
 )]
 pub async fn reject_driver(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

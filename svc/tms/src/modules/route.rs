@@ -75,7 +75,7 @@ where
     tag = "TMS - Route"
 )]
 pub async fn list_routes(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
@@ -155,7 +155,7 @@ pub async fn list_routes(
     tag = "TMS - Route"
 )]
 pub async fn create_route(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -219,7 +219,7 @@ pub async fn create_route(
     tag = "TMS - Route"
 )]
 pub async fn get_route(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -266,7 +266,7 @@ pub async fn get_route(
     tag = "TMS - Route"
 )]
 pub async fn update_route(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -329,7 +329,7 @@ pub async fn update_route(
     tag = "TMS - Route"
 )]
 pub async fn delete_route(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

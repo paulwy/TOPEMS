@@ -3,7 +3,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 

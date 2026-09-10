@@ -6,10 +6,11 @@
 use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
-    routing::{get, put},
+    routing::get,
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;

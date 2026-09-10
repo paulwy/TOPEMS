@@ -41,7 +41,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 }
 
 pub async fn list_formulas(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
     headers: HeaderMap,
@@ -227,7 +227,7 @@ pub async fn create_formula(
 }
 
 pub async fn get_formula(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -443,7 +443,7 @@ pub async fn delete_formula(
 }
 
 pub async fn get_formula_versions(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -479,7 +479,7 @@ pub async fn get_formula_versions(
 }
 
 pub async fn create_formula_version(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -578,7 +578,7 @@ pub async fn create_formula_version(
 }
 
 pub async fn approve_formula(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

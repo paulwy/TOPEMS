@@ -53,7 +53,7 @@ pub struct ListAuditLogsQuery {
     security(("bearerAuth" = []))
 )]
 pub async fn list_audit_logs(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -150,7 +150,7 @@ pub async fn list_audit_logs(
     security(("bearerAuth" = []))
 )]
 pub async fn get_audit_log(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

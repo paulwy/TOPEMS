@@ -239,7 +239,7 @@ pub async fn plan_assignment(
     Json(req): Json<AssignmentPlanRequest>,
 ) -> Json<ApiResponse<AssignmentResult>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     let result = assign_orders_to_drivers(&req.drivers, &req.orders);
     Json(ApiResponse::success(result, "订单分配完成"))
 }
@@ -259,7 +259,7 @@ pub async fn optimize_route_handler(
     Json(req): Json<RouteOptimizeRequest>,
 ) -> Json<ApiResponse<RouteOptimizeResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     if req.distances.is_empty() {
         return Json(api_error(400, "距离矩阵不能为空"));
     }
@@ -292,7 +292,7 @@ pub async fn freight_quote_handler(
     Json(req): Json<FreightQuoteRequest>,
 ) -> Json<ApiResponse<FreightQuote>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     if req.distance_km < 0.0
         || req.weight_kg < 0.0
         || req.rate_per_km < 0.0

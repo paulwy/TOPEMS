@@ -20,7 +20,7 @@ use super::ApiState;
     responses((status = 200, description = "获取抵消规则列表成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn list_elimination_rules(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ConsolidationListParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -93,7 +93,7 @@ pub async fn list_elimination_rules(
     responses((status = 200, description = "获取抵消规则详情成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_elimination_rule(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -315,7 +315,7 @@ pub async fn delete_elimination_rule(
     ),
 )]
 pub async fn export_elimination_worksheet(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

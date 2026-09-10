@@ -71,7 +71,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 }
 
 pub async fn get_project_summary(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -144,7 +144,7 @@ pub async fn get_project_summary(
 }
 
 pub async fn get_project_trends(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -204,7 +204,7 @@ pub async fn get_project_trends(
 }
 
 pub async fn get_project_type_stats(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -248,7 +248,7 @@ pub async fn get_project_type_stats(
 }
 
 pub async fn get_performance_metrics(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -361,7 +361,7 @@ pub struct ProjectDetailReport {
 }
 
 pub async fn get_project_detail_report(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

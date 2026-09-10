@@ -352,7 +352,7 @@ pub async fn compute_mrp(
     Json(req): Json<MrpComputeRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
         Err(e) => return e,

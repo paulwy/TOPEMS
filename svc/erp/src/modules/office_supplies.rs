@@ -6,7 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -45,7 +44,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "ERP/office-supplies"
 )]
 pub async fn list_supplies(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<SupplyQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -215,7 +214,7 @@ pub async fn create_supply(
     tag = "ERP/office-supplies"
 )]
 pub async fn get_supply(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

@@ -404,7 +404,9 @@ export const dataAssetCatalogApiV66 = {
     const qs = new URLSearchParams();
     if (depth) qs.set('depth', String(depth));
     const s = qs.toString();
-    return apiClient.master.get<AssetLineageGraph>(`/mdm-v60/lineage/${assetId}/upstream${s ? `?${s}` : ''}`);
+    return apiClient.master.get<AssetLineageGraph>(
+      `/mdm-v60/lineage/${assetId}/upstream${s ? `?${s}` : ''}`
+    );
   },
 
   async getLineageDownstream(
@@ -414,7 +416,9 @@ export const dataAssetCatalogApiV66 = {
     const qs = new URLSearchParams();
     if (depth) qs.set('depth', String(depth));
     const s = qs.toString();
-    return apiClient.master.get<AssetLineageGraph>(`/mdm-v60/lineage/${assetId}/downstream${s ? `?${s}` : ''}`);
+    return apiClient.master.get<AssetLineageGraph>(
+      `/mdm-v60/lineage/${assetId}/downstream${s ? `?${s}` : ''}`
+    );
   },
 
   async getLineageByColumn(

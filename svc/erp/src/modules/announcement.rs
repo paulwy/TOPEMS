@@ -50,7 +50,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "ERP/announcement"
 )]
 pub async fn list_announcements(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<AnnouncementQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -207,7 +207,7 @@ pub async fn create_announcement(
     tag = "ERP/announcement"
 )]
 pub async fn get_announcement(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

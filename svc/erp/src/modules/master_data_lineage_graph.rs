@@ -7,7 +7,6 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
@@ -56,7 +55,7 @@ pub struct LineageQuery {
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_lineage_graph(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<LineageQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -329,7 +328,7 @@ async fn build_full_lineage_graph(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_lineage_upstream(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -416,7 +415,7 @@ pub async fn get_lineage_upstream(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_lineage_downstream(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

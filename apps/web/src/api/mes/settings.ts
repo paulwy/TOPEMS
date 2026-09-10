@@ -13,7 +13,7 @@ export const mesSettingsApi = {
 
   async updateSettings(
     category: string,
-    settings: Record<string, string>,
+    settings: Record<string, string>
   ): Promise<ApiResponse<MesSettingsResponse>> {
     return apiClient.mes.put<MesSettingsResponse>(`/settings/${category}`, { settings });
   },

@@ -400,7 +400,7 @@ async fn recommend_products(
 }
 
 async fn recommend_opportunities(
-    state: &ApiState,
+    _state: &ApiState,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     customer_id: &Uuid,
     top_k: i32,

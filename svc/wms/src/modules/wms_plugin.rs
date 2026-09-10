@@ -4,7 +4,6 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 
 use crate::modules::ApiState;
@@ -163,7 +162,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 /// 插件健康检查
 pub async fn plugin_health_check(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

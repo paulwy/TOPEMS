@@ -200,7 +200,7 @@ pub fn create_routes() -> Router<ApiState> {
     security(("bearerAuth" = []))
 )]
 pub async fn list_job_openings(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -363,7 +363,7 @@ pub async fn create_job_opening(
 }
 
 pub async fn get_job_opening(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -389,7 +389,7 @@ pub async fn get_job_opening(
 }
 
 pub async fn update_job_opening(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -508,7 +508,7 @@ pub async fn delete_job_opening(
 }
 
 pub async fn publish_job_opening(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -545,7 +545,7 @@ pub async fn publish_job_opening(
 }
 
 pub async fn close_job_opening(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -582,7 +582,7 @@ pub async fn close_job_opening(
 }
 
 pub async fn list_candidates(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -737,7 +737,7 @@ pub async fn create_candidate(
 }
 
 pub async fn get_candidate(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -763,7 +763,7 @@ pub async fn get_candidate(
 }
 
 pub async fn update_candidate(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -879,7 +879,7 @@ pub async fn delete_candidate(
 }
 
 pub async fn list_interviews(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -950,7 +950,7 @@ pub async fn list_interviews(
 }
 
 pub async fn create_interview(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -999,7 +999,7 @@ pub async fn create_interview(
 }
 
 pub async fn get_interview(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1025,7 +1025,7 @@ pub async fn get_interview(
 }
 
 pub async fn update_interview(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1079,7 +1079,7 @@ pub async fn update_interview(
 }
 
 pub async fn delete_interview(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1105,7 +1105,7 @@ pub async fn delete_interview(
 }
 
 pub async fn complete_interview(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

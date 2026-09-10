@@ -6,7 +6,6 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -431,7 +430,7 @@ pub async fn create_inbound_from_scm(
     ),
 )]
 pub async fn get_sync_logs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -503,7 +502,7 @@ pub async fn get_sync_logs(
 }
 
 pub async fn record_sync_log(
-    state: &ApiState,
+    _state: &ApiState,
     sync_type: &str,
     source_module: &str,
     target_module: &str,

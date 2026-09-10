@@ -102,7 +102,7 @@ async fn record_lifecycle_audit(
     responses((status = 200, description = "OK")),
 )]
 pub async fn archive_master_data_ref(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -213,7 +213,7 @@ pub async fn archive_master_data_ref(
     responses((status = 200, description = "OK")),
 )]
 pub async fn restore_master_data_ref(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -318,7 +318,7 @@ pub async fn restore_master_data_ref(
     responses((status = 200, description = "OK")),
 )]
 pub async fn schedule_destruction(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -429,7 +429,7 @@ pub async fn schedule_destruction(
     responses((status = 200, description = "OK")),
 )]
 pub async fn cancel_destruction(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -536,7 +536,7 @@ pub async fn cancel_destruction(
     responses((status = 200, description = "OK")),
 )]
 pub async fn destroy_master_data_ref(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -645,7 +645,7 @@ pub async fn destroy_master_data_ref(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_archived(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -724,7 +724,7 @@ pub async fn list_archived(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_pending_destruction(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

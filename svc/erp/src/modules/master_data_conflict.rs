@@ -103,7 +103,7 @@ pub struct AutoMergeRequest {
     responses((status = 200, description = "OK")),
 )]
 pub async fn detect_conflicts(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -352,7 +352,7 @@ pub async fn detect_conflicts(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_conflicts(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -491,7 +491,7 @@ pub async fn list_conflicts(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_conflict(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -572,7 +572,7 @@ pub async fn get_conflict(
     responses((status = 200, description = "OK")),
 )]
 pub async fn resolve_conflict(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -657,7 +657,7 @@ pub async fn resolve_conflict(
     responses((status = 200, description = "OK")),
 )]
 pub async fn auto_merge_conflict(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(conflict_id): Path<String>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

@@ -1008,7 +1008,7 @@ pub async fn create_payment_handler(
                 let payment_id = payment.id;
                 let payment_no = payment.payment_no.clone();
                 let amount = payment.total_amount.to_f64().unwrap_or(0.0);
-                let paid_by = Some(created_by.clone());
+                let _paid_by = Some(created_by.clone());
                 let paid_at = Some(Utc::now());
                 tokio::spawn(async move {
                     let payload = PaymentMadePayload {

@@ -41,28 +41,25 @@ export const EquipmentThresholdPage: React.FC = () => {
     loadSettings();
   }, [loadSettings]);
 
-  const handleSave = useCallback(
-    async (data: Record<string, SettingValueType>) => {
-      setSaving(true);
-      setSuccess('');
-      try {
-        const stringData: Record<string, string> = {};
-        Object.entries(data).forEach(([k, v]) => {
-          stringData[k] = String(v ?? '');
-        });
-        await mesSettingsApi.updateSettings(CATEGORY, stringData);
-        setSettings(stringData);
-        setSuccess(i18n.t('pages.equipment_threshold_page.save_success'));
-        setTimeout(() => setSuccess(''), 3000);
-      } catch (e) {
-        console.error('[EquipmentThreshold] 保存设置失败:', e);
-        throw e;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [],
-  );
+  const handleSave = useCallback(async (data: Record<string, SettingValueType>) => {
+    setSaving(true);
+    setSuccess('');
+    try {
+      const stringData: Record<string, string> = {};
+      Object.entries(data).forEach(([k, v]) => {
+        stringData[k] = String(v ?? '');
+      });
+      await mesSettingsApi.updateSettings(CATEGORY, stringData);
+      setSettings(stringData);
+      setSuccess(i18n.t('pages.equipment_threshold_page.save_success'));
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (e) {
+      console.error('[EquipmentThreshold] 保存设置失败:', e);
+      throw e;
+    } finally {
+      setSaving(false);
+    }
+  }, []);
 
   const sections: SettingSection[] = [
     {

@@ -148,7 +148,7 @@ pub fn create_routes() -> Router<ApiState> {
     security(("bearerAuth" = []))
 )]
 pub async fn list_payroll_runs(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -291,7 +291,7 @@ pub async fn create_payroll_run(
 }
 
 pub async fn get_payroll_run(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -489,7 +489,7 @@ pub async fn create_payroll_items(
 }
 
 pub async fn pay_payroll_run(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -539,7 +539,7 @@ pub async fn pay_payroll_run(
 }
 
 pub async fn list_payroll_items(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -614,7 +614,7 @@ pub async fn list_payroll_items(
 }
 
 pub async fn get_payroll_item(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -662,7 +662,7 @@ pub async fn get_payroll_item(
 }
 
 pub async fn list_payroll_details(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -724,7 +724,7 @@ pub async fn list_payroll_details(
 }
 
 pub async fn create_payroll_detail(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -770,7 +770,7 @@ pub async fn create_payroll_detail(
 /// 生成薪资凭证
 /// 根据薪资发放记录生成财务凭证
 pub async fn generate_payroll_voucher(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -991,7 +991,7 @@ pub struct PayrollSlip {
 }
 
 pub async fn list_payroll_slips(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

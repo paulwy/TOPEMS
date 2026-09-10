@@ -56,7 +56,7 @@ pub fn create_routes() -> Router<ApiState> {
     security(("bearerAuth" = []))
 )]
 pub async fn list_contracts(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ContractPaginationParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -135,7 +135,7 @@ pub async fn list_contracts(
 }
 
 pub async fn list_expiring_contracts(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<ExpiringParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -356,7 +356,7 @@ pub async fn create_contract(
     security(("bearerAuth" = []))
 )]
 pub async fn get_contract(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -624,7 +624,7 @@ pub async fn delete_contract(
 }
 
 pub async fn create_renewal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -681,7 +681,7 @@ pub async fn create_renewal(
 }
 
 pub async fn list_renewals(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Query(params): Query<RenewalParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -763,7 +763,7 @@ pub struct RenewalParams {
 }
 
 pub async fn get_renewal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -798,7 +798,7 @@ pub async fn get_renewal(
 }
 
 pub async fn update_renewal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -852,7 +852,7 @@ pub async fn update_renewal(
 }
 
 pub async fn delete_renewal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -884,7 +884,7 @@ pub async fn delete_renewal(
 }
 
 pub async fn approve_renewal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -929,7 +929,7 @@ pub async fn approve_renewal(
 }
 
 pub async fn reject_renewal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -981,7 +981,7 @@ pub struct RejectRequest {
 }
 
 pub async fn execute_renewal(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

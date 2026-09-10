@@ -86,7 +86,7 @@ pub fn create_routes() -> Router<super::ApiState> {
     )
 )]
 pub async fn list_projects(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListProjectsQuery>,
     headers: HeaderMap,
@@ -329,7 +329,7 @@ pub async fn create_project(
     )
 )]
 pub async fn get_project(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -621,7 +621,7 @@ pub async fn batch_create_projects(
     Json(req): Json<BatchCreateRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let _txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut success = 0;
     let mut errors = Vec::new();
@@ -1314,7 +1314,7 @@ pub struct ProjectDashboardResponse {
     )
 )]
 pub async fn get_project_dashboard(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -1511,7 +1511,7 @@ pub struct ProjectGanttResponse {
     )
 )]
 pub async fn get_project_gantt(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,

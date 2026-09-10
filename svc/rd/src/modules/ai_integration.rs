@@ -95,7 +95,7 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
 }
 
 async fn list_analyses(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<AiAnalysisQuery>,
 
     Extension(txn_arc): Extension<
@@ -143,7 +143,7 @@ async fn list_analyses(
 }
 
 async fn create_analysis(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -205,7 +205,7 @@ async fn create_analysis(
 }
 
 async fn get_analysis(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
 
     Extension(txn_arc): Extension<
@@ -255,7 +255,7 @@ async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
 }
 
 async fn get_entity_analyses(
-    State(state): State<super::ApiState>,
+    State(_state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,
 
     Extension(txn_arc): Extension<
