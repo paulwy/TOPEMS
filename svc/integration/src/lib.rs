@@ -188,6 +188,7 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
+pub mod async_task_queue;
 pub mod conversion_rules;
 pub mod crm_erp_sync;
 pub mod crm_scm_sync;
