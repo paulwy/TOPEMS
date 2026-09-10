@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Chip, Typography } from '@mui/material';
 import { inboundOrderApi } from '@/api/wms/inbound';
-import type { InboundOrder } from '@/api/wms/types';
+import type { InboundOrder, InboundOrderItem } from '@/api/wms/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TimelineItem } from '@/components/common/StatusTimeline';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
@@ -19,51 +19,28 @@ interface InboundItemRow {
   unit: string;
   expected_quantity: number;
   received_quantity: number;
-  unit_price: number;
-  total_amount: number;
+  unit_price?: number;
+  total_amount?: number;
   status: 'received' | 'pending';
 }
 
-function buildInboundItems(orderId: string, count: number) {
-  const mats = [
-    {
-      code: 'MAT-001',
-      name: i18n.t('pages.wms_inbound_detail_page.a_1'),
-      unit: i18n.t('pages.wms_inbound_detail_page.k0'),
-    },
-    {
-      code: 'MAT-002',
-      name: i18n.t('pages.wms_inbound_detail_page.b_3'),
-      unit: i18n.t('pages.wms_inbound_detail_page.k2'),
-    },
-    {
-      code: 'MAT-003',
-      name: i18n.t('pages.wms_inbound_detail_page.c_5'),
-      unit: i18n.t('pages.wms_inbound_detail_page.k4'),
-    },
-  ];
-  return Array.from({ length: count }, (_, i) => {
-    const m = mats[i % mats.length];
-    const expected = 10 + i * 15;
-    const status: InboundItemRow['status'] = i % 2 ? 'received' : 'pending';
-    return {
-      id: `${orderId}-line-${i + 1}`,
-      line_number: i + 1,
-      material_code: m.code,
-      material_name: m.name,
-      unit: m.unit,
-      expected_quantity: expected,
-      received_quantity: Math.floor(expected * (0.8 + i * 0.1)),
-      unit_price: 50 + i * 100,
-      total_amount: expected * (50 + i * 100),
-      status,
-    };
-  });
+function mapInboundItems(items: InboundOrderItem[]): InboundItemRow[] {
+  return items.map((item) => ({
+    id: item.id,
+    line_number: item.line_number,
+    material_code: item.material_code,
+    material_name: item.material_name,
+    unit: item.unit,
+    expected_quantity: item.expected_quantity,
+    received_quantity: item.received_quantity,
+    status: item.status === 'received' ? 'received' : 'pending',
+  }));
 }
 
 export default function WmsInboundDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<InboundOrder | null>(null);
+  const [items, setItems] = useState<InboundItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,11 +54,15 @@ export default function WmsInboundDetailPage() {
     setLoading(true);
     setError(null);
 
-    inboundOrderApi
-      .get(id)
-      .then((res) => {
+    // 并行加载订单详情和明细
+    Promise.all([
+      inboundOrderApi.get(id),
+      inboundOrderApi.listItems(id).catch(() => ({ data: { items: [], total: 0 } })),
+    ])
+      .then(([orderRes, itemsRes]) => {
         if (!cancelled) {
-          setOrder(res.data ?? null);
+          setOrder(orderRes.data);
+          setItems(mapInboundItems(itemsRes.data?.items ?? []));
           setLoading(false);
         }
       })
@@ -108,10 +89,7 @@ export default function WmsInboundDetailPage() {
     approved_at?: string;
   };
 
-  const items = useMemo<InboundItemRow[]>(
-    () => (order ? buildInboundItems(order.id, 4) : []),
-    [order]
-  );
+  const itemsData = useMemo<InboundItemRow[]>(() => items, [items]);
 
   const columns = useMemo<ColumnDef<InboundItemRow>[]>(
     () => [
@@ -175,7 +153,7 @@ export default function WmsInboundDetailPage() {
             variant='body2'
             sx={{ textAlign: 'right' }}
           >
-            ¥{row.original.unit_price.toLocaleString()}
+            ¥{(row.original.unit_price ?? 0).toLocaleString()}
           </Typography>
         ),
       },
@@ -286,7 +264,7 @@ export default function WmsInboundDetailPage() {
             content: (
               <DataTable
                 columns={columns}
-                data={items}
+                data={itemsData}
                 searchKey='material_name'
                 showSearch={false}
                 showExport={false}

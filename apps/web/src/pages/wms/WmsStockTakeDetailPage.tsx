@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import { stockTakeApi } from '@/api/wms/stocktake';
-import type { StockTake } from '@/api/wms/types';
+import type { StockTake, StockTakeItem } from '@/api/wms/types';
 import { WmsFSMActionButtons, WmsStatusBadge } from '@/components/wms';
 import { DataTable, PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
@@ -20,18 +20,16 @@ interface StockTakeItemRow {
   reason: string;
 }
 
-function buildStockTakeItems(id: string, count: number): StockTakeItemRow[] {
-  return Array.from({ length: count }, (_, i) => {
-    const system = 20 + i * 15;
-    const actual = system + (i % 3 === 0 ? -2 : i % 3 === 1 ? 1 : 0);
-    const diff = actual - system;
+function mapStockTakeItems(items: StockTakeItem[]): StockTakeItemRow[] {
+  return items.map((item) => {
+    const diff = item.discrepancy_quantity ?? (item.counted_quantity ?? 0) - item.system_quantity;
     return {
-      id: `${id}-item-${i}`,
-      sku: `SKU-${String(1000 + i).padStart(4, '0')}`,
-      name: `${i18n.t('pages.wms_stock_take_detail_page.k0')}${i + 1}`,
-      location: `A-${Math.floor(i / 4) + 1}-${(i % 10) + 1}`,
-      systemQty: system,
-      actualQty: actual,
+      id: item.id,
+      sku: item.material_code,
+      name: item.material_name,
+      location: item.location_code ?? item.location_name ?? '-',
+      systemQty: item.system_quantity,
+      actualQty: item.counted_quantity ?? 0,
       diff,
       reason:
         diff === 0
@@ -59,6 +57,7 @@ function DiffCell({ diff }: { diff: number }) {
 export default function WmsStockTakeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [task, setTask] = useState<StockTake | null>(null);
+  const [items, setItems] = useState<StockTakeItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,11 +71,15 @@ export default function WmsStockTakeDetailPage() {
     setLoading(true);
     setError(null);
 
-    stockTakeApi
-      .get(id)
-      .then((res: { data: StockTake }) => {
+    // 并行加载任务详情和明细
+    Promise.all([
+      stockTakeApi.get(id),
+      stockTakeApi.listItems(id).catch(() => ({ data: { items: [], total: 0 } })),
+    ])
+      .then(([taskRes, itemsRes]) => {
         if (!cancelled) {
-          setTask(res.data);
+          setTask(taskRes.data);
+          setItems(mapStockTakeItems(itemsRes.data?.items ?? []));
           setLoading(false);
         }
       })
@@ -92,10 +95,7 @@ export default function WmsStockTakeDetailPage() {
     };
   }, [id]);
 
-  const items = useMemo<StockTakeItemRow[]>(
-    () => (task ? buildStockTakeItems(task.id, 8) : []),
-    [task]
-  );
+  const itemsData = useMemo<StockTakeItemRow[]>(() => items, [items]);
 
   const diffSummary = useMemo(() => {
     // 优先使用 API 返回的真实统计数据
@@ -264,7 +264,7 @@ export default function WmsStockTakeDetailPage() {
             content: (
               <DataTable
                 columns={columns}
-                data={items}
+                data={itemsData}
                 enablePagination={false}
                 showSearch={false}
                 showExport={false}

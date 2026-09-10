@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, LinearProgress, Typography } from '@mui/material';
 import { wavePickApi } from '@/api/wms/wavePick';
-import type { WavePick } from '@/api/wms/types';
+import type { WavePick, WavePickItem } from '@/api/wms/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import { WmsStatusBadge } from '@/components/wms';
 import { DataTable, PageContainer } from '@/components/common';
@@ -19,15 +19,24 @@ interface WaveOrderRow {
   progressPct: number;
 }
 
-function buildWaveOrders(waveId: string, count: number): WaveOrderRow[] {
-  return Array.from({ length: count }, (_, i) => {
-    const totalQty = 10 + i * 4;
-    const pickedQty = Math.floor(totalQty * (0.6 + i * 0.1));
+function groupWaveItemsByOrder(items: WavePickItem[]): WaveOrderRow[] {
+  const groups = new Map<string, WavePickItem[]>();
+  items.forEach((item) => {
+    const orderId = item.outbound_order_id ?? item.id;
+    if (!groups.has(orderId)) {
+      groups.set(orderId, []);
+    }
+    groups.get(orderId)!.push(item);
+  });
+
+  return Array.from(groups.entries()).map(([orderId, orderItems]) => {
+    const totalQty = orderItems.reduce((s, i) => s + (i.planned_quantity ?? 0), 0);
+    const pickedQty = orderItems.reduce((s, i) => s + (i.picked_quantity ?? 0), 0);
     return {
-      id: `${waveId}-order-${i + 1}`,
-      orderNumber: `OUT-${20250100 + i + 1}`,
-      customer: `${i18n.t('pages.wms_wave_pick_detail_page.k0')}${i + 1}`,
-      lines: 2 + (i % 3),
+      id: orderId,
+      orderNumber: orderItems[0]?.outbound_order_number ?? orderId,
+      customer: '-',
+      lines: orderItems.length,
       totalQty,
       pickedQty,
       progressPct: totalQty ? Math.round((pickedQty / totalQty) * 100) : 0,
@@ -46,6 +55,7 @@ const PICKERS = [
 export default function WmsWavePickDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [wave, setWave] = useState<WavePick | null>(null);
+  const [orders, setOrders] = useState<WaveOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,11 +69,15 @@ export default function WmsWavePickDetailPage() {
     setLoading(true);
     setError(null);
 
-    wavePickApi
-      .get(id)
-      .then((res) => {
+    // 并行加载波次详情和明细
+    Promise.all([
+      wavePickApi.get(id),
+      wavePickApi.listItems(id).catch(() => ({ data: { items: [], total: 0 } })),
+    ])
+      .then(([waveRes, itemsRes]) => {
         if (!cancelled) {
-          setWave(res.data);
+          setWave(waveRes.data);
+          setOrders(groupWaveItemsByOrder(itemsRes.data?.items ?? []));
           setLoading(false);
         }
       })
@@ -79,7 +93,7 @@ export default function WmsWavePickDetailPage() {
     };
   }, [id]);
 
-  const orders = useMemo<WaveOrderRow[]>(() => (wave ? buildWaveOrders(wave.id, 6) : []), [wave]);
+  const ordersData = useMemo<WaveOrderRow[]>(() => orders, [orders]);
 
   const progress = useMemo(() => {
     // 优先使用 API 返回的真实进度数据
@@ -91,10 +105,10 @@ export default function WmsWavePickDetailPage() {
       };
     }
     // 回退到订单列表计算
-    const total = orders.reduce((s, o) => s + o.totalQty, 0);
-    const picked = orders.reduce((s, o) => s + o.pickedQty, 0);
+    const total = ordersData.reduce((s, o) => s + o.totalQty, 0);
+    const picked = ordersData.reduce((s, o) => s + o.pickedQty, 0);
     return { total, picked, pct: total ? Math.round((picked / total) * 100) : 0 };
-  }, [orders, wave]);
+  }, [ordersData, wave]);
 
   const columns = useMemo<ColumnDef<WaveOrderRow>[]>(
     () => [
@@ -280,7 +294,7 @@ export default function WmsWavePickDetailPage() {
             content: (
               <DataTable
                 columns={columns}
-                data={orders}
+                data={ordersData}
                 enablePagination={false}
                 showSearch={false}
                 showExport={false}
