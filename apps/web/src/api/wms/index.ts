@@ -18,11 +18,8 @@ import { inventoryAlertApi } from './inventoryAlert';
 import { inventoryMovementApi } from './inventoryMovement';
 import { advancedReplenishmentApi } from './smartReplenishment';
 import { slottingApi } from './slotting';
-import { kittingApi } from './kitting';
 import { laborApi } from './labor';
 import { pickingApi } from './picking';
-import { putawayApi } from './putaway';
-import { manifestApi } from './manifest';
 import apiClient from '../client';
 import type { ApprovalStartRequest, ApprovalApproveRequest, ApprovalRejectRequest } from './types';
 
@@ -94,13 +91,6 @@ export type {
 } from './slotting';
 
 export type {
-  KittingOrder,
-  BillOfMaterials,
-  CreateKittingOrderRequest,
-  KittingStatus,
-} from './kitting';
-
-export type {
   LaborEfficiency,
   ProductivityMetric,
   Workload,
@@ -124,39 +114,6 @@ export type {
   CreatePickingListRequest,
   CreatePickingStrategyRequest,
 } from './picking';
-
-export type {
-  PutawayPlan,
-  PutawayPlanItem,
-  PutawaySuggestion,
-  PutawayRule,
-  PutawayTask,
-  PutawayStatistics,
-  PutawayPlanStatus,
-  PutawayStrategy,
-  PutawayTaskStatus,
-  CreatePutawayPlanRequest,
-  ExecutePutawayPlanRequest,
-  ConfirmPutawayItemRequest,
-  CreatePutawayRuleRequest,
-  CreatePutawayTaskRequest,
-} from './putaway';
-
-export type {
-  Manifest,
-  ManifestItem,
-  Carrier,
-  ManifestLabel,
-  ManifestStatistics,
-  ManifestStatus,
-  CarrierType,
-  LabelStatus,
-  CreateManifestRequest,
-  UpdateManifestRequest,
-  AddManifestItemRequest,
-  BatchCreateManifestRequest,
-  CreateCarrierRequest,
-} from './manifest';
 
 export const wmsApi = {
   dashboard: wmsDashboardApi,
@@ -182,11 +139,8 @@ export const wmsApi = {
   inventoryMovements: inventoryMovementApi,
   advancedReplenishment: advancedReplenishmentApi,
   slotting: slottingApi,
-  kitting: kittingApi,
   labor: laborApi,
   picking: pickingApi,
-  putaway: putawayApi,
-  manifests: manifestApi,
 };
 
 // ============================================================================
