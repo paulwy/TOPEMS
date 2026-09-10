@@ -86,7 +86,7 @@ export const DashboardPage: React.FC = () => {
     const weeks = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'];
     const taskTrend = weeks.map((name, i) => ({
       name,
-      value: Math.floor(Math.random() * 6) + 4 + i,
+      value: 5 + i * 2,
     }));
     return {
       projectProgress:
