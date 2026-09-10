@@ -43,7 +43,7 @@ pub struct CreateDocumentRelationRequest {
 pub use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Deserialize)]
-struct DocRelationQuery {
+pub struct DocRelationQuery {
     page: Option<i32>,
     page_size: Option<i32>,
 }

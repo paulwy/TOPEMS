@@ -594,7 +594,7 @@ impl ErpEventHandlers {
 
         tracing::info!("[erp] 已生成库存入库凭证 {}", voucher_no);
 
-        if let Some(reference_order_id) = payload.reference_order_id {
+        if payload.reference_order_id.is_some() {
             let production_voucher_no = format!("PROD-IN-{}", payload.inbound_no);
             let pv_result = sqlx::query(
                 r#"INSERT INTO erp.vouchers

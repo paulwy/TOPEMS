@@ -206,7 +206,7 @@ pub async fn upload_document(
     let mut kb_id: Option<Uuid> = None;
     let mut file_name: Option<String> = None;
     let mut file_data: Option<Vec<u8>> = None;
-    let mut content_type: Option<String> = None;
+    let mut _content_type: Option<String> = None;
 
     while let Some(field) = multipart.next_field().await.unwrap_or(None) {
         let name = field.name().unwrap_or("").to_string();
@@ -219,7 +219,7 @@ pub async fn upload_document(
             }
             "file" => {
                 file_name = field.file_name().map(|s| s.to_string());
-                content_type = field.content_type().map(|s| s.to_string());
+                _content_type = field.content_type().map(|s| s.to_string());
                 if let Ok(data) = field.bytes().await {
                     file_data = Some(data.to_vec());
                 }

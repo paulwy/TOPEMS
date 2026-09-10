@@ -386,11 +386,11 @@ pub async fn get_model_usage(
     let mut where_clauses: Vec<String> = vec!["(tenant_id IS NULL OR tenant_id = $1)".to_string()];
     let mut param_idx = 2;
 
-    if let Some(ref sd) = params.start_date {
+    if params.start_date.is_some() {
         where_clauses.push(format!("date >= ${}::date", param_idx));
         param_idx += 1;
     }
-    if let Some(ref ed) = params.end_date {
+    if params.end_date.is_some() {
         where_clauses.push(format!("date <= ${}::date", param_idx));
         param_idx += 1;
     }

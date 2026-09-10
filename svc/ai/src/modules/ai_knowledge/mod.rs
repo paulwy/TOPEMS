@@ -29,12 +29,6 @@ pub mod models;
 pub mod rag;
 pub mod service;
 
-pub use handlers::{
-    ask_question, create_knowledge_base, delete_document, delete_knowledge_base, get_document,
-    get_knowledge_base, list_documents, list_knowledge_bases, list_qa_history, reprocess_document,
-    semantic_search, submit_feedback, update_document, update_knowledge_base, upload_document,
-};
-
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use sqlx::PgPool;

@@ -121,6 +121,7 @@ pub struct InvoiceListQuery {
 }
 
 #[derive(Debug, Serialize)]
+#[allow(non_snake_case)]
 pub struct Paginated<T> {
     pub items: Vec<T>,
     pub total: i64,

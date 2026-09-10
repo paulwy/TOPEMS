@@ -810,6 +810,3 @@ fn truncate_content(content: &str, max_chars: usize) -> String {
     let truncated: String = content.chars().take(max_chars).collect();
     format!("{}...", truncated)
 }
-
-// 复用 document_processor::parse_document 以支持文件解析
-pub use document_processor::parse_document as parse_file_content;
