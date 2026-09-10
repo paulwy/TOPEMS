@@ -123,9 +123,14 @@ pub async fn list_outbound_orders(
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, order_number, warehouse_id, customer_id, order_date, 
+        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+               customer_id, customer_name, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks, created_at, updated_at
+               total_value as total_amount, status, notes as remarks,
+               sales_order_id, sales_order_number, carrier, tracking_number,
+               picked_quantity, packed_quantity, shipped_quantity,
+               created_by, approved_by, approved_at,
+               created_at, updated_at
         FROM wms.outbound_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -215,9 +220,14 @@ pub async fn create_outbound_order(
                                         status, notes, created_at, updated_at)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'sales', $3, $4, $5, $6, $7, 
                'created', $8, $9, $10)
-        RETURNING id, order_number, warehouse_id, customer_id, order_date, 
+        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+                  customer_id, customer_name, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks, created_at, updated_at
+                  total_value as total_amount, status, notes as remarks,
+                  sales_order_id, sales_order_number, carrier, tracking_number,
+                  picked_quantity, packed_quantity, shipped_quantity,
+                  created_by, approved_by, approved_at,
+                  created_at, updated_at
         "#
     ))
     .bind(id)
@@ -303,9 +313,14 @@ pub async fn get_outbound_order(
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, order_number, warehouse_id, customer_id, order_date, 
+        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+               customer_id, customer_name, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks, created_at, updated_at
+               total_value as total_amount, status, notes as remarks,
+               sales_order_id, sales_order_number, carrier, tracking_number,
+               picked_quantity, packed_quantity, shipped_quantity,
+               created_by, approved_by, approved_at,
+               created_at, updated_at
         FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
     ))
@@ -357,9 +372,14 @@ pub async fn update_outbound_order(
     let existing = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, order_number, warehouse_id, customer_id, order_date, 
+        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+               customer_id, customer_name, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks, created_at, updated_at 
+               total_value as total_amount, status, notes as remarks,
+               sales_order_id, sales_order_number, carrier, tracking_number,
+               picked_quantity, packed_quantity, shipped_quantity,
+               created_by, approved_by, approved_at,
+               created_at, updated_at 
         FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
     ))
@@ -389,9 +409,14 @@ pub async fn update_outbound_order(
             warehouse_id = $2, customer_id = $3, expected_ship_date = $4, actual_ship_date = $5, 
             total_value = $6, status = $7, notes = $8, updated_at = $9
         WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, order_number, warehouse_id, customer_id, order_date, 
+        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+                  customer_id, customer_name, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks, created_at, updated_at
+                  total_value as total_amount, status, notes as remarks,
+                  sales_order_id, sales_order_number, carrier, tracking_number,
+                  picked_quantity, packed_quantity, shipped_quantity,
+                  created_by, approved_by, approved_at,
+                  created_at, updated_at
         "#
     ))
     .bind(id)
@@ -944,9 +969,14 @@ pub async fn confirm_outbound_order(
         UPDATE wms.outbound_orders SET
             status = 'confirmed', updated_at = $2
         WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
-        RETURNING id, order_number, warehouse_id, customer_id, order_date, 
+        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+                  customer_id, customer_name, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks, created_at, updated_at
+                  total_value as total_amount, status, notes as remarks,
+                  sales_order_id, sales_order_number, carrier, tracking_number,
+                  picked_quantity, packed_quantity, shipped_quantity,
+                  created_by, approved_by, approved_at,
+                  created_at, updated_at
         "#
     ))
     .bind(id)
@@ -1024,9 +1054,14 @@ pub async fn pick_outbound_order(
         UPDATE wms.outbound_orders SET
             status = 'picking', picking_status = 'in_progress', picking_start_time = $2, updated_at = $2
         WHERE id = $1 AND status = 'confirmed' AND deleted_at IS NULL
-        RETURNING id, order_number, warehouse_id, customer_id, order_date, 
+        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+                  customer_id, customer_name, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks, created_at, updated_at
+                  total_value as total_amount, status, notes as remarks,
+                  sales_order_id, sales_order_number, carrier, tracking_number,
+                  picked_quantity, packed_quantity, shipped_quantity,
+                  created_by, approved_by, approved_at,
+                  created_at, updated_at
         "#),
     )
     .bind(id)
@@ -1106,9 +1141,14 @@ pub async fn pack_outbound_order(
             status = 'packing', picking_status = 'completed', picking_end_time = $2, 
             packing_status = 'in_progress', packing_start_time = $2, updated_at = $2
         WHERE id = $1 AND status = 'picking' AND deleted_at IS NULL
-        RETURNING id, order_number, warehouse_id, customer_id, order_date, 
+        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+                  customer_id, customer_name, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks, created_at, updated_at
+                  total_value as total_amount, status, notes as remarks,
+                  sales_order_id, sales_order_number, carrier, tracking_number,
+                  picked_quantity, packed_quantity, shipped_quantity,
+                  created_by, approved_by, approved_at,
+                  created_at, updated_at
         "#
     ))
     .bind(id)
@@ -1300,9 +1340,14 @@ pub async fn ship_outbound_order(
     let order_result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, order_number, warehouse_id, customer_id, order_date, 
+        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+               customer_id, customer_name, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks, created_at, updated_at
+               total_value as total_amount, status, notes as remarks,
+               sales_order_id, sales_order_number, carrier, tracking_number,
+               picked_quantity, packed_quantity, shipped_quantity,
+               created_by, approved_by, approved_at,
+               created_at, updated_at
         FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
     ))
@@ -1436,9 +1481,14 @@ pub async fn complete_outbound_order(
         UPDATE wms.outbound_orders SET
             status = 'completed', shipping_status = 'completed', delivery_date = $2, updated_at = $2
         WHERE id = $1 AND status = 'shipping' AND deleted_at IS NULL
-        RETURNING id, order_number, warehouse_id, customer_id, order_date, 
+        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+                  customer_id, customer_name, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks, created_at, updated_at
+                  total_value as total_amount, status, notes as remarks,
+                  sales_order_id, sales_order_number, carrier, tracking_number,
+                  picked_quantity, packed_quantity, shipped_quantity,
+                  created_by, approved_by, approved_at,
+                  created_at, updated_at
         "#
     ))
     .bind(id)
