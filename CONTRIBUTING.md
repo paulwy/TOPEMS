@@ -184,7 +184,7 @@ npm run test
 #### 代码格式
 
 - 使用 `rustfmt` 格式化代码，运行 `cargo fmt`
-- 使用 `clippy` 检查代码，运行 `cargo clippy`
+- 使用 `clippy` 检查代码，运行 `RUSTC_WRAPPER="" cargo clippy --workspace`（注意：需临时禁用 sccache，因为 sccache 与 clippy-driver 存在兼容性问题；单 crate 检查可用 `RUSTC_WRAPPER="" cargo clippy -p <crate-name>`）
 - 缩进使用 4 个空格
 - 行宽不超过 100 个字符
 - 文件末尾保留一个空行
