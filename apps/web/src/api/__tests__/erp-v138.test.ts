@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { addressbookApi, announcementApi, assetApi } from '../erp/core';
+import { announcementApi, assetApi } from '../erp/core';
 import apiClient from '../client';
 
 vi.mock('../client', () => ({
@@ -13,50 +13,7 @@ vi.mock('../client', () => ({
   },
 }));
 
-describe('V138 ERP - addressbookApi', () => {
-  const mockClient = apiClient.erp as {
-    get: vi.Mock;
-    post: vi.Mock;
-    put: vi.Mock;
-    delete: vi.Mock;
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should list contacts', async () => {
-    mockClient.get.mockResolvedValue({ success: true, data: { contacts: [], total: 0 } });
-    await addressbookApi.list({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/addressbook?page=1&pagesize=20');
-  });
-
-  it('should get contact by id', async () => {
-    mockClient.get.mockResolvedValue({ success: true, data: { id: 'C-001' } });
-    await addressbookApi.get('C-001');
-    expect(mockClient.get).toHaveBeenCalledWith('/addressbook/C-001');
-  });
-
-  it('should search contacts by keyword', async () => {
-    mockClient.get.mockResolvedValue({ success: true, data: { contacts: [], total: 0 } });
-    await addressbookApi.search('张伟', 1, 10);
-    expect(mockClient.get).toHaveBeenCalledWith(
-      '/addressbook/search?keyword=%E5%BC%A0%E4%BC%9F&page=1&pagesize=10'
-    );
-  });
-
-  it('should get department tree', async () => {
-    mockClient.get.mockResolvedValue({ success: true, data: [] });
-    await addressbookApi.getDepartmentTree();
-    expect(mockClient.get).toHaveBeenCalledWith('/addressbook/departments/tree');
-  });
-
-  it('should export contacts', async () => {
-    mockClient.get.mockResolvedValue({ success: true, data: 'csv' });
-    await addressbookApi.export('csv');
-    expect(mockClient.get).toHaveBeenCalledWith('/addressbook/export?format=csv');
-  });
-});
+// [V2026.09 已移除] addressbookApi 测试块：简化版已归档，保留完整版 src/api/addressbook/
 
 describe('V138 ERP - announcementApi', () => {
   const mockClient = apiClient.erp as {

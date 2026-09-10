@@ -36,7 +36,6 @@ export { customerApi } from './customer';
 export { productionOrderApi } from './productionOrder';
 export { customerExtendedApi } from './customerExtended';
 export { salesOrderExtendedApi } from './salesOrderExtended';
-export { addressbookApi } from './addressbook';
 export { announcementApi } from './announcement';
 export { documentApi } from './document';
 export { assetApi } from './asset';

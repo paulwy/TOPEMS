@@ -6,7 +6,6 @@ import { templateApi } from './template';
 import { configApi } from './config';
 import { batchApi } from './batch';
 import { pushConfigApi } from './pushConfig';
-import { imApi } from './im';
 import { preferenceApi } from './preference';
 import { deliveryApi } from './delivery';
 import { webhookApi } from './webhook';
@@ -547,7 +546,7 @@ export const notificationApi = {
   getMyScheduled: digestApi.getMyScheduled,
 };
 
-export { templateApi, configApi, batchApi, imApi, deliveryApi, channelApi, groupApi, digestApi };
+export { templateApi, configApi, batchApi, deliveryApi, channelApi, groupApi, digestApi };
 
 export type {
   SendNotificationRequest,
@@ -576,20 +575,6 @@ export type {
   TemplateVersion,
   TemplateCloneRequest,
 } from './template';
-
-export type {
-  ChatRoom,
-  ChatMessage,
-  ChatMember,
-  Contact,
-  ContactGroup,
-  ProjectGroup,
-  ImNotification,
-  OnlineStatus,
-  SendMessageRequest,
-  CreateRoomRequest,
-  AddContactRequest,
-} from './im';
 
 export type {
   Email,
