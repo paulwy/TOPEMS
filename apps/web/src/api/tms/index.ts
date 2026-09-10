@@ -4,6 +4,7 @@ import carrierApi from './carrier';
 import routeApi from './route';
 import shipmentApi from './shipment';
 import optimizationApi from './optimization';
+import { tmsAnalyticsApi } from './analytics';
 
 export * from './types';
 
@@ -14,6 +15,8 @@ export { default as routeApi } from './route';
 export { default as shipmentApi } from './shipment';
 export { default as optimizationApi } from './optimization';
 export * from './optimization';
+export { tmsAnalyticsApi } from './analytics';
+export * from './analytics';
 
 export const tmsApi = {
   // Vehicle

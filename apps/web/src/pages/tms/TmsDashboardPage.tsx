@@ -11,7 +11,7 @@ import {
 } from '@/components/templates';
 import i18n from '@/i18n';
 import { TMS_PATHS } from '@/modules/tms/config';
-import { tmsApi } from '@/api/tms';
+import { tmsApi, tmsAnalyticsApi } from '@/api/tms';
 
 const TmsDashboardPage: React.FC = () => {
   const { data: dashboardData } = useQuery({
@@ -35,6 +35,19 @@ const TmsDashboardPage: React.FC = () => {
       }
     },
   });
+
+  const { data: trendData } = useQuery({
+    queryKey: ['tms', 'TmsDashboardPage', 'trend'],
+    queryFn: () => tmsAnalyticsApi.getShipmentTrend(),
+    staleTime: 60_000,
+  });
+
+  const { data: rankingData } = useQuery({
+    queryKey: ['tms', 'TmsDashboardPage', 'ranking'],
+    queryFn: () => tmsAnalyticsApi.getVehicleRanking(),
+    staleTime: 60_000,
+  });
+
   const navigate = useNavigate();
   const loadingQuery = useQuery<boolean>({
     queryKey: ['tms-dashboard'],
@@ -49,27 +62,20 @@ const TmsDashboardPage: React.FC = () => {
     return i18n.t('tms.tms_dashboard_page.k2');
   };
   const lineData = useMemo(
-    () => [
-      { label: i18n.t('tms.tms_dashboard_page.k3'), value: 42 },
-      { label: i18n.t('tms.tms_dashboard_page.k4'), value: 55 },
-      { label: i18n.t('tms.tms_dashboard_page.k5'), value: 38 },
-      { label: i18n.t('tms.tms_dashboard_page.k6'), value: 60 },
-      { label: i18n.t('tms.tms_dashboard_page.k7'), value: 48 },
-      { label: i18n.t('tms.tms_dashboard_page.k8'), value: 25 },
-      { label: i18n.t('tms.tms_dashboard_page.k9'), value: 18 },
-    ],
-    []
+    () =>
+      trendData?.data?.map((item) => ({
+        label: item.date.slice(5),
+        value: item.count,
+      })) ?? [],
+    [trendData]
   );
   const barData = useMemo(
-    () => [
-      { label: i18n.t('tms.tms_dashboard_page.a12345_10'), value: 85 },
-      { label: i18n.t('tms.tms_dashboard_page.a67890_11'), value: 72 },
-      { label: i18n.t('tms.tms_dashboard_page.b11111_12'), value: 91 },
-      { label: i18n.t('tms.tms_dashboard_page.b22222_13'), value: 64 },
-      { label: i18n.t('tms.tms_dashboard_page.c33333_14'), value: 78 },
-      { label: i18n.t('tms.tms_dashboard_page.c44444_15'), value: 53 },
-    ],
-    []
+    () =>
+      rankingData?.data?.map((item) => ({
+        label: item.vehicle_no,
+        value: item.shipment_count,
+      })) ?? [],
+    [rankingData]
   );
   const stats: StatCard[] = useMemo(
     () => [
