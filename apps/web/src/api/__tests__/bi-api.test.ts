@@ -113,7 +113,7 @@ describe('BI Module API Tests', () => {
       const { fetchReports } = await import('../bi/report');
       await fetchReports({ page: 1, pageSize: 10 });
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/report', {
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/reports', {
         params: { page: 1, pageSize: 10 },
       });
     });
@@ -122,7 +122,7 @@ describe('BI Module API Tests', () => {
       const { fetchReport } = await import('../bi/report');
       await fetchReport('rep-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/report/rep-001');
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/reports/rep-001');
     });
 
     it('createReport should call POST /analytics/report with data', async () => {
@@ -130,7 +130,7 @@ describe('BI Module API Tests', () => {
       const data = { name: 'Test Report' };
       await createReport(data);
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/report', data);
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/reports', data);
     });
 
     it('updateReport should call PUT /report/:id with data', async () => {
@@ -138,21 +138,21 @@ describe('BI Module API Tests', () => {
       const data = { name: 'Updated Report' };
       await updateReport('rep-001', data);
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.put).toHaveBeenCalledWith('/report/rep-001', data);
+      expect(apiClient.bi.put).toHaveBeenCalledWith('/reports/rep-001', data);
     });
 
     it('deleteReport should call DELETE /report/:id', async () => {
       const { deleteReport } = await import('../bi/report');
       await deleteReport('rep-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.delete).toHaveBeenCalledWith('/report/rep-001');
+      expect(apiClient.bi.delete).toHaveBeenCalledWith('/reports/rep-001');
     });
 
     it('exportReport should call POST /report/:id/export with format', async () => {
       const { exportReport } = await import('../bi/report');
       await exportReport('rep-001', 'pdf');
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/report/rep-001/export', {
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/reports/rep-001/export', {
         format: 'pdf',
       });
     });
@@ -161,14 +161,14 @@ describe('BI Module API Tests', () => {
       const { listExportJobs } = await import('../bi/report');
       await listExportJobs('rep-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/report/rep-001/exports');
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/reports/rep-001/exports');
     });
 
     it('downloadExport should call GET /report/exports/:jobId/download', async () => {
       const { downloadExport } = await import('../bi/report');
       await downloadExport('job-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/report/exports/job-001/download', {
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/reports/exports/job-001/download', {
         responseType: 'blob',
       });
     });
@@ -178,21 +178,21 @@ describe('BI Module API Tests', () => {
       const data = { cron: '0 0 * * *', email: 'test@example.com' };
       await createSchedule('rep-001', data);
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/report/rep-001/schedules', data);
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/schedules', { ...data, report_id: 'rep-001' });
     });
 
     it('runSchedule should call POST /report/schedules/:scheduleId/run', async () => {
       const { runSchedule } = await import('../bi/report');
       await runSchedule('sch-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/report/schedules/sch-001/run');
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/schedules/sch-001/execute');
     });
 
     it('toggleSchedule should call POST /report/schedules/:scheduleId/toggle', async () => {
       const { toggleSchedule } = await import('../bi/report');
       await toggleSchedule('sch-001', true);
       const { apiClient } = await import('../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/report/schedules/sch-001/toggle', {
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/schedules/sch-001/toggle', {
         enabled: true,
       });
     });
