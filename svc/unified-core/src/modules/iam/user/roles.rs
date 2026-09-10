@@ -70,7 +70,7 @@ pub async fn get_user_permissions(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
+        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_optional(&state.pool)
@@ -93,7 +93,7 @@ pub async fn get_user_permissions(
 
     let roles: Vec<UserRoleRow> = if u.is_superuser {
         sqlx::query_as::<_, UserRoleRow>(
-            "SELECT id, name, description, created_at FROM core_roles ORDER BY name",
+            "SELECT id, name, description, created_at FROM core_roles WHERE deleted_at IS NULL ORDER BY name",
         )
         .fetch_all(&state.pool)
         .await
@@ -104,7 +104,7 @@ pub async fn get_user_permissions(
             SELECT r.id, r.name, r.description, r.created_at
             FROM core_roles r
             INNER JOIN core_user_roles ur ON r.id = ur.role_id
-            WHERE ur.user_id = $1
+            WHERE r.deleted_at IS NULL AND ur.user_id = $1
             ORDER BY r.name
             "#,
         )
@@ -128,7 +128,7 @@ pub async fn get_user_permissions(
             FROM core_permissions p
             INNER JOIN core_role_permissions rp ON p.id = rp.permission_id
             INNER JOIN core_user_roles ur ON rp.role_id = ur.role_id
-            WHERE ur.user_id = $1
+            WHERE r.deleted_at IS NULL AND ur.user_id = $1
             ORDER BY p.code
             "#,
         )
@@ -224,7 +224,7 @@ pub async fn get_user_roles(
     };
 
     let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE id = $1")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1")
             .bind(user_uuid)
             .fetch_one(&state.pool)
             .await
@@ -332,7 +332,7 @@ pub async fn assign_user_role(
     };
 
     let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE id = $1")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1")
             .bind(user_uuid)
             .fetch_one(&state.pool)
             .await
@@ -358,7 +358,7 @@ pub async fn assign_user_role(
     }
 
     let existing_role_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_roles WHERE id = $1")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM core_roles WHERE deleted_at IS NULL AND id = $1")
             .bind(role_uuid)
             .fetch_one(&state.pool)
             .await

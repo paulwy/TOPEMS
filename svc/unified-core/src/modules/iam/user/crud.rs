@@ -28,6 +28,7 @@ use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserRespo
 )]
 pub async fn list_users(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListUsersParams>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user list_users called");
@@ -35,11 +36,25 @@ pub async fn list_users(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let offset = (page - 1) * page_size;
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
-    let total_result =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL")
-            .fetch_one(&state.pool)
-            .await;
+    let total_result = if claims.is_superuser {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL",
+        )
+        .fetch_one(&state.pool)
+        .await
+    } else {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND tenant_id = $1",
+        )
+        .bind(tenant_id.unwrap_or_else(Uuid::nil))
+        .fetch_one(&state.pool)
+        .await
+    };
 
     let total = match total_result {
         Ok(t) => t,
@@ -52,13 +67,24 @@ pub async fn list_users(
         }
     };
 
-    let result = sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users ORDER BY created_at DESC LIMIT $1 OFFSET $2"
-    )
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&state.pool)
-    .await;
+    let result = if claims.is_superuser {
+        sqlx::query_as::<_, UserRow>(
+            "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        )
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.pool)
+        .await
+    } else {
+        sqlx::query_as::<_, UserRow>(
+            "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        )
+        .bind(tenant_id.unwrap_or_else(Uuid::nil))
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.pool)
+        .await
+    };
 
     match result {
         Ok(users) => {

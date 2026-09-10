@@ -1,7 +1,8 @@
 use crate::AppState;
-use axum::{extract::Path, extract::State, Json};
+use axum::{extract::Path, extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -17,6 +18,7 @@ pub struct BatchAssignPositionsRequest {
 
 pub async fn get_user_positions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let rows = sqlx::query(
@@ -55,9 +57,16 @@ pub async fn get_user_positions(
 
 pub async fn assign_position(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<Uuid>,
     Json(req): Json<AssignPositionRequest>,
 ) -> Json<serde_json::Value> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
+
     let result = sqlx::query(
         r#"
         INSERT INTO iam.user_positions (user_id, position_id, tenant_id)
@@ -67,7 +76,7 @@ pub async fn assign_position(
     )
     .bind(user_id)
     .bind(req.position_id)
-    .bind(Uuid::nil())
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -78,13 +87,20 @@ pub async fn assign_position(
         ));
     }
 
-    get_user_positions(State(state), Path(user_id)).await
+    get_user_positions(State(state), Extension(claims.clone()), Path(user_id)).await
 }
 
 pub async fn batch_assign_positions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<BatchAssignPositionsRequest>,
 ) -> Json<serde_json::Value> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
+
     for user_id in &req.user_ids {
         let _ = sqlx::query(
             r#"
@@ -95,7 +111,7 @@ pub async fn batch_assign_positions(
         )
         .bind(user_id)
         .bind(req.position_id)
-        .bind(Uuid::nil())
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
     }
@@ -109,6 +125,7 @@ pub async fn batch_assign_positions(
 
 pub async fn unassign_position(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((user_id, position_id)): Path<(Uuid, Uuid)>,
 ) -> Json<serde_json::Value> {
     let result = sqlx::query(
@@ -123,7 +140,9 @@ pub async fn unassign_position(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => get_user_positions(State(state), Path(user_id)).await,
+        Ok(r) if r.rows_affected() > 0 => {
+            get_user_positions(State(state), Extension(claims.clone()), Path(user_id)).await
+        }
         _ => Json(topems_shared_core::response::error_value(
             404,
             "取消分配失败",

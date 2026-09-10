@@ -3,9 +3,10 @@
 use crate::AppState;
 use axum::{
     extract::{Path, State},
-    Json,
+    Extension, Json,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -37,14 +38,31 @@ struct RoleResponse {
         (status = 500, description = "服务内部错误"),
     )
 )]
-pub async fn list_roles(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_roles(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     tracing::info!("IAM role list_roles called");
 
-    let result = sqlx::query_as::<_, RoleRow>(
-        "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles ORDER BY created_at DESC"
-    )
-    .fetch_all(&state.pool)
-    .await;
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+
+    let result = if claims.is_superuser {
+        sqlx::query_as::<_, RoleRow>(
+            "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles WHERE deleted_at IS NULL ORDER BY created_at DESC",
+        )
+        .fetch_all(&state.pool)
+        .await
+    } else {
+        sqlx::query_as::<_, RoleRow>(
+            "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
+        )
+        .bind(tenant_id.unwrap_or_else(Uuid::nil))
+        .fetch_all(&state.pool)
+        .await
+    };
 
     match result {
         Ok(roles) => {
@@ -86,6 +104,7 @@ pub async fn list_roles(State(state): State<AppState>) -> Json<serde_json::Value
 
 pub async fn create_role(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM role create_role called with: {:?}", payload);
@@ -129,6 +148,11 @@ pub async fn create_role(
     }
 
     let role_id = Uuid::new_v4();
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     // 事务创建角色和权限关联
     let mut tx = match state.pool.begin().await {
@@ -144,11 +168,12 @@ pub async fn create_role(
 
     // 创建角色
     if let Err(e) = sqlx::query(
-        "INSERT INTO core_roles (id, name, description, tenant_id, created_at, updated_at) VALUES ($1, $2, $3, '00000000-0000-0000-0000-000000000001', NOW(), NOW())"
+        "INSERT INTO core_roles (id, name, description, tenant_id, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())"
     )
     .bind(role_id)
     .bind(&name)
     .bind(&description)
+    .bind(tenant_id)
     .execute(&mut *tx)
     .await
     {
@@ -457,12 +482,25 @@ pub async fn delete_role(
         ));
     }
 
+    // 事务删除角色权限关联和角色本身，保证原子性
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开始事务失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("删除角色失败: {}", e),
+            ));
+        }
+    };
+
     // 删除角色权限关联
     if let Err(e) = sqlx::query("DELETE FROM core_role_permissions WHERE role_id = $1")
         .bind(role_uuid)
-        .execute(&state.pool)
+        .execute(&mut *tx)
         .await
     {
+        let _ = tx.rollback().await;
         tracing::error!("删除角色权限关联失败: {}", e);
         return Json(topems_shared_core::response::error_value(
             500,
@@ -470,13 +508,22 @@ pub async fn delete_role(
         ));
     }
 
-    // 删除角色
+    // 删除角色（软删除）
     if let Err(e) = sqlx::query("UPDATE core_roles SET deleted_at = NOW() WHERE id = $1")
         .bind(role_uuid)
-        .execute(&state.pool)
+        .execute(&mut *tx)
         .await
     {
+        let _ = tx.rollback().await;
         tracing::error!("删除角色失败: {}", e);
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("删除角色失败: {}", e),
+        ));
+    }
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("提交事务失败: {}", e);
         return Json(topems_shared_core::response::error_value(
             500,
             &format!("删除角色失败: {}", e),

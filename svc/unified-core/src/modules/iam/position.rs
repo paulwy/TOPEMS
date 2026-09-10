@@ -1,7 +1,8 @@
 use crate::AppState;
-use axum::{extract::Path, extract::State, Json};
+use axum::{extract::Path, extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,13 +34,31 @@ pub struct UpdatePositionRequest {
         (status = 500, description = "服务内部错误"),
     )
 )]
-pub async fn list_positions(State(state): State<AppState>) -> Json<serde_json::Value> {
-    let rows = sqlx::query(
-        r#"SELECT id, code, name, department_id, description FROM iam.positions ORDER BY name"#,
-    )
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+pub async fn list_positions(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+
+    let rows = if claims.is_superuser {
+        sqlx::query(
+            r#"SELECT id, code, name, department_id, description FROM iam.positions ORDER BY name"#,
+        )
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default()
+    } else {
+        sqlx::query(
+            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE tenant_id = $1 ORDER BY name"#,
+        )
+        .bind(tenant_id.unwrap_or_else(Uuid::nil))
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default()
+    };
 
     let result: Vec<serde_json::Value> = rows
         .into_iter()
@@ -63,9 +82,15 @@ pub async fn list_positions(State(state): State<AppState>) -> Json<serde_json::V
 
 pub async fn create_position(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePositionRequest>,
 ) -> Json<serde_json::Value> {
     let position_id = Uuid::new_v4();
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query(
         r#"INSERT INTO iam.positions (id, code, name, department_id, description, tenant_id) VALUES ($1, $2, $3, $4, $5, $6)"#,
@@ -75,7 +100,7 @@ pub async fn create_position(
     .bind(&req.name)
     .bind(req.department_id)
     .bind(&req.description)
-    .bind(Uuid::nil())
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -92,7 +117,7 @@ pub async fn create_position(
         )
         .bind(position_id)
         .bind(perm)
-        .bind(Uuid::nil())
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
     }
@@ -103,7 +128,7 @@ pub async fn create_position(
         )
         .bind(position_id)
         .bind(role_id)
-        .bind(Uuid::nil())
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
     }
@@ -125,14 +150,30 @@ pub async fn create_position(
 
 pub async fn get_position(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let row = sqlx::query(
-        r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#,
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+
+    let row = if claims.is_superuser {
+        sqlx::query(
+            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#,
+        )
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await
+    } else {
+        sqlx::query(
+            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+        )
+        .bind(id)
+        .bind(tenant_id.unwrap_or_else(Uuid::nil))
+        .fetch_optional(&state.pool)
+        .await
+    }
     .ok()
     .flatten();
 
@@ -178,16 +219,34 @@ pub async fn get_position(
 
 pub async fn update_position(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePositionRequest>,
 ) -> Json<serde_json::Value> {
-    let exists =
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
+
+    let exists = if claims.is_superuser {
         sqlx::query(r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#)
             .bind(id)
             .fetch_optional(&state.pool)
             .await
             .ok()
-            .flatten();
+            .flatten()
+    } else {
+        sqlx::query(
+            r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten()
+    };
 
     if exists.is_none() {
         return Json(topems_shared_core::response::error_value(404, "岗位不存在"));
@@ -229,7 +288,7 @@ pub async fn update_position(
             )
             .bind(id)
             .bind(perm)
-            .bind(Uuid::nil())
+            .bind(tenant_id)
             .execute(&state.pool)
             .await;
         }
@@ -247,23 +306,40 @@ pub async fn update_position(
             )
             .bind(id)
             .bind(role_id)
-            .bind(Uuid::nil())
+            .bind(tenant_id)
             .execute(&state.pool)
             .await;
         }
     }
 
-    get_position(State(state), Path(id)).await
+    get_position(State(state), Extension(claims.clone()), Path(id)).await
 }
 
 pub async fn delete_position(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query(r#"UPDATE iam.positions SET deleted_at = NOW() WHERE id = $1"#)
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
+
+    let result = if claims.is_superuser {
+        sqlx::query(r#"UPDATE iam.positions SET deleted_at = NOW() WHERE id = $1"#)
+            .bind(id)
+            .execute(&state.pool)
+            .await
+    } else {
+        sqlx::query(
+            r#"UPDATE iam.positions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+        )
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
-        .await;
+        .await
+    };
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({

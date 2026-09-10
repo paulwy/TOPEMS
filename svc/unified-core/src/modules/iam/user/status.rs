@@ -216,7 +216,7 @@ pub async fn enable_user(
 
 pub async fn change_password(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -225,6 +225,17 @@ pub async fn change_password(
         id,
         payload
     );
+
+    // 仅允许超级管理员或本人修改密码
+    if !claims.is_superuser && claims.sub != id {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(topems_shared_core::response::error_value(
+                403,
+                "无权修改他人密码",
+            )),
+        );
+    }
 
     let user_id = match Uuid::parse_str(&id) {
         Ok(uid) => uid,

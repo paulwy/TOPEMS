@@ -3,9 +3,10 @@
 use crate::AppState;
 use axum::{
     extract::{Path, State},
-    Json,
+    Extension, Json,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -29,6 +30,7 @@ struct UserPermissionResponse {
 
 pub async fn get_user_permissions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
@@ -48,7 +50,7 @@ pub async fn get_user_permissions(
 
     // 检查用户是否是超级管理员
     let is_superuser: bool =
-        match sqlx::query_scalar("SELECT is_superuser FROM core_users WHERE id = $1")
+        match sqlx::query_scalar("SELECT is_superuser FROM core_users WHERE deleted_at IS NULL AND id = $1")
             .bind(user_uuid)
             .fetch_optional(&state.pool)
             .await
@@ -151,6 +153,7 @@ pub async fn get_user_permissions(
 
 pub async fn update_user_permissions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -191,7 +194,7 @@ pub async fn update_user_permissions(
 
     // 检查用户是否存在
     let user_exists: bool =
-        match sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM core_users WHERE id = $1)")
+        match sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM core_users WHERE deleted_at IS NULL AND id = $1)")
             .bind(user_uuid)
             .fetch_one(&state.pool)
             .await

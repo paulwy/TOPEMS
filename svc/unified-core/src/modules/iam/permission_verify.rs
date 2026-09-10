@@ -1,7 +1,8 @@
 use crate::AppState;
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,9 +32,19 @@ pub struct VerifyPermissionResponse {
 )]
 pub async fn verify_permission(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<VerifyPermissionRequest>,
 ) -> Json<serde_json::Value> {
-    let result = verify_user_permission(&state.pool, &req.permission).await;
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID",
+            ));
+        }
+    };
+    let result = verify_user_permission(&state.pool, &user_id, &req.permission).await;
     let permission = req.permission.clone();
 
     Json(serde_json::json!({
@@ -72,12 +83,23 @@ pub struct VerifyMultiplePermissionsResponse {
 )]
 pub async fn verify_multiple_permissions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<VerifyMultiplePermissionsRequest>,
 ) -> Json<serde_json::Value> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID",
+            ));
+        }
+    };
+
     let mut results = Vec::new();
 
     for permission in req.permissions {
-        let has_permission = verify_user_permission(&state.pool, &permission).await;
+        let has_permission = verify_user_permission(&state.pool, &user_id, &permission).await;
         results.push(VerifyPermissionResponse {
             has_permission,
             permission: permission.clone(),
@@ -103,35 +125,44 @@ pub async fn verify_multiple_permissions(
     }))
 }
 
-async fn verify_user_permission(pool: &PgPool, permission_code: &str) -> bool {
-    let count = sqlx::query!(
-        r#"
-        SELECT COUNT(*) as count
-        FROM core_role_permissions rp
-        JOIN core_permissions p ON rp.permission_id = p.id
-        JOIN core_user_roles ur ON rp.role_id = ur.role_id
-        JOIN core_users u ON ur.user_id = u.id
-        WHERE p.code = $1 AND u.is_superuser = true
-        UNION ALL
-        SELECT COUNT(*) as count
-        FROM core_role_permissions rp
-        JOIN core_permissions p ON rp.permission_id = p.id
-        JOIN core_user_roles ur ON rp.role_id = ur.role_id
-        JOIN core_users u ON ur.user_id = u.id
-        WHERE p.code = $1 AND u.is_superuser = false
-        "#,
-        permission_code,
+async fn verify_user_permission(pool: &PgPool, user_id: &Uuid, permission_code: &str) -> bool {
+    // 超级管理员拥有所有权限
+    let is_superuser: Option<bool> = sqlx::query_scalar(
+        "SELECT is_superuser FROM core_users WHERE deleted_at IS NULL AND id = $1",
     )
-    .fetch_all(pool)
+    .bind(user_id)
+    .fetch_optional(pool)
     .await
-    .unwrap_or_default();
+    .ok()
+    .flatten();
 
-    !count.is_empty() && count.iter().any(|r| r.count.unwrap_or(0) > 0)
+    match is_superuser {
+        Some(true) => return true,
+        None => return false,
+        Some(false) => {}
+    }
+
+    // 检查用户是否通过角色关联拥有该权限
+    let count: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*)
+        FROM core_role_permissions rp
+        JOIN core_permissions p ON rp.permission_id = p.id
+        JOIN core_user_roles ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = $1 AND p.code = $2
+        "#,
+    )
+    .bind(user_id)
+    .bind(permission_code)
+    .fetch_one(pool)
+    .await
+    .unwrap_or(0);
+
+    count > 0
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CheckResourcePermissionRequest {
-    pub user_id: Uuid,
     pub resource_type: String,
     pub resource_id: Uuid,
     pub action: String,
@@ -139,11 +170,23 @@ pub struct CheckResourcePermissionRequest {
 
 pub async fn check_resource_permission(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CheckResourcePermissionRequest>,
 ) -> Json<serde_json::Value> {
+    // 从 Claims 获取当前用户 ID，不接受请求体传入的 user_id
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID",
+            ));
+        }
+    };
+
     let has_permission = check_user_resource_permission(
         &state.pool,
-        &req.user_id,
+        &user_id,
         &req.resource_type,
         &req.resource_id,
         &req.action,
@@ -191,24 +234,43 @@ async fn check_user_resource_permission(
     }
 }
 
-pub async fn get_my_permissions(State(state): State<AppState>) -> Json<serde_json::Value> {
-    let permissions: Vec<String> = sqlx::query!(
-        r#"
-        SELECT DISTINCT p.code
-        FROM core_permissions p
-        JOIN core_role_permissions rp ON p.id = rp.permission_id
-        JOIN core_user_roles ur ON rp.role_id = ur.role_id
-        JOIN core_users u ON ur.user_id = u.id
-        WHERE u.is_superuser = true
-        ORDER BY p.code
-        "#,
-    )
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default()
-    .into_iter()
-    .map(|r| r.code)
-    .collect();
+pub async fn get_my_permissions(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID",
+            ));
+        }
+    };
+
+    let permissions: Vec<String> = if claims.is_superuser {
+        // 超级管理员返回所有权限
+        sqlx::query_scalar("SELECT code FROM core_permissions ORDER BY code")
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default()
+    } else {
+        // 普通用户返回通过角色关联的权限
+        sqlx::query_scalar(
+            r#"
+            SELECT DISTINCT p.code
+            FROM core_permissions p
+            JOIN core_role_permissions rp ON p.id = rp.permission_id
+            JOIN core_user_roles ur ON rp.role_id = ur.role_id
+            WHERE ur.user_id = $1
+            ORDER BY p.code
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default()
+    };
 
     Json(serde_json::json!({
         "success": true,
