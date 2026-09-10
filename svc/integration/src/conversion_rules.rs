@@ -586,6 +586,312 @@ impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for ConversionRule {
     }
 }
 
+// ============================================================================
+// 转换执行引擎
+// ============================================================================
+
+/// 执行转换规则，将源数据转换为目标数据
+///
+/// # 参数
+/// - `rule`: 转换规则
+/// - `source`: 源数据（JSON 对象）
+///
+/// # 返回
+/// - `Ok(serde_json::Value)`: 转换后的目标数据
+/// - `Err(String)`: 转换错误信息
+pub fn execute_conversion(
+    rule: &ConversionRule,
+    source: &serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    if !rule.is_enabled {
+        return Err(format!("转换规则 '{}' 未启用", rule.code));
+    }
+
+    // 解析字段映射
+    let field_mappings: Vec<FieldMapping> = match serde_json::from_value(rule.field_mappings.clone()) {
+        Ok(mappings) => mappings,
+        Err(e) => return Err(format!("解析字段映射失败: {}", e)),
+    };
+
+    if field_mappings.is_empty() {
+        return Ok(serde_json::json!({}));
+    }
+
+    let mut target = serde_json::Map::new();
+
+    for mapping in &field_mappings {
+        match apply_field_mapping(mapping, source) {
+            Ok(value) => {
+                set_nested_value(&mut target, &mapping.target_field, value);
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "字段映射失败: {} -> {}, 错误: {}",
+                    mapping.source_field,
+                    mapping.target_field,
+                    e
+                );
+                // 如果有默认值，使用默认值
+                if let Some(default) = &mapping.default_value {
+                    set_nested_value(&mut target, &mapping.target_field, default.clone());
+                }
+            }
+        }
+    }
+
+    Ok(serde_json::Value::Object(target))
+}
+
+/// 应用单个字段映射
+fn apply_field_mapping(
+    mapping: &FieldMapping,
+    source: &serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    // 1. 从源数据获取值
+    let mut value = get_nested_value(source, &mapping.source_field);
+
+    // 2. 如果值为空，使用默认值
+    if value.is_null() {
+        if let Some(default) = &mapping.default_value {
+            return Ok(default.clone());
+        }
+        return Ok(serde_json::Value::Null);
+    }
+
+    // 3. 应用值映射（枚举转换）
+    if let Some(value_map) = &mapping.value_map {
+        let key = value.as_str().unwrap_or("");
+        value = value_map.get(key).clone();
+    }
+
+    // 4. 应用条件映射
+    if let Some(conditional_mappings) = &mapping.conditional_mappings {
+        for cond_mapping in conditional_mappings {
+            if evaluate_condition(&cond_mapping.condition, source) {
+                value = cond_mapping.result.clone();
+                break;
+            }
+        }
+    }
+
+    // 5. 应用转换表达式
+    if let Some(transform) = &mapping.transform {
+        value = evaluate_simple_transform(transform, &value)?;
+    }
+
+    Ok(value)
+}
+
+/// 获取嵌套字段值（支持 a.b.c 格式）
+fn get_nested_value(source: &serde_json::Value, path: &str) -> serde_json::Value {
+    let parts: Vec<&str> = path.split('.').collect();
+    let mut current = source;
+
+    for part in parts {
+        match current {
+            serde_json::Value::Object(map) => {
+                if let Some(next) = map.get(part) {
+                    current = next;
+                } else {
+                    return serde_json::Value::Null;
+                }
+            }
+            _ => return serde_json::Value::Null,
+        }
+    }
+
+    current.clone()
+}
+
+/// 设置嵌套字段值（支持 a.b.c 格式）
+fn set_nested_value(target: &mut serde_json::Map<String, serde_json::Value>, path: &str, value: serde_json::Value) {
+    let parts: Vec<&str> = path.split('.').collect();
+
+    if parts.len() == 1 {
+        target.insert(parts[0].to_string(), value);
+        return;
+    }
+
+    // 递归创建嵌套对象
+    let first = parts[0];
+    let remaining = &parts[1..].join(".");
+
+    let nested = target
+        .entry(first.to_string())
+        .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
+
+    if let serde_json::Value::Object(map) = nested {
+        set_nested_value(map, remaining, value);
+    }
+}
+
+/// 评估条件表达式（简单实现：支持字段比较）
+///
+/// 支持的条件格式：
+/// - `{"field": "status", "op": "eq", "value": "active"}`
+/// - `{"field": "quantity", "op": "gt", "value": 100}`
+/// - `{"and": [cond1, cond2]}`
+/// - `{"or": [cond1, cond2]}`
+fn evaluate_condition(condition: &serde_json::Value, source: &serde_json::Value) -> bool {
+    match condition {
+        serde_json::Value::Object(map) => {
+            // AND 条件
+            if let Some(and_conds) = map.get("and") {
+                if let serde_json::Value::Array(conds) = and_conds {
+                    return conds.iter().all(|c| evaluate_condition(c, source));
+                }
+            }
+
+            // OR 条件
+            if let Some(or_conds) = map.get("or") {
+                if let serde_json::Value::Array(conds) = or_conds {
+                    return conds.iter().any(|c| evaluate_condition(c, source));
+                }
+            }
+
+            // 简单比较
+            let field = match map.get("field").and_then(|v| v.as_str()) {
+                Some(f) => f,
+                None => return false,
+            };
+
+            let op = map.get("op").and_then(|v| v.as_str()).unwrap_or("eq");
+            let expected = map.get("value");
+            let actual = get_nested_value(source, field);
+
+            match op {
+                "eq" => Some(&actual) == expected,
+                "ne" => Some(&actual) != expected,
+                "gt" => compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)) == Some(std::cmp::Ordering::Greater),
+                "gte" => {
+                    matches!(
+                        compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)),
+                        Some(std::cmp::Ordering::Greater) | Some(std::cmp::Ordering::Equal)
+                    )
+                }
+                "lt" => compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)) == Some(std::cmp::Ordering::Less),
+                "lte" => {
+                    matches!(
+                        compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)),
+                        Some(std::cmp::Ordering::Less) | Some(std::cmp::Ordering::Equal)
+                    )
+                }
+                "contains" => actual
+                    .as_str()
+                    .map(|s| expected.and_then(|e| e.as_str()).map(|e| s.contains(e)).unwrap_or(false))
+                    .unwrap_or(false),
+                "exists" => !actual.is_null(),
+                _ => false,
+            }
+        }
+        _ => false,
+    }
+}
+
+/// 比较两个 JSON 值（仅支持数字和字符串）
+fn compare_values(a: &serde_json::Value, b: &serde_json::Value) -> Option<std::cmp::Ordering> {
+    // 数字比较
+    if let (Some(a_num), Some(b_num)) = (a.as_f64(), b.as_f64()) {
+        return a_num.partial_cmp(&b_num);
+    }
+
+    // 字符串比较
+    if let (Some(a_str), Some(b_str)) = (a.as_str(), b.as_str()) {
+        return Some(a_str.cmp(b_str));
+    }
+
+    None
+}
+
+/// 评估简单转换表达式
+///
+/// 支持的转换：
+/// - `toUpperCase`: 转大写
+/// - `toLowerCase`: 转小写
+/// - `trim`: 去空格
+/// - `toString`: 转字符串
+/// - `toNumber`: 转数字
+/// - `toBoolean`: 转布尔
+/// - `prefix:xxx`: 添加前缀
+/// - `suffix:xxx`: 添加后缀
+fn evaluate_simple_transform(
+    transform: &str,
+    value: &serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    match transform {
+        "toUpperCase" => {
+            let s = value.as_str().unwrap_or("");
+            Ok(serde_json::Value::String(s.to_uppercase()))
+        }
+        "toLowerCase" => {
+            let s = value.as_str().unwrap_or("");
+            Ok(serde_json::Value::String(s.to_lowercase()))
+        }
+        "trim" => {
+            let s = value.as_str().unwrap_or("");
+            Ok(serde_json::Value::String(s.trim().to_string()))
+        }
+        "toString" => {
+            let s = match value {
+                serde_json::Value::String(s) => s.clone(),
+                serde_json::Value::Number(n) => n.to_string(),
+                serde_json::Value::Bool(b) => b.to_string(),
+                _ => value.to_string(),
+            };
+            Ok(serde_json::Value::String(s))
+        }
+        "toNumber" => {
+            let n = match value {
+                serde_json::Value::Number(n) => n.as_f64().unwrap_or(0.0),
+                serde_json::Value::String(s) => s.parse::<f64>().unwrap_or(0.0),
+                _ => 0.0,
+            };
+            Ok(serde_json::json!(n))
+        }
+        "toBoolean" => {
+            let b = match value {
+                serde_json::Value::Bool(b) => *b,
+                serde_json::Value::String(s) => s.eq_ignore_ascii_case("true") || s == "1",
+                serde_json::Value::Number(n) => n.as_f64().unwrap_or(0.0) != 0.0,
+                _ => false,
+            };
+            Ok(serde_json::Value::Bool(b))
+        }
+        _ if transform.starts_with("prefix:") => {
+            let prefix = &transform["prefix:".len()..];
+            let s = value.as_str().unwrap_or("");
+            Ok(serde_json::Value::String(format!("{}{}", prefix, s)))
+        }
+        _ if transform.starts_with("suffix:") => {
+            let suffix = &transform["suffix:".len()..];
+            let s = value.as_str().unwrap_or("");
+            Ok(serde_json::Value::String(format!("{}{}", s, suffix)))
+        }
+        _ => Err(format!("不支持的转换表达式: {}", transform)),
+    }
+}
+
+/// 批量执行转换规则（按优先级排序）
+pub fn execute_conversions(
+    rules: &[ConversionRule],
+    source: &serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let mut sorted_rules: Vec<&ConversionRule> = rules
+        .iter()
+        .filter(|r| r.is_enabled && matches!(r.status, RuleStatus::Active))
+        .collect();
+
+    sorted_rules.sort_by_key(|r| r.priority);
+
+    let mut result = source.clone();
+
+    for rule in sorted_rules {
+        result = execute_conversion(rule, &result)?;
+    }
+
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -791,5 +1097,163 @@ mod tests {
         assert!(codes.contains(&"purchase_to_contract"));
         assert!(codes.contains(&"employee_to_account"));
         assert!(codes.contains(&"project_to_mes"));
+    }
+
+    // ---- 转换执行引擎测试 ----
+
+    fn make_test_rule(field_mappings: Vec<FieldMapping>) -> ConversionRule {
+        ConversionRule {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            code: "test_rule".to_string(),
+            name: "Test Rule".to_string(),
+            description: None,
+            source_system: "erp".to_string(),
+            source_entity: "order".to_string(),
+            target_system: "wms".to_string(),
+            target_entity: "outbound".to_string(),
+            trigger_type: TriggerType::Manual,
+            trigger_condition: None,
+            field_mappings: serde_json::to_value(&field_mappings).unwrap(),
+            transform_script: None,
+            status: RuleStatus::Active,
+            priority: 1,
+            is_enabled: true,
+            max_retries: 3,
+            retry_interval_secs: 60,
+            stop_on_failure: false,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn test_execute_conversion_basic_field_mapping() {
+        let mappings = vec![FieldMapping {
+            source_field: "order_no".to_string(),
+            target_field: "source_order_no".to_string(),
+            default_value: None,
+            transform: None,
+            value_map: None,
+            conditional_mappings: None,
+        }];
+        let rule = make_test_rule(mappings);
+        let source = serde_json::json!({"order_no": "ORD-001", "status": "active"});
+
+        let result = execute_conversion(&rule, &source).unwrap();
+        assert_eq!(result["source_order_no"], "ORD-001");
+    }
+
+    #[test]
+    fn test_execute_conversion_default_value() {
+        let mappings = vec![FieldMapping {
+            source_field: "missing_field".to_string(),
+            target_field: "target_field".to_string(),
+            default_value: Some(serde_json::json!("default")),
+            transform: None,
+            value_map: None,
+            conditional_mappings: None,
+        }];
+        let rule = make_test_rule(mappings);
+        let source = serde_json::json!({"order_no": "ORD-001"});
+
+        let result = execute_conversion(&rule, &source).unwrap();
+        assert_eq!(result["target_field"], "default");
+    }
+
+    #[test]
+    fn test_execute_conversion_transform_to_upper() {
+        let mappings = vec![FieldMapping {
+            source_field: "name".to_string(),
+            target_field: "name_upper".to_string(),
+            default_value: None,
+            transform: Some("toUpperCase".to_string()),
+            value_map: None,
+            conditional_mappings: None,
+        }];
+        let rule = make_test_rule(mappings);
+        let source = serde_json::json!({"name": "hello"});
+
+        let result = execute_conversion(&rule, &source).unwrap();
+        assert_eq!(result["name_upper"], "HELLO");
+    }
+
+    #[test]
+    fn test_execute_conversion_value_map() {
+        let mut mappings_hash = std::collections::HashMap::new();
+        mappings_hash.insert("active".to_string(), serde_json::json!(1));
+        mappings_hash.insert("inactive".to_string(), serde_json::json!(0));
+
+        let mappings = vec![FieldMapping {
+            source_field: "status".to_string(),
+            target_field: "status_code".to_string(),
+            default_value: Some(serde_json::json!(-1)),
+            transform: None,
+            value_map: Some(ValueMap {
+                mappings: mappings_hash,
+                default_value: Some(serde_json::json!(-1)),
+            }),
+            conditional_mappings: None,
+        }];
+        let rule = make_test_rule(mappings);
+        let source = serde_json::json!({"status": "active"});
+
+        let result = execute_conversion(&rule, &source).unwrap();
+        assert_eq!(result["status_code"], 1);
+    }
+
+    #[test]
+    fn test_execute_conversion_nested_fields() {
+        let mappings = vec![FieldMapping {
+            source_field: "customer.name".to_string(),
+            target_field: "customer_name".to_string(),
+            default_value: None,
+            transform: None,
+            value_map: None,
+            conditional_mappings: None,
+        }];
+        let rule = make_test_rule(mappings);
+        let source = serde_json::json!({"customer": {"name": "John", "email": "john@test.com"}});
+
+        let result = execute_conversion(&rule, &source).unwrap();
+        assert_eq!(result["customer_name"], "John");
+    }
+
+    #[test]
+    fn test_execute_conversion_disabled_rule() {
+        let mut rule = make_test_rule(vec![]);
+        rule.is_enabled = false;
+        let source = serde_json::json!({});
+
+        let result = execute_conversion(&rule, &source);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_execute_conversion_prefix_suffix() {
+        let mappings = vec![
+            FieldMapping {
+                source_field: "code".to_string(),
+                target_field: "prefixed".to_string(),
+                default_value: None,
+                transform: Some("prefix:PRE-".to_string()),
+                value_map: None,
+                conditional_mappings: None,
+            },
+            FieldMapping {
+                source_field: "code".to_string(),
+                target_field: "suffixed".to_string(),
+                default_value: None,
+                transform: Some("suffix:-SUF".to_string()),
+                value_map: None,
+                conditional_mappings: None,
+            },
+        ];
+        let rule = make_test_rule(mappings);
+        let source = serde_json::json!({"code": "123"});
+
+        let result = execute_conversion(&rule, &source).unwrap();
+        assert_eq!(result["prefixed"], "PRE-123");
+        assert_eq!(result["suffixed"], "123-SUF");
     }
 }
