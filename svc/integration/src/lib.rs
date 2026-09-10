@@ -210,5 +210,6 @@ pub mod routes;
 pub mod rule_engine;
 pub mod shared;
 pub mod sync_retry;
+pub mod sync_scheduler;
 
 pub use openapi::ApiDoc;

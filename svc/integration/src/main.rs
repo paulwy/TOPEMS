@@ -23,6 +23,7 @@ use axum_prometheus::PrometheusMetricLayer;
 use conversion_rules::init_conversion_rules_table;
 use mes_erp_sync::MesErpSyncService;
 use models::AppState;
+use topems_integration::sync_scheduler;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use topems_shared_core::logging::request_context_middleware;
 
@@ -108,6 +109,12 @@ async fn main() -> anyhow::Result<()> {
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
+
+    // 启动增量同步定时调度器
+    let sync_pool = ctx.db.clone();
+    tokio::spawn(async move {
+        sync_scheduler::start_sync_scheduler(sync_pool).await;
     });
 
     run(app).await?;
