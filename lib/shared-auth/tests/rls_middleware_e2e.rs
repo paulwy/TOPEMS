@@ -32,6 +32,11 @@ async fn list_items(
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    // 切换到非超级用户角色，避免超级用户绕过 RLS
+    sqlx::query("SET LOCAL ROLE rls_test_user")
+        .execute(&mut **txn)
+        .await
+        .unwrap();
     let rows: Vec<(Uuid, String)> =
         sqlx::query_as("SELECT id, name FROM rls_e2e_items ORDER BY name")
             .fetch_all(&mut **txn)
@@ -60,6 +65,12 @@ fn make_claims(tenant_id: Option<&str>, user_id: &str, role: &str) -> Claims {
 }
 
 async fn seed_and_build(pool: &PgPool) -> (Uuid, Uuid) {
+    // 创建非超级用户测试角色（避免超级用户绕过 RLS）
+    sqlx::query("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'rls_test_user') THEN CREATE ROLE rls_test_user NOLOGIN; END IF; END $$;")
+        .execute(pool)
+        .await
+        .unwrap();
+
     sqlx::query("DROP TABLE IF EXISTS rls_e2e_items CASCADE")
         .execute(pool)
         .await
@@ -96,6 +107,12 @@ async fn seed_and_build(pool: &PgPool) -> (Uuid, Uuid) {
     .execute(pool)
     .await
     .unwrap();
+
+    // 授予 rls_test_user 对表的权限
+    sqlx::query("GRANT SELECT ON rls_e2e_items TO rls_test_user")
+        .execute(pool)
+        .await
+        .unwrap();
 
     let t1 = Uuid::new_v4();
     let t2 = Uuid::new_v4();
