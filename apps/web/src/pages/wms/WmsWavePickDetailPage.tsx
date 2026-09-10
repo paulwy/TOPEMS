@@ -58,40 +58,62 @@ export default function WmsWavePickDetailPage() {
   const [orders, setOrders] = useState<WaveOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadData = (waveId: string) => {
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      wavePickApi.get(waveId),
+      wavePickApi.listItems(waveId).catch(() => ({ data: { items: [], total: 0 } })),
+    ])
+      .then(([waveRes, itemsRes]) => {
+        setWave(waveRes.data);
+        setOrders(groupWaveItemsByOrder(itemsRes.data?.items ?? []));
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err?.message ?? 'Failed to load wave pick');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    // 并行加载波次详情和明细
-    Promise.all([
-      wavePickApi.get(id),
-      wavePickApi.listItems(id).catch(() => ({ data: { items: [], total: 0 } })),
-    ])
-      .then(([waveRes, itemsRes]) => {
-        if (!cancelled) {
-          setWave(waveRes.data);
-          setOrders(groupWaveItemsByOrder(itemsRes.data?.items ?? []));
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err?.message ?? 'Failed to load wave pick');
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    loadData(id);
   }, [id]);
+
+  const handleAction = async (action: string, _from: string, _to: string) => {
+    if (!id) return;
+    setActionLoading(true);
+    try {
+      switch (action) {
+        case 'assign':
+          await wavePickApi.assign(id, { assigned_to: 'current' });
+          break;
+        case 'start_pick':
+          await wavePickApi.start(id);
+          break;
+        case 'complete':
+          await wavePickApi.complete(id);
+          break;
+        case 'cancel':
+          await wavePickApi.cancel(id);
+          break;
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
+      loadData(id);
+    } catch (err) {
+      console.error('Action failed:', err);
+      setError(err instanceof Error ? err.message : 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const ordersData = useMemo<WaveOrderRow[]>(() => orders, [orders]);
 

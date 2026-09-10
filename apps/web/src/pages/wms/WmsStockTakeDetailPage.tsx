@@ -60,40 +60,59 @@ export default function WmsStockTakeDetailPage() {
   const [items, setItems] = useState<StockTakeItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadData = (taskId: string) => {
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      stockTakeApi.get(taskId),
+      stockTakeApi.listItems(taskId).catch(() => ({ data: { items: [], total: 0 } })),
+    ])
+      .then(([taskRes, itemsRes]) => {
+        setTask(taskRes.data);
+        setItems(mapStockTakeItems(itemsRes.data?.items ?? []));
+        setLoading(false);
+      })
+      .catch((err: Error) => {
+        setError(err?.message ?? 'Failed to load stock take');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    // 并行加载任务详情和明细
-    Promise.all([
-      stockTakeApi.get(id),
-      stockTakeApi.listItems(id).catch(() => ({ data: { items: [], total: 0 } })),
-    ])
-      .then(([taskRes, itemsRes]) => {
-        if (!cancelled) {
-          setTask(taskRes.data);
-          setItems(mapStockTakeItems(itemsRes.data?.items ?? []));
-          setLoading(false);
-        }
-      })
-      .catch((err: Error) => {
-        if (!cancelled) {
-          setError(err?.message ?? 'Failed to load stock take');
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    loadData(id);
   }, [id]);
+
+  const handleAction = async (action: string, _from: string, _to: string) => {
+    if (!id) return;
+    setActionLoading(true);
+    try {
+      switch (action) {
+        case 'start':
+          await stockTakeApi.start(id);
+          break;
+        case 'complete':
+          await stockTakeApi.complete(id);
+          break;
+        case 'cancel':
+          await stockTakeApi.update(id, { status: 'cancelled' });
+          break;
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
+      loadData(id);
+    } catch (err) {
+      console.error('Action failed:', err);
+      setError(err instanceof Error ? err.message : 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const itemsData = useMemo<StockTakeItemRow[]>(() => items, [items]);
 
@@ -228,7 +247,8 @@ export default function WmsStockTakeDetailPage() {
             <WmsFSMActionButtons
               fsm='stocktake'
               currentStatus={task.status}
-              onAction={() => {}}
+              onAction={handleAction}
+              disabled={actionLoading}
             />
           </Box>
         }

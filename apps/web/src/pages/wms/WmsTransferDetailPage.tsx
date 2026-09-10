@@ -163,36 +163,65 @@ export default function WmsTransferDetailPage() {
   const [transfer, setTransfer] = useState<ExtendedTransfer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadTransfer = (transferId: string) => {
+    setLoading(true);
+    setError(null);
+    transferApi
+      .get(transferId)
+      .then((res) => {
+        setTransfer(res.data as ExtendedTransfer);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err?.message ?? 'Failed to load transfer order');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    transferApi
-      .get(id)
-      .then((res) => {
-        if (!cancelled) {
-          setTransfer(res.data as ExtendedTransfer);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err?.message ?? 'Failed to load transfer order');
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    loadTransfer(id);
   }, [id]);
+
+  const handleAction = async (action: string, _from: string, _to: string) => {
+    if (!id) return;
+    setActionLoading(true);
+    try {
+      switch (action) {
+        case 'confirm':
+          await transferApi.confirm(id);
+          break;
+        case 'reject_confirm':
+          await transferApi.update(id, { status: 'pending' });
+          break;
+        case 'ship':
+          await transferApi.ship(id);
+          break;
+        case 'receive':
+          await transferApi.receive(id);
+          break;
+        case 'complete':
+          await transferApi.complete(id);
+          break;
+        case 'cancel':
+          await transferApi.update(id, { status: 'cancelled' });
+          break;
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
+      loadTransfer(id);
+    } catch (err) {
+      console.error('Action failed:', err);
+      setError(err instanceof Error ? err.message : 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -230,7 +259,8 @@ export default function WmsTransferDetailPage() {
             <WmsFSMActionButtons
               fsm='transfer'
               currentStatus={transfer.status}
-              onAction={() => {}}
+              onAction={handleAction}
+              disabled={actionLoading}
             />
           </Box>
         }
