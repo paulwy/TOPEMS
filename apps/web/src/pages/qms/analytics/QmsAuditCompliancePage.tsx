@@ -7,7 +7,7 @@
  * 数据来自 useQmsMock 的 auditPlans / auditTasks / auditFindings。
  */
 import { useMemo } from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Grid, Paper, Typography, CircularProgress, Box, Alert } from '@mui/material';
 import {
   ResponsiveContainer,
   BarChart,
@@ -20,18 +20,33 @@ import {
   RadialBarChart,
   RadialBar,
 } from 'recharts';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { auditApi } from '@/api/qms/audit';
+import type { AuditPlan, AuditTask, AuditFinding } from '@/api/qms/types';
 
 export default function QmsAuditCompliancePage() {
-  const { data } = useQmsMock<QmsMockShape>();
   const { t } = useTranslation('qms');
-  const plans = useMemo(() => data.auditPlans ?? [], [data.auditPlans]);
-  const tasks = useMemo(() => data.auditTasks ?? [], [data.auditTasks]);
-  const findings = useMemo(() => data.auditFindings ?? [], [data.auditFindings]);
+  const { data: plansData, loading: plansLoading } = useAnalyticsData<AuditPlan[]>({
+    fetcher: () => auditApi.listAuditPlans(),
+    deps: [],
+  });
+  const { data: tasksData, loading: tasksLoading } = useAnalyticsData<AuditTask[]>({
+    fetcher: () => auditApi.listAuditTasks(),
+    deps: [],
+  });
+  const { data: findingsData, loading: findingsLoading, error, reload } = useAnalyticsData<AuditFinding[]>({
+    fetcher: () => auditApi.listAuditFindings(),
+    deps: [],
+  });
+
+  const loading = plansLoading || tasksLoading || findingsLoading;
+  const plans = useMemo(() => plansData ?? [], [plansData]);
+  const tasks = useMemo(() => tasksData ?? [], [tasksData]);
+  const findings = useMemo(() => findingsData ?? [], [findingsData]);
 
   const overall = useMemo(() => {
     const totalTasks = tasks.length;
@@ -72,7 +87,7 @@ export default function QmsAuditCompliancePage() {
       }
     >();
     plans.forEach((p) => {
-      (p.departments ?? []).forEach((dept) => {
+      (p.departments ?? []).forEach((dept: string) => {
         if (!map.has(dept)) map.set(dept, { total: 0, completed: 0, findings: 0, closed: 0 });
         const entry = map.get(dept)!;
         entry.total += 1;
@@ -186,7 +201,13 @@ export default function QmsAuditCompliancePage() {
       showRefresh={false}
       showCharts={false}
       showTables={false}
+      loading={loading}
     >
+      {error && (
+        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+          加载失败：{error}
+        </Alert>
+      )}
       <Grid
         container
         spacing={3}

@@ -8,7 +8,7 @@
  * 数据来自 useQmsMock 的 qualityCosts。
  */
 import { useMemo } from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Grid, Paper, Typography, CircularProgress, Box, Alert } from '@mui/material';
 import {
   ResponsiveContainer,
   PieChart,
@@ -24,11 +24,13 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { qualityCostApi } from '@/api/qms/qualityCost';
+import type { QualityCost } from '@/api/qms/types';
 
 const COST_TYPE_COLORS: Record<string, string> = {
   prevention: designTokens.colors.success.dark,
@@ -47,10 +49,13 @@ function getCostTypeLabels(): Record<string, string> {
 }
 
 export default function QmsCostAnalysisPage() {
-  const { data } = useQmsMock<QmsMockShape>();
   const { t } = useTranslation('qms');
+  const { data: qualityCostsData, loading, error, reload } = useAnalyticsData<QualityCost[]>({
+    fetcher: () => qualityCostApi.listQualityCosts(),
+    deps: [],
+  });
 
-  const qualityCosts = useMemo(() => data.qualityCosts ?? [], [data.qualityCosts]);
+  const qualityCosts = useMemo(() => qualityCostsData ?? [], [qualityCostsData]);
 
   const costByType = useMemo(() => {
     const map: Record<string, number> = {
@@ -150,7 +155,13 @@ export default function QmsCostAnalysisPage() {
       showRefresh={false}
       showCharts={false}
       showTables={false}
+      loading={loading}
     >
+      {error && (
+        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+          加载失败：{error}
+        </Alert>
+      )}
       <Grid
         container
         spacing={3}

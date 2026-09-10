@@ -6,7 +6,7 @@
  * - 样本均值点（超限标红）
  * 数据来自 useQmsMock 的 spcCharts + spcDataPoints。
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -18,33 +18,52 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { Box, Paper, Typography, FormControl, Select, MenuItem } from '@mui/material';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
+import { Box, Paper, Typography, FormControl, Select, MenuItem, CircularProgress, Alert } from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { spcApi } from '@/api/qms/spc';
+import type { SpcChart, SpcDataPoint } from '@/api/qms/types';
 
 export default function QmsSpcControlChartPage() {
-  const { data } = useQmsMock<QmsMockShape>();
   const { t } = useTranslation('qms');
-  const charts = useMemo(() => data.spcCharts ?? [], [data.spcCharts]);
-  const [chartId, setChartId] = useState<string>(charts[0]?.id ?? '');
+  const { data: chartsData, loading: chartsLoading } = useAnalyticsData<SpcChart[]>({
+    fetcher: () => spcApi.listSpcCharts(),
+    deps: [],
+  });
+
+  const charts = useMemo(() => chartsData ?? [], [chartsData]);
+  const [chartId, setChartId] = useState<string>('');
+
+  useEffect(() => {
+    if (charts.length > 0 && !chartId) {
+      setChartId(charts[0].id);
+    }
+  }, [charts, chartId]);
+
   const selectedChart = useMemo(
     () => charts.find((c) => c.id === chartId) ?? charts[0],
     [charts, chartId]
   );
+
+  const { data: pointsData, loading: pointsLoading, error, reload } = useAnalyticsData<SpcDataPoint[]>({
+    fetcher: () => selectedChart ? spcApi.getSpcDataPoints(selectedChart.id) : Promise.resolve({ data: [], code: 0, message: 'ok' }),
+    deps: [selectedChart?.id],
+    immediate: !!selectedChart,
+  });
+
+  const loading = chartsLoading || pointsLoading;
   const points = useMemo(() => {
     if (!selectedChart) return [];
-    return (data.spcDataPoints ?? [])
-      .filter((p) => p.chartId === selectedChart.id)
-      .map((p) => ({
-        sampleNo: p.sampleNo,
-        mean: p.mean ?? 0,
-        range: p.range ?? 0,
-        isOOC: p.isOutOfControl,
-      }));
-  }, [data.spcDataPoints, selectedChart]);
+    return (pointsData ?? []).map((p) => ({
+      sampleNo: p.sampleNo,
+      mean: p.mean ?? 0,
+      range: p.range ?? 0,
+      isOOC: p.isOutOfControl,
+    }));
+  }, [pointsData, selectedChart]);
   const ucl = selectedChart?.ucl ?? 0;
   const lcl = selectedChart?.lcl ?? 0;
   const cl = selectedChart?.cl ?? 0;
@@ -116,7 +135,13 @@ export default function QmsSpcControlChartPage() {
       showRefresh={false}
       showCharts={false}
       showTables={false}
+      loading={loading}
     >
+      {error && (
+        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+          加载失败：{error}
+        </Alert>
+      )}
       <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
         <Typography
           variant='subtitle1'

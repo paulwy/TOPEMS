@@ -8,7 +8,7 @@
  * - 高/中/低风险区域色块
  * 数据来自 useQmsMock 的 fmeaItems。
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -32,12 +32,16 @@ import {
   TableHead,
   TableRow,
   Chip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { fmeaApi } from '@/api/qms/fmea';
+import type { FmeaAnalysis, FmeaItem } from '@/api/qms/types';
 
 const HIGH_RISK_COLOR = designTokens.colors.error.main;
 const MEDIUM_RISK_COLOR = designTokens.colors.warning.main;
@@ -50,9 +54,28 @@ function riskLevel(rpn: number): 'high' | 'medium' | 'low' {
 }
 
 export default function QmsFmeaRiskMatrixPage() {
-  const { data } = useQmsMock<QmsMockShape>();
   const { t } = useTranslation('qms');
-  const items = useMemo(() => data.fmeaItems ?? [], [data.fmeaItems]);
+  const { data: analyses, loading: analysesLoading } = useAnalyticsData<FmeaAnalysis[]>({
+    fetcher: () => fmeaApi.listFmeaAnalyses(),
+    deps: [],
+  });
+
+  const [selectedFmeaId, setSelectedFmeaId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (analyses && analyses.length > 0 && !selectedFmeaId) {
+      setSelectedFmeaId(analyses[0].id);
+    }
+  }, [analyses, selectedFmeaId]);
+
+  const { data: itemsData, loading: itemsLoading, error, reload } = useAnalyticsData<FmeaItem[]>({
+    fetcher: () => selectedFmeaId ? fmeaApi.listFmeaItems(selectedFmeaId) : Promise.resolve({ data: [], code: 0, message: 'ok' }),
+    deps: [selectedFmeaId],
+    immediate: !!selectedFmeaId,
+  });
+
+  const loading = analysesLoading || itemsLoading;
+  const items = useMemo(() => itemsData ?? [], [itemsData]);
 
   const scatterData = useMemo(() => {
     const high: {
@@ -147,7 +170,13 @@ export default function QmsFmeaRiskMatrixPage() {
       showTimeRange={false}
       showExport={false}
       showRefresh={false}
+      loading={loading}
     >
+      {error && (
+        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+          加载失败：{error}
+        </Alert>
+      )}
       <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
         <Typography
           variant='subtitle1'
