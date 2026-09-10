@@ -5,7 +5,7 @@
  * 使用 StatusBadge + FSMActionButtons 组件。
  * 数据来自 useQmsMock。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,7 +22,8 @@ import {
   LinearProgress,
 } from '@mui/material';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
+import { apqpApi } from '@/api/qms/apqp';
+import type { ApqpProject } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
@@ -56,34 +57,45 @@ function Field({ label, value }: { label: string; value: string }) {
 export default function QmsApqpProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data } = useQmsMock<QmsMockShape>();
+  const [project, setProject] = useState<ApqpProject | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const project = useMemo(() => {
-    const list = data.apqpProjects ?? [];
-    return list.find((p) => p.id === id) ?? list[0];
-  }, [data.apqpProjects, id]);
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
 
-  const phases = useMemo(() => {
-    if (!project) return [];
-    return (data.apqpPhases ?? [])
-      .filter((p) => p.project_id === project.id)
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-  }, [data.apqpPhases, project]);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
 
-  const tasks = useMemo(() => {
-    if (!project) return [];
-    return (data.apqpTasks ?? []).filter((t) => t.project_id === project.id);
-  }, [data.apqpTasks, project]);
+    apqpApi
+      .getApqpProject(id)
+      .then((res) => {
+        if (!cancelled) {
+          setProject(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load APQP project');
+          setLoading(false);
+        }
+      });
 
-  const risks = useMemo(() => {
-    if (!project) return [];
-    return (data.apqpRisks ?? []).filter((r) => r.project_id === project.id);
-  }, [data.apqpRisks, project]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
-  const approvals = useMemo(() => {
-    if (!project) return [];
-    return (data.apqpApprovals ?? []).filter((a) => a.project_id === project.id);
-  }, [data.apqpApprovals, project]);
+  // 关联数据待后续对接 API，暂时使用空数组
+  const phases: any[] = [];
+  const tasks: any[] = [];
+  const risks: any[] = [];
+  const approvals: any[] = [];
 
   const radarData = useMemo(
     () =>
@@ -93,6 +105,22 @@ export default function QmsApqpProjectDetailPage() {
       })),
     [phases]
   );
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity='error'>{error}</Alert>
+      </Box>
+    );
+  }
 
   if (!project) {
     return (
