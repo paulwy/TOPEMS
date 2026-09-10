@@ -54,6 +54,79 @@ export interface WmsOrderFulfillmentResponse {
   summary: WmsOrderFulfillmentSummary;
 }
 
+// ===== 流量趋势 =====
+
+export interface FlowTrendData {
+  period: string;
+  inbound_qty: number;
+  outbound_qty: number;
+  inbound_count: number;
+  outbound_count: number;
+}
+
+export interface FlowTrendSummary {
+  total_inbound_qty: number;
+  total_outbound_qty: number;
+  total_inbound_count: number;
+  total_outbound_count: number;
+  period_count: number;
+}
+
+export interface FlowTrendResponse {
+  data: FlowTrendData[];
+  summary: FlowTrendSummary;
+}
+
+// ===== ABC分析 =====
+
+export interface AbcAnalysisData {
+  category: string;
+  material_count: number;
+  total_value: number;
+  value_percentage: number;
+  count_percentage: number;
+}
+
+export interface AbcAnalysisResponse {
+  data: AbcAnalysisData[];
+  total_materials: number;
+  total_value: number;
+}
+
+// ===== 库龄帕累托 =====
+
+export interface AgeParetoData {
+  age_bucket: string;
+  material_count: number;
+  total_value: number;
+  cumulative_percentage: number;
+}
+
+export interface AgeParetoResponse {
+  data: AgeParetoData[];
+  total_materials: number;
+  total_value: number;
+}
+
+// ===== 库位利用率 =====
+
+export interface LocationUtilizationData {
+  warehouse_id: string | null;
+  warehouse_name: string;
+  total_locations: number;
+  used_locations: number;
+  utilization_rate: number;
+  avg_capacity_usage: number;
+  dead_stock_locations: number;
+}
+
+export interface LocationUtilizationResponse {
+  data: LocationUtilizationData[];
+  total_locations: number;
+  used_locations: number;
+  overall_utilization: number;
+}
+
 // ===== API 方法 =====
 
 /**
@@ -76,9 +149,53 @@ export async function getOrderFulfillment(
   return apiClient.wms.get('/analytics/order-fulfillment', { params });
 }
 
+/**
+ * 获取流量趋势
+ * GET /wms/analytics/flow-trend
+ */
+export async function getFlowTrend(
+  params?: AnalyticsQueryParams
+): Promise<ApiResponse<FlowTrendResponse>> {
+  return apiClient.wms.get('/analytics/flow-trend', { params });
+}
+
+/**
+ * 获取ABC分析
+ * GET /wms/analytics/abc-analysis
+ */
+export async function getAbcAnalysis(
+  params?: AnalyticsQueryParams
+): Promise<ApiResponse<AbcAnalysisResponse>> {
+  return apiClient.wms.get('/analytics/abc-analysis', { params });
+}
+
+/**
+ * 获取库龄帕累托
+ * GET /wms/analytics/age-pareto
+ */
+export async function getAgePareto(
+  params?: AnalyticsQueryParams
+): Promise<ApiResponse<AgeParetoResponse>> {
+  return apiClient.wms.get('/analytics/age-pareto', { params });
+}
+
+/**
+ * 获取库位利用率
+ * GET /wms/analytics/location-utilization
+ */
+export async function getLocationUtilization(
+  params?: AnalyticsQueryParams
+): Promise<ApiResponse<LocationUtilizationResponse>> {
+  return apiClient.wms.get('/analytics/location-utilization', { params });
+}
+
 // ===== 统一导出 =====
 
 export const wmsAnalyticsApi = {
   getInventoryTurnover,
   getOrderFulfillment,
+  getFlowTrend,
+  getAbcAnalysis,
+  getAgePareto,
+  getLocationUtilization,
 };

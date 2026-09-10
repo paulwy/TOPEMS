@@ -10,9 +10,10 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { getFlowTrend, type FlowTrendData } from '@/api/wms/analytics';
 
 const RANGE_OPTIONS = [
   { label: i18n.t('pages.wms_flow_trend_page.7_2'), value: '7d' },
@@ -21,19 +22,27 @@ const RANGE_OPTIONS = [
 ];
 
 export default function WmsFlowTrendPage() {
-  const { data } = useWmsMock<WmsMockShape>();
   const [range, setRange] = useState<'7d' | '15d' | '30d'>('30d');
+  const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
+
+  const { data: response, loading, error, reload } = useAnalyticsData({
+    fetcher: () => getFlowTrend({ group_by: groupBy }),
+    deps: [groupBy],
+  });
 
   const flow = useMemo(() => {
-    const list = data.flowTrend ?? [];
+    const list: (FlowTrendData & { net: number })[] = (response?.data ?? []).map((item) => ({
+      ...item,
+      net: item.inbound_qty - item.outbound_qty,
+    }));
     if (range === '7d') return list.slice(-7);
     if (range === '15d') return list.slice(-15);
     return list;
-  }, [data.flowTrend, range]);
+  }, [response, range]);
 
   const totals = useMemo(() => {
-    const inb = flow.reduce((s, f) => s + f.inboundQty, 0);
-    const out = flow.reduce((s, f) => s + f.outboundQty, 0);
+    const inb = flow.reduce((s, f) => s + f.inbound_qty, 0);
+    const out = flow.reduce((s, f) => s + f.outbound_qty, 0);
     const net = inb - out;
     return { inb, out, net, days: flow.length };
   }, [flow]);
@@ -70,21 +79,33 @@ export default function WmsFlowTrendPage() {
   );
 
   const customToolbar = (
-    <select
-      value={range}
-      onChange={(e) => setRange(e.target.value as '7d' | '15d' | '30d')}
-      className='border rounded px-3 py-1.5 text-sm'
-      aria-label={i18n.t('pages.wms_flow_trend_page.k1')}
-    >
-      {RANGE_OPTIONS.map((option) => (
-        <option
-          key={option.value}
-          value={option.value}
-        >
-          {option.label}
-        </option>
-      ))}
-    </select>
+    <div className='flex items-center gap-2'>
+      <select
+        value={groupBy}
+        onChange={(e) => setGroupBy(e.target.value as 'day' | 'week' | 'month')}
+        className='border rounded px-3 py-1.5 text-sm'
+        aria-label='时间粒度'
+      >
+        <option value='day'>按日</option>
+        <option value='week'>按周</option>
+        <option value='month'>按月</option>
+      </select>
+      <select
+        value={range}
+        onChange={(e) => setRange(e.target.value as '7d' | '15d' | '30d')}
+        className='border rounded px-3 py-1.5 text-sm'
+        aria-label={i18n.t('pages.wms_flow_trend_page.k1')}
+      >
+        {RANGE_OPTIONS.map((option) => (
+          <option
+            key={option.value}
+            value={option.value}
+          >
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 
   return (
@@ -98,6 +119,7 @@ export default function WmsFlowTrendPage() {
       showCharts={false}
       showTables={false}
       customToolbar={customToolbar}
+      loading={loading}
     >
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_flow_trend_page.k1')}</h3>
@@ -167,7 +189,7 @@ export default function WmsFlowTrendPage() {
             </defs>
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis
-              dataKey='date'
+              dataKey='period'
               fontSize={11}
             />
             <YAxis
@@ -182,7 +204,7 @@ export default function WmsFlowTrendPage() {
             <Legend />
             <Area
               type='monotone'
-              dataKey='inboundQty'
+              dataKey='inbound_qty'
               name={i18n.t('pages.wms_flow_trend_page.k10')}
               stroke={designTokens.colors.success.dark}
               fill='url(#inbGrad)'
@@ -190,7 +212,7 @@ export default function WmsFlowTrendPage() {
             />
             <Area
               type='monotone'
-              dataKey='outboundQty'
+              dataKey='outbound_qty'
               name={i18n.t('pages.wms_flow_trend_page.k11')}
               stroke={designTokens.colors.primary.main}
               fill='url(#outGrad)'

@@ -13,9 +13,10 @@ import {
   CartesianGrid,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { getAbcAnalysis, type AbcAnalysisData } from '@/api/wms/analytics';
 
 const ABC_COLORS: Record<string, string> = {
   A: designTokens.colors.error.main,
@@ -24,15 +25,20 @@ const ABC_COLORS: Record<string, string> = {
 };
 
 export default function WmsAbcAnalysisPage() {
-  const { data } = useWmsMock<WmsMockShape>();
+  const { data: response, loading, error, reload } = useAnalyticsData({
+    fetcher: () => getAbcAnalysis(),
+    deps: [],
+  });
 
-  const abc = useMemo(() => data.abcAnalysis ?? [], [data.abcAnalysis]);
-  const inventory = useMemo(() => data.inventoryList ?? [], [data.inventoryList]);
-
-  const topSku = useMemo(
-    () => [...inventory].sort((a, b) => (b.total_value ?? 0) - (a.total_value ?? 0)).slice(0, 10),
-    [inventory]
-  );
+  const abc = useMemo(() => {
+    return (response?.data ?? []).map((item: AbcAnalysisData) => ({
+      category: item.category,
+      count: item.material_count,
+      amount: item.total_value,
+      value_percentage: item.value_percentage,
+      count_percentage: item.count_percentage,
+    }));
+  }, [response]);
 
   const totalAmount = useMemo(() => abc.reduce((s, c) => s + c.amount, 0), [abc]);
   const totalCount = useMemo(() => abc.reduce((s, c) => s + c.count, 0), [abc]);
@@ -60,8 +66,14 @@ export default function WmsAbcAnalysisPage() {
         suffix: 'SKU',
         color: 'success' as const,
       },
+      {
+        id: 'total-value',
+        title: '库存总价值',
+        value: `¥${totalAmount.toLocaleString()}`,
+        color: 'info' as const,
+      },
     ],
-    [abc]
+    [abc, totalAmount]
   );
 
   return (
@@ -74,6 +86,7 @@ export default function WmsAbcAnalysisPage() {
       showRefresh={false}
       showCharts={false}
       showTables={false}
+      loading={loading}
     >
       <div className='space-y-4'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -147,49 +160,40 @@ export default function WmsAbcAnalysisPage() {
         </div>
 
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('wms:wms_abc_analysis_page.top10sku_1')}</h3>
+          <h3 className='mb-2 font-semibold'>ABC 分类明细</h3>
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50'>
                 <tr>
-                  <th className='px-3 py-2 text-left font-medium'>
-                    {i18n.t('wms:wms_abc_analysis_page.sku_0')}
-                  </th>
-                  <th className='px-3 py-2 text-left font-medium'>
-                    {i18n.t('pages.wms_abc_analysis_page.k3')}
-                  </th>
-                  <th className='px-3 py-2 text-left font-medium'>
-                    {i18n.t('pages.wms_abc_analysis_page.k4')}
-                  </th>
-                  <th className='px-3 py-2 text-right font-medium'>
-                    {i18n.t('pages.wms_abc_analysis_page.k5')}
-                  </th>
-                  <th className='px-3 py-2 text-right font-medium'>
-                    {i18n.t('pages.wms_abc_analysis_page.k6')}
-                  </th>
-                  <th className='px-3 py-2 text-right font-medium'>
-                    {i18n.t('pages.wms_abc_analysis_page.k7')}
-                  </th>
+                  <th className='px-3 py-2 text-left font-medium'>分类</th>
+                  <th className='px-3 py-2 text-right font-medium'>SKU 数量</th>
+                  <th className='px-3 py-2 text-right font-medium'>数量占比</th>
+                  <th className='px-3 py-2 text-right font-medium'>库存价值</th>
+                  <th className='px-3 py-2 text-right font-medium'>价值占比</th>
                 </tr>
               </thead>
               <tbody>
-                {topSku.map((s, i) => (
+                {abc.map((item, i) => (
                   <tr
-                    key={s.id}
-                    className={i % 2 ? 'bg-var(--color-primary-foreground)' : 'bg-gray-50'}
+                    key={item.category}
+                    className={i % 2 ? 'bg-gray-50' : ''}
                   >
-                    <td className='px-3 py-2 font-mono'>{s.sku}</td>
-                    <td className='px-3 py-2'>{s.name}</td>
-                    <td className='px-3 py-2'>{s.warehouse_name ?? '-'}</td>
-                    <td className='px-3 py-2 text-right'>{s.quantity.toLocaleString()}</td>
-                    <td className='px-3 py-2 text-right'>
-                      ¥{(s.purchase_price ?? 0).toLocaleString()}
+                    <td className='px-3 py-2 font-semibold' style={{ color: ABC_COLORS[item.category] }}>
+                      {item.category} 类
                     </td>
-                    <td className='px-3 py-2 text-right font-semibold text-blue-700'>
-                      ¥{(s.total_value ?? 0).toLocaleString()}
-                    </td>
+                    <td className='px-3 py-2 text-right'>{item.count.toLocaleString()}</td>
+                    <td className='px-3 py-2 text-right'>{item.count_percentage.toFixed(1)}%</td>
+                    <td className='px-3 py-2 text-right'>¥{item.amount.toLocaleString()}</td>
+                    <td className='px-3 py-2 text-right'>{item.value_percentage.toFixed(1)}%</td>
                   </tr>
                 ))}
+                <tr className='font-semibold bg-gray-100'>
+                  <td className='px-3 py-2'>合计</td>
+                  <td className='px-3 py-2 text-right'>{totalCount.toLocaleString()}</td>
+                  <td className='px-3 py-2 text-right'>100%</td>
+                  <td className='px-3 py-2 text-right'>¥{totalAmount.toLocaleString()}</td>
+                  <td className='px-3 py-2 text-right'>100%</td>
+                </tr>
               </tbody>
             </table>
           </div>

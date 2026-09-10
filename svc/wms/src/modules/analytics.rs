@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
+use num_traits::cast::ToPrimitive;
+
 use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -364,6 +366,490 @@ async fn get_order_fulfillment(
     ))
 }
 
+// ===== 流量趋势 =====
+
+#[derive(Debug, Serialize)]
+pub struct FlowTrendData {
+    pub period: String,
+    pub inbound_qty: f64,
+    pub outbound_qty: f64,
+    pub inbound_count: i64,
+    pub outbound_count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FlowTrendSummary {
+    pub total_inbound_qty: f64,
+    pub total_outbound_qty: f64,
+    pub total_inbound_count: i64,
+    pub total_outbound_count: i64,
+    pub period_count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FlowTrendResponse {
+    pub data: Vec<FlowTrendData>,
+    pub summary: FlowTrendSummary,
+}
+
+/// 获取流量趋势（入库/出库数量和订单数）
+#[utoipa::path(
+    get,
+    path = "/api/wms/analytics/flow-trend",
+    tag = "WMS/analytics",
+    params(
+        ("start_date" = Option<String>, Query, description = "开始日期"),
+        ("end_date" = Option<String>, Query, description = "结束日期"),
+        ("group_by" = Option<String>, Query, description = "时间粒度: month/week/day"),
+        ("warehouse_id" = Option<String>, Query, description = "仓库ID"),
+    ),
+    responses((status = 200, description = "流量趋势查询成功"))
+)]
+pub async fn get_flow_trend(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+    Query(params): Query<AnalyticsQueryParams>,
+) -> Json<ApiResponse<FlowTrendResponse>> {
+    let group_by = params.group_by.as_deref().unwrap_or("month");
+    let date_trunc = match group_by {
+        "day" => "day",
+        "week" => "week",
+        _ => "month",
+    };
+
+    // 入库统计
+    let inbound_result = sqlx::query(
+        r#"
+        SELECT
+            DATE_TRUNC($1, created_at) as period,
+            COALESCE(SUM(total_items), 0) as total_qty,
+            COUNT(*) as order_count
+        FROM wms.inbound_orders
+        WHERE deleted_at IS NULL
+          AND ($2::date IS NULL OR created_at >= $2::date)
+          AND ($3::date IS NULL OR created_at <= $3::date)
+          AND ($4::uuid IS NULL OR warehouse_id = $4::uuid)
+        GROUP BY DATE_TRUNC($1, created_at)
+        ORDER BY period ASC
+        "#,
+    )
+    .bind(date_trunc)
+    .bind(params.start_date.as_deref())
+    .bind(params.end_date.as_deref())
+    .bind(params.warehouse_id.as_deref())
+    .fetch_all(&state.db)
+    .await;
+
+    // 出库统计
+    let outbound_result = sqlx::query(
+        r#"
+        SELECT
+            DATE_TRUNC($1, created_at) as period,
+            COALESCE(SUM(total_items), 0) as total_qty,
+            COUNT(*) as order_count
+        FROM wms.outbound_orders
+        WHERE deleted_at IS NULL
+          AND ($2::date IS NULL OR created_at >= $2::date)
+          AND ($3::date IS NULL OR created_at <= $3::date)
+          AND ($4::uuid IS NULL OR warehouse_id = $4::uuid)
+        GROUP BY DATE_TRUNC($1, created_at)
+        ORDER BY period ASC
+        "#,
+    )
+    .bind(date_trunc)
+    .bind(params.start_date.as_deref())
+    .bind(params.end_date.as_deref())
+    .bind(params.warehouse_id.as_deref())
+    .fetch_all(&state.db)
+    .await;
+
+    let mut data = Vec::new();
+    let mut total_inbound_qty = 0.0;
+    let mut total_outbound_qty = 0.0;
+    let mut total_inbound_count = 0i64;
+    let mut total_outbound_count = 0i64;
+
+    // 合并入库和出库数据
+    let mut periods = std::collections::BTreeMap::new();
+
+    if let Ok(rows) = inbound_result {
+        for row in rows {
+            let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
+            let qty: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            let count: i64 = row.try_get("order_count").unwrap_or(0);
+            let key = period.map(|p| format_period_date(p, group_by)).unwrap_or_default();
+            periods.entry(key.clone()).or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
+            if let Some(v) = periods.get_mut(&key) {
+                v.0 = qty;
+                v.2 = count;
+            }
+            total_inbound_qty += qty;
+            total_inbound_count += count;
+        }
+    }
+
+    if let Ok(rows) = outbound_result {
+        for row in rows {
+            let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
+            let qty: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            let count: i64 = row.try_get("order_count").unwrap_or(0);
+            let key = period.map(|p| format_period_date(p, group_by)).unwrap_or_default();
+            periods.entry(key.clone()).or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
+            if let Some(v) = periods.get_mut(&key) {
+                v.1 = qty;
+                v.3 = count;
+            }
+            total_outbound_qty += qty;
+            total_outbound_count += count;
+        }
+    }
+
+    for (period, (inbound_qty, outbound_qty, inbound_count, outbound_count)) in periods {
+        data.push(FlowTrendData {
+            period,
+            inbound_qty: (inbound_qty * 100.0).round() / 100.0,
+            outbound_qty: (outbound_qty * 100.0).round() / 100.0,
+            inbound_count,
+            outbound_count,
+        });
+    }
+
+    let period_count = data.len() as i64;
+
+    Json(ApiResponse::success(
+        FlowTrendResponse {
+            data,
+            summary: FlowTrendSummary {
+                total_inbound_qty: (total_inbound_qty * 100.0).round() / 100.0,
+                total_outbound_qty: (total_outbound_qty * 100.0).round() / 100.0,
+                total_inbound_count,
+                total_outbound_count,
+                period_count,
+            },
+        },
+        "流量趋势查询成功",
+    ))
+}
+
+// ===== ABC分析 =====
+
+#[derive(Debug, Serialize)]
+pub struct AbcAnalysisData {
+    pub category: String,
+    pub material_count: i64,
+    pub total_value: f64,
+    pub value_percentage: f64,
+    pub count_percentage: f64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AbcAnalysisResponse {
+    pub data: Vec<AbcAnalysisData>,
+    pub total_materials: i64,
+    pub total_value: f64,
+}
+
+/// 获取ABC分析（按物料价值分类）
+pub async fn get_abc_analysis(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+    Query(params): Query<AnalyticsQueryParams>,
+) -> Json<ApiResponse<AbcAnalysisResponse>> {
+    // 按物料汇总价值
+    let result = sqlx::query(
+        r#"
+        SELECT
+            material_code,
+            material_name,
+            SUM(quantity * COALESCE(purchase_price, 0)) as total_value,
+            SUM(quantity) as total_qty
+        FROM wms.inventory
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
+        GROUP BY material_code, material_name
+        ORDER BY total_value DESC
+        "#,
+    )
+    .bind(params.warehouse_id.as_deref())
+    .fetch_all(&state.db)
+    .await;
+
+    let mut materials: Vec<(String, f64)> = Vec::new();
+    let mut total_value = 0.0;
+
+    if let Ok(rows) = result {
+        for row in rows {
+            let code: String = row.try_get("material_code").unwrap_or_default();
+            let value: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            materials.push((code, value));
+            total_value += value;
+        }
+    }
+
+    // ABC分类：A类(前70%价值)、B类(70-90%)、C类(90-100%)
+    let mut cumulative = 0.0;
+    let mut category_a = (0i64, 0.0f64);
+    let mut category_b = (0i64, 0.0f64);
+    let mut category_c = (0i64, 0.0f64);
+
+    for (_, value) in &materials {
+        cumulative += value;
+        let percentage = if total_value > 0.0 { cumulative / total_value } else { 0.0 };
+
+        if percentage <= 0.7 {
+            category_a.0 += 1;
+            category_a.1 += value;
+        } else if percentage <= 0.9 {
+            category_b.0 += 1;
+            category_b.1 += value;
+        } else {
+            category_c.0 += 1;
+            category_c.1 += value;
+        }
+    }
+
+    let total_count = materials.len() as i64;
+    let data = vec![
+        AbcAnalysisData {
+            category: "A".to_string(),
+            material_count: category_a.0,
+            total_value: (category_a.1 * 100.0).round() / 100.0,
+            value_percentage: if total_value > 0.0 { (category_a.1 / total_value * 10000.0).round() / 100.0 } else { 0.0 },
+            count_percentage: if total_count > 0 { (category_a.0 as f64 / total_count as f64 * 10000.0).round() / 100.0 } else { 0.0 },
+        },
+        AbcAnalysisData {
+            category: "B".to_string(),
+            material_count: category_b.0,
+            total_value: (category_b.1 * 100.0).round() / 100.0,
+            value_percentage: if total_value > 0.0 { (category_b.1 / total_value * 10000.0).round() / 100.0 } else { 0.0 },
+            count_percentage: if total_count > 0 { (category_b.0 as f64 / total_count as f64 * 10000.0).round() / 100.0 } else { 0.0 },
+        },
+        AbcAnalysisData {
+            category: "C".to_string(),
+            material_count: category_c.0,
+            total_value: (category_c.1 * 100.0).round() / 100.0,
+            value_percentage: if total_value > 0.0 { (category_c.1 / total_value * 10000.0).round() / 100.0 } else { 0.0 },
+            count_percentage: if total_count > 0 { (category_c.0 as f64 / total_count as f64 * 10000.0).round() / 100.0 } else { 0.0 },
+        },
+    ];
+
+    Json(ApiResponse::success(
+        AbcAnalysisResponse {
+            data,
+            total_materials: total_count,
+            total_value: (total_value * 100.0).round() / 100.0,
+        },
+        "ABC分析查询成功",
+    ))
+}
+
+// ===== 库龄帕累托 =====
+
+#[derive(Debug, Serialize)]
+pub struct AgeParetoData {
+    pub age_bucket: String,
+    pub material_count: i64,
+    pub total_value: f64,
+    pub cumulative_percentage: f64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AgeParetoResponse {
+    pub data: Vec<AgeParetoData>,
+    pub total_materials: i64,
+    pub total_value: f64,
+}
+
+/// 获取库龄帕累托分析
+pub async fn get_age_pareto(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+    Query(params): Query<AnalyticsQueryParams>,
+) -> Json<ApiResponse<AgeParetoResponse>> {
+    let result = sqlx::query(
+        r#"
+        SELECT
+            material_code,
+            material_name,
+            SUM(quantity * COALESCE(purchase_price, 0)) as total_value,
+            MIN(COALESCE(production_date, created_at::date)) as earliest_date
+        FROM wms.inventory
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
+        GROUP BY material_code, material_name
+        ORDER BY total_value DESC
+        "#,
+    )
+    .bind(params.warehouse_id.as_deref())
+    .fetch_all(&state.db)
+    .await;
+
+    let mut items: Vec<(String, f64, i64)> = Vec::new(); // (age_bucket, value, days)
+    let mut total_value = 0.0;
+
+    let now = chrono::Utc::now().date_naive();
+
+    if let Ok(rows) = result {
+        for row in rows {
+            let value: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            let earliest: Option<chrono::NaiveDate> = row.try_get("earliest_date").ok().flatten();
+            let days = earliest.map(|d| (now - d).num_days()).unwrap_or(0);
+
+            let bucket = if days <= 30 {
+                "0-30天"
+            } else if days <= 90 {
+                "31-90天"
+            } else if days <= 180 {
+                "91-180天"
+            } else if days <= 365 {
+                "181-365天"
+            } else {
+                "365天以上"
+            };
+
+            items.push((bucket.to_string(), value, days));
+            total_value += value;
+        }
+    }
+
+    // 按库龄桶汇总
+    let mut buckets = std::collections::BTreeMap::new();
+    for (bucket, value, _) in items {
+        let entry = buckets.entry(bucket).or_insert_with(|| (0i64, 0.0f64));
+        entry.0 += 1;
+        entry.1 += value;
+    }
+
+    let mut cumulative = 0.0;
+    let mut data = Vec::new();
+    let total_count = buckets.values().map(|v| v.0).sum::<i64>();
+
+    for (bucket, (count, value)) in buckets {
+        cumulative += value;
+        data.push(AgeParetoData {
+            age_bucket: bucket,
+            material_count: count,
+            total_value: (value * 100.0).round() / 100.0,
+            cumulative_percentage: if total_value > 0.0 { (cumulative / total_value * 10000.0).round() / 100.0 } else { 0.0 },
+        });
+    }
+
+    Json(ApiResponse::success(
+        AgeParetoResponse {
+            data,
+            total_materials: total_count,
+            total_value: (total_value * 100.0).round() / 100.0,
+        },
+        "库龄帕累托查询成功",
+    ))
+}
+
+// ===== 库位利用率 =====
+
+#[derive(Debug, Serialize)]
+pub struct LocationUtilizationData {
+    pub warehouse_id: Option<Uuid>,
+    pub warehouse_name: String,
+    pub total_locations: i64,
+    pub used_locations: i64,
+    pub utilization_rate: f64,
+    pub avg_capacity_usage: f64,
+    pub dead_stock_locations: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct LocationUtilizationResponse {
+    pub data: Vec<LocationUtilizationData>,
+    pub total_locations: i64,
+    pub used_locations: i64,
+    pub overall_utilization: f64,
+}
+
+/// 获取库位利用率
+pub async fn get_location_utilization(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+    Query(params): Query<AnalyticsQueryParams>,
+) -> Json<ApiResponse<LocationUtilizationResponse>> {
+    let result = sqlx::query(
+        r#"
+        SELECT
+            l.warehouse_id,
+            w.warehouse_name,
+            COUNT(*) as total_locations,
+            COUNT(*) FILTER (WHERE l.current_quantity > 0) as used_locations,
+            COALESCE(AVG(CASE WHEN l.capacity > 0 THEN l.current_quantity / l.capacity ELSE 0 END), 0) as avg_capacity_usage,
+            COUNT(*) FILTER (WHERE l.current_quantity > 0 AND l.updated_at < NOW() - INTERVAL '90 days') as dead_stock_locations
+        FROM wms.locations l
+        LEFT JOIN wms.warehouses w ON l.warehouse_id = w.id
+        WHERE l.deleted_at IS NULL
+          AND l.is_active = true
+          AND ($1::uuid IS NULL OR l.warehouse_id = $1::uuid)
+        GROUP BY l.warehouse_id, w.warehouse_name
+        ORDER BY total_locations DESC
+        "#,
+    )
+    .bind(params.warehouse_id.as_deref())
+    .fetch_all(&state.db)
+    .await;
+
+    let mut data = Vec::new();
+    let mut total_locations = 0i64;
+    let mut used_locations = 0i64;
+
+    if let Ok(rows) = result {
+        for row in rows {
+            let warehouse_id: Option<Uuid> = row.try_get("warehouse_id").ok();
+            let warehouse_name: String = row.try_get("warehouse_name").unwrap_or_else(|_| "未知仓库".to_string());
+            let total: i64 = row.try_get("total_locations").unwrap_or(0);
+            let used: i64 = row.try_get("used_locations").unwrap_or(0);
+            let avg_usage: f64 = row.try_get("avg_capacity_usage").unwrap_or(0.0);
+            let dead: i64 = row.try_get("dead_stock_locations").unwrap_or(0);
+
+            let utilization = if total > 0 { (used as f64 / total as f64 * 10000.0).round() / 100.0 } else { 0.0 };
+
+            data.push(LocationUtilizationData {
+                warehouse_id,
+                warehouse_name,
+                total_locations: total,
+                used_locations: used,
+                utilization_rate: utilization,
+                avg_capacity_usage: (avg_usage * 10000.0).round() / 100.0,
+                dead_stock_locations: dead,
+            });
+
+            total_locations += total;
+            used_locations += used;
+        }
+    }
+
+    let overall_utilization = if total_locations > 0 {
+        (used_locations as f64 / total_locations as f64 * 10000.0).round() / 100.0
+    } else {
+        0.0
+    };
+
+    Json(ApiResponse::success(
+        LocationUtilizationResponse {
+            data,
+            total_locations,
+            used_locations,
+            overall_utilization,
+        },
+        "库位利用率查询成功",
+    ))
+}
+
+// ===== 辅助函数 =====
+
+fn format_period_date(dt: chrono::NaiveDateTime, group_by: &str) -> String {
+    match group_by {
+        "day" => dt.format("%Y-%m-%d").to_string(),
+        "week" => dt.format("%Y-W%U").to_string(),
+        _ => dt.format("%Y-%m").to_string(),
+    }
+}
+
 // ===== 路由注册 =====
 
 pub fn create_routes<S>() -> Router<S>
@@ -374,4 +860,8 @@ where
     Router::new()
         .route("/analytics/inventory-turnover", get(get_inventory_turnover))
         .route("/analytics/order-fulfillment", get(get_order_fulfillment))
+        .route("/analytics/flow-trend", get(get_flow_trend))
+        .route("/analytics/abc-analysis", get(get_abc_analysis))
+        .route("/analytics/age-pareto", get(get_age_pareto))
+        .route("/analytics/location-utilization", get(get_location_utilization))
 }

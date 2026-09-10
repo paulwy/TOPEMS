@@ -12,13 +12,26 @@ import {
   ReferenceLine,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { getAgePareto, type AgeParetoData } from '@/api/wms/analytics';
 
 export default function WmsAgeParetoPage() {
-  const { data } = useWmsMock<WmsMockShape>();
-  const pareto = useMemo(() => data.agePareto ?? [], [data.agePareto]);
+  const { data: response, loading, error, reload } = useAnalyticsData({
+    fetcher: () => getAgePareto(),
+    deps: [],
+  });
+
+  const pareto = useMemo(() => {
+    return (response?.data ?? []).map((item: AgeParetoData) => ({
+      sku: item.age_bucket,
+      amount: item.total_value,
+      cumulative: item.cumulative_percentage,
+      material_count: item.material_count,
+    }));
+  }, [response]);
+
   const top80 = useMemo(() => {
     const count = pareto.findIndex((p) => p.cumulative >= 80) + 1;
     return count > 0 ? count : pareto.length;
@@ -37,16 +50,24 @@ export default function WmsAgeParetoPage() {
         id: 'top80-count',
         title: i18n.t('pages.wms_age_pareto_page.80sku_1'),
         value: top80,
+        suffix: '个库龄段',
         color: 'info' as const,
       },
       {
         id: 'sku-count',
         title: i18n.t('wms.analytics.agePareto.k1'),
         value: pareto.length,
+        suffix: '个库龄段',
         color: 'secondary' as const,
       },
+      {
+        id: 'total-materials',
+        title: '物料总数',
+        value: response?.total_materials ?? 0,
+        color: 'warning' as const,
+      },
     ],
-    [totalAmount, top80, pareto.length]
+    [totalAmount, top80, pareto.length, response]
   );
 
   return (
@@ -59,6 +80,7 @@ export default function WmsAgeParetoPage() {
       showRefresh={false}
       showCharts={false}
       showTables={false}
+      loading={loading}
     >
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_age_pareto_page.k0')}</h3>
@@ -73,10 +95,7 @@ export default function WmsAgeParetoPage() {
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis
               dataKey='sku'
-              fontSize={10}
-              angle={-30}
-              textAnchor='end'
-              height={80}
+              fontSize={11}
             />
             <YAxis
               yAxisId='left'
@@ -108,13 +127,6 @@ export default function WmsAgeParetoPage() {
               strokeDasharray='4 4'
               label={i18n.t('pages.wms_age_pareto_page.80_1')}
             />
-            <ReferenceLine
-              yAxisId='right'
-              y={20}
-              stroke={designTokens.colors.secondary.dark}
-              strokeDasharray='2 2'
-              label='20% SKU'
-            />
             <Bar
               yAxisId='left'
               dataKey='amount'
@@ -133,6 +145,35 @@ export default function WmsAgeParetoPage() {
             />
           </ComposedChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className='mt-4 rounded-lg border p-4'>
+        <h3 className='mb-2 font-semibold'>库龄分布明细</h3>
+        <div className='overflow-x-auto'>
+          <table className='w-full text-sm'>
+            <thead className='bg-gray-50'>
+              <tr>
+                <th className='px-3 py-2 text-left font-medium'>库龄段</th>
+                <th className='px-3 py-2 text-right font-medium'>物料数量</th>
+                <th className='px-3 py-2 text-right font-medium'>库存价值</th>
+                <th className='px-3 py-2 text-right font-medium'>累计占比</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pareto.map((item, i) => (
+                <tr
+                  key={item.sku}
+                  className={i % 2 ? 'bg-gray-50' : ''}
+                >
+                  <td className='px-3 py-2 font-medium'>{item.sku}</td>
+                  <td className='px-3 py-2 text-right'>{item.material_count.toLocaleString()}</td>
+                  <td className='px-3 py-2 text-right'>¥{item.amount.toLocaleString()}</td>
+                  <td className='px-3 py-2 text-right'>{item.cumulative.toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </StatsPageTemplate>
   );
