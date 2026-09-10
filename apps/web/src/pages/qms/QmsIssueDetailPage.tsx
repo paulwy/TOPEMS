@@ -5,7 +5,7 @@
  * 使用 StatusBadge + FSMActionButtons 组件。
  * 数据来自 useQmsMock。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -22,7 +22,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
+import { issueApi } from '@/api/qms/issue';
+import type { QualityIssue } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
@@ -70,13 +71,39 @@ function DetailFieldItem({ label, value }: DetailField) {
 export default function QmsIssueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data } = useQmsMock<QmsMockShape>();
-  const issue = useMemo(() => {
-    const list = data.issues ?? [];
-    return list.find((i) => i.id === id) ?? list[0];
-  }, [data.issues, id]);
-  const improvements = useMemo(() => data.improvements ?? [], [data.improvements]);
-  const eightDReports = useMemo(() => data.eightDReports ?? [], [data.eightDReports]);
+  const [issue, setIssue] = useState<QualityIssue | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    issueApi
+      .getIssue(id)
+      .then((res) => {
+        if (!cancelled) {
+          setIssue(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load quality issue');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
@@ -86,6 +113,10 @@ export default function QmsIssueDetailPage() {
   const handleBack = () => {
     navigate(QMS_PATHS.nonconformance);
   };
+
+  // 关联数据待后续对接 API，暂时使用空数组
+  const improvements: Array<{ id: string; improvement_no: string; title: string; assignee: string; status: string }> = [];
+  const eightDReports: Array<{ id: string }> = [];
 
   const tabs = useMemo<TabConfig[]>(() => {
     if (!issue) return [];
@@ -216,6 +247,22 @@ export default function QmsIssueDetailPage() {
       },
     ];
   }, [eightDReports.length, improvements, issue]);
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity='error'>{error}</Alert>
+      </Box>
+    );
+  }
 
   if (!issue) {
     return (
