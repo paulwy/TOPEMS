@@ -476,7 +476,7 @@ impl ErpEventHandlers {
 
                 sqlx::query(
                     r#"INSERT INTO erp.financial_vouchers
-                       (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
+                       (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
                        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'purchase_order', $7, $8, $8, $9)"#,
                 )
                 .bind(voucher_id)
@@ -699,8 +699,8 @@ impl ErpEventHandlers {
 
         let payable_result = sqlx::query(
             r#"INSERT INTO erp.payables
-               (invoice_number, supplier_name, category, amount, status, invoice_date, created_at, updated_at)
-               VALUES ($1, $2, 'onboarding', $3, 'pending', $4, $5, $5)
+               (invoice_number, supplier_name, category, amount, status, invoice_date, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, 'onboarding', $3, 'pending', $4, $5, $5, $6)
                ON CONFLICT (invoice_number) DO NOTHING"#,
         )
         .bind(&payable_no)
@@ -708,6 +708,7 @@ impl ErpEventHandlers {
         .bind(onboarding_cost)
         .bind(onboard_date)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await;
 
@@ -749,8 +750,8 @@ impl ErpEventHandlers {
 
             let voucher_result = sqlx::query(
                 r#"INSERT INTO erp.financial_vouchers
-                   (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'hr_onboarding', $7, $8, $8)"#,
+                   (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
+                   VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'hr_onboarding', $7, $8, $8, $9)"#,
             )
             .bind(voucher_id)
             .bind(&voucher_no)
@@ -760,6 +761,7 @@ impl ErpEventHandlers {
             .bind(onboarding_cost)
             .bind(payload.employee_id.to_string())
             .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&mut *tx)
             .await;
 
@@ -857,8 +859,8 @@ impl ErpEventHandlers {
 
         let receivable_result = sqlx::query(
             r#"INSERT INTO erp.receivables
-               (invoice_number, customer_name, project_name, amount, status, invoice_date, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, 'pending', $5, $6, $6)
+               (invoice_number, customer_name, project_name, amount, status, invoice_date, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, 'pending', $5, $6, $6, $7)
                ON CONFLICT (invoice_number) DO NOTHING"#,
         )
         .bind(&receivable_no)
@@ -867,6 +869,7 @@ impl ErpEventHandlers {
         .bind(project_amount)
         .bind(completed_at)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await;
 
@@ -908,8 +911,8 @@ impl ErpEventHandlers {
 
             let voucher_result = sqlx::query(
                 r#"INSERT INTO erp.financial_vouchers
-                   (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, project_id, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'pm_project', $7, $8, $9, $9)"#,
+                   (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, project_id, created_at, updated_at, tenant_id)
+                   VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'pm_project', $7, $8, $9, $9, $10)"#,
             )
             .bind(voucher_id)
             .bind(&voucher_no)
@@ -920,6 +923,7 @@ impl ErpEventHandlers {
             .bind(payload.project_id.to_string())
             .bind(payload.project_id)
             .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&mut *tx)
             .await;
 
@@ -1054,8 +1058,8 @@ impl ErpEventHandlers {
 
         let voucher_result = sqlx::query(
             r#"INSERT INTO erp.financial_vouchers
-               (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, project_id, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'pm_settlement', $7, $8, $9, $9)"#,
+               (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, project_id, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'pm_settlement', $7, $8, $9, $9, $10)"#,
         )
         .bind(voucher_id)
         .bind(&voucher_no)
@@ -1066,6 +1070,7 @@ impl ErpEventHandlers {
         .bind(payload.project_id.to_string())
         .bind(payload.project_id)
         .bind(now)
+.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await;
 
