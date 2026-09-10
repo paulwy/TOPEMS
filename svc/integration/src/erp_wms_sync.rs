@@ -1069,3 +1069,391 @@ pub async fn handle_wms_stock_updated(
 
     Ok(())
 }
+
+// ============================================================================
+// 增量同步
+// ============================================================================
+
+/// 增量同步结果
+#[derive(Debug, Clone, Serialize)]
+pub struct IncrementalSyncResult {
+    pub sync_type: String,
+    pub direction: String,
+    pub last_sync_time: Option<DateTime<Utc>>,
+    pub total_found: i64,
+    pub total_processed: i64,
+    pub total_success: i64,
+    pub total_failed: i64,
+    pub total_skipped: i64,
+    pub started_at: DateTime<Utc>,
+    pub completed_at: DateTime<Utc>,
+    pub errors: Vec<String>,
+}
+
+/// 增量同步请求
+#[derive(Debug, Clone, Deserialize)]
+pub struct IncrementalSyncRequest {
+    pub tenant_id: Uuid,
+    pub sync_type: Option<String>,
+    pub direction: Option<String>,
+    pub since: Option<DateTime<Utc>>,
+    pub limit: Option<i64>,
+    pub dry_run: Option<bool>,
+}
+
+/// 获取指定类型/方向的上次同步时间
+pub async fn get_last_sync_time(
+    pool: &PgPool,
+    sync_type: &str,
+    direction: &str,
+) -> Result<Option<DateTime<Utc>>, String> {
+    let row = sqlx::query(only_own_schema_query!(
+        "integration",
+        "SELECT MAX(last_synced_at) as last_sync
+         FROM integration.erp_wms_sync
+         WHERE sync_type = $1 AND direction = $2 AND synced = true"
+    ))
+    .bind(sync_type)
+    .bind(direction)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("获取上次同步时间失败: {}", e))?;
+
+    Ok(row.try_get("last_sync").ok())
+}
+
+/// 获取待同步的记录（增量查询）
+///
+/// 根据上次同步时间，查询新增或更新的待同步记录
+pub async fn get_pending_syncs(
+    pool: &PgPool,
+    sync_type: &str,
+    direction: &str,
+    since: Option<DateTime<Utc>>,
+    limit: i64,
+) -> Result<Vec<ErpWmsSync>, String> {
+    let rows = sqlx::query(only_own_schema_query!(
+        "integration",
+        r#"
+        SELECT id, tenant_id, sync_type, direction, erp_order_id, erp_inventory_id,
+               wms_transaction_id, wms_location_id, order_no, product_code, product_name,
+               warehouse_code, location_code, quantity, synced, sync_status, sync_error,
+               retry_count, max_retries, payload, result_payload, last_synced_at,
+               created_at, updated_at
+        FROM integration.erp_wms_sync
+        WHERE sync_type = $1
+          AND direction = $2
+          AND synced = false
+          AND sync_status IN ('pending', 'failed', 'retrying')
+          AND retry_count < max_retries
+          AND ($4::timestamptz IS NULL OR updated_at >= $4)
+        ORDER BY created_at ASC
+        LIMIT $3
+        "#
+    ))
+    .bind(sync_type)
+    .bind(direction)
+    .bind(limit)
+    .bind(since)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("获取待同步记录失败: {}", e))?;
+
+    let mut results = Vec::with_capacity(rows.len());
+    for row in rows {
+        results.push(ErpWmsSync {
+            id: row.try_get("id").unwrap_or_default(),
+            tenant_id: row.try_get("tenant_id").unwrap_or_default(),
+            sync_type: row.try_get("sync_type").unwrap_or_default(),
+            direction: row.try_get("direction").unwrap_or_default(),
+            erp_order_id: row.try_get("erp_order_id").ok(),
+            erp_inventory_id: row.try_get("erp_inventory_id").ok(),
+            wms_transaction_id: row.try_get("wms_transaction_id").ok(),
+            wms_location_id: row.try_get("wms_location_id").ok(),
+            order_no: row.try_get("order_no").ok(),
+            product_code: row.try_get("product_code").ok(),
+            product_name: row.try_get("product_name").ok(),
+            warehouse_code: row.try_get("warehouse_code").ok(),
+            location_code: row.try_get("location_code").ok(),
+            quantity: row.try_get("quantity").ok(),
+            synced: row.try_get("synced").unwrap_or(false),
+            sync_status: row.try_get("sync_status").unwrap_or_default(),
+            sync_error: row.try_get("sync_error").ok(),
+            retry_count: row.try_get("retry_count").unwrap_or(0),
+            max_retries: row.try_get("max_retries").unwrap_or(5),
+            payload: row.try_get("payload").ok(),
+            result_payload: row.try_get("result_payload").ok(),
+            last_synced_at: row.try_get("last_synced_at").ok(),
+            created_at: row.try_get("created_at").unwrap_or_else(|_| Utc::now()),
+            updated_at: row.try_get("updated_at").unwrap_or_else(|_| Utc::now()),
+        });
+    }
+
+    Ok(results)
+}
+
+/// 执行增量同步（订单 ERP → WMS）
+pub async fn sync_incremental_orders(
+    pool: &PgPool,
+    tenant_id: Uuid,
+    erp_url: &str,
+    wms_url: &str,
+    since: Option<DateTime<Utc>>,
+    limit: i64,
+    dry_run: bool,
+) -> Result<IncrementalSyncResult, String> {
+    let started_at = Utc::now();
+
+    // 获取上次同步时间（如果未指定）
+    let last_sync_time = match since {
+        Some(s) => Some(s),
+        None => get_last_sync_time(pool, SYNC_TYPE_ORDER, DIRECTION_ERP_TO_WMS).await?,
+    };
+
+    // 获取待同步记录
+    let pending = get_pending_syncs(
+        pool,
+        SYNC_TYPE_ORDER,
+        DIRECTION_ERP_TO_WMS,
+        last_sync_time,
+        limit,
+    )
+    .await?;
+
+    let total_found = pending.len() as i64;
+    let mut total_success = 0i64;
+    let mut total_failed = 0i64;
+    let mut total_skipped = 0i64;
+    let mut errors = Vec::new();
+
+    if dry_run {
+        info!(
+            "[增量同步-干跑] 订单同步 - 找到 {} 条待同步记录，上次同步: {:?}",
+            total_found, last_sync_time
+        );
+        return Ok(IncrementalSyncResult {
+            sync_type: SYNC_TYPE_ORDER.to_string(),
+            direction: DIRECTION_ERP_TO_WMS.to_string(),
+            last_sync_time,
+            total_found,
+            total_processed: 0,
+            total_success: 0,
+            total_failed: 0,
+            total_skipped: total_found,
+            started_at,
+            completed_at: Utc::now(),
+            errors,
+        });
+    }
+
+    // 逐条同步
+    for record in &pending {
+        let order_id = match record.erp_order_id {
+            Some(id) => id.to_string(),
+            None => {
+                total_skipped += 1;
+                continue;
+            }
+        };
+
+        let req = SyncOrderRequest {
+            order_id,
+            order_type: "sales_order".to_string(),
+        };
+
+        match sync_order_to_wms(pool, tenant_id, erp_url, wms_url, &req).await {
+            Ok(_) => {
+                total_success += 1;
+            }
+            Err(e) => {
+                total_failed += 1;
+                errors.push(format!("订单 {} 同步失败: {}", record.order_no.clone().unwrap_or_default(), e));
+                // 增加重试次数
+                let _ = increment_retry_count(pool, record.id, &e).await;
+            }
+        }
+    }
+
+    let completed_at = Utc::now();
+    info!(
+        "[增量同步] 订单同步完成 - 总数: {}, 成功: {}, 失败: {}, 跳过: {}",
+        total_found, total_success, total_failed, total_skipped
+    );
+
+    Ok(IncrementalSyncResult {
+        sync_type: SYNC_TYPE_ORDER.to_string(),
+        direction: DIRECTION_ERP_TO_WMS.to_string(),
+        last_sync_time,
+        total_found,
+        total_processed: total_success + total_failed,
+        total_success,
+        total_failed,
+        total_skipped,
+        started_at,
+        completed_at,
+        errors,
+    })
+}
+
+/// 执行增量同步（库存 WMS → ERP）
+pub async fn sync_incremental_stock(
+    pool: &PgPool,
+    tenant_id: Uuid,
+    erp_url: &str,
+    wms_url: &str,
+    since: Option<DateTime<Utc>>,
+    limit: i64,
+    dry_run: bool,
+) -> Result<IncrementalSyncResult, String> {
+    let started_at = Utc::now();
+
+    // 获取上次同步时间
+    let last_sync_time = match since {
+        Some(s) => Some(s),
+        None => get_last_sync_time(pool, SYNC_TYPE_STOCK, DIRECTION_WMS_TO_ERP).await?,
+    };
+
+    // 获取待同步记录
+    let pending = get_pending_syncs(
+        pool,
+        SYNC_TYPE_STOCK,
+        DIRECTION_WMS_TO_ERP,
+        last_sync_time,
+        limit,
+    )
+    .await?;
+
+    let total_found = pending.len() as i64;
+    let mut total_success = 0i64;
+    let mut total_failed = 0i64;
+    let mut total_skipped = 0i64;
+    let mut errors = Vec::new();
+
+    if dry_run {
+        info!(
+            "[增量同步-干跑] 库存同步 - 找到 {} 条待同步记录，上次同步: {:?}",
+            total_found, last_sync_time
+        );
+        return Ok(IncrementalSyncResult {
+            sync_type: SYNC_TYPE_STOCK.to_string(),
+            direction: DIRECTION_WMS_TO_ERP.to_string(),
+            last_sync_time,
+            total_found,
+            total_processed: 0,
+            total_success: 0,
+            total_failed: 0,
+            total_skipped: total_found,
+            started_at,
+            completed_at: Utc::now(),
+            errors,
+        });
+    }
+
+    // 逐条同步
+    for record in &pending {
+        let product_id = match &record.product_code {
+            Some(code) => code.clone(),
+            None => {
+                total_skipped += 1;
+                continue;
+            }
+        };
+
+        let req = SyncStockRequest {
+            product_id,
+            warehouse_code: record.warehouse_code.clone(),
+        };
+
+        match sync_stock_to_erp(pool, tenant_id, erp_url, wms_url, &req).await {
+            Ok(_) => {
+                total_success += 1;
+            }
+            Err(e) => {
+                total_failed += 1;
+                errors.push(format!(
+                    "库存 {} 同步失败: {}",
+                    record.product_code.clone().unwrap_or_default(),
+                    e
+                ));
+                let _ = increment_retry_count(pool, record.id, &e).await;
+            }
+        }
+    }
+
+    let completed_at = Utc::now();
+    info!(
+        "[增量同步] 库存同步完成 - 总数: {}, 成功: {}, 失败: {}, 跳过: {}",
+        total_found, total_success, total_failed, total_skipped
+    );
+
+    Ok(IncrementalSyncResult {
+        sync_type: SYNC_TYPE_STOCK.to_string(),
+        direction: DIRECTION_WMS_TO_ERP.to_string(),
+        last_sync_time,
+        total_found,
+        total_processed: total_success + total_failed,
+        total_success,
+        total_failed,
+        total_skipped,
+        started_at,
+        completed_at,
+        errors,
+    })
+}
+
+/// 执行全量增量同步（订单 + 库存）
+pub async fn sync_incremental_all(
+    pool: &PgPool,
+    tenant_id: Uuid,
+    erp_url: &str,
+    wms_url: &str,
+    since: Option<DateTime<Utc>>,
+    limit: i64,
+    dry_run: bool,
+) -> Result<Vec<IncrementalSyncResult>, String> {
+    let mut results = Vec::new();
+
+    // 同步订单（ERP → WMS）
+    match sync_incremental_orders(pool, tenant_id, erp_url, wms_url, since, limit, dry_run).await {
+        Ok(r) => results.push(r),
+        Err(e) => {
+            error!("订单增量同步失败: {}", e);
+            results.push(IncrementalSyncResult {
+                sync_type: SYNC_TYPE_ORDER.to_string(),
+                direction: DIRECTION_ERP_TO_WMS.to_string(),
+                last_sync_time: since,
+                total_found: 0,
+                total_processed: 0,
+                total_success: 0,
+                total_failed: 1,
+                total_skipped: 0,
+                started_at: Utc::now(),
+                completed_at: Utc::now(),
+                errors: vec![e],
+            });
+        }
+    }
+
+    // 同步库存（WMS → ERP）
+    match sync_incremental_stock(pool, tenant_id, erp_url, wms_url, since, limit, dry_run).await {
+        Ok(r) => results.push(r),
+        Err(e) => {
+            error!("库存增量同步失败: {}", e);
+            results.push(IncrementalSyncResult {
+                sync_type: SYNC_TYPE_STOCK.to_string(),
+                direction: DIRECTION_WMS_TO_ERP.to_string(),
+                last_sync_time: since,
+                total_found: 0,
+                total_processed: 0,
+                total_success: 0,
+                total_failed: 1,
+                total_skipped: 0,
+                started_at: Utc::now(),
+                completed_at: Utc::now(),
+                errors: vec![e],
+            });
+        }
+    }
+
+    Ok(results)
+}
