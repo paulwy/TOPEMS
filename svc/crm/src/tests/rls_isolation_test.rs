@@ -2,6 +2,10 @@ use crate::models::customer::{CreateCustomerRequest, Customer};
 use sqlx::PgPool;
 use uuid::Uuid;
 
+// 注意：本测试文件使用 #[sqlx::test] 宏，需要超级用户权限运行
+// 因为 sqlx::test 需要创建临时数据库（基于模板数据库），这需要 PostgreSQL 超级用户权限
+// 运行方式：DATABASE_URL="postgres://<superuser>@localhost:5432/topems" cargo test -p topems-crm rls_isolation_test
+
 #[sqlx::test]
 async fn customer_isolated_by_tenant(pool: PgPool) {
     let tenant_a = Uuid::new_v4();
@@ -101,7 +105,30 @@ async fn rls_txn_context_isolates_tenant(pool: PgPool) {
 
     // 模拟 tenant_middleware：请求级事务 + SET LOCAL app.tenant_id
     //（handler 经 Extension<Arc<Mutex<Transaction>>> 提取后用 &mut **txn 查询）
+    // 注意：使用 SET ROLE 切换到非超级用户，否则超级用户会绕过 RLS
+    // 首先创建测试角色（如果不存在）
+    sqlx::query("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'rls_test_user') THEN CREATE ROLE rls_test_user NOLOGIN; END IF; END $$;")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("GRANT USAGE ON SCHEMA crm TO rls_test_user;")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("GRANT SELECT, INSERT ON crm.customers TO rls_test_user;")
+        .execute(&pool)
+        .await
+        .unwrap();
+
     let mut txn_a = pool.begin().await.unwrap();
+    sqlx::query("SET LOCAL ROLE rls_test_user")
+        .execute(&mut *txn_a)
+        .await
+        .unwrap();
+    sqlx::query("SET LOCAL row_security = on")
+        .execute(&mut *txn_a)
+        .await
+        .unwrap();
     sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(tenant_a.to_string())
         .execute(&mut *txn_a)
@@ -117,6 +144,14 @@ async fn rls_txn_context_isolates_tenant(pool: PgPool) {
     txn_a.rollback().await.unwrap();
 
     let mut txn_b = pool.begin().await.unwrap();
+    sqlx::query("SET LOCAL ROLE rls_test_user")
+        .execute(&mut *txn_b)
+        .await
+        .unwrap();
+    sqlx::query("SET LOCAL row_security = on")
+        .execute(&mut *txn_b)
+        .await
+        .unwrap();
     sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(tenant_b.to_string())
         .execute(&mut *txn_b)
