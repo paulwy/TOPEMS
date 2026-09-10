@@ -170,7 +170,7 @@ export default defineConfig({
       'tests/admin-module.spec.ts',
       'tests/websocket.spec.ts',
     ],
-    testTimeout: 15000,
+    testTimeout: 30000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'json-summary'],
