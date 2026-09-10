@@ -210,6 +210,51 @@ export async function getDashboardSummary(): Promise<ApiResponse<WmsDashboardSum
   return apiClient.wms.get('/analytics/dashboard-summary');
 }
 
+// ===== Dashboard 图表数据 =====
+
+export interface InventoryDistributionItem {
+  warehouse_id: string;
+  warehouse_name: string;
+  quantity: number;
+  sku_count: number;
+}
+
+export interface InventoryTypeItem {
+  material_type: string;
+  quantity: number;
+  percentage: number;
+}
+
+export interface DailyTrendItem {
+  date: string;
+  inbound: number;
+  outbound: number;
+}
+
+/**
+ * 获取库存分布（按仓库）
+ * GET /wms/analytics/inventory-distribution
+ */
+export async function getInventoryDistribution(): Promise<ApiResponse<InventoryDistributionItem[]>> {
+  return apiClient.wms.get('/analytics/inventory-distribution');
+}
+
+/**
+ * 获取库存类型分布
+ * GET /wms/analytics/inventory-types
+ */
+export async function getInventoryTypes(): Promise<ApiResponse<InventoryTypeItem[]>> {
+  return apiClient.wms.get('/analytics/inventory-types');
+}
+
+/**
+ * 获取每日出入库趋势
+ * GET /wms/analytics/daily-trend
+ */
+export async function getDailyTrend(): Promise<ApiResponse<DailyTrendItem[]>> {
+  return apiClient.wms.get('/analytics/daily-trend');
+}
+
 // ===== 统一导出 =====
 
 export const wmsAnalyticsApi = {
@@ -220,4 +265,7 @@ export const wmsAnalyticsApi = {
   getAgePareto,
   getLocationUtilization,
   getDashboardSummary,
+  getInventoryDistribution,
+  getInventoryTypes,
+  getDailyTrend,
 };

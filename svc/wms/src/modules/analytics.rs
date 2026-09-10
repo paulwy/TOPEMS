@@ -938,6 +938,177 @@ pub async fn get_dashboard_summary(
     Json(ApiResponse::success(summary, "获取成功"))
 }
 
+// ===== Dashboard 图表数据 =====
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InventoryDistributionItem {
+    pub warehouse_id: String,
+    pub warehouse_name: String,
+    pub quantity: f64,
+    pub sku_count: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InventoryTypeItem {
+    pub material_type: String,
+    pub quantity: f64,
+    pub percentage: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DailyTrendItem {
+    pub date: String,
+    pub inbound: i64,
+    pub outbound: i64,
+}
+
+/// 获取库存分布（按仓库）
+#[utoipa::path(
+    get,
+    path = "/analytics/inventory-distribution",
+    tag = "WMS Analytics",
+    responses(
+        (status = 200, description = "库存分布数据", body = ApiResponse<Vec<InventoryDistributionItem>>),
+    ),
+)]
+pub async fn get_inventory_distribution(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<InventoryDistributionItem>>> {
+    tracing::info!("获取WMS库存分布数据");
+
+    let rows: Vec<(String, Option<String>, Option<f64>, Option<i64>)> = sqlx::query_as(
+        "SELECT i.warehouse_id::text as warehouse_id, w.name as warehouse_name, 
+                COALESCE(SUM(i.quantity), 0) as quantity, 
+                COUNT(DISTINCT i.material_code) as sku_count
+         FROM wms.inventory i
+         LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
+         WHERE i.deleted_at IS NULL
+         GROUP BY i.warehouse_id, w.name
+         ORDER BY quantity DESC
+         LIMIT 10"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<InventoryDistributionItem> = rows
+        .into_iter()
+        .map(|(warehouse_id, warehouse_name, quantity, sku_count)| {
+            InventoryDistributionItem {
+                warehouse_id,
+                warehouse_name: warehouse_name.unwrap_or_else(|| "未知仓库".to_string()),
+                quantity: quantity.unwrap_or(0.0),
+                sku_count: sku_count.unwrap_or(0),
+            }
+        })
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
+/// 获取库存类型分布（按物料类型）
+#[utoipa::path(
+    get,
+    path = "/analytics/inventory-types",
+    tag = "WMS Analytics",
+    responses(
+        (status = 200, description = "库存类型分布", body = ApiResponse<Vec<InventoryTypeItem>>),
+    ),
+)]
+pub async fn get_inventory_types(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<InventoryTypeItem>>> {
+    tracing::info!("获取WMS库存类型分布");
+
+    let total: f64 = sqlx::query_scalar("SELECT COALESCE(SUM(quantity), 0) FROM wms.inventory WHERE deleted_at IS NULL")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0.0);
+
+    let rows: Vec<(Option<String>, Option<f64>)> = sqlx::query_as(
+        "SELECT COALESCE(material_type, '未分类') as material_type, 
+                COALESCE(SUM(quantity), 0) as quantity
+         FROM wms.inventory
+         WHERE deleted_at IS NULL
+         GROUP BY material_type
+         ORDER BY quantity DESC
+         LIMIT 8"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<InventoryTypeItem> = rows
+        .into_iter()
+        .map(|(material_type, quantity)| {
+            let qty = quantity.unwrap_or(0.0);
+            let percentage = if total > 0.0 { (qty / total) * 100.0 } else { 0.0 };
+            InventoryTypeItem {
+                material_type: material_type.unwrap_or_else(|| "未分类".to_string()),
+                quantity: qty,
+                percentage,
+            }
+        })
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
+/// 获取每日出入库趋势（最近7天）
+#[utoipa::path(
+    get,
+    path = "/analytics/daily-trend",
+    tag = "WMS Analytics",
+    responses(
+        (status = 200, description = "每日出入库趋势", body = ApiResponse<Vec<DailyTrendItem>>),
+    ),
+)]
+pub async fn get_daily_trend(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<DailyTrendItem>>> {
+    tracing::info!("获取WMS每日出入库趋势");
+
+    let rows: Vec<(Option<String>, Option<i64>, Option<i64>)> = sqlx::query_as(
+        "SELECT 
+            dates.date::text as date,
+            COALESCE(inbound.count, 0) as inbound,
+            COALESCE(outbound.count, 0) as outbound
+         FROM (
+             SELECT generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day')::date as date
+         ) dates
+         LEFT JOIN (
+             SELECT DATE(created_at) as date, COUNT(*) as count
+             FROM wms.inbound_orders
+             WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days'
+             GROUP BY DATE(created_at)
+         ) inbound ON dates.date = inbound.date
+         LEFT JOIN (
+             SELECT DATE(created_at) as date, COUNT(*) as count
+             FROM wms.outbound_orders
+             WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days'
+             GROUP BY DATE(created_at)
+         ) outbound ON dates.date = outbound.date
+         ORDER BY dates.date"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<DailyTrendItem> = rows
+        .into_iter()
+        .map(|(date, inbound, outbound)| DailyTrendItem {
+            date: date.unwrap_or_default(),
+            inbound: inbound.unwrap_or(0),
+            outbound: outbound.unwrap_or(0),
+        })
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
 // ===== 路由注册 =====
 
 pub fn create_routes<S>() -> Router<S>
@@ -953,4 +1124,7 @@ where
         .route("/analytics/age-pareto", get(get_age_pareto))
         .route("/analytics/location-utilization", get(get_location_utilization))
         .route("/analytics/dashboard-summary", get(get_dashboard_summary))
+        .route("/analytics/inventory-distribution", get(get_inventory_distribution))
+        .route("/analytics/inventory-types", get(get_inventory_types))
+        .route("/analytics/daily-trend", get(get_daily_trend))
 }

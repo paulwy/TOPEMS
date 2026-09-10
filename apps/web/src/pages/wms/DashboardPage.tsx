@@ -25,6 +25,25 @@ export const DashboardPage: React.FC = () => {
     queryFn: () => wmsAnalyticsApi.getDashboardSummary(),
     staleTime: 60_000,
   });
+
+  const { data: distributionData } = useQuery({
+    queryKey: [QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE, 'distribution'],
+    queryFn: () => wmsAnalyticsApi.getInventoryDistribution(),
+    staleTime: 60_000,
+  });
+
+  const { data: typesData } = useQuery({
+    queryKey: [QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE, 'types'],
+    queryFn: () => wmsAnalyticsApi.getInventoryTypes(),
+    staleTime: 60_000,
+  });
+
+  const { data: trendData } = useQuery({
+    queryKey: [QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE, 'trend'],
+    queryFn: () => wmsAnalyticsApi.getDailyTrend(),
+    staleTime: 60_000,
+  });
+
   const loading = isLoading;
 
   const getGreeting = (): string => {
@@ -35,34 +54,28 @@ export const DashboardPage: React.FC = () => {
   };
 
   const barData = useMemo(
-    () => [
-      { name: t('wms.dashboard_page.area_a'), value: 1200 },
-      { name: t('wms.dashboard_page.area_b'), value: 980 },
-      { name: t('wms.dashboard_page.area_c'), value: 1500 },
-      { name: t('wms.dashboard_page.area_d'), value: 750 },
-      { name: t('wms.dashboard_page.area_e'), value: 1100 },
-      { name: t('wms.dashboard_page.area_f'), value: 620 },
-    ],
-    [t]
+    () =>
+      distributionData?.data?.map((item) => ({
+        name: item.warehouse_name,
+        value: Math.round(item.quantity),
+      })) ?? [],
+    [distributionData]
   );
   const pieData = useMemo(
-    () => [
-      { name: t('wms.dashboard_page.type_raw_material'), value: 35 },
-      { name: t('wms.dashboard_page.type_finished'), value: 45 },
-      { name: t('wms.dashboard_page.type_semi_finished'), value: 20 },
-    ],
-    [t]
+    () =>
+      typesData?.data?.map((item) => ({
+        name: item.material_type,
+        value: Math.round(item.percentage),
+      })) ?? [],
+    [typesData]
   );
   const lineData = useMemo(
-    () => [
-      { name: t('wms.dashboard_page.weekday_mon'), value: 85 },
-      { name: t('wms.dashboard_page.weekday_tue'), value: 92 },
-      { name: t('wms.dashboard_page.weekday_wed'), value: 78 },
-      { name: t('wms.dashboard_page.weekday_thu'), value: 95 },
-      { name: t('wms.dashboard_page.weekday_fri'), value: 88 },
-      { name: t('wms.dashboard_page.weekday_sat'), value: 45 },
-    ],
-    [t]
+    () =>
+      trendData?.data?.map((item) => ({
+        name: item.date.slice(5),
+        value: item.inbound + item.outbound,
+      })) ?? [],
+    [trendData]
   );
 
   const stats: StatCard[] = useMemo(
