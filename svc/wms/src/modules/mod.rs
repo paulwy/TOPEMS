@@ -18,6 +18,7 @@ pub mod slotting;
 // V514-3: 恢复 discrepancy 模块（修复存量 E0308×3 + SQL 列名错误后启用）
 pub mod discrepancy;
 pub mod data_sync;
+pub mod analytics;
 pub mod inbound_order;
 pub mod inventory;
 pub mod inventory_alert;
@@ -84,4 +85,5 @@ where
         .merge(discrepancy::create_routes())
         .merge(audit::create_routes())
         .merge(data_sync::create_routes())
+        .merge(analytics::create_routes())
 }

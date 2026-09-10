@@ -930,6 +930,7 @@ export interface InventoryTurnoverData {
   turnover_days: number;
   cost_of_goods_sold: number;
   average_inventory_value: number;
+  outbound_count?: number;
 }
 
 export interface InventoryValueByWarehouse {

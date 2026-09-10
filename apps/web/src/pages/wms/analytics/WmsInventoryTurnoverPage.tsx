@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -12,23 +12,52 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
 import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { useAnalyticsData, getDefaultDateRange } from '@/hooks/useAnalyticsData';
+import { wmsAnalyticsApi } from '@/api/wms/analytics';
+import type { InventoryTurnoverData } from '@/api/wms/types';
 
 export default function WmsInventoryTurnoverPage() {
-  const { data } = useWmsMock<WmsMockShape>();
+  const { startDate, endDate } = getDefaultDateRange();
+  const [groupBy, setGroupBy] = useState<'month' | 'week' | 'day'>('month');
 
-  const turnover = useMemo(() => data.turnover ?? [], [data.turnover]);
+  const { data, loading, error, reload } = useAnalyticsData({
+    fetcher: () =>
+      wmsAnalyticsApi.getInventoryTurnover({
+        start_date: startDate,
+        end_date: endDate,
+        group_by: groupBy,
+      }),
+    deps: [startDate, endDate, groupBy],
+  });
+
+  // 适配后端数据格式到图表格式
+  const chartData = useMemo(() => {
+    if (!data?.data) return [];
+    return data.data.map((item: InventoryTurnoverData) => ({
+      month: item.period,
+      turnoverRate: item.turnover_rate,
+      days: item.turnover_days,
+      outboundCount: item.outbound_count,
+      costOfGoods: item.cost_of_goods_sold,
+      avgInventory: item.average_inventory_value,
+    }));
+  }, [data]);
 
   const summary = useMemo(() => {
-    const totalRate = turnover.reduce((s, t) => s + (t.turnoverRate || 0), 0);
-    const totalDays = turnover.reduce((s, t) => s + (t.days || 0), 0);
-    const avgRate = turnover.length ? (totalRate / turnover.length).toFixed(2) : '0';
-    const avgDays = turnover.length ? (totalDays / turnover.length).toFixed(1) : '0';
-    const warehouses = new Set(turnover.map((t) => t.warehouse)).size;
-    return { avgRate, avgDays, warehouses, records: turnover.length };
-  }, [turnover]);
+    if (!data?.summary) {
+      return { avgRate: '0', avgDays: '0', outbound: 0, records: 0 };
+    }
+    const avgRate = data.summary.avg_turnover.toFixed(2);
+    const avgDays = data.summary.avg_turnover > 0 ? (30 / data.summary.avg_turnover).toFixed(1) : '0';
+    return {
+      avgRate,
+      avgDays,
+      outbound: data.summary.total_outbound,
+      records: data.summary.period_count,
+    };
+  }, [data]);
 
   const statCards = useMemo(
     () => [
@@ -46,9 +75,9 @@ export default function WmsInventoryTurnoverPage() {
         color: 'info' as const,
       },
       {
-        id: 'warehouse-count',
-        title: i18n.t('pages.wms_inventory_turnover_page.k3'),
-        value: summary.warehouses,
+        id: 'outbound-count',
+        title: '出库单数',
+        value: summary.outbound,
         color: 'secondary' as const,
       },
       {
@@ -61,6 +90,50 @@ export default function WmsInventoryTurnoverPage() {
     [summary]
   );
 
+  if (loading) {
+    return (
+      <StatsPageTemplate
+        title={i18n.t('pages.wms_inventory_turnover_page.k0')}
+        statCards={[]}
+        showSearch={false}
+        showTimeRange={false}
+        showExport={false}
+        showRefresh={false}
+        showCharts={false}
+        showTables={false}
+      >
+        <div className='flex h-64 items-center justify-center'>
+          <div className='text-gray-500'>加载中...</div>
+        </div>
+      </StatsPageTemplate>
+    );
+  }
+
+  if (error) {
+    return (
+      <StatsPageTemplate
+        title={i18n.t('pages.wms_inventory_turnover_page.k0')}
+        statCards={[]}
+        showSearch={false}
+        showTimeRange={false}
+        showExport={false}
+        showRefresh={false}
+        showCharts={false}
+        showTables={false}
+      >
+        <div className='flex h-64 flex-col items-center justify-center gap-4'>
+          <div className='text-red-500'>加载失败: {error}</div>
+          <button
+            onClick={reload}
+            className='rounded bg-primary px-4 py-2 text-white hover:bg-primary-dark'
+          >
+            重试
+          </button>
+        </div>
+      </StatsPageTemplate>
+    );
+  }
+
   return (
     <StatsPageTemplate
       title={i18n.t('pages.wms_inventory_turnover_page.k0')}
@@ -68,26 +141,38 @@ export default function WmsInventoryTurnoverPage() {
       showSearch={false}
       showTimeRange={false}
       showExport={false}
-      showRefresh={false}
+      showRefresh={true}
+      onRefresh={reload}
       showCharts={false}
       showTables={false}
     >
       <div className='space-y-4'>
+        {/* 时间粒度选择 */}
+        <div className='flex items-center gap-4'>
+          <span className='text-sm text-gray-600'>时间粒度:</span>
+          <div className='flex gap-2'>
+            {(['month', 'week', 'day'] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => setGroupBy(g)}
+                className={`rounded px-3 py-1 text-sm ${
+                  groupBy === g
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {g === 'month' ? '月' : g === 'week' ? '周' : '日'}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_turnover_page.k5')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={360}
-          >
-            <LineChart
-              data={turnover}
-              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-            >
+          <ResponsiveContainer width='100%' height={360}>
+            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='month'
-                fontSize={11}
-              />
+              <XAxis dataKey='month' fontSize={11} />
               <YAxis fontSize={11} />
               <Tooltip />
               <Legend />
@@ -105,16 +190,10 @@ export default function WmsInventoryTurnoverPage() {
 
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_turnover_page.k7')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={300}
-          >
-            <BarChart data={turnover.slice(0, 32)}>
+          <ResponsiveContainer width='100%' height={300}>
+            <BarChart data={chartData.slice(0, 32)}>
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='month'
-                fontSize={11}
-              />
+              <XAxis dataKey='month' fontSize={11} />
               <YAxis fontSize={11} />
               <Tooltip />
               <Legend />

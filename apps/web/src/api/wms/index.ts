@@ -20,6 +20,7 @@ import { advancedReplenishmentApi } from './smartReplenishment';
 import { slottingApi } from './slotting';
 import { laborApi } from './labor';
 import { pickingApi } from './picking';
+import { wmsAnalyticsApi } from './analytics';
 import apiClient from '../client';
 import type { ApprovalStartRequest, ApprovalApproveRequest, ApprovalRejectRequest } from './types';
 
@@ -115,6 +116,15 @@ export type {
   CreatePickingStrategyRequest,
 } from './picking';
 
+export type {
+  AnalyticsQueryParams,
+  InventoryTurnoverSummary,
+  InventoryTurnoverResponse,
+  WmsOrderFulfillmentData,
+  WmsOrderFulfillmentSummary,
+  WmsOrderFulfillmentResponse,
+} from './analytics';
+
 export const wmsApi = {
   dashboard: wmsDashboardApi,
   inventory: inventoryApi,
@@ -141,6 +151,7 @@ export const wmsApi = {
   slotting: slottingApi,
   labor: laborApi,
   picking: pickingApi,
+  analytics: wmsAnalyticsApi,
 };
 
 // ============================================================================
