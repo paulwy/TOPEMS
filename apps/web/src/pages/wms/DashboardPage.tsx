@@ -12,6 +12,7 @@ import {
 } from '@/components/templates';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { LazyChart } from '@/components/charts';
+import { wmsAnalyticsApi } from '@/api/wms/analytics';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -19,12 +20,12 @@ export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const loadingQuery = useQuery<boolean>({
-    queryKey: QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE,
-    queryFn: async () => true,
-    staleTime: Infinity,
+  const { data: summary, isLoading } = useQuery({
+    queryKey: [QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE, 'summary'],
+    queryFn: () => wmsAnalyticsApi.getDashboardSummary(),
+    staleTime: 60_000,
   });
-  const loading = loadingQuery.isLoading;
+  const loading = isLoading;
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -69,41 +70,41 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'warehouses',
         title: t('wms.dashboard_page.stat_warehouses'),
-        value: '6',
+        value: summary?.data?.warehouse_count?.toLocaleString() ?? '-',
         icon: <Warehouse size={24} />,
-        change: 1,
+        change: 0,
         changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'primary',
       },
       {
         id: 'inventory',
         title: t('wms.dashboard_page.stat_inventory'),
-        value: '6,150',
+        value: summary?.data?.inventory_total?.toLocaleString() ?? '-',
         icon: <Package size={24} />,
-        change: 320,
+        change: 0,
         changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'success',
       },
       {
         id: 'inbound',
         title: t('wms.dashboard_page.stat_inbound_today'),
-        value: '128',
+        value: summary?.data?.inbound_today?.toLocaleString() ?? '-',
         icon: <Truck size={24} />,
-        change: 25,
+        change: 0,
         changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'info',
       },
       {
         id: 'alerts',
         title: t('wms.dashboard_page.stat_alerts'),
-        value: '5',
+        value: summary?.data?.alert_count?.toLocaleString() ?? '-',
         icon: <AlertCircle size={24} />,
-        change: -3,
+        change: summary?.data?.alert_critical ? -summary.data.alert_critical : 0,
         changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'warning',
       },
     ],
-    [t]
+    [t, summary]
   );
 
   const charts: ChartCard[] = useMemo(

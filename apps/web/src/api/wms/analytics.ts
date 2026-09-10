@@ -189,6 +189,27 @@ export async function getLocationUtilization(
   return apiClient.wms.get('/analytics/location-utilization', { params });
 }
 
+// ===== Dashboard 汇总 =====
+
+export interface WmsDashboardSummary {
+  warehouse_count: number;
+  inventory_total: number;
+  inventory_sku_count: number;
+  inbound_today: number;
+  outbound_today: number;
+  alert_count: number;
+  alert_critical: number;
+  location_utilization: number;
+}
+
+/**
+ * 获取Dashboard汇总数据
+ * GET /wms/analytics/dashboard-summary
+ */
+export async function getDashboardSummary(): Promise<ApiResponse<WmsDashboardSummary>> {
+  return apiClient.wms.get('/analytics/dashboard-summary');
+}
+
 // ===== 统一导出 =====
 
 export const wmsAnalyticsApi = {
@@ -198,4 +219,5 @@ export const wmsAnalyticsApi = {
   getAbcAnalysis,
   getAgePareto,
   getLocationUtilization,
+  getDashboardSummary,
 };

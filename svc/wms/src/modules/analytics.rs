@@ -850,6 +850,94 @@ fn format_period_date(dt: chrono::NaiveDateTime, group_by: &str) -> String {
     }
 }
 
+// ===== Dashboard 汇总 =====
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DashboardSummary {
+    pub warehouse_count: i64,
+    pub inventory_total: f64,
+    pub inventory_sku_count: i64,
+    pub inbound_today: i64,
+    pub outbound_today: i64,
+    pub alert_count: i64,
+    pub alert_critical: i64,
+    pub location_utilization: f64,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/wms/analytics/dashboard-summary",
+    tag = "WMS Analytics",
+    responses(
+        (status = 200, description = "Dashboard汇总数据", body = ApiResponse<DashboardSummary>),
+    ),
+)]
+pub async fn get_dashboard_summary(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<DashboardSummary>> {
+    tracing::info!("获取WMS Dashboard汇总数据");
+
+    // 仓库数
+    let warehouse_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    // 库存总量和SKU数
+    let inventory_row: (Option<f64>, Option<i64>) = sqlx::query_as(
+        "SELECT COALESCE(SUM(quantity), 0) as total, COUNT(DISTINCT material_code) as sku_count FROM wms.inventory"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or((Some(0.0), Some(0)));
+
+    // 今日入库数
+    let inbound_today: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM wms.inbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    // 今日出库数
+    let outbound_today: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM wms.outbound_orders WHERE DATE(created_at) = CURRENT_DATE AND deleted_at IS NULL"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    // 告警数
+    let alert_row: (Option<i64>, Option<i64>) = sqlx::query_as(
+        "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE severity = 'critical') as critical FROM wms.alerts WHERE status = 'active' AND deleted_at IS NULL"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or((Some(0), Some(0)));
+
+    // 库位利用率（简化：已使用库位/总库位）
+    let location_util: f64 = sqlx::query_scalar(
+        "SELECT CASE WHEN COUNT(*) > 0 THEN (COUNT(*) FILTER (WHERE status = 'occupied')::float / COUNT(*)::float) * 100 ELSE 0 END FROM wms.locations WHERE deleted_at IS NULL"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0.0);
+
+    let summary = DashboardSummary {
+        warehouse_count,
+        inventory_total: inventory_row.0.unwrap_or(0.0),
+        inventory_sku_count: inventory_row.1.unwrap_or(0),
+        inbound_today,
+        outbound_today,
+        alert_count: alert_row.0.unwrap_or(0),
+        alert_critical: alert_row.1.unwrap_or(0),
+        location_utilization: location_util,
+    };
+
+    Json(ApiResponse::success(summary, "获取成功"))
+}
+
 // ===== 路由注册 =====
 
 pub fn create_routes<S>() -> Router<S>
@@ -864,4 +952,5 @@ where
         .route("/analytics/abc-analysis", get(get_abc_analysis))
         .route("/analytics/age-pareto", get(get_age_pareto))
         .route("/analytics/location-utilization", get(get_location_utilization))
+        .route("/analytics/dashboard-summary", get(get_dashboard_summary))
 }
