@@ -23,7 +23,9 @@ import {
   Typography,
 } from '@mui/material';
 import { issueApi } from '@/api/qms/issue';
-import type { QualityIssue } from '@/api/qms/types';
+import { improvementApi } from '@/api/qms/improvement';
+import { eightDApi } from '@/api/qms/eightD';
+import type { QualityIssue, QualityImprovement, EightDReport } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
@@ -72,6 +74,8 @@ export default function QmsIssueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [issue, setIssue] = useState<QualityIssue | null>(null);
+  const [improvements, setImprovements] = useState<QualityImprovement[]>([]);
+  const [eightDReports, setEightDReports] = useState<EightDReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,13 +89,20 @@ export default function QmsIssueDetailPage() {
     setLoading(true);
     setError(null);
 
-    issueApi
-      .getIssue(id)
-      .then((res) => {
-        if (!cancelled) {
-          setIssue(res.data ?? null);
-          setLoading(false);
-        }
+    // 并行加载 issue 详情、improvements 和 eightDReports
+    Promise.all([
+      issueApi.getIssue(id),
+      improvementApi.listImprovements(),
+      eightDApi.listEightDReports(),
+    ])
+      .then(([issueRes, improvementsRes, eightDRes]) => {
+        if (cancelled) return;
+        setIssue(issueRes.data ?? null);
+        // 通过 issue_id 过滤 improvements
+        setImprovements((improvementsRes.data ?? []).filter((imp) => imp.issue_id === id));
+        // 通过 relatedIssueId 过滤 eightDReports
+        setEightDReports((eightDRes.data ?? []).filter((report) => report.relatedIssueId === id));
+        setLoading(false);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -113,10 +124,6 @@ export default function QmsIssueDetailPage() {
   const handleBack = () => {
     navigate(QMS_PATHS.nonconformance);
   };
-
-  // 关联数据待后续对接 API，暂时使用空数组
-  const improvements: Array<{ id: string; improvement_no: string; title: string; assignee: string; status: string }> = [];
-  const eightDReports: Array<{ id: string }> = [];
 
   const tabs = useMemo<TabConfig[]>(() => {
     if (!issue) return [];

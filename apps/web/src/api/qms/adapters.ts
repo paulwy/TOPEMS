@@ -147,6 +147,7 @@ export const adaptActionToFrontend = (backend: CorrectiveActionBackend): Quality
   proposer: backend.verified_by || '',
   assignee: backend.assigned_to,
   improvement_effect: backend.verification_result,
+  issue_id: backend.issue_id,
   created_at: backend.created_at,
   updated_at: backend.updated_at,
 });

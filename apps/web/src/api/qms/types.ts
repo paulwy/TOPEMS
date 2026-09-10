@@ -340,6 +340,7 @@ export interface QualityImprovement {
   proposer: string;
   assignee: string;
   improvement_effect?: string;
+  issue_id?: string;
   created_at: string;
   updated_at: string;
 }

@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import { inspectionApi } from '@/api/qms/inspection';
-import type { QualityCheck } from '@/api/qms/types';
+import type { QualityCheck, InspectionResult } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { DetailPageTemplate } from '@/components/templates';
@@ -36,6 +36,7 @@ export default function QmsInspectionDetailPage() {
   }>();
   const navigate = useNavigate();
   const [inspection, setInspection] = useState<QualityCheck | null>(null);
+  const [checkResults, setCheckResults] = useState<InspectionResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,11 +50,15 @@ export default function QmsInspectionDetailPage() {
     setLoading(true);
     setError(null);
 
-    inspectionApi
-      .getCheck(id)
-      .then((res) => {
+    // 并行加载检验单详情和检验结果
+    Promise.all([
+      inspectionApi.getCheck(id),
+      inspectionApi.getCheckResults(id),
+    ])
+      .then(([inspectionRes, resultsRes]) => {
         if (!cancelled) {
-          setInspection(res.data ?? null);
+          setInspection(inspectionRes.data ?? null);
+          setCheckResults(resultsRes.data ?? []);
           setLoading(false);
         }
       })
@@ -141,9 +146,6 @@ export default function QmsInspectionDetailPage() {
     { label: i18n.t('qms.qms_inspection_detail_page.k16'), value: inspection.memo ?? '-' },
   ];
 
-  const qualificationRate = inspection.qualification_rate ?? 0;
-  const passed = qualificationRate > 95;
-
   const tabs = [
     {
       id: 'info',
@@ -195,59 +197,51 @@ export default function QmsInspectionDetailPage() {
           >
             {i18n.t('qms.qms_inspection_detail_page.k17')}
           </Typography>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k18')}</TableCell>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k19')}</TableCell>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k20')}</TableCell>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k21')}</TableCell>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k22')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k23')}</TableCell>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k24')}</TableCell>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k25')}</TableCell>
-                <TableCell>
-                  <Chip
-                    size='small'
-                    label={i18n.t('pages.qms_inspection_detail_page.k2')}
-                    sx={{
-                      bgcolor: designTokens.colors.success[100],
-                      color: designTokens.colors.success[700],
-                    }}
-                  />
-                </TableCell>
-                <TableCell>-</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k26')}</TableCell>
-                <TableCell>±0.05mm</TableCell>
-                <TableCell>{passed ? '0.02mm' : '0.08mm'}</TableCell>
-                <TableCell>
-                  <Chip
-                    size='small'
-                    label={
-                      passed
-                        ? i18n.t('qms.qms_inspection_detail_page.k28')
-                        : i18n.t('qms.qms_inspection_detail_page.k27')
-                    }
-                    sx={{
-                      bgcolor: passed
-                        ? designTokens.colors.success[100]
-                        : designTokens.colors.error[100],
-                      color: passed
-                        ? designTokens.colors.success[700]
-                        : designTokens.colors.error[700],
-                    }}
-                  />
-                </TableCell>
-                <TableCell>{i18n.t('qms.qms_inspection_detail_page.k29')}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          {checkResults.length === 0 ? (
+            <Typography variant='body2' color='text.secondary'>
+              {i18n.t('qms.qms_inspection_detail_page.k31')}
+            </Typography>
+          ) : (
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell>{i18n.t('qms.qms_inspection_detail_page.k18')}</TableCell>
+                  <TableCell>{i18n.t('qms.qms_inspection_detail_page.k19')}</TableCell>
+                  <TableCell>{i18n.t('qms.qms_inspection_detail_page.k20')}</TableCell>
+                  <TableCell>{i18n.t('qms.qms_inspection_detail_page.k21')}</TableCell>
+                  <TableCell>{i18n.t('qms.qms_inspection_detail_page.k22')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {checkResults.map((result) => (
+                  <TableRow key={result.id}>
+                    <TableCell>{result.item_name}</TableCell>
+                    <TableCell>{result.standard_value ?? '-'}</TableCell>
+                    <TableCell>{result.measured_value ?? '-'}</TableCell>
+                    <TableCell>
+                      <Chip
+                        size='small'
+                        label={
+                          result.is_qualified
+                            ? i18n.t('qms.qms_inspection_detail_page.k28')
+                            : i18n.t('qms.qms_inspection_detail_page.k27')
+                        }
+                        sx={{
+                          bgcolor: result.is_qualified
+                            ? designTokens.colors.success[100]
+                            : designTokens.colors.error[100],
+                          color: result.is_qualified
+                            ? designTokens.colors.success[700]
+                            : designTokens.colors.error[700],
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>{result.remark ?? '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </Paper>
       ),
     },
