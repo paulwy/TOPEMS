@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Chip, LinearProgress, Typography } from '@mui/material';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
-import type { OutboundOrderDto } from '@/types/wms';
+import { outboundOrderApi } from '@/api/wms/outbound';
+import type { OutboundOrder } from '@/api/wms/types';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
@@ -87,30 +87,70 @@ function StageProgress({ stageIndex }: { stageIndex: number }) {
 
 export default function WmsOutboundDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useWmsMock<WmsMockShape>();
+  const [order, setOrder] = useState<OutboundOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const order = useMemo<OutboundOrderDto | undefined>(() => {
-    if (!id) return data.outboundList?.[0];
-    return (
-      data.outboundList?.find((o) => o.id === id || o.order_number === id) ?? data.outboundList?.[0]
-    );
-  }, [id, data.outboundList]);
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    outboundOrderApi
+      .get(id)
+      .then((res) => {
+        if (!cancelled) {
+          setOrder(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load outbound order');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const stageIndex = useMemo(() => {
     const i = OUTBOUND_STAGES.indexOf(order?.status ?? '');
     return i < 0 ? 0 : i;
   }, [order]);
 
-  if (!order) {
+  if (loading) {
     return (
-      <PageContainer
-        autoTitle
-        autoBreadcrumbs
-      >
-        <Typography>{i18n.t('pages.wms_outbound_detail_page.k0')}</Typography>
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('common.loading')}</Typography>
       </PageContainer>
     );
   }
+
+  if (error || !order) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography color="error">{error ?? i18n.t('pages.wms_outbound_detail_page.k0')}</Typography>
+      </PageContainer>
+    );
+  }
+
+  // 扩展字段：后端模型可能不包含这些字段，使用类型断言访问
+  const extendedOrder = order as OutboundOrder & {
+    warehouse_name?: string;
+    customer_name?: string;
+    carrier?: string;
+    tracking_number?: string;
+    picked_quantity?: number;
+    shipped_quantity?: number;
+  };
 
   return (
     <PageContainer
@@ -119,7 +159,7 @@ export default function WmsOutboundDetailPage() {
     >
       <DetailPageTemplate
         title={i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: order.order_number })}
-        subtitle={i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' })}
+        subtitle={i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: extendedOrder.customer_name ?? '-' })}
         detailItemName={order.order_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -136,20 +176,20 @@ export default function WmsOutboundDetailPage() {
         }
         infoCard={{
           title: order.order_number,
-          subtitle: i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' }),
-          tags: [order.warehouse_name ?? '-', order.carrier ?? '-'],
+          subtitle: i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: extendedOrder.customer_name ?? '-' }),
+          tags: [extendedOrder.warehouse_name ?? '-', extendedOrder.carrier ?? '-'],
           stats: [
             {
               label: i18n.t('pages.wms_outbound_detail_page.k7'),
-              value: order.warehouse_name ?? '-',
+              value: extendedOrder.warehouse_name ?? '-',
             },
             {
               label: i18n.t('wms:wms_outbound_detail_page.k1'),
-              value: `${order.carrier ?? '-'} / ${order.tracking_number ?? '-'}`,
+              value: `${extendedOrder.carrier ?? '-'} / ${extendedOrder.tracking_number ?? '-'}`,
             },
             {
               label: i18n.t('wms:wms_outbound_detail_page.k0'),
-              value: `${order.picked_quantity ?? 0} / ${order.shipped_quantity ?? 0}`,
+              value: `${extendedOrder.picked_quantity ?? 0} / ${extendedOrder.shipped_quantity ?? 0}`,
             },
             {
               label: i18n.t('pages.wms_outbound_detail_page.k8'),

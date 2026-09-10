@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Chip, Typography } from '@mui/material';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
-import type { InboundOrderDto } from '@/types/wms';
+import { inboundOrderApi } from '@/api/wms/inbound';
+import type { InboundOrder } from '@/api/wms/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TimelineItem } from '@/components/common/StatusTimeline';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
@@ -63,14 +63,50 @@ function buildInboundItems(orderId: string, count: number) {
 
 export default function WmsInboundDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useWmsMock<WmsMockShape>();
+  const [order, setOrder] = useState<InboundOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const order = useMemo<InboundOrderDto | undefined>(() => {
-    if (!id) return data.inboundList?.[0];
-    return (
-      data.inboundList?.find((o) => o.id === id || o.order_number === id) ?? data.inboundList?.[0]
-    );
-  }, [id, data.inboundList]);
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    inboundOrderApi
+      .get(id)
+      .then((res) => {
+        if (!cancelled) {
+          setOrder(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load inbound order');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // 扩展字段：后端模型可能不包含这些字段，使用类型断言访问
+  const extendedOrder = (order ?? {}) as InboundOrder & {
+    warehouse_name?: string;
+    supplier_name?: string;
+    total_quantity?: number;
+    received_quantity?: number;
+    created_by?: string;
+    approved_by?: string;
+    approved_at?: string;
+  };
 
   const items = useMemo<InboundItemRow[]>(
     () => (order ? buildInboundItems(order.id, 4) : []),
@@ -169,7 +205,7 @@ export default function WmsInboundDetailPage() {
         id: 'created',
         title: i18n.t('pages.wms_inbound_detail_page.k20'),
         description: i18n.t('wms:wms_inbound_detail_page.v0_0', {
-          v0: order.created_by ?? 'system',
+          v0: extendedOrder.created_by ?? 'system',
         }),
         status: 'completed',
         time: order.created_at?.slice(0, 19).replace('T', ' '),
@@ -177,22 +213,27 @@ export default function WmsInboundDetailPage() {
       {
         id: 'approved',
         title: i18n.t('pages.wms_inbound_detail_page.k21'),
-        description: order.approved_by
-          ? i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: order.approved_by })
+        description: extendedOrder.approved_by
+          ? i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: extendedOrder.approved_by })
           : undefined,
-        status: order.approved_at ? 'completed' : 'pending',
-        time: order.approved_at?.slice(0, 19).replace('T', ' '),
+        status: extendedOrder.approved_at ? 'completed' : 'pending',
+        time: extendedOrder.approved_at?.slice(0, 19).replace('T', ' '),
       },
     ];
-  }, [order]);
+  }, [order, extendedOrder]);
 
-  if (!order) {
+  if (loading) {
     return (
-      <PageContainer
-        autoTitle
-        autoBreadcrumbs
-      >
-        <Typography>{i18n.t('pages.wms_inbound_detail_page.k0')}</Typography>
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </PageContainer>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography color="error">{error ?? i18n.t('pages.wms_inbound_detail_page.k0')}</Typography>
       </PageContainer>
     );
   }
@@ -226,7 +267,7 @@ export default function WmsInboundDetailPage() {
           subtitle: i18n.t('wms:wms_inbound_detail_page.v0_2', {
             v0: order.created_at.slice(0, 10),
           }),
-          tags: [order.warehouse_name ?? '-', order.supplier_name ?? '-'],
+          tags: [extendedOrder.warehouse_name ?? '-', extendedOrder.supplier_name ?? '-'],
           stats: [
             {
               label: i18n.t('pages.wms_inbound_detail_page.k8'),
@@ -234,7 +275,7 @@ export default function WmsInboundDetailPage() {
             },
             {
               label: i18n.t('wms:wms_inbound_detail_page.k1'),
-              value: `${order.total_quantity ?? 0} / ${order.received_quantity ?? 0}`,
+              value: `${extendedOrder.total_quantity ?? 0} / ${extendedOrder.received_quantity ?? 0}`,
             },
           ],
         }}
