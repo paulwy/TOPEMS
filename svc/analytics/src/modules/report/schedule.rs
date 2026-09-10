@@ -25,6 +25,7 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/schedules/{id}/execute", post(execute_schedule))
         .route("/schedules/{id}/history", get(get_execution_history))
+        .route("/schedules/{id}/toggle", post(toggle_schedule))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

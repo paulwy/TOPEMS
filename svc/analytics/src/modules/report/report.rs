@@ -22,6 +22,9 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/reports/{id}/export", post(export_report))
         .route("/reports/{id}/run", post(run_report))
+        .route("/reports/{id}/exports", get(list_export_jobs))
+        .route("/reports/exports/{job_id}", get(get_export_job))
+        .route("/reports/exports/{job_id}/download", get(download_export))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
