@@ -90,7 +90,7 @@ pub async fn list_discrepancies(
         LIMIT $3 OFFSET $4
         "#),
     )
-    .bind(&stock_take_id)
+    .bind(stock_take_id)
     .bind(&adjustment_status)
     .bind(page_size)
     .bind(offset)
@@ -107,7 +107,7 @@ pub async fn list_discrepancies(
                   AND deleted_at IS NULL
                 "#),
             )
-            .bind(&stock_take_id)
+            .bind(stock_take_id)
             .bind(&adjustment_status)
             .fetch_one(&mut **txn)
             .await;
@@ -129,7 +129,7 @@ pub async fn list_discrepancies(
                   AND deleted_at IS NULL
                 "#),
             )
-            .bind(&stock_take_id)
+            .bind(stock_take_id)
             .bind(&adjustment_status)
             .fetch_one(&mut **txn)
             .await;

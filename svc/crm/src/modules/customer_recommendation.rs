@@ -94,7 +94,7 @@ async fn list_recommendations(
         LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(&params.customer_id)
+    .bind(params.customer_id)
     .bind(&params.recommendation_type)
     .bind(page_size)
     .bind(offset)
@@ -110,7 +110,7 @@ async fn list_recommendations(
                   AND ($2::text IS NULL OR recommendation_type = $2)
                 "#,
             )
-            .bind(&params.customer_id)
+            .bind(params.customer_id)
             .bind(&params.recommendation_type)
             .fetch_one(&mut **txn)
             .await;
@@ -218,7 +218,7 @@ async fn create_recommendation(
 
     let customer_name_result =
         sqlx::query_scalar::<_, Option<String>>("SELECT name FROM crm.customers WHERE id = $1")
-            .bind(&req.customer_id)
+            .bind(req.customer_id)
             .fetch_optional(&mut **txn)
             .await;
 

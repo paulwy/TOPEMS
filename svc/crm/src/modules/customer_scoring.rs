@@ -81,7 +81,7 @@ async fn list_customer_scores(
         "#,
     )
     .bind(tenant_id)
-    .bind(&customer_id_filter)
+    .bind(customer_id_filter)
     .bind(&score_level_filter)
     .bind(page_size)
     .bind(offset)
@@ -99,7 +99,7 @@ async fn list_customer_scores(
                 "#,
             )
             .bind(tenant_id)
-            .bind(&customer_id_filter)
+            .bind(customer_id_filter)
             .bind(&score_level_filter)
             .fetch_one(&mut **txn)
             .await;
@@ -183,7 +183,7 @@ async fn create_customer_score(
     let customer = sqlx::query_scalar::<_, String>(
         "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
     )
-    .bind(&req.customer_id)
+    .bind(req.customer_id)
     .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
@@ -205,7 +205,7 @@ async fn create_customer_score(
     let last_score = sqlx::query_scalar::<_, Option<i32>>(
         "SELECT score FROM crm.customer_scores WHERE deleted_at IS NULL AND customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 1",
     )
-    .bind(&req.customer_id)
+    .bind(req.customer_id)
     .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await
@@ -226,14 +226,14 @@ async fn create_customer_score(
     )
     .bind(id)
     .bind(tenant_id)
-    .bind(&req.customer_id)
+    .bind(req.customer_id)
     .bind(&customer_name)
     .bind(score)
     .bind(&score_level)
     .bind(now)
     .bind(&factors)
     .bind(&trend)
-    .bind(&last_score)
+    .bind(last_score)
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -604,7 +604,7 @@ async fn batch_calculate(
             .bind(now)
             .bind(&factors)
             .bind(&trend)
-            .bind(&last_score)
+            .bind(last_score)
             .bind(now)
             .bind(now)
             .fetch_one(&mut **txn)

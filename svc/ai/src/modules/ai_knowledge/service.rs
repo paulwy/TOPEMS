@@ -28,7 +28,7 @@ pub fn parse_tenant_id(tenant_id_str: &Option<String>) -> Uuid {
     tenant_id_str
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(|| Uuid::nil())
+        .unwrap_or_else(Uuid::nil)
 }
 
 /// 创建 AI 客户端

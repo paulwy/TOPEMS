@@ -69,7 +69,7 @@ async fn write_line<W: tokio::io::AsyncWrite + Unpin>(
     response: &JsonRpcResponse,
 ) -> Result<(), io::Error> {
     let payload = serde_json::to_string(response)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("serialize: {}", e)))?;
+        .map_err(|e| io::Error::other(format!("serialize: {}", e)))?;
     writer.write_all(payload.as_bytes()).await?;
     writer.write_all(b"\n").await?;
     writer.flush().await?;

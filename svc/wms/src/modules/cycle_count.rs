@@ -81,8 +81,8 @@ pub async fn list_cycle_count_configs(
         LIMIT $3 OFFSET $4
         "#),
     )
-    .bind(&warehouse_id)
-    .bind(&is_active)
+    .bind(warehouse_id)
+    .bind(is_active)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -98,8 +98,8 @@ pub async fn list_cycle_count_configs(
                   AND deleted_at IS NULL
                 "#),
             )
-            .bind(&warehouse_id)
-            .bind(&is_active)
+            .bind(warehouse_id)
+            .bind(is_active)
             .fetch_one(&mut **txn)
             .await;
 
@@ -159,8 +159,8 @@ pub async fn create_cycle_count_config(
         "#),
     )
     .bind(id)
-    .bind(&req.warehouse_id)
-    .bind(&req.location_id)
+    .bind(req.warehouse_id)
+    .bind(req.location_id)
     .bind(&req.material_category)
     .bind(&req.count_frequency)
     .bind(&req.priority_level)
@@ -289,8 +289,8 @@ pub async fn update_cycle_count_config(
         "#),
     )
     .bind(id)
-    .bind(&req.warehouse_id)
-    .bind(&req.location_id)
+    .bind(req.warehouse_id)
+    .bind(req.location_id)
     .bind(&req.material_category)
     .bind(&req.count_frequency)
     .bind(&req.priority_level)

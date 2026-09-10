@@ -436,7 +436,7 @@ pub async fn audit_logger_middleware(
             .headers
             .get(axum::http::header::CONTENT_TYPE)
             .and_then(|v| v.to_str().ok())
-            .map_or(false, |ct| ct.to_lowercase().contains("text/event-stream"));
+            .is_some_and(|ct| ct.to_lowercase().contains("text/event-stream"));
         if is_sse_stream {
             (parts, (body, Vec::new()))
         } else {

@@ -186,7 +186,6 @@ pub async fn get_feature_usage(
     {
         Ok(rows) => rows
             .into_iter()
-            .map(|(f, l, c)| (f, l, c))
             .collect(),
         Err(e) => return Json(ApiResponse::<Vec<FeatureUsageItem>>::error(500, &e.to_string())),
     };

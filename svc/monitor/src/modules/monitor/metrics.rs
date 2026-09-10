@@ -282,7 +282,7 @@ pub struct RealtimeMetricsResponse {
 fn get_load_averages() -> (f64, f64, f64) {
     if let Ok(out) = std::process::Command::new("sysctl").args(["-n", "vm.loadavg"]).output() {
         if let Ok(s) = String::from_utf8(out.stdout) {
-            let p: Vec<&str> = s.trim().split_whitespace().collect();
+            let p: Vec<&str> = s.split_whitespace().collect();
             if p.len() >= 3 { return (p[0].parse().unwrap_or(0.0), p[1].parse().unwrap_or(0.0), p[2].parse().unwrap_or(0.0)); }
         }
     }
