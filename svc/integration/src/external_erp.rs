@@ -475,6 +475,73 @@ async fn update_sync_log_status(
     .await;
 }
 
+/// 将从 ERP 导入的数据写入 staging 表
+/// 支持去重（基于 connection_id + entity + external_id）
+async fn write_to_staging(
+    pool: &sqlx::PgPool,
+    connection_id: Uuid,
+    entity: &str,
+    items: &[serde_json::Value],
+) -> Result<(i32, i32), String> {
+    let mut inserted = 0;
+    let mut skipped = 0;
+
+    for item in items {
+        // 尝试提取 external_id（常见字段名：id、ID、external_id、code）
+        let external_id = item
+            .get("id")
+            .and_then(|v| v.as_str())
+            .or_else(|| item.get("ID").and_then(|v| v.as_str()))
+            .or_else(|| item.get("external_id").and_then(|v| v.as_str()))
+            .or_else(|| item.get("code").and_then(|v| v.as_str()))
+            .map(|s| s.to_string());
+
+        // 如果有 external_id，检查是否已存在（去重）
+        if let Some(ref eid) = external_id {
+            let exists: Option<(i64,)> = sqlx::query_as(
+                "SELECT COUNT(*) FROM integration.external_erp_staging \
+                 WHERE connection_id = $1 AND entity = $2 AND external_id = $3"
+            )
+            .bind(connection_id)
+            .bind(entity)
+            .bind(eid)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("检查重复记录失败: {}", e))?;
+
+            if exists.map(|(c,)| c > 0).unwrap_or(false) {
+                skipped += 1;
+                continue;
+            }
+        }
+
+        // 插入 staging 表
+        let tenant_id = Uuid::parse_str(TENANT_ID).unwrap_or_else(|_| Uuid::nil());
+
+        match sqlx::query(
+            "INSERT INTO integration.external_erp_staging \
+             (tenant_id, connection_id, entity, direction, source_system, external_id, raw_data, processed, process_status) \
+             VALUES ($1, $2, $3, 'import', 'external_erp', $4, $5, false, 'pending')"
+        )
+        .bind(tenant_id)
+        .bind(connection_id)
+        .bind(entity)
+        .bind(&external_id)
+        .bind(item)
+        .execute(pool)
+        .await
+        {
+            Ok(_) => inserted += 1,
+            Err(e) => {
+                tracing::warn!("写入 staging 表失败（entity={}, external_id={:?}）: {}", entity, external_id, e);
+                // 单条失败不影响整体，继续处理下一条
+            }
+        }
+    }
+
+    Ok((inserted, skipped))
+}
+
 // ===== sync/{entity} =====
 
 async fn sync_entity(
@@ -535,11 +602,26 @@ async fn sync_entity(
             let path = format!("/api/{}?page_size={}", entity, page_size);
             match call_erp_api(&connection, "GET", &path, None).await {
                 Ok(data) => {
-                    let records = data.get("items").and_then(|v| v.as_array()).map(|a| a.len() as i32).unwrap_or(0);
+                    let items = data.get("items").and_then(|v| v.as_array()).cloned().unwrap_or_default();
+                    let records = items.len() as i32;
                     let total = data.get("total").and_then(|v| v.as_i64()).unwrap_or(records as i64) as i32;
-                    // TODO: 将数据写入本地业务表（需根据 entity 类型映射）
-                    update_sync_log_status(&state.pool, task_id, "success", total, records, 0, None).await;
-                    Ok((total, records, 0))
+
+                    // 将数据写入 staging 表（支持去重）
+                    let (inserted, skipped) = match write_to_staging(&state.pool, cid, &entity, &items).await {
+                        Ok((i, s)) => (i, s),
+                        Err(e) => {
+                            tracing::warn!("写入 staging 表失败: {}", e);
+                            (0, 0)
+                        }
+                    };
+
+                    tracing::info!(
+                        "ERP 导入完成: entity={}, total={}, records={}, inserted={}, skipped={}",
+                        entity, total, records, inserted, skipped
+                    );
+
+                    update_sync_log_status(&state.pool, task_id, "success", total, inserted, skipped, None).await;
+                    Ok((total, inserted, skipped))
                 }
                 Err(e) => {
                     update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e)).await;
