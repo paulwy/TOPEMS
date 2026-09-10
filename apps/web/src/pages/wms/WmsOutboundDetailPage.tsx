@@ -90,36 +90,69 @@ export default function WmsOutboundDetailPage() {
   const [order, setOrder] = useState<OutboundOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadOrder = (orderId: string) => {
+    setLoading(true);
+    setError(null);
+    outboundOrderApi
+      .get(orderId)
+      .then((res) => {
+        setOrder(res.data ?? null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err?.message ?? 'Failed to load outbound order');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    outboundOrderApi
-      .get(id)
-      .then((res) => {
-        if (!cancelled) {
-          setOrder(res.data ?? null);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err?.message ?? 'Failed to load outbound order');
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    loadOrder(id);
   }, [id]);
+
+  const handleAction = async (action: string, _from: string, _to: string) => {
+    if (!id) return;
+    setActionLoading(true);
+    try {
+      switch (action) {
+        case 'confirm':
+          await outboundOrderApi.confirm(id);
+          break;
+        case 'start_pick':
+          await outboundOrderApi.pick(id);
+          break;
+        case 'start_pack':
+          // pack 状态通过 update 或专用接口，暂用 update
+          await outboundOrderApi.update(id, { status: 'packing' });
+          break;
+        case 'reject_pack':
+          await outboundOrderApi.update(id, { status: 'picking' });
+          break;
+        case 'start_ship':
+          await outboundOrderApi.ship(id, []);
+          break;
+        case 'complete':
+          await outboundOrderApi.complete(id);
+          break;
+        case 'cancel':
+          await outboundOrderApi.update(id, { status: 'cancelled' });
+          break;
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
+      loadOrder(id);
+    } catch (err) {
+      console.error('Action failed:', err);
+      setError(err instanceof Error ? err.message : 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const stageIndex = useMemo(() => {
     const i = OUTBOUND_STAGES.indexOf(order?.status ?? '');
@@ -170,7 +203,8 @@ export default function WmsOutboundDetailPage() {
             <WmsFSMActionButtons
               fsm='outbound'
               currentStatus={order.status}
-              onAction={() => {}}
+              onAction={handleAction}
+              disabled={actionLoading}
             />
           </Box>
         }

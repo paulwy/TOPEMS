@@ -43,40 +43,68 @@ export default function WmsInboundDetailPage() {
   const [items, setItems] = useState<InboundItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadData = (orderId: string) => {
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      inboundOrderApi.get(orderId),
+      inboundOrderApi.listItems(orderId).catch(() => ({ data: { items: [], total: 0 } })),
+    ])
+      .then(([orderRes, itemsRes]) => {
+        setOrder(orderRes.data);
+        setItems(mapInboundItems(itemsRes.data?.items ?? []));
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err?.message ?? 'Failed to load inbound order');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    // 并行加载订单详情和明细
-    Promise.all([
-      inboundOrderApi.get(id),
-      inboundOrderApi.listItems(id).catch(() => ({ data: { items: [], total: 0 } })),
-    ])
-      .then(([orderRes, itemsRes]) => {
-        if (!cancelled) {
-          setOrder(orderRes.data);
-          setItems(mapInboundItems(itemsRes.data?.items ?? []));
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err?.message ?? 'Failed to load inbound order');
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    loadData(id);
   }, [id]);
+
+  const handleAction = async (action: string, _from: string, _to: string) => {
+    if (!id) return;
+    setActionLoading(true);
+    try {
+      switch (action) {
+        case 'confirm':
+          await inboundOrderApi.confirm(id);
+          break;
+        case 'revert_created':
+          await inboundOrderApi.update(id, { status: 'created' });
+          break;
+        case 'receive':
+          await inboundOrderApi.receive(id, []);
+          break;
+        case 'reject_receive':
+          await inboundOrderApi.update(id, { status: 'confirmed' });
+          break;
+        case 'complete':
+          await inboundOrderApi.complete(id);
+          break;
+        case 'cancel':
+          await inboundOrderApi.update(id, { status: 'cancelled' });
+          break;
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
+      loadData(id);
+    } catch (err) {
+      console.error('Action failed:', err);
+      setError(err instanceof Error ? err.message : 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // 扩展字段：后端模型可能不包含这些字段，使用类型断言访问
   const extendedOrder = (order ?? {}) as InboundOrder & {
@@ -236,7 +264,8 @@ export default function WmsInboundDetailPage() {
             <WmsFSMActionButtons
               fsm='inbound'
               currentStatus={order.status}
-              onAction={() => {}}
+              onAction={handleAction}
+              disabled={actionLoading}
             />
           </Box>
         }
