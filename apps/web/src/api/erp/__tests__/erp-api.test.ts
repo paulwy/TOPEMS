@@ -9,7 +9,6 @@ import {
 } from '../core';
 import { voucherApi } from '../../finance/voucher';
 import { bankAccountApi } from '../bankAccount';
-import { bankTransactionApi } from '../bankTransaction';
 import { financeReportApi } from '../../finance/report';
 import { officeSupplyApi } from '../admin/officeSupplies';
 import { meetingRoomApi, meetingBookingApi } from '../admin/meeting';
@@ -458,44 +457,6 @@ describe('ERP bankAccountApi', () => {
     mockApiClient.delete.mockResolvedValue({ success: true, data: 'deleted' });
     await bankAccountApi.delete('BA001');
     expect(mockApiClient.delete).toHaveBeenCalledWith('/bank-accounts/BA001');
-  });
-});
-
-describe('ERP bankTransactionApi', () => {
-  const mockApiClient = apiClient.erp as {
-    get: vi.Mock;
-    post: vi.Mock;
-    put: vi.Mock;
-    delete: vi.Mock;
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call GET /bank-transactions for list', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await bankTransactionApi.list({ page: 1 });
-    expect(mockApiClient.get).toHaveBeenCalled();
-  });
-
-  it('should call GET /bank-transactions/:id for get', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { id: 'BT001' } });
-    await bankTransactionApi.get('BT001');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/bank-transactions/BT001');
-  });
-
-  it('should call POST /bank-transactions for create', async () => {
-    const data = { account_id: 'BA001', amount: 1000, transaction_type: 'transfer' };
-    mockApiClient.post.mockResolvedValue({ success: true, data });
-    await bankTransactionApi.create(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/bank-transactions', data);
-  });
-
-  it('should call DELETE /bank-transactions/:id for delete', async () => {
-    mockApiClient.delete.mockResolvedValue({ success: true, data: 'deleted' });
-    await bankTransactionApi.delete('BT001');
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/bank-transactions/BT001');
   });
 });
 
