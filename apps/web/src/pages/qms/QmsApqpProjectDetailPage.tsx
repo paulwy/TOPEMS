@@ -3,7 +3,7 @@
  *
  * 包含：5 阶段进度 + 任务列表 + 风险登记 + 审批记录
  * 使用 StatusBadge + FSMActionButtons 组件。
- * 数据来自 useQmsMock。
+ * 数据来自真实 API。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';

@@ -3,7 +3,7 @@
  *
  * 包含：8 步骤时间线（D1-D8）+ 每步骤内容展示 + 审计日志
  * 使用 StatusBadge + FSMActionButtons 组件。
- * 数据来自 useQmsMock。
+ * 数据来自真实 API。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';

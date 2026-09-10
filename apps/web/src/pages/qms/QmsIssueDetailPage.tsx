@@ -3,7 +3,7 @@
  *
  * 包含：基本信息 + 纠正措施列表（含 8D 关联提示）
  * 使用 StatusBadge + FSMActionButtons 组件。
- * 数据来自 useQmsMock。
+ * 数据来自真实 API。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';

@@ -3,7 +3,7 @@
  *
  * 包含：基本信息、检验结果项、审核日志
  * 使用 StatusBadge + FSMActionButtons 组件。
- * 数据来自 useQmsMock（按 :id 查找，未命中则取第一条）。
+ * 数据来自真实 API。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
