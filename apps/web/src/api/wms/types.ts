@@ -55,6 +55,7 @@ export interface UpdateInventoryItemRequest {
 
 export interface InboundOrder {
   id: string;
+  tenant_id?: string;
   order_number: string;
   order_type: string;
   warehouse_id: string;
@@ -62,9 +63,16 @@ export interface InboundOrder {
   supplier_id?: string;
   supplier_name?: string;
   expected_date?: string;
+  expected_arrival?: string;
+  actual_arrival?: string;
   status: string;
   total_amount?: number;
   total_quantity?: number;
+  received_quantity?: number;
+  remarks?: string;
+  created_by?: string;
+  approved_by?: string;
+  approved_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -123,6 +131,7 @@ export interface UpdateInboundOrderRequest {
 
 export interface OutboundOrder {
   id: string;
+  tenant_id?: string;
   order_number: string;
   order_type: string;
   warehouse_id: string;
@@ -138,6 +147,17 @@ export interface OutboundOrder {
   total_amount?: number;
   total_quantity?: number;
   remarks?: string;
+  sales_order_id?: string;
+  sales_order_number?: string;
+  carrier?: string;
+  tracking_number?: string;
+  picked_quantity?: number;
+  packed_quantity?: number;
+  shipped_quantity?: number;
+  created_by?: string;
+  approved_by?: string;
+  approved_at?: string;
+  is_synced_to_crm?: boolean;
   created_at: string;
   updated_at: string;
 }

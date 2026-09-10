@@ -175,16 +175,6 @@ export default function WmsOutboundDetailPage() {
     );
   }
 
-  // 扩展字段：后端模型可能不包含这些字段，使用类型断言访问
-  const extendedOrder = order as OutboundOrder & {
-    warehouse_name?: string;
-    customer_name?: string;
-    carrier?: string;
-    tracking_number?: string;
-    picked_quantity?: number;
-    shipped_quantity?: number;
-  };
-
   return (
     <PageContainer
       autoTitle
@@ -192,7 +182,7 @@ export default function WmsOutboundDetailPage() {
     >
       <DetailPageTemplate
         title={i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: order.order_number })}
-        subtitle={i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: extendedOrder.customer_name ?? '-' })}
+        subtitle={i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' })}
         detailItemName={order.order_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -210,20 +200,20 @@ export default function WmsOutboundDetailPage() {
         }
         infoCard={{
           title: order.order_number,
-          subtitle: i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: extendedOrder.customer_name ?? '-' }),
-          tags: [extendedOrder.warehouse_name ?? '-', extendedOrder.carrier ?? '-'],
+          subtitle: i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' }),
+          tags: [order.warehouse_name ?? '-', order.carrier ?? '-'],
           stats: [
             {
               label: i18n.t('pages.wms_outbound_detail_page.k7'),
-              value: extendedOrder.warehouse_name ?? '-',
+              value: order.warehouse_name ?? '-',
             },
             {
               label: i18n.t('wms:wms_outbound_detail_page.k1'),
-              value: `${extendedOrder.carrier ?? '-'} / ${extendedOrder.tracking_number ?? '-'}`,
+              value: `${order.carrier ?? '-'} / ${order.tracking_number ?? '-'}`,
             },
             {
               label: i18n.t('wms:wms_outbound_detail_page.k0'),
-              value: `${extendedOrder.picked_quantity ?? 0} / ${extendedOrder.shipped_quantity ?? 0}`,
+              value: `${order.picked_quantity ?? 0} / ${order.shipped_quantity ?? 0}`,
             },
             {
               label: i18n.t('pages.wms_outbound_detail_page.k8'),

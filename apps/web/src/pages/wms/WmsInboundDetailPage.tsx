@@ -106,17 +106,6 @@ export default function WmsInboundDetailPage() {
     }
   };
 
-  // 扩展字段：后端模型可能不包含这些字段，使用类型断言访问
-  const extendedOrder = (order ?? {}) as InboundOrder & {
-    warehouse_name?: string;
-    supplier_name?: string;
-    total_quantity?: number;
-    received_quantity?: number;
-    created_by?: string;
-    approved_by?: string;
-    approved_at?: string;
-  };
-
   const itemsData = useMemo<InboundItemRow[]>(() => items, [items]);
 
   const columns = useMemo<ColumnDef<InboundItemRow>[]>(
@@ -211,7 +200,7 @@ export default function WmsInboundDetailPage() {
         id: 'created',
         title: i18n.t('pages.wms_inbound_detail_page.k20'),
         description: i18n.t('wms:wms_inbound_detail_page.v0_0', {
-          v0: extendedOrder.created_by ?? 'system',
+          v0: order.created_by ?? 'system',
         }),
         status: 'completed',
         time: order.created_at?.slice(0, 19).replace('T', ' '),
@@ -219,14 +208,14 @@ export default function WmsInboundDetailPage() {
       {
         id: 'approved',
         title: i18n.t('pages.wms_inbound_detail_page.k21'),
-        description: extendedOrder.approved_by
-          ? i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: extendedOrder.approved_by })
+        description: order.approved_by
+          ? i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: order.approved_by })
           : undefined,
-        status: extendedOrder.approved_at ? 'completed' : 'pending',
-        time: extendedOrder.approved_at?.slice(0, 19).replace('T', ' '),
+        status: order.approved_at ? 'completed' : 'pending',
+        time: order.approved_at?.slice(0, 19).replace('T', ' '),
       },
     ];
-  }, [order, extendedOrder]);
+  }, [order]);
 
   if (loading) {
     return (
@@ -274,7 +263,7 @@ export default function WmsInboundDetailPage() {
           subtitle: i18n.t('wms:wms_inbound_detail_page.v0_2', {
             v0: order.created_at.slice(0, 10),
           }),
-          tags: [extendedOrder.warehouse_name ?? '-', extendedOrder.supplier_name ?? '-'],
+          tags: [order.warehouse_name ?? '-', order.supplier_name ?? '-'],
           stats: [
             {
               label: i18n.t('pages.wms_inbound_detail_page.k8'),
@@ -282,7 +271,7 @@ export default function WmsInboundDetailPage() {
             },
             {
               label: i18n.t('wms:wms_inbound_detail_page.k1'),
-              value: `${extendedOrder.total_quantity ?? 0} / ${extendedOrder.received_quantity ?? 0}`,
+              value: `${order.total_quantity ?? 0} / ${order.received_quantity ?? 0}`,
             },
           ],
         }}
