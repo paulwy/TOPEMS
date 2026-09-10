@@ -12,6 +12,9 @@
 target-dir = "target"
 # sccache 编译缓存：跨 workspace / 跨版本 / 跨分支复用，典型命中命中率 40–70%
 rustc-wrapper = "sccache"
+# 抑制第三方依赖（zookeeper v0.8.0）的未来兼容性警告
+# zookeeper 0.8.0 为最新版本，使用了未来 Rust 将拒绝的语法，无法通过升级解决
+rustflags = ["-A", "future_incompatible"]
 
 [registries.crates-io]
 # 稀疏注册中心：替代旧式 git-based index，增量 crates.io 索引更新快 5–10×
