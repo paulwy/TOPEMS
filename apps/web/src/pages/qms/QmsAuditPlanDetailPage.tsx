@@ -5,7 +5,7 @@
  * 使用 StatusBadge + FSMActionButtons 组件。
  * 数据来自 useQmsMock。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -22,7 +22,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
+import { auditApi } from '@/api/qms/audit';
+import type { AuditPlan } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
@@ -53,20 +54,43 @@ function DetailFieldItem({ label, value }: DetailField) {
 export default function QmsAuditPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data } = useQmsMock<QmsMockShape>();
-  const plan = useMemo(() => {
-    const list = data.auditPlans ?? [];
-    return list.find((p) => p.id === id) ?? list[0];
-  }, [data.auditPlans, id]);
-  const tasks = useMemo(() => {
-    if (!plan) return [];
-    return (data.auditTasks ?? []).filter((t) => t.plan_id === plan.id);
-  }, [data.auditTasks, plan]);
-  const findings = useMemo(() => {
-    if (!plan) return [];
-    const taskIds = new Set(tasks.map((t) => t.id));
-    return (data.auditFindings ?? []).filter((f) => taskIds.has(f.task_id));
-  }, [data.auditFindings, tasks, plan]);
+  const [plan, setPlan] = useState<AuditPlan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    auditApi
+      .getAuditPlan(id)
+      .then((res) => {
+        if (!cancelled) {
+          setPlan(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load audit plan');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // 关联数据待后续对接 API，暂时使用空数组
+  const tasks: any[] = [];
+  const findings: any[] = [];
 
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
@@ -224,6 +248,22 @@ export default function QmsAuditPlanDetailPage() {
       },
     ];
   }, [findings, plan, tasks]);
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity='error'>{error}</Alert>
+      </Box>
+    );
+  }
 
   if (!plan) {
     return (

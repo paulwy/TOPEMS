@@ -5,11 +5,12 @@
  * 使用 StatusBadge + FSMActionButtons 组件。
  * 数据来自 useQmsMock。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Paper, Grid, Typography, Button, Chip, Alert } from '@mui/material';
 import { designTokens } from '@topems/tokens';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
+import { eightDApi } from '@/api/qms/eightD';
+import type { EightDReport } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { DetailPageTemplate } from '@/components/templates';
@@ -80,16 +81,60 @@ function getSeverityLabels(): Record<string, string> {
 export default function QmsEightDDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data } = useQmsMock<QmsMockShape>();
-  const report = useMemo(() => {
-    const list = data.eightDReports ?? [];
-    return list.find((r) => r.id === id) ?? list[0];
-  }, [data.eightDReports, id]);
+  const [report, setReport] = useState<EightDReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    eightDApi
+      .getEightDReport(id)
+      .then((res) => {
+        if (!cancelled) {
+          setReport(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load 8D report');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
     void requiresApproval;
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity='error'>{error}</Alert>
+      </Box>
+    );
+  }
 
   if (!report) {
     return (

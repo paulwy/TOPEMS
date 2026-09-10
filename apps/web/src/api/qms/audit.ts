@@ -8,6 +8,10 @@ export const auditApi = {
     return { ...response, data: response.data?.plans || [] };
   },
 
+  getAuditPlan: async (id: string): Promise<ApiResponse<AuditPlan>> => {
+    return apiClient.qms.get<AuditPlan>(`/audit-plans/${id}`);
+  },
+
   listAuditTasks: async (planId?: string): Promise<ApiResponse<AuditTask[]>> => {
     const url = planId ? `/audit-tasks?plan_id=${planId}` : '/audit-tasks';
     const response = await apiClient.qms.get<{ tasks?: AuditTask[] }>(url);

@@ -5,7 +5,7 @@
  * 使用 StatusBadge 组件。
  * 数据来自 useQmsMock。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -32,7 +32,8 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
+import { fmeaApi } from '@/api/qms/fmea';
+import type { FmeaAnalysis } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { QMS_PATHS } from '@/modules/qms/config';
 import { designTokens } from '@topems/tokens';
@@ -131,20 +132,42 @@ function SummaryFooter({ maxRpn, avgRpn }: { maxRpn: number; avgRpn: number }) {
 export default function QmsFmeaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data } = useQmsMock<QmsMockShape>();
+  const [analysis, setAnalysis] = useState<FmeaAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const analysis = useMemo(() => {
-    const list = data.fmeaAnalyses ?? [];
-    return list.find((a) => a.id === id) ?? list[0];
-  }, [data.fmeaAnalyses, id]);
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
 
-  const items = useMemo(() => {
-    if (!analysis) return [];
-    return (data.fmeaItems ?? [])
-      .filter((it) => it.fmeaId === analysis.id)
-      .slice()
-      .sort((a, b) => b.rpn - a.rpn);
-  }, [data.fmeaItems, analysis]);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fmeaApi
+      .getFmeaAnalysis(id)
+      .then((res) => {
+        if (!cancelled) {
+          setAnalysis(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load FMEA analysis');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // 关联数据待后续对接 API，暂时使用空数组
+  const items: any[] = [];
 
   const distribution = useMemo(() => {
     const buckets = { high: 0, medium: 0, low: 0 };
@@ -169,6 +192,22 @@ export default function QmsFmeaDetailPage() {
       },
     ];
   }, [items]);
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity='error'>{error}</Alert>
+      </Box>
+    );
+  }
 
   if (!analysis) {
     return (
