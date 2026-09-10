@@ -14,7 +14,7 @@ import { TMS_PATHS } from '@/modules/tms/config';
 import { tmsApi } from '@/api/tms';
 
 const TmsDashboardPage: React.FC = () => {
-  useQuery({
+  const { data: dashboardData } = useQuery({
     queryKey: ['tms', 'TmsDashboardPage'],
     queryFn: async () => {
       try {
@@ -76,41 +76,41 @@ const TmsDashboardPage: React.FC = () => {
       {
         id: 'vehicles',
         title: i18n.t('tms.tms_dashboard_page.k16'),
-        value: '48',
+        value: dashboardData?.totalVehicles?.toLocaleString() ?? '-',
         icon: <Truck size={24} />,
-        change: 2,
+        change: 0,
         changeLabel: i18n.t('tms.tms_dashboard_page.k17'),
         color: 'primary',
       },
       {
         id: 'drivers',
         title: i18n.t('tms.tms_dashboard_page.k18'),
-        value: '65',
+        value: dashboardData?.totalDrivers?.toLocaleString() ?? '-',
         icon: <Users size={24} />,
-        change: 5,
+        change: 0,
         changeLabel: i18n.t('tms.tms_dashboard_page.k19'),
         color: 'success',
       },
       {
         id: 'in-transit',
         title: i18n.t('tms.tms_dashboard_page.k20'),
-        value: '23',
+        value: dashboardData?.totalShipments?.toLocaleString() ?? '-',
         icon: <Package size={24} />,
-        change: 8,
+        change: 0,
         changeLabel: i18n.t('tms.tms_dashboard_page.k21'),
         color: 'info',
       },
       {
         id: 'monthly-completed',
         title: i18n.t('tms.tms_dashboard_page.k22'),
-        value: '186',
+        value: dashboardData?.totalCarriers?.toLocaleString() ?? '-',
         icon: <CheckCircle size={24} />,
-        change: 12,
+        change: 0,
         changeLabel: i18n.t('tms.tms_dashboard_page.k23'),
         color: 'warning',
       },
     ],
-    []
+    [dashboardData]
   );
   const charts: ChartCard[] = useMemo(
     () => [
