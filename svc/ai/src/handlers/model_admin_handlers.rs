@@ -373,6 +373,7 @@ pub struct UsageStats {
 }
 
 /// GET /models/usage — 从 ai.model_usage_stats 真实聚合（按租户/日期/模型过滤）
+#[allow(unused_assignments)]
 pub async fn get_model_usage(
     State(state): State<AppState>,
     Query(params): Query<UsageStatsQuery>,
@@ -382,7 +383,6 @@ pub async fn get_model_usage(
 
     // 构建动态 WHERE 子句（$1 始终为 tenant_id）
     let mut where_clauses: Vec<String> = vec!["(tenant_id IS NULL OR tenant_id = $1)".to_string()];
-    #[allow(unused_assignments)]
     let mut param_idx = 2;
 
     if params.start_date.is_some() {
