@@ -30,7 +30,7 @@ struct UserPermissionResponse {
 
 pub async fn get_user_permissions(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
@@ -153,7 +153,7 @@ pub async fn get_user_permissions(
 
 pub async fn update_user_permissions(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {

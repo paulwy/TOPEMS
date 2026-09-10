@@ -18,7 +18,7 @@ pub struct BatchAssignPositionsRequest {
 
 pub async fn get_user_positions(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(user_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let rows = sqlx::query(
