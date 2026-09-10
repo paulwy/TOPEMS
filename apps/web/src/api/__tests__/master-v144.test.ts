@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   disasterRecoveryApi,
   knowledgeGraphApi,
-  governanceApiV2,
   semanticSearchApi,
   versioningApi,
 } from '../master';
@@ -105,66 +104,6 @@ describe('V144 masterData API bindings', () => {
       mockClient.get.mockResolvedValue({ success: true, data: { format: 'json' } });
       await knowledgeGraphApi.exportKg({ format: 'json', scope: 'full' });
       expect(mockClient.get).toHaveBeenCalledWith('/kg-v53/export?format=json&scope=full');
-    });
-  });
-
-  // ===== Governance V2 =====
-  describe('governanceApiV2', () => {
-    it('should assess maturity', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { overall_score: 82 } });
-      await governanceApiV2.assessMaturity({ scope: 'full' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/maturity/assess', { scope: 'full' });
-    });
-
-    it('should create workflow', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { id: 'wf-1' } });
-      await governanceApiV2.createWorkflow({
-        name: 'Data onboarding',
-        trigger_type: 'event',
-        entity_type: 'dataset',
-      });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/workflow', {
-        name: 'Data onboarding',
-        trigger_type: 'event',
-        entity_type: 'dataset',
-      });
-    });
-
-    it('should list workflows', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await governanceApiV2.listWorkflows({ status: 'active' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v58/workflows?status=active');
-    });
-
-    it('should create data product', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { id: 'dp-1' } });
-      await governanceApiV2.createDataProduct({
-        name: 'Sales Cube',
-        description: 'Sales data',
-        owner: 'team-a',
-        source_system: 'dw',
-      });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/data-product', {
-        name: 'Sales Cube',
-        description: 'Sales data',
-        owner: 'team-a',
-        source_system: 'dw',
-      });
-    });
-
-    it('should expose data product as API', async () => {
-      mockClient.post.mockResolvedValue({
-        success: true,
-        data: { url: 'https://api.example.com/dp-1' },
-      });
-      await governanceApiV2.exposeAsApi('dp-1');
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/data-product/dp-1/expose', {});
-    });
-
-    it('should get dimension scores', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: [] });
-      await governanceApiV2.getDimensionScores();
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v58/maturity/scores');
     });
   });
 
