@@ -306,7 +306,7 @@ impl CashFlowPredictor {
 
     async fn fetch_historical_data(
         pool: &PgPool,
-        _tenant_id: Uuid,
+        tenant_id: Uuid,
         entity_id: &str,
     ) -> Result<Vec<(f64, f64)>, sqlx::Error> {
         let entity_uuid = Uuid::parse_str(entity_id).unwrap_or_else(|_| Uuid::new_v4());
@@ -324,6 +324,7 @@ impl CashFlowPredictor {
             ORDER BY DATE_TRUNC('month', v.created_at) DESC
             LIMIT 24"#),
         )
+        .bind(tenant_id)
         .bind(entity_uuid)
         .fetch_all(pool)
         .await?;

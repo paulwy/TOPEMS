@@ -1001,6 +1001,7 @@ impl FinanceService {
             .bind(line.credit)
             .bind(line.project_id)
             .bind(line.department_id)
+            .bind(tenant_id)
             .execute(&mut *tx)
             .await?;
         }

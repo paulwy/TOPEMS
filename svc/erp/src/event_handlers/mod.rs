@@ -1349,8 +1349,8 @@ impl ErpEventHandlers {
 
         sqlx::query(
             r#"INSERT INTO erp.financial_vouchers
-               (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'return_order', $7, $8, $8)"#,
+               (id, voucher_number, voucher_date, period, summary, status, total_debit, total_credit, source_system, source_id, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, $5, 'draft', $6, $6, 'return_order', $7, $8, $8, $9)"#,
         )
         .bind(voucher_id)
         .bind(&voucher_no)
@@ -1369,7 +1369,7 @@ impl ErpEventHandlers {
         sqlx::query(
             r#"INSERT INTO erp.voucher_items
                (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, 1, '6001', '主营业务收入', $3, $4, 0, $5, $5)"#,
+               VALUES ($1, $2, 1, '6001', '主营业务收入', $3, $4, 0, $5, $5, $6)"#,
         )
         .bind(uuid::Uuid::new_v4())
         .bind(voucher_id)
@@ -1386,7 +1386,7 @@ impl ErpEventHandlers {
         sqlx::query(
             r#"INSERT INTO erp.voucher_items
                (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, 2, '1122', '应收账款', $3, 0, $4, $5, $5)"#,
+               VALUES ($1, $2, 2, '1122', '应收账款', $3, 0, $4, $5, $5, $6)"#,
         )
         .bind(uuid::Uuid::new_v4())
         .bind(voucher_id)

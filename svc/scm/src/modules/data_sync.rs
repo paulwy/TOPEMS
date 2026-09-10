@@ -560,7 +560,6 @@ pub async fn sync_supplier_from_srm(
         .bind(&status)
         .bind(id)
         .bind(now)
-        .bind(now)
         .execute(&mut **txn)
         .await;
 
@@ -781,7 +780,6 @@ pub async fn sync_all_suppliers_from_srm(
             .bind(tax_number)
             .bind(&status)
             .bind(id)
-            .bind(now)
             .bind(now)
             .execute(&mut **txn)
             .await;

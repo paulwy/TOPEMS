@@ -197,8 +197,8 @@ pub async fn get_performance_reports(
                     SELECT supplier_id, AVG(overall_score) as avg_overall_score
                     FROM srm.supplier_evaluations
                     WHERE tenant_id = $1
-                      AND ($6::timestamptz IS NULL OR evaluation_date >= $6)
-                      AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
+                      AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
+                      AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
                     GROUP BY supplier_id
                 ) e ON s.id = e.supplier_id
                 WHERE s.tenant_id = $1
@@ -206,8 +206,8 @@ pub async fn get_performance_reports(
                   AND ($2::text IS NULL OR s.name ILIKE $2)
                   AND ($3::text IS NULL OR s.category = $3)
                   AND ($4::text IS NULL OR s.status = $4)
-                  AND ($8::double precision IS NULL OR e.avg_overall_score >= $8)
-                  AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
+                  AND ($7::double precision IS NULL OR e.avg_overall_score >= $7)
+                  AND ($8::double precision IS NULL OR e.avg_overall_score <= $8)
                 "#,
                 "srm"
             ))
@@ -855,8 +855,8 @@ pub async fn export_performance_report(
             FROM srm.purchase_orders
             WHERE tenant_id = $1
               AND status != 'cancelled'
-              AND ($6::timestamptz IS NULL OR created_at >= $6)
-              AND ($7::timestamptz IS NULL OR created_at <= $7)
+              AND ($5::timestamptz IS NULL OR created_at >= $5)
+              AND ($6::timestamptz IS NULL OR created_at <= $6)
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -868,8 +868,8 @@ pub async fn export_performance_report(
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
             FROM srm.supplier_evaluations
             WHERE tenant_id = $1
-              AND ($6::timestamptz IS NULL OR evaluation_date >= $6)
-              AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
+              AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
+              AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
         WHERE s.tenant_id = $1
@@ -877,8 +877,8 @@ pub async fn export_performance_report(
           AND ($2::text IS NULL OR s.name ILIKE $2)
           AND ($3::text IS NULL OR s.category = $3)
           AND ($4::text IS NULL OR s.status = $4)
-          AND ($8::double precision IS NULL OR e.avg_overall_score >= $8)
-          AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
+          AND ($7::double precision IS NULL OR e.avg_overall_score >= $7)
+          AND ($8::double precision IS NULL OR e.avg_overall_score <= $8)
         ORDER BY e.avg_overall_score DESC NULLS LAST
         "#, "srm"),
     )

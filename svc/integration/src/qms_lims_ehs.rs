@@ -25,6 +25,7 @@ pub async fn handle_qms_inspection_completed(
     let _ = sqlx::query(
         only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (sample_no) DO UPDATE SET updated_at = NOW()", "qms")
     )
+    .bind(tenant_id)
     .bind(&sample_no)
     .bind(payload.product_name.as_deref().unwrap_or("未知产品"))
     .bind("产品检验样品")
@@ -289,7 +290,8 @@ pub async fn handle_lims_record_completed(
 
 pub async fn handle_lims_reagent_alert(
     pool: &PgPool,
-    tenant_id: Uuid,
+    // ehs.qa_ehs_alerts 表无 tenant_id 列（ehs schema 按 RLS 隔离），tenant 暂不落库
+    _tenant_id: Uuid,
     payload: &LimsReagentAlertPayload,
 ) -> anyhow::Result<()> {
     info!("处理LIMS试剂告警事件 - 同步到EHS: {}", payload.reagent_no);
@@ -312,7 +314,7 @@ pub async fn handle_lims_reagent_alert(
     let _ = sqlx::query(
         only_own_schema_query!("integration", "INSERT INTO ehs.qa_ehs_alerts (alert_no, title, alert_type, severity, description, status, source_system, source_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", "ehs")
     )
-    .bind(tenant_id)
+    // ehs.qa_ehs_alerts 表无 tenant_id 列（ehs schema 按 RLS 隔离），不绑定 tenant
     .bind(alert_no)
     .bind(format!("试剂告警: {}", payload.reagent_name))
     .bind(alert_type)

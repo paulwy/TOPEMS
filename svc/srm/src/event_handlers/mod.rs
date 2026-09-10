@@ -363,6 +363,7 @@ impl SrmEventHandlers {
         .bind(&payload.status)
         .bind(now)
         .bind(payload.tenant_id)
+        .bind(now)
         .execute(&self.db)
         .await
         .map_err(|e| format!("写入 srm.scm_supplier_snapshots 失败: {}", e))?;

@@ -179,9 +179,7 @@ pub async fn get_feature_usage(
          UNION ALL
          SELECT 'vectors', '向量检索', COUNT(*) FROM ai.vectors WHERE (tenant_id IS NULL OR tenant_id = $1)",
     )
-    .bind(tenant_id)
-    .bind(tenant_id)
-    .bind(tenant_id)
+    // 4 个 UNION 分支共用同一个 $1 参数，Postgres 预备语句只需绑定一次
     .bind(tenant_id)
     .fetch_all(&state.pool)
     .await

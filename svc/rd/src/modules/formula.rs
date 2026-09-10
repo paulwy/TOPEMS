@@ -155,7 +155,7 @@ pub async fn create_formula(
             approval_status, effective_date, expiration_date,
             ingredients, process_steps, process_params, properties, created_by,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
@@ -178,7 +178,7 @@ pub async fn create_formula(
     .bind(&req_process_steps)
     .bind(serde_json::json!({}))
     .bind(req.properties.unwrap_or(serde_json::json!({})))
-    .bind(&req_name)
+    .bind(&claims.sub)
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
