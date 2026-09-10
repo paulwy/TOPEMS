@@ -4,7 +4,7 @@ import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { reportSchema } from '@/schemas/bi';
-import { reportCrudApi } from '@/api/bi';
+import { reportCrudApi } from '@/api/report';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
 

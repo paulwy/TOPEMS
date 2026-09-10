@@ -31,13 +31,15 @@ import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
 import {
+  type Report,
+} from '@/api/bi';
+import {
   fetchReports,
   createReport,
   updateReport,
   deleteReport,
   exportReport,
-  type Report,
-} from '@/api/bi';
+} from '@/api/report';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';

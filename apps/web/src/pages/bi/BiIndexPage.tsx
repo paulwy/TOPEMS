@@ -36,12 +36,12 @@ import { MetricCard } from '@/components/bi/MetricCard';
 import { ChartComponent } from '@/components/bi/ChartLibrary';
 import {
   fetchDashboards,
-  fetchReports,
   listDatasets,
   type Dashboard,
   type Report,
   type Dataset,
 } from '@/api/bi';
+import { fetchReports } from '@/api/report';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';

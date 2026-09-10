@@ -28,24 +28,6 @@ import {
 } from './widget';
 
 import {
-  fetchReports,
-  fetchReport,
-  createReport,
-  updateReport,
-  deleteReport,
-  exportReport,
-  listExportJobs,
-  getExportJob,
-  downloadExport,
-  listSchedules,
-  createSchedule,
-  updateSchedule,
-  deleteSchedule,
-  runSchedule,
-  toggleSchedule,
-} from './report';
-
-import {
   fetchSummaryDashboard,
   fetchDevelopmentAnalytics,
   fetchQualityAnalytics,
@@ -178,25 +160,6 @@ export {
 } from './widget';
 
 export {
-  fetchReports,
-  fetchReport,
-  createReport,
-  updateReport,
-  deleteReport,
-  exportReport,
-  listExportJobs,
-  getExportJob,
-  downloadExport,
-  listSchedules,
-  createSchedule,
-  updateSchedule,
-  deleteSchedule,
-  runSchedule,
-  toggleSchedule,
-  reportCrudApi,
-} from './report';
-
-export {
   listDatasets,
   getDataset,
   createDataset,
@@ -323,11 +286,6 @@ export const biApi = {
   updateWidget,
   deleteWidget,
   fetchWidgetData,
-  fetchReports,
-  fetchReport,
-  createReport,
-  updateReport,
-  deleteReport,
   fetchSummaryDashboard,
   fetchDevelopmentAnalytics,
   fetchQualityAnalytics,
@@ -410,16 +368,6 @@ export const biApi = {
   deleteChartAnnotation,
   exportChart,
   getFullscreenChart,
-  exportReport,
-  listExportJobs,
-  getExportJob,
-  downloadExport,
-  listSchedules,
-  createSchedule,
-  updateSchedule,
-  deleteSchedule,
-  runSchedule,
-  toggleSchedule,
 };
 
 export default apiClient.bi;

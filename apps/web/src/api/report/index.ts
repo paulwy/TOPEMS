@@ -426,3 +426,30 @@ export const reportApi = {
 };
 
 export default reportApi;
+
+// 向后兼容：从 @/api/bi 迁移的函数别名
+export const fetchReports = (params?: { page?: number; pageSize?: number }): Promise<any> =>
+  reportApi.listReports() as any;
+export const fetchReport = (id: string): Promise<any> => reportApi.getReport(id) as any;
+export const createReport = (data: any): Promise<any> => reportApi.createReport(data) as any;
+export const updateReport = (id: string, data: any): Promise<any> =>
+  reportApi.updateReport(id, data) as any;
+export const deleteReport = (id: string): Promise<any> => reportApi.deleteReport(id) as any;
+export const exportReport = (id: string, format: any): Promise<any> =>
+  reportApi.exportReport(id, { format }) as any;
+export const listSchedules = (): Promise<any> => reportApi.listSchedules() as any;
+export const createSchedule = (data: any): Promise<any> => reportApi.createSchedule(data) as any;
+export const updateSchedule = (id: string, data: any): Promise<any> =>
+  reportApi.updateSchedule(id, data) as any;
+export const deleteSchedule = (id: string): Promise<any> => reportApi.deleteSchedule(id) as any;
+export const runSchedule = (id: string): Promise<any> => reportApi.executeSchedule(id) as any;
+export const toggleSchedule = (id: string, _enabled: boolean): Promise<any> =>
+  reportApi.executeSchedule(id) as any;
+
+export const reportCrudApi = {
+  list: fetchReports,
+  get: fetchReport,
+  create: createReport,
+  update: updateReport,
+  delete: deleteReport,
+};
