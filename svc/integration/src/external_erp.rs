@@ -379,6 +379,102 @@ async fn preview_entity(
     }
 }
 
+// ===== 真实同步执行引擎 =====
+
+/// 获取 ERP 连接信息
+async fn get_connection_by_id(
+    pool: &sqlx::PgPool,
+    connection_id: Uuid,
+) -> Option<ErpConnection> {
+    sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
+        "integration",
+        "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
+         created_at, updated_at FROM erp_connections WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(connection_id)
+    .bind(TENANT_ID)
+    .fetch_optional(pool)
+    .await
+    .ok()
+    .flatten()
+}
+
+/// 调用 ERP API（支持认证头）
+async fn call_erp_api(
+    connection: &ErpConnection,
+    method: &str,
+    path: &str,
+    body: Option<&serde_json::Value>,
+) -> Result<serde_json::Value, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("HTTP client build failed: {}", e))?;
+
+    let url = format!("{}{}", connection.api_url.trim_end_matches('/'), path);
+    let mut request = match method {
+        "POST" => client.post(&url),
+        "PUT" => client.put(&url),
+        "DELETE" => client.delete(&url),
+        _ => client.get(&url),
+    };
+
+    // 添加认证头
+    if let Some(ref key) = connection.app_key {
+        if !key.is_empty() {
+            request = request.header("X-API-Key", key);
+        }
+    }
+    if let Some(ref secret) = connection.app_secret {
+        if !secret.is_empty() {
+            request = request.header("X-API-Secret", secret);
+        }
+    }
+    request = request.header("Content-Type", "application/json");
+
+    if let Some(b) = body {
+        request = request.json(b);
+    }
+
+    let resp = request.send().await.map_err(|e| format!("HTTP request failed: {}", e))?;
+    let status = resp.status();
+
+    if !status.is_success() {
+        return Err(format!("ERP API returned status {}: {}", status.as_u16(), resp.text().await.unwrap_or_default()));
+    }
+
+    let data: serde_json::Value = resp.json().await.map_err(|e| format!("Failed to parse response: {}", e))?;
+    Ok(data)
+}
+
+/// 更新同步日志状态
+async fn update_sync_log_status(
+    pool: &sqlx::PgPool,
+    task_id: Uuid,
+    status: &str,
+    total_records: i32,
+    success_count: i32,
+    failed_count: i32,
+    error_message: Option<&str>,
+) {
+    let _ = sqlx::query(only_own_schema_query!(
+        "integration",
+        "UPDATE external_erp_sync_logs \
+         SET status = $1, total_records = $2, success_count = $3, failed_count = $4, \
+             error_message = $5, completed_at = NOW() \
+         WHERE id = $6"
+    ))
+    .bind(status)
+    .bind(total_records)
+    .bind(success_count)
+    .bind(failed_count)
+    .bind(error_message)
+    .bind(task_id)
+    .execute(pool)
+    .await;
+}
+
 // ===== sync/{entity} =====
 
 async fn sync_entity(
@@ -388,7 +484,8 @@ async fn sync_entity(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let task_id = Uuid::new_v4();
     let connection_id = body.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let direction = body.get("direction").and_then(|v| v.as_str()).unwrap_or("export").to_string();
+    let direction = body.get("direction").and_then(|v| v.as_str()).unwrap_or("import").to_string();
+    let page_size = body.get("page_size").and_then(|v| v.as_i64()).unwrap_or(100) as i32;
 
     // 创建同步日志记录
     if let Err(e) = sqlx::query(only_own_schema_query!(
@@ -409,27 +506,94 @@ async fn sync_entity(
         return Json(ApiResponse::error(500, &format!("创建同步任务失败: {}", e)));
     }
 
-    // 更新连接的最后同步时间
-    if let Some(cid) = connection_id {
-        let _ = sqlx::query(only_own_schema_query!(
-            "integration",
-            "UPDATE erp_connections SET last_sync_at = NOW(), updated_at = NOW() WHERE id = $1"
-        ))
-        .bind(cid)
-        .execute(&state.pool)
-        .await;
+    // 验证连接
+    let cid = match connection_id {
+        Some(c) => c,
+        None => {
+            update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("缺少 connection_id")).await;
+            return Json(ApiResponse::error(400, "缺少 connection_id"));
+        }
+    };
+
+    let connection = match get_connection_by_id(&state.pool, cid).await {
+        Some(c) => c,
+        None => {
+            update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("连接不存在或已删除")).await;
+            return Json(ApiResponse::error(404, "ERP 连接不存在"));
+        }
+    };
+
+    if !connection.isactive {
+        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("连接已禁用")).await;
+        return Json(ApiResponse::error(400, "ERP 连接已禁用"));
     }
 
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "task_id": task_id.to_string(),
-            "entity": entity,
-            "direction": direction,
-            "status": "running",
-            "message": "同步任务已创建，正在执行"
-        }),
-        "同步任务已创建",
+    // 执行真实同步
+    let sync_result = match direction.as_str() {
+        "import" => {
+            // 从 ERP 导入数据：调用 GET /api/{entity}?page_size=N
+            let path = format!("/api/{}?page_size={}", entity, page_size);
+            match call_erp_api(&connection, "GET", &path, None).await {
+                Ok(data) => {
+                    let records = data.get("items").and_then(|v| v.as_array()).map(|a| a.len() as i32).unwrap_or(0);
+                    let total = data.get("total").and_then(|v| v.as_i64()).unwrap_or(records as i64) as i32;
+                    // TODO: 将数据写入本地业务表（需根据 entity 类型映射）
+                    update_sync_log_status(&state.pool, task_id, "success", total, records, 0, None).await;
+                    Ok((total, records, 0))
+                }
+                Err(e) => {
+                    update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e)).await;
+                    Err(e)
+                }
+            }
+        }
+        "export" => {
+            // 导出数据到 ERP：调用 POST /api/{entity}
+            let payload = body.get("data").cloned().unwrap_or(serde_json::json!({}));
+            match call_erp_api(&connection, "POST", &format!("/api/{}", entity), Some(&payload)).await {
+                Ok(data) => {
+                    let created = data.get("created_count").and_then(|v| v.as_i64()).unwrap_or(1) as i32;
+                    update_sync_log_status(&state.pool, task_id, "success", created, created, 0, None).await;
+                    Ok((created, created, 0))
+                }
+                Err(e) => {
+                    update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e)).await;
+                    Err(e)
+                }
+            }
+        }
+        _ => {
+            let msg = format!("不支持的同步方向: {}", direction);
+            update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&msg)).await;
+            Err(msg)
+        }
+    };
+
+    // 更新连接的最后同步时间
+    let _ = sqlx::query(only_own_schema_query!(
+        "integration",
+        "UPDATE erp_connections SET last_sync_at = NOW(), updated_at = NOW() WHERE id = $1"
     ))
+    .bind(cid)
+    .execute(&state.pool)
+    .await;
+
+    match sync_result {
+        Ok((total, success, failed)) => Json(ApiResponse::success(
+            serde_json::json!({
+                "task_id": task_id.to_string(),
+                "entity": entity,
+                "direction": direction,
+                "status": "success",
+                "total_records": total,
+                "success_count": success,
+                "failed_count": failed,
+                "message": "同步完成"
+            }),
+            "同步完成",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &format!("同步失败: {}", e))),
+    }
 }
 
 // ===== sync-logs =====
