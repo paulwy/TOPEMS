@@ -167,3 +167,23 @@ function useAnalyticsData<T>(endpoint: string, params: AnalyticsParams) {
 分析/仪表盘页面 mock→真实 API 是一个较大的工程（约 50-75 人天），建议分阶段实施。先从 wms 模块开始试点，验证技术方案后逐步推广到其他模块。
 
 **当前状态**: 评估完成，待启动阶段一（基础框架 + wms 试点）。
+
+## 实施进度更新（2026-09-11）
+
+### 已完成
+- **阶段一**：WMS 2 个页面（InventoryTurnover、OrderFulfillment）- 提交 73d55621f
+- **阶段二**：WMS 4 个页面（FlowTrend、AbcAnalysis、AgePareto、LocationUtilization）- 提交 803358209
+- **阶段三**：TMS 6 页面（已使用真实API，无需改造）+ QMS 6 页面全部改造完成 - 提交 efee2c519、6c546613d
+- **阶段四**：APS 6 页面（已使用真实API，无需改造）
+- **优先级4**：bi/report 双套实现合并全部完成 - 提交 bd30db401、ef7a60817、e483d30eb、46a912cc1
+
+### 待实施（需后端新增聚合API）
+- **MES 5 个 analytics 页面**：CapacityUtilization、EnergyCost、EquipmentMtbf、DeliveryAnalytics、QualityPareto（OEE 已有对应API）
+- **WMS Dashboard**：需要后端新增汇总 API（仓库数、库存数、入库数、告警数）
+- **其他模块 Dashboard**：待评估
+- **优先级5高级功能**：增量同步定时调度、实时同步、监控告警
+
+### 验证结果
+- 前端 TypeScript：0 errors
+- 前端测试：375 文件 / 5914 测试全部通过
+- 后端编译：0 errors（analytics、wms、qms 服务）
