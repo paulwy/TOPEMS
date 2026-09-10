@@ -5,7 +5,7 @@
  * 使用 StatusBadge + FSMActionButtons 组件。
  * 数据来自 useQmsMock（按 :id 查找，未命中则取第一条）。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,7 +22,8 @@ import {
   Alert,
 } from '@mui/material';
 import { designTokens } from '@topems/tokens';
-import { useQmsMock, type QmsMockShape } from '@/api/qms/mockData';
+import { inspectionApi } from '@/api/qms/inspection';
+import type { QualityCheck } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { DetailPageTemplate } from '@/components/templates';
@@ -34,17 +35,61 @@ export default function QmsInspectionDetailPage() {
     id: string;
   }>();
   const navigate = useNavigate();
-  const { data } = useQmsMock<QmsMockShape>();
-  const inspection = useMemo(() => {
-    const list = data.inspections ?? [];
-    return list.find((i) => i.id === id) ?? list[0];
-  }, [data.inspections, id]);
+  const [inspection, setInspection] = useState<QualityCheck | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    inspectionApi
+      .getCheck(id)
+      .then((res) => {
+        if (!cancelled) {
+          setInspection(res.data ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load inspection');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     // 实际项目应调用审批 API；此处仅占位
     void targetStatus;
     void requiresApproval;
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity='error'>{error}</Alert>
+      </Box>
+    );
+  }
 
   if (!inspection) {
     return (
