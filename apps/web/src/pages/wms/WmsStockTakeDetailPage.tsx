@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
+import { stockTakeApi } from '@/api/wms/stocktake';
+import type { StockTake } from '@/api/wms/types';
 import { WmsFSMActionButtons, WmsStatusBadge } from '@/components/wms';
 import { DataTable, PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
-import type { StockTakeDto } from '@/types/wms';
 import i18n from '@/i18n';
 
 interface StockTakeItemRow {
@@ -58,15 +58,39 @@ function DiffCell({ diff }: { diff: number }) {
 
 export default function WmsStockTakeDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useWmsMock<WmsMockShape>();
+  const [task, setTask] = useState<StockTake | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const task = useMemo<StockTakeDto | undefined>(() => {
-    if (!id) return data.stockTakeList?.[0];
-    return (
-      data.stockTakeList?.find((t) => t.id === id || t.stock_take_number === id) ??
-      data.stockTakeList?.[0]
-    );
-  }, [id, data.stockTakeList]);
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    stockTakeApi
+      .get(id)
+      .then((res: { data: StockTake }) => {
+        if (!cancelled) {
+          setTask(res.data);
+          setLoading(false);
+        }
+      })
+      .catch((err: Error) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load stock take');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const items = useMemo<StockTakeItemRow[]>(
     () => (task ? buildStockTakeItems(task.id, 8) : []),
@@ -74,13 +98,24 @@ export default function WmsStockTakeDetailPage() {
   );
 
   const diffSummary = useMemo(() => {
+    // 优先使用 API 返回的真实统计数据
+    if (task && task.totalitems) {
+      return {
+        over: task.discrepancyitems ?? 0,
+        under: 0,
+        ok: task.counteditems ?? 0,
+        total: task.totalitems,
+        accuracy: task.accuracy_rate ?? 0,
+      };
+    }
+    // 回退到 items 列表计算
     const over = items.filter((i) => i.diff > 0).length;
     const under = items.filter((i) => i.diff < 0).length;
     const ok = items.filter((i) => i.diff === 0).length;
     const total = items.length;
     const accuracy = total ? Math.round((ok / total) * 100) : 0;
     return { over, under, ok, total, accuracy };
-  }, [items]);
+  }, [items, task]);
 
   const columns = useMemo<ColumnDef<StockTakeItemRow>[]>(
     () => [
@@ -157,13 +192,18 @@ export default function WmsStockTakeDetailPage() {
     []
   );
 
-  if (!task) {
+  if (loading) {
     return (
-      <PageContainer
-        autoTitle
-        autoBreadcrumbs
-      >
-        <Typography>{i18n.t('pages.wms_stock_take_detail_page.k1')}</Typography>
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </PageContainer>
+    );
+  }
+
+  if (error || !task) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography color="error">{error ?? i18n.t('pages.wms_stock_take_detail_page.k1')}</Typography>
       </PageContainer>
     );
   }

@@ -1,15 +1,31 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Card, CardContent, Chip, Typography } from '@mui/material';
 import { ArrowRight, MapPin } from 'lucide-react';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
-import type { InventoryMovementDto } from '@/types/wms';
+import { inventoryMovementApi } from '@/api/wms/inventoryMovement';
+import type { InventoryMovement } from '@/api/wms/inventoryMovement';
 import { WmsStatusBadge } from '@/components/wms';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
 
-function MovementRouteCard({ move }: { move: InventoryMovementDto }) {
+// 扩展类型：包含页面需要但 API 可能不返回的字段
+type ExtendedMovement = InventoryMovement & {
+  movement_number?: string;
+  source_location_code?: string;
+  target_location_code?: string;
+  warehouse_name?: string;
+  created_by?: string;
+  posted_at?: string;
+  posted_by?: string;
+  approved_at?: string;
+  approved_by?: string;
+  serial_number?: string;
+  batch_number?: string;
+  total_quantity?: number;
+};
+
+function MovementRouteCard({ move }: { move: ExtendedMovement }) {
   const sourceLoc = move.source_location_code ?? 'A-01-01';
   const targetLoc = move.target_location_code ?? 'B-02-05';
   const warehouse = move.warehouse_name ?? '-';
@@ -115,7 +131,7 @@ function SerialNumbers({ serials }: { serials: string[] }) {
   );
 }
 
-function OperationTimeline({ move }: { move: InventoryMovementDto }) {
+function OperationTimeline({ move }: { move: ExtendedMovement }) {
   const events = [
     {
       t: move.created_at,
@@ -124,9 +140,9 @@ function OperationTimeline({ move }: { move: InventoryMovementDto }) {
       color: 'primary.main',
     },
     {
-      t: move.posted_at,
+      t: move.posted_at ?? move.performed_at,
       title: i18n.t('pages.wms_inventory_movement_detail_page.k9'),
-      who: move.posted_by,
+      who: move.posted_by ?? move.performed_by,
       color: 'warning.main',
     },
     {
@@ -183,28 +199,62 @@ function OperationTimeline({ move }: { move: InventoryMovementDto }) {
 
 export default function WmsInventoryMovementDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useWmsMock<WmsMockShape>();
+  const [move, setMove] = useState<ExtendedMovement | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const move = useMemo<InventoryMovementDto | undefined>(() => {
-    if (!id) return data.movementList?.[0];
-    return (
-      data.movementList?.find((m) => m.id === id || m.movement_number === id) ??
-      data.movementList?.[0]
-    );
-  }, [id, data.movementList]);
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    inventoryMovementApi
+      .getMovement(id)
+      .then((res) => {
+        if (!cancelled) {
+          const data = res.data as ExtendedMovement;
+          // 兼容字段：movement_no -> movement_number
+          if (data.movement_no && !data.movement_number) {
+            data.movement_number = data.movement_no;
+          }
+          setMove(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load inventory movement');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const serials = useMemo(() => {
     if (move?.serial_number) return [move.serial_number];
     return ['SN-2024A001', 'SN-2024A002', 'SN-2024A003'];
   }, [move]);
 
-  if (!move) {
+  if (loading) {
     return (
-      <PageContainer
-        autoTitle
-        autoBreadcrumbs
-      >
-        <Typography>{i18n.t('pages.wms_inventory_movement_detail_page.k0')}</Typography>
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </PageContainer>
+    );
+  }
+
+  if (error || !move) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography color="error">{error ?? i18n.t('pages.wms_inventory_movement_detail_page.k0')}</Typography>
       </PageContainer>
     );
   }
@@ -216,13 +266,13 @@ export default function WmsInventoryMovementDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
-        title={i18n.t('wms:wms_inventory_movement_detail_page.v0_5', { v0: move.movement_number })}
+        title={i18n.t('wms:wms_inventory_movement_detail_page.v0_5', { v0: move.movement_number ?? move.movement_no })}
         subtitle={i18n.t('wms:wms_inventory_movement_detail_page.k4', {
           v0: i18n.t('pages.wms_inventory_movement_detail_page.k1'),
           v1: move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0'),
           v2: move.created_at.slice(0, 10),
         })}
-        detailItemName={move.movement_number}
+        detailItemName={move.movement_number ?? move.movement_no}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <WmsStatusBadge
@@ -232,7 +282,7 @@ export default function WmsInventoryMovementDetailPage() {
           </Box>
         }
         infoCard={{
-          title: move.movement_number,
+          title: move.movement_number ?? move.movement_no,
           subtitle: i18n.t('wms:wms_inventory_movement_detail_page.k4', {
             v0: i18n.t('pages.wms_inventory_movement_detail_page.k1'),
             v1: move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0'),

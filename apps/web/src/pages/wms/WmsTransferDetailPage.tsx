@@ -1,15 +1,20 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import { Truck, ArrowLeftRight, MapPin, Package, CheckCircle2 } from 'lucide-react';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
-import type { TransferOrderDto } from '@/types/wms';
+import { transferApi } from '@/api/wms/transfer';
+import type { TransferOrder } from '@/api/wms/types';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
 
-function TransferRouteCard({ transfer }: { transfer: TransferOrderDto }) {
+// 扩展类型：包含页面需要但 API 可能不返回的字段
+type ExtendedTransfer = TransferOrder & {
+  received_at?: string;
+};
+
+function TransferRouteCard({ transfer }: { transfer: ExtendedTransfer }) {
   return (
     <Card variant='outlined'>
       <CardContent>
@@ -113,7 +118,7 @@ function TransferRouteCard({ transfer }: { transfer: TransferOrderDto }) {
   );
 }
 
-function TransferDetails({ transfer }: { transfer: TransferOrderDto }) {
+function TransferDetails({ transfer }: { transfer: ExtendedTransfer }) {
   const items = [
     {
       label: i18n.t('pages.wms_transfer_detail_page.k4'),
@@ -155,22 +160,52 @@ function TransferDetails({ transfer }: { transfer: TransferOrderDto }) {
 
 export default function WmsTransferDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useWmsMock<WmsMockShape>();
+  const [transfer, setTransfer] = useState<ExtendedTransfer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const transfer = useMemo<TransferOrderDto | undefined>(() => {
-    if (!id) return data.transferList?.[0];
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    transferApi
+      .get(id)
+      .then((res) => {
+        if (!cancelled) {
+          setTransfer(res.data as ExtendedTransfer);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load transfer order');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
     return (
-      data.transferList?.find((t) => t.id === id || t.order_number === id) ?? data.transferList?.[0]
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </PageContainer>
     );
-  }, [id, data.transferList]);
+  }
 
-  if (!transfer) {
+  if (error || !transfer) {
     return (
-      <PageContainer
-        autoTitle
-        autoBreadcrumbs
-      >
-        <Typography>{i18n.t('pages.wms_transfer_detail_page.k0')}</Typography>
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography color="error">{error ?? i18n.t('pages.wms_transfer_detail_page.k0')}</Typography>
       </PageContainer>
     );
   }

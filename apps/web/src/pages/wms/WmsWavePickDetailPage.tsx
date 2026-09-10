@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, LinearProgress, Typography } from '@mui/material';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/mockData';
-import type { WavePickDto } from '@/types/wms';
+import { wavePickApi } from '@/api/wms/wavePick';
+import type { WavePick } from '@/api/wms/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import { WmsStatusBadge } from '@/components/wms';
 import { DataTable, PageContainer } from '@/components/common';
@@ -45,23 +45,56 @@ const PICKERS = [
 
 export default function WmsWavePickDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useWmsMock<WmsMockShape>();
+  const [wave, setWave] = useState<WavePick | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const wave = useMemo<WavePickDto | undefined>(() => {
-    if (!id) return data.wavePickList?.[0];
-    return (
-      data.wavePickList?.find((w) => w.id === id || w.wave_pick_number === id) ??
-      data.wavePickList?.[0]
-    );
-  }, [id, data.wavePickList]);
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    wavePickApi
+      .get(id)
+      .then((res) => {
+        if (!cancelled) {
+          setWave(res.data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err?.message ?? 'Failed to load wave pick');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const orders = useMemo<WaveOrderRow[]>(() => (wave ? buildWaveOrders(wave.id, 6) : []), [wave]);
 
   const progress = useMemo(() => {
+    // 优先使用 API 返回的真实进度数据
+    if (wave && wave.total_quantity > 0) {
+      return {
+        total: wave.total_quantity,
+        picked: wave.picked_quantity,
+        pct: Math.round((wave.picked_quantity / wave.total_quantity) * 100),
+      };
+    }
+    // 回退到订单列表计算
     const total = orders.reduce((s, o) => s + o.totalQty, 0);
     const picked = orders.reduce((s, o) => s + o.pickedQty, 0);
     return { total, picked, pct: total ? Math.round((picked / total) * 100) : 0 };
-  }, [orders]);
+  }, [orders, wave]);
 
   const columns = useMemo<ColumnDef<WaveOrderRow>[]>(
     () => [
@@ -148,13 +181,18 @@ export default function WmsWavePickDetailPage() {
     []
   );
 
-  if (!wave) {
+  if (loading) {
     return (
-      <PageContainer
-        autoTitle
-        autoBreadcrumbs
-      >
-        <Typography>{i18n.t('pages.wms_wave_pick_detail_page.k1')}</Typography>
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('common.loading')}</Typography>
+      </PageContainer>
+    );
+  }
+
+  if (error || !wave) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography color="error">{error ?? i18n.t('pages.wms_wave_pick_detail_page.k1')}</Typography>
       </PageContainer>
     );
   }
