@@ -19,12 +19,15 @@ import { reportApi, reportTemplateApi } from './report';
 import { notificationApi, notificationSettingApi, notificationTypeApi } from './notification';
 import { dashboardApi } from './dashboard';
 import { pmStatisticsApi } from './statistics';
+import { pmAnalyticsApi } from './analytics';
 
 export * from './types';
 
 export { projectApi, approvalApi } from './project';
 export { expenseApi } from './resource';
 export { benefitApi } from './benefit';
+export { pmAnalyticsApi } from './analytics';
+export * from './analytics';
 export {
   contractApi,
   contractMilestoneApi,

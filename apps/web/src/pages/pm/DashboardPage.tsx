@@ -4,7 +4,7 @@ import { FolderKanban, CheckSquare, Trophy, AlertTriangle, Plus } from 'lucide-r
 import { useQuery } from '@tanstack/react-query';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { pmApi, type Project } from '@/api/pm';
+import { pmApi, pmAnalyticsApi, type Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
@@ -29,6 +29,11 @@ export const DashboardPage: React.FC = () => {
     },
 
     staleTime: CACHE_DURATIONS.MEDIUM,
+  });
+  const { data: trendData } = useQuery({
+    queryKey: [QUERY_KEYS.PM.STATISTICS, 'trend'],
+    queryFn: () => pmAnalyticsApi.getProjectTrend(),
+    staleTime: 60_000,
   });
   const loading = statisticsQuery.isLoading || projectsQuery.isLoading;
   const statsData = useMemo(() => {
@@ -83,11 +88,10 @@ export const DashboardPage: React.FC = () => {
       name: statusMap[status] || status,
       value: count,
     }));
-    const weeks = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'];
-    const taskTrend = weeks.map((name, i) => ({
-      name,
-      value: 5 + i * 2,
-    }));
+    const taskTrend = trendData?.data?.map((item) => ({
+      name: item.date.slice(5),
+      value: item.count,
+    })) ?? [];
     return {
       projectProgress:
         projectProgress.length > 0
@@ -110,7 +114,7 @@ export const DashboardPage: React.FC = () => {
               { name: i18n.t('pm.dashboard_page.k16'), value: 15 },
             ],
     };
-  }, [projectsQuery.data]);
+  }, [projectsQuery.data, trendData]);
   const loadStats = useCallback(() => {
     statisticsQuery.refetch();
     projectsQuery.refetch();

@@ -1,4 +1,5 @@
 pub mod acceptance;
+pub mod analytics;
 pub mod budget;
 pub mod contract;
 pub mod document;
@@ -66,7 +67,8 @@ pub fn create_routes(
         .merge(report::create_routes(pool.clone()))
         .merge(notification::create_routes(pool.clone()))
         .merge(task::create_routes(pool.clone()))
-        .merge(statistics::create_routes(pool))
+        .merge(statistics::create_routes(pool.clone()))
+        .merge(analytics::create_routes(pool))
         .layer(Extension(audit_service))
 }
 
