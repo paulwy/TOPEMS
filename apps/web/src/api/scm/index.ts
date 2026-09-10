@@ -19,6 +19,7 @@ import { purchaseRequisitionApi } from './purchaseRequisition';
 import { purchaseContractApi } from './purchaseContract';
 import { supplierAdmissionApi } from './supplierAdmission';
 import { scmSettingsApi } from './settings';
+import { scmAnalyticsApi } from './analytics';
 
 export * from './types';
 
@@ -28,6 +29,8 @@ export { incomingInspectionApi } from './incomingInspection';
 export { syncRecordApi } from './syncRecord';
 export { auditLogApi } from './auditLog';
 export { deliveryAppointmentApi } from './deliveryAppointment';
+export { scmAnalyticsApi } from './analytics';
+export * from './analytics';
 export { purchaseItemApi } from './purchaseItem';
 export { supplierEvaluationApi } from './supplierEvaluation';
 export { mrpPlanApi } from './mrpPlan';

@@ -18,7 +18,7 @@ import {
   type QuickAction,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { scmApi } from '@/api/scm';
+import { scmApi, scmAnalyticsApi } from '@/api/scm';
 import type {
   SupplyChainOverview,
   MrpPlan,
@@ -33,30 +33,52 @@ import { LazyChart } from '@/components/charts';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const barData = [
-  { name: i18n.t('scm.dashboard_page.a_0'), value: 35 },
-
-  { name: i18n.t('scm.dashboard_page.b_1'), value: 28 },
-  { name: i18n.t('scm.dashboard_page.c_2'), value: 22 },
-  { name: i18n.t('scm.dashboard_page.d_3'), value: 15 },
-];
-const pieData = [
-  { name: i18n.t('scm.dashboard_page.k4'), value: 50 },
-  { name: i18n.t('scm.dashboard_page.k5'), value: 30 },
-  { name: i18n.t('scm.dashboard_page.k6'), value: 20 },
-];
-const lineData = [
-  { name: i18n.t('scm.dashboard_page.m1'), value: 8 },
-  { name: i18n.t('scm.dashboard_page.m2'), value: 12 },
-  { name: i18n.t('scm.dashboard_page.m3'), value: 10 },
-  { name: i18n.t('scm.dashboard_page.m4'), value: 15 },
-  { name: i18n.t('scm.dashboard_page.m5'), value: 11 },
-  { name: i18n.t('scm.dashboard_page.m6'), value: 14 },
-];
-
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation('scm');
   const navigate = useNavigate();
+
+  const { data: trendData } = useQuery({
+    queryKey: [QUERY_KEYS.SCM.OVERVIEW, 'trend'],
+    queryFn: () => scmAnalyticsApi.getPurchaseTrend(),
+    staleTime: 60_000,
+  });
+
+  const { data: statusData } = useQuery({
+    queryKey: [QUERY_KEYS.SCM.OVERVIEW, 'status'],
+    queryFn: () => scmAnalyticsApi.getPurchaseStatus(),
+    staleTime: 60_000,
+  });
+
+  const { data: rankingData } = useQuery({
+    queryKey: [QUERY_KEYS.SCM.OVERVIEW, 'ranking'],
+    queryFn: () => scmAnalyticsApi.getSupplierRanking(),
+    staleTime: 60_000,
+  });
+
+  const barData = useMemo(
+    () =>
+      rankingData?.data?.map((item) => ({
+        name: item.supplier_name,
+        value: Math.round(item.total_amount / 10000),
+      })) ?? [],
+    [rankingData]
+  );
+  const pieData = useMemo(
+    () =>
+      statusData?.data?.map((item) => ({
+        name: item.status,
+        value: Math.round(item.percentage),
+      })) ?? [],
+    [statusData]
+  );
+  const lineData = useMemo(
+    () =>
+      trendData?.data?.map((item) => ({
+        name: item.date.slice(5),
+        value: item.count,
+      })) ?? [],
+    [trendData]
+  );
 
   const { data: overview, isPending: overviewLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.OVERVIEW,

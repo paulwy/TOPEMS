@@ -7,6 +7,7 @@ use topems_shared_event::event::EventPublisher;
 use topems_shared_event::redis::RedisCacheService;
 
 pub mod audit;
+pub mod analytics;
 pub mod data_sync;
 pub mod evaluation_logic;
 pub mod incoming_inspection;
@@ -70,6 +71,7 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(incoming_inspection::create_routes())
         .merge(inventory_turnover::create_routes())
         .merge(supply_chain_dashboard::create_routes())
+        .merge(analytics::create_routes())
         .merge(audit::create_routes())
         .merge(data_sync::create_routes())
         .merge(settings::create_routes())
