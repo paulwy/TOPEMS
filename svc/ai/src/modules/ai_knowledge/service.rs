@@ -14,7 +14,7 @@ use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType, 
 use uuid::Uuid;
 
 use super::document_processor::{
-    self, chunk_document, generate_embeddings, vector_to_pgvector_string, ProcessorError,
+    chunk_document, generate_embeddings, vector_to_pgvector_string, ProcessorError,
 };
 use super::models::*;
 use super::rag::{self, RetrievedChunk};

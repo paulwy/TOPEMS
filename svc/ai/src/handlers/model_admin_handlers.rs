@@ -382,6 +382,7 @@ pub async fn get_model_usage(
 
     // 构建动态 WHERE 子句（$1 始终为 tenant_id）
     let mut where_clauses: Vec<String> = vec!["(tenant_id IS NULL OR tenant_id = $1)".to_string()];
+    #[allow(unused_assignments)]
     let mut param_idx = 2;
 
     if params.start_date.is_some() {
