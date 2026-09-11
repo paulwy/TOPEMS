@@ -2,9 +2,9 @@ use axum::{extract::FromRef, Router};
 
 use crate::shared::AppState;
 
+pub mod analytics;
 pub mod carrier;
 pub mod driver;
-pub mod analytics;
 pub mod openapi;
 pub mod optimization;
 pub mod route;

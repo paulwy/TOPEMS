@@ -107,7 +107,7 @@ pub async fn list_carriers(
     );
 
     // 检查缓存（在获取事务锁之前，避免不必要的锁等待）
-    if let Some(cached) = state.dict_cache.get(&cache_key) {
+    if let Some(cached) = state.dict_cache.get(&cache_key).await {
         record_cache_hit("tms", "carrier", "list");
         tracing::debug!(
             event_type = "cache_hit",
@@ -171,7 +171,10 @@ pub async fn list_carriers(
             });
 
             // 写入缓存
-            state.dict_cache.set(cache_key.clone(), response_data.clone());
+            state
+                .dict_cache
+                .set(cache_key.clone(), response_data.clone())
+                .await;
             record_cache_set("tms", "carrier", "list");
             tracing::debug!(
                 event_type = "cache_set",
@@ -246,14 +249,18 @@ pub async fn create_carrier(
             }
 
             // 失效列表缓存（创建后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("tms:carrier:*", "pattern", Some("carrier_created"))
+                        .publish_cache_invalidated(
+                            "tms:carrier:*",
+                            "pattern",
+                            Some("carrier_created"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -371,14 +378,18 @@ pub async fn update_carrier(
     match result {
         Ok(Some(carrier)) => {
             // 失效列表缓存（更新后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("tms:carrier:*", "pattern", Some("carrier_updated"))
+                        .publish_cache_invalidated(
+                            "tms:carrier:*",
+                            "pattern",
+                            Some("carrier_updated"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -430,14 +441,18 @@ pub async fn delete_carrier(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             // 失效列表缓存（删除后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("tms:carrier:*", "pattern", Some("carrier_deleted"))
+                        .publish_cache_invalidated(
+                            "tms:carrier:*",
+                            "pattern",
+                            Some("carrier_deleted"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);

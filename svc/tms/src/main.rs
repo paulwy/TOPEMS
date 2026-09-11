@@ -17,8 +17,8 @@ use topems_shared_bootstrap::{
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
-    InMemoryCache as LocalInMemoryCache, InMemoryCacheInvalidationHandler,
 };
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
 use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 
 use modules::tms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
@@ -53,7 +53,28 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let dict_cache = Arc::new(LocalInMemoryCache::new(Duration::from_secs(600)));
+    // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
+    let l2_config = L2CacheConfig {
+        instance_prefix: "tms".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+    };
+    let redis_url = std::env::var("REDIS_URL").ok();
+    let dict_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（TMS，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（TMS，纯 L1 模式，Redis 未配置）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（TMS）: {}", warn);
+            Arc::new(cache)
+        }
+    };
 
     // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
     {
@@ -83,8 +104,9 @@ async fn main() -> Result<()> {
             .await
             {
                 Ok(Some(data)) => {
-                    let cache_key = "tms:driver:list:default:page:1:pagesize:10:search:none:status:all";
-                    cache.set(cache_key.to_string(), data);
+                    let cache_key =
+                        "tms:driver:list:default:page:1:pagesize:10:search:none:status:all";
+                    cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[tms] 司机列表缓存预热完成");
                 }
                 Ok(None) => {
@@ -116,8 +138,9 @@ async fn main() -> Result<()> {
             .await
             {
                 Ok(Some(data)) => {
-                    let cache_key = "tms:vehicle:list:default:page:1:pagesize:10:search:none:status:all";
-                    cache.set(cache_key.to_string(), data);
+                    let cache_key =
+                        "tms:vehicle:list:default:page:1:pagesize:10:search:none:status:all";
+                    cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[tms] 车辆列表缓存预热完成");
                 }
                 Ok(None) => {
@@ -149,8 +172,9 @@ async fn main() -> Result<()> {
             .await
             {
                 Ok(Some(data)) => {
-                    let cache_key = "tms:carrier:list:default:page:1:pagesize:10:search:none:status:all";
-                    cache.set(cache_key.to_string(), data);
+                    let cache_key =
+                        "tms:carrier:list:default:page:1:pagesize:10:search:none:status:all";
+                    cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[tms] 承运商列表缓存预热完成");
                 }
                 Ok(None) => {
@@ -168,19 +192,19 @@ async fn main() -> Result<()> {
     // 缓存失效事件订阅（事件驱动缓存一致性）
     {
         let mut cache_invalidation_listener = CacheInvalidationListener::new("tms");
-        let driver_cache_handler = InMemoryCacheInvalidationHandler::new(
+        let driver_cache_handler = AsyncL2CacheInvalidationHandler::new(
             "tms_driver_cache",
             dict_cache.clone(),
             "tms:driver:",
         );
         cache_invalidation_listener.register_handler(driver_cache_handler);
-        let vehicle_cache_handler = InMemoryCacheInvalidationHandler::new(
+        let vehicle_cache_handler = AsyncL2CacheInvalidationHandler::new(
             "tms_vehicle_cache",
             dict_cache.clone(),
             "tms:vehicle:",
         );
         cache_invalidation_listener.register_handler(vehicle_cache_handler);
-        let carrier_cache_handler = InMemoryCacheInvalidationHandler::new(
+        let carrier_cache_handler = AsyncL2CacheInvalidationHandler::new(
             "tms_carrier_cache",
             dict_cache.clone(),
             "tms:carrier:",
@@ -191,8 +215,8 @@ async fn main() -> Result<()> {
         match EventSubscriber::new("tms-cache-invalidation") {
             Ok(cache_subscriber) => {
                 let listener = cache_invalidation_listener.clone();
-                let cache_subscriber = cache_subscriber
-                    .subscribe(vec![EventType::CacheInvalidated], move |event| {
+                let cache_subscriber =
+                    cache_subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
                         let listener = listener.clone();
                         Box::pin(async move {
                             if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
@@ -200,7 +224,9 @@ async fn main() -> Result<()> {
                                     source_service: payload.source_service,
                                     source_instance: payload.source_instance,
                                     cache_key_pattern: payload.cache_key_pattern,
-                                    invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                                    invalidation_level: InvalidationLevel::from_str(
+                                        &payload.invalidation_level,
+                                    ),
                                     reason: payload.reason,
                                 };
                                 listener.dispatch_invalidation(&invalidation_event);

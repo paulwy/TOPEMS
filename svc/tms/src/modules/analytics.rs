@@ -88,7 +88,7 @@ pub async fn get_vehicle_ranking(
          WHERE s.vehicle_id IS NOT NULL
          GROUP BY s.vehicle_id, v.vehicle_no
          ORDER BY shipment_count DESC
-         LIMIT 10"
+         LIMIT 10",
     )
     .fetch_all(&state.db)
     .await
@@ -96,11 +96,13 @@ pub async fn get_vehicle_ranking(
 
     let items: Vec<VehicleRankingItem> = rows
         .into_iter()
-        .map(|(vehicle_id, vehicle_no, shipment_count)| VehicleRankingItem {
-            vehicle_id: vehicle_id.unwrap_or_default(),
-            vehicle_no: vehicle_no.unwrap_or_else(|| "未知车辆".to_string()),
-            shipment_count: shipment_count.unwrap_or(0),
-        })
+        .map(
+            |(vehicle_id, vehicle_no, shipment_count)| VehicleRankingItem {
+                vehicle_id: vehicle_id.unwrap_or_default(),
+                vehicle_no: vehicle_no.unwrap_or_else(|| "未知车辆".to_string()),
+                shipment_count: shipment_count.unwrap_or(0),
+            },
+        )
         .collect();
 
     Json(ApiResponse::success(items, "获取成功"))
@@ -122,7 +124,7 @@ pub async fn get_status_distribution(
         "SELECT status, COUNT(*) as count
          FROM tms.tms_shipments
          GROUP BY status
-         ORDER BY count DESC"
+         ORDER BY count DESC",
     )
     .fetch_all(&state.db)
     .await
@@ -132,7 +134,11 @@ pub async fn get_status_distribution(
         .into_iter()
         .map(|(status, count)| {
             let cnt = count.unwrap_or(0);
-            let percentage = if total > 0 { (cnt as f64 / total as f64) * 100.0 } else { 0.0 };
+            let percentage = if total > 0 {
+                (cnt as f64 / total as f64) * 100.0
+            } else {
+                0.0
+            };
             StatusDistributionItem {
                 status: status.unwrap_or_else(|| "未知".to_string()),
                 count: cnt,
@@ -154,5 +160,8 @@ where
     Router::new()
         .route("/analytics/shipment-trend", get(get_shipment_trend))
         .route("/analytics/vehicle-ranking", get(get_vehicle_ranking))
-        .route("/analytics/status-distribution", get(get_status_distribution))
+        .route(
+            "/analytics/status-distribution",
+            get(get_status_distribution),
+        )
 }
