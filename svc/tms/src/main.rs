@@ -6,6 +6,8 @@ pub mod modules;
 
 use anyhow::Result;
 use axum::{routing::get, Router};
+use std::sync::Arc;
+use std::time::Duration;
 use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_permission;
@@ -13,6 +15,7 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
+use topems_shared_core::cache::InMemoryCache as LocalInMemoryCache;
 
 use modules::tms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 use shared::AppState;
@@ -46,12 +49,15 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let dict_cache = Arc::new(LocalInMemoryCache::new(Duration::from_secs(600)));
+
     let app_state = AppState {
         db: ctx.db.clone(),
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,
         event_publisher: ctx.event_publisher.clone(),
+        dict_cache,
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）

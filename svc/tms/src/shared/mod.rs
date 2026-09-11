@@ -10,6 +10,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_core::cache::InMemoryCache as LocalInMemoryCache;
 use topems_shared_core::health::SystemMetrics;
 use topems_shared_event::event::EventPublisher;
 
@@ -20,6 +21,7 @@ pub struct AppState {
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
     pub event_publisher: Option<Arc<EventPublisher>>,
+    pub dict_cache: Arc<LocalInMemoryCache<serde_json::Value>>,
 }
 
 impl FromRef<AppState> for AuthState {

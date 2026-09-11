@@ -79,7 +79,7 @@ where
     tag = "TMS - Vehicle"
 )]
 pub async fn list_vehicles(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
@@ -87,8 +87,6 @@ pub async fn list_vehicles(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -96,6 +94,25 @@ pub async fn list_vehicles(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let tenant_id = get_tenant_id(&claims, &headers);
+
+    // 构建缓存 Key
+    let cache_key = format!(
+        "tms:vehicles:{}:{}:{}:{}:{}",
+        tenant_id,
+        page,
+        page_size,
+        params.search.clone().unwrap_or_else(|| "none".to_string()),
+        params.status.clone().unwrap_or_else(|| "all".to_string())
+    );
+
+    // 检查缓存（在获取事务锁之前，避免不必要的锁等待）
+    if let Some(cached) = state.dict_cache.get(&cache_key) {
+        tracing::debug!("📋 车辆列表缓存命中: {}", cache_key);
+        return Json(ApiResponse::success(cached, "获取车辆列表成功"));
+    }
+
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
 
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
@@ -139,6 +156,11 @@ pub async fn list_vehicles(
                 "page": page,
                 "page_size": page_size
             });
+
+            // 写入缓存
+            state.dict_cache.set(cache_key.clone(), response_data.clone());
+            tracing::debug!("💾 车辆列表缓存写入: {}", cache_key);
+
             Json(ApiResponse::success(response_data, "获取车辆列表成功"))
         }
         Err(e) => {
