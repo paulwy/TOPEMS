@@ -83,6 +83,50 @@ async fn main() -> Result<()> {
     let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
     tracing::info!("💾 内存缓存初始化完成（供应商）");
 
+    // 缓存预热：服务启动时异步加载常用数据，避免首次请求缓存未命中
+    {
+        let cache = supplier_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[srm] 开始缓存预热...");
+
+            // 预热供应商列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM suppliers WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'page_size', 20
+                ) as data
+                FROM (
+                    SELECT s.* FROM suppliers s
+                    WHERE s.deleted_at IS NULL
+                    ORDER BY s.created_at DESC
+                    LIMIT 20 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "srm:suppliers:default:page:1:size:20:search:None:status:None:category:None:sort:created_at:order:desc";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[srm] 供应商列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[srm] 供应商列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[srm] 供应商列表缓存预热失败: {}", e);
+                }
+            }
+
+            tracing::info!("[srm] 缓存预热完成");
+        });
+    }
+
     if let Err(e) =
         event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone(), supplier_cache.clone()).await
     {
