@@ -310,7 +310,25 @@ pub async fn create_capacity(
     .await;
 
     match result {
-        Ok(cap) => Json(ApiResponse::success(cap, "产能记录创建成功")),
+        Ok(cap) => {
+            // 失效列表缓存（创建后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("mes:capacity:*", "pattern", Some("capacity_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(cap, "产能记录创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建产能记录失败: {}", e);
             Json(ApiResponse::error(500, "创建产能记录失败"))
@@ -370,7 +388,25 @@ pub async fn update_capacity(
     .await;
 
     match result {
-        Ok(cap) => Json(ApiResponse::success(cap, "产能记录更新成功")),
+        Ok(cap) => {
+            // 失效列表缓存（更新后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("mes:capacity:*", "pattern", Some("capacity_updated"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(cap, "产能记录更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新产能记录失败: {}", e);
             Json(ApiResponse::error(500, "更新产能记录失败"))
@@ -392,10 +428,28 @@ pub async fn delete_capacity(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "产能记录删除成功",
-        )),
+        Ok(r) if r.rows_affected() > 0 => {
+            // 失效列表缓存（删除后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("mes:capacity:*", "pattern", Some("capacity_deleted"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(
+                serde_json::json!({"id": id}),
+                "产能记录删除成功",
+            ))
+        }
         Ok(_) => Json(ApiResponse::error(404, "产能记录不存在")),
         Err(e) => {
             tracing::error!("删除产能记录失败: {}", e);

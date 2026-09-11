@@ -203,7 +203,7 @@ pub async fn list_carriers(
     tag = "TMS - Carrier"
 )]
 pub async fn create_carrier(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -244,6 +244,23 @@ pub async fn create_carrier(
                     return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
+
+            // 失效列表缓存（创建后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("tms:carrier:*", "pattern", Some("carrier_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success(carrier, "承运商创建成功"))
         }
         Err(e) => {
@@ -313,7 +330,7 @@ pub async fn get_carrier(
     tag = "TMS - Carrier"
 )]
 pub async fn update_carrier(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -352,7 +369,25 @@ pub async fn update_carrier(
     .await;
 
     match result {
-        Ok(Some(carrier)) => Json(ApiResponse::success(carrier, "承运商更新成功")),
+        Ok(Some(carrier)) => {
+            // 失效列表缓存（更新后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("tms:carrier:*", "pattern", Some("carrier_updated"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(carrier, "承运商更新成功"))
+        }
         Ok(None) => Json(api_error(404, "承运商不存在")),
         Err(e) => {
             tracing::error!("更新承运商失败: {}", e);
@@ -374,7 +409,7 @@ pub async fn update_carrier(
     tag = "TMS - Carrier"
 )]
 pub async fn delete_carrier(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -394,6 +429,22 @@ pub async fn delete_carrier(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            // 失效列表缓存（删除后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("tms:carrier:*", "pattern", Some("carrier_deleted"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success("".to_string(), "承运商删除成功"))
         }
         Ok(_) => Json(api_error(404, "承运商不存在")),

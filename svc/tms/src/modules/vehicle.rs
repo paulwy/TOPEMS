@@ -203,7 +203,7 @@ pub async fn list_vehicles(
     tag = "TMS - Vehicle"
 )]
 pub async fn create_vehicle(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -245,6 +245,23 @@ pub async fn create_vehicle(
                     return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
+
+            // 失效列表缓存（创建后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("tms:vehicle:*", "pattern", Some("vehicle_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success(vehicle, "车辆创建成功"))
         }
         Err(e) => {
@@ -314,7 +331,7 @@ pub async fn get_vehicle(
     tag = "TMS - Vehicle"
 )]
 pub async fn update_vehicle(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -355,7 +372,25 @@ pub async fn update_vehicle(
     .await;
 
     match result {
-        Ok(Some(vehicle)) => Json(ApiResponse::success(vehicle, "车辆更新成功")),
+        Ok(Some(vehicle)) => {
+            // 失效列表缓存（更新后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("tms:vehicle:*", "pattern", Some("vehicle_updated"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(vehicle, "车辆更新成功"))
+        }
         Ok(None) => Json(api_error(404, "车辆不存在")),
         Err(e) => {
             tracing::error!("更新车辆失败: {}", e);
@@ -377,7 +412,7 @@ pub async fn update_vehicle(
     tag = "TMS - Vehicle"
 )]
 pub async fn delete_vehicle(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -397,6 +432,22 @@ pub async fn delete_vehicle(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            // 失效列表缓存（删除后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("tms:vehicle:*", "pattern", Some("vehicle_deleted"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success("".to_string(), "车辆删除成功"))
         }
         Ok(_) => Json(api_error(404, "车辆不存在")),
