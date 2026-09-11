@@ -21,6 +21,7 @@ use crate::cache::{
 };
 
 // ===== Redis 相关（仅当 redis_client 参数传入时启用 L2）=====
+use redis::aio::ConnectionManager as RedisConnectionManager;
 use redis::Client as RedisClient;
 
 /// L2 缓存配置
@@ -60,9 +61,9 @@ where
     config: L2CacheConfig,
 }
 
-/// Redis L2 后端（封装连接和前缀）
+/// Redis L2 后端（封装连接管理器和前缀）
 struct RedisL2Backend {
-    client: RedisClient,
+    manager: RedisConnectionManager,
     prefix: String,
 }
 
@@ -115,12 +116,11 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
 
         match RedisClient::open(url) {
             Ok(client) => {
-                // 探测连接有效性（同步 get_connection 会阻塞，但只在启动时调用一次）
-                match client.get_connection() {
-                    Ok(mut conn) => {
-                        let _: Result<String, _> = redis::cmd("PING").query(&mut conn);
+                // 创建异步连接管理器（内部维护连接池，自动重连）
+                match RedisConnectionManager::new(client).await {
+                    Ok(manager) => {
                         let backend = RedisL2Backend {
-                            client,
+                            manager,
                             prefix: config.instance_prefix.clone(),
                         };
                         Ok(Self {
@@ -130,7 +130,7 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
                         })
                     }
                     Err(e) => {
-                        let warn = format!("Redis 连接失败，回退到纯 L1 模式: {}", e);
+                        let warn = format!("Redis 连接管理器创建失败，回退到纯 L1 模式: {}", e);
                         Err((
                             Self {
                                 l1,
@@ -174,17 +174,13 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
             return None;
         };
         let full_key = l2.full_key(key);
-        let l2 = Arc::clone(l2);
-        // Redis 同步 API 用 spawn_blocking 避免阻塞 async runtime
-        tokio::task::spawn_blocking(move || {
-            let mut conn = l2.client.get_connection().ok()?;
-            let r: redis::RedisResult<Option<String>> =
-                redis::cmd("GET").arg(&full_key).query(&mut conn);
-            r.ok().flatten()
-        })
-        .await
-        .ok()
-        .flatten()
+        let mut manager = l2.manager.clone();
+        // 使用异步连接管理器，内部维护连接池
+        let result: redis::RedisResult<Option<String>> = redis::cmd("GET")
+            .arg(&full_key)
+            .query_async(&mut manager)
+            .await;
+        result.ok().flatten()
     }
 
     /// 写入 Redis L2，失败静默（只在日志 debug 可见）
@@ -195,20 +191,14 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
         let full_key = l2.full_key(key);
         let value = value.to_string();
         let secs = ttl.as_secs().max(1); // 至少 1s，Redis SET EX 不接受 0
-        let l2 = Arc::clone(l2);
-        let _ = tokio::task::spawn_blocking(move || {
-            let mut conn = match l2.client.get_connection() {
-                Ok(c) => c,
-                Err(_) => return,
-            };
-            let _: redis::RedisResult<()> = redis::cmd("SET")
-                .arg(&full_key)
-                .arg(&value)
-                .arg("EX")
-                .arg(secs)
-                .query(&mut conn);
-        })
-        .await;
+        let mut manager = l2.manager.clone();
+        let _: redis::RedisResult<()> = redis::cmd("SET")
+            .arg(&full_key)
+            .arg(&value)
+            .arg("EX")
+            .arg(secs)
+            .query_async(&mut manager)
+            .await;
     }
 
     /// 删除 Redis L2 key
@@ -217,15 +207,11 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
             return;
         };
         let full_key = l2.full_key(key);
-        let l2 = Arc::clone(l2);
-        let _ = tokio::task::spawn_blocking(move || {
-            let mut conn = match l2.client.get_connection() {
-                Ok(c) => c,
-                Err(_) => return,
-            };
-            let _: redis::RedisResult<()> = redis::cmd("DEL").arg(&full_key).query(&mut conn);
-        })
-        .await;
+        let mut manager = l2.manager.clone();
+        let _: redis::RedisResult<()> = redis::cmd("DEL")
+            .arg(&full_key)
+            .query_async(&mut manager)
+            .await;
     }
 
     // ===== 公共 API =====

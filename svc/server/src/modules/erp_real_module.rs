@@ -16,9 +16,9 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_erp::modules::ApiState;
-use topems_shared::LocalInMemoryCache;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi, TypedServiceClient,
@@ -106,12 +106,18 @@ impl ErpRealModule {
             });
 
         // 4. 构建业务 ApiState
+        let l2_config = L2CacheConfig {
+            instance_prefix: "erp_server".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(600),
+            l1_capacity: 10_000,
+        };
         let api_state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,
-            dict_cache: Arc::new(LocalInMemoryCache::new(Duration::from_secs(600))),
+            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
             notification_client,
             hrm_client,
             encryption: Arc::new(encryption_service),

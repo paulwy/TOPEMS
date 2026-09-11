@@ -16,8 +16,8 @@ use std::time::Duration;
 use topems_mes::{modules, AppState};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
-use topems_shared_core::cache::InMemoryCache;
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedServiceClient};
 
@@ -74,12 +74,18 @@ impl MesRealModule {
         let health_config = SimpleHealthConfig::new("topems-mes").with_db(ctx.db.clone());
 
         // 5. 构建业务 AppState（与独立部署 main.rs 一致）
+        let l2_config = L2CacheConfig {
+            instance_prefix: "mes_server".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(600),
+            l1_capacity: 10_000,
+        };
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
             health_config,
             event_publisher: ctx.event_publisher.clone(),
-            dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(600))),
+            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
             // 生产执行闭环：ERP 服务客户端（报工后回传生产进度，service token erp:admin；失败优雅降级）
             erp_client: TypedServiceClient::<ErpApi>::from_env_default()
                 .and_then(|c| {

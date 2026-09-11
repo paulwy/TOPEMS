@@ -19,8 +19,8 @@ use topems_hrm::modules::{hrm_plugin, ApiState};
 use topems_shared::init_encryption_from_env;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
-use topems_shared_core::cache::InMemoryCache;
 use topems_shared_core::config::CacheConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::cache::InMemoryCache as EventInMemoryCache;
 use topems_shared_event::redis::CacheService;
 
@@ -76,6 +76,12 @@ impl HrmRealModule {
             Arc::new(EventInMemoryCache::new(CacheConfig::default()));
 
         // 5. 构建业务 ApiState（与独立部署 main.rs 一致）
+        let l2_config = L2CacheConfig {
+            instance_prefix: "hrm_server".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(3600),
+            l1_capacity: 10_000,
+        };
         let state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
@@ -84,7 +90,7 @@ impl HrmRealModule {
             cache,
             encryption: Arc::new(encryption),
             event_publisher: ctx.event_publisher.clone(),
-            employee_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
+            employee_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
         };
 
         // 6. 插件路由（lib 内 handler）

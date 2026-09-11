@@ -14,6 +14,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
@@ -61,10 +62,14 @@ impl SrmRealModule {
         }
 
         // 依赖构造（与独立部署 main.rs 一致）
-        let supplier_cache: Arc<topems_shared_core::cache::InMemoryCache<serde_json::Value>> =
-            Arc::new(topems_shared_core::cache::InMemoryCache::new(
-                Duration::from_secs(300),
-            ));
+        let l2_config = L2CacheConfig {
+            instance_prefix: "srm_server".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 10_000,
+        };
+        let supplier_cache: Arc<AsyncL2Cache<serde_json::Value>> =
+            Arc::new(AsyncL2Cache::new_l1_only(l2_config));
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
             .and_then(|c| c.with_service_token(&jwt_secret, "srm-module", &["workflow:read"]))

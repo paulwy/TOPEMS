@@ -19,8 +19,8 @@ use std::time::Duration;
 use topems_qms::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
-use topems_shared_core::cache::InMemoryCache;
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 /// 真实 QMS 模块：持有数据库连接池 + 完整业务路由
@@ -67,12 +67,18 @@ impl QmsRealModule {
             .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
 
         // 4. 构建业务 AppState
+        let l2_config = L2CacheConfig {
+            instance_prefix: "qms_server".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(600),
+            l1_capacity: 10_000,
+        };
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
             health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
             event_publisher: ctx.event_publisher.clone(),
-            dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(600))),
+            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
             workflow_client,
         };
 

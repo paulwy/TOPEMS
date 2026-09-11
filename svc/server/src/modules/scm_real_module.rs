@@ -14,9 +14,9 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_scm::modules::{create_routes, ApiState};
-use topems_scm::shared::cache::InMemoryCache;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 
 /// 真实 SCM 模块：持有数据库连接池 + 完整业务路由 + 缓存
 pub struct ScmRealModule {
@@ -63,14 +63,32 @@ impl ScmRealModule {
         }
 
         // 3. 构建业务 ApiState（与独立部署 main.rs 一致）
+        let supplier_l2_config = L2CacheConfig {
+            instance_prefix: "scm_server_supplier".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 10_000,
+        };
+        let purchase_l2_config = L2CacheConfig {
+            instance_prefix: "scm_server_purchase".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(120),
+            l1_capacity: 10_000,
+        };
+        let dict_l2_config = L2CacheConfig {
+            instance_prefix: "scm_server_dict".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(600),
+            l1_capacity: 10_000,
+        };
         let state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             cache: None,
             event_publisher: ctx.event_publisher.clone(),
-            supplier_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
-            purchase_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
-            dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(1800))),
+            supplier_cache: Arc::new(AsyncL2Cache::new_l1_only(supplier_l2_config)),
+            purchase_cache: Arc::new(AsyncL2Cache::new_l1_only(purchase_l2_config)),
+            dict_cache: Arc::new(AsyncL2Cache::new_l1_only(dict_l2_config)),
         };
 
         // 4. 业务路由（tenant 中间件 + 权限中间件 + with_state）
