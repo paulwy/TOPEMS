@@ -486,6 +486,7 @@ pub async fn update_material_bom(
             health_config: state.health_config.clone(),
             event_publisher: state.event_publisher.clone(),
             erp_client: None,
+            dict_cache: state.dict_cache.clone(),
         }),
         Extension(claims),
         Path(id),

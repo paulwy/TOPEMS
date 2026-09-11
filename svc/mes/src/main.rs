@@ -5,8 +5,10 @@
 mod models;
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use topems_mes::{modules, AppState};
+use topems_shared::LocalInMemoryCache;
 
 use axum::routing::get;
 use utoipa::OpenApi;
@@ -65,12 +67,16 @@ async fn main() -> anyhow::Result<()> {
         .map(Arc::new)
         .ok();
 
+    // 字典数据缓存（工艺路线、工作中心、物料分类等不常变化的数据，TTL 10 分钟）
+    let dict_cache = Arc::new(LocalInMemoryCache::new(Duration::from_secs(600)));
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
         health_config,
         event_publisher: ctx.event_publisher.clone(),
         erp_client,
+        dict_cache,
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）
