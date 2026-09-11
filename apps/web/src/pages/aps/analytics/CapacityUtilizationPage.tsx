@@ -1,18 +1,18 @@
 /**
  * 产能利用率分析页
  *
- * 使用 recharts LineChart 展示工作中心利用率趋势：
- * - 各工作中心利用率折线
+ * 使用 recharts LineChart 展示设备利用率趋势：
+ * - 各设备利用率折线
  * - 目标利用率基准线
- * 数据使用内置 mock 数据。
+ * 数据来自 MES 后端聚合 API。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { Activity, TrendingUp, TrendingDown } from 'lucide-react';
-import { apsApi } from '@/api/aps';
-import type { Capacity } from '@/api/aps/types';
+import { mesAnalyticsApi } from '@/api/mes/analytics';
+import type { CapacityUtilizationResponse } from '@/api/mes/analytics';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@topems/tokens';
@@ -28,60 +28,89 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-const mockData = [
-  { date: 'W1', wcA: 78, wcB: 65, wcC: 88 },
-  { date: 'W2', wcA: 82, wcB: 70, wcC: 91 },
-  { date: 'W3', wcA: 85, wcB: 75, wcC: 85 },
-  { date: 'W4', wcA: 90, wcB: 80, wcC: 92 },
-  { date: 'W5', wcA: 88, wcB: 85, wcC: 89 },
-  { date: 'W6', wcA: 92, wcB: 78, wcC: 94 },
-  { date: 'W7', wcA: 85, wcB: 82, wcC: 90 },
-  { date: 'W8', wcA: 89, wcB: 88, wcC: 93 },
-  { date: 'W9', wcA: 94, wcB: 90, wcC: 96 },
-  { date: 'W10', wcA: 91, wcB: 85, wcC: 92 },
-  { date: 'W11', wcA: 87, wcB: 83, wcC: 88 },
-  { date: 'W12', wcA: 93, wcB: 89, wcC: 95 },
+const LINE_COLORS = [
+  designTokens.colors.secondary.dark,
+  designTokens.colors.warning.main,
+  designTokens.colors.success.dark,
+  designTokens.colors.error.main,
+  designTokens.colors.info.main,
+  designTokens.colors.primary.main,
 ];
 
 export default function CapacityUtilizationPage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['aps', 'CapacityUtilizationPage'],
+  const { data: apiResponse, isLoading } = useQuery({
+    queryKey: ['aps', 'capacityUtilization'],
     queryFn: async () => {
-      try {
-        const res = await apsApi.listCapacities();
-        const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
-        const totalUsed = items.reduce<number>(
-          (s, c: Capacity & { usedQty?: number; used?: number }) => s + (c.usedQty || c.used || 0),
-          0
-        );
-        const totalCap = items.reduce<number>(
-          (s, c: Capacity & { totalQty?: number; total?: number; capacity?: number }) =>
-            s + (c.totalQty || c.total || c.capacity || 0),
-          0
-        );
-        return {
-          capacities: items,
-          usedRatio: totalCap > 0 ? totalUsed / totalCap : 0,
-        };
-      } catch {
-        return {};
-      }
+      const res = await mesAnalyticsApi.getCapacityUtilization({ days: 7 });
+      return res as CapacityUtilizationResponse;
     },
   });
 
-  const data = mockData;
+  const apiData = apiResponse;
+
+  const { chartData, equipmentList } = useMemo(() => {
+    const heatmap = apiData?.heatmap ?? [];
+    if (heatmap.length === 0) return { chartData: [], equipmentList: [] as string[] };
+
+    // 获取所有设备列表
+    const equipmentSet = new Set<string>();
+    heatmap.forEach((item) => equipmentSet.add(item.equipment));
+    const equipments = Array.from(equipmentSet);
+
+    // 按日期分组，计算每个设备每天的平均利用率（跨班次）
+    const dateMap = new Map<string, Map<string, number[]>>();
+    heatmap.forEach((item) => {
+      if (!dateMap.has(item.date)) {
+        dateMap.set(item.date, new Map());
+      }
+      const equipMap = dateMap.get(item.date)!;
+      if (!equipMap.has(item.equipment)) {
+        equipMap.set(item.equipment, []);
+      }
+      equipMap.get(item.equipment)!.push(item.utilization);
+    });
+
+    // 转换为图表数据格式
+    const dates = Array.from(dateMap.keys()).sort();
+    const data = dates.map((date) => {
+      const equipMap = dateMap.get(date)!;
+      const row: Record<string, string | number> = { date };
+      equipments.forEach((equip) => {
+        const values = equipMap.get(equip) ?? [];
+        const avg = values.length > 0 ? values.reduce((s, v) => s + v, 0) / values.length : 0;
+        row[equip] = Math.round(avg * 10) / 10;
+      });
+      return row;
+    });
+
+    return { chartData: data, equipmentList: equipments };
+  }, [apiData]);
+
+  const allUtilizations = useMemo(() => {
+    return chartData.flatMap((row) =>
+      equipmentList.map((equip) => Number(row[equip] ?? 0)).filter((v) => v > 0)
+    );
+  }, [chartData, equipmentList]);
+
   const avgUtilization = useMemo(() => {
-    const allValues = data.flatMap((d) => [d.wcA, d.wcB, d.wcC]);
-    return Math.round((allValues.reduce((s, v) => s + v, 0) / allValues.length) * 10) / 10;
-  }, [data]);
+    if (apiData?.avg_utilization !== undefined)
+      return Math.round(apiData.avg_utilization * 10) / 10;
+    if (allUtilizations.length === 0) return 0;
+    return (
+      Math.round((allUtilizations.reduce((s, v) => s + v, 0) / allUtilizations.length) * 10) / 10
+    );
+  }, [apiData, allUtilizations]);
+
   const maxUtilization = useMemo(() => {
-    return Math.max(...data.flatMap((d) => [d.wcA, d.wcB, d.wcC]));
-  }, [data]);
+    return allUtilizations.length > 0 ? Math.max(...allUtilizations) : 0;
+  }, [allUtilizations]);
+
   const minUtilization = useMemo(() => {
-    return Math.min(...data.flatMap((d) => [d.wcA, d.wcB, d.wcC]));
-  }, [data]);
+    const positive = allUtilizations.filter((v) => v > 0);
+    return positive.length > 0 ? Math.min(...positive) : 0;
+  }, [allUtilizations]);
 
   const statCards: StatCard[] = [
     {
@@ -110,6 +139,21 @@ export default function CapacityUtilizationPage() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <StatsPageTemplate
       title={t('aps.capacity_utilization_page.k0')}
@@ -135,7 +179,7 @@ export default function CapacityUtilizationPage() {
             height={340}
           >
             <LineChart
-              data={data}
+              data={chartData}
               margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
             >
               <CartesianGrid strokeDasharray='3 3' />
@@ -144,7 +188,7 @@ export default function CapacityUtilizationPage() {
                 fontSize={11}
               />
               <YAxis
-                domain={[50, 100]}
+                domain={[0, 100]}
                 unit='%'
                 fontSize={11}
                 label={{
@@ -153,7 +197,7 @@ export default function CapacityUtilizationPage() {
                   position: 'insideLeft',
                 }}
               />
-              <Tooltip />
+              <Tooltip formatter={(value: unknown) => `${value}%`} />
               <Legend />
               <ReferenceLine
                 y={85}
@@ -161,30 +205,18 @@ export default function CapacityUtilizationPage() {
                 strokeDasharray='4 4'
                 label={t('aps.capacity_utilization_page.85_7')}
               />
-              <Line
-                type='monotone'
-                dataKey='wcA'
-                name={t('aps.capacity_utilization_page.a_8')}
-                stroke={designTokens.colors.secondary.dark}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-              <Line
-                type='monotone'
-                dataKey='wcB'
-                name={t('aps.capacity_utilization_page.b_9')}
-                stroke={designTokens.colors.warning.main}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-              <Line
-                type='monotone'
-                dataKey='wcC'
-                name={t('aps.capacity_utilization_page.c_10')}
-                stroke={designTokens.colors.success.dark}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
+              {equipmentList.map((equip, index) => (
+                <Line
+                  key={equip}
+                  type='monotone'
+                  dataKey={equip}
+                  name={equip}
+                  stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  connectNulls
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </Box>

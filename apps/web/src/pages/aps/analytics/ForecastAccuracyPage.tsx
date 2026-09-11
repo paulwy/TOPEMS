@@ -4,12 +4,12 @@
  * 使用 recharts LineChart 展示预测 vs 实际准确率趋势：
  * - 预测量 vs 实际量折线
  * - 准确率折线（右 Y 轴）
- * 数据使用内置 mock 数据。
+ * 数据来自 APS 后端列表 API，按预测期间聚合。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { Target, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apsApi } from '@/api/aps';
 import type { DemandForecast } from '@/api/aps/types';
@@ -28,79 +28,83 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-const mockData = [
-  { period: '2025-01', forecast: 1000, actual: 980 },
-  { period: '2025-02', forecast: 1100, actual: 1150 },
-  { period: '2025-03', forecast: 1200, actual: 1180 },
-  { period: '2025-04', forecast: 1300, actual: 1250 },
-  { period: '2025-05', forecast: 1400, actual: 1420 },
-  { period: '2025-06', forecast: 1500, actual: 1480 },
-  { period: '2025-07', forecast: 1600, actual: 1550 },
-  { period: '2025-08', forecast: 1700, actual: 1720 },
-  { period: '2025-09', forecast: 1800, actual: 1780 },
-  { period: '2025-10', forecast: 1900, actual: 1850 },
-  { period: '2025-11', forecast: 2000, actual: 2050 },
-  { period: '2025-12', forecast: 2100, actual: 2080 },
-];
+interface ForecastAccuracyItem {
+  period: string;
+  forecast: number;
+  actual: number;
+  accuracy: number;
+}
 
 export default function ForecastAccuracyPage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['aps', 'ForecastAccuracyPage'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['aps', 'forecasts'],
     queryFn: async () => {
-      try {
-        const res = await apsApi.listForecasts();
-        const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
-        const valid = items.filter(
-          (
-            f: DemandForecast & {
-              forecastQty?: number;
-              forecast?: number;
-              actualQty?: number;
-              actual?: number;
-            }
-          ) => f.forecastQty || f.forecast || f.actualQty || f.actual
-        );
-        const totalAcc = valid.reduce<number>(
-          (
-            s,
-            f: DemandForecast & {
-              forecastQty?: number;
-              forecast?: number;
-              actualQty?: number;
-              actual?: number;
-            }
-          ) => {
-            const fc = f.forecastQty || f.forecast || 0;
-            const ac = f.actualQty || f.actual || 0;
-            if (fc <= 0) return s;
-            return s + (100 - (Math.abs(ac - fc) / fc) * 100);
-          },
-          0
-        );
-        return {
-          forecasts: items,
-          accuracy: valid.length > 0 ? totalAcc / valid.length : 0,
-        };
-      } catch {
-        return {};
-      }
+      const res = await apsApi.listForecasts();
+      const items =
+        res?.data?.items ?? (Array.isArray(res?.data) ? (res.data as DemandForecast[]) : []);
+      return items;
     },
   });
 
-  const data = useMemo(() => {
-    return mockData.map((d) => ({
-      ...d,
-      accuracy: Number((100 - (Math.abs(d.actual - d.forecast) / d.forecast) * 100).toFixed(1)),
-    }));
-  }, []);
+  const data = useMemo<ForecastAccuracyItem[]>(() => {
+    const forecasts = apiData ?? [];
+    if (forecasts.length === 0) return [];
+
+    // 按预测期间分组
+    const periodMap = new Map<string, { forecast: number; actual: number }>();
+
+    forecasts.forEach((fc) => {
+      // 优先使用 forecast_period，否则使用 forecast_date 的月份
+      const period =
+        fc.forecast_period ?? (fc.forecast_date ? fc.forecast_date.substring(0, 7) : null);
+      if (!period) return;
+
+      const forecastQty = fc.forecast_quantity ?? 0;
+      const actualQty = fc.actual_quantity ?? 0;
+
+      if (!periodMap.has(period)) {
+        periodMap.set(period, { forecast: 0, actual: 0 });
+      }
+      const entry = periodMap.get(period)!;
+      entry.forecast += forecastQty;
+      entry.actual += actualQty;
+    });
+
+    // 转换为数组并按期间排序
+    const periods = Array.from(periodMap.keys()).sort();
+    return periods.map((period) => {
+      const entry = periodMap.get(period)!;
+      const forecast = Math.round(entry.forecast);
+      const actual = Math.round(entry.actual);
+      const accuracy =
+        forecast > 0
+          ? Math.round((100 - (Math.abs(actual - forecast) / forecast) * 100) * 10) / 10
+          : 0;
+      return {
+        period,
+        forecast,
+        actual,
+        accuracy,
+      };
+    });
+  }, [apiData]);
+
   const avgAccuracy = useMemo(() => {
+    if (data.length === 0) return 0;
     const sum = data.reduce((s, d) => s + d.accuracy, 0);
     return Number((sum / data.length).toFixed(1));
   }, [data]);
-  const bestAccuracy = useMemo(() => Math.max(...data.map((d) => d.accuracy)), [data]);
-  const worstAccuracy = useMemo(() => Math.min(...data.map((d) => d.accuracy)), [data]);
+
+  const bestAccuracy = useMemo(() => {
+    return data.length > 0 ? Math.max(...data.map((d) => d.accuracy)) : 0;
+  }, [data]);
+
+  const worstAccuracy = useMemo(() => {
+    const positive = data.filter((d) => d.accuracy > 0);
+    return positive.length > 0 ? Math.min(...positive.map((d) => d.accuracy)) : 0;
+  }, [data]);
 
   const statCards: StatCard[] = [
     {
@@ -128,6 +132,21 @@ export default function ForecastAccuracyPage() {
       color: 'warning',
     },
   ];
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <StatsPageTemplate
@@ -174,7 +193,7 @@ export default function ForecastAccuracyPage() {
               <YAxis
                 yAxisId='right'
                 orientation='right'
-                domain={[80, 100]}
+                domain={[0, 100]}
                 unit='%'
                 fontSize={11}
                 label={{

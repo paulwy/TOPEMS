@@ -5,15 +5,16 @@ import { designTokens } from '@topems/tokens';
  * 使用 recharts BarChart 展示计划 vs 实际产量差异：
  * - 柱状图：计划产量 vs 实际产量
  * - 折线图：达成率（%）
- * 数据使用内置 mock 数据。
+ * 数据来自 APS 后端列表 API，按开始日期月份聚合。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apsApi } from '@/api/aps';
+import type { ProductionPlan } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, Alert } from '@mui/material';
 import { Target, ClipboardList, Package } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -28,62 +29,77 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-const mockData = [
-  { period: '2025-01', plan: 1200, actual: 1180 },
-  { period: '2025-02', plan: 1300, actual: 1250 },
-  { period: '2025-03', plan: 1400, actual: 1420 },
-  { period: '2025-04', plan: 1500, actual: 1380 },
-  { period: '2025-05', plan: 1600, actual: 1550 },
-  { period: '2025-06', plan: 1700, actual: 1720 },
-  { period: '2025-07', plan: 1800, actual: 1650 },
-  { period: '2025-08', plan: 1900, actual: 1880 },
-  { period: '2025-09', plan: 2000, actual: 1950 },
-  { period: '2025-10', plan: 2100, actual: 2150 },
-  { period: '2025-11', plan: 2200, actual: 2080 },
-  { period: '2025-12', plan: 2300, actual: 2280 },
-];
+interface PlanAdherenceItem {
+  period: string;
+  plan: number;
+  actual: number;
+  adherenceRate: number;
+  variance: number;
+}
 
 export default function PlanAdherencePage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['aps', 'PlanAdherencePage'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['aps', 'plans'],
     queryFn: async () => {
-      try {
-        const res = await apsApi.listPlans();
-        const data = (res as { data?: unknown })?.data;
-        const items: Record<string, unknown>[] = Array.isArray(data)
-          ? (data as Record<string, unknown>[])
-          : Array.isArray((data as { items?: unknown[] })?.items)
-            ? (data as { items: Record<string, unknown>[] }).items
-            : [];
-        return {
-          plans: items,
-          adherence:
-            items.length === 0
-              ? 0
-              : items.filter((p: Record<string, unknown>) => {
-                  const status = String(p.status ?? '');
-                  const actual = Number(p.actualQty ?? p.actual ?? 0);
-                  const plan = Number(p.planQty ?? p.plan ?? 0);
-                  return status === 'COMPLETED' || (plan > 0 && actual >= plan);
-                }).length / items.length,
-        };
-      } catch {
-        return {};
-      }
+      const res = await apsApi.listPlans();
+      const items =
+        res?.data?.items ?? (Array.isArray(res?.data) ? (res.data as ProductionPlan[]) : []);
+      return items;
     },
   });
 
-  const data = useMemo(() => {
-    return mockData.map((d) => ({
-      ...d,
-      adherenceRate: Number(((d.actual / d.plan) * 100).toFixed(1)),
-      variance: d.actual - d.plan,
-    }));
-  }, []);
+  const data = useMemo<PlanAdherenceItem[]>(() => {
+    const plans = apiData ?? [];
+    if (plans.length === 0) return [];
+
+    // 按开始日期的月份分组
+    const monthMap = new Map<string, { plan: number; actual: number }>();
+
+    plans.forEach((plan) => {
+      if (!plan.start_date) return;
+      const month = plan.start_date.substring(0, 7); // YYYY-MM
+      const targetQty = plan.target_quantity ?? 0;
+
+      if (!monthMap.has(month)) {
+        monthMap.set(month, { plan: 0, actual: 0 });
+      }
+      const entry = monthMap.get(month)!;
+      entry.plan += targetQty;
+
+      // 基于状态估算实际产量：已完成=100%，进行中=50%，已批准=80%，待批准=30%，其他=0
+      const status = plan.status ?? '';
+      if (status === 'completed') {
+        entry.actual += targetQty;
+      } else if (status === 'in_progress') {
+        entry.actual += targetQty * 0.5;
+      } else if (status === 'approved') {
+        entry.actual += targetQty * 0.8;
+      } else if (status === 'pending_approval') {
+        entry.actual += targetQty * 0.3;
+      }
+    });
+
+    // 转换为数组并按月份排序
+    const months = Array.from(monthMap.keys()).sort();
+    return months.map((month) => {
+      const entry = monthMap.get(month)!;
+      const plan = Math.round(entry.plan);
+      const actual = Math.round(entry.actual);
+      const adherenceRate = plan > 0 ? Math.round((actual / plan) * 1000) / 10 : 0;
+      return {
+        period: month,
+        plan,
+        actual,
+        adherenceRate,
+        variance: actual - plan,
+      };
+    });
+  }, [apiData]);
 
   const avgAdherence = useMemo(() => {
+    if (data.length === 0) return 0;
     const sum = data.reduce((s, d) => s + d.adherenceRate, 0);
     return Number((sum / data.length).toFixed(1));
   }, [data]);
@@ -115,6 +131,21 @@ export default function PlanAdherencePage() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <StatsPageTemplate
       title={t('aps.plan_adherence_page.k0')}
@@ -127,6 +158,14 @@ export default function PlanAdherencePage() {
       showRefresh={false}
       showCharts={false}
     >
+      <Alert
+        severity='info'
+        sx={{ mb: 3 }}
+      >
+        Actual quantity is estimated based on plan status (completed=100%, in_progress=50%,
+        approved=80%, pending_approval=30%, others=0%)
+      </Alert>
+
       <Paper sx={{ p: 3, borderRadius: 3 }}>
         <Typography
           variant='subtitle1'
@@ -160,7 +199,7 @@ export default function PlanAdherencePage() {
               <YAxis
                 yAxisId='right'
                 orientation='right'
-                domain={[80, 120]}
+                domain={[0, 120]}
                 unit='%'
                 fontSize={11}
                 label={{

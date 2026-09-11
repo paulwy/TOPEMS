@@ -1,5 +1,4 @@
 import { designTokens } from '@topems/tokens';
-import i18n from '@/i18n';
 /**
  * 排程甘特图分析页
  *
@@ -7,15 +6,16 @@ import i18n from '@/i18n';
  * - 每行一个排程任务
  * - 柱条表示计划开始到结束的时间跨度
  * - 颜色区分状态
- * 数据使用内置 mock 数据。
+ * 数据来自 APS 后端列表 API。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apsApi } from '@/api/aps';
+import type { Schedule } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { Calendar, CheckCircle, PlayCircle } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -26,83 +26,71 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  Cell,
 } from 'recharts';
-
-const mockSchedules = [
-  {
-    name: i18n.t('pages.schedule_gantt_page.sch001a_0'),
-    start: 1,
-    duration: 5,
-    status: 'completed',
-  },
-  {
-    name: i18n.t('pages.schedule_gantt_page.sch002b_1'),
-    start: 3,
-    duration: 4,
-    status: 'completed',
-  },
-  { name: i18n.t('pages.schedule_gantt_page.sch003c_2'), start: 6, duration: 6, status: 'running' },
-  {
-    name: i18n.t('pages.schedule_gantt_page.sch004d_3'),
-    start: 8,
-    duration: 3,
-    status: 'released',
-  },
-  {
-    name: i18n.t('pages.schedule_gantt_page.sch005e_4'),
-    start: 10,
-    duration: 5,
-    status: 'pending',
-  },
-  {
-    name: i18n.t('pages.schedule_gantt_page.sch006f_5'),
-    start: 12,
-    duration: 4,
-    status: 'pending',
-  },
-  {
-    name: i18n.t('pages.schedule_gantt_page.sch007g_6'),
-    start: 14,
-    duration: 7,
-    status: 'pending',
-  },
-];
 
 const STATUS_COLORS: Record<string, string> = {
   completed: designTokens.colors.success.dark,
   running: designTokens.colors.primary.main,
   released: designTokens.colors.warning.main,
-  pending: 'colors.grey.400',
+  pending: designTokens.colors.grey[400],
   cancelled: designTokens.colors.error.main,
 };
+
+interface GanttItem {
+  name: string;
+  start: number;
+  duration: number;
+  end: number;
+  status: string;
+}
 
 export default function ScheduleGanttPage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['aps', 'ScheduleGanttPage'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['aps', 'schedules'],
     queryFn: async () => {
-      try {
-        const res = await apsApi.listSchedules();
-        const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
-        return { schedules: items };
-      } catch {
-        return {};
-      }
+      const res = await apsApi.listSchedules();
+      const items = res?.data?.items ?? (Array.isArray(res?.data) ? (res.data as Schedule[]) : []);
+      return items;
     },
   });
 
-  const data = useMemo(() => {
-    return mockSchedules.map((s) => ({
-      ...s,
-      end: s.start + s.duration,
-      // recharts stacked bar: 用 base offset + duration 来画甘特
-      offset: s.start,
-    }));
-  }, []);
+  const data = useMemo<GanttItem[]>(() => {
+    const schedules = apiData ?? [];
+    if (schedules.length === 0) return [];
+
+    // 找到最早的开始时间作为基准
+    const startDates = schedules
+      .map((s) => s.planned_start)
+      .filter((d): d is string => !!d)
+      .map((d) => new Date(d).getTime());
+    if (startDates.length === 0) return [];
+
+    const minTime = Math.min(...startDates);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    return schedules
+      .filter((s) => s.planned_start && s.planned_end)
+      .map((s) => {
+        const startTime = new Date(s.planned_start!).getTime();
+        const endTime = new Date(s.planned_end!).getTime();
+        const startDay = Math.round((startTime - minTime) / DAY_MS);
+        const durationDays = Math.max(1, Math.round((endTime - startTime) / DAY_MS));
+        return {
+          name: s.schedule_no || s.product_name || s.id,
+          start: startDay,
+          duration: durationDays,
+          end: startDay + durationDays,
+          status: s.status ?? 'pending',
+        };
+      })
+      .sort((a, b) => a.start - b.start);
+  }, [apiData]);
 
   const totalDuration = useMemo(() => {
-    return Math.max(...data.map((d) => d.end));
+    return data.length > 0 ? Math.max(...data.map((d) => d.end)) : 0;
   }, [data]);
 
   const completedCount = useMemo(() => data.filter((d) => d.status === 'completed').length, [data]);
@@ -131,6 +119,21 @@ export default function ScheduleGanttPage() {
       color: 'primary',
     },
   ];
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <StatsPageTemplate
@@ -193,10 +196,9 @@ export default function ScheduleGanttPage() {
                 barSize={24}
               >
                 {data.map((entry, index) => (
-                  <Bar
-                    key={`bar-${index}`}
-                    dataKey='duration'
-                    fill={STATUS_COLORS[entry.status] ?? 'colors.grey.400'}
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={STATUS_COLORS[entry.status] ?? designTokens.colors.grey[400]}
                   />
                 ))}
               </Bar>

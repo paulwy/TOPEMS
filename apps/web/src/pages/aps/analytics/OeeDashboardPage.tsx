@@ -6,14 +6,15 @@
  * - 性能率（Performance）
  * - 质量率（Quality）
  * - OEE = Availability × Performance × Quality
- * 数据使用内置 mock 数据。
+ * 数据来自 MES 后端聚合 API。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Paper, Typography, Chip } from '@mui/material';
+import { Box, Paper, Typography, Chip, CircularProgress } from '@mui/material';
 import { Gauge, Zap, Activity, CheckCircle } from 'lucide-react';
-import { mesApi } from '@/api/mes';
+import { mesAnalyticsApi } from '@/api/mes/analytics';
+import type { OeeDashboardResponse } from '@/api/mes/analytics';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@topems/tokens';
@@ -31,62 +32,58 @@ import {
   PolarAngleAxis,
 } from 'recharts';
 
-const mockData = [
-  { workCenter: 'WC-A', availability: 88, performance: 92, quality: 96 },
-  { workCenter: 'WC-B', availability: 82, performance: 85, quality: 94 },
-  { workCenter: 'WC-C', availability: 90, performance: 88, quality: 98 },
-  { workCenter: 'WC-D', availability: 75, performance: 80, quality: 92 },
-  { workCenter: 'WC-E', availability: 85, performance: 90, quality: 95 },
-  { workCenter: 'WC-F', availability: 92, performance: 94, quality: 99 },
-];
-
 export default function OeeDashboardPage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['aps', 'OeeDashboardPage'],
+  const { data: apiResponse, isLoading } = useQuery({
+    queryKey: ['aps', 'oeeDashboard'],
     queryFn: async () => {
-      try {
-        const mesApiWithOee = mesApi as {
-          equipmentOee?: { list?: () => Promise<unknown> };
-        };
-        const res = await (typeof mesApiWithOee.equipmentOee?.list === 'function'
-          ? (mesApi as { equipmentOee: { list: () => Promise<unknown> } }).equipmentOee.list()
-          : Promise.resolve({ data: { records: [] } }));
-        const data = (res as { data?: unknown })?.data;
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray((data as { records?: unknown[] })?.records)
-            ? (data as { records: unknown[] }).records
-            : Array.isArray((data as { items?: unknown[] })?.items)
-              ? (data as { items: unknown[] }).items
-              : [];
-        return { oeeRecords: items };
-      } catch {
-        return {};
-      }
+      const res = await mesAnalyticsApi.getOeeDashboard({ days: 7 });
+      return res as OeeDashboardResponse;
     },
   });
 
+  const apiData = apiResponse;
+
   const oeeData = useMemo(() => {
-    return mockData.map((d) => ({
-      ...d,
-      oee: Number(((d.availability * d.performance * d.quality) / 10000).toFixed(1)),
+    const equipmentList = apiData?.by_equipment ?? [];
+    return equipmentList.map((item) => ({
+      workCenter: item.equipment_name,
+      availability: Math.round(item.availability * 10) / 10,
+      performance: Math.round(item.performance * 10) / 10,
+      quality: Math.round(item.quality_rate * 10) / 10,
+      oee: Math.round(item.oee * 10) / 10,
     }));
-  }, []);
+  }, [apiData]);
+
   const avgOee = useMemo(() => {
+    if (apiData?.avg_oee !== undefined) return Math.round(apiData.avg_oee * 10) / 10;
+    if (oeeData.length === 0) return 0;
     const sum = oeeData.reduce((s, d) => s + d.oee, 0);
     return Number((sum / oeeData.length).toFixed(1));
-  }, [oeeData]);
+  }, [apiData, oeeData]);
+
   const avgAvailability = useMemo(() => {
+    if (apiData?.avg_availability !== undefined)
+      return Math.round(apiData.avg_availability * 10) / 10;
+    if (oeeData.length === 0) return 0;
     return Number((oeeData.reduce((s, d) => s + d.availability, 0) / oeeData.length).toFixed(1));
-  }, [oeeData]);
+  }, [apiData, oeeData]);
+
   const avgPerformance = useMemo(() => {
+    if (apiData?.avg_performance !== undefined)
+      return Math.round(apiData.avg_performance * 10) / 10;
+    if (oeeData.length === 0) return 0;
     return Number((oeeData.reduce((s, d) => s + d.performance, 0) / oeeData.length).toFixed(1));
-  }, [oeeData]);
+  }, [apiData, oeeData]);
+
   const avgQuality = useMemo(() => {
+    if (apiData?.avg_quality_rate !== undefined)
+      return Math.round(apiData.avg_quality_rate * 10) / 10;
+    if (oeeData.length === 0) return 0;
     return Number((oeeData.reduce((s, d) => s + d.quality, 0) / oeeData.length).toFixed(1));
-  }, [oeeData]);
+  }, [apiData, oeeData]);
+
   const radialData = [
     {
       name: t('aps.oee_dashboard_page.k0'),
@@ -188,6 +185,21 @@ export default function OeeDashboardPage() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <StatsPageTemplate
       title={t('aps:oee_dashboard_page.oee_2')}
@@ -250,52 +262,53 @@ export default function OeeDashboardPage() {
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {t('aps.oee_dashboard_page.oee_7')}
+            {t('aps.oee_dashboard_page.k10')}
           </Typography>
-          <Box sx={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer
-              width='100%'
-              height={300}
+          <ResponsiveContainer
+            width='100%'
+            height={300}
+          >
+            <BarChart
+              data={oeeData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
             >
-              <BarChart
-                data={oeeData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-              >
-                <CartesianGrid strokeDasharray='3 3' />
-                <XAxis
-                  dataKey='workCenter'
-                  fontSize={11}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  unit='%'
-                  fontSize={11}
-                />
-                <Tooltip />
-                <Legend />
-                <Bar
-                  dataKey='availability'
-                  name={t('aps.oee_dashboard_page.k8')}
-                  fill={designTokens.colors.secondary.dark}
-                />
-                <Bar
-                  dataKey='performance'
-                  name={t('aps.oee_dashboard_page.k9')}
-                  fill={designTokens.colors.warning.main}
-                />
-                <Bar
-                  dataKey='quality'
-                  name={t('aps.oee_dashboard_page.k10')}
-                  fill={designTokens.colors.success.dark}
-                />
-                <Bar
-                  dataKey='oee'
-                  name='OEE'
-                  fill={designTokens.colors.error.main}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </Box>
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='workCenter'
+                fontSize={11}
+              />
+              <YAxis
+                domain={[0, 100]}
+                fontSize={11}
+              />
+              <Tooltip formatter={(value: unknown) => `${value}%`} />
+              <Legend />
+              <Bar
+                dataKey='availability'
+                name={t('aps.oee_dashboard_page.k0')}
+                fill={designTokens.colors.secondary.dark}
+                barSize={12}
+              />
+              <Bar
+                dataKey='performance'
+                name={t('aps.oee_dashboard_page.k1')}
+                fill={designTokens.colors.warning.main}
+                barSize={12}
+              />
+              <Bar
+                dataKey='quality'
+                name={t('aps.oee_dashboard_page.k2')}
+                fill={designTokens.colors.success.dark}
+                barSize={12}
+              />
+              <Bar
+                dataKey='oee'
+                name='OEE'
+                fill={designTokens.colors.error.main}
+                barSize={12}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </Paper>
       </Box>
     </StatsPageTemplate>
