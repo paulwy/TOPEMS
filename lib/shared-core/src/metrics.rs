@@ -1,6 +1,6 @@
 use prometheus::{
-    register_histogram_vec, register_int_counter_vec, register_int_gauge, HistogramVec,
-    IntCounterVec, IntGauge,
+    register_histogram_vec, register_int_counter_vec, register_int_gauge, register_int_gauge_vec,
+    HistogramVec, IntCounterVec, IntGauge, IntGaugeVec,
 };
 use std::sync::LazyLock;
 
@@ -57,6 +57,58 @@ pub static DB_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     .expect("Failed to register DB_QUERY_DURATION histogram")
 });
 
+// ==================== 缓存指标 ====================
+
+/// 缓存命中总数（按 service、entity、operation 分类）
+pub static CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_cache_hits_total",
+        "Total number of cache hits",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register CACHE_HITS_TOTAL counter")
+});
+
+/// 缓存未命中总数（按 service、entity、operation 分类）
+pub static CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_cache_misses_total",
+        "Total number of cache misses",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register CACHE_MISSES_TOTAL counter")
+});
+
+/// 缓存写入总数（按 service、entity、operation 分类）
+pub static CACHE_SETS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_cache_sets_total",
+        "Total number of cache writes",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register CACHE_SETS_TOTAL counter")
+});
+
+/// 缓存失效总数（按 service、entity、operation 分类）
+pub static CACHE_REMOVALS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_cache_removals_total",
+        "Total number of cache removals",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register CACHE_REMOVALS_TOTAL counter")
+});
+
+/// 当前缓存条目数（按 service、entity 分类）
+pub static CACHE_ENTRIES: LazyLock<IntGaugeVec> = LazyLock::new(|| {
+    register_int_gauge_vec!(
+        "topems_cache_entries",
+        "Current number of entries in cache",
+        &["service", "entity"]
+    )
+    .expect("Failed to register CACHE_ENTRIES gauge")
+});
+
 #[macro_export]
 macro_rules! observe_operation {
     ($service:expr, $operation:expr, $body:expr) => {{
@@ -97,6 +149,12 @@ pub fn init_metrics() {
     LazyLock::force(&BUSINESS_OPERATION_DURATION);
     LazyLock::force(&BUSINESS_OPERATIONS_TOTAL);
     LazyLock::force(&DB_QUERY_DURATION);
+    // 缓存指标
+    LazyLock::force(&CACHE_HITS_TOTAL);
+    LazyLock::force(&CACHE_MISSES_TOTAL);
+    LazyLock::force(&CACHE_SETS_TOTAL);
+    LazyLock::force(&CACHE_REMOVALS_TOTAL);
+    LazyLock::force(&CACHE_ENTRIES);
 }
 
 #[cfg(test)]

@@ -351,3 +351,67 @@ pub fn log_cache_set(service: &str, entity: &str, tenant_id: &str, cache_key: &s
 pub fn log_cache_remove(service: &str, entity: &str, tenant_id: &str, cache_key: &str) {
     log_cache_operation(service, entity, CacheOperation::Remove, tenant_id, cache_key);
 }
+
+// ==================== 缓存指标记录 ====================
+
+use crate::metrics::{CACHE_ENTRIES, CACHE_HITS_TOTAL, CACHE_MISSES_TOTAL, CACHE_REMOVALS_TOTAL, CACHE_SETS_TOTAL};
+
+/// 记录缓存命中指标
+///
+/// # 示例
+///
+/// ```rust
+/// use topems_shared_core::cache::record_cache_hit;
+/// record_cache_hit("mes", "process_route", "list");
+/// ```
+pub fn record_cache_hit(service: &str, entity: &str, operation: &str) {
+    CACHE_HITS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录缓存未命中指标
+pub fn record_cache_miss(service: &str, entity: &str, operation: &str) {
+    CACHE_MISSES_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录缓存写入指标
+pub fn record_cache_set(service: &str, entity: &str, operation: &str) {
+    CACHE_SETS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录缓存失效指标
+pub fn record_cache_remove(service: &str, entity: &str, operation: &str) {
+    CACHE_REMOVALS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 更新缓存条目数指标
+pub fn update_cache_entries(service: &str, entity: &str, count: i64) {
+    CACHE_ENTRIES
+        .with_label_values(&[service, entity])
+        .set(count);
+}
+
+/// 计算缓存命中率
+///
+/// 返回命中率（0.0 ~ 1.0），如果总请求数为 0 则返回 0.0
+pub fn cache_hit_rate(service: &str, entity: &str, operation: &str) -> f64 {
+    let hits = CACHE_HITS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .get();
+    let misses = CACHE_MISSES_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .get();
+    let total = hits + misses;
+    if total == 0 {
+        0.0
+    } else {
+        hits as f64 / total as f64
+    }
+}

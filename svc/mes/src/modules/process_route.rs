@@ -17,6 +17,7 @@ use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
@@ -165,6 +166,7 @@ pub async fn list_process_routes(
 
     // 检查缓存
     if let Some(cached) = state.dict_cache.get(&cache_key) {
+        record_cache_hit("mes", "process_route", "list");
         tracing::debug!(
             event_type = "cache_hit",
             service = "mes",
@@ -176,6 +178,9 @@ pub async fn list_process_routes(
         );
         return Json(ApiResponse::success(cached, "获取工艺路线列表成功"));
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("mes", "process_route", "list");
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE pr.deleted_at IS NULL");
@@ -285,6 +290,7 @@ pub async fn list_process_routes(
 
     // 写入缓存
     state.dict_cache.set(cache_key.clone(), response_data.clone());
+    record_cache_set("mes", "process_route", "list");
     tracing::debug!(
         event_type = "cache_set",
         service = "mes",
