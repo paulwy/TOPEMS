@@ -15,6 +15,7 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
+use models::dict::DictType;
 use topems_shared::LocalInMemoryCache as InMemoryCache;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
@@ -65,6 +66,34 @@ async fn main() -> Result<()> {
 
     // 创建字典缓存（在事件订阅者之前创建，以便传入）
     let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
+
+    // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
+    {
+        let cache = dict_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[erp] 开始缓存预热...");
+
+            // 预热字典类型列表（所有字典类型）
+            match sqlx::query_as::<_, DictType>(
+                "SELECT id, code, name, category, description, status, created_at, updated_at FROM dict_types WHERE deleted_at IS NULL ORDER BY category, code"
+            )
+            .fetch_all(&pool)
+            .await
+            {
+                Ok(dict_types) => {
+                    let cache_key = "erp:dict_type:dict:default:all";
+                    cache.set(cache_key.to_string(), dict_types.clone());
+                    tracing::info!("[erp] 字典类型列表缓存预热完成，共 {} 条", dict_types.len());
+                }
+                Err(e) => {
+                    tracing::warn!("[erp] 字典类型列表缓存预热失败: {}", e);
+                }
+            }
+
+            tracing::info!("[erp] 缓存预热完成");
+        });
+    }
 
     // 事件订阅者（失败不阻塞启动）
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await {
