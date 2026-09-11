@@ -1,10 +1,8 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_scm::shared::cache::InMemoryCache;
 use topems_shared_core::cache::{
-    CacheInvalidationEvent, CacheInvalidationListener, InMemoryCacheInvalidationHandler,
-    InvalidationLevel,
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
@@ -24,7 +22,7 @@ pub struct ScmEventHandlers {
     pub db: PgPool,
     pub supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     pub purchase_cache: Arc<AsyncL2Cache<serde_json::Value>>,
-    pub dict_cache: Arc<InMemoryCache<String>>,
+    pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl ScmEventHandlers {
@@ -32,7 +30,7 @@ impl ScmEventHandlers {
         db: PgPool,
         supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
         purchase_cache: Arc<AsyncL2Cache<serde_json::Value>>,
-        dict_cache: Arc<InMemoryCache<String>>,
+        dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     ) -> Self {
         Self {
             db,
@@ -909,7 +907,7 @@ pub async fn start_event_subscribers(
     db: PgPool,
     supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     purchase_cache: Arc<AsyncL2Cache<serde_json::Value>>,
-    dict_cache: Arc<InMemoryCache<String>>,
+    dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<(), String> {
     let handlers = ScmEventHandlers::new(
         db,
@@ -928,7 +926,7 @@ pub async fn start_event_subscribers(
         AsyncL2CacheInvalidationHandler::new("scm_purchase_cache", purchase_cache, "scm:purchase:");
     cache_invalidation_listener.register_handler(purchase_cache_handler);
     let dict_cache_handler =
-        InMemoryCacheInvalidationHandler::new("scm_dict_cache", dict_cache, "scm:dict:");
+        AsyncL2CacheInvalidationHandler::new("scm_dict_cache", dict_cache, "scm:dict:");
     cache_invalidation_listener.register_handler(dict_cache_handler);
     let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
 

@@ -1,4 +1,3 @@
-use crate::shared::cache::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -36,7 +35,7 @@ pub struct ApiState {
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     pub purchase_cache: Arc<AsyncL2Cache<serde_json::Value>>,
-    pub dict_cache: Arc<InMemoryCache<String>>,
+    pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl FromRef<ApiState> for AuthState {

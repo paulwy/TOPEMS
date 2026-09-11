@@ -12,7 +12,6 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use prometheus::{default_registry, Gauge};
-use topems_scm::shared::cache::InMemoryCache;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, Application, ServiceConfig,
@@ -148,8 +147,26 @@ async fn main() -> Result<()> {
         }
     };
 
-    let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
-    tracing::info!("💾 内存缓存初始化完成（字典）");
+    let dict_l2_config = L2CacheConfig {
+        instance_prefix: "scm_dict".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+    };
+    let dict_cache = match AsyncL2Cache::try_new(dict_l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（SCM 字典，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（SCM 字典，纯 L1 模式，Redis 未配置）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（SCM 字典）: {}", warn);
+            Arc::new(cache)
+        }
+    };
 
     // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
     {
