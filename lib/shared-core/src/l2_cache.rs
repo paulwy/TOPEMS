@@ -19,6 +19,10 @@ use std::time::Duration;
 use crate::cache::{
     CacheInvalidationEvent, CacheInvalidationHandler, InMemoryCache as MokaL1, InvalidationLevel,
 };
+use crate::metrics::{
+    L1_CACHE_ENTRIES, L1_CACHE_HITS_TOTAL, L1_CACHE_MISSES_TOTAL, L2_CACHE_CONNECTED,
+    L2_CACHE_HITS_TOTAL, L2_CACHE_MISSES_TOTAL, L2_CACHE_REMOVALS_TOTAL, L2_CACHE_SETS_TOTAL,
+};
 
 // ===== Redis 相关（仅当 redis_client 参数传入时启用 L2）=====
 use redis::aio::ConnectionManager as RedisConnectionManager;
@@ -297,6 +301,110 @@ impl<T: Clone + Send + Sync + 'static> Clone for AsyncL2Cache<T> {
             l2: self.l2.clone(),
             config: self.config.clone(),
         }
+    }
+}
+
+// ===== 多级缓存监控指标记录函数 =====
+
+/// 记录 L1 缓存命中指标
+///
+/// # 示例
+///
+/// ```rust
+/// use topems_shared_core::l2_cache::record_l1_cache_hit;
+/// record_l1_cache_hit("mes", "process_route", "list");
+/// ```
+pub fn record_l1_cache_hit(service: &str, entity: &str, operation: &str) {
+    L1_CACHE_HITS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录 L1 缓存未命中指标
+pub fn record_l1_cache_miss(service: &str, entity: &str, operation: &str) {
+    L1_CACHE_MISSES_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录 L2 缓存命中指标
+pub fn record_l2_cache_hit(service: &str, entity: &str, operation: &str) {
+    L2_CACHE_HITS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录 L2 缓存未命中指标
+pub fn record_l2_cache_miss(service: &str, entity: &str, operation: &str) {
+    L2_CACHE_MISSES_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录 L2 缓存写入指标
+pub fn record_l2_cache_set(service: &str, entity: &str, operation: &str) {
+    L2_CACHE_SETS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 记录 L2 缓存失效指标
+pub fn record_l2_cache_remove(service: &str, entity: &str, operation: &str) {
+    L2_CACHE_REMOVALS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .inc();
+}
+
+/// 更新 L1 缓存条目数指标
+pub fn update_l1_cache_entries(service: &str, entity: &str, count: i64) {
+    L1_CACHE_ENTRIES
+        .with_label_values(&[service, entity])
+        .set(count);
+}
+
+/// 设置 L2 缓存连接状态指标
+///
+/// - `connected = true`：设置为 1（已连接）
+/// - `connected = false`：设置为 0（未连接）
+pub fn set_l2_cache_connected(service: &str, connected: bool) {
+    L2_CACHE_CONNECTED
+        .with_label_values(&[service])
+        .set(if connected { 1 } else { 0 });
+}
+
+/// 计算 L1 缓存命中率
+///
+/// 返回命中率（0.0 ~ 1.0），如果总请求数为 0 则返回 0.0
+pub fn l1_cache_hit_rate(service: &str, entity: &str, operation: &str) -> f64 {
+    let hits = L1_CACHE_HITS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .get();
+    let misses = L1_CACHE_MISSES_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .get();
+    let total = hits + misses;
+    if total == 0 {
+        0.0
+    } else {
+        hits as f64 / total as f64
+    }
+}
+
+/// 计算 L2 缓存命中率
+///
+/// 返回命中率（0.0 ~ 1.0），如果总请求数为 0 则返回 0.0
+pub fn l2_cache_hit_rate(service: &str, entity: &str, operation: &str) -> f64 {
+    let hits = L2_CACHE_HITS_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .get();
+    let misses = L2_CACHE_MISSES_TOTAL
+        .with_label_values(&[service, entity, operation])
+        .get();
+    let total = hits + misses;
+    if total == 0 {
+        0.0
+    } else {
+        hits as f64 / total as f64
     }
 }
 

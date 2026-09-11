@@ -109,6 +109,88 @@ pub static CACHE_ENTRIES: LazyLock<IntGaugeVec> = LazyLock::new(|| {
     .expect("Failed to register CACHE_ENTRIES gauge")
 });
 
+// ===== 多级缓存（L1/L2）监控指标 =====
+
+/// L1 缓存命中总数（按 service、entity、operation 分类）
+pub static L1_CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_l1_cache_hits_total",
+        "Total number of L1 cache hits",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register L1_CACHE_HITS_TOTAL counter")
+});
+
+/// L1 缓存未命中总数（按 service、entity、operation 分类）
+pub static L1_CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_l1_cache_misses_total",
+        "Total number of L1 cache misses",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register L1_CACHE_MISSES_TOTAL counter")
+});
+
+/// L2 缓存命中总数（按 service、entity、operation 分类）
+pub static L2_CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_l2_cache_hits_total",
+        "Total number of L2 cache hits",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register L2_CACHE_HITS_TOTAL counter")
+});
+
+/// L2 缓存未命中总数（按 service、entity、operation 分类）
+pub static L2_CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_l2_cache_misses_total",
+        "Total number of L2 cache misses",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register L2_CACHE_MISSES_TOTAL counter")
+});
+
+/// L2 缓存写入总数（按 service、entity、operation 分类）
+pub static L2_CACHE_SETS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_l2_cache_sets_total",
+        "Total number of L2 cache writes",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register L2_CACHE_SETS_TOTAL counter")
+});
+
+/// L2 缓存失效总数（按 service、entity、operation 分类）
+pub static L2_CACHE_REMOVALS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
+    register_int_counter_vec!(
+        "topems_l2_cache_removals_total",
+        "Total number of L2 cache removals",
+        &["service", "entity", "operation"]
+    )
+    .expect("Failed to register L2_CACHE_REMOVALS_TOTAL counter")
+});
+
+/// L1 缓存条目数（按 service、entity 分类）
+pub static L1_CACHE_ENTRIES: LazyLock<IntGaugeVec> = LazyLock::new(|| {
+    register_int_gauge_vec!(
+        "topems_l1_cache_entries",
+        "Current number of entries in L1 cache",
+        &["service", "entity"]
+    )
+    .expect("Failed to register L1_CACHE_ENTRIES gauge")
+});
+
+/// L2 缓存连接状态（按 service 分类，1 = 已连接，0 = 未连接）
+pub static L2_CACHE_CONNECTED: LazyLock<IntGaugeVec> = LazyLock::new(|| {
+    register_int_gauge_vec!(
+        "topems_l2_cache_connected",
+        "L2 cache connection status (1 = connected, 0 = disconnected)",
+        &["service"]
+    )
+    .expect("Failed to register L2_CACHE_CONNECTED gauge")
+});
+
 #[macro_export]
 macro_rules! observe_operation {
     ($service:expr, $operation:expr, $body:expr) => {{
