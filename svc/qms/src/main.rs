@@ -92,7 +92,9 @@ async fn main() -> anyhow::Result<()> {
         l1_ttl: std::time::Duration::from_secs(60),
         l2_ttl: std::time::Duration::from_secs(600),
         l1_capacity: 10_000,
-    };
+        ..Default::default()
+    }
+    .with_metrics("qms", "quality_standard");
     let redis_url = std::env::var("REDIS_URL").ok();
     let dict_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
         Ok(cache) => {

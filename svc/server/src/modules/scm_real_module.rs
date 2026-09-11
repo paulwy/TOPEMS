@@ -68,18 +68,21 @@ impl ScmRealModule {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 10_000,
+            ..Default::default()
         };
         let purchase_l2_config = L2CacheConfig {
             instance_prefix: "scm_server_purchase".to_string(),
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(120),
             l1_capacity: 10_000,
+            ..Default::default()
         };
         let dict_l2_config = L2CacheConfig {
             instance_prefix: "scm_server_dict".to_string(),
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(600),
             l1_capacity: 10_000,
+            ..Default::default()
         };
         let state = ApiState {
             db: ctx.db.clone(),

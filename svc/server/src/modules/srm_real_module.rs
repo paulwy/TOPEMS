@@ -67,6 +67,7 @@ impl SrmRealModule {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 10_000,
+            ..Default::default()
         };
         let supplier_cache: Arc<AsyncL2Cache<serde_json::Value>> =
             Arc::new(AsyncL2Cache::new_l1_only(l2_config));

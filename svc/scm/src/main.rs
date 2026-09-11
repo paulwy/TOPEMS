@@ -106,13 +106,17 @@ async fn main() -> Result<()> {
         l1_ttl: Duration::from_secs(60),
         l2_ttl: Duration::from_secs(300),
         l1_capacity: 10_000,
-    };
+        ..Default::default()
+    }
+    .with_metrics("scm", "supplier");
     let purchase_l2_config = L2CacheConfig {
         instance_prefix: "scm_purchase".to_string(),
         l1_ttl: Duration::from_secs(60),
         l2_ttl: Duration::from_secs(120),
         l1_capacity: 10_000,
-    };
+        ..Default::default()
+    }
+    .with_metrics("scm", "purchase");
     let redis_url = std::env::var("REDIS_URL").ok();
 
     let supplier_cache = match AsyncL2Cache::try_new(supplier_l2_config, redis_url.as_deref()).await
@@ -152,7 +156,9 @@ async fn main() -> Result<()> {
         l1_ttl: Duration::from_secs(60),
         l2_ttl: Duration::from_secs(600),
         l1_capacity: 10_000,
-    };
+        ..Default::default()
+    }
+    .with_metrics("scm", "dict");
     let dict_cache = match AsyncL2Cache::try_new(dict_l2_config, redis_url.as_deref()).await {
         Ok(cache) => {
             if cache.has_l2() {

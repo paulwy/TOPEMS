@@ -62,7 +62,9 @@ async fn main() -> Result<()> {
         l1_ttl: Duration::from_secs(60),
         l2_ttl: Duration::from_secs(3600),
         l1_capacity: 10_000,
-    };
+        ..Default::default()
+    }
+    .with_metrics("hrm", "employee");
     let redis_url = std::env::var("REDIS_URL").ok();
     let employee_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
         Ok(cache) => {

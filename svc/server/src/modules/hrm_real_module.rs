@@ -81,6 +81,7 @@ impl HrmRealModule {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(3600),
             l1_capacity: 10_000,
+            ..Default::default()
         };
         let state = ApiState {
             db: ctx.db.clone(),

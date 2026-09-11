@@ -79,6 +79,7 @@ impl MesRealModule {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(600),
             l1_capacity: 10_000,
+            ..Default::default()
         };
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
