@@ -165,7 +165,15 @@ pub async fn list_process_routes(
 
     // 检查缓存
     if let Some(cached) = state.dict_cache.get(&cache_key) {
-        tracing::debug!("📋 工艺路线列表缓存命中: {}", cache_key);
+        tracing::debug!(
+            event_type = "cache_hit",
+            service = "mes",
+            entity = "process_route",
+            operation = "list",
+            tenant_id = %tenant_id,
+            cache_key = %cache_key,
+            "工艺路线列表缓存命中"
+        );
         return Json(ApiResponse::success(cached, "获取工艺路线列表成功"));
     }
 
@@ -277,7 +285,15 @@ pub async fn list_process_routes(
 
     // 写入缓存
     state.dict_cache.set(cache_key.clone(), response_data.clone());
-    tracing::debug!("💾 工艺路线列表缓存写入: {}", cache_key);
+    tracing::debug!(
+        event_type = "cache_set",
+        service = "mes",
+        entity = "process_route",
+        operation = "list",
+        tenant_id = %tenant_id,
+        cache_key = %cache_key,
+        "工艺路线列表缓存写入"
+    );
 
     Json(ApiResponse::success(
         response_data,

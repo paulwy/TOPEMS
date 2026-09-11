@@ -110,7 +110,15 @@ pub async fn list_drivers(
 
     // 检查缓存（在获取事务锁之前，避免不必要的锁等待）
     if let Some(cached) = state.dict_cache.get(&cache_key) {
-        tracing::debug!("📋 司机列表缓存命中: {}", cache_key);
+        tracing::debug!(
+            event_type = "cache_hit",
+            service = "tms",
+            entity = "driver",
+            operation = "list",
+            tenant_id = %tenant_id,
+            cache_key = %cache_key,
+            "司机列表缓存命中"
+        );
         return Json(ApiResponse::success(cached, "获取司机列表成功"));
     }
 
@@ -162,7 +170,15 @@ pub async fn list_drivers(
 
             // 写入缓存
             state.dict_cache.set(cache_key.clone(), response_data.clone());
-            tracing::debug!("💾 司机列表缓存写入: {}", cache_key);
+            tracing::debug!(
+                event_type = "cache_set",
+                service = "tms",
+                entity = "driver",
+                operation = "list",
+                tenant_id = %tenant_id,
+                cache_key = %cache_key,
+                "司机列表缓存写入"
+            );
 
             Json(ApiResponse::success(response_data, "获取司机列表成功"))
         }
