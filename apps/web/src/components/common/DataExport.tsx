@@ -24,6 +24,25 @@ import {
 import i18n from '@/i18n';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
 
+// ============ 安全工具函数 ============
+
+/**
+ * HTML 转义函数，防止 XSS 攻击
+ * 将特殊字符转换为 HTML 实体
+ */
+function escapeHtml(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  const str = String(value);
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ============ 类型定义 ============
 
 /**
@@ -293,12 +312,12 @@ const DataExport: React.FC<DataExportProps> = ({
             </style>
           </head>
           <body>
-            <h1>${name}</h1>
+            <h1>${escapeHtml(name)}</h1>
             <div class="export-time">{i18n.t('components.data_export.k0')}</div>
             <table>
               <thead>
                 <tr>
-                  ${selectedFieldsFiltered.map((f) => `<th>${f.title}</th>`).join('')}
+                  ${selectedFieldsFiltered.map((f) => `<th>${escapeHtml(f.title)}</th>`).join('')}
                 </tr>
               </thead>
               <tbody>
@@ -306,7 +325,7 @@ const DataExport: React.FC<DataExportProps> = ({
                   .map(
                     (row) =>
                       `<tr>${selectedFieldsFiltered
-                        .map((f) => `<td>${row[f.key] ?? ''}</td>`)
+                        .map((f) => `<td>${escapeHtml(row[f.key] ?? '')}</td>`)
                         .join('')}</tr>`
                   )
                   .join('')}

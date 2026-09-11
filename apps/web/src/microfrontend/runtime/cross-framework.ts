@@ -22,6 +22,25 @@ import ReactDOM from 'react-dom/client';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
+// ==================== 安全工具函数 ====================
+
+/**
+ * HTML 转义函数，防止 XSS 攻击
+ * 将特殊字符转换为 HTML 实体
+ */
+function escapeHtml(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  const str = String(value);
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ==================== 类型定义 ====================
 
 /** 支持的框架类型 */
@@ -237,7 +256,7 @@ export class VueAdapter implements FrameworkAdapter {
   /** 模拟 Vue 模板渲染 */
   private renderTemplate(props: UnifiedProps): string {
     const entries = Object.entries(props)
-      .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
+      .map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}`)
       .join('<br/>');
     return `<div data-framework="vue" style="padding: designTokens.spacing.md;border:1px solid var(--color-success-400);border-radius:6px;">
       <strong>[Vue {i18n.t('microfrontend.cross-framework.k0')}]</strong><br/>${entries || i18n.t('microfrontend.cross-framework.k0')}
@@ -310,7 +329,7 @@ export class AngularAdapter implements FrameworkAdapter {
     const entries = Object.entries(props)
       .map(
         ([k, v]) =>
-          `<li><strong>{{ ${k} }}</strong>: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</li>`
+          `<li><strong>{{ ${escapeHtml(k)} }}</strong>: ${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</li>`
       )
       .join('');
     return `<div data-framework="angular" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">
@@ -388,7 +407,7 @@ export class SvelteAdapter implements FrameworkAdapter {
     const entries = Object.entries(props)
       .map(
         ([k, v]) =>
-          `<span style="display:inline-block;margin:2px 6px;padding:2px 8px;background:${designTokens.colors.error['600']};color:var(--color-primary-foreground);border-radius:3px;">${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>`
+          `<span style="display:inline-block;margin:2px 6px;padding:2px 8px;background:${designTokens.colors.error['600']};color:var(--color-primary-foreground);border-radius:3px;">${escapeHtml(k)}: ${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</span>`
       )
       .join('');
     return `<div data-framework="svelte" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">
