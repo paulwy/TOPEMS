@@ -33,8 +33,8 @@ pub fn create_routes() -> Router<ApiState> {
 
 const EMPLOYEE_CACHE_TTL: u64 = 3600;
 
-fn employee_cache_key(id: &Uuid) -> String {
-    format!("employee:{}", id)
+fn employee_cache_key(tenant_id: &Uuid, id: &Uuid) -> String {
+    format!("hrm:employee:get:{}:{}", tenant_id, id)
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -150,7 +150,9 @@ pub async fn get_employee(
         return e;
     }
 
-    let cache_key = employee_cache_key(&id);
+    // 从 claims 和 headers 中获取 tenant_id，用于多租户缓存隔离
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let cache_key = employee_cache_key(&tenant_id, &id);
 
     if let Some(cached) = state.employee_cache.get(&cache_key) {
         return Json(ApiResponse::success(cached, "从本地内存缓存获取员工成功"));
@@ -163,7 +165,6 @@ pub async fn get_employee(
         }
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
     let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
     let result = service.get_employee(&id).await;
 
@@ -321,7 +322,7 @@ pub async fn create_employee(
             let _ = state
                 .cache
                 .set(
-                    &employee_cache_key(&employee.id),
+                    &employee_cache_key(&tenant_id, &employee.id),
                     &serde_json::to_string(employee).unwrap_or_default(),
                     Some(EMPLOYEE_CACHE_TTL),
                 )
@@ -452,11 +453,11 @@ pub async fn update_employee(
     let result = service.update_employee(&id, req, &mut *txn).await;
 
     if result.code == 200 {
-        state.employee_cache.remove(&employee_cache_key(&id));
+        state.employee_cache.remove(&employee_cache_key(&tenant_id, &id));
         let _ = state
             .cache
             .set(
-                &employee_cache_key(&id),
+                &employee_cache_key(&tenant_id, &id),
                 &result
                     .data
                     .as_ref()
@@ -556,8 +557,8 @@ pub async fn delete_employee(
     let result = service.delete_employee(&id, &mut *txn).await;
 
     if result.code == 200 {
-        state.employee_cache.remove(&employee_cache_key(&id));
-        let _ = state.cache.delete(&employee_cache_key(&id)).await;
+        state.employee_cache.remove(&employee_cache_key(&tenant_id, &id));
+        let _ = state.cache.delete(&employee_cache_key(&tenant_id, &id)).await;
 
         // 发布 MDM 主数据删除事件
         let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
@@ -723,29 +724,43 @@ mod tests {
     #[test]
     fn test_employee_cache_key_format() {
         let id = Uuid::new_v4();
-        let key = employee_cache_key(&id);
-        assert_eq!(key, format!("employee:{}", id));
+        let tenant_id = Uuid::new_v4();
+        let key = employee_cache_key(&tenant_id, &id);
+        assert_eq!(key, format!("hrm:employee:get:{}:{}", tenant_id, id));
     }
 
     #[test]
     fn test_employee_cache_key_nil_uuid() {
         let id = Uuid::nil();
-        let key = employee_cache_key(&id);
-        assert_eq!(key, format!("employee:{}", Uuid::nil()));
+        let tenant_id = Uuid::new_v4();
+        let key = employee_cache_key(&tenant_id, &id);
+        assert_eq!(key, format!("hrm:employee:get:{}:{}", tenant_id, Uuid::nil()));
     }
 
     #[test]
     fn test_employee_cache_key_different_uuids() {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
-        assert_ne!(employee_cache_key(&id1), employee_cache_key(&id2));
+        let tenant_id = Uuid::new_v4();
+        assert_ne!(employee_cache_key(&tenant_id, &id1), employee_cache_key(&tenant_id, &id2));
     }
 
     #[test]
     fn test_employee_cache_key_prefix() {
         let id = Uuid::new_v4();
-        let key = employee_cache_key(&id);
-        assert!(key.starts_with("employee:"));
+        let tenant_id = Uuid::new_v4();
+        let key = employee_cache_key(&tenant_id, &id);
+        assert!(key.starts_with("hrm:employee:get:"));
+    }
+
+    #[test]
+    fn test_employee_cache_key_is_isolated_by_tenant() {
+        let id = Uuid::new_v4();
+        let tenant_a = Uuid::new_v4();
+        let tenant_b = Uuid::new_v4();
+        let key1 = employee_cache_key(&tenant_a, &id);
+        let key2 = employee_cache_key(&tenant_b, &id);
+        assert_ne!(key1, key2, "different tenants should have different cache keys");
     }
 
     #[test]

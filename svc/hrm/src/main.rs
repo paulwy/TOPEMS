@@ -68,7 +68,6 @@ async fn main() -> Result<()> {
         encryption: Arc::new(encryption),
         event_publisher: ctx.event_publisher.clone(),
         employee_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
-        department_cache: Arc::new(InMemoryCache::new(Duration::from_secs(1800))),
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）

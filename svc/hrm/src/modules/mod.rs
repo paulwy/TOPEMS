@@ -1,4 +1,4 @@
-use crate::models::{Department, Employee};
+use crate::models::Employee;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -43,7 +43,6 @@ pub struct ApiState {
     pub encryption: Arc<FieldEncryptionService>,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub employee_cache: Arc<InMemoryCache<Employee>>,
-    pub department_cache: Arc<InMemoryCache<Vec<Department>>>,
 }
 
 impl FromRef<ApiState> for AuthState {
