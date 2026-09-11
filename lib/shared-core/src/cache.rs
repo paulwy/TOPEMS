@@ -349,12 +349,20 @@ pub fn log_cache_set(service: &str, entity: &str, tenant_id: &str, cache_key: &s
 
 /// 缓存失效日志（便捷函数）
 pub fn log_cache_remove(service: &str, entity: &str, tenant_id: &str, cache_key: &str) {
-    log_cache_operation(service, entity, CacheOperation::Remove, tenant_id, cache_key);
+    log_cache_operation(
+        service,
+        entity,
+        CacheOperation::Remove,
+        tenant_id,
+        cache_key,
+    );
 }
 
 // ==================== 缓存指标记录 ====================
 
-use crate::metrics::{CACHE_ENTRIES, CACHE_HITS_TOTAL, CACHE_MISSES_TOTAL, CACHE_REMOVALS_TOTAL, CACHE_SETS_TOTAL};
+use crate::metrics::{
+    CACHE_ENTRIES, CACHE_HITS_TOTAL, CACHE_MISSES_TOTAL, CACHE_REMOVALS_TOTAL, CACHE_SETS_TOTAL,
+};
 
 /// 记录缓存命中指标
 ///
@@ -505,10 +513,7 @@ impl CacheInvalidationListener {
 
     /// 注册缓存失效处理器
     pub fn register_handler<H: CacheInvalidationHandler + 'static>(&mut self, handler: H) {
-        tracing::info!(
-            "注册缓存失效处理器: {}",
-            handler.name()
-        );
+        tracing::info!("注册缓存失效处理器: {}", handler.name());
         self.handlers.push(Box::new(handler));
     }
 

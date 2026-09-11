@@ -56,7 +56,7 @@ pub async fn list_standards(
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    // 构建缓存 Key 并检查缓存
+    // 构建缓存 Key 并检查缓存（异步多级缓存：L1 moka + L2 Redis）
     let cache_key = standards_list_cache_key(
         &tenant_id,
         page,
@@ -65,7 +65,7 @@ pub async fn list_standards(
         &query.status,
         &query.search,
     );
-    if let Some(cached) = state.dict_cache.get(&cache_key) {
+    if let Some(cached) = state.dict_cache.get(&cache_key).await {
         record_cache_hit("qms", "quality_standard", "list");
         tracing::debug!(
             service = "qms",
@@ -129,9 +129,9 @@ pub async fn list_standards(
                 page,
                 page_size,
             };
-            // 写入缓存
+            // 写入缓存（异步多级缓存：write-through L1 + L2）
             if let Ok(cached_value) = serde_json::to_value(&response) {
-                state.dict_cache.set(cache_key.clone(), cached_value);
+                state.dict_cache.set(cache_key.clone(), cached_value).await;
                 record_cache_set("qms", "quality_standard", "list");
                 tracing::debug!(
                     service = "qms",
@@ -188,14 +188,18 @@ pub async fn create_standard(
                 .await;
             }
             // 失效列表缓存（创建后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("qms:quality_standard:*", "pattern", Some("quality_standard_created"))
+                        .publish_cache_invalidated(
+                            "qms:quality_standard:*",
+                            "pattern",
+                            Some("quality_standard_created"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -298,14 +302,18 @@ pub async fn update_standard(
     match standard {
         Ok(data) => {
             // 失效列表缓存（更新后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("qms:quality_standard:*", "pattern", Some("quality_standard_updated"))
+                        .publish_cache_invalidated(
+                            "qms:quality_standard:*",
+                            "pattern",
+                            Some("quality_standard_updated"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -360,14 +368,18 @@ pub async fn delete_standard(
     match result {
         Ok(_) => {
             // 失效列表缓存（删除后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("qms:quality_standard:*", "pattern", Some("quality_standard_deleted"))
+                        .publish_cache_invalidated(
+                            "qms:quality_standard:*",
+                            "pattern",
+                            Some("quality_standard_deleted"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);

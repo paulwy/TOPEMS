@@ -16,7 +16,9 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::cache::InMemoryCache as MokaL1;
+use crate::cache::{
+    CacheInvalidationEvent, CacheInvalidationHandler, InMemoryCache as MokaL1, InvalidationLevel,
+};
 
 // ===== Redis 相关（仅当 redis_client 参数传入时启用 L2）=====
 use redis::Client as RedisClient;
@@ -309,6 +311,85 @@ impl<T: Clone + Send + Sync + 'static> Clone for AsyncL2Cache<T> {
             l2: self.l2.clone(),
             config: self.config.clone(),
         }
+    }
+}
+
+// ===== AsyncL2Cache 缓存失效处理器 =====
+
+/// AsyncL2Cache 缓存失效处理器
+///
+/// 适配 `CacheInvalidationHandler` trait，用于处理 `AsyncL2Cache` 的缓存失效事件。
+/// 由于 `AsyncL2Cache` 的 API 是异步的，处理器内部使用 `tokio::spawn` 执行异步操作。
+pub struct AsyncL2CacheInvalidationHandler<T: Clone + Send + Sync + 'static> {
+    /// 处理器名称
+    name: String,
+    /// 缓存引用
+    cache: Arc<AsyncL2Cache<T>>,
+    /// 缓存键前缀（用于 pattern 匹配，如 "qms:quality_standard:"）
+    key_prefix: String,
+}
+
+impl<T: Clone + Send + Sync + 'static> AsyncL2CacheInvalidationHandler<T> {
+    /// 创建新的 AsyncL2Cache 失效处理器
+    pub fn new(name: &str, cache: Arc<AsyncL2Cache<T>>, key_prefix: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            cache,
+            key_prefix: key_prefix.to_string(),
+        }
+    }
+}
+
+impl<T: Clone + Send + Sync + 'static> CacheInvalidationHandler
+    for AsyncL2CacheInvalidationHandler<T>
+{
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn handle_invalidation(&self, event: &CacheInvalidationEvent) {
+        let cache = self.cache.clone();
+        let event = event.clone();
+        let name = self.name.clone();
+        let key_prefix = self.key_prefix.clone();
+
+        // 使用 tokio::spawn 执行异步缓存失效操作
+        tokio::spawn(async move {
+            match event.invalidation_level {
+                InvalidationLevel::All => {
+                    // 清空 L1 缓存（不清空 L2，避免跨实例误删）
+                    cache.clear_l1();
+                    tracing::info!("AsyncL2Cache L1 已全部清空: {}", name);
+                }
+                InvalidationLevel::Specific => {
+                    // 精确失效指定的缓存键（同时删除 L1 和 L2）
+                    cache.remove(&event.cache_key_pattern).await;
+                    tracing::info!(
+                        "AsyncL2Cache 缓存键已失效: {} -> {}",
+                        name,
+                        event.cache_key_pattern
+                    );
+                }
+                InvalidationLevel::Pattern => {
+                    // 前缀匹配失效
+                    // 注意：AsyncL2Cache 不支持直接的前缀匹配删除，
+                    // 这里采用简化策略：如果事件的 pattern 以本缓存的 key_prefix 开头，
+                    // 则清空 L1 缓存（因为无法精确删除前缀匹配的键）。
+                    // 更精细的实现需要维护键索引。
+                    if event.cache_key_pattern.starts_with(&key_prefix)
+                        || key_prefix.starts_with(&event.cache_key_pattern)
+                        || event.cache_key_pattern == "*"
+                    {
+                        cache.clear_l1();
+                        tracing::info!(
+                            "AsyncL2Cache L1 已按前缀清空: {} (pattern={})",
+                            name,
+                            event.cache_key_pattern
+                        );
+                    }
+                }
+            }
+        });
     }
 }
 
