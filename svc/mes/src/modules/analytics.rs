@@ -153,7 +153,10 @@ pub struct AnalyticsQuery {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/analytics/capacity-utilization", get(get_capacity_utilization))
+        .route(
+            "/analytics/capacity-utilization",
+            get(get_capacity_utilization),
+        )
         .route("/analytics/energy-cost", get(get_energy_cost))
         .route("/analytics/equipment-mtbf", get(get_equipment_mtbf))
         .route("/analytics/delivery-analytics", get(get_delivery_analytics))
@@ -192,12 +195,14 @@ pub async fn get_capacity_utilization(
         Ok(rows) => {
             let heatmap: Vec<CapacityUtilizationItem> = rows
                 .into_iter()
-                .map(|(equipment, date, shift, utilization)| CapacityUtilizationItem {
-                    equipment,
-                    date,
-                    shift,
-                    utilization: utilization.unwrap_or(0.0),
-                })
+                .map(
+                    |(equipment, date, shift, utilization)| CapacityUtilizationItem {
+                        equipment,
+                        date,
+                        shift,
+                        utilization: utilization.unwrap_or(0.0),
+                    },
+                )
                 .collect();
 
             let avg_utilization = if heatmap.is_empty() {
@@ -206,7 +211,11 @@ pub async fn get_capacity_utilization(
                 heatmap.iter().map(|h| h.utilization).sum::<f64>() / heatmap.len() as f64
             };
 
-            let total_equipment = heatmap.iter().map(|h| &h.equipment).collect::<std::collections::HashSet<_>>().len() as i64;
+            let total_equipment = heatmap
+                .iter()
+                .map(|h| &h.equipment)
+                .collect::<std::collections::HashSet<_>>()
+                .len() as i64;
 
             Json(CapacityUtilizationResponse {
                 heatmap,
@@ -259,7 +268,11 @@ pub async fn get_energy_cost(
                     let c = cost.unwrap_or(0.0);
                     EnergyMixItem {
                         energy_type: category,
-                        percentage: if total > 0.0 { (c / total) * 100.0 } else { 0.0 },
+                        percentage: if total > 0.0 {
+                            (c / total) * 100.0
+                        } else {
+                            0.0
+                        },
                         cost: c,
                     }
                 })
@@ -542,8 +555,9 @@ pub async fn get_oee_dashboard(
     let days = query.days.unwrap_or(7);
 
     // 按设备统计 OEE
-    let equipment_result = sqlx::query_as::<_, (String, Option<f64>, Option<f64>, Option<f64>, Option<f64>)>(
-        r#"
+    let equipment_result =
+        sqlx::query_as::<_, (String, Option<f64>, Option<f64>, Option<f64>, Option<f64>)>(
+            r#"
         SELECT
             COALESCE(e.equipment_name, '未知') as equipment_name,
             AVG(o.oee) * 100 as oee,
@@ -557,10 +571,10 @@ pub async fn get_oee_dashboard(
         ORDER BY oee DESC
         LIMIT 20
         "#,
-    )
-    .bind(days)
-    .fetch_all(&state.pool)
-    .await;
+        )
+        .bind(days)
+        .fetch_all(&state.pool)
+        .await;
 
     let by_equipment: Vec<OeeDashboardItem> = match equipment_result {
         Ok(rows) => rows
@@ -580,8 +594,9 @@ pub async fn get_oee_dashboard(
     };
 
     // OEE 趋势
-    let trend_result = sqlx::query_as::<_, (String, Option<f64>, Option<f64>, Option<f64>, Option<f64>)>(
-        r#"
+    let trend_result =
+        sqlx::query_as::<_, (String, Option<f64>, Option<f64>, Option<f64>, Option<f64>)>(
+            r#"
         SELECT
             record_date::text as date,
             AVG(oee) * 100 as oee,
@@ -594,10 +609,10 @@ pub async fn get_oee_dashboard(
         ORDER BY record_date
         LIMIT 30
         "#,
-    )
-    .bind(days)
-    .fetch_all(&state.pool)
-    .await;
+        )
+        .bind(days)
+        .fetch_all(&state.pool)
+        .await;
 
     let trend: Vec<OeeTrendItem> = match trend_result {
         Ok(rows) => rows
@@ -616,10 +631,26 @@ pub async fn get_oee_dashboard(
         }
     };
 
-    let avg_oee = if by_equipment.is_empty() { 0.0 } else { by_equipment.iter().map(|b| b.oee).sum::<f64>() / by_equipment.len() as f64 };
-    let avg_availability = if by_equipment.is_empty() { 0.0 } else { by_equipment.iter().map(|b| b.availability).sum::<f64>() / by_equipment.len() as f64 };
-    let avg_performance = if by_equipment.is_empty() { 0.0 } else { by_equipment.iter().map(|b| b.performance).sum::<f64>() / by_equipment.len() as f64 };
-    let avg_quality_rate = if by_equipment.is_empty() { 0.0 } else { by_equipment.iter().map(|b| b.quality_rate).sum::<f64>() / by_equipment.len() as f64 };
+    let avg_oee = if by_equipment.is_empty() {
+        0.0
+    } else {
+        by_equipment.iter().map(|b| b.oee).sum::<f64>() / by_equipment.len() as f64
+    };
+    let avg_availability = if by_equipment.is_empty() {
+        0.0
+    } else {
+        by_equipment.iter().map(|b| b.availability).sum::<f64>() / by_equipment.len() as f64
+    };
+    let avg_performance = if by_equipment.is_empty() {
+        0.0
+    } else {
+        by_equipment.iter().map(|b| b.performance).sum::<f64>() / by_equipment.len() as f64
+    };
+    let avg_quality_rate = if by_equipment.is_empty() {
+        0.0
+    } else {
+        by_equipment.iter().map(|b| b.quality_rate).sum::<f64>() / by_equipment.len() as f64
+    };
 
     Json(OeeDashboardResponse {
         avg_oee,

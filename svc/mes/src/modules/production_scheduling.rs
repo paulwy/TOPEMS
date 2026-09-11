@@ -1073,9 +1073,8 @@ async fn transition_schedule(
 
 fn get_schedule_tenant_id(claims: &Claims) -> Uuid {
     match &claims.tenant_id {
-        Some(t) => Uuid::parse_str(t).unwrap_or_else(|_| {
-            Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap()
-        }),
+        Some(t) => Uuid::parse_str(t)
+            .unwrap_or_else(|_| Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap()),
         None => Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap(),
     }
 }
@@ -1133,4 +1132,3 @@ pub async fn cancel_schedule(
 ) -> Json<ApiResponse<ScheduleActionResponse>> {
     transition_schedule(&state, &claims, id, "cancelled", req.comment).await
 }
-

@@ -1,5 +1,5 @@
-pub mod anomaly_detection;
 pub mod analytics;
+pub mod anomaly_detection;
 pub mod approval_common;
 pub mod aps_compat;
 pub mod aps_scheduling;
@@ -28,13 +28,13 @@ pub mod production_record;
 pub mod production_scheduling;
 pub mod quality_management;
 pub mod quality_traceability;
+pub mod settings;
 pub mod team;
 pub mod wip;
 pub mod work_order;
 pub mod work_order_calc;
 pub mod work_report;
 pub mod work_station;
-pub mod settings;
 
 use crate::AppState;
 use axum::Router;

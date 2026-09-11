@@ -150,11 +150,14 @@ pub async fn list_capacities(
         page_size,
         params.search.clone().unwrap_or_else(|| "none".to_string()),
         params.status.clone().unwrap_or_else(|| "all".to_string()),
-        params.work_center_id.map(|id| id.to_string()).unwrap_or_else(|| "none".to_string())
+        params
+            .work_center_id
+            .map(|id| id.to_string())
+            .unwrap_or_else(|| "none".to_string())
     );
 
     // 检查缓存
-    if let Some(cached) = state.dict_cache.get(&cache_key) {
+    if let Some(cached) = state.dict_cache.get(&cache_key).await {
         tracing::debug!(
             event_type = "cache_hit",
             service = "mes",
@@ -220,7 +223,10 @@ pub async fn list_capacities(
             });
 
             // 写入缓存
-            state.dict_cache.set(cache_key.clone(), response_data.clone());
+            state
+                .dict_cache
+                .set(cache_key.clone(), response_data.clone())
+                .await;
             tracing::debug!(
                 event_type = "cache_set",
                 service = "mes",
@@ -231,10 +237,7 @@ pub async fn list_capacities(
                 "产能列表缓存写入"
             );
 
-            Json(ApiResponse::success(
-                response_data,
-                "获取产能列表成功",
-            ))
+            Json(ApiResponse::success(response_data, "获取产能列表成功"))
         }
         Err(e) => {
             tracing::error!("获取产能列表失败: {}", e);
@@ -312,14 +315,18 @@ pub async fn create_capacity(
     match result {
         Ok(cap) => {
             // 失效列表缓存（创建后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("mes:capacity:*", "pattern", Some("capacity_created"))
+                        .publish_cache_invalidated(
+                            "mes:capacity:*",
+                            "pattern",
+                            Some("capacity_created"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -390,14 +397,18 @@ pub async fn update_capacity(
     match result {
         Ok(cap) => {
             // 失效列表缓存（更新后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("mes:capacity:*", "pattern", Some("capacity_updated"))
+                        .publish_cache_invalidated(
+                            "mes:capacity:*",
+                            "pattern",
+                            Some("capacity_updated"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -430,14 +441,18 @@ pub async fn delete_capacity(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             // 失效列表缓存（删除后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("mes:capacity:*", "pattern", Some("capacity_deleted"))
+                        .publish_cache_invalidated(
+                            "mes:capacity:*",
+                            "pattern",
+                            Some("capacity_deleted"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -751,4 +766,3 @@ pub async fn submit_capacity(
         }
     }
 }
-

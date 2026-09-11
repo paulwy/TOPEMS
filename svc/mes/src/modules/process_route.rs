@@ -154,7 +154,10 @@ pub async fn list_process_routes(
     let offset = (page - 1) * pagesize;
 
     // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     let cache_key = format!(
         "mes:process_route:list:{}:page:{}:pagesize:{}:search:{}:status:{}",
         tenant_id,
@@ -165,7 +168,7 @@ pub async fn list_process_routes(
     );
 
     // 检查缓存
-    if let Some(cached) = state.dict_cache.get(&cache_key) {
+    if let Some(cached) = state.dict_cache.get(&cache_key).await {
         record_cache_hit("mes", "process_route", "list");
         tracing::debug!(
             event_type = "cache_hit",
@@ -289,7 +292,10 @@ pub async fn list_process_routes(
     });
 
     // 写入缓存
-    state.dict_cache.set(cache_key.clone(), response_data.clone());
+    state
+        .dict_cache
+        .set(cache_key.clone(), response_data.clone())
+        .await;
     record_cache_set("mes", "process_route", "list");
     tracing::debug!(
         event_type = "cache_set",
@@ -301,10 +307,7 @@ pub async fn list_process_routes(
         "工艺路线列表缓存写入"
     );
 
-    Json(ApiResponse::success(
-        response_data,
-        "获取工艺路线列表成功",
-    ))
+    Json(ApiResponse::success(response_data, "获取工艺路线列表成功"))
 }
 
 pub async fn get_process_route(
@@ -417,14 +420,18 @@ pub async fn create_process_route(
     match result {
         Ok(r) => {
             // 失效列表缓存（创建后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("mes:process_route:*", "pattern", Some("process_route_created"))
+                        .publish_cache_invalidated(
+                            "mes:process_route:*",
+                            "pattern",
+                            Some("process_route_created"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -498,14 +505,18 @@ pub async fn update_process_route(
     match result {
         Ok(r) => {
             // 失效列表缓存（更新后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("mes:process_route:*", "pattern", Some("process_route_updated"))
+                        .publish_cache_invalidated(
+                            "mes:process_route:*",
+                            "pattern",
+                            Some("process_route_updated"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -568,14 +579,18 @@ pub async fn delete_process_route(
     match result {
         Ok(_) => {
             // 失效列表缓存（删除后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("mes:process_route:*", "pattern", Some("process_route_deleted"))
+                        .publish_cache_invalidated(
+                            "mes:process_route:*",
+                            "pattern",
+                            Some("process_route_deleted"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
