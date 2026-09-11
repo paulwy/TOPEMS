@@ -1,12 +1,19 @@
 use chrono::Utc;
 use sqlx::PgPool;
+use std::sync::Arc;
+use topems_scm::shared::cache::InMemoryCache;
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+    InMemoryCacheInvalidationHandler,
+};
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
 use topems_shared_event::event::{
-    Event, EventResult, EventSubscriber, EventType, InventoryUpdatedPayload, MasterDataAction,
-    MasterDataDomain, MasterDataEvent, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
-    SrmSupplierCreatedPayload, SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
-    StockInboundPayload, StockOutboundPayload, SupplierDataSyncRequestedPayload,
-    WmsInventoryItemReceivedPayload, WmsInventoryItemShippedPayload,
+    CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
+    InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload, SrmSupplierCreatedPayload,
+    SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload, StockInboundPayload,
+    StockOutboundPayload, SupplierDataSyncRequestedPayload, WmsInventoryItemReceivedPayload,
+    WmsInventoryItemShippedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -14,11 +21,24 @@ type HandlerResult = std::result::Result<(), String>;
 #[derive(Clone)]
 pub struct ScmEventHandlers {
     pub db: PgPool,
+    pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub purchase_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub dict_cache: Arc<InMemoryCache<String>>,
 }
 
 impl ScmEventHandlers {
-    pub fn new(db: PgPool) -> Self {
-        Self { db }
+    pub fn new(
+        db: PgPool,
+        supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+        purchase_cache: Arc<InMemoryCache<serde_json::Value>>,
+        dict_cache: Arc<InMemoryCache<String>>,
+    ) -> Self {
+        Self {
+            db,
+            supplier_cache,
+            purchase_cache,
+            dict_cache,
+        }
     }
 
     pub fn build_subscriber(&self) -> EventResult<EventSubscriber> {
@@ -884,15 +904,69 @@ impl ScmEventHandlers {
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
-    let handlers = ScmEventHandlers::new(db);
+pub async fn start_event_subscribers(
+    db: PgPool,
+    supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+    purchase_cache: Arc<InMemoryCache<serde_json::Value>>,
+    dict_cache: Arc<InMemoryCache<String>>,
+) -> Result<(), String> {
+    let handlers = ScmEventHandlers::new(db, supplier_cache.clone(), purchase_cache.clone(), dict_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[scm] 启动事件订阅者，注册 2 类业务事件 + 2 个 MDM 主数据事件 handler");
+    // 创建缓存失效监听器，注册三个缓存处理器
+    let mut cache_invalidation_listener = CacheInvalidationListener::new("scm");
+    let supplier_cache_handler = InMemoryCacheInvalidationHandler::new(
+        "scm_supplier_cache",
+        supplier_cache,
+        "scm:supplier:",
+    );
+    cache_invalidation_listener.register_handler(supplier_cache_handler);
+    let purchase_cache_handler = InMemoryCacheInvalidationHandler::new(
+        "scm_purchase_cache",
+        purchase_cache,
+        "scm:purchase:",
+    );
+    cache_invalidation_listener.register_handler(purchase_cache_handler);
+    let dict_cache_handler = InMemoryCacheInvalidationHandler::new(
+        "scm_dict_cache",
+        dict_cache,
+        "scm:dict:",
+    );
+    cache_invalidation_listener.register_handler(dict_cache_handler);
+    let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+    tracing::info!("[scm] 启动事件订阅者，注册 2 类业务事件 + 2 个 MDM 主数据事件 + 1 个缓存失效事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[scm] 事件订阅者异常退出: {}", e);
         }
     });
+
+    // 订阅缓存失效事件
+    let cache_listener = cache_invalidation_listener.clone();
+    let cache_subscriber = EventSubscriber::new("scm-cache-invalidation")
+        .map_err(|e| e.to_string())?
+        .subscribe(vec![EventType::CacheInvalidated], move |event| {
+            let listener = cache_listener.clone();
+            Box::pin(async move {
+                if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                    let invalidation_event = CacheInvalidationEvent {
+                        source_service: payload.source_service,
+                        source_instance: payload.source_instance,
+                        cache_key_pattern: payload.cache_key_pattern,
+                        invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                        reason: payload.reason,
+                    };
+                    listener.dispatch_invalidation(&invalidation_event);
+                }
+            })
+        });
+
+    tokio::spawn(async move {
+        if let Err(e) = cache_subscriber.start_listening().await {
+            tracing::error!("[scm] 缓存失效事件订阅者异常退出: {}", e);
+        }
+    });
+
     Ok(())
 }

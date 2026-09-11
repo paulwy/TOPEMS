@@ -18,7 +18,12 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+    InMemoryCacheInvalidationHandler,
+};
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedServiceClient};
 
 use modules::openapi::MesApiDoc;
@@ -69,6 +74,56 @@ async fn main() -> anyhow::Result<()> {
 
     // 字典数据缓存（工艺路线、工作中心、物料分类等不常变化的数据，TTL 10 分钟）
     let dict_cache = Arc::new(LocalInMemoryCache::new(Duration::from_secs(600)));
+
+    // 缓存失效事件订阅（事件驱动缓存一致性）
+    {
+        let mut cache_invalidation_listener = CacheInvalidationListener::new("mes");
+        let process_route_cache_handler = InMemoryCacheInvalidationHandler::new(
+            "mes_process_route_cache",
+            dict_cache.clone(),
+            "mes:process_route:",
+        );
+        cache_invalidation_listener.register_handler(process_route_cache_handler);
+        let capacity_cache_handler = InMemoryCacheInvalidationHandler::new(
+            "mes_capacity_cache",
+            dict_cache.clone(),
+            "mes:capacity:",
+        );
+        cache_invalidation_listener.register_handler(capacity_cache_handler);
+        let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+        match EventSubscriber::new("mes-cache-invalidation") {
+            Ok(cache_subscriber) => {
+                let listener = cache_invalidation_listener.clone();
+                let cache_subscriber = cache_subscriber
+                    .subscribe(vec![EventType::CacheInvalidated], move |event| {
+                        let listener = listener.clone();
+                        Box::pin(async move {
+                            if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                                let invalidation_event = CacheInvalidationEvent {
+                                    source_service: payload.source_service,
+                                    source_instance: payload.source_instance,
+                                    cache_key_pattern: payload.cache_key_pattern,
+                                    invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                                    reason: payload.reason,
+                                };
+                                listener.dispatch_invalidation(&invalidation_event);
+                            }
+                        })
+                    });
+
+                tokio::spawn(async move {
+                    if let Err(e) = cache_subscriber.start_listening().await {
+                        tracing::error!("[mes] 缓存失效事件订阅者异常退出: {}", e);
+                    }
+                });
+                tracing::info!("[mes] 缓存失效事件订阅者启动成功");
+            }
+            Err(e) => {
+                tracing::warn!("[mes] 缓存失效事件订阅者创建失败: {}", e);
+            }
+        }
+    }
 
     let state = AppState {
         auth_state: ctx.auth_state.clone(),

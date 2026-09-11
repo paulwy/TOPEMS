@@ -49,15 +49,17 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
-        tracing::warn!("⚠️ HRM 事件订阅者启动失败: {}", e);
-    }
-
     let cache = init_cache().await;
     tracing::info!("🗄️ 缓存服务初始化完成");
 
     let encryption = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化完成");
+
+    let employee_cache = Arc::new(InMemoryCache::new(Duration::from_secs(3600)));
+
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), employee_cache.clone()).await {
+        tracing::warn!("⚠️ HRM 事件订阅者启动失败: {}", e);
+    }
 
     let api_state = ApiState {
         db: ctx.db.clone(),
@@ -67,7 +69,7 @@ async fn main() -> Result<()> {
         cache,
         encryption: Arc::new(encryption),
         event_publisher: ctx.event_publisher.clone(),
-        employee_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
+        employee_cache,
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）

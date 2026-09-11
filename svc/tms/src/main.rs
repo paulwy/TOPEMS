@@ -15,7 +15,11 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
-use topems_shared_core::cache::InMemoryCache as LocalInMemoryCache;
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+    InMemoryCache as LocalInMemoryCache, InMemoryCacheInvalidationHandler,
+};
+use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 
 use modules::tms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 use shared::AppState;
@@ -50,6 +54,62 @@ async fn main() -> Result<()> {
     }
 
     let dict_cache = Arc::new(LocalInMemoryCache::new(Duration::from_secs(600)));
+
+    // 缓存失效事件订阅（事件驱动缓存一致性）
+    {
+        let mut cache_invalidation_listener = CacheInvalidationListener::new("tms");
+        let driver_cache_handler = InMemoryCacheInvalidationHandler::new(
+            "tms_driver_cache",
+            dict_cache.clone(),
+            "tms:driver:",
+        );
+        cache_invalidation_listener.register_handler(driver_cache_handler);
+        let vehicle_cache_handler = InMemoryCacheInvalidationHandler::new(
+            "tms_vehicle_cache",
+            dict_cache.clone(),
+            "tms:vehicle:",
+        );
+        cache_invalidation_listener.register_handler(vehicle_cache_handler);
+        let carrier_cache_handler = InMemoryCacheInvalidationHandler::new(
+            "tms_carrier_cache",
+            dict_cache.clone(),
+            "tms:carrier:",
+        );
+        cache_invalidation_listener.register_handler(carrier_cache_handler);
+        let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+        match EventSubscriber::new("tms-cache-invalidation") {
+            Ok(cache_subscriber) => {
+                let listener = cache_invalidation_listener.clone();
+                let cache_subscriber = cache_subscriber
+                    .subscribe(vec![EventType::CacheInvalidated], move |event| {
+                        let listener = listener.clone();
+                        Box::pin(async move {
+                            if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                                let invalidation_event = CacheInvalidationEvent {
+                                    source_service: payload.source_service,
+                                    source_instance: payload.source_instance,
+                                    cache_key_pattern: payload.cache_key_pattern,
+                                    invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                                    reason: payload.reason,
+                                };
+                                listener.dispatch_invalidation(&invalidation_event);
+                            }
+                        })
+                    });
+
+                tokio::spawn(async move {
+                    if let Err(e) = cache_subscriber.start_listening().await {
+                        tracing::error!("[tms] 缓存失效事件订阅者异常退出: {}", e);
+                    }
+                });
+                tracing::info!("[tms] 缓存失效事件订阅者启动成功");
+            }
+            Err(e) => {
+                tracing::warn!("[tms] 缓存失效事件订阅者创建失败: {}", e);
+            }
+        }
+    }
 
     let app_state = AppState {
         db: ctx.db.clone(),

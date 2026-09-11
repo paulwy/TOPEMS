@@ -16,8 +16,14 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+    InMemoryCacheInvalidationHandler,
+};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
-use topems_shared_event::event::EventPublisher;
+use topems_shared_event::event::{
+    CacheInvalidatedPayload, EventPublisher, EventSubscriber, EventType,
+};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 pub use shared::*;
@@ -82,6 +88,50 @@ async fn main() -> anyhow::Result<()> {
 
     let dict_cache = std::sync::Arc::new(LocalInMemoryCache::new(std::time::Duration::from_secs(600)));
     tracing::info!("💾 字典缓存初始化完成（QMS，TTL 600秒）");
+
+    // 缓存失效事件订阅（事件驱动缓存一致性）
+    {
+        let mut cache_invalidation_listener = CacheInvalidationListener::new("qms");
+        let quality_standard_cache_handler = InMemoryCacheInvalidationHandler::new(
+            "qms_quality_standard_cache",
+            dict_cache.clone(),
+            "qms:quality_standard:",
+        );
+        cache_invalidation_listener.register_handler(quality_standard_cache_handler);
+        let cache_invalidation_listener = std::sync::Arc::new(cache_invalidation_listener);
+
+        match EventSubscriber::new("qms-cache-invalidation") {
+            Ok(cache_subscriber) => {
+                let listener = cache_invalidation_listener.clone();
+                let cache_subscriber = cache_subscriber
+                    .subscribe(vec![EventType::CacheInvalidated], move |event| {
+                        let listener = listener.clone();
+                        Box::pin(async move {
+                            if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                                let invalidation_event = CacheInvalidationEvent {
+                                    source_service: payload.source_service,
+                                    source_instance: payload.source_instance,
+                                    cache_key_pattern: payload.cache_key_pattern,
+                                    invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                                    reason: payload.reason,
+                                };
+                                listener.dispatch_invalidation(&invalidation_event);
+                            }
+                        })
+                    });
+
+                tokio::spawn(async move {
+                    if let Err(e) = cache_subscriber.start_listening().await {
+                        tracing::error!("[qms] 缓存失效事件订阅者异常退出: {}", e);
+                    }
+                });
+                tracing::info!("[qms] 缓存失效事件订阅者启动成功");
+            }
+            Err(e) => {
+                tracing::warn!("[qms] 缓存失效事件订阅者创建失败: {}", e);
+            }
+        }
+    }
 
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),

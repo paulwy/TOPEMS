@@ -1,8 +1,14 @@
 use sqlx::PgPool;
+use std::sync::Arc;
+use topems_shared::LocalInMemoryCache as InMemoryCache;
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+    InMemoryCacheInvalidationHandler,
+};
 use topems_shared_event::event::{
-    Event, EventResult, EventSubscriber, EventType, MasterDataAction, MasterDataDomain,
-    MasterDataEvent, ProductionOrderCreatedPayload, PurchaseOrderCreatedPayload,
-    ScmShipmentReceivedPayload,
+    CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType, MasterDataAction,
+    MasterDataDomain, MasterDataEvent, ProductionOrderCreatedPayload,
+    PurchaseOrderCreatedPayload, ScmShipmentReceivedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -10,11 +16,12 @@ type HandlerResult = std::result::Result<(), String>;
 #[derive(Clone)]
 pub struct PdmEventHandlers {
     pub db: PgPool,
+    pub dict_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
 
 impl PdmEventHandlers {
-    pub fn new(db: PgPool) -> Self {
-        Self { db }
+    pub fn new(db: PgPool, dict_cache: Arc<InMemoryCache<serde_json::Value>>) -> Self {
+        Self { db, dict_cache }
     }
 
     pub fn build_subscriber(&self) -> EventResult<EventSubscriber> {
@@ -254,15 +261,55 @@ impl PdmEventHandlers {
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
-    let handlers = PdmEventHandlers::new(db);
+pub async fn start_event_subscribers(
+    db: PgPool,
+    dict_cache: Arc<InMemoryCache<serde_json::Value>>,
+) -> Result<(), String> {
+    let handlers = PdmEventHandlers::new(db, dict_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[pdm] 启动事件订阅者，注册 3 类业务事件 handler");
+    // 创建缓存失效监听器，注册物料缓存处理器
+    let mut cache_invalidation_listener = CacheInvalidationListener::new("pdm");
+    let material_cache_handler = InMemoryCacheInvalidationHandler::new(
+        "pdm_material_cache",
+        dict_cache,
+        "pdm:material:",
+    );
+    cache_invalidation_listener.register_handler(material_cache_handler);
+    let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+    tracing::info!("[pdm] 启动事件订阅者，注册 3 类业务事件 + 1 个缓存失效事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[pdm] 事件订阅者异常退出: {}", e);
         }
     });
+
+    // 订阅缓存失效事件
+    let cache_listener = cache_invalidation_listener.clone();
+    let cache_subscriber = EventSubscriber::new("pdm-cache-invalidation")
+        .map_err(|e| e.to_string())?
+        .subscribe(vec![EventType::CacheInvalidated], move |event| {
+            let listener = cache_listener.clone();
+            Box::pin(async move {
+                if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                    let invalidation_event = CacheInvalidationEvent {
+                        source_service: payload.source_service,
+                        source_instance: payload.source_instance,
+                        cache_key_pattern: payload.cache_key_pattern,
+                        invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                        reason: payload.reason,
+                    };
+                    listener.dispatch_invalidation(&invalidation_event);
+                }
+            })
+        });
+
+    tokio::spawn(async move {
+        if let Err(e) = cache_subscriber.start_listening().await {
+            tracing::error!("[pdm] 缓存失效事件订阅者异常退出: {}", e);
+        }
+    });
+
     Ok(())
 }

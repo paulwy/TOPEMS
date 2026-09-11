@@ -74,10 +74,6 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
-        tracing::warn!("⚠️ SCM 事件订阅者启动失败: {}", e);
-    }
-
     // Redis 缓存（可选，失败不阻塞启动）
     let redis_cache = match env::var("REDIS_URL").ok() {
         Some(url) => {
@@ -108,6 +104,10 @@ async fn main() -> Result<()> {
     let purchase_cache = Arc::new(InMemoryCache::new(Duration::from_secs(120)));
     let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
     tracing::info!("💾 内存缓存初始化完成（供应商/采购/字典）");
+
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), supplier_cache.clone(), purchase_cache.clone(), dict_cache.clone()).await {
+        tracing::warn!("⚠️ SCM 事件订阅者启动失败: {}", e);
+    }
 
     let api_state = ApiState {
         db: ctx.db.clone(),

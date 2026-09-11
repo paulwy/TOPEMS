@@ -1,11 +1,18 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+    InMemoryCacheInvalidationHandler,
+};
 use topems_shared_event::event::{
-    Event, EventPublisher, EventResult, EventSubscriber, EventType, PurchaseOrderCreatedPayload,
-    ScmPurchasePlanCreatedPayload, ScmSupplierEvaluatedPayload, SupplierDataSyncRequestedPayload,
+    CacheInvalidatedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
+    PurchaseOrderCreatedPayload, ScmPurchasePlanCreatedPayload, ScmSupplierEvaluatedPayload,
+    SupplierDataSyncRequestedPayload,
 };
 use uuid::Uuid;
+
+use crate::shared::cache::InMemoryCache;
 
 type HandlerResult = std::result::Result<(), String>;
 
@@ -13,13 +20,19 @@ type HandlerResult = std::result::Result<(), String>;
 pub struct SrmEventHandlers {
     pub db: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
+    pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
 
 impl SrmEventHandlers {
-    pub fn new(db: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
+    pub fn new(
+        db: PgPool,
+        event_publisher: Option<Arc<EventPublisher>>,
+        supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+    ) -> Self {
         Self {
             db,
             event_publisher,
+            supplier_cache,
         }
     }
 
@@ -375,15 +388,53 @@ impl SrmEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
+    supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
 ) -> Result<(), String> {
-    let handlers = SrmEventHandlers::new(db, event_publisher);
+    let handlers = SrmEventHandlers::new(db, event_publisher, supplier_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[srm] 启动事件订阅者，注册 3 类业务事件 handler");
+    // 创建缓存失效监听器，注册供应商缓存处理器
+    let mut cache_invalidation_listener = CacheInvalidationListener::new("srm");
+    let supplier_cache_handler = InMemoryCacheInvalidationHandler::new(
+        "srm_supplier_cache",
+        supplier_cache,
+        "srm:supplier:",
+    );
+    cache_invalidation_listener.register_handler(supplier_cache_handler);
+    let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+    tracing::info!("[srm] 启动事件订阅者，注册 3 类业务事件 + 1 个缓存失效事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[srm] 事件订阅者异常退出: {}", e);
         }
     });
+
+    // 订阅缓存失效事件
+    let cache_listener = cache_invalidation_listener.clone();
+    let cache_subscriber = EventSubscriber::new("srm-cache-invalidation")
+        .map_err(|e| e.to_string())?
+        .subscribe(vec![EventType::CacheInvalidated], move |event| {
+            let listener = cache_listener.clone();
+            Box::pin(async move {
+                if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                    let invalidation_event = CacheInvalidationEvent {
+                        source_service: payload.source_service,
+                        source_instance: payload.source_instance,
+                        cache_key_pattern: payload.cache_key_pattern,
+                        invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                        reason: payload.reason,
+                    };
+                    listener.dispatch_invalidation(&invalidation_event);
+                }
+            })
+        });
+
+    tokio::spawn(async move {
+        if let Err(e) = cache_subscriber.start_listening().await {
+            tracing::error!("[srm] 缓存失效事件订阅者异常退出: {}", e);
+        }
+    });
+
     Ok(())
 }

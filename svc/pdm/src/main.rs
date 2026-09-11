@@ -59,12 +59,13 @@ async fn main() -> anyhow::Result<()> {
     {
         tracing::warn!("PDM AC-5 ref 表初始化警告: {}", e);
     }
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
-        tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
-    }
 
     let dict_cache = std::sync::Arc::new(topems_shared::LocalInMemoryCache::new(std::time::Duration::from_secs(600)));
     tracing::info!("💾 字典缓存初始化完成（PDM，TTL 600秒）");
+
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await {
+        tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
+    }
 
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),

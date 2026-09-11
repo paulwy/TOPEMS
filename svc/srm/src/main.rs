@@ -80,14 +80,14 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
+    tracing::info!("💾 内存缓存初始化完成（供应商）");
+
     if let Err(e) =
-        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone(), supplier_cache.clone()).await
     {
         tracing::warn!("⚠️ SRM 事件订阅者启动失败: {}", e);
     }
-
-    let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
-    tracing::info!("💾 内存缓存初始化完成（供应商）");
 
     let workflow_url =
         env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
