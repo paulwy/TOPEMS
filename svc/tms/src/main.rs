@@ -55,6 +55,116 @@ async fn main() -> Result<()> {
 
     let dict_cache = Arc::new(LocalInMemoryCache::new(Duration::from_secs(600)));
 
+    // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
+    {
+        let cache = dict_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[tms] 开始缓存预热...");
+
+            // 预热司机列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM drivers WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'pagesize', 10
+                ) as data
+                FROM (
+                    SELECT d.* FROM drivers d
+                    WHERE d.deleted_at IS NULL
+                    ORDER BY d.created_at DESC
+                    LIMIT 10 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "tms:driver:list:default:page:1:pagesize:10:search:none:status:all";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[tms] 司机列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[tms] 司机列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[tms] 司机列表缓存预热失败: {}", e);
+                }
+            }
+
+            // 预热车辆列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM vehicles WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'pagesize', 10
+                ) as data
+                FROM (
+                    SELECT v.* FROM vehicles v
+                    WHERE v.deleted_at IS NULL
+                    ORDER BY v.created_at DESC
+                    LIMIT 10 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "tms:vehicle:list:default:page:1:pagesize:10:search:none:status:all";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[tms] 车辆列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[tms] 车辆列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[tms] 车辆列表缓存预热失败: {}", e);
+                }
+            }
+
+            // 预热承运商列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM carriers WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'pagesize', 10
+                ) as data
+                FROM (
+                    SELECT c.* FROM carriers c
+                    WHERE c.deleted_at IS NULL
+                    ORDER BY c.created_at DESC
+                    LIMIT 10 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "tms:carrier:list:default:page:1:pagesize:10:search:none:status:all";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[tms] 承运商列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[tms] 承运商列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[tms] 承运商列表缓存预热失败: {}", e);
+                }
+            }
+
+            tracing::info!("[tms] 缓存预热完成");
+        });
+    }
+
     // 缓存失效事件订阅（事件驱动缓存一致性）
     {
         let mut cache_invalidation_listener = CacheInvalidationListener::new("tms");

@@ -75,6 +75,82 @@ async fn main() -> anyhow::Result<()> {
     // 字典数据缓存（工艺路线、工作中心、物料分类等不常变化的数据，TTL 10 分钟）
     let dict_cache = Arc::new(LocalInMemoryCache::new(Duration::from_secs(600)));
 
+    // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
+    {
+        let cache = dict_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[mes] 开始缓存预热...");
+
+            // 预热工艺路线列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM process_routes WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'pagesize', 10
+                ) as data
+                FROM (
+                    SELECT pr.* FROM process_routes pr
+                    WHERE pr.deleted_at IS NULL
+                    ORDER BY pr.created_at DESC
+                    LIMIT 10 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "mes:process_route:list:default:page:1:pagesize:10:search:none:status:all";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[mes] 工艺路线列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[mes] 工艺路线列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[mes] 工艺路线列表缓存预热失败: {}", e);
+                }
+            }
+
+            // 预热产能列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM capacities),
+                    'page', 1,
+                    'pagesize', 10
+                ) as data
+                FROM (
+                    SELECT c.* FROM capacities c
+                    ORDER BY c.capacity_date DESC
+                    LIMIT 10 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "mes:capacity:list:default:page:1:pagesize:10:search:none:status:all:work_center_id:none";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[mes] 产能列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[mes] 产能列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[mes] 产能列表缓存预热失败: {}", e);
+                }
+            }
+
+            tracing::info!("[mes] 缓存预热完成");
+        });
+    }
+
     // 缓存失效事件订阅（事件驱动缓存一致性）
     {
         let mut cache_invalidation_listener = CacheInvalidationListener::new("mes");
