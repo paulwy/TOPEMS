@@ -18,15 +18,23 @@
 //! - `PaymentMade` → 自动核销应付账款（V20.1 新增）
 
 use sqlx::{PgPool, Row};
-use topems_shared_event::event::{
-    EmployeeOnboardedPayload, Event, EventResult, EventSubscriber, EventType,
-    HrmPayrollVoucherRequestedPayload, InventoryUpdatedPayload, MasterDataAction, MasterDataDomain,
-    MasterDataEvent, OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload,
-    PmProjectCompletedPayload, PmProjectSettledPayload, PurchaseOrderApprovedPayload,
-    ReconciliationApprovedPayload, ReconciliationCreatedPayload, ReconciliationUpdatedPayload,
-    ReturnCompletedPayload, SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
-    WorkOrderCompletedPayload,
+use std::sync::Arc;
+use topems_shared::LocalInMemoryCache as InMemoryCache;
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+    InMemoryCacheInvalidationHandler,
 };
+use topems_shared_event::event::{
+    CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult, EventSubscriber,
+    EventType, HrmPayrollVoucherRequestedPayload, InventoryUpdatedPayload, MasterDataAction,
+    MasterDataDomain, MasterDataEvent, OpportunityWonPayload, PaymentMadePayload,
+    PaymentReceivedPayload, PmProjectCompletedPayload, PmProjectSettledPayload,
+    PurchaseOrderApprovedPayload, ReconciliationApprovedPayload, ReconciliationCreatedPayload,
+    ReconciliationUpdatedPayload, ReturnCompletedPayload, SalesOrderApprovedPayload,
+    StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
+};
+
+use crate::models::dict::DictType;
 
 type HandlerResult = std::result::Result<(), String>;
 
@@ -34,11 +42,12 @@ type HandlerResult = std::result::Result<(), String>;
 #[derive(Clone)]
 pub struct ErpEventHandlers {
     pub db: PgPool,
+    pub dict_cache: Arc<InMemoryCache<Vec<DictType>>>,
 }
 
 impl ErpEventHandlers {
-    pub fn new(db: PgPool) -> Self {
-        Self { db }
+    pub fn new(db: PgPool, dict_cache: Arc<InMemoryCache<Vec<DictType>>>) -> Self {
+        Self { db, dict_cache }
     }
 
     /// 构建 ERP 服务的事件订阅者，注册所有业务事件 handler
@@ -1991,15 +2000,55 @@ impl ErpEventHandlers {
 }
 
 /// 启动 ERP 服务的事件订阅
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
-    let handlers = ErpEventHandlers::new(db);
+pub async fn start_event_subscribers(
+    db: PgPool,
+    dict_cache: Arc<InMemoryCache<Vec<DictType>>>,
+) -> Result<(), String> {
+    let handlers = ErpEventHandlers::new(db, dict_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[erp] 启动事件订阅者，注册 16 个业务事件 + 4 个 MDM 主数据事件 handler");
+    // 创建缓存失效监听器，注册字典缓存处理器
+    let mut cache_invalidation_listener = CacheInvalidationListener::new("erp");
+    let dict_cache_handler = InMemoryCacheInvalidationHandler::new(
+        "erp_dict_cache",
+        dict_cache,
+        "erp:dict_type:",
+    );
+    cache_invalidation_listener.register_handler(dict_cache_handler);
+    let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+    tracing::info!("[erp] 启动事件订阅者，注册 16 个业务事件 + 4 个 MDM 主数据事件 + 1 个缓存失效事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[erp] 事件订阅者异常退出: {}", e);
         }
     });
+
+    // 订阅缓存失效事件
+    let cache_listener = cache_invalidation_listener.clone();
+    let cache_subscriber = EventSubscriber::new("erp-cache-invalidation")
+        .map_err(|e| e.to_string())?
+        .subscribe(vec![EventType::CacheInvalidated], move |event| {
+            let listener = cache_listener.clone();
+            Box::pin(async move {
+                if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                    let invalidation_event = CacheInvalidationEvent {
+                        source_service: payload.source_service,
+                        source_instance: payload.source_instance,
+                        cache_key_pattern: payload.cache_key_pattern,
+                        invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                        reason: payload.reason,
+                    };
+                    listener.dispatch_invalidation(&invalidation_event);
+                }
+            })
+        });
+
+    tokio::spawn(async move {
+        if let Err(e) = cache_subscriber.start_listening().await {
+            tracing::error!("[erp] 缓存失效事件订阅者异常退出: {}", e);
+        }
+    });
+
     Ok(())
 }

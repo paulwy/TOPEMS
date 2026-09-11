@@ -63,8 +63,11 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    // 创建字典缓存（在事件订阅者之前创建，以便传入）
+    let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
+
     // 事件订阅者（失败不阻塞启动）
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await {
         tracing::warn!("⚠️ ERP 事件订阅者启动失败: {}", e);
     }
 
@@ -140,7 +143,7 @@ async fn main() -> Result<()> {
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,
-        dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(600))),
+        dict_cache,
         notification_client,
         hrm_client,
         encryption: Arc::new(encryption_service),
