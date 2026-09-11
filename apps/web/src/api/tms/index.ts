@@ -4,7 +4,6 @@ import carrierApi from './carrier';
 import routeApi from './route';
 import shipmentApi from './shipment';
 import optimizationApi from './optimization';
-import { tmsAnalyticsApi } from './analytics';
 
 export * from './types';
 

@@ -165,7 +165,7 @@ const DataAssetCatalogPage: React.FC = () => {
             variant='h5'
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
-            <DatasetIcon sx={{ color: '#1976d2' }} />
+            <DatasetIcon sx={{ color: 'primary.main' }} />
             数据资产目录
           </Typography>
           <Typography
@@ -206,7 +206,7 @@ const DataAssetCatalogPage: React.FC = () => {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <DatasetIcon sx={{ color: '#1976d2' }} />
+                <DatasetIcon sx={{ color: 'primary.main' }} />
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -231,7 +231,7 @@ const DataAssetCatalogPage: React.FC = () => {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <DescriptionIcon sx={{ color: '#388e3c' }} />
+                <DescriptionIcon sx={{ color: 'success.main' }} />
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -244,7 +244,7 @@ const DataAssetCatalogPage: React.FC = () => {
               ) : (
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: '#388e3c' }}
+                  sx={{ fontWeight: 700, color: 'success.main' }}
                 >
                   {dashboard?.active_assets ?? 0}
                 </Typography>
@@ -268,7 +268,7 @@ const DataAssetCatalogPage: React.FC = () => {
               ) : (
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: '#f57c00' }}
+                  sx={{ fontWeight: 700, color: 'warning.main' }}
                 >
                   {dashboard?.deprecated_assets ?? 0}
                 </Typography>
@@ -280,7 +280,7 @@ const DataAssetCatalogPage: React.FC = () => {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <ApiIcon sx={{ color: '#d32f2f' }} />
+                <ApiIcon sx={{ color: 'error.main' }} />
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -293,7 +293,7 @@ const DataAssetCatalogPage: React.FC = () => {
               ) : (
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: '#d32f2f' }}
+                  sx={{ fontWeight: 700, color: 'error.main' }}
                 >
                   {dashboard?.unassigned_assets ?? 0}
                 </Typography>
@@ -319,7 +319,8 @@ const DataAssetCatalogPage: React.FC = () => {
           style={{
             flex: 1,
             padding: '8px 12px',
-            border: '1px solid #ccc',
+            border: '1px solid',
+            borderColor: 'grey.300',
             borderRadius: '4px',
             fontSize: '14px',
           }}
@@ -351,7 +352,7 @@ const DataAssetCatalogPage: React.FC = () => {
         <TableContainer>
           <Table size='small'>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableRow sx={{ backgroundColor: 'grey.100' }}>
                 <TableCell sx={{ fontWeight: 600 }}>资产名称</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>显示名</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
@@ -404,7 +405,7 @@ const DataAssetCatalogPage: React.FC = () => {
                         size='small'
                         sx={{
                           backgroundColor: TYPE_COLORS[asset.type],
-                          color: '#fff',
+                          color: 'common.white',
                           fontWeight: 500,
                         }}
                       />
@@ -415,7 +416,7 @@ const DataAssetCatalogPage: React.FC = () => {
                         size='small'
                         sx={{
                           backgroundColor: STATUS_COLORS[asset.status],
-                          color: '#fff',
+                          color: 'common.white',
                           fontWeight: 500,
                         }}
                       />
@@ -426,7 +427,7 @@ const DataAssetCatalogPage: React.FC = () => {
                         size='small'
                         sx={{
                           backgroundColor: SENSITIVITY_COLORS[asset.sensitivity],
-                          color: '#fff',
+                          color: 'common.white',
                           fontWeight: 500,
                         }}
                       />
@@ -512,15 +513,21 @@ const DataAssetCatalogPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', gap: 1, borderBottom: '1px solid #eee' }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            borderBottom: '1px solid',
+            borderColor: 'grey.200',
+          }}
         >
-          <DatasetIcon sx={{ color: '#1976d2' }} />
+          <DatasetIcon sx={{ color: 'primary.main' }} />
           资产详情
           {detailAsset && (
             <Chip
               label={detailAsset.name}
               size='small'
-              sx={{ ml: 2, backgroundColor: '#1976d2', color: '#fff' }}
+              sx={{ ml: 2, backgroundColor: 'primary.main', color: 'common.white' }}
             />
           )}
         </DialogTitle>
@@ -560,7 +567,11 @@ const DataAssetCatalogPage: React.FC = () => {
                 <Chip
                   label={detailAsset.type}
                   size='small'
-                  sx={{ backgroundColor: TYPE_COLORS[detailAsset.type], color: '#fff', mt: 0.5 }}
+                  sx={{
+                    backgroundColor: TYPE_COLORS[detailAsset.type],
+                    color: 'common.white',
+                    mt: 0.5,
+                  }}
                 />
               </Box>
               <Box sx={{ flex: '1 1 22%', minWidth: 150 }}>
@@ -575,7 +586,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   size='small'
                   sx={{
                     backgroundColor: STATUS_COLORS[detailAsset.status],
-                    color: '#fff',
+                    color: 'common.white',
                     mt: 0.5,
                   }}
                 />
@@ -592,7 +603,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   size='small'
                   sx={{
                     backgroundColor: SENSITIVITY_COLORS[detailAsset.sensitivity],
-                    color: '#fff',
+                    color: 'common.white',
                     mt: 0.5,
                   }}
                 />

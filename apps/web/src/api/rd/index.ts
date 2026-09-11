@@ -8,7 +8,6 @@ import { bugApi } from './bug';
 import { testApi } from './test';
 import { buildApi } from './build';
 import { deployApi } from './deploy';
-import { rdSettingsApi } from './settings';
 
 export * from './types';
 

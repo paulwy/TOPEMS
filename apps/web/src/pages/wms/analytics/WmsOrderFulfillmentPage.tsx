@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   ResponsiveContainer,
-  LineChart,
   Line,
   BarChart,
   Bar,
@@ -173,12 +172,29 @@ export default function WmsOrderFulfillmentPage() {
         {/* 履约率趋势图 */}
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>履约率趋势</h3>
-          <ResponsiveContainer width='100%' height={360}>
-            <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+          <ResponsiveContainer
+            width='100%'
+            height={360}
+          >
+            <ComposedChart
+              data={chartData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='period' fontSize={11} />
-              <YAxis yAxisId='left' fontSize={11} domain={[0, 100]} />
-              <YAxis yAxisId='right' orientation='right' fontSize={11} />
+              <XAxis
+                dataKey='period'
+                fontSize={11}
+              />
+              <YAxis
+                yAxisId='left'
+                fontSize={11}
+                domain={[0, 100]}
+              />
+              <YAxis
+                yAxisId='right'
+                orientation='right'
+                fontSize={11}
+              />
               <Tooltip />
               <Legend />
               <Area
@@ -213,10 +229,16 @@ export default function WmsOrderFulfillmentPage() {
         {/* 平均履约天数趋势 */}
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>平均履约天数趋势</h3>
-          <ResponsiveContainer width='100%' height={300}>
+          <ResponsiveContainer
+            width='100%'
+            height={300}
+          >
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='period' fontSize={11} />
+              <XAxis
+                dataKey='period'
+                fontSize={11}
+              />
               <YAxis fontSize={11} />
               <Tooltip />
               <Legend />
@@ -233,10 +255,16 @@ export default function WmsOrderFulfillmentPage() {
         {/* 订单数量对比 */}
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>订单数量对比</h3>
-          <ResponsiveContainer width='100%' height={300}>
+          <ResponsiveContainer
+            width='100%'
+            height={300}
+          >
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='period' fontSize={11} />
+              <XAxis
+                dataKey='period'
+                fontSize={11}
+              />
               <YAxis fontSize={11} />
               <Tooltip />
               <Legend />

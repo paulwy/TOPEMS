@@ -30,16 +30,8 @@ import {
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
-import {
-  type Report,
-} from '@/api/bi';
-import {
-  fetchReports,
-  createReport,
-  updateReport,
-  deleteReport,
-  exportReport,
-} from '@/api/report';
+import { type Report } from '@/api/bi';
+import { fetchReports, createReport, updateReport, deleteReport, exportReport } from '@/api/report';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -121,7 +113,7 @@ const ReportBuilderPage = () => {
       try {
         const res = await fetchReports();
         if (res.success && res.data) {
-          return res.data.items || mockReports;
+          return (res.data as unknown as Report[]) || mockReports;
         }
         return mockReports;
       } catch (error: unknown) {

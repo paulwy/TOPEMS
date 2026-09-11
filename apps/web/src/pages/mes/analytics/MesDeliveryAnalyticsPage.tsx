@@ -19,24 +19,27 @@ const DONUT_COLORS = [
 ];
 
 export default function MesDeliveryAnalyticsPage() {
-  const { data: analyticsData, loading } = useAnalyticsData({
+  const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getDeliveryAnalytics({ days: 30 }),
     deps: [],
   });
   const [productFamily, setProductFamily] = useState('all');
 
   // 从后端数据派生前端需要的结构
-  const data = useMemo(() => ({
-    on_time_rate: analyticsData?.on_time_rate ?? 0,
-    sla_achievement: (analyticsData?.on_time_rate ?? 0) + 5,
-    top10_delayed: [],
-    distribution: (analyticsData?.trend ?? []).map((item, i) => ({
-      order_no: `WO-${String(20240001 + i).padStart(8, '0')}`,
-      planned: item.date,
-      actual: item.date,
-      diff_days: item.planned - item.delivered,
-    })),
-  }), [analyticsData]);
+  const data = useMemo(
+    () => ({
+      on_time_rate: analyticsData?.on_time_rate ?? 0,
+      sla_achievement: (analyticsData?.on_time_rate ?? 0) + 5,
+      top10_delayed: [],
+      distribution: (analyticsData?.trend ?? []).map((item, i) => ({
+        order_no: `WO-${String(20240001 + i).padStart(8, '0')}`,
+        planned: item.date,
+        actual: item.date,
+        diff_days: item.planned - item.delivered,
+      })),
+    }),
+    [analyticsData]
+  );
 
   const donutData = useMemo(
     () => [

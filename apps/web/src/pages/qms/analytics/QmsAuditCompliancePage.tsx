@@ -7,7 +7,7 @@
  * 数据来自 useQmsMock 的 auditPlans / auditTasks / auditFindings。
  */
 import { useMemo } from 'react';
-import { Grid, Paper, Typography, CircularProgress, Box, Alert } from '@mui/material';
+import { Grid, Paper, Typography, Alert } from '@mui/material';
 import {
   ResponsiveContainer,
   BarChart,
@@ -38,7 +38,12 @@ export default function QmsAuditCompliancePage() {
     fetcher: () => auditApi.listAuditTasks(),
     deps: [],
   });
-  const { data: findingsData, loading: findingsLoading, error, reload } = useAnalyticsData<AuditFinding[]>({
+  const {
+    data: findingsData,
+    loading: findingsLoading,
+    error,
+    reload,
+  } = useAnalyticsData<AuditFinding[]>({
     fetcher: () => auditApi.listAuditFindings(),
     deps: [],
   });
@@ -204,7 +209,11 @@ export default function QmsAuditCompliancePage() {
       loading={loading}
     >
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          onClose={reload}
+        >
           加载失败：{error}
         </Alert>
       )}

@@ -25,7 +25,7 @@ export default function WmsFlowTrendPage() {
   const [range, setRange] = useState<'7d' | '15d' | '30d'>('30d');
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
 
-  const { data: response, loading, error, reload } = useAnalyticsData({
+  const { data: response, loading } = useAnalyticsData({
     fetcher: () => getFlowTrend({ group_by: groupBy }),
     deps: [groupBy],
   });

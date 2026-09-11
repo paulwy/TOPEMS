@@ -245,7 +245,10 @@ export default function WmsInventoryMovementDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('common.loading')}</Typography>
       </PageContainer>
     );
@@ -253,8 +256,13 @@ export default function WmsInventoryMovementDetailPage() {
 
   if (error || !move) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
-        <Typography color="error">{error ?? i18n.t('pages.wms_inventory_movement_detail_page.k0')}</Typography>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
+        <Typography color='error'>
+          {error ?? i18n.t('pages.wms_inventory_movement_detail_page.k0')}
+        </Typography>
       </PageContainer>
     );
   }
@@ -266,7 +274,9 @@ export default function WmsInventoryMovementDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
-        title={i18n.t('wms:wms_inventory_movement_detail_page.v0_5', { v0: move.movement_number ?? move.movement_no })}
+        title={i18n.t('wms:wms_inventory_movement_detail_page.v0_5', {
+          v0: move.movement_number ?? move.movement_no,
+        })}
         subtitle={i18n.t('wms:wms_inventory_movement_detail_page.k4', {
           v0: i18n.t('pages.wms_inventory_movement_detail_page.k1'),
           v1: move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0'),

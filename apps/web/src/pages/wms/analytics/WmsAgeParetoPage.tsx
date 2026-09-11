@@ -18,7 +18,7 @@ import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getAgePareto, type AgeParetoData } from '@/api/wms/analytics';
 
 export default function WmsAgeParetoPage() {
-  const { data: response, loading, error, reload } = useAnalyticsData({
+  const { data: response, loading } = useAnalyticsData({
     fetcher: () => getAgePareto(),
     deps: [],
   });

@@ -39,7 +39,7 @@ const CHART_HEIGHT_SM = 200;
 const CHART_HEIGHT_LG = 300;
 
 export default function MesOeeDashboardPage() {
-  const { data: analyticsData, loading } = useAnalyticsData({
+  const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getOeeDashboard({ days: 7 }),
     deps: [],
   });
@@ -50,22 +50,25 @@ export default function MesOeeDashboardPage() {
   };
 
   // 适配后端数据结构
-  const data = useMemo(() => ({
-    overall_oee: analyticsData?.avg_oee ?? 0,
-    availability_avg: analyticsData?.avg_availability ?? 0,
-    performance_avg: analyticsData?.avg_performance ?? 0,
-    quality_avg: analyticsData?.avg_quality_rate ?? 0,
-    by_equipment: (analyticsData?.by_equipment ?? []).map((item, i) => ({
-      equipment_id: `eq-${i + 1}`,
-      equipment_name: item.equipment_name,
-      oee: item.oee,
-      shift: i % 2 === 0 ? '白班' : '夜班',
-    })),
-    trend_24h: (analyticsData?.trend ?? []).map((item) => ({
-      timestamp: item.date,
-      oee: item.oee,
-    })),
-  }), [analyticsData]);
+  const data = useMemo(
+    () => ({
+      overall_oee: analyticsData?.avg_oee ?? 0,
+      availability_avg: analyticsData?.avg_availability ?? 0,
+      performance_avg: analyticsData?.avg_performance ?? 0,
+      quality_avg: analyticsData?.avg_quality_rate ?? 0,
+      by_equipment: (analyticsData?.by_equipment ?? []).map((item, i) => ({
+        equipment_id: `eq-${i + 1}`,
+        equipment_name: item.equipment_name,
+        oee: item.oee,
+        shift: i % 2 === 0 ? '白班' : '夜班',
+      })),
+      trend_24h: (analyticsData?.trend ?? []).map((item) => ({
+        timestamp: item.date,
+        oee: item.oee,
+      })),
+    }),
+    [analyticsData]
+  );
 
   const radarData = useMemo(
     () => [

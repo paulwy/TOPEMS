@@ -25,7 +25,7 @@ const ABC_COLORS: Record<string, string> = {
 };
 
 export default function WmsAbcAnalysisPage() {
-  const { data: response, loading, error, reload } = useAnalyticsData({
+  const { data: response, loading } = useAnalyticsData({
     fetcher: () => getAbcAnalysis(),
     deps: [],
   });
@@ -178,7 +178,10 @@ export default function WmsAbcAnalysisPage() {
                     key={item.category}
                     className={i % 2 ? 'bg-gray-50' : ''}
                   >
-                    <td className='px-3 py-2 font-semibold' style={{ color: ABC_COLORS[item.category] }}>
+                    <td
+                      className='px-3 py-2 font-semibold'
+                      style={{ color: ABC_COLORS[item.category] }}
+                    >
                       {item.category} 类
                     </td>
                     <td className='px-3 py-2 text-right'>{item.count.toLocaleString()}</td>

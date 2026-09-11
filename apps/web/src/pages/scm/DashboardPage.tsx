@@ -268,7 +268,7 @@ export const DashboardPage: React.FC = () => {
         type: 'pie',
       },
     ],
-    []
+    [barData, lineData, pieData]
   );
 
   const quickActions: QuickAction[] = useMemo(

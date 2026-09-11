@@ -111,7 +111,7 @@ export const MonitorSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   // 从后端加载设置
-  const { data: settingsData, isLoading: settingsLoading } = useQuery({
+  const { data: settingsData } = useQuery({
     queryKey: ['monitor', 'settings', 'all'],
     queryFn: async () => {
       try {

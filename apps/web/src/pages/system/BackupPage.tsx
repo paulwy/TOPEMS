@@ -374,6 +374,7 @@ const BackupPage: React.FC = () => {
       handleDeleteBackup,
       restoreBackupMutation.isPending,
       deleteBackupMutation.isPending,
+      addNotification,
     ]
   );
 

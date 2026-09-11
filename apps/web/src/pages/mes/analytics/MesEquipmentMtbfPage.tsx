@@ -17,22 +17,25 @@ const TREND_12W = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 export default function MesEquipmentMtbfPage() {
-  const { data: analyticsData, loading } = useAnalyticsData({
+  const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getEquipmentMtbf({ days: 90 }),
     deps: [],
   });
   const [severity, setSeverity] = useState('all');
 
   // 适配后端字段名：equipment_type → type
-  const data = useMemo(() => ({
-    by_equipment_type: (analyticsData?.by_equipment_type ?? []).map((item) => ({
-      type: item.equipment_type,
-      mtbf_hours: item.mtbf_hours,
-      mttr_hours: item.mttr_hours,
-    })),
-    fault_reasons: analyticsData?.fault_reasons ?? [],
-    scatter: analyticsData?.scatter ?? [],
-  }), [analyticsData]);
+  const data = useMemo(
+    () => ({
+      by_equipment_type: (analyticsData?.by_equipment_type ?? []).map((item) => ({
+        type: item.equipment_type,
+        mtbf_hours: item.mtbf_hours,
+        mttr_hours: item.mttr_hours,
+      })),
+      fault_reasons: analyticsData?.fault_reasons ?? [],
+      scatter: analyticsData?.scatter ?? [],
+    }),
+    [analyticsData]
+  );
 
   const statCards: StatCard[] = useMemo(() => {
     const avgMtbf = Math.round(

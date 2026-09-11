@@ -142,9 +142,7 @@ export const mesAnalyticsApi = {
   },
 
   /** 能源成本分析 */
-  getEnergyCost: async (
-    params?: AnalyticsQueryParams
-  ): Promise<EnergyCostResponse> => {
+  getEnergyCost: async (params?: AnalyticsQueryParams): Promise<EnergyCostResponse> => {
     const res = await apiClient.mes.get<EnergyCostResponse>(
       `/analytics/energy-cost${buildQuery(params)}`
     );
@@ -152,9 +150,7 @@ export const mesAnalyticsApi = {
   },
 
   /** 设备 MTBF 分析 */
-  getEquipmentMtbf: async (
-    params?: AnalyticsQueryParams
-  ): Promise<EquipmentMtbfResponse> => {
+  getEquipmentMtbf: async (params?: AnalyticsQueryParams): Promise<EquipmentMtbfResponse> => {
     const res = await apiClient.mes.get<EquipmentMtbfResponse>(
       `/analytics/equipment-mtbf${buildQuery(params)}`
     );
@@ -172,9 +168,7 @@ export const mesAnalyticsApi = {
   },
 
   /** OEE 仪表盘 */
-  getOeeDashboard: async (
-    params?: AnalyticsQueryParams
-  ): Promise<OeeDashboardResponse> => {
+  getOeeDashboard: async (params?: AnalyticsQueryParams): Promise<OeeDashboardResponse> => {
     const res = await apiClient.mes.get<OeeDashboardResponse>(
       `/analytics/oee-dashboard${buildQuery(params)}`
     );
@@ -182,9 +176,7 @@ export const mesAnalyticsApi = {
   },
 
   /** 质量帕累托 */
-  getQualityPareto: async (
-    params?: AnalyticsQueryParams
-  ): Promise<QualityParetoResponse> => {
+  getQualityPareto: async (params?: AnalyticsQueryParams): Promise<QualityParetoResponse> => {
     const res = await apiClient.mes.get<QualityParetoResponse>(
       `/analytics/quality-pareto${buildQuery(params)}`
     );

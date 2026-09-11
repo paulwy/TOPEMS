@@ -58,7 +58,7 @@ export default function WmsWavePickDetailPage() {
   const [orders, setOrders] = useState<WaveOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [_actionLoading, setActionLoading] = useState(false);
 
   const loadData = (waveId: string) => {
     setLoading(true);
@@ -86,7 +86,7 @@ export default function WmsWavePickDetailPage() {
     loadData(id);
   }, [id]);
 
-  const handleAction = async (action: string, _from: string, _to: string) => {
+  const _handleAction = async (action: string, _from: string, _to: string) => {
     if (!id) return;
     setActionLoading(true);
     try {
@@ -219,7 +219,10 @@ export default function WmsWavePickDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('common.loading')}</Typography>
       </PageContainer>
     );
@@ -227,8 +230,13 @@ export default function WmsWavePickDetailPage() {
 
   if (error || !wave) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
-        <Typography color="error">{error ?? i18n.t('pages.wms_wave_pick_detail_page.k1')}</Typography>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
+        <Typography color='error'>
+          {error ?? i18n.t('pages.wms_wave_pick_detail_page.k1')}
+        </Typography>
       </PageContainer>
     );
   }

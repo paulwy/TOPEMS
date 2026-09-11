@@ -34,13 +34,7 @@ import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
 import { MetricCard } from '@/components/bi/MetricCard';
 import { ChartComponent } from '@/components/bi/ChartLibrary';
-import {
-  fetchDashboards,
-  listDatasets,
-  type Dashboard,
-  type Report,
-  type Dataset,
-} from '@/api/bi';
+import { fetchDashboards, listDatasets, type Dashboard, type Report, type Dataset } from '@/api/bi';
 import { fetchReports } from '@/api/report';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
@@ -155,7 +149,10 @@ const BiIndexPage = () => {
 
       return {
         dashboards: dashRes.success && dashRes.data ? dashRes.data.items?.slice(0, 4) || [] : [],
-        reports: reportRes.success && reportRes.data ? reportRes.data.items?.slice(0, 4) || [] : [],
+        reports:
+          reportRes.success && reportRes.data
+            ? (reportRes.data.slice(0, 4) as unknown as Report[]) || []
+            : [],
         datasets: dsRes.success && dsRes.data ? dsRes.data.items?.slice(0, 4) || [] : [],
       };
     },

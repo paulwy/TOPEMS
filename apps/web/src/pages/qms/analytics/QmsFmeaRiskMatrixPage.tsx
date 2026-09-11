@@ -32,7 +32,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  CircularProgress,
   Alert,
 } from '@mui/material';
 import { designTokens } from '@topems/tokens';
@@ -68,8 +67,16 @@ export default function QmsFmeaRiskMatrixPage() {
     }
   }, [analyses, selectedFmeaId]);
 
-  const { data: itemsData, loading: itemsLoading, error, reload } = useAnalyticsData<FmeaItem[]>({
-    fetcher: () => selectedFmeaId ? fmeaApi.listFmeaItems(selectedFmeaId) : Promise.resolve({ data: [], code: 0, message: 'ok' }),
+  const {
+    data: itemsData,
+    loading: itemsLoading,
+    error,
+    reload,
+  } = useAnalyticsData<FmeaItem[]>({
+    fetcher: () =>
+      selectedFmeaId
+        ? fmeaApi.listFmeaItems(selectedFmeaId)
+        : Promise.resolve({ data: [], code: 0, message: 'ok' }),
     deps: [selectedFmeaId],
     immediate: !!selectedFmeaId,
   });
@@ -173,7 +180,11 @@ export default function QmsFmeaRiskMatrixPage() {
       loading={loading}
     >
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          onClose={reload}
+        >
           加载失败：{error}
         </Alert>
       )}

@@ -213,7 +213,10 @@ export default function WmsStockTakeDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('common.loading')}</Typography>
       </PageContainer>
     );
@@ -221,8 +224,13 @@ export default function WmsStockTakeDetailPage() {
 
   if (error || !task) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
-        <Typography color="error">{error ?? i18n.t('pages.wms_stock_take_detail_page.k1')}</Typography>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
+        <Typography color='error'>
+          {error ?? i18n.t('pages.wms_stock_take_detail_page.k1')}
+        </Typography>
       </PageContainer>
     );
   }

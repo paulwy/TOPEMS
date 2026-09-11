@@ -50,7 +50,8 @@ export default function WmsInventoryTurnoverPage() {
       return { avgRate: '0', avgDays: '0', outbound: 0, records: 0 };
     }
     const avgRate = data.summary.avg_turnover.toFixed(2);
-    const avgDays = data.summary.avg_turnover > 0 ? (30 / data.summary.avg_turnover).toFixed(1) : '0';
+    const avgDays =
+      data.summary.avg_turnover > 0 ? (30 / data.summary.avg_turnover).toFixed(1) : '0';
     return {
       avgRate,
       avgDays,
@@ -169,10 +170,19 @@ export default function WmsInventoryTurnoverPage() {
 
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_turnover_page.k5')}</h3>
-          <ResponsiveContainer width='100%' height={360}>
-            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+          <ResponsiveContainer
+            width='100%'
+            height={360}
+          >
+            <LineChart
+              data={chartData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='month' fontSize={11} />
+              <XAxis
+                dataKey='month'
+                fontSize={11}
+              />
               <YAxis fontSize={11} />
               <Tooltip />
               <Legend />
@@ -190,10 +200,16 @@ export default function WmsInventoryTurnoverPage() {
 
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_turnover_page.k7')}</h3>
-          <ResponsiveContainer width='100%' height={300}>
+          <ResponsiveContainer
+            width='100%'
+            height={300}
+          >
             <BarChart data={chartData.slice(0, 32)}>
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='month' fontSize={11} />
+              <XAxis
+                dataKey='month'
+                fontSize={11}
+              />
               <YAxis fontSize={11} />
               <Tooltip />
               <Legend />

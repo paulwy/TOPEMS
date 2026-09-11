@@ -19,7 +19,6 @@ import { purchaseRequisitionApi } from './purchaseRequisition';
 import { purchaseContractApi } from './purchaseContract';
 import { supplierAdmissionApi } from './supplierAdmission';
 import { scmSettingsApi } from './settings';
-import { scmAnalyticsApi } from './analytics';
 
 export * from './types';
 

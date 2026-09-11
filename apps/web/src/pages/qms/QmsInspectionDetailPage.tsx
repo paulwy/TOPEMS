@@ -5,7 +5,7 @@
  * 使用 StatusBadge + FSMActionButtons 组件。
  * 数据来自真实 API。
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -51,10 +51,7 @@ export default function QmsInspectionDetailPage() {
     setError(null);
 
     // 并行加载检验单详情和检验结果
-    Promise.all([
-      inspectionApi.getCheck(id),
-      inspectionApi.getCheckResults(id),
-    ])
+    Promise.all([inspectionApi.getCheck(id), inspectionApi.getCheckResults(id)])
       .then(([inspectionRes, resultsRes]) => {
         if (!cancelled) {
           setInspection(inspectionRes.data ?? null);
@@ -198,7 +195,10 @@ export default function QmsInspectionDetailPage() {
             {i18n.t('qms.qms_inspection_detail_page.k17')}
           </Typography>
           {checkResults.length === 0 ? (
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {i18n.t('qms.qms_inspection_detail_page.k31')}
             </Typography>
           ) : (

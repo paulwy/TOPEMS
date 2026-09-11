@@ -1,7 +1,6 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
-import i18n from '@/i18n';
 
 /**
  * Master Data 模块配置

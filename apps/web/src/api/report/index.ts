@@ -428,23 +428,23 @@ export const reportApi = {
 export default reportApi;
 
 // 向后兼容：从 @/api/bi 迁移的函数别名
-export const fetchReports = (params?: { page?: number; pageSize?: number }): Promise<any> =>
-  reportApi.listReports() as any;
-export const fetchReport = (id: string): Promise<any> => reportApi.getReport(id) as any;
-export const createReport = (data: any): Promise<any> => reportApi.createReport(data) as any;
-export const updateReport = (id: string, data: any): Promise<any> =>
-  reportApi.updateReport(id, data) as any;
-export const deleteReport = (id: string): Promise<any> => reportApi.deleteReport(id) as any;
-export const exportReport = (id: string, format: any): Promise<any> =>
-  reportApi.exportReport(id, { format }) as any;
-export const listSchedules = (): Promise<any> => reportApi.listSchedules() as any;
-export const createSchedule = (data: any): Promise<any> => reportApi.createSchedule(data) as any;
-export const updateSchedule = (id: string, data: any): Promise<any> =>
-  reportApi.updateSchedule(id, data) as any;
-export const deleteSchedule = (id: string): Promise<any> => reportApi.deleteSchedule(id) as any;
-export const runSchedule = (id: string): Promise<any> => reportApi.executeSchedule(id) as any;
-export const toggleSchedule = (id: string, _enabled: boolean): Promise<any> =>
-  reportApi.executeSchedule(id) as any;
+export const fetchReports = (_params?: { page?: number; pageSize?: number }) =>
+  reportApi.listReports();
+export const fetchReport = (id: string) => reportApi.getReport(id);
+export const createReport = (data: unknown) => reportApi.createReport(data as CreateReportRequest);
+export const updateReport = (id: string, data: unknown) =>
+  reportApi.updateReport(id, data as Partial<ReportConfig>);
+export const deleteReport = (id: string) => reportApi.deleteReport(id);
+export const exportReport = (id: string, format: string) =>
+  reportApi.exportReport(id, { format: format as ExportFormat });
+export const listSchedules = () => reportApi.listSchedules();
+export const createSchedule = (data: unknown) =>
+  reportApi.createSchedule(data as CreateScheduleRequest);
+export const updateSchedule = (id: string, data: unknown) =>
+  reportApi.updateSchedule(id, data as UpdateScheduleRequest);
+export const deleteSchedule = (id: string) => reportApi.deleteSchedule(id);
+export const runSchedule = (id: string) => reportApi.executeSchedule(id);
+export const toggleSchedule = (id: string, _enabled: boolean) => reportApi.executeSchedule(id);
 
 export const reportCrudApi = {
   list: fetchReports,

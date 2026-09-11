@@ -51,7 +51,7 @@ const SCHEDULE_PIE = [
 ];
 
 export default function MesCapacityUtilizationPage() {
-  const { data: analyticsData, loading } = useAnalyticsData({
+  const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getCapacityUtilization({ days: 7 }),
     deps: [],
   });
@@ -61,9 +61,8 @@ export default function MesCapacityUtilizationPage() {
     setWorkCenter(event.target.value);
   };
 
-  // 从 heatmap 数据派生 waterfall 和 bottleneck_top10
-  const heatmap = analyticsData?.heatmap ?? [];
-  const avgUtilization = analyticsData?.avg_utilization ?? 0;
+  // 从 heatmap 数据派生 waterfall 和 bottleneckTop10
+  const heatmap = useMemo(() => analyticsData?.heatmap ?? [], [analyticsData]);
 
   const waterfall = useMemo(() => {
     const stages = [
@@ -85,7 +84,7 @@ export default function MesCapacityUtilizationPage() {
     });
   }, []);
 
-  const bottleneck_top10 = useMemo(() => {
+  const bottleneckTop10 = useMemo(() => {
     const equipmentMap = new Map<string, number[]>();
     heatmap.forEach((item) => {
       if (!equipmentMap.has(item.equipment)) {
@@ -139,13 +138,13 @@ export default function MesCapacityUtilizationPage() {
           },
         },
       ],
-      data: bottleneck_top10.map((item) => ({
+      data: bottleneckTop10.map((item) => ({
         equipment: item.equipment,
         utilization: `${item.utilization}%`,
         status: item.utilization,
       })),
     }),
-    [bottleneck_top10]
+    [bottleneckTop10]
   );
 
   return (

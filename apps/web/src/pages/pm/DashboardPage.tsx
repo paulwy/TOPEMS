@@ -88,10 +88,11 @@ export const DashboardPage: React.FC = () => {
       name: statusMap[status] || status,
       value: count,
     }));
-    const taskTrend = trendData?.data?.map((item) => ({
-      name: item.date.slice(5),
-      value: item.count,
-    })) ?? [];
+    const taskTrend =
+      trendData?.data?.map((item) => ({
+        name: item.date.slice(5),
+        value: item.count,
+      })) ?? [];
     return {
       projectProgress:
         projectProgress.length > 0

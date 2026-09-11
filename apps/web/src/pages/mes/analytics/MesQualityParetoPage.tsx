@@ -19,26 +19,29 @@ const DISPOSITION_COLORS = [
 ];
 
 export default function MesQualityParetoPage() {
-  const { data: analyticsData, loading } = useAnalyticsData({
+  const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getQualityPareto({ days: 30 }),
     deps: [],
   });
   const [line, setLine] = useState('all');
 
   // 适配后端数据结构
-  const data = useMemo(() => ({
-    defect_types: (analyticsData?.pareto ?? []).map((item) => ({
-      type: item.defect_type,
-      count: item.count,
-      cumulative_pct: item.cumulative_percentage,
-    })),
-    heatmap: [] as Array<{ process: string; defect_type: string; count: number }>,
-    disposition: [
-      { category: '合格', count: Math.round((analyticsData?.pass_rate ?? 0) * 10) },
-      { category: '返工', count: Math.round((analyticsData?.total_defects ?? 0) * 0.3) },
-      { category: '报废', count: Math.round((analyticsData?.total_defects ?? 0) * 0.2) },
-    ],
-  }), [analyticsData]);
+  const data = useMemo(
+    () => ({
+      defect_types: (analyticsData?.pareto ?? []).map((item) => ({
+        type: item.defect_type,
+        count: item.count,
+        cumulative_pct: item.cumulative_percentage,
+      })),
+      heatmap: [] as Array<{ process: string; defect_type: string; count: number }>,
+      disposition: [
+        { category: '合格', count: Math.round((analyticsData?.pass_rate ?? 0) * 10) },
+        { category: '返工', count: Math.round((analyticsData?.total_defects ?? 0) * 0.3) },
+        { category: '报废', count: Math.round((analyticsData?.total_defects ?? 0) * 0.2) },
+      ],
+    }),
+    [analyticsData]
+  );
 
   const statCards: StatCard[] = useMemo(() => {
     const totalDefects = data.defect_types.reduce((sum, item) => sum + item.count, 0);

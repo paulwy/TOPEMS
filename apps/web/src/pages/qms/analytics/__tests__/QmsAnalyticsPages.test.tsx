@@ -47,8 +47,20 @@ vi.mock('@/api/qms/dashboard', () => ({
   qualityDashboardApi: {
     getQualityTrend: vi.fn().mockResolvedValue({
       data: [
-        { period: '2026-01', total_count: 100, qualified_count: 95, qualification_rate: 95, issue_count: 5 },
-        { period: '2026-02', total_count: 120, qualified_count: 114, qualification_rate: 95, issue_count: 6 },
+        {
+          period: '2026-01',
+          total_count: 100,
+          qualified_count: 95,
+          qualification_rate: 95,
+          issue_count: 5,
+        },
+        {
+          period: '2026-02',
+          total_count: 120,
+          qualified_count: 114,
+          qualification_rate: 95,
+          issue_count: 6,
+        },
       ],
       code: 0,
       message: 'ok',

@@ -219,7 +219,10 @@ export default function WmsInboundDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('common.loading')}</Typography>
       </PageContainer>
     );
@@ -227,8 +230,11 @@ export default function WmsInboundDetailPage() {
 
   if (error || !order) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
-        <Typography color="error">{error ?? i18n.t('pages.wms_inbound_detail_page.k0')}</Typography>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
+        <Typography color='error'>{error ?? i18n.t('pages.wms_inbound_detail_page.k0')}</Typography>
       </PageContainer>
     );
   }

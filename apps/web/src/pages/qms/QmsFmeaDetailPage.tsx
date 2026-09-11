@@ -33,7 +33,7 @@ import {
 } from 'recharts';
 import i18n from '@/i18n';
 import { fmeaApi } from '@/api/qms/fmea';
-import type { FmeaAnalysis } from '@/api/qms/types';
+import type { FmeaAnalysis, FmeaItem } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { QMS_PATHS } from '@/modules/qms/config';
 import { designTokens } from '@topems/tokens';
@@ -133,7 +133,7 @@ export default function QmsFmeaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<FmeaAnalysis | null>(null);
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<FmeaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -148,10 +148,7 @@ export default function QmsFmeaDetailPage() {
     setError(null);
 
     // 并行加载分析详情和 items
-    Promise.all([
-      fmeaApi.getFmeaAnalysis(id),
-      fmeaApi.listFmeaItems(id),
-    ])
+    Promise.all([fmeaApi.getFmeaAnalysis(id), fmeaApi.listFmeaItems(id)])
       .then(([analysisRes, itemsRes]) => {
         if (!cancelled) {
           setAnalysis(analysisRes.data ?? null);

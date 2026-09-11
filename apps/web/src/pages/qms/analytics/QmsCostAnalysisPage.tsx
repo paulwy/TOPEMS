@@ -8,7 +8,7 @@
  * 数据来自 useQmsMock 的 qualityCosts。
  */
 import { useMemo } from 'react';
-import { Grid, Paper, Typography, CircularProgress, Box, Alert } from '@mui/material';
+import { Grid, Paper, Typography, Alert } from '@mui/material';
 import {
   ResponsiveContainer,
   PieChart,
@@ -50,7 +50,12 @@ function getCostTypeLabels(): Record<string, string> {
 
 export default function QmsCostAnalysisPage() {
   const { t } = useTranslation('qms');
-  const { data: qualityCostsData, loading, error, reload } = useAnalyticsData<QualityCost[]>({
+  const {
+    data: qualityCostsData,
+    loading,
+    error,
+    reload,
+  } = useAnalyticsData<QualityCost[]>({
     fetcher: () => qualityCostApi.listQualityCosts(),
     deps: [],
   });
@@ -158,7 +163,11 @@ export default function QmsCostAnalysisPage() {
       loading={loading}
     >
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          onClose={reload}
+        >
           加载失败：{error}
         </Alert>
       )}

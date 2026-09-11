@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import { Truck, ArrowLeftRight, MapPin, Package, CheckCircle2 } from 'lucide-react';
@@ -225,7 +225,10 @@ export default function WmsTransferDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('common.loading')}</Typography>
       </PageContainer>
     );
@@ -233,8 +236,13 @@ export default function WmsTransferDetailPage() {
 
   if (error || !transfer) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
-        <Typography color="error">{error ?? i18n.t('pages.wms_transfer_detail_page.k0')}</Typography>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
+        <Typography color='error'>
+          {error ?? i18n.t('pages.wms_transfer_detail_page.k0')}
+        </Typography>
       </PageContainer>
     );
   }

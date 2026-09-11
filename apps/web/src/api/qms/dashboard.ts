@@ -39,20 +39,13 @@ export const qualityDashboardApi = {
     };
   },
 
-  getQualityTrend: async (params?: {
-    days?: number;
-  }): Promise<ApiResponse<QualityTrendItem[]>> => {
-    return apiClient.qms.get<QualityTrendItem[]>(
-      '/quality-dashboard/trend',
-      {
-        params: { days: params?.days ?? 30 },
-      }
-    );
+  getQualityTrend: async (params?: { days?: number }): Promise<ApiResponse<QualityTrendItem[]>> => {
+    return apiClient.qms.get<QualityTrendItem[]>('/quality-dashboard/trend', {
+      params: { days: params?.days ?? 30 },
+    });
   },
 
   getDefectDistribution: async (): Promise<ApiResponse<QualityDefectDistribution[]>> => {
-    return apiClient.qms.get<QualityDefectDistribution[]>(
-      '/quality-dashboard/defect-distribution'
-    );
+    return apiClient.qms.get<QualityDefectDistribution[]>('/quality-dashboard/defect-distribution');
   },
 };

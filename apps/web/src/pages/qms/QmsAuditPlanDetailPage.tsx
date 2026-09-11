@@ -23,7 +23,7 @@ import {
   Typography,
 } from '@mui/material';
 import { auditApi } from '@/api/qms/audit';
-import type { AuditPlan } from '@/api/qms/types';
+import type { AuditPlan, AuditTask, AuditFinding } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
@@ -55,8 +55,8 @@ export default function QmsAuditPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<AuditPlan | null>(null);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [findings, setFindings] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<AuditTask[]>([]);
+  const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,10 +71,7 @@ export default function QmsAuditPlanDetailPage() {
     setError(null);
 
     // 先并行获取 plan 和 tasks
-    Promise.all([
-      auditApi.getAuditPlan(id),
-      auditApi.listAuditTasks(id),
-    ])
+    Promise.all([auditApi.getAuditPlan(id), auditApi.listAuditTasks(id)])
       .then(([planRes, tasksRes]) => {
         if (cancelled) return;
         const taskList = tasksRes.data ?? [];
@@ -83,9 +80,7 @@ export default function QmsAuditPlanDetailPage() {
 
         // 根据 tasks 的 id 获取所有 findings
         if (taskList.length > 0) {
-          return Promise.all(
-            taskList.map((task) => auditApi.listAuditFindings(task.id))
-          );
+          return Promise.all(taskList.map((task) => auditApi.listAuditFindings(task.id)));
         }
         return [];
       })

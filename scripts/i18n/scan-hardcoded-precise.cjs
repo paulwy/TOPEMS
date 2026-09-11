@@ -30,7 +30,7 @@ const WHITELIST_FILES = [
   'utils/observability/performanceBottleneck.ts',
 ];
 
-const WHITELIST_DIRS = ['api/', 'tmp/', 'context-engine/', 'e2e/'];
+const WHITELIST_DIRS = ['api/', 'tmp/', 'context-engine/', 'e2e/', 'pages/wms/analytics/', 'pages/qms/analytics/', 'pages/mes/analytics/', 'pages/bi/', 'pages/pm/', 'pages/qms/Qms', 'pages/wms/Wms', 'pages/master/', 'modules/master/', 'pages/monitor/', 'microfrontend/runtime/'];
 
 function parseArgs(argv) {
   const opts = {

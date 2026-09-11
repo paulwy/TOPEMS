@@ -19,22 +19,25 @@ const getStackedTrend = () =>
   }));
 
 export default function MesEnergyCostPage() {
-  const { data: analyticsData, loading } = useAnalyticsData({
+  const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getEnergyCost({ days: 30 }),
     deps: [],
   });
   const [energyType, setEnergyType] = useState('all');
 
   // 适配后端字段名：energy_type → type
-  const data = useMemo(() => ({
-    per_unit_trend: analyticsData?.per_unit_trend ?? [],
-    energy_mix: (analyticsData?.energy_mix ?? []).map((item) => ({
-      type: item.energy_type,
-      percentage: item.percentage,
-      cost: item.cost,
-    })),
-    workshop_top_n: analyticsData?.workshop_top_n ?? [],
-  }), [analyticsData]);
+  const data = useMemo(
+    () => ({
+      per_unit_trend: analyticsData?.per_unit_trend ?? [],
+      energy_mix: (analyticsData?.energy_mix ?? []).map((item) => ({
+        type: item.energy_type,
+        percentage: item.percentage,
+        cost: item.cost,
+      })),
+      workshop_top_n: analyticsData?.workshop_top_n ?? [],
+    }),
+    [analyticsData]
+  );
 
   const statCards: StatCard[] = useMemo(() => {
     const totalCost = data.energy_mix.reduce((sum, item) => sum + item.cost, 0);

@@ -41,7 +41,12 @@ import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { qualityDashboardApi, type QualityDefectDistribution } from '@/api/qms/dashboard';
 
 export default function QmsDefectParetoPage() {
-  const { data: defectData, loading, error, reload } = useAnalyticsData<QualityDefectDistribution[]>({
+  const {
+    data: defectData,
+    loading,
+    error,
+    reload,
+  } = useAnalyticsData<QualityDefectDistribution[]>({
     fetcher: () => qualityDashboardApi.getDefectDistribution(),
     deps: [],
   });
@@ -112,7 +117,11 @@ export default function QmsDefectParetoPage() {
       loading={loading}
     >
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          onClose={reload}
+        >
           加载失败：{error}
         </Alert>
       )}
@@ -131,7 +140,14 @@ export default function QmsDefectParetoPage() {
             </Typography>
             <Box sx={{ width: '100%', height: 360, position: 'relative' }}>
               {loading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                  }}
+                >
                   <CircularProgress />
                 </Box>
               )}
@@ -230,8 +246,11 @@ export default function QmsDefectParetoPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paretoData.map((row, idx) => (
-                    <TableRow key={row.category} hover>
+                  {paretoData.map((row) => (
+                    <TableRow
+                      key={row.category}
+                      hover
+                    >
                       <TableCell>
                         <Chip
                           label={row.category}

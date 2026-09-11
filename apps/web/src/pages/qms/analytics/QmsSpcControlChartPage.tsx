@@ -18,7 +18,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { Box, Paper, Typography, FormControl, Select, MenuItem, CircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Typography, FormControl, Select, MenuItem, Alert } from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -48,8 +48,16 @@ export default function QmsSpcControlChartPage() {
     [charts, chartId]
   );
 
-  const { data: pointsData, loading: pointsLoading, error, reload } = useAnalyticsData<SpcDataPoint[]>({
-    fetcher: () => selectedChart ? spcApi.getSpcDataPoints(selectedChart.id) : Promise.resolve({ data: [], code: 0, message: 'ok' }),
+  const {
+    data: pointsData,
+    loading: pointsLoading,
+    error,
+    reload,
+  } = useAnalyticsData<SpcDataPoint[]>({
+    fetcher: () =>
+      selectedChart
+        ? spcApi.getSpcDataPoints(selectedChart.id)
+        : Promise.resolve({ data: [], code: 0, message: 'ok' }),
     deps: [selectedChart?.id],
     immediate: !!selectedChart,
   });
@@ -138,7 +146,11 @@ export default function QmsSpcControlChartPage() {
       loading={loading}
     >
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          onClose={reload}
+        >
           加载失败：{error}
         </Alert>
       )}

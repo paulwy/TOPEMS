@@ -235,7 +235,9 @@ export interface DailyTrendItem {
  * 获取库存分布（按仓库）
  * GET /wms/analytics/inventory-distribution
  */
-export async function getInventoryDistribution(): Promise<ApiResponse<InventoryDistributionItem[]>> {
+export async function getInventoryDistribution(): Promise<
+  ApiResponse<InventoryDistributionItem[]>
+> {
   return apiClient.wms.get('/analytics/inventory-distribution');
 }
 

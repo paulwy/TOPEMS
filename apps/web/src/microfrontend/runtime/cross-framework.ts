@@ -256,7 +256,10 @@ export class VueAdapter implements FrameworkAdapter {
   /** 模拟 Vue 模板渲染 */
   private renderTemplate(props: UnifiedProps): string {
     const entries = Object.entries(props)
-      .map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}`)
+      .map(
+        ([k, v]) =>
+          `${escapeHtml(k)}: ${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}`
+      )
       .join('<br/>');
     return `<div data-framework="vue" style="padding: designTokens.spacing.md;border:1px solid var(--color-success-400);border-radius:6px;">
       <strong>[Vue {i18n.t('microfrontend.cross-framework.k0')}]</strong><br/>${entries || i18n.t('microfrontend.cross-framework.k0')}

@@ -16,19 +16,25 @@ import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getLocationUtilization, type LocationUtilizationData } from '@/api/wms/analytics';
 
 export default function WmsLocationUtilizationPage() {
-  const { data: response, loading, error, reload } = useAnalyticsData({
+  const { data: response, loading } = useAnalyticsData({
     fetcher: () => getLocationUtilization(),
     deps: [],
   });
 
   const locationUtil = useMemo(() => {
     return (response?.data ?? []).map((item: LocationUtilizationData) => {
-      const vacancy = Math.max(0, 100 - item.utilization_rate - (item.dead_stock_locations / Math.max(1, item.total_locations)) * 100);
+      const vacancy = Math.max(
+        0,
+        100 -
+          item.utilization_rate -
+          (item.dead_stock_locations / Math.max(1, item.total_locations)) * 100
+      );
       return {
         area: item.warehouse_name,
         utilization: item.utilization_rate,
         vacancy: Math.round(vacancy * 10) / 10,
-        deadStock: Math.round((item.dead_stock_locations / Math.max(1, item.total_locations)) * 1000) / 10,
+        deadStock:
+          Math.round((item.dead_stock_locations / Math.max(1, item.total_locations)) * 1000) / 10,
         total_locations: item.total_locations,
         used_locations: item.used_locations,
         dead_stock_locations: item.dead_stock_locations,
@@ -39,10 +45,6 @@ export default function WmsLocationUtilizationPage() {
   const avgUtil = useMemo(() => {
     if (locationUtil.length === 0) return 0;
     return Math.round(locationUtil.reduce((s, l) => s + l.utilization, 0) / locationUtil.length);
-  }, [locationUtil]);
-  const avgDead = useMemo(() => {
-    if (locationUtil.length === 0) return 0;
-    return Math.round(locationUtil.reduce((s, l) => s + l.deadStock, 0) / locationUtil.length);
   }, [locationUtil]);
 
   const statCards = useMemo(
@@ -74,7 +76,7 @@ export default function WmsLocationUtilizationPage() {
         color: 'secondary' as const,
       },
     ],
-    [avgUtil, avgDead, locationUtil.length, response]
+    [avgUtil, locationUtil.length, response]
   );
 
   return (
@@ -165,7 +167,9 @@ export default function WmsLocationUtilizationPage() {
                   <td className='px-3 py-2 text-right'>{item.total_locations.toLocaleString()}</td>
                   <td className='px-3 py-2 text-right'>{item.used_locations.toLocaleString()}</td>
                   <td className='px-3 py-2 text-right'>{item.utilization.toFixed(1)}%</td>
-                  <td className='px-3 py-2 text-right text-red-600'>{item.dead_stock_locations.toLocaleString()}</td>
+                  <td className='px-3 py-2 text-right text-red-600'>
+                    {item.dead_stock_locations.toLocaleString()}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -91,7 +91,7 @@ export const SourcingStrategyPage: React.FC = () => {
     try {
       await scmApi.settings.update(CATEGORY, values);
       setSuccess(t('scm.sourcing_strategy_page.k10'));
-    } catch (e) {
+    } catch (_e) {
       setError(t('scm.sourcing_strategy_page.k11'));
     } finally {
       setSaving(false);

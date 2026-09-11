@@ -19,7 +19,6 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { Box, Paper, Typography, CircularProgress, Alert } from '@mui/material';
-import i18n from '@/i18n';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -31,7 +30,12 @@ export default function QmsQualityTrendPage() {
   const [range, setRange] = useState<'6m' | '12m'>('12m');
   const days = range === '6m' ? 180 : 365;
 
-  const { data: trendData, loading, error, reload } = useAnalyticsData<QualityTrendItem[]>({
+  const {
+    data: trendData,
+    loading,
+    error,
+    reload,
+  } = useAnalyticsData<QualityTrendItem[]>({
     fetcher: () => qualityDashboardApi.getQualityTrend({ days }),
     deps: [days],
   });
@@ -97,7 +101,11 @@ export default function QmsQualityTrendPage() {
       loading={loading}
     >
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }} onClose={reload}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          onClose={reload}
+        >
           加载失败：{error}
         </Alert>
       )}
@@ -111,7 +119,14 @@ export default function QmsQualityTrendPage() {
         </Typography>
         <Box sx={{ width: '100%', height: 340, position: 'relative' }}>
           {loading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
               <CircularProgress />
             </Box>
           )}

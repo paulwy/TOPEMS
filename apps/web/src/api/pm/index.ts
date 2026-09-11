@@ -19,7 +19,6 @@ import { reportApi, reportTemplateApi } from './report';
 import { notificationApi, notificationSettingApi, notificationTypeApi } from './notification';
 import { dashboardApi } from './dashboard';
 import { pmStatisticsApi } from './statistics';
-import { pmAnalyticsApi } from './analytics';
 
 export * from './types';
 
