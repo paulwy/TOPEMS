@@ -20,8 +20,9 @@ use crate::cache::{
     CacheInvalidationEvent, CacheInvalidationHandler, InMemoryCache as MokaL1, InvalidationLevel,
 };
 use crate::metrics::{
-    L1_CACHE_ENTRIES, L1_CACHE_HITS_TOTAL, L1_CACHE_MISSES_TOTAL, L2_CACHE_CONNECTED,
-    L2_CACHE_HITS_TOTAL, L2_CACHE_MISSES_TOTAL, L2_CACHE_REMOVALS_TOTAL, L2_CACHE_SETS_TOTAL,
+    CACHE_QUERY_DURATION, L1_CACHE_ENTRIES, L1_CACHE_HITS_TOTAL, L1_CACHE_MISSES_TOTAL,
+    L1_CACHE_QUERY_DURATION, L2_CACHE_CONNECTED, L2_CACHE_HITS_TOTAL, L2_CACHE_MISSES_TOTAL,
+    L2_CACHE_QUERY_DURATION, L2_CACHE_REMOVALS_TOTAL, L2_CACHE_SETS_TOTAL,
 };
 
 // ===== Redis 相关（仅当 redis_client 参数传入时启用 L2）=====
@@ -277,56 +278,84 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
     where
         T: for<'de> Deserialize<'de>,
     {
+        let total_start = std::time::Instant::now();
+
         // L1 命中直接返回
+        let l1_start = std::time::Instant::now();
         if let Some(v) = self.l1.get(key) {
-            // 记录 L1 命中指标
+            let l1_duration = l1_start.elapsed().as_secs_f64();
+            let total_duration = total_start.elapsed().as_secs_f64();
+            // 记录 L1 命中指标和延迟
             if self.config.metrics_enabled() {
                 if let (Some(service), Some(entity)) = (
                     self.config.metrics_service.as_ref(),
                     self.config.metrics_entity.as_ref(),
                 ) {
                     record_l1_cache_hit(service, entity, "get");
+                    record_l1_cache_query_duration(service, entity, "get", l1_duration);
+                    record_cache_query_duration(service, entity, "get", "l1_hit", total_duration);
                 }
             }
             return Some(v);
         }
 
-        // 记录 L1 未命中指标
+        let l1_duration = l1_start.elapsed().as_secs_f64();
+
+        // 记录 L1 未命中指标和延迟
         if self.config.metrics_enabled() {
             if let (Some(service), Some(entity)) = (
                 self.config.metrics_service.as_ref(),
                 self.config.metrics_entity.as_ref(),
             ) {
                 record_l1_cache_miss(service, entity, "get");
+                record_l1_cache_query_duration(service, entity, "get", l1_duration);
             }
         }
 
         // L2 命中 → 回填 L1
+        let l2_start = std::time::Instant::now();
         if let Some(raw) = self.l2_get_raw(key).await {
+            let l2_duration = l2_start.elapsed().as_secs_f64();
             if let Ok(v) = serde_json::from_str::<T>(&raw) {
                 // 回填 L1（使用 L1 的 TTL）
                 self.l1
                     .set_with_ttl(key.to_string(), v.clone(), self.config.l1_ttl);
-                // 记录 L2 命中指标
+                let total_duration = total_start.elapsed().as_secs_f64();
+                // 记录 L2 命中指标和延迟
                 if self.config.metrics_enabled() {
                     if let (Some(service), Some(entity)) = (
                         self.config.metrics_service.as_ref(),
                         self.config.metrics_entity.as_ref(),
                     ) {
                         record_l2_cache_hit(service, entity, "get");
+                        record_l2_cache_query_duration(service, entity, "get", l2_duration);
+                        record_cache_query_duration(service, entity, "get", "l2_hit", total_duration);
                     }
                 }
                 return Some(v);
             }
         }
 
-        // 记录 L2 未命中指标（仅当启用了 L2 时）
+        let l2_duration = l2_start.elapsed().as_secs_f64();
+        let total_duration = total_start.elapsed().as_secs_f64();
+
+        // 记录 L2 未命中指标（仅当启用了 L2 时）和总延迟
         if self.l2.is_some() && self.config.metrics_enabled() {
             if let (Some(service), Some(entity)) = (
                 self.config.metrics_service.as_ref(),
                 self.config.metrics_entity.as_ref(),
             ) {
                 record_l2_cache_miss(service, entity, "get");
+                record_l2_cache_query_duration(service, entity, "get", l2_duration);
+                record_cache_query_duration(service, entity, "get", "miss", total_duration);
+            }
+        } else if self.config.metrics_enabled() {
+            // 纯 L1 模式下的 miss
+            if let (Some(service), Some(entity)) = (
+                self.config.metrics_service.as_ref(),
+                self.config.metrics_entity.as_ref(),
+            ) {
+                record_cache_query_duration(service, entity, "get", "miss", total_duration);
             }
         }
         None
@@ -346,22 +375,50 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
     where
         T: Serialize,
     {
+        let total_start = std::time::Instant::now();
+
         // L1 写入（同步，立即）
+        let l1_start = std::time::Instant::now();
         self.l1.set_with_ttl(key.clone(), value.clone(), l1_ttl);
+        let l1_duration = l1_start.elapsed().as_secs_f64();
+
+        // 记录 L1 写入延迟
+        if self.config.metrics_enabled() {
+            if let (Some(service), Some(entity)) = (
+                self.config.metrics_service.as_ref(),
+                self.config.metrics_entity.as_ref(),
+            ) {
+                record_l1_cache_query_duration(service, entity, "set", l1_duration);
+            }
+        }
 
         // L2 写入（异步 JSON 序列化）
         if self.l2.is_some() {
+            let l2_start = std::time::Instant::now();
             if let Ok(serialized) = serde_json::to_string(&value) {
                 self.l2_set_raw(&key, &serialized, l2_ttl).await;
-                // 记录 L2 写入指标
+                let l2_duration = l2_start.elapsed().as_secs_f64();
+                let total_duration = total_start.elapsed().as_secs_f64();
+                // 记录 L2 写入指标和延迟
                 if self.config.metrics_enabled() {
                     if let (Some(service), Some(entity)) = (
                         self.config.metrics_service.as_ref(),
                         self.config.metrics_entity.as_ref(),
                     ) {
                         record_l2_cache_set(service, entity, "set");
+                        record_l2_cache_query_duration(service, entity, "set", l2_duration);
+                        record_cache_query_duration(service, entity, "set", "set", total_duration);
                     }
                 }
+            }
+        } else if self.config.metrics_enabled() {
+            // 纯 L1 模式下的写入总延迟
+            let total_duration = total_start.elapsed().as_secs_f64();
+            if let (Some(service), Some(entity)) = (
+                self.config.metrics_service.as_ref(),
+                self.config.metrics_entity.as_ref(),
+            ) {
+                record_cache_query_duration(service, entity, "set", "set", total_duration);
             }
         }
     }
@@ -478,6 +535,64 @@ pub fn set_l2_cache_connected(service: &str, connected: bool) {
     L2_CACHE_CONNECTED
         .with_label_values(&[service])
         .set(if connected { 1 } else { 0 });
+}
+
+// ===== 缓存查询延迟指标记录函数 =====
+
+/// 记录 L1 缓存查询延迟
+///
+/// # 参数
+/// - `service`: 服务名称（如 "mes"、"wms"）
+/// - `entity`: 实体名称（如 "process_route"、"warehouse"）
+/// - `operation`: 操作类型（如 "get"、"set"）
+/// - `duration_secs`: 延迟时间（秒）
+pub fn record_l1_cache_query_duration(
+    service: &str,
+    entity: &str,
+    operation: &str,
+    duration_secs: f64,
+) {
+    L1_CACHE_QUERY_DURATION
+        .with_label_values(&[service, entity, operation])
+        .observe(duration_secs);
+}
+
+/// 记录 L2 缓存查询延迟
+///
+/// # 参数
+/// - `service`: 服务名称
+/// - `entity`: 实体名称
+/// - `operation`: 操作类型（如 "get"、"set"）
+/// - `duration_secs`: 延迟时间（秒）
+pub fn record_l2_cache_query_duration(
+    service: &str,
+    entity: &str,
+    operation: &str,
+    duration_secs: f64,
+) {
+    L2_CACHE_QUERY_DURATION
+        .with_label_values(&[service, entity, operation])
+        .observe(duration_secs);
+}
+
+/// 记录总缓存查询延迟
+///
+/// # 参数
+/// - `service`: 服务名称
+/// - `entity`: 实体名称
+/// - `operation`: 操作类型（如 "get"、"set"）
+/// - `result`: 结果类型（"l1_hit"、"l2_hit"、"miss"、"set"）
+/// - `duration_secs`: 延迟时间（秒）
+pub fn record_cache_query_duration(
+    service: &str,
+    entity: &str,
+    operation: &str,
+    result: &str,
+    duration_secs: f64,
+) {
+    CACHE_QUERY_DURATION
+        .with_label_values(&[service, entity, operation, result])
+        .observe(duration_secs);
 }
 
 /// 计算 L1 缓存命中率

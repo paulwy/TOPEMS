@@ -191,6 +191,44 @@ pub static L2_CACHE_CONNECTED: LazyLock<IntGaugeVec> = LazyLock::new(|| {
     .expect("Failed to register L2_CACHE_CONNECTED gauge")
 });
 
+// ===== 缓存查询延迟指标（Histogram）=====
+
+/// L1 缓存查询延迟（按 service、entity、operation 分类）
+/// L1 是进程内 moka 缓存，延迟通常在微秒级
+pub static L1_CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
+    register_histogram_vec!(
+        "topems_l1_cache_query_duration_seconds",
+        "L1 cache query duration in seconds",
+        &["service", "entity", "operation"],
+        vec![1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2]
+    )
+    .expect("Failed to register L1_CACHE_QUERY_DURATION histogram")
+});
+
+/// L2 缓存查询延迟（按 service、entity、operation 分类）
+/// L2 是 Redis 分布式缓存，延迟通常在毫秒级
+pub static L2_CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
+    register_histogram_vec!(
+        "topems_l2_cache_query_duration_seconds",
+        "L2 cache query duration in seconds",
+        &["service", "entity", "operation"],
+        vec![1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1, 1.0]
+    )
+    .expect("Failed to register L2_CACHE_QUERY_DURATION histogram")
+});
+
+/// 总缓存查询延迟（按 service、entity、operation、result 分类）
+/// result: l1_hit（L1 命中）、l2_hit（L2 命中）、miss（未命中，回源）、set（写入）
+pub static CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
+    register_histogram_vec!(
+        "topems_cache_query_duration_seconds",
+        "Total cache query duration in seconds (including L1 lookup, L2 lookup, and source fallback)",
+        &["service", "entity", "operation", "result"],
+        vec![1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1, 1.0]
+    )
+    .expect("Failed to register CACHE_QUERY_DURATION histogram")
+});
+
 #[macro_export]
 macro_rules! observe_operation {
     ($service:expr, $operation:expr, $body:expr) => {{
@@ -237,6 +275,10 @@ pub fn init_metrics() {
     LazyLock::force(&CACHE_SETS_TOTAL);
     LazyLock::force(&CACHE_REMOVALS_TOTAL);
     LazyLock::force(&CACHE_ENTRIES);
+    // 多级缓存延迟指标
+    LazyLock::force(&L1_CACHE_QUERY_DURATION);
+    LazyLock::force(&L2_CACHE_QUERY_DURATION);
+    LazyLock::force(&CACHE_QUERY_DURATION);
 }
 
 #[cfg(test)]
