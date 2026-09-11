@@ -5,8 +5,6 @@ mod schema_defense;
 mod services;
 mod shared;
 
-use shared::cache::InMemoryCache;
-
 use anyhow::Result;
 use axum::routing::get;
 use std::env;
@@ -20,6 +18,7 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 use modules::{
@@ -80,8 +79,28 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
-    tracing::info!("💾 内存缓存初始化完成（供应商）");
+    // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
+    let l2_config = L2CacheConfig {
+        instance_prefix: "srm".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(300),
+        l1_capacity: 10_000,
+    };
+    let redis_url = std::env::var("REDIS_URL").ok();
+    let supplier_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（SRM，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（SRM，纯 L1 模式，Redis 未配置）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（SRM）: {}", warn);
+            Arc::new(cache)
+        }
+    };
 
     // 缓存预热：服务启动时异步加载常用数据，避免首次请求缓存未命中
     {
@@ -112,7 +131,7 @@ async fn main() -> Result<()> {
             {
                 Ok(Some(data)) => {
                     let cache_key = "srm:suppliers:default:page:1:size:20:search:None:status:None:category:None:sort:created_at:order:desc";
-                    cache.set(cache_key.to_string(), data);
+                    cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[srm] 供应商列表缓存预热完成");
                 }
                 Ok(None) => {
@@ -127,8 +146,12 @@ async fn main() -> Result<()> {
         });
     }
 
-    if let Err(e) =
-        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone(), supplier_cache.clone()).await
+    if let Err(e) = event_handlers::start_event_subscribers(
+        ctx.db.clone(),
+        ctx.event_publisher.clone(),
+        supplier_cache.clone(),
+    )
+    .await
     {
         tracing::warn!("⚠️ SRM 事件订阅者启动失败: {}", e);
     }

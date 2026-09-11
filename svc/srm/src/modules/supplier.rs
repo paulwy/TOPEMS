@@ -17,11 +17,11 @@ use crate::models::{
     CreateSupplierRequest, Supplier, SupplierContract, SupplierPerformance, SupplierProduct,
     UpdateSupplierRequest,
 };
-use crate::shared::cache::InMemoryCache;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
+use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::{
     EventPublisher, EventType, SrmSupplierCreatedPayload, SrmSupplierRegisteredPayload,
     SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
@@ -44,14 +44,14 @@ pub struct AppState {
     pub db: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
-    pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 pub async fn create_routes(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
     workflow_client: TypedServiceClient<WorkflowApi>,
-    supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+    supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<Router> {
     let state = Arc::new(AppState {
         db,
@@ -61,40 +61,22 @@ pub async fn create_routes(
     });
 
     let app = Router::new()
-        .route(
-            "/suppliers",
-            get(list_suppliers).post(create_supplier),
-        )
+        .route("/suppliers", get(list_suppliers).post(create_supplier))
         .route(
             "/suppliers/{id}",
             get(get_supplier)
                 .put(update_supplier)
                 .delete(delete_supplier),
         )
-        .route(
-            "/suppliers/{id}/products",
-            get(get_supplier_products),
-        )
-        .route(
-            "/suppliers/{id}/contracts",
-            get(get_supplier_contracts),
-        )
-        .route(
-            "/suppliers/{id}/performance",
-            get(get_supplier_performance),
-        )
+        .route("/suppliers/{id}/products", get(get_supplier_products))
+        .route("/suppliers/{id}/contracts", get(get_supplier_contracts))
+        .route("/suppliers/{id}/performance", get(get_supplier_performance))
         .route(
             "/suppliers/{id}/approval/start",
             post(start_supplier_approval),
         )
-        .route(
-            "/suppliers/{id}/approval/approve",
-            post(approve_supplier),
-        )
-        .route(
-            "/suppliers/{id}/approval/reject",
-            post(reject_supplier),
-        )
+        .route("/suppliers/{id}/approval/approve", post(approve_supplier))
+        .route("/suppliers/{id}/approval/reject", post(reject_supplier))
         .with_state(state);
 
     Ok(app)
@@ -172,7 +154,7 @@ pub async fn list_suppliers(
         &sort_order,
     );
 
-    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+    if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("srm", "supplier", "list");
         tracing::debug!("📋 供应商列表缓存命中: {}", cache_key);
         return Json(ApiResponse::success(cached, "获取供应商列表成功"));
@@ -250,7 +232,10 @@ pub async fn list_suppliers(
                 "page_size": page_size
             });
 
-            state.supplier_cache.set(cache_key, response_data.clone());
+            state
+                .supplier_cache
+                .set(cache_key, response_data.clone())
+                .await;
             record_cache_set("srm", "supplier", "list");
 
             Json(ApiResponse::success(response_data, "获取供应商列表成功"))
@@ -354,7 +339,7 @@ pub async fn create_supplier(
                     return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
-            state.supplier_cache.clear();
+            state.supplier_cache.clear_l1();
             tracing::debug!("🗑️ 供应商缓存已清空（创建供应商）");
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -362,7 +347,11 @@ pub async fn create_supplier(
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("srm:supplier:*", "pattern", Some("supplier_created"))
+                        .publish_cache_invalidated(
+                            "srm:supplier:*",
+                            "pattern",
+                            Some("supplier_created"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -491,7 +480,7 @@ pub async fn get_supplier(
     let tenant_id = get_tenant_id(&claims, &headers);
     let cache_key = supplier_cache_key(tenant_id, id);
 
-    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+    if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("srm", "supplier", "get");
         tracing::debug!("📋 供应商缓存命中: {}", cache_key);
         if let Ok(supplier) = serde_json::from_value::<Supplier>(cached) {
@@ -516,7 +505,7 @@ pub async fn get_supplier(
     match result {
         Ok(Some(supplier)) => {
             if let Ok(value) = serde_json::to_value(&supplier) {
-                state.supplier_cache.set(cache_key, value);
+                state.supplier_cache.set(cache_key, value).await;
             }
             Json(ApiResponse::success(supplier, "获取供应商成功"))
         }
@@ -628,8 +617,8 @@ pub async fn update_supplier(
     match result {
         Ok(supplier) => {
             let cache_key = supplier_cache_key(tenant_id, id);
-            state.supplier_cache.remove(&cache_key);
-            state.supplier_cache.clear();
+            state.supplier_cache.remove(&cache_key).await;
+            state.supplier_cache.clear_l1();
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -637,7 +626,11 @@ pub async fn update_supplier(
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("srm:supplier:*", "pattern", Some("supplier_updated"))
+                        .publish_cache_invalidated(
+                            "srm:supplier:*",
+                            "pattern",
+                            Some("supplier_updated"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -765,8 +758,8 @@ pub async fn delete_supplier(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             let cache_key = supplier_cache_key(tenant_id, id);
-            state.supplier_cache.remove(&cache_key);
-            state.supplier_cache.clear();
+            state.supplier_cache.remove(&cache_key).await;
+            state.supplier_cache.clear_l1();
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -774,7 +767,11 @@ pub async fn delete_supplier(
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("srm:supplier:*", "pattern", Some("supplier_deleted"))
+                        .publish_cache_invalidated(
+                            "srm:supplier:*",
+                            "pattern",
+                            Some("supplier_deleted"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -1161,7 +1158,7 @@ pub async fn start_supplier_approval(
     .await;
 
     if result.is_ok() {
-        state.supplier_cache.clear();
+        state.supplier_cache.clear_l1();
 
         // P3 事件驱动规范化：状态变更 → pending_approval，通知 SCM/Finance/Portal
         if let Some(ref publisher) = state.event_publisher {
@@ -1272,7 +1269,7 @@ pub async fn approve_supplier(
     .await;
 
     if result.is_ok() {
-        state.supplier_cache.clear();
+        state.supplier_cache.clear_l1();
 
         // P3 事件驱动规范化：状态变更 → approved，通知 SCM（采购资格）/Finance（应付启用）
         if let Some(ref publisher) = state.event_publisher {
@@ -1381,7 +1378,7 @@ pub async fn reject_supplier(
     .await;
 
     if result.is_ok() {
-        state.supplier_cache.clear();
+        state.supplier_cache.clear_l1();
 
         // P3 事件驱动规范化：状态变更 → rejected，通知 SCM（采购冻结）/Finance/Portal
         if let Some(ref publisher) = state.event_publisher {

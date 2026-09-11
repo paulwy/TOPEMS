@@ -1,4 +1,6 @@
 // 统一使用 shared-core 的 InMemoryCache 实现（接受 Duration 作为 TTL）
+// 注意：SRM 服务已迁移到 AsyncL2Cache，此重新导出仅用于测试
+#[allow(unused_imports)]
 pub use topems_shared_core::cache::InMemoryCache;
 
 #[cfg(test)]
