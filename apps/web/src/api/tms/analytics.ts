@@ -25,6 +25,34 @@ export interface StatusDistributionItem {
   percentage: number;
 }
 
+export interface CarrierPerformanceItem {
+  carrier_id: string;
+  carrier_name: string;
+  total_shipments: number;
+  completed_shipments: number;
+  total_freight: number;
+  avg_freight: number;
+}
+
+export interface RouteEfficiencyItem {
+  route_id: string;
+  route_name: string;
+  distance_km: number;
+  estimated_hours: number;
+  total_trips: number;
+  total_freight: number;
+  cost_per_km: number;
+}
+
+export interface DriverPerformanceItem {
+  driver_id: string;
+  driver_name: string;
+  total_deliveries: number;
+  completed_deliveries: number;
+  total_freight: number;
+  avg_freight: number;
+}
+
 // ===== API 函数 =====
 
 /**
@@ -51,10 +79,37 @@ export async function getStatusDistribution(): Promise<ApiResponse<StatusDistrib
   return apiClient.tms.get('/analytics/status-distribution');
 }
 
+/**
+ * 获取承运商绩效
+ * GET /tms/analytics/carrier-performance
+ */
+export async function getCarrierPerformance(): Promise<ApiResponse<CarrierPerformanceItem[]>> {
+  return apiClient.tms.get('/analytics/carrier-performance');
+}
+
+/**
+ * 获取路线效率
+ * GET /tms/analytics/route-efficiency
+ */
+export async function getRouteEfficiency(): Promise<ApiResponse<RouteEfficiencyItem[]>> {
+  return apiClient.tms.get('/analytics/route-efficiency');
+}
+
+/**
+ * 获取司机绩效
+ * GET /tms/analytics/driver-performance
+ */
+export async function getDriverPerformance(): Promise<ApiResponse<DriverPerformanceItem[]>> {
+  return apiClient.tms.get('/analytics/driver-performance');
+}
+
 // ===== 统一导出 =====
 
 export const tmsAnalyticsApi = {
   getShipmentTrend,
   getVehicleRanking,
   getStatusDistribution,
+  getCarrierPerformance,
+  getRouteEfficiency,
+  getDriverPerformance,
 };

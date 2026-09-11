@@ -1,20 +1,20 @@
 import { designTokens } from '@topems/tokens';
-import i18n from '@/i18n';
 /**
  * 司机绩效分析页
  *
- * 使用 recharts BarChart 展示各司机的准点送达率：
- * - 准点率（%）
- * 数据为 mock 数据。
+ * 使用 recharts BarChart 展示各司机的配送统计对比：
+ * - 完成率、总配送数、已完成数、平均运费
+ * 数据来自后端 /tms/analytics/driver-performance API。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { tmsApi } from '@/api/tms';
+import { tmsAnalyticsApi } from '@/api/tms';
+import type { DriverPerformanceItem } from '@/api/tms';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography } from '@mui/material';
-import { TrendingUp, Truck, User, Award } from 'lucide-react';
+import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Truck, CheckCircle, User, Award } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -27,115 +27,45 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-function getMockData() {
-  return [
-    {
-      driver: i18n.t('tms.driver_performance_page.k0'),
-      onTimeRate: 92,
-      totalDeliveries: 45,
-      avgDelayMin: 5,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k1'),
-      onTimeRate: 88,
-      totalDeliveries: 38,
-      avgDelayMin: 8,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k2'),
-      onTimeRate: 95,
-      totalDeliveries: 52,
-      avgDelayMin: 3,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k3'),
-      onTimeRate: 78,
-      totalDeliveries: 30,
-      avgDelayMin: 15,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k4'),
-      onTimeRate: 90,
-      totalDeliveries: 42,
-      avgDelayMin: 6,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k5'),
-      onTimeRate: 85,
-      totalDeliveries: 35,
-      avgDelayMin: 10,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k6'),
-      onTimeRate: 97,
-      totalDeliveries: 48,
-      avgDelayMin: 2,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k7'),
-      onTimeRate: 82,
-      totalDeliveries: 33,
-      avgDelayMin: 12,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k8'),
-      onTimeRate: 89,
-      totalDeliveries: 40,
-      avgDelayMin: 7,
-    },
-    {
-      driver: i18n.t('tms.driver_performance_page.k9'),
-      onTimeRate: 94,
-      totalDeliveries: 46,
-      avgDelayMin: 4,
-    },
-  ];
-}
-
 export default function DriverPerformancePage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['tms', 'DriverPerformancePage'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['tms', 'driverPerformance'],
     queryFn: async () => {
-      try {
-        const res = await tmsApi.listDrivers();
-        const data = (res as { data?: unknown })?.data;
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray((data as { items?: unknown[] })?.items)
-            ? (data as { items: unknown[] }).items
-            : [];
-        const ratings = items
-          .map((x: unknown) => (x as { avg_rating?: number })?.avg_rating)
-          .filter((v: unknown): v is number => typeof v === 'number' && !isNaN(v));
-        const avgScore =
-          ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0;
-        return {
-          total: items.length,
-          avgScore,
-        };
-      } catch {
-        return {};
-      }
+      const res = await tmsAnalyticsApi.getDriverPerformance();
+      return (res?.data ?? []) as DriverPerformanceItem[];
     },
   });
 
-  const data = useMemo(() => getMockData(), []);
+  const data = useMemo(
+    () =>
+      (apiData ?? []).map((d) => ({
+        driver: d.driver_name,
+        completionRate:
+          d.total_deliveries > 0
+            ? Math.round((d.completed_deliveries / d.total_deliveries) * 1000) / 10
+            : 0,
+        totalDeliveries: d.total_deliveries,
+        completed: d.completed_deliveries,
+        avgFreight: Math.round(d.avg_freight * 100) / 100,
+      })),
+    [apiData]
+  );
 
-  const avgOnTimeRate =
+  const avgCompletionRate =
     data.length > 0
-      ? Math.round((data.reduce((s, d) => s + d.onTimeRate, 0) / data.length) * 10) / 10
+      ? Math.round((data.reduce((s, d) => s + d.completionRate, 0) / data.length) * 10) / 10
       : 0;
   const totalDeliveries = data.reduce((s, d) => s + d.totalDeliveries, 0);
-  const topPerformer = [...data].sort((a, b) => b.onTimeRate - a.onTimeRate)[0];
+  const topPerformer = [...data].sort((a, b) => b.completionRate - a.completionRate)[0];
 
   const statCards: StatCard[] = [
     {
-      id: 'avgOnTimeRate',
+      id: 'avgCompletionRate',
       title: t('tms.driver_performance_page.k12'),
-      value: `${avgOnTimeRate}%`,
-      icon: <TrendingUp size={24} />,
+      value: `${avgCompletionRate}%`,
+      icon: <Award size={24} />,
       color: 'success',
     },
     {
@@ -155,11 +85,26 @@ export default function DriverPerformancePage() {
     {
       id: 'topPerformerRate',
       title: t('tms.driver_performance_page.k15'),
-      value: `${topPerformer?.onTimeRate ?? 0}%`,
-      icon: <Award size={24} />,
+      value: `${topPerformer?.completionRate ?? 0}%`,
+      icon: <CheckCircle size={24} />,
       color: 'info',
     },
   ];
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <StatsPageTemplate
@@ -195,7 +140,7 @@ export default function DriverPerformancePage() {
                 fontSize={11}
               />
               <YAxis
-                domain={[60, 100]}
+                domain={[0, 100]}
                 unit='%'
                 fontSize={11}
               />
@@ -208,7 +153,7 @@ export default function DriverPerformancePage() {
                 label={t('tms.driver_performance_page.90_17')}
               />
               <Bar
-                dataKey='onTimeRate'
+                dataKey='completionRate'
                 name={t('tms.driver_performance_page.k18')}
                 fill={designTokens.colors.primary.main}
                 barSize={28}
@@ -248,9 +193,9 @@ export default function DriverPerformancePage() {
                 barSize={20}
               />
               <Bar
-                dataKey='avgDelayMin'
+                dataKey='completed'
                 name={t('tms.driver_performance_page.k21')}
-                fill={designTokens.colors.warning.main}
+                fill={designTokens.colors.success.dark}
                 barSize={20}
               />
             </BarChart>

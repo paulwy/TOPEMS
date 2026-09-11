@@ -35,6 +35,37 @@ pub struct StatusDistributionItem {
     pub percentage: f64,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CarrierPerformanceItem {
+    pub carrier_id: String,
+    pub carrier_name: String,
+    pub total_shipments: i64,
+    pub completed_shipments: i64,
+    pub total_freight: f64,
+    pub avg_freight: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RouteEfficiencyItem {
+    pub route_id: String,
+    pub route_name: String,
+    pub distance_km: f64,
+    pub estimated_hours: f64,
+    pub total_trips: i64,
+    pub total_freight: f64,
+    pub cost_per_km: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DriverPerformanceItem {
+    pub driver_id: String,
+    pub driver_name: String,
+    pub total_deliveries: i64,
+    pub completed_deliveries: i64,
+    pub total_freight: f64,
+    pub avg_freight: f64,
+}
+
 // ===== API 处理函数 =====
 
 /// 获取运输趋势（最近7天）
@@ -150,6 +181,162 @@ pub async fn get_status_distribution(
     Json(ApiResponse::success(items, "获取成功"))
 }
 
+/// 获取承运商绩效
+pub async fn get_carrier_performance(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<CarrierPerformanceItem>>> {
+    tracing::info!("获取TMS承运商绩效数据");
+
+    let rows: Vec<(
+        Option<String>,
+        Option<String>,
+        Option<i64>,
+        Option<i64>,
+        Option<f64>,
+    )> = sqlx::query_as(
+        "SELECT 
+            c.id::text as carrier_id,
+            c.name as carrier_name,
+            COUNT(s.id) as total_shipments,
+            COUNT(CASE WHEN s.status = 'delivered' THEN 1 END) as completed_shipments,
+            COALESCE(SUM(s.freight_amount), 0)::float8 as total_freight
+         FROM tms.tms_carriers c
+         LEFT JOIN tms.tms_shipments s ON s.carrier_id = c.id
+         GROUP BY c.id, c.name
+         ORDER BY total_shipments DESC
+         LIMIT 20",
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<CarrierPerformanceItem> = rows
+        .into_iter()
+        .map(
+            |(carrier_id, carrier_name, total_shipments, completed_shipments, total_freight)| {
+                let total = total_shipments.unwrap_or(0);
+                let freight = total_freight.unwrap_or(0.0);
+                CarrierPerformanceItem {
+                    carrier_id: carrier_id.unwrap_or_default(),
+                    carrier_name: carrier_name.unwrap_or_else(|| "未知承运商".to_string()),
+                    total_shipments: total,
+                    completed_shipments: completed_shipments.unwrap_or(0),
+                    total_freight: freight,
+                    avg_freight: if total > 0 { freight / total as f64 } else { 0.0 },
+                }
+            },
+        )
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
+/// 获取路线效率
+pub async fn get_route_efficiency(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<RouteEfficiencyItem>>> {
+    tracing::info!("获取TMS路线效率数据");
+
+    let rows: Vec<(
+        Option<String>,
+        Option<String>,
+        Option<f64>,
+        Option<f64>,
+        Option<i64>,
+        Option<f64>,
+    )> = sqlx::query_as(
+        "SELECT 
+            r.id::text as route_id,
+            COALESCE(r.name, r.route_no) as route_name,
+            COALESCE(r.distance_km, 0)::float8 as distance_km,
+            COALESCE(r.estimated_hours, 0)::float8 as estimated_hours,
+            COUNT(s.id) as total_trips,
+            COALESCE(SUM(s.freight_amount), 0)::float8 as total_freight
+         FROM tms.tms_routes r
+         LEFT JOIN tms.tms_shipments s ON s.route_id = r.id
+         GROUP BY r.id, r.name, r.route_no, r.distance_km, r.estimated_hours
+         ORDER BY total_trips DESC
+         LIMIT 20",
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<RouteEfficiencyItem> = rows
+        .into_iter()
+        .map(
+            |(route_id, route_name, distance_km, estimated_hours, total_trips, total_freight)| {
+                let distance = distance_km.unwrap_or(0.0);
+                let freight = total_freight.unwrap_or(0.0);
+                RouteEfficiencyItem {
+                    route_id: route_id.unwrap_or_default(),
+                    route_name: route_name.unwrap_or_else(|| "未知路线".to_string()),
+                    distance_km: distance,
+                    estimated_hours: estimated_hours.unwrap_or(0.0),
+                    total_trips: total_trips.unwrap_or(0),
+                    total_freight: freight,
+                    cost_per_km: if distance > 0.0 { freight / distance } else { 0.0 },
+                }
+            },
+        )
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
+/// 获取司机绩效
+pub async fn get_driver_performance(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<DriverPerformanceItem>>> {
+    tracing::info!("获取TMS司机绩效数据");
+
+    let rows: Vec<(
+        Option<String>,
+        Option<String>,
+        Option<i64>,
+        Option<i64>,
+        Option<f64>,
+    )> = sqlx::query_as(
+        "SELECT 
+            d.id::text as driver_id,
+            d.name as driver_name,
+            COUNT(s.id) as total_deliveries,
+            COUNT(CASE WHEN s.status = 'delivered' THEN 1 END) as completed_deliveries,
+            COALESCE(SUM(s.freight_amount), 0)::float8 as total_freight
+         FROM tms.tms_drivers d
+         LEFT JOIN tms.tms_shipments s ON s.driver_id = d.id
+         GROUP BY d.id, d.name
+         ORDER BY total_deliveries DESC
+         LIMIT 20",
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<DriverPerformanceItem> = rows
+        .into_iter()
+        .map(
+            |(driver_id, driver_name, total_deliveries, completed_deliveries, total_freight)| {
+                let total = total_deliveries.unwrap_or(0);
+                let freight = total_freight.unwrap_or(0.0);
+                DriverPerformanceItem {
+                    driver_id: driver_id.unwrap_or_default(),
+                    driver_name: driver_name.unwrap_or_else(|| "未知司机".to_string()),
+                    total_deliveries: total,
+                    completed_deliveries: completed_deliveries.unwrap_or(0),
+                    total_freight: freight,
+                    avg_freight: if total > 0 { freight / total as f64 } else { 0.0 },
+                }
+            },
+        )
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
 // ===== 路由注册 =====
 
 pub fn create_routes<S>() -> Router<S>
@@ -163,5 +350,17 @@ where
         .route(
             "/analytics/status-distribution",
             get(get_status_distribution),
+        )
+        .route(
+            "/analytics/carrier-performance",
+            get(get_carrier_performance),
+        )
+        .route(
+            "/analytics/route-efficiency",
+            get(get_route_efficiency),
+        )
+        .route(
+            "/analytics/driver-performance",
+            get(get_driver_performance),
         )
 }
