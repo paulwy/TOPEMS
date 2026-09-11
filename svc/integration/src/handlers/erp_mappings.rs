@@ -9,9 +9,7 @@ use uuid::Uuid;
 
 use crate::models::{AppState, CreateErpMappingRequest, ErpMapping, UpdateErpMappingRequest};
 
-pub async fn list_mappings(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<ErpMapping>>> {
+pub async fn list_mappings(State(state): State<AppState>) -> Json<ApiResponse<Vec<ErpMapping>>> {
     let tid = "default".to_string();
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",

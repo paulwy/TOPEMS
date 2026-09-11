@@ -1267,7 +1267,11 @@ pub async fn sync_incremental_orders(
             }
             Err(e) => {
                 total_failed += 1;
-                errors.push(format!("订单 {} 同步失败: {}", record.order_no.clone().unwrap_or_default(), e));
+                errors.push(format!(
+                    "订单 {} 同步失败: {}",
+                    record.order_no.clone().unwrap_or_default(),
+                    e
+                ));
                 // 增加重试次数
                 let _ = increment_retry_count(pool, record.id, &e).await;
             }

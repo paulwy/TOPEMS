@@ -608,10 +608,11 @@ pub fn execute_conversion(
     }
 
     // 解析字段映射
-    let field_mappings: Vec<FieldMapping> = match serde_json::from_value(rule.field_mappings.clone()) {
-        Ok(mappings) => mappings,
-        Err(e) => return Err(format!("解析字段映射失败: {}", e)),
-    };
+    let field_mappings: Vec<FieldMapping> =
+        match serde_json::from_value(rule.field_mappings.clone()) {
+            Ok(mappings) => mappings,
+            Err(e) => return Err(format!("解析字段映射失败: {}", e)),
+        };
 
     if field_mappings.is_empty() {
         return Ok(serde_json::json!({}));
@@ -704,7 +705,11 @@ fn get_nested_value(source: &serde_json::Value, path: &str) -> serde_json::Value
 }
 
 /// 设置嵌套字段值（支持 a.b.c 格式）
-fn set_nested_value(target: &mut serde_json::Map<String, serde_json::Value>, path: &str, value: serde_json::Value) {
+fn set_nested_value(
+    target: &mut serde_json::Map<String, serde_json::Value>,
+    path: &str,
+    value: serde_json::Value,
+) {
     let parts: Vec<&str> = path.split('.').collect();
 
     if parts.len() == 1 {
@@ -762,23 +767,44 @@ fn evaluate_condition(condition: &serde_json::Value, source: &serde_json::Value)
             match op {
                 "eq" => Some(&actual) == expected,
                 "ne" => Some(&actual) != expected,
-                "gt" => compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)) == Some(std::cmp::Ordering::Greater),
+                "gt" => {
+                    compare_values(
+                        &actual,
+                        &expected.cloned().unwrap_or(serde_json::Value::Null),
+                    ) == Some(std::cmp::Ordering::Greater)
+                }
                 "gte" => {
                     matches!(
-                        compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)),
+                        compare_values(
+                            &actual,
+                            &expected.cloned().unwrap_or(serde_json::Value::Null)
+                        ),
                         Some(std::cmp::Ordering::Greater) | Some(std::cmp::Ordering::Equal)
                     )
                 }
-                "lt" => compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)) == Some(std::cmp::Ordering::Less),
+                "lt" => {
+                    compare_values(
+                        &actual,
+                        &expected.cloned().unwrap_or(serde_json::Value::Null),
+                    ) == Some(std::cmp::Ordering::Less)
+                }
                 "lte" => {
                     matches!(
-                        compare_values(&actual, &expected.cloned().unwrap_or(serde_json::Value::Null)),
+                        compare_values(
+                            &actual,
+                            &expected.cloned().unwrap_or(serde_json::Value::Null)
+                        ),
                         Some(std::cmp::Ordering::Less) | Some(std::cmp::Ordering::Equal)
                     )
                 }
                 "contains" => actual
                     .as_str()
-                    .map(|s| expected.and_then(|e| e.as_str()).map(|e| s.contains(e)).unwrap_or(false))
+                    .map(|s| {
+                        expected
+                            .and_then(|e| e.as_str())
+                            .map(|e| s.contains(e))
+                            .unwrap_or(false)
+                    })
                     .unwrap_or(false),
                 "exists" => !actual.is_null(),
                 _ => false,

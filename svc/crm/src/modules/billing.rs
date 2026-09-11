@@ -7,21 +7,32 @@ use axum::{
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::{BillingQueryParams, BillingRecord, UpdateBillingRequest};
 use crate::models::billing::CreateBillingRequest;
+use crate::models::{BillingQueryParams, BillingRecord, UpdateBillingRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
+use sqlx::Row;
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
-use sqlx::Row;
 use topems_shared_core::response::api_error;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/billing", get(list_billing_records).post(create_billing_record))
-        .route("/billing/{id}", get(get_billing_record).put(update_billing_record).delete(delete_billing_record))
+        .route(
+            "/billing",
+            get(list_billing_records).post(create_billing_record),
+        )
+        .route(
+            "/billing/{id}",
+            get(get_billing_record)
+                .put(update_billing_record)
+                .delete(delete_billing_record),
+        )
         .route("/billing/{id}/paid", axum::routing::post(mark_billing_paid))
-        .route("/billing/{id}/notify", axum::routing::post(send_billing_notification))
+        .route(
+            "/billing/{id}/notify",
+            axum::routing::post(send_billing_notification),
+        )
 }
 
 async fn list_billing_records(
@@ -161,7 +172,10 @@ async fn create_billing_record(
 
     let tenant_id = get_tenant_id(&claims, &headers);
     let invoice_no = req.invoice_no.unwrap_or_else(|| {
-        format!("BR-{}", Uuid::new_v4().simple().to_string()[..8].to_uppercase())
+        format!(
+            "BR-{}",
+            Uuid::new_v4().simple().to_string()[..8].to_uppercase()
+        )
     });
     let items = serde_json::to_value(&req.items).unwrap_or(serde_json::json!([]));
     let now = chrono::Utc::now();
@@ -231,7 +245,10 @@ async fn update_billing_record(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let items = req.items.as_ref().map(|i| serde_json::to_value(i).unwrap_or(serde_json::json!([])));
+    let items = req
+        .items
+        .as_ref()
+        .map(|i| serde_json::to_value(i).unwrap_or(serde_json::json!([])));
     let now = chrono::Utc::now();
 
     let result = sqlx::query_as::<_, BillingRecord>(

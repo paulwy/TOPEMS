@@ -8,8 +8,8 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::{Interaction, UpdateInteractionRequest};
 use crate::models::interaction::CreateInteractionRequest;
+use crate::models::{Interaction, UpdateInteractionRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{ApiResponse, ListResponse};

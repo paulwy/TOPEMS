@@ -87,17 +87,14 @@ pub struct NameValue {
 }
 
 /// GET /dashboard — CRM 仪表盘聚合统计（真实数据）
-pub async fn dashboard_aggregate(
-    State(state): State<ApiState>,
-) -> impl IntoResponse {
+pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResponse {
     let db = &state.db;
 
-    let total_opportunities: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let total_opportunities: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL")
+            .fetch_one(db)
+            .await
+            .unwrap_or(0);
 
     let won_amount: f64 = sqlx::query_scalar(
         "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND value IS NOT NULL",

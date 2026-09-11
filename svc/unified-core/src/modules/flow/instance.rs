@@ -638,7 +638,6 @@ pub async fn overdue_instances(
     ))
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct RetryInstanceRequest {
     pub node_id: Option<String>,

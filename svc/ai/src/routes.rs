@@ -148,7 +148,10 @@ pub fn create_routes(
         .route("/summarize", post(ai_handlers::summarize))
         .route("/templates", get(ai_handlers::list_templates))
         // ========== AI 仪表盘（known_gap A 补全，2026-09-09）==========
-        .route("/dashboard/stats", get(model_admin_handlers::get_dashboard_stats))
+        .route(
+            "/dashboard/stats",
+            get(model_admin_handlers::get_dashboard_stats),
+        )
         .route(
             "/dashboard/activity-trend",
             get(model_admin_handlers::get_activity_trend),
@@ -159,18 +162,17 @@ pub fn create_routes(
         )
         // ========== 模型管理（known_gap A 补全，2026-09-09）==========
         .route("/models", get(model_admin_handlers::list_models))
-        .route(
-            "/models/usage",
-            get(model_admin_handlers::get_model_usage),
-        )
+        .route("/models/usage", get(model_admin_handlers::get_model_usage))
         .route(
             "/models/{id}/config",
-            get(model_admin_handlers::get_model_config).put(model_admin_handlers::update_model_config),
+            get(model_admin_handlers::get_model_config)
+                .put(model_admin_handlers::update_model_config),
         )
         // ========== Prompt 模板（known_gap A 补全，2026-09-09）==========
         .route(
             "/prompts/templates",
-            get(prompt_handlers::list_prompt_templates).post(prompt_handlers::create_prompt_template),
+            get(prompt_handlers::list_prompt_templates)
+                .post(prompt_handlers::create_prompt_template),
         )
         .route(
             "/prompts/templates/{id}",

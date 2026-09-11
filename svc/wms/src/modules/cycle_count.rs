@@ -1,4 +1,3 @@
-use topems_shared_boundary::only_own_schema_query;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::inventory_alert::{CreateCycleCountConfigRequest, CycleCountConfig};
@@ -69,8 +69,9 @@ pub async fn list_cycle_count_configs(
     let warehouse_id = params.warehouse_id;
     let is_active = params.is_active;
 
-    let result = sqlx::query_as::<_, CycleCountConfig>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
+        "wms",
+        r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
@@ -79,8 +80,8 @@ pub async fn list_cycle_count_configs(
           AND deleted_at IS NULL
         ORDER BY priority_level, next_count_date
         LIMIT $3 OFFSET $4
-        "#),
-    )
+        "#
+    ))
     .bind(warehouse_id)
     .bind(is_active)
     .bind(page_size)
@@ -90,14 +91,15 @@ pub async fn list_cycle_count_configs(
 
     match result {
         Ok(configs) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
-                only_own_schema_query!("wms", r#"
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
+                r#"
                 SELECT COUNT(*) FROM wms.cycle_count_configs
                 WHERE ($1::uuid IS NULL OR warehouse_id = $1)
                   AND ($2::boolean IS NULL OR is_active = $2)
                   AND deleted_at IS NULL
-                "#),
-            )
+                "#
+            ))
             .bind(warehouse_id)
             .bind(is_active)
             .fetch_one(&mut **txn)
@@ -227,14 +229,15 @@ pub async fn get_cycle_count_config(
         Err(e) => return e,
     }
 
-    let result = sqlx::query_as::<_, CycleCountConfig>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
+        "wms",
+        r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE id = $1 AND deleted_at IS NULL
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -278,16 +281,17 @@ pub async fn update_cycle_count_config(
         _ => now + Duration::days(30),
     };
 
-    let result = sqlx::query_as::<_, CycleCountConfig>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
+        "wms",
+        r#"
         UPDATE wms.cycle_count_configs SET
             warehouse_id = $2, location_id = $3, material_category = $4, count_frequency = $5,
             priority_level = $6, next_count_date = $7, updated_at = $8
         WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                   last_count_date, next_count_date, is_active, created_at, updated_at
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.warehouse_id)
     .bind(req.location_id)
@@ -378,11 +382,11 @@ pub async fn delete_cycle_count_config(
                 }
             }
             (
-            Json(ApiResponse::success("".to_string(), "循环盘点配置删除成功")),
-            "success",
-            None,
-        )
-        },
+                Json(ApiResponse::success("".to_string(), "循环盘点配置删除成功")),
+                "success",
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "循环盘点配置不存在")),
             "error",
@@ -435,14 +439,15 @@ pub async fn generate_cycle_count(
     }
 
     // 获取配置
-    let config = sqlx::query_as::<_, CycleCountConfig>(
-        only_own_schema_query!("wms", r#"
+    let config = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
+        "wms",
+        r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE id = $1 AND is_active = true AND deleted_at IS NULL
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -525,13 +530,13 @@ pub async fn generate_cycle_count(
     )
     .await;
 
-        if let Some(t) = guard.take() {
+    if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
             return Json(ApiResponse::error(500, "事务提交失败"));
         }
     }
-Json(ApiResponse::success(
+    Json(ApiResponse::success(
         serde_json::json!({
             "stock_take_id": new_stock_take_id,
             "stock_take_number": stock_take_number
@@ -559,15 +564,16 @@ pub async fn generate_all_cycle_counts(
     let now = Utc::now();
 
     // 查询所有到期的配置
-    let configs = sqlx::query_as::<_, CycleCountConfig>(
-        only_own_schema_query!("wms", r#"
+    let configs = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
+        "wms",
+        r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE is_active = true AND next_count_date <= $1 AND deleted_at IS NULL
         ORDER BY priority_level DESC, next_count_date
-        "#),
-    )
+        "#
+    ))
     .bind(now)
     .fetch_all(&mut **txn)
     .await;
@@ -653,13 +659,13 @@ pub async fn generate_all_cycle_counts(
     )
     .await;
 
-        if let Some(t) = guard.take() {
+    if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
             return Json(ApiResponse::error(500, "事务提交失败"));
         }
     }
-Json(ApiResponse::success(
+    Json(ApiResponse::success(
         serde_json::json!({
             "generated_count": generated_count,
             "results": results

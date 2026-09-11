@@ -74,19 +74,18 @@ pub async fn get_project_status(
 ) -> Json<ApiResponse<Vec<ProjectStatusItem>>> {
     tracing::info!("获取PM项目状态分布");
 
-    let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL"
-    )
-    .fetch_one(&pool)
-    .await
-    .unwrap_or(0);
+    let total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL")
+            .fetch_one(&pool)
+            .await
+            .unwrap_or(0);
 
     let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
         "SELECT status, COUNT(*) as count
          FROM pm.projects
          WHERE deleted_at IS NULL
          GROUP BY status
-         ORDER BY count DESC"
+         ORDER BY count DESC",
     )
     .fetch_all(&pool)
     .await
@@ -96,7 +95,11 @@ pub async fn get_project_status(
         .into_iter()
         .map(|(status, count)| {
             let cnt = count.unwrap_or(0);
-            let percentage = if total > 0 { (cnt as f64 / total as f64) * 100.0 } else { 0.0 };
+            let percentage = if total > 0 {
+                (cnt as f64 / total as f64) * 100.0
+            } else {
+                0.0
+            };
             ProjectStatusItem {
                 status: status.unwrap_or_else(|| "未知".to_string()),
                 count: cnt,

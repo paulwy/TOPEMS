@@ -204,7 +204,13 @@ impl QaApi {
         // 调用 QA 服务
         match state
             .qa_service
-            .ask_with_context(&req.question, &req.document_ids, &context_chunks, tenant_id, user_id)
+            .ask_with_context(
+                &req.question,
+                &req.document_ids,
+                &context_chunks,
+                tenant_id,
+                user_id,
+            )
             .await
         {
             Ok((answer, sources, qa_id, confidence)) => Json(ApiResponse::success(

@@ -212,11 +212,7 @@ pub async fn complete_task(
 }
 
 /// 标记任务失败
-pub async fn fail_task(
-    pool: &PgPool,
-    task_id: Uuid,
-    error: &str,
-) -> Result<AsyncTask, String> {
+pub async fn fail_task(pool: &PgPool, task_id: Uuid, error: &str) -> Result<AsyncTask, String> {
     let row = sqlx::query(
         r#"
         UPDATE integration.async_tasks
@@ -388,10 +384,7 @@ pub async fn get_task_stats(pool: &PgPool) -> Result<AsyncTaskStats, String> {
 }
 
 /// 清理已完成的旧任务（软删除）
-pub async fn cleanup_completed_tasks(
-    pool: &PgPool,
-    older_than_days: i64,
-) -> Result<i64, String> {
+pub async fn cleanup_completed_tasks(pool: &PgPool, older_than_days: i64) -> Result<i64, String> {
     let result = sqlx::query(
         r#"
         UPDATE integration.async_tasks
@@ -414,7 +407,9 @@ pub async fn cleanup_completed_tasks(
 // ============================================================================
 
 fn row_to_task(row: &sqlx::postgres::PgRow) -> AsyncTask {
-    let status_str: String = row.try_get("status").unwrap_or_else(|_| "pending".to_string());
+    let status_str: String = row
+        .try_get("status")
+        .unwrap_or_else(|_| "pending".to_string());
 
     AsyncTask {
         id: row.try_get("id").unwrap_or_else(|_| Uuid::nil()),
@@ -451,22 +446,40 @@ mod tests {
         assert_eq!(AsyncTaskStatus::InProgress.as_str(), "in_progress");
         assert_eq!(AsyncTaskStatus::Completed.as_str(), "completed");
         assert_eq!(AsyncTaskStatus::Failed.as_str(), "failed");
-        assert_eq!(AsyncTaskStatus::MaxRetriesExceeded.as_str(), "max_retries_exceeded");
+        assert_eq!(
+            AsyncTaskStatus::MaxRetriesExceeded.as_str(),
+            "max_retries_exceeded"
+        );
         assert_eq!(AsyncTaskStatus::Cancelled.as_str(), "cancelled");
     }
 
     #[test]
     fn test_async_task_status_from_str() {
-        assert_eq!(AsyncTaskStatus::from_str("pending"), AsyncTaskStatus::Pending);
-        assert_eq!(AsyncTaskStatus::from_str("in_progress"), AsyncTaskStatus::InProgress);
-        assert_eq!(AsyncTaskStatus::from_str("completed"), AsyncTaskStatus::Completed);
+        assert_eq!(
+            AsyncTaskStatus::from_str("pending"),
+            AsyncTaskStatus::Pending
+        );
+        assert_eq!(
+            AsyncTaskStatus::from_str("in_progress"),
+            AsyncTaskStatus::InProgress
+        );
+        assert_eq!(
+            AsyncTaskStatus::from_str("completed"),
+            AsyncTaskStatus::Completed
+        );
         assert_eq!(AsyncTaskStatus::from_str("failed"), AsyncTaskStatus::Failed);
         assert_eq!(
             AsyncTaskStatus::from_str("max_retries_exceeded"),
             AsyncTaskStatus::MaxRetriesExceeded
         );
-        assert_eq!(AsyncTaskStatus::from_str("cancelled"), AsyncTaskStatus::Cancelled);
-        assert_eq!(AsyncTaskStatus::from_str("unknown"), AsyncTaskStatus::Pending);
+        assert_eq!(
+            AsyncTaskStatus::from_str("cancelled"),
+            AsyncTaskStatus::Cancelled
+        );
+        assert_eq!(
+            AsyncTaskStatus::from_str("unknown"),
+            AsyncTaskStatus::Pending
+        );
     }
 
     #[test]

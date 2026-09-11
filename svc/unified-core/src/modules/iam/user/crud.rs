@@ -42,11 +42,9 @@ pub async fn list_users(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let total_result = if claims.is_superuser {
-        sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL",
-        )
-        .fetch_one(&state.pool)
-        .await
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL")
+            .fetch_one(&state.pool)
+            .await
     } else {
         sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND tenant_id = $1",

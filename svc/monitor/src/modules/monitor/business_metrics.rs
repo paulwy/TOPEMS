@@ -1085,7 +1085,10 @@ pub async fn get_performance_report(
     State(_state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> impl IntoResponse {
-    let period = params.get("period").cloned().unwrap_or_else(|| "24h".to_string());
+    let period = params
+        .get("period")
+        .cloned()
+        .unwrap_or_else(|| "24h".to_string());
     let report = PerformanceReport {
         period,
         total_requests: 0,

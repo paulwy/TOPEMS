@@ -98,7 +98,9 @@ pub async fn get_dashboard(
         .map(|rows| {
             rows.into_iter()
                 .map(|r| NameValue {
-                    name: r.try_get::<String, _>("cat").unwrap_or_else(|_| "未分类".to_string()),
+                    name: r
+                        .try_get::<String, _>("cat")
+                        .unwrap_or_else(|_| "未分类".to_string()),
                     value: r.try_get::<i64, _>("cnt").unwrap_or(0),
                 })
                 .collect()
@@ -149,15 +151,33 @@ pub async fn get_dashboard(
         training_rate,
         drill_count,
         accident_trend: vec![
-            NameValue { name: "已报告".to_string(), value: reported_accidents },
-            NameValue { name: "调查中".to_string(), value: investigating_accidents },
-            NameValue { name: "处理中".to_string(), value: treating_accidents },
-            NameValue { name: "已闭环".to_string(), value: closed_accidents },
+            NameValue {
+                name: "已报告".to_string(),
+                value: reported_accidents,
+            },
+            NameValue {
+                name: "调查中".to_string(),
+                value: investigating_accidents,
+            },
+            NameValue {
+                name: "处理中".to_string(),
+                value: treating_accidents,
+            },
+            NameValue {
+                name: "已闭环".to_string(),
+                value: closed_accidents,
+            },
         ],
         hazard_types,
         training_trend: vec![
-            NameValue { name: "已完成".to_string(), value: completed_trainings },
-            NameValue { name: "计划中".to_string(), value: scheduled_trainings },
+            NameValue {
+                name: "已完成".to_string(),
+                value: completed_trainings,
+            },
+            NameValue {
+                name: "计划中".to_string(),
+                value: scheduled_trainings,
+            },
         ],
     };
 

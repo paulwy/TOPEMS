@@ -295,7 +295,12 @@ pub async fn list_sales_invoices(
     .await
     {
         Ok(r) => r.get(0),
-        Err(e) => return Json(ApiResponse::<Paginated<SalesInvoiceOut>>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<Paginated<SalesInvoiceOut>>::error(
+                500,
+                &e.to_string(),
+            ))
+        }
     };
 
     let items = match sqlx::query(&format!(
@@ -342,10 +347,18 @@ pub async fn list_sales_invoices(
 
     Json(ApiResponse::success(
         Paginated {
-            total_pages: if pagesize > 0 { (total + pagesize - 1) / pagesize } else { 0 },
+            total_pages: if pagesize > 0 {
+                (total + pagesize - 1) / pagesize
+            } else {
+                0
+            },
             page_size: pagesize,
             pageSize: pagesize,
-            totalPages: if pagesize > 0 { (total + pagesize - 1) / pagesize } else { 0 },
+            totalPages: if pagesize > 0 {
+                (total + pagesize - 1) / pagesize
+            } else {
+                0
+            },
             items,
             total,
             page,
@@ -451,7 +464,10 @@ pub async fn update_sales_invoice(
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "更新后读取失败")),
             }
         }
-        Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::error(409, "仅草稿可编辑或发票不存在")),
+        Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::error(
+            409,
+            "仅草稿可编辑或发票不存在",
+        )),
         Err(e) => Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string())),
     }
 }
@@ -472,7 +488,10 @@ pub async fn delete_sales_invoice(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "Success")),
-        Ok(_) => Json(ApiResponse::<String>::error(409, "仅草稿可删除或发票不存在")),
+        Ok(_) => Json(ApiResponse::<String>::error(
+            409,
+            "仅草稿可删除或发票不存在",
+        )),
         Err(e) => Json(ApiResponse::<String>::error(500, &e.to_string())),
     }
 }
@@ -553,7 +572,10 @@ pub async fn red_flush_sales_invoice(
         _ => return Json(ApiResponse::<SalesInvoiceOut>::error(404, "发票不存在")),
     };
     if original.status != "issued" {
-        return Json(ApiResponse::<SalesInvoiceOut>::error(409, "仅已开具发票可红冲"));
+        return Json(ApiResponse::<SalesInvoiceOut>::error(
+            409,
+            "仅已开具发票可红冲",
+        ));
     }
 
     // 取消原票
@@ -675,7 +697,12 @@ pub async fn list_collections(
     .await
     {
         Ok(r) => r.get(0),
-        Err(e) => return Json(ApiResponse::<Paginated<CollectionOut>>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<Paginated<CollectionOut>>::error(
+                500,
+                &e.to_string(),
+            ))
+        }
     };
 
     let items = match sqlx::query(&format!(
@@ -723,10 +750,18 @@ pub async fn list_collections(
 
     Json(ApiResponse::success(
         Paginated {
-            total_pages: if pagesize > 0 { (total + pagesize - 1) / pagesize } else { 0 },
+            total_pages: if pagesize > 0 {
+                (total + pagesize - 1) / pagesize
+            } else {
+                0
+            },
             page_size: pagesize,
             pageSize: pagesize,
-            totalPages: if pagesize > 0 { (total + pagesize - 1) / pagesize } else { 0 },
+            totalPages: if pagesize > 0 {
+                (total + pagesize - 1) / pagesize
+            } else {
+                0
+            },
             items,
             total,
             page,
@@ -765,7 +800,10 @@ pub async fn create_collection(
     } else {
         payload.collection_number.clone()
     };
-    let col_date = payload.collection_date.clone().unwrap_or_else(|| today().to_string());
+    let col_date = payload
+        .collection_date
+        .clone()
+        .unwrap_or_else(|| today().to_string());
 
     // 前端传销售发票 uuid → 落库存发票号文本（erp_collection_records.invoice_no）
     let invoice_number: Option<String> = match payload.invoice_id {
@@ -1199,21 +1237,33 @@ pub async fn export_receivable_aging(
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/sales-invoices", get(list_sales_invoices).post(create_sales_invoice))
+        .route(
+            "/sales-invoices",
+            get(list_sales_invoices).post(create_sales_invoice),
+        )
         .route(
             "/sales-invoices/{id}",
             get(get_sales_invoice)
                 .put(update_sales_invoice)
                 .delete(delete_sales_invoice),
         )
-        .route("/sales-invoices/{id}/issue", axum::routing::post(issue_sales_invoice))
-        .route("/sales-invoices/{id}/cancel", axum::routing::post(cancel_sales_invoice))
+        .route(
+            "/sales-invoices/{id}/issue",
+            axum::routing::post(issue_sales_invoice),
+        )
+        .route(
+            "/sales-invoices/{id}/cancel",
+            axum::routing::post(cancel_sales_invoice),
+        )
         .route(
             "/sales-invoices/{id}/red-flush",
             axum::routing::post(red_flush_sales_invoice),
         )
         .route("/sales-invoices/export", get(export_sales_invoices))
-        .route("/sales-collections", get(list_collections).post(create_collection))
+        .route(
+            "/sales-collections",
+            get(list_collections).post(create_collection),
+        )
         .route("/sales-collections/{id}", get(get_collection))
         .route(
             "/sales-collections/{id}/confirm",

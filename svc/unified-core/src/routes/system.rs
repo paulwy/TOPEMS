@@ -151,10 +151,22 @@ pub fn system_routes(state: &AppState) -> Router<AppState> {
         .route("/system/v1/cache/stats", get(get_cache_stats))
         .route("/system/v1/log/config", get(get_log_config))
         .route("/system/v1/params", get(get_system_params))
-        .route("/system/audit-logs", get(crate::modules::system_audit::list_audit_logs))
-        .route("/system/audit-logs/stats", get(crate::modules::system_audit::get_audit_stats))
-        .route("/system/audit-logs/export", get(crate::modules::system_audit::export_audit_logs))
-        .route("/system/audit-logs/{id}", get(crate::modules::system_audit::get_audit_log))
+        .route(
+            "/system/audit-logs",
+            get(crate::modules::system_audit::list_audit_logs),
+        )
+        .route(
+            "/system/audit-logs/stats",
+            get(crate::modules::system_audit::get_audit_stats),
+        )
+        .route(
+            "/system/audit-logs/export",
+            get(crate::modules::system_audit::export_audit_logs),
+        )
+        .route(
+            "/system/audit-logs/{id}",
+            get(crate::modules::system_audit::get_audit_log),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:read"),

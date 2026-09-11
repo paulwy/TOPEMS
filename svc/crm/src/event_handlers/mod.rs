@@ -686,13 +686,14 @@ impl CrmEventHandlers {
         // 幂等：同租户同单号已同步则跳过
         let order_no = payload.order_no.clone();
         let payload_tenant = payload.tenant_id;
-        let existing: Option<(uuid::Uuid,)> =
-            sqlx::query_as("SELECT id FROM crm.customer_orders WHERE order_no = $1 AND tenant_id = $2")
-                .bind(&order_no)
-                .bind(payload_tenant)
-                .fetch_optional(&self.db)
-                .await
-                .map_err(|e| format!("查询客户订单失败: {}", e))?;
+        let existing: Option<(uuid::Uuid,)> = sqlx::query_as(
+            "SELECT id FROM crm.customer_orders WHERE order_no = $1 AND tenant_id = $2",
+        )
+        .bind(&order_no)
+        .bind(payload_tenant)
+        .fetch_optional(&self.db)
+        .await
+        .map_err(|e| format!("查询客户订单失败: {}", e))?;
 
         if existing.is_some() {
             tracing::debug!("[crm] 客户订单已同步（跳过）- order_no={}", order_no);
@@ -709,13 +710,21 @@ impl CrmEventHandlers {
                 .flatten()
         };
         let Some(tenant_id) = tenant_id else {
-            tracing::warn!("[crm] 跳过客户订单同步（无租户上下文）- order_no={}", order_no);
+            tracing::warn!(
+                "[crm] 跳过客户订单同步（无租户上下文）- order_no={}",
+                order_no
+            );
             return Ok(());
         };
 
         // 状态透传：erp 侧真实订单状态；缺失时按 CRM 台账语义记 confirmed（进入台账视为已确认）
-        let status = payload.status.clone().unwrap_or_else(|| "confirmed".to_string());
-        let order_amount = payload.payable_amount.unwrap_or_else(|| payload.total_amount.unwrap_or(0.0));
+        let status = payload
+            .status
+            .clone()
+            .unwrap_or_else(|| "confirmed".to_string());
+        let order_amount = payload
+            .payable_amount
+            .unwrap_or_else(|| payload.total_amount.unwrap_or(0.0));
         let customer_id = payload.customer_id;
 
         let result = sqlx::query(
@@ -743,7 +752,6 @@ impl CrmEventHandlers {
         Ok(())
     }
 }
-
 
 /// 启动 CRM 服务的事件订阅
 pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {

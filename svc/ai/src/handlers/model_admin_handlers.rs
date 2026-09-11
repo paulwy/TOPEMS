@@ -144,7 +144,12 @@ pub async fn get_activity_trend(
         }
     };
 
-    match sqlx::query(sql).bind(tenant_id).bind(days).fetch_all(&state.pool).await {
+    match sqlx::query(sql)
+        .bind(tenant_id)
+        .bind(days)
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(rows) => {
             for row in rows {
                 let date: String = row.get("d");
@@ -250,7 +255,20 @@ pub async fn list_models(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ModelItem>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, Option<i32>, Option<serde_json::Value>, Option<serde_json::Value>)>(
+    match sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            String,
+            String,
+            String,
+            Option<String>,
+            Option<i32>,
+            Option<serde_json::Value>,
+            Option<serde_json::Value>,
+        ),
+    >(
         "SELECT id, name, provider, type, status, description, max_tokens, pricing, capabilities
          FROM ai.ai_models WHERE tenant_id IS NULL OR tenant_id = $1 ORDER BY created_at",
     )
@@ -260,9 +278,29 @@ pub async fn list_models(
     {
         Ok(rows) => Json(ApiResponse::success(
             rows.into_iter()
-                .map(|(id, name, provider, r#type, status, description, max_tokens, pricing, capabilities)| ModelItem {
-                    id, name, provider, r#type, status, description, max_tokens, pricing, capabilities,
-                })
+                .map(
+                    |(
+                        id,
+                        name,
+                        provider,
+                        r#type,
+                        status,
+                        description,
+                        max_tokens,
+                        pricing,
+                        capabilities,
+                    )| ModelItem {
+                        id,
+                        name,
+                        provider,
+                        r#type,
+                        status,
+                        description,
+                        max_tokens,
+                        pricing,
+                        capabilities,
+                    },
+                )
                 .collect(),
             "Success",
         )),
@@ -287,20 +325,26 @@ pub async fn get_model_config(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some((model_id, temperature, max_tokens, top_p, frequency_penalty, presence_penalty, system_prompt))) => Json(
-            ApiResponse::success(
-                ModelConfig {
-                    model_id,
-                    temperature,
-                    max_tokens,
-                    top_p,
-                    frequency_penalty,
-                    presence_penalty,
-                    system_prompt,
-                },
-                "Success",
-            ),
-        ),
+        Ok(Some((
+            model_id,
+            temperature,
+            max_tokens,
+            top_p,
+            frequency_penalty,
+            presence_penalty,
+            system_prompt,
+        ))) => Json(ApiResponse::success(
+            ModelConfig {
+                model_id,
+                temperature,
+                max_tokens,
+                top_p,
+                frequency_penalty,
+                presence_penalty,
+                system_prompt,
+            },
+            "Success",
+        )),
         Ok(None) => Json(ApiResponse::<ModelConfig>::error(404, "模型不存在")),
         Err(e) => Json(ApiResponse::<ModelConfig>::error(500, &e.to_string())),
     }
@@ -408,9 +452,15 @@ pub async fn get_model_usage(
     );
 
     let mut total_query = sqlx::query(&total_sql).bind(tenant_id);
-    if let Some(ref sd) = params.start_date { total_query = total_query.bind(sd); }
-    if let Some(ref ed) = params.end_date { total_query = total_query.bind(ed); }
-    if let Some(mid) = params.model_id { total_query = total_query.bind(mid); }
+    if let Some(ref sd) = params.start_date {
+        total_query = total_query.bind(sd);
+    }
+    if let Some(ref ed) = params.end_date {
+        total_query = total_query.bind(ed);
+    }
+    if let Some(mid) = params.model_id {
+        total_query = total_query.bind(mid);
+    }
 
     let (total_tokens, total_requests) = match total_query.fetch_one(&state.pool).await {
         Ok(row) => {
@@ -431,9 +481,15 @@ pub async fn get_model_usage(
     );
 
     let mut breakdown_query = sqlx::query(&breakdown_sql).bind(tenant_id);
-    if let Some(ref sd) = params.start_date { breakdown_query = breakdown_query.bind(sd); }
-    if let Some(ref ed) = params.end_date { breakdown_query = breakdown_query.bind(ed); }
-    if let Some(mid) = params.model_id { breakdown_query = breakdown_query.bind(mid); }
+    if let Some(ref sd) = params.start_date {
+        breakdown_query = breakdown_query.bind(sd);
+    }
+    if let Some(ref ed) = params.end_date {
+        breakdown_query = breakdown_query.bind(ed);
+    }
+    if let Some(mid) = params.model_id {
+        breakdown_query = breakdown_query.bind(mid);
+    }
 
     let mut breakdown: Vec<UsageBreakdown> = Vec::new();
     match breakdown_query.fetch_all(&state.pool).await {

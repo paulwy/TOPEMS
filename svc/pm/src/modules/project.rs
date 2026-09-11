@@ -6,8 +6,8 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::Row;
 use sqlx::PgPool;
+use sqlx::Row;
 use std::sync::Arc;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
@@ -1142,9 +1142,7 @@ pub struct KanbanBoardResponse {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_kanban_board(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<KanbanBoardResponse>> {
+async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<KanbanBoardResponse>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "SELECT id::TEXT, title, description, priority, status, assignee, COALESCE(progress, 0) AS progress FROM pm.pm_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC"
@@ -1189,13 +1187,32 @@ async fn get_kanban_board(
     Json(ApiResponse::success(
         KanbanBoardResponse {
             columns: vec![
-                KanbanColumn { id: "backlog".into(), title: "待办".into(), status: "backlog".into(), cards: backlog },
-                KanbanColumn { id: "in-progress".into(), title: "进行中".into(), status: "in-progress".into(), cards: in_progress },
-                KanbanColumn { id: "review".into(), title: "评审".into(), status: "review".into(), cards: review },
-                KanbanColumn { id: "completed".into(), title: "已完成".into(), status: "completed".into(), cards: completed },
+                KanbanColumn {
+                    id: "backlog".into(),
+                    title: "待办".into(),
+                    status: "backlog".into(),
+                    cards: backlog,
+                },
+                KanbanColumn {
+                    id: "in-progress".into(),
+                    title: "进行中".into(),
+                    status: "in-progress".into(),
+                    cards: in_progress,
+                },
+                KanbanColumn {
+                    id: "review".into(),
+                    title: "评审".into(),
+                    status: "review".into(),
+                    cards: review,
+                },
+                KanbanColumn {
+                    id: "completed".into(),
+                    title: "已完成".into(),
+                    status: "completed".into(),
+                    cards: completed,
+                },
             ],
         },
         "获取看板成功",
     ))
 }
-

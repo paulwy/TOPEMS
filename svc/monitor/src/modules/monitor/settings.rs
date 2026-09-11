@@ -91,7 +91,14 @@ pub async fn list_settings(
                 map.insert(key, value);
             }
         }
-        Err(e) => return Json(ApiResponse::<std::collections::HashMap<String, JsonValue>>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(
+                ApiResponse::<std::collections::HashMap<String, JsonValue>>::error(
+                    500,
+                    &e.to_string(),
+                ),
+            )
+        }
     }
 
     Json(ApiResponse::success(map, "获取设置成功"))
@@ -153,7 +160,14 @@ pub async fn get_setting(
             let k: String = row.try_get("key").unwrap_or(key);
             let v: JsonValue = row.try_get("value").unwrap_or(JsonValue::Null);
             let cat: Option<String> = row.try_get("category").ok();
-            Json(ApiResponse::success(SettingItem { key: k, value: v, category: cat }, "获取设置成功"))
+            Json(ApiResponse::success(
+                SettingItem {
+                    key: k,
+                    value: v,
+                    category: cat,
+                },
+                "获取设置成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::<SettingItem>::error(404, "设置不存在")),
         Err(e) => Json(ApiResponse::<SettingItem>::error(500, &e.to_string())),
@@ -168,7 +182,9 @@ pub async fn update_setting(
     Json(payload): Json<SingleUpdateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let category = payload.category.or_else(|| key.split('_').next().map(|s| s.to_string()));
+    let category = payload
+        .category
+        .or_else(|| key.split('_').next().map(|s| s.to_string()));
 
     match sqlx::query(
         "INSERT INTO public.monitor_settings (tenant_id, key, value, category)
@@ -183,7 +199,10 @@ pub async fn update_setting(
     .execute(&state.pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success(serde_json::json!({ "key": key }), "设置更新成功")),
+        Ok(_) => Json(ApiResponse::success(
+            serde_json::json!({ "key": key }),
+            "设置更新成功",
+        )),
         Err(e) => Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string())),
     }
 }

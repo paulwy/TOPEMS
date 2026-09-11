@@ -105,9 +105,7 @@ pub struct UsePromptResult {
     pub formatted_prompt: String,
 }
 
-fn to_out(
-    row: &sqlx::postgres::PgRow,
-) -> Result<PromptTemplateOut, Box<dyn std::error::Error>> {
+fn to_out(row: &sqlx::postgres::PgRow) -> Result<PromptTemplateOut, Box<dyn std::error::Error>> {
     Ok(PromptTemplateOut {
         id: row.try_get("id")?,
         name: row.try_get("name")?,
@@ -146,9 +144,7 @@ pub async fn list_prompt_templates(
        AND ($3::text IS NULL OR category = $3)
        AND ($4::boolean IS NULL OR is_favorite = $4)";
 
-    let q_count = format!(
-        "SELECT COUNT(*) FROM ai.ai_prompt_templates WHERE {where_sql}"
-    );
+    let q_count = format!("SELECT COUNT(*) FROM ai.ai_prompt_templates WHERE {where_sql}");
     let q_list = format!(
         "SELECT id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
          FROM ai.ai_prompt_templates WHERE {where_sql} ORDER BY updated_at DESC LIMIT $5 OFFSET $6"
@@ -163,7 +159,12 @@ pub async fn list_prompt_templates(
         .await
     {
         Ok(row) => row.get(0),
-        Err(e) => return Json(ApiResponse::<PromptTemplateList>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<PromptTemplateList>::error(
+                500,
+                &e.to_string(),
+            ))
+        }
     };
 
     let items = match sqlx::query(&q_list)
@@ -191,7 +192,12 @@ pub async fn list_prompt_templates(
             }
             out
         }
-        Err(e) => return Json(ApiResponse::<PromptTemplateList>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<PromptTemplateList>::error(
+                500,
+                &e.to_string(),
+            ))
+        }
     };
 
     Json(ApiResponse::success(
@@ -200,7 +206,11 @@ pub async fn list_prompt_templates(
             total,
             page,
             pagesize,
-            total_pages: if pagesize > 0 { (total + pagesize - 1) / pagesize } else { 0 },
+            total_pages: if pagesize > 0 {
+                (total + pagesize - 1) / pagesize
+            } else {
+                0
+            },
         },
         "Success",
     ))
@@ -369,7 +379,10 @@ pub async fn get_prompt_categories(
             }
             Json(ApiResponse::success(items, "Success"))
         }
-        Err(e) => Json(ApiResponse::<Vec<PromptCategory>>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<Vec<PromptCategory>>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -391,7 +404,9 @@ pub async fn use_prompt_template(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(row)) => row.try_get::<String, _>("prompt_template").unwrap_or_default(),
+        Ok(Some(row)) => row
+            .try_get::<String, _>("prompt_template")
+            .unwrap_or_default(),
         Ok(None) => return Json(ApiResponse::<UsePromptResult>::error(404, "模板不存在")),
         Err(e) => return Json(ApiResponse::<UsePromptResult>::error(500, &e.to_string())),
     };

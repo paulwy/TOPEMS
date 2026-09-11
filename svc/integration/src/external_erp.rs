@@ -42,9 +42,7 @@ struct SyncStatistics {
 
 // ===== connections =====
 
-async fn list_connections(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<ErpConnection>>> {
+async fn list_connections(State(state): State<AppState>) -> Json<ApiResponse<Vec<ErpConnection>>> {
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
@@ -68,15 +66,47 @@ async fn create_connection(
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpConnection>> {
     let id = Uuid::new_v4();
-    let name = body.get("name").and_then(|v| v.as_str()).unwrap_or("未命名连接").to_string();
-    let r#type = body.get("type").and_then(|v| v.as_str()).unwrap_or("custom").to_string();
-    let api_url = body.get("api_url").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let api_version = body.get("api_version").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let app_key = body.get("app_key").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let app_secret = body.get("app_secret").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let sync_direction = body.get("sync_direction").and_then(|v| v.as_str()).unwrap_or("bidirectional").to_string();
-    let sync_mode = body.get("sync_mode").and_then(|v| v.as_str()).unwrap_or("manual").to_string();
-    let sync_interval = body.get("sync_interval").and_then(|v| v.as_i64()).map(|v| v as i32);
+    let name = body
+        .get("name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("未命名连接")
+        .to_string();
+    let r#type = body
+        .get("type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("custom")
+        .to_string();
+    let api_url = body
+        .get("api_url")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let api_version = body
+        .get("api_version")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let app_key = body
+        .get("app_key")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let app_secret = body
+        .get("app_secret")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let sync_direction = body
+        .get("sync_direction")
+        .and_then(|v| v.as_str())
+        .unwrap_or("bidirectional")
+        .to_string();
+    let sync_mode = body
+        .get("sync_mode")
+        .and_then(|v| v.as_str())
+        .unwrap_or("manual")
+        .to_string();
+    let sync_interval = body
+        .get("sync_interval")
+        .and_then(|v| v.as_i64())
+        .map(|v| v as i32);
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -111,7 +141,11 @@ async fn test_connection(
     State(_state): State<AppState>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let api_url = body.get("api_url").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let api_url = body
+        .get("api_url")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
     let timeout_ms = body.get("timeout").and_then(|v| v.as_i64()).unwrap_or(5000) as u64;
 
     // URL 格式校验
@@ -185,10 +219,19 @@ async fn update_connection(
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpConnection>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
-    let name = body.get("name").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let api_url = body.get("api_url").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let name = body
+        .get("name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let api_url = body
+        .get("api_url")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let isactive = body.get("isactive").and_then(|v| v.as_bool());
-    let status = body.get("status").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let status = body
+        .get("status")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -270,10 +313,26 @@ async fn create_entity_mapping(
 ) -> Json<ApiResponse<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mapping_id = Uuid::new_v4();
-    let local_code = body.get("local_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let local_name = body.get("local_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let external_code = body.get("external_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let external_name = body.get("external_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let local_code = body
+        .get("local_code")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let local_name = body
+        .get("local_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let external_code = body
+        .get("external_code")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let external_name = body
+        .get("external_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
 
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
@@ -309,16 +368,36 @@ async fn batch_entity_mappings(
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
-    let items = body.get("items").and_then(|v| v.as_array()).cloned().unwrap_or_default();
+    let items = body
+        .get("items")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
     let mut processed = 0i64;
     let mut failed = 0i64;
 
     for item in &items {
         let mapping_id = Uuid::new_v4();
-        let local_code = item.get("local_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
-        let local_name = item.get("local_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-        let external_code = item.get("external_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
-        let external_name = item.get("external_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let local_code = item
+            .get("local_code")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let local_name = item
+            .get("local_name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let external_code = item
+            .get("external_code")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let external_name = item
+            .get("external_name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
 
         match sqlx::query(only_own_schema_query!(
             "integration",
@@ -382,10 +461,7 @@ async fn preview_entity(
 // ===== 真实同步执行引擎 =====
 
 /// 获取 ERP 连接信息
-async fn get_connection_by_id(
-    pool: &sqlx::PgPool,
-    connection_id: Uuid,
-) -> Option<ErpConnection> {
+async fn get_connection_by_id(pool: &sqlx::PgPool, connection_id: Uuid) -> Option<ErpConnection> {
     sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
@@ -437,14 +513,24 @@ async fn call_erp_api(
         request = request.json(b);
     }
 
-    let resp = request.send().await.map_err(|e| format!("HTTP request failed: {}", e))?;
+    let resp = request
+        .send()
+        .await
+        .map_err(|e| format!("HTTP request failed: {}", e))?;
     let status = resp.status();
 
     if !status.is_success() {
-        return Err(format!("ERP API returned status {}: {}", status.as_u16(), resp.text().await.unwrap_or_default()));
+        return Err(format!(
+            "ERP API returned status {}: {}",
+            status.as_u16(),
+            resp.text().await.unwrap_or_default()
+        ));
     }
 
-    let data: serde_json::Value = resp.json().await.map_err(|e| format!("Failed to parse response: {}", e))?;
+    let data: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse response: {}", e))?;
     Ok(data)
 }
 
@@ -500,7 +586,7 @@ async fn write_to_staging(
         if let Some(ref eid) = external_id {
             let exists: Option<(i64,)> = sqlx::query_as(
                 "SELECT COUNT(*) FROM integration.external_erp_staging \
-                 WHERE connection_id = $1 AND entity = $2 AND external_id = $3"
+                 WHERE connection_id = $1 AND entity = $2 AND external_id = $3",
             )
             .bind(connection_id)
             .bind(entity)
@@ -550,9 +636,19 @@ async fn sync_entity(
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let task_id = Uuid::new_v4();
-    let connection_id = body.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let direction = body.get("direction").and_then(|v| v.as_str()).unwrap_or("import").to_string();
-    let page_size = body.get("page_size").and_then(|v| v.as_i64()).unwrap_or(100) as i32;
+    let connection_id = body
+        .get("connection_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let direction = body
+        .get("direction")
+        .and_then(|v| v.as_str())
+        .unwrap_or("import")
+        .to_string();
+    let page_size = body
+        .get("page_size")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(100) as i32;
 
     // 创建同步日志记录
     if let Err(e) = sqlx::query(only_own_schema_query!(
@@ -577,7 +673,16 @@ async fn sync_entity(
     let cid = match connection_id {
         Some(c) => c,
         None => {
-            update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("缺少 connection_id")).await;
+            update_sync_log_status(
+                &state.pool,
+                task_id,
+                "failed",
+                0,
+                0,
+                0,
+                Some("缺少 connection_id"),
+            )
+            .await;
             return Json(ApiResponse::error(400, "缺少 connection_id"));
         }
     };
@@ -585,7 +690,16 @@ async fn sync_entity(
     let connection = match get_connection_by_id(&state.pool, cid).await {
         Some(c) => c,
         None => {
-            update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("连接不存在或已删除")).await;
+            update_sync_log_status(
+                &state.pool,
+                task_id,
+                "failed",
+                0,
+                0,
+                0,
+                Some("连接不存在或已删除"),
+            )
+            .await;
             return Json(ApiResponse::error(404, "ERP 连接不存在"));
         }
     };
@@ -596,60 +710,99 @@ async fn sync_entity(
     }
 
     // 执行真实同步
-    let sync_result = match direction.as_str() {
-        "import" => {
-            // 从 ERP 导入数据：调用 GET /api/{entity}?page_size=N
-            let path = format!("/api/{}?page_size={}", entity, page_size);
-            match call_erp_api(&connection, "GET", &path, None).await {
-                Ok(data) => {
-                    let items = data.get("items").and_then(|v| v.as_array()).cloned().unwrap_or_default();
-                    let records = items.len() as i32;
-                    let total = data.get("total").and_then(|v| v.as_i64()).unwrap_or(records as i64) as i32;
+    let sync_result =
+        match direction.as_str() {
+            "import" => {
+                // 从 ERP 导入数据：调用 GET /api/{entity}?page_size=N
+                let path = format!("/api/{}?page_size={}", entity, page_size);
+                match call_erp_api(&connection, "GET", &path, None).await {
+                    Ok(data) => {
+                        let items = data
+                            .get("items")
+                            .and_then(|v| v.as_array())
+                            .cloned()
+                            .unwrap_or_default();
+                        let records = items.len() as i32;
+                        let total = data
+                            .get("total")
+                            .and_then(|v| v.as_i64())
+                            .unwrap_or(records as i64) as i32;
 
-                    // 将数据写入 staging 表（支持去重）
-                    let (inserted, skipped) = match write_to_staging(&state.pool, cid, &entity, &items).await {
-                        Ok((i, s)) => (i, s),
-                        Err(e) => {
-                            tracing::warn!("写入 staging 表失败: {}", e);
-                            (0, 0)
-                        }
-                    };
+                        // 将数据写入 staging 表（支持去重）
+                        let (inserted, skipped) =
+                            match write_to_staging(&state.pool, cid, &entity, &items).await {
+                                Ok((i, s)) => (i, s),
+                                Err(e) => {
+                                    tracing::warn!("写入 staging 表失败: {}", e);
+                                    (0, 0)
+                                }
+                            };
 
-                    tracing::info!(
+                        tracing::info!(
                         "ERP 导入完成: entity={}, total={}, records={}, inserted={}, skipped={}",
                         entity, total, records, inserted, skipped
                     );
 
-                    update_sync_log_status(&state.pool, task_id, "success", total, inserted, skipped, None).await;
-                    Ok((total, inserted, skipped))
-                }
-                Err(e) => {
-                    update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e)).await;
-                    Err(e)
-                }
-            }
-        }
-        "export" => {
-            // 导出数据到 ERP：调用 POST /api/{entity}
-            let payload = body.get("data").cloned().unwrap_or(serde_json::json!({}));
-            match call_erp_api(&connection, "POST", &format!("/api/{}", entity), Some(&payload)).await {
-                Ok(data) => {
-                    let created = data.get("created_count").and_then(|v| v.as_i64()).unwrap_or(1) as i32;
-                    update_sync_log_status(&state.pool, task_id, "success", created, created, 0, None).await;
-                    Ok((created, created, 0))
-                }
-                Err(e) => {
-                    update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e)).await;
-                    Err(e)
+                        update_sync_log_status(
+                            &state.pool,
+                            task_id,
+                            "success",
+                            total,
+                            inserted,
+                            skipped,
+                            None,
+                        )
+                        .await;
+                        Ok((total, inserted, skipped))
+                    }
+                    Err(e) => {
+                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e))
+                            .await;
+                        Err(e)
+                    }
                 }
             }
-        }
-        _ => {
-            let msg = format!("不支持的同步方向: {}", direction);
-            update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&msg)).await;
-            Err(msg)
-        }
-    };
+            "export" => {
+                // 导出数据到 ERP：调用 POST /api/{entity}
+                let payload = body.get("data").cloned().unwrap_or(serde_json::json!({}));
+                match call_erp_api(
+                    &connection,
+                    "POST",
+                    &format!("/api/{}", entity),
+                    Some(&payload),
+                )
+                .await
+                {
+                    Ok(data) => {
+                        let created = data
+                            .get("created_count")
+                            .and_then(|v| v.as_i64())
+                            .unwrap_or(1) as i32;
+                        update_sync_log_status(
+                            &state.pool,
+                            task_id,
+                            "success",
+                            created,
+                            created,
+                            0,
+                            None,
+                        )
+                        .await;
+                        Ok((created, created, 0))
+                    }
+                    Err(e) => {
+                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e))
+                            .await;
+                        Err(e)
+                    }
+                }
+            }
+            _ => {
+                let msg = format!("不支持的同步方向: {}", direction);
+                update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&msg)).await;
+                Err(msg)
+            }
+        };
 
     // 更新连接的最后同步时间
     let _ = sqlx::query(only_own_schema_query!(
@@ -680,9 +833,7 @@ async fn sync_entity(
 
 // ===== sync-logs =====
 
-async fn sync_logs(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<ExternalErpSyncLog>>> {
+async fn sync_logs(State(state): State<AppState>) -> Json<ApiResponse<Vec<ExternalErpSyncLog>>> {
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
@@ -701,9 +852,7 @@ async fn sync_logs(
 
 // ===== sync-statistics =====
 
-async fn sync_statistics(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<SyncStatistics>> {
+async fn sync_statistics(State(state): State<AppState>) -> Json<ApiResponse<SyncStatistics>> {
     // 总量统计
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
@@ -732,14 +881,15 @@ async fn sync_statistics(
     .await
     .unwrap_or(None);
 
-    let last_sync: Option<(Option<chrono::NaiveDateTime>,)> = sqlx::query_as(only_own_schema_query!(
-        "integration",
-        "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE tenant_id = $1"
-    ))
-    .bind(TENANT_ID)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let last_sync: Option<(Option<chrono::NaiveDateTime>,)> =
+        sqlx::query_as(only_own_schema_query!(
+            "integration",
+            "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE tenant_id = $1"
+        ))
+        .bind(TENANT_ID)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     // 按 entity 分组统计
     let by_entity_rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
@@ -770,9 +920,7 @@ async fn sync_statistics(
 
 // ===== export =====
 
-async fn export_mappings(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn export_mappings(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
@@ -795,9 +943,7 @@ async fn export_mappings(
     }
 }
 
-async fn export_sync_logs(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn export_sync_logs(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
@@ -830,14 +976,22 @@ pub fn create_routes() -> Router<AppState> {
     let preview = Router::new().route("/{entity}", get(preview_entity));
 
     let connection_detail = Router::new()
-        .route("/", get(get_connection).put(update_connection).delete(delete_connection))
+        .route(
+            "/",
+            get(get_connection)
+                .put(update_connection)
+                .delete(delete_connection),
+        )
         .nest("/{entity}-mappings", entity_mappings)
         .nest("/preview", preview);
 
     let sync = Router::new().route("/{entity}", post(sync_entity));
 
     Router::new()
-        .route("/connections", get(list_connections).post(create_connection))
+        .route(
+            "/connections",
+            get(list_connections).post(create_connection),
+        )
         .route("/connections/test", post(test_connection))
         .nest("/connections/{id}", connection_detail)
         .nest("/sync", sync)

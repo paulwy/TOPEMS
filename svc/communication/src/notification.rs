@@ -1923,7 +1923,10 @@ pub async fn list_channels(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ChannelQuery>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -1987,7 +1990,10 @@ pub async fn get_channel(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
@@ -2016,7 +2022,10 @@ pub async fn create_channel(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateChannelRequest>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     let id = Uuid::new_v4();
     let config = req.config.unwrap_or_else(|| serde_json::json!({}));
     let is_default = req.is_default.unwrap_or(false);
@@ -2069,7 +2078,10 @@ pub async fn update_channel(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateChannelRequest>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
 
     // 如果设为默认，先取消其他默认
     if req.is_default.unwrap_or(false) {
@@ -2127,7 +2139,10 @@ pub async fn delete_channel(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     match sqlx::query("DELETE FROM notification_channels WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(&tenant_id)
@@ -2157,7 +2172,10 @@ pub async fn test_channel(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \

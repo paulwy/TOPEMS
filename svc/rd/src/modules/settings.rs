@@ -19,7 +19,10 @@ use topems_shared_core::response::{api_error, ApiResponse};
 use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
-    Router::new().route("/settings/{category}", get(get_settings).put(update_settings))
+    Router::new().route(
+        "/settings/{category}",
+        get(get_settings).put(update_settings),
+    )
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

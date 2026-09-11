@@ -38,55 +38,62 @@ pub async fn get_dashboard(
     let pool = &state.pool;
 
     // --- 样品状态分布 ---
-    let received_samples: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'received'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let received_samples: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'received'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let testing_samples: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'testing'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let testing_samples: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'testing'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let completed_samples: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'completed'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let completed_samples: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'completed'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let cancelled_samples: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'cancelled'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let cancelled_samples: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'cancelled'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
     // --- 任务状态分布 ---
-    let pending_tasks: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'pending'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let pending_tasks: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'pending'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let in_progress_tasks: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'in_progress'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let in_progress_tasks: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'in_progress'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let completed_tasks: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'completed'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let completed_tasks: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'completed'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
     // --- 仪器状态分布 ---
     let total_instruments: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments")
@@ -96,33 +103,37 @@ pub async fn get_dashboard(
         .and_then(|r| r.try_get::<i64, _>(0).ok())
         .unwrap_or(0);
 
-    let normal_instruments: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'normal'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let normal_instruments: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'normal'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let calibration_instruments: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'calibration'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let calibration_instruments: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'calibration'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let maintenance_instruments: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'maintenance'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let maintenance_instruments: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'maintenance'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
-    let disabled_instruments: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'disabled'")
-        .fetch_one(pool)
-        .await
-        .ok()
-        .and_then(|r| r.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let disabled_instruments: i64 =
+        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'disabled'")
+            .fetch_one(pool)
+            .await
+            .ok()
+            .and_then(|r| r.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
     // --- 检验记录合格率 ---
     let total_records: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_records")
@@ -158,21 +169,54 @@ pub async fn get_dashboard(
         instrument_usage,
         pass_rate,
         test_items: vec![
-            NameValue { name: "待检".to_string(), value: received_samples },
-            NameValue { name: "检测中".to_string(), value: testing_samples },
-            NameValue { name: "已完成".to_string(), value: completed_samples },
-            NameValue { name: "已取消".to_string(), value: cancelled_samples },
+            NameValue {
+                name: "待检".to_string(),
+                value: received_samples,
+            },
+            NameValue {
+                name: "检测中".to_string(),
+                value: testing_samples,
+            },
+            NameValue {
+                name: "已完成".to_string(),
+                value: completed_samples,
+            },
+            NameValue {
+                name: "已取消".to_string(),
+                value: cancelled_samples,
+            },
         ],
         task_completion: vec![
-            NameValue { name: "待开始".to_string(), value: pending_tasks },
-            NameValue { name: "进行中".to_string(), value: in_progress_tasks },
-            NameValue { name: "已完成".to_string(), value: completed_tasks },
+            NameValue {
+                name: "待开始".to_string(),
+                value: pending_tasks,
+            },
+            NameValue {
+                name: "进行中".to_string(),
+                value: in_progress_tasks,
+            },
+            NameValue {
+                name: "已完成".to_string(),
+                value: completed_tasks,
+            },
         ],
         instrument_status: vec![
-            NameValue { name: "正常".to_string(), value: normal_instruments },
-            NameValue { name: "校准中".to_string(), value: calibration_instruments },
-            NameValue { name: "维护中".to_string(), value: maintenance_instruments },
-            NameValue { name: "停用".to_string(), value: disabled_instruments },
+            NameValue {
+                name: "正常".to_string(),
+                value: normal_instruments,
+            },
+            NameValue {
+                name: "校准中".to_string(),
+                value: calibration_instruments,
+            },
+            NameValue {
+                name: "维护中".to_string(),
+                value: maintenance_instruments,
+            },
+            NameValue {
+                name: "停用".to_string(),
+                value: disabled_instruments,
+            },
         ],
     };
 

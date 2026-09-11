@@ -1,4 +1,3 @@
-use topems_shared_boundary::only_own_schema_query;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -7,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::inventory_alert::{
@@ -76,8 +76,9 @@ pub async fn list_discrepancies(
     let stock_take_id = params.stock_take_id;
     let adjustment_status = params.adjustment_status;
 
-    let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
+        "wms",
+        r#"
         SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -88,8 +89,8 @@ pub async fn list_discrepancies(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#),
-    )
+        "#
+    ))
     .bind(stock_take_id)
     .bind(&adjustment_status)
     .bind(page_size)
@@ -99,14 +100,15 @@ pub async fn list_discrepancies(
 
     match result {
         Ok(records) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
-                only_own_schema_query!("wms", r#"
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
+                r#"
                 SELECT COUNT(*) FROM wms.discrepancy_records
                 WHERE ($1::uuid IS NULL OR stock_take_id = $1)
                   AND ($2::text IS NULL OR adjustment_status = $2)
                   AND deleted_at IS NULL
-                "#),
-            )
+                "#
+            ))
             .bind(stock_take_id)
             .bind(&adjustment_status)
             .fetch_one(&mut **txn)
@@ -182,16 +184,17 @@ pub async fn get_discrepancy(
         Err(e) => return e,
     }
 
-    let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
+        "wms",
+        r#"
         SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
         WHERE id = $1 AND deleted_at IS NULL
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -256,8 +259,9 @@ pub async fn create_discrepancy(
         "none"
     };
 
-    let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
+        "wms",
+        r#"
         INSERT INTO wms.discrepancy_records (
             id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
             system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
@@ -268,8 +272,8 @@ pub async fn create_discrepancy(
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .bind(stock_take_item.stock_take_id)
     .bind(req.stock_take_item_id)
@@ -450,16 +454,17 @@ pub async fn adjust_inventory(
     let now = Utc::now();
 
     // 获取已审批的差异处理记录
-    let record = sqlx::query_as::<_, DiscrepancyRecord>(
-        only_own_schema_query!("wms", r#"
+    let record = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
+        "wms",
+        r#"
         SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
         WHERE id = $1 AND adjustment_status = 'approved' AND deleted_at IS NULL
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -497,8 +502,9 @@ pub async fn adjust_inventory(
     }
 
     // 更新差异处理记录状态
-    let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
+        "wms",
+        r#"
         UPDATE wms.discrepancy_records SET
             adjustment_status = 'completed', adjustment_date = $2, updated_at = $2
         WHERE id = $1
@@ -506,8 +512,8 @@ pub async fn adjust_inventory(
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -516,7 +522,7 @@ pub async fn adjust_inventory(
     match result {
         Ok(record) => {
             log_audit_event(
-        &state.db,
+                &state.db,
                 "adjust".to_string(),
                 "discrepancy_record".to_string(),
                 Some(id),
@@ -590,14 +596,12 @@ pub async fn process_stock_take_discrepancies(
 
     for item in items {
         let discrepancy_id = Uuid::new_v4();
-        let discrepancy_q = item.discrepancy_quantity.as_ref()
+        let discrepancy_q = item
+            .discrepancy_quantity
+            .as_ref()
             .and_then(|b| b.to_string().parse::<f64>().ok())
             .unwrap_or(0.0);
-        let discrepancy_type = if discrepancy_q > 0.0 {
-            "over"
-        } else {
-            "under"
-        };
+        let discrepancy_type = if discrepancy_q > 0.0 { "over" } else { "under" };
 
         let create_result = sqlx::query!(
             r#"

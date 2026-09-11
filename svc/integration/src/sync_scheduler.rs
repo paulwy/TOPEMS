@@ -137,7 +137,10 @@ impl SyncScheduler {
             return Ok(());
         }
 
-        tracing::info!("[sync-scheduler] 发现 {} 个激活的 ERP 连接", connections.len());
+        tracing::info!(
+            "[sync-scheduler] 发现 {} 个激活的 ERP 连接",
+            connections.len()
+        );
 
         let now = Utc::now();
         let mut success_count = 0;
@@ -158,10 +161,7 @@ impl SyncScheduler {
 
             // 检查是否需要同步
             if !self.should_sync(&conn, now) {
-                tracing::debug!(
-                    "[sync-scheduler] 连接 '{}' 未到同步时间，跳过",
-                    conn.name
-                );
+                tracing::debug!("[sync-scheduler] 连接 '{}' 未到同步时间，跳过", conn.name);
                 skipped_count += 1;
                 continue;
             }
@@ -191,7 +191,10 @@ impl SyncScheduler {
                             "[sync-scheduler] 连接 '{}' 增量同步失败（重试 {} 次后）: {}",
                             conn.name,
                             result.retry_count,
-                            result.error.clone().unwrap_or_else(|| "未知错误".to_string())
+                            result
+                                .error
+                                .clone()
+                                .unwrap_or_else(|| "未知错误".to_string())
                         );
                         // 更新失败状态
                         if let Err(e) = self.update_sync_failure(conn.id, result.error).await {
@@ -211,7 +214,9 @@ impl SyncScheduler {
                         e
                     );
                     // 更新失败状态
-                    if let Err(update_err) = self.update_sync_failure(conn.id, Some(e.clone())).await {
+                    if let Err(update_err) =
+                        self.update_sync_failure(conn.id, Some(e.clone())).await
+                    {
                         tracing::warn!(
                             "[sync-scheduler] 更新连接 '{}' 失败状态失败: {}",
                             conn.name,
@@ -302,18 +307,15 @@ impl SyncScheduler {
 
     /// 执行单次同步（带超时）
     async fn execute_single_sync(&self, conn: &ErpConnection) -> Result<(i64, i64), String> {
-        tracing::info!(
-            "[sync-scheduler] 开始执行连接 '{}' 的增量同步",
-            conn.name
-        );
+        tracing::info!("[sync-scheduler] 开始执行连接 '{}' 的增量同步", conn.name);
 
         // 解析 tenant_id
-        let tenant_id = Uuid::parse_str(&conn.tenant_id)
-            .map_err(|e| format!("解析 tenant_id 失败: {}", e))?;
+        let tenant_id =
+            Uuid::parse_str(&conn.tenant_id).map_err(|e| format!("解析 tenant_id 失败: {}", e))?;
 
         // WMS URL（从环境变量获取，或使用默认值）
-        let wms_url = std::env::var("WMS_URL")
-            .unwrap_or_else(|_| "http://localhost:8081".to_string());
+        let wms_url =
+            std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8081".to_string());
 
         // 执行增量同步（带超时）
         let sync_future = sync_incremental_all(
@@ -340,15 +342,17 @@ impl SyncScheduler {
 
         // 检查是否有部分失败
         if total_failed > 0 {
-            let errors: Vec<String> = results
-                .iter()
-                .flat_map(|r| r.errors.clone())
-                .collect();
+            let errors: Vec<String> = results.iter().flat_map(|r| r.errors.clone()).collect();
             if !errors.is_empty() {
                 tracing::warn!(
                     "[sync-scheduler] 连接 '{}' 同步部分失败，错误示例: {}",
                     conn.name,
-                    errors.iter().take(3).cloned().collect::<Vec<_>>().join("; ")
+                    errors
+                        .iter()
+                        .take(3)
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join("; ")
                 );
             }
             tracing::warn!(
@@ -390,7 +394,7 @@ impl SyncScheduler {
                     last_sync_status, last_sync_error, consecutive_failures, last_failure_at
              FROM integration.erp_connections
              WHERE isactive = true AND status = 'active'
-             ORDER BY name"
+             ORDER BY name",
         )
         .fetch_all(&self.pool)
         .await
@@ -398,22 +402,35 @@ impl SyncScheduler {
 
         let connections: Vec<ErpConnection> = rows
             .into_iter()
-            .map(|(id, tenant_id, name, api_url, sync_interval, isactive, last_sync_at,
-                   last_sync_status, last_sync_error, consecutive_failures, last_failure_at)| {
-                ErpConnection {
+            .map(
+                |(
                     id,
                     tenant_id,
                     name,
                     api_url,
-                    sync_interval: sync_interval.unwrap_or(60), // 默认 60 分钟
-                    isactive: isactive.unwrap_or(false),
+                    sync_interval,
+                    isactive,
                     last_sync_at,
                     last_sync_status,
                     last_sync_error,
                     consecutive_failures,
                     last_failure_at,
-                }
-            })
+                )| {
+                    ErpConnection {
+                        id,
+                        tenant_id,
+                        name,
+                        api_url,
+                        sync_interval: sync_interval.unwrap_or(60), // 默认 60 分钟
+                        isactive: isactive.unwrap_or(false),
+                        last_sync_at,
+                        last_sync_status,
+                        last_sync_error,
+                        consecutive_failures,
+                        last_failure_at,
+                    }
+                },
+            )
             .collect();
 
         Ok(connections)
@@ -444,7 +461,7 @@ impl SyncScheduler {
                  last_sync_status = 'success',
                  last_sync_error = NULL,
                  consecutive_failures = 0
-             WHERE id = $1"
+             WHERE id = $1",
         )
         .bind(conn_id)
         .execute(&self.pool)
@@ -455,7 +472,11 @@ impl SyncScheduler {
     }
 
     /// 更新同步失败状态
-    async fn update_sync_failure(&self, conn_id: Uuid, error: Option<String>) -> Result<(), String> {
+    async fn update_sync_failure(
+        &self,
+        conn_id: Uuid,
+        error: Option<String>,
+    ) -> Result<(), String> {
         let error_msg = error.unwrap_or_else(|| "未知错误".to_string());
         // 截断错误信息，避免过长
         let truncated_error = if error_msg.len() > 500 {
@@ -471,7 +492,7 @@ impl SyncScheduler {
                  last_sync_error = $1,
                  consecutive_failures = COALESCE(consecutive_failures, 0) + 1,
                  last_failure_at = NOW()
-             WHERE id = $2"
+             WHERE id = $2",
         )
         .bind(truncated_error)
         .bind(conn_id)

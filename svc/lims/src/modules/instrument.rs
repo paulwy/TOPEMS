@@ -24,7 +24,10 @@ pub fn create_routes() -> Router<AppState> {
                 .delete(delete_instrument),
         )
         .route("/instruments/{id}/calibration", post(calibrate))
-        .route("/instruments/{id}/calibrations", get(get_calibration_history))
+        .route(
+            "/instruments/{id}/calibrations",
+            get(get_calibration_history),
+        )
         .route("/instruments/{id}/maintenance", get(list_maintenance))
         .route("/maintenance", post(create_maintenance))
         .route(
@@ -916,4 +919,3 @@ pub async fn delete_maintenance(
         }
     }
 }
-

@@ -130,7 +130,11 @@ async fn get_inventory_turnover(
     let group_by = params.group_by.as_deref().unwrap_or("month");
 
     // 查询出库移动记录，按周期聚合
-    let warehouse_filter = params.warehouse_id.as_ref().map(|_| "AND from_warehouse_id = $4").unwrap_or("");
+    let warehouse_filter = params
+        .warehouse_id
+        .as_ref()
+        .map(|_| "AND from_warehouse_id = $4")
+        .unwrap_or("");
     let sql = format!(
         r#"
         SELECT
@@ -245,7 +249,11 @@ async fn get_order_fulfillment(
     let (start, end) = parse_date_range(&params);
     let group_by = params.group_by.as_deref().unwrap_or("month");
 
-    let warehouse_filter = params.warehouse_id.as_ref().map(|_| "AND warehouse_id = $4").unwrap_or("");
+    let warehouse_filter = params
+        .warehouse_id
+        .as_ref()
+        .map(|_| "AND warehouse_id = $4")
+        .unwrap_or("");
     let sql = format!(
         r#"
         SELECT
@@ -303,7 +311,9 @@ async fn get_order_fulfillment(
         let period_total: i64 = row.get("total_orders");
         let period_fulfilled: i64 = row.get("fulfilled_orders");
         let period_on_time: i64 = row.get("on_time_orders");
-        let avg_days: f64 = row.get::<Option<f64>, _>("avg_fulfillment_days").unwrap_or(0.0);
+        let avg_days: f64 = row
+            .get::<Option<f64>, _>("avg_fulfillment_days")
+            .unwrap_or(0.0);
 
         let fulfillment_rate = if period_total > 0 {
             period_fulfilled as f64 / period_total as f64 * 100.0
@@ -475,10 +485,19 @@ pub async fn get_flow_trend(
     if let Ok(rows) = inbound_result {
         for row in rows {
             let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
-            let qty: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            let qty: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
             let count: i64 = row.try_get("order_count").unwrap_or(0);
-            let key = period.map(|p| format_period_date(p, group_by)).unwrap_or_default();
-            periods.entry(key.clone()).or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
+            let key = period
+                .map(|p| format_period_date(p, group_by))
+                .unwrap_or_default();
+            periods
+                .entry(key.clone())
+                .or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
             if let Some(v) = periods.get_mut(&key) {
                 v.0 = qty;
                 v.2 = count;
@@ -491,10 +510,19 @@ pub async fn get_flow_trend(
     if let Ok(rows) = outbound_result {
         for row in rows {
             let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
-            let qty: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            let qty: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
             let count: i64 = row.try_get("order_count").unwrap_or(0);
-            let key = period.map(|p| format_period_date(p, group_by)).unwrap_or_default();
-            periods.entry(key.clone()).or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
+            let key = period
+                .map(|p| format_period_date(p, group_by))
+                .unwrap_or_default();
+            periods
+                .entry(key.clone())
+                .or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
             if let Some(v) = periods.get_mut(&key) {
                 v.1 = qty;
                 v.3 = count;
@@ -580,7 +608,12 @@ pub async fn get_abc_analysis(
     if let Ok(rows) = result {
         for row in rows {
             let code: String = row.try_get("material_code").unwrap_or_default();
-            let value: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            let value: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
             materials.push((code, value));
             total_value += value;
         }
@@ -594,7 +627,11 @@ pub async fn get_abc_analysis(
 
     for (_, value) in &materials {
         cumulative += value;
-        let percentage = if total_value > 0.0 { cumulative / total_value } else { 0.0 };
+        let percentage = if total_value > 0.0 {
+            cumulative / total_value
+        } else {
+            0.0
+        };
 
         if percentage <= 0.7 {
             category_a.0 += 1;
@@ -614,22 +651,46 @@ pub async fn get_abc_analysis(
             category: "A".to_string(),
             material_count: category_a.0,
             total_value: (category_a.1 * 100.0).round() / 100.0,
-            value_percentage: if total_value > 0.0 { (category_a.1 / total_value * 10000.0).round() / 100.0 } else { 0.0 },
-            count_percentage: if total_count > 0 { (category_a.0 as f64 / total_count as f64 * 10000.0).round() / 100.0 } else { 0.0 },
+            value_percentage: if total_value > 0.0 {
+                (category_a.1 / total_value * 10000.0).round() / 100.0
+            } else {
+                0.0
+            },
+            count_percentage: if total_count > 0 {
+                (category_a.0 as f64 / total_count as f64 * 10000.0).round() / 100.0
+            } else {
+                0.0
+            },
         },
         AbcAnalysisData {
             category: "B".to_string(),
             material_count: category_b.0,
             total_value: (category_b.1 * 100.0).round() / 100.0,
-            value_percentage: if total_value > 0.0 { (category_b.1 / total_value * 10000.0).round() / 100.0 } else { 0.0 },
-            count_percentage: if total_count > 0 { (category_b.0 as f64 / total_count as f64 * 10000.0).round() / 100.0 } else { 0.0 },
+            value_percentage: if total_value > 0.0 {
+                (category_b.1 / total_value * 10000.0).round() / 100.0
+            } else {
+                0.0
+            },
+            count_percentage: if total_count > 0 {
+                (category_b.0 as f64 / total_count as f64 * 10000.0).round() / 100.0
+            } else {
+                0.0
+            },
         },
         AbcAnalysisData {
             category: "C".to_string(),
             material_count: category_c.0,
             total_value: (category_c.1 * 100.0).round() / 100.0,
-            value_percentage: if total_value > 0.0 { (category_c.1 / total_value * 10000.0).round() / 100.0 } else { 0.0 },
-            count_percentage: if total_count > 0 { (category_c.0 as f64 / total_count as f64 * 10000.0).round() / 100.0 } else { 0.0 },
+            value_percentage: if total_value > 0.0 {
+                (category_c.1 / total_value * 10000.0).round() / 100.0
+            } else {
+                0.0
+            },
+            count_percentage: if total_count > 0 {
+                (category_c.0 as f64 / total_count as f64 * 10000.0).round() / 100.0
+            } else {
+                0.0
+            },
         },
     ];
 
@@ -691,7 +752,12 @@ pub async fn get_age_pareto(
 
     if let Ok(rows) = result {
         for row in rows {
-            let value: f64 = row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten().and_then(|v| v.to_f64()).unwrap_or(0.0);
+            let value: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
             let earliest: Option<chrono::NaiveDate> = row.try_get("earliest_date").ok().flatten();
             let days = earliest.map(|d| (now - d).num_days()).unwrap_or(0);
 
@@ -730,7 +796,11 @@ pub async fn get_age_pareto(
             age_bucket: bucket,
             material_count: count,
             total_value: (value * 100.0).round() / 100.0,
-            cumulative_percentage: if total_value > 0.0 { (cumulative / total_value * 10000.0).round() / 100.0 } else { 0.0 },
+            cumulative_percentage: if total_value > 0.0 {
+                (cumulative / total_value * 10000.0).round() / 100.0
+            } else {
+                0.0
+            },
         });
     }
 
@@ -800,13 +870,19 @@ pub async fn get_location_utilization(
     if let Ok(rows) = result {
         for row in rows {
             let warehouse_id: Option<Uuid> = row.try_get("warehouse_id").ok();
-            let warehouse_name: String = row.try_get("warehouse_name").unwrap_or_else(|_| "未知仓库".to_string());
+            let warehouse_name: String = row
+                .try_get("warehouse_name")
+                .unwrap_or_else(|_| "未知仓库".to_string());
             let total: i64 = row.try_get("total_locations").unwrap_or(0);
             let used: i64 = row.try_get("used_locations").unwrap_or(0);
             let avg_usage: f64 = row.try_get("avg_capacity_usage").unwrap_or(0.0);
             let dead: i64 = row.try_get("dead_stock_locations").unwrap_or(0);
 
-            let utilization = if total > 0 { (used as f64 / total as f64 * 10000.0).round() / 100.0 } else { 0.0 };
+            let utilization = if total > 0 {
+                (used as f64 / total as f64 * 10000.0).round() / 100.0
+            } else {
+                0.0
+            };
 
             data.push(LocationUtilizationData {
                 warehouse_id,
@@ -879,10 +955,11 @@ pub async fn get_dashboard_summary(
     tracing::info!("获取WMS Dashboard汇总数据");
 
     // 仓库数
-    let warehouse_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let warehouse_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     // 库存总量和SKU数
     let inventory_row: (Option<f64>, Option<i64>) = sqlx::query_as(
@@ -986,7 +1063,7 @@ pub async fn get_inventory_distribution(
          WHERE i.deleted_at IS NULL
          GROUP BY i.warehouse_id, w.name
          ORDER BY quantity DESC
-         LIMIT 10"
+         LIMIT 10",
     )
     .fetch_all(&state.db)
     .await
@@ -994,14 +1071,14 @@ pub async fn get_inventory_distribution(
 
     let items: Vec<InventoryDistributionItem> = rows
         .into_iter()
-        .map(|(warehouse_id, warehouse_name, quantity, sku_count)| {
-            InventoryDistributionItem {
+        .map(
+            |(warehouse_id, warehouse_name, quantity, sku_count)| InventoryDistributionItem {
                 warehouse_id,
                 warehouse_name: warehouse_name.unwrap_or_else(|| "未知仓库".to_string()),
                 quantity: quantity.unwrap_or(0.0),
                 sku_count: sku_count.unwrap_or(0),
-            }
-        })
+            },
+        )
         .collect();
 
     Json(ApiResponse::success(items, "获取成功"))
@@ -1022,10 +1099,12 @@ pub async fn get_inventory_types(
 ) -> Json<ApiResponse<Vec<InventoryTypeItem>>> {
     tracing::info!("获取WMS库存类型分布");
 
-    let total: f64 = sqlx::query_scalar("SELECT COALESCE(SUM(quantity), 0) FROM wms.inventory WHERE deleted_at IS NULL")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0.0);
+    let total: f64 = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(quantity), 0) FROM wms.inventory WHERE deleted_at IS NULL",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0.0);
 
     let rows: Vec<(Option<String>, Option<f64>)> = sqlx::query_as(
         "SELECT COALESCE(material_type, '未分类') as material_type, 
@@ -1034,7 +1113,7 @@ pub async fn get_inventory_types(
          WHERE deleted_at IS NULL
          GROUP BY material_type
          ORDER BY quantity DESC
-         LIMIT 8"
+         LIMIT 8",
     )
     .fetch_all(&state.db)
     .await
@@ -1044,7 +1123,11 @@ pub async fn get_inventory_types(
         .into_iter()
         .map(|(material_type, quantity)| {
             let qty = quantity.unwrap_or(0.0);
-            let percentage = if total > 0.0 { (qty / total) * 100.0 } else { 0.0 };
+            let percentage = if total > 0.0 {
+                (qty / total) * 100.0
+            } else {
+                0.0
+            };
             InventoryTypeItem {
                 material_type: material_type.unwrap_or_else(|| "未分类".to_string()),
                 quantity: qty,
@@ -1122,9 +1205,15 @@ where
         .route("/analytics/flow-trend", get(get_flow_trend))
         .route("/analytics/abc-analysis", get(get_abc_analysis))
         .route("/analytics/age-pareto", get(get_age_pareto))
-        .route("/analytics/location-utilization", get(get_location_utilization))
+        .route(
+            "/analytics/location-utilization",
+            get(get_location_utilization),
+        )
         .route("/analytics/dashboard-summary", get(get_dashboard_summary))
-        .route("/analytics/inventory-distribution", get(get_inventory_distribution))
+        .route(
+            "/analytics/inventory-distribution",
+            get(get_inventory_distribution),
+        )
         .route("/analytics/inventory-types", get(get_inventory_types))
         .route("/analytics/daily-trend", get(get_daily_trend))
 }

@@ -326,7 +326,10 @@ impl AgentService {
             .and_then(|v| v.as_str())
             .unwrap_or_default();
 
-        let result = self.qa_service.ask(question, None, 5, Uuid::nil(), None).await;
+        let result = self
+            .qa_service
+            .ask(question, None, 5, Uuid::nil(), None)
+            .await;
 
         match result {
             Ok(response) => ToolResult {

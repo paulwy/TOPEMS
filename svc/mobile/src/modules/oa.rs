@@ -261,10 +261,16 @@ pub async fn update_meeting(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<OaMeeting>> {
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
-    let description = req.get("description").and_then(|v| v.as_str().map(String::from));
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str().map(String::from));
     let status = req.get("status").and_then(|v| v.as_str().map(String::from));
-    let location = req.get("location").and_then(|v| v.as_str().map(String::from));
-    let video_url = req.get("video_url").and_then(|v| v.as_str().map(String::from));
+    let location = req
+        .get("location")
+        .and_then(|v| v.as_str().map(String::from));
+    let video_url = req
+        .get("video_url")
+        .and_then(|v| v.as_str().map(String::from));
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "UPDATE oa_meetings SET title = COALESCE($1, title), description = COALESCE($2, description), \
@@ -290,10 +296,13 @@ pub async fn delete_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query(only_own_schema_query!("mobile", "DELETE FROM oa_meetings WHERE id = $1"))
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "DELETE FROM oa_meetings WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "会议不存在")),
@@ -363,8 +372,12 @@ pub async fn create_calendar_event(
 ) -> Json<ApiResponse<OaCalendarEvent>> {
     let tid = tenant_id();
     let id = Uuid::new_v4();
-    let start = DateTime::parse_from_rfc3339(&req.start_time).unwrap_or_else(|_| Utc::now().into()).with_timezone(&Utc);
-    let end = DateTime::parse_from_rfc3339(&req.end_time).unwrap_or_else(|_| Utc::now().into()).with_timezone(&Utc);
+    let start = DateTime::parse_from_rfc3339(&req.start_time)
+        .unwrap_or_else(|_| Utc::now().into())
+        .with_timezone(&Utc);
+    let end = DateTime::parse_from_rfc3339(&req.end_time)
+        .unwrap_or_else(|_| Utc::now().into())
+        .with_timezone(&Utc);
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
         "INSERT INTO oa_calendar_events (id, tenant_id, title, description, type, start_time, end_time, all_day, location, is_reminder, reminder_minutes, color, created_at, updated_at) \
@@ -396,8 +409,12 @@ pub async fn update_calendar_event(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<OaCalendarEvent>> {
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
-    let description = req.get("description").and_then(|v| v.as_str().map(String::from));
-    let location = req.get("location").and_then(|v| v.as_str().map(String::from));
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str().map(String::from));
+    let location = req
+        .get("location")
+        .and_then(|v| v.as_str().map(String::from));
     let color = req.get("color").and_then(|v| v.as_str().map(String::from));
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
@@ -422,10 +439,13 @@ pub async fn delete_calendar_event(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query(only_own_schema_query!("mobile", "DELETE FROM oa_calendar_events WHERE id = $1"))
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "DELETE FROM oa_calendar_events WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "事件不存在")),
@@ -480,10 +500,13 @@ pub async fn get_oa_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OaTask>> {
-    match sqlx::query_as::<_, OaTask>(only_own_schema_query!("mobile", "SELECT * FROM oa_tasks WHERE id = $1"))
-        .bind(id)
-        .fetch_optional(&pool)
-        .await
+    match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
+        "mobile",
+        "SELECT * FROM oa_tasks WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&pool)
+    .await
     {
         Ok(Some(t)) => Json(ApiResponse::success(t, "ok")),
         Ok(None) => Json(ApiResponse::error(404, "任务不存在")),
@@ -497,8 +520,15 @@ pub async fn create_oa_task(
 ) -> Json<ApiResponse<OaTask>> {
     let tid = tenant_id();
     let id = Uuid::new_v4();
-    let due = req.due_date.and_then(|d| DateTime::parse_from_rfc3339(&d).ok().map(|dt| dt.with_timezone(&Utc)));
-    let tags = req.tags.map(|t| serde_json::json!(t)).unwrap_or(serde_json::json!([]));
+    let due = req.due_date.and_then(|d| {
+        DateTime::parse_from_rfc3339(&d)
+            .ok()
+            .map(|dt| dt.with_timezone(&Utc))
+    });
+    let tags = req
+        .tags
+        .map(|t| serde_json::json!(t))
+        .unwrap_or(serde_json::json!([]));
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "INSERT INTO oa_tasks (id, tenant_id, title, description, priority, status, assignee, due_date, tags, project_id, created_at, updated_at) \
@@ -527,10 +557,16 @@ pub async fn update_oa_task(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<OaTask>> {
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
-    let description = req.get("description").and_then(|v| v.as_str().map(String::from));
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str().map(String::from));
     let status = req.get("status").and_then(|v| v.as_str().map(String::from));
-    let priority = req.get("priority").and_then(|v| v.as_str().map(String::from));
-    let assignee = req.get("assignee").and_then(|v| v.as_str().map(String::from));
+    let priority = req
+        .get("priority")
+        .and_then(|v| v.as_str().map(String::from));
+    let assignee = req
+        .get("assignee")
+        .and_then(|v| v.as_str().map(String::from));
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "UPDATE oa_tasks SET title = COALESCE($1, title), description = COALESCE($2, description), \
@@ -556,10 +592,13 @@ pub async fn delete_oa_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query(only_own_schema_query!("mobile", "DELETE FROM oa_tasks WHERE id = $1"))
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "DELETE FROM oa_tasks WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "任务不存在")),
@@ -662,9 +701,7 @@ pub async fn mark_announcement_read(
 
 // ===== OA Stats =====
 
-pub async fn get_oa_stats(
-    State(pool): State<PgPool>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let tid = tenant_id();
     let meetings_today = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",

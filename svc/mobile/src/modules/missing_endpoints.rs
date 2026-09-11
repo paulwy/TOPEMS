@@ -119,7 +119,10 @@ pub async fn get_user_settings(
         "theme": "light",
         "offlineSync": {"auto": true, "intervalMinutes": 15}
     });
-    (StatusCode::OK, Json(ApiResponse::success(settings, "用户设置")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(settings, "用户设置")),
+    )
 }
 
 pub async fn get_push_config(
@@ -135,11 +138,9 @@ pub async fn get_push_config(
             Json(ApiResponse::<Value>::error(500, "初始化失败")),
         );
     }
-    let row = sqlx::query(
-        r#"SELECT channel_config FROM mobile.push_config LIMIT 1"#,
-    )
-    .fetch_optional(&pool)
-    .await;
+    let row = sqlx::query(r#"SELECT channel_config FROM mobile.push_config LIMIT 1"#)
+        .fetch_optional(&pool)
+        .await;
     let v = match row {
         Ok(Some(r)) => r.get::<Value, _>("channel_config"),
         _ => json!({
@@ -200,8 +201,14 @@ pub async fn update_push_template(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("");
-    let title_template = payload.get("titleTemplate").and_then(|v| v.as_str()).unwrap_or("");
-    let body_template = payload.get("bodyTemplate").and_then(|v| v.as_str()).unwrap_or("");
+    let title_template = payload
+        .get("titleTemplate")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let body_template = payload
+        .get("bodyTemplate")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     let is_active = payload.get("isActive").and_then(|v| v.as_bool());
     match sqlx::query(
         r#"UPDATE mobile.push_templates

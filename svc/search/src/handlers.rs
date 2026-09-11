@@ -398,13 +398,11 @@ pub async fn search_handler(
     let log_pool = pool.clone();
     let log_result_count = total;
     tokio::spawn(async move {
-        let _ = sqlx::query(
-            "INSERT INTO public.search_logs (query, result_count) VALUES ($1, $2)",
-        )
-        .bind(log_query)
-        .bind(log_result_count)
-        .execute(&log_pool)
-        .await;
+        let _ = sqlx::query("INSERT INTO public.search_logs (query, result_count) VALUES ($1, $2)")
+            .bind(log_query)
+            .bind(log_result_count)
+            .execute(&log_pool)
+            .await;
     });
 
     Json(api_success(SearchResponse {

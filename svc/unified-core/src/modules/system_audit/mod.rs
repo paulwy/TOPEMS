@@ -66,14 +66,13 @@ pub async fn list_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AuditLog>>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params
-        .pagesize
-        .or(params.page_size)
-        .unwrap_or(20)
-        .min(200);
+    let page_size = params.pagesize.or(params.page_size).unwrap_or(20).min(200);
     let offset = (page - 1) * page_size;
 
-    let user_uuid = params.user_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let user_uuid = params
+        .user_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
     let search = params.search.clone().unwrap_or_default();
 
     let total: i64 = sqlx::query_scalar(
@@ -157,7 +156,10 @@ pub async fn export_audit_logs(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> Json<ApiResponse<Value>> {
-    let user_uuid = params.user_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let user_uuid = params
+        .user_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
     let search = params.search.clone().unwrap_or_default();
 
     let items: Vec<AuditLog> = sqlx::query_as(
@@ -199,7 +201,10 @@ pub async fn get_audit_stats(
     State(state): State<AppState>,
     Query(params): Query<AuditStatsParams>,
 ) -> Json<ApiResponse<Value>> {
-    let group_by = params.group_by.clone().unwrap_or_else(|| "action".to_string());
+    let group_by = params
+        .group_by
+        .clone()
+        .unwrap_or_else(|| "action".to_string());
 
     let total: i64 = sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM audit_logs

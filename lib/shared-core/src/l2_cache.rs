@@ -907,7 +907,8 @@ mod tests {
     #[tokio::test]
     #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
     async fn test_write_through_consistency() {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
         let config = L2CacheConfig {
             instance_prefix: "test_write_through".to_string(),
             l1_ttl: Duration::from_secs(60),
@@ -941,7 +942,8 @@ mod tests {
     #[tokio::test]
     #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
     async fn test_multi_instance_consistency() {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
         let config_a = L2CacheConfig {
             instance_prefix: "test_multi_instance".to_string(),
             l1_ttl: Duration::from_secs(60),
@@ -968,11 +970,16 @@ mod tests {
         assert!(cache_b.has_l2());
 
         // 实例 A 写入数据
-        cache_a.set("shared-key".to_string(), "shared-value".to_string()).await;
+        cache_a
+            .set("shared-key".to_string(), "shared-value".to_string())
+            .await;
 
         // 实例 B 清空 L1（确保从 L2 读取），然后验证能读取到数据
         cache_b.clear_l1();
-        assert_eq!(cache_b.get("shared-key").await, Some("shared-value".to_string()));
+        assert_eq!(
+            cache_b.get("shared-key").await,
+            Some("shared-value".to_string())
+        );
 
         // 实例 A 删除数据
         cache_a.remove("shared-key").await;
@@ -986,7 +993,8 @@ mod tests {
     #[tokio::test]
     #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
     async fn test_cache_invalidation_consistency() {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
         let config = L2CacheConfig {
             instance_prefix: "test_invalidation".to_string(),
             l1_ttl: Duration::from_secs(60),
@@ -1049,7 +1057,8 @@ mod tests {
     #[tokio::test]
     #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
     async fn test_l1_backfill_from_l2() {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
         let config = L2CacheConfig {
             instance_prefix: "test_backfill".to_string(),
             l1_ttl: Duration::from_secs(60),
@@ -1066,18 +1075,26 @@ mod tests {
         assert!(cache.has_l2());
 
         // 写入数据（同时写入 L1 和 L2）
-        cache.set("backfill-key".to_string(), "backfill-value".to_string()).await;
+        cache
+            .set("backfill-key".to_string(), "backfill-value".to_string())
+            .await;
 
         // 清空 L1
         cache.clear_l1();
         assert_eq!(cache.l1_len(), 0);
 
         // 从 L2 读取，应该回填到 L1
-        assert_eq!(cache.get("backfill-key").await, Some("backfill-value".to_string()));
+        assert_eq!(
+            cache.get("backfill-key").await,
+            Some("backfill-value".to_string())
+        );
 
         // 验证 L1 已回填（再次读取应该立即命中 L1，不需要访问 L2）
         // 注意：l1_len() 返回的是近似值，可能有延迟，所以这里只验证再次读取能命中
-        assert_eq!(cache.get("backfill-key").await, Some("backfill-value".to_string()));
+        assert_eq!(
+            cache.get("backfill-key").await,
+            Some("backfill-value".to_string())
+        );
 
         // 清理测试数据
         cache.remove("backfill-key").await;
@@ -1087,7 +1104,8 @@ mod tests {
     #[tokio::test]
     #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
     async fn test_concurrent_read_write_consistency() {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
         let config = L2CacheConfig {
             instance_prefix: "test_concurrent".to_string(),
             l1_ttl: Duration::from_secs(60),
@@ -1095,12 +1113,14 @@ mod tests {
             l1_capacity: 10000,
             ..Default::default()
         };
-        let cache = Arc::new(match AsyncL2Cache::<u32>::try_new(config, Some(&redis_url)).await {
-            Ok(c) => c,
-            Err((_c, warn)) => {
-                panic!("创建缓存失败: {}", warn);
-            }
-        });
+        let cache = Arc::new(
+            match AsyncL2Cache::<u32>::try_new(config, Some(&redis_url)).await {
+                Ok(c) => c,
+                Err((_c, warn)) => {
+                    panic!("创建缓存失败: {}", warn);
+                }
+            },
+        );
         assert!(cache.has_l2());
 
         // 并发写入 100 个 key

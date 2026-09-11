@@ -15,8 +15,11 @@ use topems_shared_db::rls::rls_middleware;
 use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
-use crate::handlers::{conversion_rules, erp_connections, erp_mappings, events, lims_qms, mes_erp, mes_qms, sync, wms_scm};
 use crate::external_erp;
+use crate::handlers::{
+    conversion_rules, erp_connections, erp_mappings, events, lims_qms, mes_erp, mes_qms, sync,
+    wms_scm,
+};
 use crate::models::AppState;
 use crate::plugin;
 
@@ -49,10 +52,22 @@ pub fn create_routes(state: AppState) -> Router {
         // ERP 连接管理（缺口#11）
         .route("/erp/connections", get(erp_connections::list_connections))
         .route("/erp/connections", post(erp_connections::create_connection))
-        .route("/erp/connections/test", post(erp_connections::test_connection))
-        .route("/erp/connections/{id}", get(erp_connections::get_connection))
-        .route("/erp/connections/{id}", put(erp_connections::update_connection))
-        .route("/erp/connections/{id}", delete(erp_connections::delete_connection))
+        .route(
+            "/erp/connections/test",
+            post(erp_connections::test_connection),
+        )
+        .route(
+            "/erp/connections/{id}",
+            get(erp_connections::get_connection),
+        )
+        .route(
+            "/erp/connections/{id}",
+            put(erp_connections::update_connection),
+        )
+        .route(
+            "/erp/connections/{id}",
+            delete(erp_connections::delete_connection),
+        )
         // ERP 字段映射（缺口#12）
         .route("/erp/mappings", get(erp_mappings::list_mappings))
         .route("/erp/mappings", post(erp_mappings::create_mapping))

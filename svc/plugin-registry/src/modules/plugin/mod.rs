@@ -28,7 +28,10 @@ pub fn create_routes() -> Router<AppState> {
             "/api/plugin/marketplace",
             get(marketplace::get_marketplace_summary),
         )
-        .route("/api/plugin/marketplace/list", get(marketplace::list_plugins))
+        .route(
+            "/api/plugin/marketplace/list",
+            get(marketplace::list_plugins),
+        )
         .route(
             "/api/plugin/marketplace/categories",
             get(marketplace::list_categories),
@@ -134,7 +137,10 @@ pub fn create_routes() -> Router<AppState> {
 
     // --- Dev / plugin owner (publish, upload) ---
     let dev = Router::new()
-        .route("/api/plugin/dev/plugins", post(tenant_plugins::upload_plugin))
+        .route(
+            "/api/plugin/dev/plugins",
+            post(tenant_plugins::upload_plugin),
+        )
         .route(
             "/api/plugin/dev/plugins/{code}",
             put(tenant_plugins::update_plugin),

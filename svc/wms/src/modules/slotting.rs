@@ -186,7 +186,10 @@ pub async fn run_optimization(
     }
 
     let _tenant_id = claims.tenant_id;
-    let strategy = params.strategy.clone().unwrap_or_else(|| "frequency".into());
+    let strategy = params
+        .strategy
+        .clone()
+        .unwrap_or_else(|| "frequency".into());
     let _ = strategy;
 
     // 读取启用中的规则（无规则时按默认 frequency 策略生成一条占位建议）
@@ -335,7 +338,8 @@ pub async fn list_suggestions(
         offset,
     )
     .fetch_all(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("查询建议失败: {}", e))),
     };
@@ -351,7 +355,8 @@ pub async fn list_suggestions(
         status,
     )
     .fetch_one(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("统计建议失败: {}", e))),
     };
@@ -421,7 +426,8 @@ pub async fn get_suggestion(
         id,
     )
     .fetch_optional(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("查询建议失败: {}", e))),
     };
@@ -485,13 +491,17 @@ pub async fn apply_suggestion(
         id,
     )
     .fetch_optional(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("应用建议失败: {}", e))),
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(serde_json::json!({ "id": r.id, "status": r.status }), "success")),
+        Some(r) => Json(ApiResponse::success(
+            serde_json::json!({ "id": r.id, "status": r.status }),
+            "success",
+        )),
         None => Json(api_error(404, "建议不存在或已处理")),
     }
 }
@@ -529,13 +539,17 @@ pub async fn reject_suggestion(
         id,
     )
     .fetch_optional(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("拒绝建议失败: {}", e))),
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(serde_json::json!({ "id": r.id, "status": r.status }), "success")),
+        Some(r) => Json(ApiResponse::success(
+            serde_json::json!({ "id": r.id, "status": r.status }),
+            "success",
+        )),
         None => Json(api_error(404, "建议不存在或已处理")),
     }
 }
@@ -573,7 +587,8 @@ pub async fn list_zones(
         params.warehouse_id,
     )
     .fetch_all(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("查询分区失败: {}", e))),
     };
@@ -592,7 +607,10 @@ pub async fn list_zones(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::to_value(zones).unwrap_or(serde_json::Value::Null), "success"))
+    Json(ApiResponse::success(
+        serde_json::to_value(zones).unwrap_or(serde_json::Value::Null),
+        "success",
+    ))
 }
 
 /// 创建分区
@@ -621,7 +639,8 @@ pub async fn create_zone(
     let warehouse_id: Uuid = match payload
         .get("warehouse_id")
         .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok()) {
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
         Some(v) => v,
         None => return Json(api_error(400, "warehouse_id 必填")),
     };
@@ -635,7 +654,10 @@ pub async fn create_zone(
         .and_then(|v| v.as_str())
         .unwrap_or("bulk")
         .to_string();
-    let location_ids = payload.get("location_ids").cloned().unwrap_or_else(|| serde_json::json!([]));
+    let location_ids = payload
+        .get("location_ids")
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
     let is_active = payload
         .get("is_active")
         .and_then(|v| v.as_bool())
@@ -655,7 +677,8 @@ pub async fn create_zone(
         is_active,
     )
     .fetch_one(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("创建分区失败: {}", e))),
     };
@@ -729,7 +752,10 @@ pub async fn list_rules(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::to_value(rules).unwrap_or(serde_json::Value::Null), "success"))
+    Json(ApiResponse::success(
+        serde_json::to_value(rules).unwrap_or(serde_json::Value::Null),
+        "success",
+    ))
 }
 
 /// 创建规则
@@ -758,7 +784,8 @@ pub async fn create_rule(
     let warehouse_id: Uuid = match payload
         .get("warehouse_id")
         .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok()) {
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
         Some(v) => v,
         None => return Json(api_error(400, "warehouse_id 必填")),
     };
@@ -767,9 +794,18 @@ pub async fn create_rule(
         .and_then(|v| v.as_str())
         .unwrap_or("velocity_class")
         .to_string();
-    let priority = payload.get("priority").and_then(|v| v.as_i64()).unwrap_or(10) as i32;
-    let conditions = payload.get("conditions").cloned().unwrap_or_else(|| serde_json::json!([]));
-    let actions = payload.get("actions").cloned().unwrap_or_else(|| serde_json::json!([]));
+    let priority = payload
+        .get("priority")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(10) as i32;
+    let conditions = payload
+        .get("conditions")
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
+    let actions = payload
+        .get("actions")
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
     let is_active = payload
         .get("is_active")
         .and_then(|v| v.as_bool())
@@ -847,7 +883,8 @@ pub async fn get_impact_analysis(
         params.warehouse_id,
     )
     .fetch_one(&mut **txn)
-    .await {
+    .await
+    {
         Ok(v) => v,
         Err(e) => return Json(api_error(500, &format!("分析失败: {}", e))),
     };
@@ -868,5 +905,8 @@ pub async fn get_impact_analysis(
         implementation_cost_estimate: (agg.total_suggestions.unwrap_or(0) as f64 * 50.0),
     };
 
-    Json(ApiResponse::success(serde_json::to_value(result).unwrap_or(serde_json::Value::Null), "success"))
+    Json(ApiResponse::success(
+        serde_json::to_value(result).unwrap_or(serde_json::Value::Null),
+        "success",
+    ))
 }

@@ -711,12 +711,13 @@ pub async fn delete_category(
         Err(_) => return Json(ApiResponse::error(400, "无效的分类ID")),
     };
 
-    let result =
-        sqlx::query("UPDATE qa_lims_method_categories SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(ctx.tenant_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE qa_lims_method_categories SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(ctx.tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "方法分类删除成功")),
@@ -1036,13 +1037,19 @@ mod tests {
     #[test]
     fn cache_key_prefix() {
         let tenant = Uuid::nil();
-        assert_eq!(test_method_cache_key(&tenant, "abc"), "test_method:00000000-0000-0000-0000-000000000000:abc");
+        assert_eq!(
+            test_method_cache_key(&tenant, "abc"),
+            "test_method:00000000-0000-0000-0000-000000000000:abc"
+        );
     }
 
     #[test]
     fn cache_key_empty_id() {
         let tenant = Uuid::nil();
-        assert_eq!(test_method_cache_key(&tenant, ""), "test_method:00000000-0000-0000-0000-000000000000:");
+        assert_eq!(
+            test_method_cache_key(&tenant, ""),
+            "test_method:00000000-0000-0000-0000-000000000000:"
+        );
     }
 
     #[test]

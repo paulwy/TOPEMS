@@ -84,7 +84,10 @@ pub async fn create_connection(
     .bind(req.api_version)
     .bind(req.app_key)
     .bind(req.app_secret)
-    .bind(req.sync_direction.unwrap_or_else(|| "bidirectional".to_string()))
+    .bind(
+        req.sync_direction
+            .unwrap_or_else(|| "bidirectional".to_string()),
+    )
     .bind(req.sync_mode.unwrap_or_else(|| "manual".to_string()))
     .bind(req.sync_interval)
     .fetch_one(&state.pool)

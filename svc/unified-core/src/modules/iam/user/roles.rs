@@ -223,24 +223,25 @@ pub async fn get_user_roles(
         }
     };
 
-    let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1")
-            .bind(user_uuid)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Database query failed: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        &format!("查询用户失败: {}", e),
-                    )),
-                );
-            }
-        };
+    let existing_user_count: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(user_uuid)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("Database query failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
 
     if existing_user_count == 0 {
         return (
@@ -331,24 +332,25 @@ pub async fn assign_user_role(
         }
     };
 
-    let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1")
-            .bind(user_uuid)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Database query failed: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        &format!("查询用户失败: {}", e),
-                    )),
-                );
-            }
-        };
+    let existing_user_count: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(user_uuid)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("Database query failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
 
     if existing_user_count == 0 {
         return (
@@ -357,24 +359,25 @@ pub async fn assign_user_role(
         );
     }
 
-    let existing_role_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_roles WHERE deleted_at IS NULL AND id = $1")
-            .bind(role_uuid)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                tracing::error!("Database query failed: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        &format!("查询角色失败: {}", e),
-                    )),
-                );
-            }
-        };
+    let existing_role_count: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM core_roles WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(role_uuid)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(count) => count,
+        Err(e) => {
+            tracing::error!("Database query failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询角色失败: {}", e),
+                )),
+            );
+        }
+    };
 
     if existing_role_count == 0 {
         return (

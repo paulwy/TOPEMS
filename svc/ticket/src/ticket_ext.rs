@@ -2,9 +2,9 @@
 //! 与既有 handler 风格一致：State(Pool) + Claims + tenant_id 代码绑定（RLS 由 DB 层兜底）
 
 use axum::{
-    Json, Router,
     extract::{Path, State},
     routing::{delete, get, post},
+    Json, Router,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -17,12 +17,16 @@ use topems_shared_core::response::ApiResponse;
 use crate::models::is_valid_ticket_transition;
 
 const ALL_STATUSES: &[&str] = &[
-    "open", "in_progress", "pending", "resolved", "closed", "cancelled",
+    "open",
+    "in_progress",
+    "pending",
+    "resolved",
+    "closed",
+    "cancelled",
 ];
 
 fn tenant_of(claims: &Claims) -> Uuid {
-    Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or(""))
-        .unwrap_or_else(|_| Uuid::nil())
+    Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil())
 }
 
 fn user_of(claims: &Claims) -> Option<Uuid> {
@@ -34,10 +38,7 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
         // ---- 工作流（静态状态机）----
         .route("/workflows", get(get_workflows))
         // ---- 状态流转 ----
-        .route(
-            "/tickets/{id}/transitions",
-            get(get_ticket_transitions),
-        )
+        .route("/tickets/{id}/transitions", get(get_ticket_transitions))
         .route("/tickets/{id}/transition", post(apply_transition))
         // ---- 标签 ----
         .route(
@@ -45,10 +46,15 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
             get(get_ticket_tags).post(add_ticket_tag),
         )
         .route("/tickets/{id}/tags/{tag}", delete(remove_ticket_tag))
-        .route("/ticket-tags", get(list_tag_directory).post(create_tag_stub))
+        .route(
+            "/ticket-tags",
+            get(list_tag_directory).post(create_tag_stub),
+        )
         .route(
             "/ticket-tags/{tag}",
-            get(get_tag_stub).put(update_tag_stub).delete(delete_tag_stub),
+            get(get_tag_stub)
+                .put(update_tag_stub)
+                .delete(delete_tag_stub),
         )
         // ---- 批量操作 ----
         .route("/tickets/batch-update", post(batch_update_tickets))
@@ -63,12 +69,23 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
         )
         .route(
             "/tickets/{id}/attachments/{attachment_id}",
-            get(get_attachment).put(update_attachment).delete(delete_attachment),
+            get(get_attachment)
+                .put(update_attachment)
+                .delete(delete_attachment),
         )
-        .route("/tickets/{id}/attachments/batch", post(batch_upload_attachments))
-        .route("/tickets/{id}/attachments/batch-delete", post(batch_delete_attachments))
+        .route(
+            "/tickets/{id}/attachments/batch",
+            post(batch_upload_attachments),
+        )
+        .route(
+            "/tickets/{id}/attachments/batch-delete",
+            post(batch_delete_attachments),
+        )
         .route("/tickets/{id}/attachments/stats", get(get_attachment_stats))
-        .route("/tickets/{id}/attachments/type/{file_type}", get(get_attachments_by_type))
+        .route(
+            "/tickets/{id}/attachments/type/{file_type}",
+            get(get_attachments_by_type),
+        )
         .route(
             "/tickets/{id}/attachments/{attachment_id}/download",
             get(download_attachment_handler),
@@ -166,8 +183,16 @@ async fn apply_transition(
     }
 
     let now = chrono::Utc::now();
-    let resolved_at = if req.to_status == "resolved" { Some(now) } else { None };
-    let closed_at = if req.to_status == "closed" { Some(now) } else { None };
+    let resolved_at = if req.to_status == "resolved" {
+        Some(now)
+    } else {
+        None
+    };
+    let closed_at = if req.to_status == "closed" {
+        Some(now)
+    } else {
+        None
+    };
 
     let mut txn = match pool.begin().await {
         Ok(t) => t,
@@ -259,7 +284,10 @@ async fn get_ticket_tags(
         Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"tags": tags.unwrap_or_default()}), "工单标签"))
+    Json(ApiResponse::success(
+        json!({"tags": tags.unwrap_or_default()}),
+        "工单标签",
+    ))
 }
 
 async fn add_ticket_tag(
@@ -371,7 +399,10 @@ async fn list_tag_directory(
 
 // 标签目录为聚合派生，无独立存储；写操作返回成功占位（幂等无状态）
 async fn create_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(json!({"ok": true}), "标签目录为隐式聚合，无需创建"))
+    Json(ApiResponse::success(
+        json!({"ok": true}),
+        "标签目录为隐式聚合，无需创建",
+    ))
 }
 
 async fn get_tag_stub(
@@ -392,15 +423,24 @@ async fn get_tag_stub(
         Ok(c) => c,
         Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"name": tag, "count": count}), "标签"))
+    Json(ApiResponse::success(
+        json!({"name": tag, "count": count}),
+        "标签",
+    ))
 }
 
 async fn update_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(json!({"ok": true}), "标签目录为隐式聚合"))
+    Json(ApiResponse::success(
+        json!({"ok": true}),
+        "标签目录为隐式聚合",
+    ))
 }
 
 async fn delete_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(json!({"ok": true}), "标签为工单内联属性，无全局删除语义"))
+    Json(ApiResponse::success(
+        json!({"ok": true}),
+        "标签为工单内联属性，无全局删除语义",
+    ))
 }
 
 // ==================== 批量操作 ====================
@@ -457,7 +497,10 @@ async fn batch_update_tickets(
         Ok(r) => r.rows_affected(),
         Err(e) => return Json(ApiResponse::error(500, &format!("批量更新失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"updated": affected}), "批量更新完成"))
+    Json(ApiResponse::success(
+        json!({"updated": affected}),
+        "批量更新完成",
+    ))
 }
 
 async fn batch_assign_tickets(
@@ -484,7 +527,10 @@ async fn batch_assign_tickets(
         Ok(r) => r.rows_affected(),
         Err(e) => return Json(ApiResponse::error(500, &format!("批量指派失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"updated": affected}), "批量指派完成"))
+    Json(ApiResponse::success(
+        json!({"updated": affected}),
+        "批量指派完成",
+    ))
 }
 
 async fn batch_close_tickets(
@@ -506,7 +552,10 @@ async fn batch_close_tickets(
         Ok(r) => r.rows_affected(),
         Err(e) => return Json(ApiResponse::error(500, &format!("批量关闭失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"closed": affected}), "批量关闭完成"))
+    Json(ApiResponse::success(
+        json!({"closed": affected}),
+        "批量关闭完成",
+    ))
 }
 
 async fn batch_delete_tickets(
@@ -528,7 +577,10 @@ async fn batch_delete_tickets(
         Ok(r) => r.rows_affected(),
         Err(e) => return Json(ApiResponse::error(500, &format!("批量删除失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"deleted": affected}), "批量删除完成"))
+    Json(ApiResponse::success(
+        json!({"deleted": affected}),
+        "批量删除完成",
+    ))
 }
 
 async fn batch_escalate_tickets(
@@ -550,7 +602,10 @@ async fn batch_escalate_tickets(
         Ok(r) => r.rows_affected(),
         Err(e) => return Json(ApiResponse::error(500, &format!("批量升级失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"escalated": affected}), "批量升级完成"))
+    Json(ApiResponse::success(
+        json!({"escalated": affected}),
+        "批量升级完成",
+    ))
 }
 
 // ==================== 附件 ====================
@@ -614,7 +669,10 @@ async fn list_attachments(
             })
         })
         .collect();
-    Json(ApiResponse::success(json!({"items": items, "total": items.len()}), "附件列表"))
+    Json(ApiResponse::success(
+        json!({"items": items, "total": items.len()}),
+        "附件列表",
+    ))
 }
 
 async fn upload_attachment(
@@ -727,7 +785,10 @@ async fn update_attachment(
     if affected == 0 {
         return Json(ApiResponse::error(404, "附件不存在"));
     }
-    Json(ApiResponse::success(json!({"id": attachment_id}), "附件已更新"))
+    Json(ApiResponse::success(
+        json!({"id": attachment_id}),
+        "附件已更新",
+    ))
 }
 
 async fn delete_attachment(
@@ -752,7 +813,10 @@ async fn delete_attachment(
     if affected == 0 {
         return Json(ApiResponse::error(404, "附件不存在"));
     }
-    Json(ApiResponse::success(json!({"id": attachment_id}), "附件已删除"))
+    Json(ApiResponse::success(
+        json!({"id": attachment_id}),
+        "附件已删除",
+    ))
 }
 
 async fn batch_upload_attachments(
@@ -769,7 +833,11 @@ async fn batch_upload_attachments(
         Err(e) => return Json(ApiResponse::error(500, &format!("事务失败: {}", e))),
     };
     for item in &req.attachments {
-        let data = item.file_data.as_deref().map(decode_file_data).unwrap_or_default();
+        let data = item
+            .file_data
+            .as_deref()
+            .map(decode_file_data)
+            .unwrap_or_default();
         if let Err(e) = sqlx::query(
             "INSERT INTO ticket.ticket_attachments \
              (ticket_id, tenant_id, file_name, mime_type, file_size, file_type, file_data, created_by) \
@@ -793,7 +861,10 @@ async fn batch_upload_attachments(
     if let Err(e) = txn.commit().await {
         return Json(ApiResponse::error(500, &format!("提交失败: {}", e)));
     }
-    Json(ApiResponse::success(json!({"created": created}), "批量上传完成"))
+    Json(ApiResponse::success(
+        json!({"created": created}),
+        "批量上传完成",
+    ))
 }
 
 async fn batch_delete_attachments(
@@ -819,7 +890,10 @@ async fn batch_delete_attachments(
         Ok(r) => r.rows_affected(),
         Err(e) => return Json(ApiResponse::error(500, &format!("批量删除失败: {}", e))),
     };
-    Json(ApiResponse::success(json!({"deleted": affected}), "批量删除完成"))
+    Json(ApiResponse::success(
+        json!({"deleted": affected}),
+        "批量删除完成",
+    ))
 }
 
 async fn get_attachment_stats(
@@ -883,7 +957,10 @@ async fn get_attachments_by_type(
             })
         })
         .collect();
-    Json(ApiResponse::success(json!({"items": items, "total": items.len()}), "类型附件"))
+    Json(ApiResponse::success(
+        json!({"items": items, "total": items.len()}),
+        "类型附件",
+    ))
 }
 
 // 下载走 bytea 返回（供前端 Blob 消费）
@@ -904,7 +981,8 @@ pub async fn download_attachment_handler(
     .await
     .map_err(|_| axum::response::Response::new(axum::body::Body::from("查询失败")))?;
 
-    let row = row.ok_or_else(|| axum::response::Response::new(axum::body::Body::from("附件不存在")))?;
+    let row =
+        row.ok_or_else(|| axum::response::Response::new(axum::body::Body::from("附件不存在")))?;
     let file_name: String = row.get("file_name");
     let mime_type: Option<String> = row.get("mime_type");
     let data: Vec<u8> = row.get("file_data");

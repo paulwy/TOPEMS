@@ -807,7 +807,10 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("department_name", "VARCHAR(128)"),
             ("position", "VARCHAR(128)"),
             ("status", "VARCHAR(32) DEFAULT 'active'"),
-            ("tenant_id", "UUID DEFAULT '00000000-0000-0000-0000-000000000000'"),
+            (
+                "tenant_id",
+                "UUID DEFAULT '00000000-0000-0000-0000-000000000000'",
+            ),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
             ("updated_at", "TIMESTAMP DEFAULT NOW()"),
         ],

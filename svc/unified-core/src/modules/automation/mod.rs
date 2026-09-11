@@ -217,7 +217,11 @@ pub async fn list_rules(
     Query(params): Query<RuleQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AutomationRule>>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.or(params.page_size_alt).unwrap_or(20).min(100);
+    let page_size = params
+        .page_size
+        .or(params.page_size_alt)
+        .unwrap_or(20)
+        .min(100);
     let offset = (page - 1) * page_size;
     let search = params.search.clone().unwrap_or_default();
     let status = params.status.clone();
@@ -257,10 +261,11 @@ pub async fn get_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AutomationRule>> {
-    let rule: Result<AutomationRule, _> = sqlx::query_as("SELECT * FROM automation_rules WHERE id = $1")
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await;
+    let rule: Result<AutomationRule, _> =
+        sqlx::query_as("SELECT * FROM automation_rules WHERE id = $1")
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await;
 
     match rule {
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
@@ -304,7 +309,10 @@ pub async fn create_rule(
     Json(payload): Json<CreateRuleRequest>,
 ) -> Json<ApiResponse<AutomationRule>> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
-    let status = payload.status.clone().unwrap_or_else(|| "draft".to_string());
+    let status = payload
+        .status
+        .clone()
+        .unwrap_or_else(|| "draft".to_string());
 
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status, created_by)
@@ -386,9 +394,10 @@ pub async fn delete_rule(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({"success": true}), "删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"success": true}),
+            "删除成功",
+        )),
         Ok(_) => Json(api_error(404, "规则不存在")),
         Err(e) => {
             tracing::error!("删除规则失败: {}", e);
@@ -535,9 +544,16 @@ pub async fn list_runs(
     Query(params): Query<RunQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AutomationRun>>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.or(params.page_size_alt).unwrap_or(20).min(100);
+    let page_size = params
+        .page_size
+        .or(params.page_size_alt)
+        .unwrap_or(20)
+        .min(100);
     let offset = (page - 1) * page_size;
-    let rule_id = params.rule_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let rule_id = params
+        .rule_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
     let status = params.status.clone();
 
     let total: i64 = sqlx::query_scalar(
@@ -649,9 +665,10 @@ pub async fn cancel_run(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({"success": true}), "取消成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"success": true}),
+            "取消成功",
+        )),
         Ok(_) => Json(api_error(404, "运行记录不存在或非运行中")),
         Err(e) => {
             tracing::error!("取消运行失败: {}", e);
@@ -749,10 +766,17 @@ pub async fn list_variables(
     Query(params): Query<VariableQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AutomationVariable>>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.or(params.page_size_alt).unwrap_or(20).min(100);
+    let page_size = params
+        .page_size
+        .or(params.page_size_alt)
+        .unwrap_or(20)
+        .min(100);
     let offset = (page - 1) * page_size;
     let scope = params.scope.clone();
-    let rule_id = params.rule_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let rule_id = params
+        .rule_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
     let search = params.search.clone().unwrap_or_default();
 
     let total: i64 = sqlx::query_scalar(
@@ -826,8 +850,14 @@ pub async fn create_variable(
     Json(payload): Json<CreateVariableRequest>,
 ) -> Json<ApiResponse<AutomationVariable>> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
-    let scope = payload.scope.clone().unwrap_or_else(|| "global".to_string());
-    let rule_id = payload.rule_id.clone().and_then(|s| Uuid::parse_str(&s).ok());
+    let scope = payload
+        .scope
+        .clone()
+        .unwrap_or_else(|| "global".to_string());
+    let rule_id = payload
+        .rule_id
+        .clone()
+        .and_then(|s| Uuid::parse_str(&s).ok());
     let is_secret = payload.is_secret.unwrap_or(false);
 
     let var: Result<AutomationVariable, _> = sqlx::query_as(
@@ -904,9 +934,10 @@ pub async fn delete_variable(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({"success": true}), "删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"success": true}),
+            "删除成功",
+        )),
         Ok(_) => Json(api_error(404, "变量不存在")),
         Err(e) => {
             tracing::error!("删除变量失败: {}", e);
@@ -919,14 +950,18 @@ pub async fn reveal_variable(
     State(state): State<AppState>,
     Path(key): Path<String>,
 ) -> Json<ApiResponse<Value>> {
-    let value: Result<Option<String>, _> =
-        sqlx::query_scalar("SELECT value FROM automation_variables WHERE key = $1 AND is_secret = true")
-            .bind(&key)
-            .fetch_one(&state.pool)
-            .await;
+    let value: Result<Option<String>, _> = sqlx::query_scalar(
+        "SELECT value FROM automation_variables WHERE key = $1 AND is_secret = true",
+    )
+    .bind(&key)
+    .fetch_one(&state.pool)
+    .await;
 
     match value {
-        Ok(Some(v)) => Json(ApiResponse::success(serde_json::json!({"value": v}), "查询成功")),
+        Ok(Some(v)) => Json(ApiResponse::success(
+            serde_json::json!({"value": v}),
+            "查询成功",
+        )),
         Ok(None) => Json(api_error(404, "密钥变量不存在")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
@@ -1032,11 +1067,10 @@ pub async fn get_dashboard_stats(
     .await
     .unwrap_or(0.0);
 
-    let total_variables: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM automation_variables")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total_variables: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM automation_variables")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
 
     let runs_today: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM automation_runs WHERE created_at >= CURRENT_DATE")
@@ -1180,9 +1214,7 @@ pub async fn save_designer_canvas(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(payload.canvas, "保存成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(payload.canvas, "保存成功")),
         Ok(_) => Json(api_error(404, "规则不存在")),
         Err(e) => {
             tracing::error!("保存画布失败: {}", e);

@@ -622,7 +622,6 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["unified-core:doc:read"])),

@@ -438,11 +438,12 @@ pub async fn delete_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let result = sqlx::query("UPDATE qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(ctx.tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "检测任务删除成功")),
