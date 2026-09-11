@@ -682,4 +682,231 @@ mod tests {
         // 插入第 4 个后应触发 LRU 淘汰，最新的 "d" 必然存在
         assert_eq!(cache.get("d").await, Some(4));
     }
+
+    // ===== 新增：缓存一致性验证测试 =====
+
+    /// 测试 write-through 一致性：写入后 L1 和 L2 都应该有数据
+    #[tokio::test]
+    #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
+    async fn test_write_through_consistency() {
+        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let config = L2CacheConfig {
+            instance_prefix: "test_write_through".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 1000,
+        };
+        let cache = match AsyncL2Cache::<String>::try_new(config, Some(&redis_url)).await {
+            Ok(c) => c,
+            Err((_c, warn)) => {
+                panic!("创建缓存失败: {}", warn);
+            }
+        };
+        assert!(cache.has_l2());
+
+        // 写入数据
+        cache.set("key1".to_string(), "value1".to_string()).await;
+
+        // 验证 L1 有数据（立即命中）
+        assert_eq!(cache.get("key1").await, Some("value1".to_string()));
+
+        // 清空 L1，验证 L2 有数据（回源）
+        cache.clear_l1();
+        assert_eq!(cache.get("key1").await, Some("value1".to_string()));
+
+        // 清理测试数据
+        cache.remove("key1").await;
+    }
+
+    /// 测试多实例缓存一致性：实例 A 写入后，实例 B 应该能从 L2 读取到
+    #[tokio::test]
+    #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
+    async fn test_multi_instance_consistency() {
+        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let config_a = L2CacheConfig {
+            instance_prefix: "test_multi_instance".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 1000,
+        };
+        let config_b = config_a.clone();
+
+        // 创建两个实例（模拟多实例部署）
+        let cache_a = match AsyncL2Cache::<String>::try_new(config_a, Some(&redis_url)).await {
+            Ok(c) => c,
+            Err((_c, warn)) => {
+                panic!("创建缓存 A 失败: {}", warn);
+            }
+        };
+        let cache_b = match AsyncL2Cache::<String>::try_new(config_b, Some(&redis_url)).await {
+            Ok(c) => c,
+            Err((_c, warn)) => {
+                panic!("创建缓存 B 失败: {}", warn);
+            }
+        };
+        assert!(cache_a.has_l2());
+        assert!(cache_b.has_l2());
+
+        // 实例 A 写入数据
+        cache_a.set("shared-key".to_string(), "shared-value".to_string()).await;
+
+        // 实例 B 清空 L1（确保从 L2 读取），然后验证能读取到数据
+        cache_b.clear_l1();
+        assert_eq!(cache_b.get("shared-key").await, Some("shared-value".to_string()));
+
+        // 实例 A 删除数据
+        cache_a.remove("shared-key").await;
+
+        // 实例 B 清空 L1，验证数据已被删除
+        cache_b.clear_l1();
+        assert_eq!(cache_b.get("shared-key").await, None);
+    }
+
+    /// 测试缓存失效机制：删除后 L1 和 L2 都应该被清除
+    #[tokio::test]
+    #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
+    async fn test_cache_invalidation_consistency() {
+        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let config = L2CacheConfig {
+            instance_prefix: "test_invalidation".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 1000,
+        };
+        let cache = match AsyncL2Cache::<u32>::try_new(config, Some(&redis_url)).await {
+            Ok(c) => c,
+            Err((_c, warn)) => {
+                panic!("创建缓存失败: {}", warn);
+            }
+        };
+        assert!(cache.has_l2());
+
+        // 写入数据
+        cache.set("invalid-key".to_string(), 123).await;
+        assert_eq!(cache.get("invalid-key").await, Some(123));
+
+        // 删除数据
+        cache.remove("invalid-key").await;
+
+        // 验证 L1 已清除
+        assert_eq!(cache.get("invalid-key").await, None);
+
+        // 验证 L2 已清除（清空 L1 后回源应该返回 None）
+        cache.clear_l1();
+        assert_eq!(cache.get("invalid-key").await, None);
+    }
+
+    /// 测试缓存降级机制：Redis 不可用时自动降级为纯 L1 模式
+    #[tokio::test]
+    async fn test_graceful_degradation() {
+        // 使用不可达的 Redis 地址
+        let config = L2CacheConfig {
+            instance_prefix: "test_degradation".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 1000,
+        };
+        let cache = match AsyncL2Cache::<u32>::try_new(config, Some("redis://127.0.0.1:1")).await {
+            Ok(c) => c,
+            Err((c, _warn)) => c,
+        };
+
+        // 验证降级为纯 L1 模式
+        assert!(!cache.has_l2());
+
+        // 验证 L1 仍可正常读写
+        cache.set("degraded-key".to_string(), 456).await;
+        assert_eq!(cache.get("degraded-key").await, Some(456));
+
+        // 验证删除正常
+        cache.remove("degraded-key").await;
+        assert_eq!(cache.get("degraded-key").await, None);
+    }
+
+    /// 测试 L1 回填机制：L2 命中后应该回填到 L1
+    #[tokio::test]
+    #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
+    async fn test_l1_backfill_from_l2() {
+        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let config = L2CacheConfig {
+            instance_prefix: "test_backfill".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 1000,
+        };
+        let cache = match AsyncL2Cache::<String>::try_new(config, Some(&redis_url)).await {
+            Ok(c) => c,
+            Err((_c, warn)) => {
+                panic!("创建缓存失败: {}", warn);
+            }
+        };
+        assert!(cache.has_l2());
+
+        // 写入数据（同时写入 L1 和 L2）
+        cache.set("backfill-key".to_string(), "backfill-value".to_string()).await;
+
+        // 清空 L1
+        cache.clear_l1();
+        assert_eq!(cache.l1_len(), 0);
+
+        // 从 L2 读取，应该回填到 L1
+        assert_eq!(cache.get("backfill-key").await, Some("backfill-value".to_string()));
+
+        // 验证 L1 已回填（再次读取应该立即命中 L1，不需要访问 L2）
+        // 注意：l1_len() 返回的是近似值，可能有延迟，所以这里只验证再次读取能命中
+        assert_eq!(cache.get("backfill-key").await, Some("backfill-value".to_string()));
+
+        // 清理测试数据
+        cache.remove("backfill-key").await;
+    }
+
+    /// 测试并发读写一致性
+    #[tokio::test]
+    #[ignore = "需要 Redis 环境，运行时使用 cargo test -- --ignored"]
+    async fn test_concurrent_read_write_consistency() {
+        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let config = L2CacheConfig {
+            instance_prefix: "test_concurrent".to_string(),
+            l1_ttl: Duration::from_secs(60),
+            l2_ttl: Duration::from_secs(300),
+            l1_capacity: 10000,
+        };
+        let cache = Arc::new(match AsyncL2Cache::<u32>::try_new(config, Some(&redis_url)).await {
+            Ok(c) => c,
+            Err((_c, warn)) => {
+                panic!("创建缓存失败: {}", warn);
+            }
+        });
+        assert!(cache.has_l2());
+
+        // 并发写入 100 个 key
+        let mut handles = vec![];
+        for i in 0..100 {
+            let cache = Arc::clone(&cache);
+            handles.push(tokio::spawn(async move {
+                cache.set(format!("concurrent-key-{i}"), i).await;
+            }));
+        }
+        for handle in handles {
+            handle.await.unwrap();
+        }
+
+        // 并发读取 100 个 key，验证一致性
+        let mut handles = vec![];
+        for i in 0..100 {
+            let cache = Arc::clone(&cache);
+            handles.push(tokio::spawn(async move {
+                let value = cache.get(&format!("concurrent-key-{i}")).await;
+                assert_eq!(value, Some(i));
+            }));
+        }
+        for handle in handles {
+            handle.await.unwrap();
+        }
+
+        // 清理测试数据
+        for i in 0..100 {
+            cache.remove(&format!("concurrent-key-{i}")).await;
+        }
+    }
 }
