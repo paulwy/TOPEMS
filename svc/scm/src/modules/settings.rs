@@ -17,8 +17,10 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
-    Router::new()
-        .route("/settings/{category}", get(get_settings).put(update_settings))
+    Router::new().route(
+        "/settings/{category}",
+        get(get_settings).put(update_settings),
+    )
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -144,8 +146,5 @@ pub async fn update_settings(
     )
     .await;
 
-    Json(ApiResponse::success(
-        response_data,
-        "模块设置更新成功",
-    ))
+    Json(ApiResponse::success(response_data, "模块设置更新成功"))
 }

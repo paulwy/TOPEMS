@@ -18,6 +18,7 @@ use topems_shared_bootstrap::{
     default_init_db, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
@@ -100,10 +101,55 @@ async fn main() -> Result<()> {
         }
     };
 
-    let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
-    let purchase_cache = Arc::new(InMemoryCache::new(Duration::from_secs(120)));
+    // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
+    let supplier_l2_config = L2CacheConfig {
+        instance_prefix: "scm_supplier".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(300),
+        l1_capacity: 10_000,
+    };
+    let purchase_l2_config = L2CacheConfig {
+        instance_prefix: "scm_purchase".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(120),
+        l1_capacity: 10_000,
+    };
+    let redis_url = std::env::var("REDIS_URL").ok();
+
+    let supplier_cache = match AsyncL2Cache::try_new(supplier_l2_config, redis_url.as_deref()).await
+    {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（SCM 供应商，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（SCM 供应商，纯 L1 模式，Redis 未配置）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（SCM 供应商）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
+    let purchase_cache = match AsyncL2Cache::try_new(purchase_l2_config, redis_url.as_deref()).await
+    {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（SCM 采购，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（SCM 采购，纯 L1 模式，Redis 未配置）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（SCM 采购）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
     let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
-    tracing::info!("💾 内存缓存初始化完成（供应商/采购/字典）");
+    tracing::info!("💾 内存缓存初始化完成（字典）");
 
     // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
     {
@@ -133,8 +179,9 @@ async fn main() -> Result<()> {
             .await
             {
                 Ok(Some(data)) => {
-                    let cache_key = "scm:suppliers:list:default:page:1:size:20:search:None:status:None";
-                    cache.set(cache_key.to_string(), data);
+                    let cache_key =
+                        "scm:suppliers:list:default:page:1:size:20:search:None:status:None";
+                    cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[scm] 供应商列表缓存预热完成");
                 }
                 Ok(None) => {
@@ -149,7 +196,14 @@ async fn main() -> Result<()> {
         });
     }
 
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), supplier_cache.clone(), purchase_cache.clone(), dict_cache.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(
+        ctx.db.clone(),
+        supplier_cache.clone(),
+        purchase_cache.clone(),
+        dict_cache.clone(),
+    )
+    .await
+    {
         tracing::warn!("⚠️ SCM 事件订阅者启动失败: {}", e);
     }
 

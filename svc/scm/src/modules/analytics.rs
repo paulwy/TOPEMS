@@ -85,19 +85,18 @@ pub async fn get_purchase_status(
 ) -> Json<ApiResponse<Vec<PurchaseStatusItem>>> {
     tracing::info!("获取SCM采购状态分布");
 
-    let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL"
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
         "SELECT status, COUNT(*) as count
          FROM scm.purchase_orders
          WHERE deleted_at IS NULL
          GROUP BY status
-         ORDER BY count DESC"
+         ORDER BY count DESC",
     )
     .fetch_all(&state.db)
     .await
@@ -107,7 +106,11 @@ pub async fn get_purchase_status(
         .into_iter()
         .map(|(status, count)| {
             let cnt = count.unwrap_or(0);
-            let percentage = if total > 0 { (cnt as f64 / total as f64) * 100.0 } else { 0.0 };
+            let percentage = if total > 0 {
+                (cnt as f64 / total as f64) * 100.0
+            } else {
+                0.0
+            };
             PurchaseStatusItem {
                 status: status.unwrap_or_else(|| "未知".to_string()),
                 count: cnt,
@@ -134,7 +137,7 @@ pub async fn get_supplier_ranking(
          WHERE po.deleted_at IS NULL AND po.supplier_id IS NOT NULL
          GROUP BY po.supplier_id, s.name
          ORDER BY total_amount DESC
-         LIMIT 10"
+         LIMIT 10",
     )
     .fetch_all(&state.db)
     .await
@@ -142,12 +145,14 @@ pub async fn get_supplier_ranking(
 
     let items: Vec<SupplierRankingItem> = rows
         .into_iter()
-        .map(|(supplier_id, supplier_name, order_count, total_amount)| SupplierRankingItem {
-            supplier_id: supplier_id.unwrap_or_default(),
-            supplier_name: supplier_name.unwrap_or_else(|| "未知供应商".to_string()),
-            order_count: order_count.unwrap_or(0),
-            total_amount: total_amount.unwrap_or(0.0),
-        })
+        .map(
+            |(supplier_id, supplier_name, order_count, total_amount)| SupplierRankingItem {
+                supplier_id: supplier_id.unwrap_or_default(),
+                supplier_name: supplier_name.unwrap_or_else(|| "未知供应商".to_string()),
+                order_count: order_count.unwrap_or(0),
+                total_amount: total_amount.unwrap_or(0.0),
+            },
+        )
         .collect();
 
     Json(ApiResponse::success(items, "获取成功"))

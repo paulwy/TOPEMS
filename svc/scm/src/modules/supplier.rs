@@ -22,7 +22,7 @@ use crate::modules::audit::log_audit_event;
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::{auth::Claims, ApiResponse};
-use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss};
 use topems_shared_core::response::api_error;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_event::event::{MasterDataAction, SupplierDataSyncRequestedPayload};
@@ -149,10 +149,14 @@ pub async fn list_suppliers(
     let status_filter = params.status.clone();
 
     // 从 claims 中获取 tenant_id，用于多租户缓存隔离
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
-    let cache_key = suppliers_list_cache_key(&tenant_id, page, page_size, &params.search, &params.status);
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
+    let cache_key =
+        suppliers_list_cache_key(&tenant_id, page, page_size, &params.search, &params.status);
 
-    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+    if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("scm", "supplier", "list");
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
         return Json(ApiResponse::success(cached, "获取供应商列表成功"));
@@ -165,7 +169,10 @@ pub async fn list_suppliers(
         if let Ok(Some(cached)) = cache.get(&cache_key).await {
             tracing::debug!("📋 Redis缓存命中: {}", cache_key);
             if let Ok(data) = serde_json::from_str::<serde_json::Value>(&cached) {
-                state.supplier_cache.set(cache_key.clone(), data.clone());
+                state
+                    .supplier_cache
+                    .set(cache_key.clone(), data.clone())
+                    .await;
                 return Json(ApiResponse::success(data, "获取供应商列表成功"));
             }
         }
@@ -213,7 +220,8 @@ pub async fn list_suppliers(
 
             state
                 .supplier_cache
-                .set(cache_key.clone(), response_data.clone());
+                .set(cache_key.clone(), response_data.clone())
+                .await;
 
             if let Some(cache) = &state.cache {
                 if let Ok(serialized) = serde_json::to_string(&response_data) {
@@ -305,7 +313,7 @@ pub async fn create_supplier(
     };
 
     if status == "success" {
-        state.supplier_cache.clear();
+        state.supplier_cache.clear_l1();
         tracing::debug!("🗑️ 供应商内存缓存已清空（创建供应商）");
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -313,7 +321,11 @@ pub async fn create_supplier(
             let publisher = publisher.clone();
             tokio::spawn(async move {
                 if let Err(e) = publisher
-                    .publish_cache_invalidated("scm:supplier:*", "pattern", Some("supplier_created"))
+                    .publish_cache_invalidated(
+                        "scm:supplier:*",
+                        "pattern",
+                        Some("supplier_created"),
+                    )
                     .await
                 {
                     tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -422,10 +434,13 @@ pub async fn get_supplier(
     }
 
     // 从 claims 中获取 tenant_id，用于多租户缓存隔离
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     let cache_key = supplier_cache_key(&tenant_id, &id);
 
-    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+    if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("scm", "supplier", "get");
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
         if let Ok(supplier) = serde_json::from_value::<Supplier>(cached) {
@@ -441,7 +456,7 @@ pub async fn get_supplier(
             tracing::debug!("📋 Redis缓存命中: {}", cache_key);
             if let Ok(supplier) = serde_json::from_str::<Supplier>(&cached) {
                 if let Ok(value) = serde_json::to_value(&supplier) {
-                    state.supplier_cache.set(cache_key.clone(), value);
+                    state.supplier_cache.set(cache_key.clone(), value).await;
                 }
                 return Json(ApiResponse::success(supplier, "获取供应商成功"));
             }
@@ -461,7 +476,7 @@ pub async fn get_supplier(
     match result {
         Ok(Some(supplier)) => {
             if let Ok(value) = serde_json::to_value(&supplier) {
-                state.supplier_cache.set(cache_key.clone(), value);
+                state.supplier_cache.set(cache_key.clone(), value).await;
             }
             if let Some(cache) = &state.cache {
                 if let Ok(serialized) = serde_json::to_string(&supplier) {
@@ -582,10 +597,13 @@ pub async fn update_supplier(
 
     if status_str == "success" {
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离
-        let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+        let tenant_id = claims
+            .tenant_id
+            .clone()
+            .unwrap_or_else(|| "default".to_string());
         let cache_key = supplier_cache_key(&tenant_id, &id);
-        state.supplier_cache.remove(&cache_key);
-        state.supplier_cache.clear();
+        state.supplier_cache.remove(&cache_key).await;
+        state.supplier_cache.clear_l1();
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -593,7 +611,11 @@ pub async fn update_supplier(
             let publisher = publisher.clone();
             tokio::spawn(async move {
                 if let Err(e) = publisher
-                    .publish_cache_invalidated("scm:supplier:*", "pattern", Some("supplier_updated"))
+                    .publish_cache_invalidated(
+                        "scm:supplier:*",
+                        "pattern",
+                        Some("supplier_updated"),
+                    )
                     .await
                 {
                     tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -738,10 +760,13 @@ pub async fn delete_supplier(
 
     if status_str == "success" {
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离
-        let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+        let tenant_id = claims
+            .tenant_id
+            .clone()
+            .unwrap_or_else(|| "default".to_string());
         let cache_key = supplier_cache_key(&tenant_id, &id);
-        state.supplier_cache.remove(&cache_key);
-        state.supplier_cache.clear();
+        state.supplier_cache.remove(&cache_key).await;
+        state.supplier_cache.clear_l1();
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -749,7 +774,11 @@ pub async fn delete_supplier(
             let publisher = publisher.clone();
             tokio::spawn(async move {
                 if let Err(e) = publisher
-                    .publish_cache_invalidated("scm:supplier:*", "pattern", Some("supplier_deleted"))
+                    .publish_cache_invalidated(
+                        "scm:supplier:*",
+                        "pattern",
+                        Some("supplier_deleted"),
+                    )
                     .await
                 {
                     tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -872,7 +901,10 @@ mod tests {
         let id = Uuid::new_v4();
         let key1 = supplier_cache_key("tenant-a", &id);
         let key2 = supplier_cache_key("tenant-b", &id);
-        assert_ne!(key1, key2, "different tenants should have different cache keys");
+        assert_ne!(
+            key1, key2,
+            "different tenants should have different cache keys"
+        );
     }
 
     #[test]

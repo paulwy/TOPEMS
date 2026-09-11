@@ -3,11 +3,12 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_event::redis::RedisCacheService;
 
-pub mod audit;
 pub mod analytics;
+pub mod audit;
 pub mod data_sync;
 pub mod evaluation_logic;
 pub mod incoming_inspection;
@@ -33,8 +34,8 @@ pub struct ApiState {
     pub auth_state: AuthState,
     pub cache: Option<Arc<RedisCacheService>>,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
-    pub purchase_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    pub purchase_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     pub dict_cache: Arc<InMemoryCache<String>>,
 }
 
