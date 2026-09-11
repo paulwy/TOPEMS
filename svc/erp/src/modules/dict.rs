@@ -214,7 +214,10 @@ pub async fn list_dict_types(
     let status_filter = params.status.clone();
 
     // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:{operation}:{tenant_id}:{params}）
-    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
     let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
 
     if search_pattern.is_none()
@@ -223,14 +226,19 @@ pub async fn list_dict_types(
         && page == 1
         && page_size >= 100
     {
-        if let Some(cached) = state.dict_cache.get(&cache_key) {
+        if let Some(cached) = state.dict_cache.get(&cache_key).await {
             record_cache_hit("erp", "dict_type", "dict");
-            let total = cached.len() as i64;
-            let dict_types = cached.into_iter().take(page_size as usize).collect();
-            return Json(ApiResponse::success(
-                PaginatedResponse::new(dict_types, total, page, page_size),
-                "获取字典类型列表成功(缓存)",
-            ));
+            if let Ok(dict_types_vec) = serde_json::from_value::<Vec<DictType>>(cached) {
+                let total = dict_types_vec.len() as i64;
+                let dict_types = dict_types_vec
+                    .into_iter()
+                    .take(page_size as usize)
+                    .collect();
+                return Json(ApiResponse::success(
+                    PaginatedResponse::new(dict_types, total, page, page_size),
+                    "获取字典类型列表成功(缓存)",
+                ));
+            }
         }
     }
 
@@ -277,10 +285,10 @@ pub async fn list_dict_types(
             let total = count_result.unwrap_or(0);
 
             if search_pattern.is_none() && category_filter.is_none() && status_filter.is_none() {
-                state
-                    .dict_cache
-                    .set(cache_key.clone(), dict_types.clone());
-                record_cache_set("erp", "dict_type", "dict");
+                if let Ok(value) = serde_json::to_value(&dict_types) {
+                    state.dict_cache.set(cache_key.clone(), value).await;
+                    record_cache_set("erp", "dict_type", "dict");
+                }
             }
 
             Json(ApiResponse::success(
@@ -351,9 +359,12 @@ pub async fn create_dict_type(
                 }
             }
             // 失效当前租户的字典类型缓存
-            let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+            let tenant_id = claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string());
             let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
-            state.dict_cache.remove(&cache_key);
+            state.dict_cache.remove(&cache_key).await;
             tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -361,7 +372,11 @@ pub async fn create_dict_type(
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("erp:dict_type:*", "pattern", Some("dict_type_created"))
+                        .publish_cache_invalidated(
+                            "erp:dict_type:*",
+                            "pattern",
+                            Some("dict_type_created"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -519,9 +534,12 @@ pub async fn update_dict_type(
                 }
             }
             // 失效当前租户的字典类型缓存
-            let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+            let tenant_id = claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string());
             let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
-            state.dict_cache.remove(&cache_key);
+            state.dict_cache.remove(&cache_key).await;
             tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -529,7 +547,11 @@ pub async fn update_dict_type(
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("erp:dict_type:*", "pattern", Some("dict_type_updated"))
+                        .publish_cache_invalidated(
+                            "erp:dict_type:*",
+                            "pattern",
+                            Some("dict_type_updated"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -621,9 +643,12 @@ pub async fn delete_dict_type(
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => {
             // 失效当前租户的字典类型缓存
-            let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+            let tenant_id = claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string());
             let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
-            state.dict_cache.remove(&cache_key);
+            state.dict_cache.remove(&cache_key).await;
             tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -631,7 +656,11 @@ pub async fn delete_dict_type(
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("erp:dict_type:*", "pattern", Some("dict_type_deleted"))
+                        .publish_cache_invalidated(
+                            "erp:dict_type:*",
+                            "pattern",
+                            Some("dict_type_deleted"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);

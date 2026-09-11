@@ -1,14 +1,13 @@
 #![allow(dead_code)]
 
-use crate::models;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared::AuthState;
-use topems_shared::LocalInMemoryCache as InMemoryCache;
 use topems_shared_auth::security::FieldEncryptionService;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
@@ -91,7 +90,7 @@ pub struct ApiState {
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
-    pub dict_cache: Arc<InMemoryCache<Vec<models::dict::DictType>>>,
+    pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     pub notification_client: Arc<NotificationServiceClient>,
     pub hrm_client: Arc<TypedServiceClient<HrmApi>>,
     pub encryption: Arc<FieldEncryptionService>,

@@ -96,10 +96,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
                 .put(update_archive_policy)
                 .delete(delete_archive_policy),
         )
-        .route(
-            "/mdm-v49/archive/records",
-            get(list_archive_records),
-        )
+        .route("/mdm-v49/archive/records", get(list_archive_records))
         .route(
             "/mdm-v49/archive/records/{record_id}",
             get(get_archive_record),
@@ -112,10 +109,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         // 统计仪表盘
         .route("/mdm-v49/stats/lifecycle", get(get_lifecycle_stats))
         .route("/mdm-v49/stats/archive", get(get_archive_stats))
-        .route(
-            "/mdm-v49/stats/retirement",
-            get(get_retirement_stats),
-        )
+        .route("/mdm-v49/stats/retirement", get(get_retirement_stats))
         .route("/mdm-v49/sla/check", post(run_sla_check))
         .route("/mdm-v49/dashboard", get(get_lifecycle_dashboard))
 }

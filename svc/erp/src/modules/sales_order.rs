@@ -38,10 +38,19 @@ pub fn create_routes() -> Router<ApiState> {
             "/sales-orders/batch",
             post(batch_create_sales_orders).put(batch_update_sales_orders),
         )
-        .route("/sales-orders/batch/approve", post(batch_approve_sales_orders))
+        .route(
+            "/sales-orders/batch/approve",
+            post(batch_approve_sales_orders),
+        )
         .route("/sales-orders/batch/ship", post(batch_ship_sales_orders))
-        .route("/sales-orders/batch/complete", post(batch_complete_sales_orders))
-        .route("/sales-orders/batch/cancel", post(batch_cancel_sales_orders))
+        .route(
+            "/sales-orders/batch/complete",
+            post(batch_complete_sales_orders),
+        )
+        .route(
+            "/sales-orders/batch/cancel",
+            post(batch_cancel_sales_orders),
+        )
         .route("/sales-orders/stats", get(get_sales_order_stats))
 }
 
@@ -585,22 +594,37 @@ pub async fn cancel_sales_order(
 // ============ #27: 批量/统计端点 ============
 
 #[derive(Debug, Deserialize)]
-struct BatchCreateOrdersRequest { orders: Vec<CreateSalesOrderRequest> }
+struct BatchCreateOrdersRequest {
+    orders: Vec<CreateSalesOrderRequest>,
+}
 
 #[derive(Debug, Deserialize)]
-struct BatchUpdateOrderItem { id: Uuid, payload: UpdateSalesOrderRequest }
+struct BatchUpdateOrderItem {
+    id: Uuid,
+    payload: UpdateSalesOrderRequest,
+}
 
 #[derive(Debug, Deserialize)]
-struct BatchUpdateOrdersRequest { updates: Vec<BatchUpdateOrderItem> }
+struct BatchUpdateOrdersRequest {
+    updates: Vec<BatchUpdateOrderItem>,
+}
 
 #[derive(Debug, Deserialize)]
-struct BatchIdsRequest { ids: Vec<Uuid> }
+struct BatchIdsRequest {
+    ids: Vec<Uuid>,
+}
 
 #[derive(Debug, Deserialize)]
-struct BatchShipRequest { ids: Vec<Uuid>, ship_date: Option<chrono::DateTime<Utc>> }
+struct BatchShipRequest {
+    ids: Vec<Uuid>,
+    ship_date: Option<chrono::DateTime<Utc>>,
+}
 
 #[derive(Debug, Deserialize)]
-struct BatchCancelRequest { ids: Vec<Uuid>, reason: Option<String> }
+struct BatchCancelRequest {
+    ids: Vec<Uuid>,
+    reason: Option<String>,
+}
 
 #[derive(Debug, Serialize)]
 struct SalesOrderStatsResponse {
@@ -613,10 +637,17 @@ struct SalesOrderStatsResponse {
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
-struct StatusCount { status: String, count: i64 }
+struct StatusCount {
+    status: String,
+    count: i64,
+}
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
-struct CustomerOrderCount { customer_id: Uuid, customer_name: String, total: i64 }
+struct CustomerOrderCount {
+    customer_id: Uuid,
+    customer_name: String,
+    total: i64,
+}
 
 const SALES_ORDER_SELECT_COLS: &str = "id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at";
 
@@ -630,12 +661,28 @@ async fn batch_create_sales_orders(
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await { return e; }
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
     let mut created = Vec::new();
     for req in &body.orders {
-        let customer_name: String = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT name FROM erp.customers WHERE id = $1")).bind(req.customer_id).fetch_optional(&mut **txn).await.ok().flatten().unwrap_or_default();
+        let customer_name: String = sqlx::query_scalar(only_own_schema_query!(
+            "erp",
+            "SELECT name FROM erp.customers WHERE id = $1"
+        ))
+        .bind(req.customer_id)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
         let order_date = req.order_date.unwrap_or_else(Utc::now);
-        let amounts = calculate_sales_order_amounts(req.total_amount, req.tax_amount, req.discount_amount, req.payable_amount);
+        let amounts = calculate_sales_order_amounts(
+            req.total_amount,
+            req.tax_amount,
+            req.discount_amount,
+            req.payable_amount,
+        );
         let result = sqlx::query_as::<_, SalesOrder>(only_own_schema_query!(
             "erp",
             "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"
@@ -645,10 +692,15 @@ async fn batch_create_sales_orders(
         .bind(dec_owned(amounts.discount_amount)).bind(dec_owned(amounts.payable_amount))
         .bind(default_sales_order_status(req.status.clone())).bind(&req.remark)
         .fetch_optional(&mut **txn).await;
-        if let Ok(Some(o)) = result { created.push(o); }
+        if let Ok(Some(o)) = result {
+            created.push(o);
+        }
     }
     if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
     }
     Json(ApiResponse::success(created, "批量创建销售订单成功"))
 }
@@ -663,7 +715,9 @@ async fn batch_update_sales_orders(
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await { return e; }
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
     let mut updated = Vec::new();
     for item in &body.updates {
         let result = sqlx::query_as::<_, SalesOrder>(only_own_schema_query!(
@@ -674,10 +728,15 @@ async fn batch_update_sales_orders(
         .bind(dec(item.payload.tax_amount)).bind(dec(item.payload.discount_amount)).bind(dec(item.payload.payable_amount))
         .bind(&item.payload.status).bind(&item.payload.remark).bind(item.id)
         .fetch_optional(&mut **txn).await;
-        if let Ok(Some(o)) = result { updated.push(o); }
+        if let Ok(Some(o)) = result {
+            updated.push(o);
+        }
     }
     if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
     }
     Json(ApiResponse::success(updated, "批量更新销售订单成功"))
 }
@@ -689,7 +748,9 @@ async fn batch_update_status(
     ids: &[Uuid],
     status: &str,
 ) -> Result<Vec<SalesOrder>, String> {
-    if ids.is_empty() { return Ok(vec![]); }
+    if ids.is_empty() {
+        return Ok(vec![]);
+    }
     let placeholders: Vec<String> = (2..=ids.len() + 1).map(|i| format!("${}", i)).collect();
     let sql = format!(
         "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING {}",
@@ -698,7 +759,9 @@ async fn batch_update_status(
     );
     let mut query = sqlx::query_as::<_, SalesOrder>(&sql);
     query = query.bind(status);
-    for id in ids { query = query.bind(id); }
+    for id in ids {
+        query = query.bind(id);
+    }
     query.fetch_all(&mut **txn).await.map_err(|e| e.to_string())
 }
 
@@ -712,10 +775,20 @@ async fn batch_approve_sales_orders(
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await { return e; }
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
     match batch_update_status(&state, &claims, txn, &body.ids, "approved").await {
-        Ok(orders) => { if let Some(t) = guard.take() { let _ = t.commit().await; } Json(ApiResponse::success(orders, "批量审批成功")) }
-        Err(e) => { tracing::error!("批量审批销售订单失败: {}", e); Json(api_error(500, "批量审批销售订单失败")) }
+        Ok(orders) => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
+            Json(ApiResponse::success(orders, "批量审批成功"))
+        }
+        Err(e) => {
+            tracing::error!("批量审批销售订单失败: {}", e);
+            Json(api_error(500, "批量审批销售订单失败"))
+        }
     }
 }
 
@@ -729,10 +802,20 @@ async fn batch_ship_sales_orders(
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await { return e; }
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
     match batch_update_status(&state, &claims, txn, &body.ids, "shipped").await {
-        Ok(orders) => { if let Some(t) = guard.take() { let _ = t.commit().await; } Json(ApiResponse::success(orders, "批量发货成功")) }
-        Err(e) => { tracing::error!("批量发货销售订单失败: {}", e); Json(api_error(500, "批量发货销售订单失败")) }
+        Ok(orders) => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
+            Json(ApiResponse::success(orders, "批量发货成功"))
+        }
+        Err(e) => {
+            tracing::error!("批量发货销售订单失败: {}", e);
+            Json(api_error(500, "批量发货销售订单失败"))
+        }
     }
 }
 
@@ -746,10 +829,20 @@ async fn batch_complete_sales_orders(
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await { return e; }
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
     match batch_update_status(&state, &claims, txn, &body.ids, "completed").await {
-        Ok(orders) => { if let Some(t) = guard.take() { let _ = t.commit().await; } Json(ApiResponse::success(orders, "批量完成成功")) }
-        Err(e) => { tracing::error!("批量完成销售订单失败: {}", e); Json(api_error(500, "批量完成销售订单失败")) }
+        Ok(orders) => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
+            Json(ApiResponse::success(orders, "批量完成成功"))
+        }
+        Err(e) => {
+            tracing::error!("批量完成销售订单失败: {}", e);
+            Json(api_error(500, "批量完成销售订单失败"))
+        }
     }
 }
 
@@ -763,10 +856,20 @@ async fn batch_cancel_sales_orders(
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await { return e; }
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
     match batch_update_status(&state, &claims, txn, &body.ids, "cancelled").await {
-        Ok(orders) => { if let Some(t) = guard.take() { let _ = t.commit().await; } Json(ApiResponse::success(orders, "批量取消成功")) }
-        Err(e) => { tracing::error!("批量取消销售订单失败: {}", e); Json(api_error(500, "批量取消销售订单失败")) }
+        Ok(orders) => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
+            Json(ApiResponse::success(orders, "批量取消成功"))
+        }
+        Err(e) => {
+            tracing::error!("批量取消销售订单失败: {}", e);
+            Json(api_error(500, "批量取消销售订单失败"))
+        }
     }
 }
 
@@ -779,12 +882,30 @@ async fn get_sales_order_stats(
 ) -> Json<ApiResponse<SalesOrderStatsResponse>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await { return e; }
-    let total: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.sales_orders WHERE deleted_at IS NULL")).fetch_one(&mut **txn).await.unwrap_or(0);
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+    let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.sales_orders WHERE deleted_at IS NULL"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
     let by_status: Vec<StatusCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT status, COUNT(*) AS count FROM erp.sales_orders WHERE deleted_at IS NULL GROUP BY status ORDER BY count DESC")).fetch_all(&mut **txn).await.unwrap_or_default();
     let by_customer: Vec<CustomerOrderCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT customer_id, customer_name, COUNT(*) AS total FROM erp.sales_orders WHERE deleted_at IS NULL GROUP BY customer_id, customer_name ORDER BY total DESC LIMIT 10")).fetch_all(&mut **txn).await.unwrap_or_default();
     let pending_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('pending', 'draft')")).fetch_one(&mut **txn).await.unwrap_or(0.0);
     let shipped_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = 'shipped'")).fetch_one(&mut **txn).await.unwrap_or(0.0);
     let completed_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = 'completed'")).fetch_one(&mut **txn).await.unwrap_or(0.0);
-    Json(ApiResponse::success(SalesOrderStatsResponse { total, by_status, by_customer, pending_total_amount, shipped_total_amount, completed_total_amount }, "获取销售订单统计成功"))
+    Json(ApiResponse::success(
+        SalesOrderStatsResponse {
+            total,
+            by_status,
+            by_customer,
+            pending_total_amount,
+            shipped_total_amount,
+            completed_total_amount,
+        },
+        "获取销售订单统计成功",
+    ))
 }

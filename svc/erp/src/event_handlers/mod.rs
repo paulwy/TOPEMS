@@ -19,11 +19,10 @@
 
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
-use topems_shared::LocalInMemoryCache as InMemoryCache;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
-    InMemoryCacheInvalidationHandler,
 };
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
     CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult, EventSubscriber,
     EventType, HrmPayrollVoucherRequestedPayload, InventoryUpdatedPayload, MasterDataAction,
@@ -34,19 +33,17 @@ use topems_shared_event::event::{
     StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
 };
 
-use crate::models::dict::DictType;
-
 type HandlerResult = std::result::Result<(), String>;
 
 /// ERP 事件处理器集合，承载必要的依赖
 #[derive(Clone)]
 pub struct ErpEventHandlers {
     pub db: PgPool,
-    pub dict_cache: Arc<InMemoryCache<Vec<DictType>>>,
+    pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl ErpEventHandlers {
-    pub fn new(db: PgPool, dict_cache: Arc<InMemoryCache<Vec<DictType>>>) -> Self {
+    pub fn new(db: PgPool, dict_cache: Arc<AsyncL2Cache<serde_json::Value>>) -> Self {
         Self { db, dict_cache }
     }
 
@@ -626,10 +623,7 @@ impl ErpEventHandlers {
                     );
                 }
                 Err(e) => {
-                    tracing::warn!(
-                        "[erp] 生产入库凭证生成失败（graceful fallback）: {}",
-                        e
-                    );
+                    tracing::warn!("[erp] 生产入库凭证生成失败（graceful fallback）: {}", e);
                 }
             }
         }
@@ -1982,7 +1976,7 @@ impl ErpEventHandlers {
             .bind(payload.department_id)
             .bind(now)
             .bind(now)
-.bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+            .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&self.db)
             .await
             .map_err(|e| format!("创建 erp.voucher_items 失败: {}", e))?;
@@ -2002,22 +1996,21 @@ impl ErpEventHandlers {
 /// 启动 ERP 服务的事件订阅
 pub async fn start_event_subscribers(
     db: PgPool,
-    dict_cache: Arc<InMemoryCache<Vec<DictType>>>,
+    dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<(), String> {
     let handlers = ErpEventHandlers::new(db, dict_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
     // 创建缓存失效监听器，注册字典缓存处理器
     let mut cache_invalidation_listener = CacheInvalidationListener::new("erp");
-    let dict_cache_handler = InMemoryCacheInvalidationHandler::new(
-        "erp_dict_cache",
-        dict_cache,
-        "erp:dict_type:",
-    );
+    let dict_cache_handler =
+        AsyncL2CacheInvalidationHandler::new("erp_dict_cache", dict_cache, "erp:dict_type:");
     cache_invalidation_listener.register_handler(dict_cache_handler);
     let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
 
-    tracing::info!("[erp] 启动事件订阅者，注册 16 个业务事件 + 4 个 MDM 主数据事件 + 1 个缓存失效事件 handler");
+    tracing::info!(
+        "[erp] 启动事件订阅者，注册 16 个业务事件 + 4 个 MDM 主数据事件 + 1 个缓存失效事件 handler"
+    );
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[erp] 事件订阅者异常退出: {}", e);
@@ -2036,7 +2029,9 @@ pub async fn start_event_subscribers(
                         source_service: payload.source_service,
                         source_instance: payload.source_instance,
                         cache_key_pattern: payload.cache_key_pattern,
-                        invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                        invalidation_level: InvalidationLevel::from_str(
+                            &payload.invalidation_level,
+                        ),
                         reason: payload.reason,
                     };
                     listener.dispatch_invalidation(&invalidation_event);

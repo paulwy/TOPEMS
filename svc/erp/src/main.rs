@@ -14,14 +14,14 @@ use std::sync::Arc;
 use std::time::Duration;
 use utoipa::OpenApi;
 
-use modules::ApiState;
 use models::dict::DictType;
-use topems_shared::LocalInMemoryCache as InMemoryCache;
+use modules::ApiState;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::mes_api::MesApi, TypedServiceClient,
@@ -65,7 +65,28 @@ async fn main() -> Result<()> {
     }
 
     // 创建字典缓存（在事件订阅者之前创建，以便传入）
-    let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
+    // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
+    let l2_config = L2CacheConfig {
+        instance_prefix: "erp".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+    };
+    let redis_url = std::env::var("REDIS_URL").ok();
+    let dict_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（ERP，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（ERP，纯 L1 模式，Redis 未配置）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（ERP）: {}", warn);
+            Arc::new(cache)
+        }
+    };
 
     // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
     {
@@ -83,8 +104,10 @@ async fn main() -> Result<()> {
             {
                 Ok(dict_types) => {
                     let cache_key = "erp:dict_type:dict:default:all";
-                    cache.set(cache_key.to_string(), dict_types.clone());
-                    tracing::info!("[erp] 字典类型列表缓存预热完成，共 {} 条", dict_types.len());
+                    if let Ok(value) = serde_json::to_value(&dict_types) {
+                        cache.set(cache_key.to_string(), value).await;
+                        tracing::info!("[erp] 字典类型列表缓存预热完成，共 {} 条", dict_types.len());
+                    }
                 }
                 Err(e) => {
                     tracing::warn!("[erp] 字典类型列表缓存预热失败: {}", e);
@@ -96,7 +119,9 @@ async fn main() -> Result<()> {
     }
 
     // 事件订阅者（失败不阻塞启动）
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await {
+    if let Err(e) =
+        event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await
+    {
         tracing::warn!("⚠️ ERP 事件订阅者启动失败: {}", e);
     }
 

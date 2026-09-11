@@ -146,10 +146,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/master-data-refs/{master_data_id}/audit-trail",
             get(get_audit_trail),
         )
-        .route(
-            "/master-data-refs/audit-trail",
-            post(record_audit_event),
-        )
+        .route("/master-data-refs/audit-trail", post(record_audit_event))
         // V35.0 AC-7: 数据血缘
         .route(
             "/master-data-refs/{master_data_id}/lineage",
@@ -169,10 +166,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(rollback_to_version),
         )
         // V37.0 AC-9: 冲突检测 + 自动合并
-        .route(
-            "/master-data-refs/conflicts/detect",
-            post(detect_conflicts),
-        )
+        .route("/master-data-refs/conflicts/detect", post(detect_conflicts))
         .route("/master-data-refs/conflicts", get(list_conflicts))
         .route(
             "/master-data-refs/conflicts/{conflict_id}",
@@ -223,24 +217,15 @@ pub fn create_routes() -> axum::Router<ApiState> {
                 .put(update_quality_rule)
                 .delete(delete_quality_rule),
         )
-        .route(
-            "/master-data-refs/quality-check",
-            post(run_quality_check),
-        )
-        .route(
-            "/master-data-refs/quality-report",
-            get(get_quality_report),
-        )
+        .route("/master-data-refs/quality-check", post(run_quality_check))
+        .route("/master-data-refs/quality-report", get(get_quality_report))
         // V40.0 AC-12: 主数据治理仪表盘
         .route(
             "/master-data-refs/governance/dashboard",
             get(get_governance_dashboard),
         )
         // V40.0 AC-12: 数据资产目录
-        .route(
-            "/master-data-refs/governance/assets",
-            get(list_data_assets),
-        )
+        .route("/master-data-refs/governance/assets", get(list_data_assets))
         .route(
             "/master-data-refs/governance/assets/{domain}",
             get(get_data_asset_detail),
@@ -269,23 +254,14 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(create_sync_job).get(list_sync_jobs),
         )
         .route("/master-data/sync/jobs/{id}", get(get_sync_job))
-        .route(
-            "/master-data/sync/jobs/{id}/retry",
-            post(retry_sync_job),
-        )
-        .route(
-            "/master-data/sync/jobs/{id}/cancel",
-            post(cancel_sync_job),
-        )
+        .route("/master-data/sync/jobs/{id}/retry", post(retry_sync_job))
+        .route("/master-data/sync/jobs/{id}/cancel", post(cancel_sync_job))
         .route(
             "/master-data/sync/jobs/{id}/compensate",
             post(trigger_compensation),
         )
         .route("/master-data/sync/stats", get(get_sync_stats))
-        .route(
-            "/master-data/sync/dead-letters",
-            get(list_dead_letters),
-        )
+        .route("/master-data/sync/dead-letters", get(list_dead_letters))
         .route(
             "/master-data/sync/dead-letters/{id}/replay",
             post(replay_dead_letter),
@@ -303,10 +279,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/master-data/quality/tickets",
             post(create_quality_ticket).get(list_quality_tickets),
         )
-        .route(
-            "/master-data/quality/tickets/{id}",
-            get(get_quality_ticket),
-        )
+        .route("/master-data/quality/tickets/{id}", get(get_quality_ticket))
         .route(
             "/master-data/quality/tickets/{id}/assign",
             post(assign_quality_ticket),
@@ -387,28 +360,19 @@ pub fn create_routes() -> axum::Router<ApiState> {
         )
         // V43.0 AC-15: 主数据图谱
         .route("/master-data/graph", get(get_master_data_graph))
-        .route(
-            "/master-data/graph/nodes/{node_id}",
-            get(get_graph_node),
-        )
+        .route("/master-data/graph/nodes/{node_id}", get(get_graph_node))
         .route(
             "/master-data/graph/nodes/{node_id}/neighbors",
             get(get_node_neighbors),
         )
-        .route(
-            "/master-data/graph/shortest-path",
-            get(get_shortest_path),
-        )
+        .route("/master-data/graph/shortest-path", get(get_shortest_path))
         .route(
             "/master-data/graph/nodes/{node_id}/multi-hop",
             get(multi_hop_traversal),
         )
         .route("/master-data/graph/stats", get(get_graph_stats))
         // V43.0 AC-15: 知识图谱
-        .route(
-            "/master-data/knowledge/concepts",
-            get(list_concepts),
-        )
+        .route("/master-data/knowledge/concepts", get(list_concepts))
         .route(
             "/master-data/knowledge/concepts/{concept_id}",
             get(get_concept),
@@ -418,10 +382,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/master-data/knowledge/inference-rules",
             get(list_inference_rules),
         )
-        .route(
-            "/master-data/knowledge/inference",
-            post(run_inference),
-        )
+        .route("/master-data/knowledge/inference", post(run_inference))
         // V43.0 AC-15: 智能推荐
         .route(
             "/master-data/recommendations/similar",
@@ -442,10 +403,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/master-data/sync/v2/jobs",
             post(create_sync_job_v2).get(list_sync_jobs_v2),
         )
-        .route(
-            "/master-data/sync/v2/jobs/{id}",
-            get(get_sync_job_v2),
-        )
+        .route("/master-data/sync/v2/jobs/{id}", get(get_sync_job_v2))
         .route(
             "/master-data/sync/v2/dead-letters/{id}/retry",
             post(retry_dead_letter_v2),
@@ -454,15 +412,9 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/master-data/sync/v2/dead-letters/batch-retry",
             post(batch_retry_dead_letters),
         )
-        .route(
-            "/master-data/sync/v2/stats",
-            get(sync_engine_stats_v2),
-        )
+        .route("/master-data/sync/v2/stats", get(sync_engine_stats_v2))
         // V44.0 AC-16: MDM 服务注册与健康检查
-        .route(
-            "/master-data/services/register",
-            post(mdm_service_register),
-        )
+        .route("/master-data/services/register", post(mdm_service_register))
         .route(
             "/master-data/services/{service_id}/deregister",
             post(mdm_service_deregister),
@@ -477,14 +429,8 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(mdm_service_health),
         )
         // V44.0 AC-16: MDM API 网关层
-        .route(
-            "/master-data/gateway/route",
-            post(mdm_gateway_route),
-        )
-        .route(
-            "/master-data/gateway/batch",
-            post(mdm_gateway_batch),
-        )
+        .route("/master-data/gateway/route", post(mdm_gateway_route))
+        .route("/master-data/gateway/batch", post(mdm_gateway_batch))
         .route(
             "/master-data/gateway/aggregate",
             post(mdm_gateway_aggregate),
@@ -507,10 +453,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/master-data/quality-ai/predict/{id}",
             post(quality_ai_predict_quality),
         )
-        .route(
-            "/master-data/quality-ai/stats",
-            get(quality_ai_get_stats),
-        )
+        .route("/master-data/quality-ai/stats", get(quality_ai_get_stats))
         // V45.0 AC-17: 智能匹配
         .route(
             "/master-data/matching/find-matches/{id}",

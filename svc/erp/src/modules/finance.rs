@@ -62,13 +62,12 @@ pub async fn create_voucher(
     let voucher_id = Uuid::new_v4();
     let now = Utc::now();
     let department_id = req.department_id.unwrap_or_else(Uuid::nil);
-    let tenant_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
-    )
-    .fetch_optional(&mut **txn)
-    .await
-    .ok()
-    .flatten();
+    let tenant_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
 
     let voucher_result = sqlx::query(
         r#"INSERT INTO erp.financial_vouchers

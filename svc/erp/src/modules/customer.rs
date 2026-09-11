@@ -449,7 +449,11 @@ async fn batch_list_customers(
     if body.ids.is_empty() {
         return Json(ApiResponse::success(vec![], "批量查询成功"));
     }
-    let uuids: Vec<Uuid> = body.ids.iter().filter_map(|s| Uuid::parse_str(s).ok()).collect();
+    let uuids: Vec<Uuid> = body
+        .ids
+        .iter()
+        .filter_map(|s| Uuid::parse_str(s).ok())
+        .collect();
     if uuids.is_empty() {
         return Json(ApiResponse::success(vec![], "批量查询成功"));
     }
@@ -460,10 +464,15 @@ async fn batch_list_customers(
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
-    for id in &uuids { query = query.bind(id); }
+    for id in &uuids {
+        query = query.bind(id);
+    }
     match query.fetch_all(&mut **txn).await {
         Ok(customers) => Json(ApiResponse::success(customers, "批量查询成功")),
-        Err(e) => { tracing::error!("批量查询客户失败: {}", e); Json(api_error(500, "批量查询客户失败")) }
+        Err(e) => {
+            tracing::error!("批量查询客户失败: {}", e);
+            Json(api_error(500, "批量查询客户失败"))
+        }
     }
 }
 
@@ -492,10 +501,15 @@ async fn batch_create_customers(
         .bind(&req.scale).bind(default_credit_limit(req.credit_limit))
         .bind(default_customer_status(req.status.clone()))
         .fetch_optional(&mut **txn).await;
-        if let Ok(Some(c)) = result { created.push(c); }
+        if let Ok(Some(c)) = result {
+            created.push(c);
+        }
     }
     if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
     }
     Json(ApiResponse::success(created, "批量创建成功"))
 }
@@ -525,10 +539,15 @@ async fn batch_update_customers(
         .bind(&item.payload.customer_type).bind(&item.payload.industry).bind(&item.payload.scale)
         .bind(item.payload.credit_limit).bind(&item.payload.status).bind(item.id)
         .fetch_optional(&mut **txn).await;
-        if let Ok(Some(c)) = result { updated.push(c); }
+        if let Ok(Some(c)) = result {
+            updated.push(c);
+        }
     }
     if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(api_error(500, "事务提交失败"));
+        }
     }
     Json(ApiResponse::success(updated, "批量更新成功"))
 }
@@ -555,15 +574,26 @@ async fn batch_delete_customers(
         placeholders.join(",")
     );
     let mut query = sqlx::query(&sql);
-    for id in &body.ids { query = query.bind(id); }
+    for id in &body.ids {
+        query = query.bind(id);
+    }
     match query.execute(&mut **txn).await {
         Ok(r) => {
             if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await { tracing::error!("事务提交失败: {}", e); return Json(api_error(500, "事务提交失败")); }
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "事务提交失败"));
+                }
             }
-            Json(ApiResponse::success(format!("已删除 {} 条客户记录", r.rows_affected()), "批量删除成功"))
+            Json(ApiResponse::success(
+                format!("已删除 {} 条客户记录", r.rows_affected()),
+                "批量删除成功",
+            ))
         }
-        Err(e) => { tracing::error!("批量删除客户失败: {}", e); Json(api_error(500, "批量删除客户失败")) }
+        Err(e) => {
+            tracing::error!("批量删除客户失败: {}", e);
+            Json(api_error(500, "批量删除客户失败"))
+        }
     }
 }
 
@@ -588,11 +618,16 @@ async fn change_customer_status(
     .bind(&body.status).bind(id).fetch_optional(&mut **txn).await;
     match result {
         Ok(Some(customer)) => {
-            if let Some(t) = guard.take() { let _ = t.commit().await; }
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
             Json(ApiResponse::success(customer, "客户状态更新成功"))
         }
         Ok(None) => Json(api_error(404, "客户不存在")),
-        Err(e) => { tracing::error!("更新客户状态失败: {}", e); Json(api_error(500, "更新客户状态失败")) }
+        Err(e) => {
+            tracing::error!("更新客户状态失败: {}", e);
+            Json(api_error(500, "更新客户状态失败"))
+        }
     }
 }
 
@@ -612,20 +647,29 @@ async fn batch_change_status(
     if body.ids.is_empty() {
         return Json(ApiResponse::success(vec![], "批量状态更新成功"));
     }
-    let placeholders: Vec<String> = (2..=body.ids.len() + 1).map(|i| format!("${}", i)).collect();
+    let placeholders: Vec<String> = (2..=body.ids.len() + 1)
+        .map(|i| format!("${}", i))
+        .collect();
     let sql = format!(
         "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
     query = query.bind(&body.status);
-    for id in &body.ids { query = query.bind(id); }
+    for id in &body.ids {
+        query = query.bind(id);
+    }
     match query.fetch_all(&mut **txn).await {
         Ok(customers) => {
-            if let Some(t) = guard.take() { let _ = t.commit().await; }
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
             Json(ApiResponse::success(customers, "批量状态更新成功"))
         }
-        Err(e) => { tracing::error!("批量更新客户状态失败: {}", e); Json(api_error(500, "批量更新客户状态失败")) }
+        Err(e) => {
+            tracing::error!("批量更新客户状态失败: {}", e);
+            Json(api_error(500, "批量更新客户状态失败"))
+        }
     }
 }
 
@@ -645,20 +689,29 @@ async fn batch_change_category(
     if body.ids.is_empty() {
         return Json(ApiResponse::success(vec![], "批量分类更新成功"));
     }
-    let placeholders: Vec<String> = (3..=body.ids.len() + 2).map(|i| format!("${}", i)).collect();
+    let placeholders: Vec<String> = (3..=body.ids.len() + 2)
+        .map(|i| format!("${}", i))
+        .collect();
     let sql = format!(
         "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
     query = query.bind(&body.category).bind(&body.industry);
-    for id in &body.ids { query = query.bind(id); }
+    for id in &body.ids {
+        query = query.bind(id);
+    }
     match query.fetch_all(&mut **txn).await {
         Ok(customers) => {
-            if let Some(t) = guard.take() { let _ = t.commit().await; }
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
             Json(ApiResponse::success(customers, "批量分类更新成功"))
         }
-        Err(e) => { tracing::error!("批量更新客户分类失败: {}", e); Json(api_error(500, "批量更新客户分类失败")) }
+        Err(e) => {
+            tracing::error!("批量更新客户分类失败: {}", e);
+            Json(api_error(500, "批量更新客户分类失败"))
+        }
     }
 }
 
@@ -674,12 +727,45 @@ async fn get_customer_stats(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
-    let total: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL")).fetch_one(&mut **txn).await.unwrap_or(0);
-    let active: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'active'")).fetch_one(&mut **txn).await.unwrap_or(0);
-    let inactive: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'inactive'")).fetch_one(&mut **txn).await.unwrap_or(0);
-    let blacklisted: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'blacklisted'")).fetch_one(&mut **txn).await.unwrap_or(0);
+    let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+    let active: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'active'"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+    let inactive: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'inactive'"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+    let blacklisted: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND status = 'blacklisted'"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
     let by_category: Vec<CategoryCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT customer_type AS category, COUNT(*) AS count FROM erp.customers WHERE deleted_at IS NULL GROUP BY customer_type ORDER BY count DESC")).fetch_all(&mut **txn).await.unwrap_or_default();
-    Json(ApiResponse::success(CustomerStatsResponse { total, active, inactive, blacklisted, by_category }, "获取客户统计成功"))
+    Json(ApiResponse::success(
+        CustomerStatsResponse {
+            total,
+            active,
+            inactive,
+            blacklisted,
+            by_category,
+        },
+        "获取客户统计成功",
+    ))
 }
 
 async fn list_recent_customers(
@@ -697,8 +783,22 @@ async fn list_recent_customers(
     }
     let limit = params.limit.unwrap_or(20).clamp(1, 100);
     let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).fetch_all(&mut **txn).await.unwrap_or_default();
-    let total: i64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL")).fetch_one(&mut **txn).await.unwrap_or(0);
-    Json(ApiResponse::success(CustomerRecentResponse { customers, total, page: 1, pagesize: limit }, "获取最近客户成功"))
+    let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "erp",
+        "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+    Json(ApiResponse::success(
+        CustomerRecentResponse {
+            customers,
+            total,
+            page: 1,
+            pagesize: limit,
+        },
+        "获取最近客户成功",
+    ))
 }
 
 #[cfg(test)]
