@@ -607,7 +607,8 @@ pub async fn filter_data(
 
     // S1.1: table_name 已由 validate_table_name 做字符白名单校验；
     // LIMIT/OFFSET 走参数化绑定，杜绝数值拼接注入。
-    let query = format!("SELECT * FROM {} LIMIT $1 OFFSET $2", req.table_name);
+    // 性能优化：使用 SELECT 1 代替 SELECT *，因为结果只用于计数，不使用列数据
+    let query = format!("SELECT 1 FROM {} LIMIT $1 OFFSET $2", req.table_name);
 
     let data_result = sqlx::query(&query)
         .bind(page_size)

@@ -40,9 +40,12 @@ impl Default for DatabaseConfig {
             url: env::var("DATABASE_URL").unwrap_or_else(|_| {
                 "postgres://topems:topems_secret@localhost:5432/topems".to_string()
             }),
-            max_connections: 4,
-            min_connections: Some(1),
-            connect_timeout: Some(30),
+            // 性能优化：开发环境默认 10 连接，生产环境通过 DB_MAX_CONNECTIONS 环境变量调整（20-50）
+            max_connections: 10,
+            // 性能优化：预热 2 个连接，减少首次请求延迟
+            min_connections: Some(2),
+            // 性能优化：连接超时从 30s 降至 10s，让 DB 错误路径更快失败
+            connect_timeout: Some(10),
             idle_timeout: Some(300),
             max_lifetime: Some(1800),
             test_interval: Some(60),
