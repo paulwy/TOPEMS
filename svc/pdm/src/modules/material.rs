@@ -10,6 +10,20 @@ use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
 use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
 
+/// 物料列表缓存 Key
+fn materials_list_cache_key(
+    tenant_id: &Uuid,
+    page: i64,
+    page_size: i64,
+    search: &Option<String>,
+    status: &Option<String>,
+) -> String {
+    format!(
+        "pdm:material:list:{}:page:{}:pagesize:{}:search:{:?}:status:{:?}",
+        tenant_id, page, page_size, search, status
+    )
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/materials", get(list_materials).post(create_material))
@@ -79,6 +93,20 @@ pub async fn list_materials(
     let offset = (page - 1) * page_size;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
+    // 构建缓存 Key 并检查缓存
+    let cache_key = materials_list_cache_key(&tenant_id, page, page_size, &query.search, &query.status);
+    if let Some(cached) = state.dict_cache.get(&cache_key) {
+        tracing::debug!(
+            service = "pdm",
+            entity = "material",
+            operation = "list",
+            tenant_id = %tenant_id,
+            cache_key = %cache_key,
+            "物料列表缓存命中"
+        );
+        return Json(ApiResponse::success(cached, "获取物料列表成功"));
+    }
+
     let result = sqlx::query_as::<_, Material>(
         r#"
         SELECT id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
@@ -116,15 +144,25 @@ pub async fn list_materials(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "materials": materials,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
-                "获取物料列表成功",
-            ))
+            let response_data = serde_json::json!({
+                "materials": materials,
+                "total": total,
+                "page": page,
+                "page_size": page_size
+            });
+
+            // 写入缓存
+            state.dict_cache.set(cache_key.clone(), response_data.clone());
+            tracing::debug!(
+                service = "pdm",
+                entity = "material",
+                operation = "list",
+                tenant_id = %tenant_id,
+                cache_key = %cache_key,
+                "物料列表缓存写入"
+            );
+
+            Json(ApiResponse::success(response_data, "获取物料列表成功"))
         }
         Err(e) => {
             tracing::error!("获取物料列表失败: {}", e);
@@ -239,6 +277,8 @@ pub async fn create_material(
                     .await;
             });
 
+            // 失效列表缓存（创建后列表数据可能变化）
+            state.dict_cache.clear();
             Json(ApiResponse::success(material, "物料创建成功"))
         }
         Err(e) => {
@@ -383,6 +423,8 @@ pub async fn update_material(
                     .await;
             });
 
+            // 失效列表缓存（更新后列表数据可能变化）
+            state.dict_cache.clear();
             Json(ApiResponse::success(material, "物料更新成功"))
         }
         Err(e) => {
@@ -440,6 +482,8 @@ pub async fn delete_material(
                     .await;
             });
 
+            // 失效列表缓存（删除后列表数据可能变化）
+            state.dict_cache.clear();
             Json(ApiResponse::success(true, "物料删除成功"))
         }
         Ok(_) => Json(ApiResponse::error(404, "物料不存在")),

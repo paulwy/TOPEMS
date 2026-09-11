@@ -63,11 +63,15 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
     }
 
+    let dict_cache = std::sync::Arc::new(topems_shared::LocalInMemoryCache::new(std::time::Duration::from_secs(600)));
+    tracing::info!("💾 字典缓存初始化完成（PDM，TTL 600秒）");
+
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
         health_config: SimpleHealthConfig::new("topems-pdm").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
+        dict_cache,
     };
 
     // Public routes（stateful：/health + /api/health/detailed + /api/plugins/*）
