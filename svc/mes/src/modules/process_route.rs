@@ -152,15 +152,15 @@ pub async fn list_process_routes(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    // 构建缓存 Key
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
     let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
     let cache_key = format!(
-        "mes:process_routes:{}:{}:{}:{}:{}",
+        "mes:process_route:list:{}:page:{}:pagesize:{}:search:{}:status:{}",
         tenant_id,
         page,
         pagesize,
-        query.status.clone().unwrap_or_else(|| "all".to_string()),
-        query.search.clone().unwrap_or_else(|| "none".to_string())
+        query.search.clone().unwrap_or_else(|| "none".to_string()),
+        query.status.clone().unwrap_or_else(|| "all".to_string())
     );
 
     // 检查缓存

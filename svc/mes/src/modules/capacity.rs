@@ -142,15 +142,15 @@ pub async fn list_capacities(
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims);
 
-    // 构建缓存 Key
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
     let cache_key = format!(
-        "mes:capacities:{}:{}:{}:{}:{}:{}",
+        "mes:capacity:list:{}:page:{}:pagesize:{}:search:{}:status:{}:work_center_id:{}",
         tenant_id,
         page,
         page_size,
         params.search.clone().unwrap_or_else(|| "none".to_string()),
         params.status.clone().unwrap_or_else(|| "all".to_string()),
-        params.work_center_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string())
+        params.work_center_id.map(|id| id.to_string()).unwrap_or_else(|| "none".to_string())
     );
 
     // 检查缓存

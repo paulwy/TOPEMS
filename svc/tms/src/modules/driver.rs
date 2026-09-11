@@ -98,9 +98,9 @@ pub async fn list_drivers(
     let status_filter = params.status.clone();
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    // 构建缓存 Key
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
     let cache_key = format!(
-        "tms:drivers:{}:{}:{}:{}:{}",
+        "tms:driver:list:{}:page:{}:pagesize:{}:search:{}:status:{}",
         tenant_id,
         page,
         page_size,
