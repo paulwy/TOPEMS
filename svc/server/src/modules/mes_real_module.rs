@@ -44,6 +44,7 @@ impl MesRealModule {
             api_prefix: "/api/mes",
             legacy_prefixes: &["/api/v1/mes"],
             // 宿主进程统一初始化全局 telemetry
+            init_telemetry: false,
             ..Default::default()
         };
 

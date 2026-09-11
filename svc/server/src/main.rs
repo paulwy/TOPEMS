@@ -19,13 +19,13 @@ use topems_server::ModuleRegistry;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 初始化日志
-    tracing_subscriber::fmt()
+    // 初始化日志（使用 try_init 避免全局 subscriber 重复设置 panic）
+    let _ = tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "info,tower_http=info".into()),
         )
-        .init();
+        .try_init();
 
     tracing::info!("🚀 启动 topems-server 模块化单体统一入口");
     tracing::info!("部署模式: private-deployment（进程内 trait 调用）");

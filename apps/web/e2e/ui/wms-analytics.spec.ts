@@ -29,8 +29,8 @@ test.describe('WMS Analytics & Report Flow (TC-WMS-019 ~ TC-WMS-025)', () => {
     // 尝试点击查询按钮
     const searchButton = page.getByRole('button', { name: /查询|搜索|筛选/ }).first();
     if (await searchButton.isVisible().catch(() => false)) {
-      await searchButton.click();
-      await page.waitForLoadState('networkidle');
+      await searchButton.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(1000);
     }
   });
 

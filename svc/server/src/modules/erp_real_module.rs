@@ -45,6 +45,7 @@ impl ErpRealModule {
             api_prefix: "/api/erp",
             legacy_prefixes: &["/api/v1/erp"],
             // 宿主进程统一初始化全局 telemetry
+            init_telemetry: false,
             ..Default::default()
         };
 

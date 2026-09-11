@@ -47,6 +47,7 @@ impl FinanceRealModule {
             legacy_prefixes: &["/api/v1/finance", "/api/core/finance/v1"],
             // 模块化单体嵌入：由宿主进程（topems-server）统一初始化全局 telemetry，
             // 避免重复设置全局 tracing subscriber 导致 panic
+            init_telemetry: false,
             ..Default::default()
         };
 
