@@ -1,14 +1,13 @@
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::LocalInMemoryCache as InMemoryCache;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
-    InMemoryCacheInvalidationHandler,
 };
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType, MasterDataAction,
-    MasterDataDomain, MasterDataEvent, ProductionOrderCreatedPayload,
-    PurchaseOrderCreatedPayload, ScmShipmentReceivedPayload,
+    MasterDataDomain, MasterDataEvent, ProductionOrderCreatedPayload, PurchaseOrderCreatedPayload,
+    ScmShipmentReceivedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -16,11 +15,11 @@ type HandlerResult = std::result::Result<(), String>;
 #[derive(Clone)]
 pub struct PdmEventHandlers {
     pub db: PgPool,
-    pub dict_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl PdmEventHandlers {
-    pub fn new(db: PgPool, dict_cache: Arc<InMemoryCache<serde_json::Value>>) -> Self {
+    pub fn new(db: PgPool, dict_cache: Arc<AsyncL2Cache<serde_json::Value>>) -> Self {
         Self { db, dict_cache }
     }
 
@@ -263,18 +262,15 @@ impl PdmEventHandlers {
 
 pub async fn start_event_subscribers(
     db: PgPool,
-    dict_cache: Arc<InMemoryCache<serde_json::Value>>,
+    dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<(), String> {
     let handlers = PdmEventHandlers::new(db, dict_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
     // 创建缓存失效监听器，注册物料缓存处理器
     let mut cache_invalidation_listener = CacheInvalidationListener::new("pdm");
-    let material_cache_handler = InMemoryCacheInvalidationHandler::new(
-        "pdm_material_cache",
-        dict_cache,
-        "pdm:material:",
-    );
+    let material_cache_handler =
+        AsyncL2CacheInvalidationHandler::new("pdm_material_cache", dict_cache, "pdm:material:");
     cache_invalidation_listener.register_handler(material_cache_handler);
     let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
 
@@ -297,7 +293,9 @@ pub async fn start_event_subscribers(
                         source_service: payload.source_service,
                         source_instance: payload.source_instance,
                         cache_key_pattern: payload.cache_key_pattern,
-                        invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                        invalidation_level: InvalidationLevel::from_str(
+                            &payload.invalidation_level,
+                        ),
                         reason: payload.reason,
                     };
                     listener.dispatch_invalidation(&invalidation_event);

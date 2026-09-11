@@ -60,8 +60,31 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("PDM AC-5 ref 表初始化警告: {}", e);
     }
 
-    let dict_cache = std::sync::Arc::new(topems_shared::LocalInMemoryCache::new(std::time::Duration::from_secs(600)));
-    tracing::info!("💾 字典缓存初始化完成（PDM，TTL 600秒）");
+    // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
+    let l2_config = topems_shared_core::l2_cache::L2CacheConfig {
+        instance_prefix: "pdm".to_string(),
+        l1_ttl: std::time::Duration::from_secs(60),
+        l2_ttl: std::time::Duration::from_secs(600),
+        l1_capacity: 10_000,
+    };
+    let redis_url = std::env::var("REDIS_URL").ok();
+    let dict_cache =
+        match topems_shared_core::l2_cache::AsyncL2Cache::try_new(l2_config, redis_url.as_deref())
+            .await
+        {
+            Ok(cache) => {
+                if cache.has_l2() {
+                    tracing::info!("💾 多级缓存初始化完成（PDM，L1+L2 Redis 已启用）");
+                } else {
+                    tracing::info!("💾 多级缓存初始化完成（PDM，纯 L1 模式，Redis 未配置）");
+                }
+                std::sync::Arc::new(cache)
+            }
+            Err((cache, warn)) => {
+                tracing::warn!("💾 多级缓存初始化降级（PDM）: {}", warn);
+                std::sync::Arc::new(cache)
+            }
+        };
 
     // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
     {
@@ -91,8 +114,9 @@ async fn main() -> anyhow::Result<()> {
             .await
             {
                 Ok(Some(data)) => {
-                    let cache_key = "pdm:material:list:default:page:1:pagesize:20:search:None:status:None";
-                    cache.set(cache_key.to_string(), data);
+                    let cache_key =
+                        "pdm:material:list:default:page:1:pagesize:20:search:None:status:None";
+                    cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[pdm] 物料列表缓存预热完成");
                 }
                 Ok(None) => {
@@ -107,7 +131,9 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await {
+    if let Err(e) =
+        event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await
+    {
         tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
     }
 

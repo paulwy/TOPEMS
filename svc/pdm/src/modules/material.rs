@@ -95,8 +95,9 @@ pub async fn list_materials(
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
     // 构建缓存 Key 并检查缓存
-    let cache_key = materials_list_cache_key(&tenant_id, page, page_size, &query.search, &query.status);
-    if let Some(cached) = state.dict_cache.get(&cache_key) {
+    let cache_key =
+        materials_list_cache_key(&tenant_id, page, page_size, &query.search, &query.status);
+    if let Some(cached) = state.dict_cache.get(&cache_key).await {
         record_cache_hit("pdm", "material", "list");
         tracing::debug!(
             service = "pdm",
@@ -157,7 +158,10 @@ pub async fn list_materials(
             });
 
             // 写入缓存
-            state.dict_cache.set(cache_key.clone(), response_data.clone());
+            state
+                .dict_cache
+                .set(cache_key.clone(), response_data.clone())
+                .await;
             record_cache_set("pdm", "material", "list");
             tracing::debug!(
                 service = "pdm",
@@ -284,14 +288,18 @@ pub async fn create_material(
             });
 
             // 失效列表缓存（创建后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("pdm:material:*", "pattern", Some("material_created"))
+                        .publish_cache_invalidated(
+                            "pdm:material:*",
+                            "pattern",
+                            Some("material_created"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -444,14 +452,18 @@ pub async fn update_material(
             });
 
             // 失效列表缓存（更新后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("pdm:material:*", "pattern", Some("material_updated"))
+                        .publish_cache_invalidated(
+                            "pdm:material:*",
+                            "pattern",
+                            Some("material_updated"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -517,14 +529,18 @@ pub async fn delete_material(
             });
 
             // 失效列表缓存（删除后列表数据可能变化）
-            state.dict_cache.clear();
+            state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 tokio::spawn(async move {
                     if let Err(e) = publisher
-                        .publish_cache_invalidated("pdm:material:*", "pattern", Some("material_deleted"))
+                        .publish_cache_invalidated(
+                            "pdm:material:*",
+                            "pattern",
+                            Some("material_deleted"),
+                        )
                         .await
                     {
                         tracing::warn!("发布缓存失效事件失败: {}", e);
