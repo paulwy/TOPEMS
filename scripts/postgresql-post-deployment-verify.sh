@@ -9,35 +9,36 @@ set -euo pipefail
 # ==================== 配置变量 ====================
 
 # PostgreSQL 配置文件路径（根据实际环境修改）
-PG_CONF="/etc/postgresql/16/main/postgresql.conf"
-# PG_CONF="/opt/homebrew/var/postgresql@18/postgresql.conf"  # macOS Homebrew
+# PG_CONF="/etc/postgresql/16/main/postgresql.conf"  # Linux
+PG_CONF="/opt/homebrew/var/postgresql@18/postgresql.conf"  # macOS Homebrew
 
 # PostgreSQL 数据目录
-PG_DATA="/var/lib/postgresql/16/main"
-# PG_DATA="/opt/homebrew/var/postgresql@18"  # macOS Homebrew
+# PG_DATA="/var/lib/postgresql/16/main"  # Linux
+PG_DATA="/opt/homebrew/var/postgresql@18"  # macOS Homebrew
 
-# PostgreSQL 服务名（systemd）
+# PostgreSQL 服务名（systemd/Linux）
 PG_SERVICE="postgresql"
 
 # 目标数据库名
 DB_NAME="topems"
 
 # 目标配置参数（用于验证）
-declare -A TARGET_CONFIG=(
-    ["shared_buffers"]="4GB"
-    ["effective_cache_size"]="12GB"
-    ["work_mem"]="16MB"
-    ["maintenance_work_mem"]="512MB"
-    ["max_wal_size"]="4GB"
-    ["min_wal_size"]="1GB"
-    ["checkpoint_timeout"]="15min"
-    ["random_page_cost"]="1.1"
-    ["effective_io_concurrency"]="200"
-    ["default_statistics_target"]="200"
-    ["max_connections"]="200"
-    ["shared_preload_libraries"]="pg_stat_statements"
-    ["log_min_duration_statement"]="1000"
-    ["logging_collector"]="on"
+# 使用普通数组兼容 bash 3.2（macOS 默认），格式：参数名|目标值
+TARGET_CONFIG=(
+    "shared_buffers|4GB"
+    "effective_cache_size|12GB"
+    "work_mem|16MB"
+    "maintenance_work_mem|512MB"
+    "max_wal_size|4GB"
+    "min_wal_size|1GB"
+    "checkpoint_timeout|15min"
+    "random_page_cost|1.1"
+    "effective_io_concurrency|200"
+    "default_statistics_target|200"
+    "max_connections|200"
+    "shared_preload_libraries|pg_stat_statements"
+    "log_min_duration_statement|1000"
+    "logging_collector|on"
 )
 
 # ==================== 颜色定义 ====================
@@ -85,8 +86,8 @@ print_section() {
 # 执行 SQL 查询
 exec_sql() {
     local sql="$1"
-    local db="${2:-postgres}"
-    sudo -u postgres psql -t -A -c "$sql" -d "$db" 2>/dev/null || echo ""
+    local db="${2:-topems}"
+    psql -U air -t -A -c "$sql" -d "$db" 2>/dev/null || echo ""
 }
 
 # ==================== 验证函数 ====================
@@ -139,23 +140,15 @@ verify_config_params() {
     printf "%-30s %-20s %-20s %s\n" "参数名" "当前值" "目标值" "状态"
     printf "%-30s %-20s %-20s %s\n" "------" "------" "------" "----"
 
-    for param in "${!TARGET_CONFIG[@]}"; do
+    for config_item in "${TARGET_CONFIG[@]}"; do
+        local param=$(echo "$config_item" | cut -d'|' -f1)
+        local target_value=$(echo "$config_item" | cut -d'|' -f2)
         local current_value=$(exec_sql "SHOW $param;")
-        local target_value=${TARGET_CONFIG[$param]}
         local status="FAIL"
         local status_color="$RED"
 
-        # 特殊处理：shared_buffers 和 effective_cache_size 的单位是 8KB
-        if [[ "$param" == "shared_buffers" || "$param" == "effective_cache_size" ]]; then
-            # 将当前值转换为 GB 进行比较
-            local current_kb=$((current_value * 8))
-            local current_gb=$(echo "scale=0; $current_kb / 1024 / 1024" | bc 2>/dev/null || echo "0")
-            local target_gb=$(echo "$target_value" | sed 's/GB//')
-            if [[ "$current_gb" == "$target_gb" ]]; then
-                status="PASS"
-                status_color="$GREEN"
-            fi
-        elif [[ "$current_value" == "$target_value" ]]; then
+        # 直接比较字符串值（PostgreSQL 返回带单位的字符串，如 "2GB"、"16MB"）
+        if [[ "$current_value" == "$target_value" ]]; then
             status="PASS"
             status_color="$GREEN"
         fi
@@ -258,11 +251,11 @@ verify_slow_query_log() {
             log_info "最新日志文件: $latest_log"
 
             # 检查慢查询记录
-            local slow_query_count=$(grep -c "duration:" "$latest_log" 2>/dev/null || echo "0")
-            if [[ "$slow_query_count" -gt 0 ]]; then
+            local slow_query_count=$(grep -c "duration:" "$latest_log" 2>/dev/null | tr -d '[:space:]' || echo "0")
+            if [[ "$slow_query_count" =~ ^[0-9]+$ ]] && [[ "$slow_query_count" -gt 0 ]]; then
                 log_pass "慢查询日志记录: 已记录 $slow_query_count 条"
             else
-                log_info "慢查询日志记录: 暂无慢查询记录（阈值 ${log_min_duration}ms）"
+                log_info "慢查询日志记录: 暂无慢查询记录（阈值 ${log_min_duration}）"
             fi
         else
             log_warn "未找到日志文件"
@@ -301,18 +294,21 @@ verify_performance_metrics() {
     # 缓存命中率
     local cache_stats=$(exec_sql "
         SELECT 
-            sum(heap_blks_read) as heap_read,
-            sum(heap_blks_hit) as heap_hit,
-            round(sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) * 100, 2) as cache_hit_rate
+            COALESCE(sum(heap_blks_read), 0) as heap_read,
+            COALESCE(sum(heap_blks_hit), 0) as heap_hit,
+            COALESCE(round(sum(heap_blks_hit) / NULLIF(sum(heap_blks_hit) + sum(heap_blks_read), 0) * 100, 2), 0) as cache_hit_rate
         FROM pg_statio_user_tables;
     ")
 
-    local cache_hit_rate=$(echo "$cache_stats" | cut -d'|' -f3)
+    local cache_hit_rate=$(echo "$cache_stats" | cut -d'|' -f3 | tr -d '[:space:]')
+    if [[ -z "$cache_hit_rate" || "$cache_hit_rate" == "" ]]; then
+        cache_hit_rate="0"
+    fi
     log_info "数据缓存命中率: ${cache_hit_rate}%"
 
-    if (( $(echo "$cache_hit_rate > 90" | bc -l) )); then
+    if [[ "$cache_hit_rate" =~ ^[0-9.]+$ ]] && (( $(echo "$cache_hit_rate > 90" | bc -l 2>/dev/null || echo "0") )); then
         log_pass "数据缓存命中率: 优秀 (${cache_hit_rate}%)"
-    elif (( $(echo "$cache_hit_rate > 80" | bc -l) )); then
+    elif [[ "$cache_hit_rate" =~ ^[0-9.]+$ ]] && (( $(echo "$cache_hit_rate > 80" | bc -l 2>/dev/null || echo "0") )); then
         log_warn "数据缓存命中率: 良好 (${cache_hit_rate}%)"
     else
         log_fail "数据缓存命中率: 较低 (${cache_hit_rate}%)"
@@ -321,18 +317,21 @@ verify_performance_metrics() {
     # 索引命中率
     local index_stats=$(exec_sql "
         SELECT 
-            sum(idx_blks_read) as idx_read,
-            sum(idx_blks_hit) as idx_hit,
-            round(sum(idx_blks_hit) / (sum(idx_blks_hit) + sum(idx_blks_read)) * 100, 2) as index_hit_rate
+            COALESCE(sum(idx_blks_read), 0) as idx_read,
+            COALESCE(sum(idx_blks_hit), 0) as idx_hit,
+            COALESCE(round(sum(idx_blks_hit) / NULLIF(sum(idx_blks_hit) + sum(idx_blks_read), 0) * 100, 2), 0) as index_hit_rate
         FROM pg_statio_user_indexes;
     ")
 
-    local index_hit_rate=$(echo "$index_stats" | cut -d'|' -f3)
+    local index_hit_rate=$(echo "$index_stats" | cut -d'|' -f3 | tr -d '[:space:]')
+    if [[ -z "$index_hit_rate" || "$index_hit_rate" == "" ]]; then
+        index_hit_rate="0"
+    fi
     log_info "索引缓存命中率: ${index_hit_rate}%"
 
-    if (( $(echo "$index_hit_rate > 90" | bc -l) )); then
+    if [[ "$index_hit_rate" =~ ^[0-9.]+$ ]] && (( $(echo "$index_hit_rate > 90" | bc -l 2>/dev/null || echo "0") )); then
         log_pass "索引缓存命中率: 优秀 (${index_hit_rate}%)"
-    elif (( $(echo "$index_hit_rate > 80" | bc -l) )); then
+    elif [[ "$index_hit_rate" =~ ^[0-9.]+$ ]] && (( $(echo "$index_hit_rate > 80" | bc -l 2>/dev/null || echo "0") )); then
         log_warn "索引缓存命中率: 良好 (${index_hit_rate}%)"
     else
         log_fail "索引缓存命中率: 较低 (${index_hit_rate}%)"
@@ -360,7 +359,18 @@ verify_system_resources() {
     print_section "6. 系统资源验证"
 
     # CPU 使用率
-    if command -v top &> /dev/null; then
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # macOS: 使用 top -l 1 -n 0 获取 CPU 使用率
+        local cpu_usage=$(top -l 1 -n 0 2>/dev/null | grep "CPU usage" | awk '{print $3}' | cut -d'%' -f1 || echo "0")
+        log_info "CPU 使用率: ${cpu_usage}%"
+
+        if [[ "$cpu_usage" =~ ^[0-9.]+$ ]] && (( $(echo "$cpu_usage < 80" | bc -l 2>/dev/null || echo "0") )); then
+            log_pass "CPU 使用率: 正常"
+        else
+            log_warn "CPU 使用率: 较高"
+        fi
+    elif command -v top &> /dev/null; then
+        # Linux: 使用 top -bn1
         local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1 2>/dev/null || echo "0")
         log_info "CPU 使用率: ${cpu_usage}%"
 
@@ -392,7 +402,12 @@ verify_system_resources() {
     fi
 
     # 磁盘 I/O
-    if command -v iostat &> /dev/null; then
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # macOS: 使用 iostat -c 2 -w 1
+        log_info "磁盘 I/O 统计:"
+        iostat -c 2 -w 1 2>/dev/null | tail -5 || log_info "iostat 不可用"
+    elif command -v iostat &> /dev/null; then
+        # Linux: 使用 iostat -x 1 2
         log_info "磁盘 I/O 统计:"
         iostat -x 1 2 2>/dev/null | tail -10 || log_info "iostat 不可用"
     fi

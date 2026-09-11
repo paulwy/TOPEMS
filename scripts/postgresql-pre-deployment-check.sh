@@ -9,18 +9,19 @@ set -euo pipefail
 # ==================== 配置变量 ====================
 
 # PostgreSQL 配置文件路径（根据实际环境修改）
-PG_CONF="/etc/postgresql/16/main/postgresql.conf"
-# PG_CONF="/opt/homebrew/var/postgresql@18/postgresql.conf"  # macOS Homebrew
+# PG_CONF="/etc/postgresql/16/main/postgresql.conf"  # Linux
+PG_CONF="/opt/homebrew/var/postgresql@18/postgresql.conf"  # macOS Homebrew
 
 # PostgreSQL 数据目录
-PG_DATA="/var/lib/postgresql/16/main"
-# PG_DATA="/opt/homebrew/var/postgresql@18"  # macOS Homebrew
+# PG_DATA="/var/lib/postgresql/16/main"  # Linux
+PG_DATA="/opt/homebrew/var/postgresql@18"  # macOS Homebrew
 
-# PostgreSQL 服务名（systemd）
+# PostgreSQL 服务名（systemd/Linux）
 PG_SERVICE="postgresql"
 
 # 备份目录
-BACKUP_DIR="/var/backups/postgresql"
+# BACKUP_DIR="/var/backups/postgresql"  # Linux
+BACKUP_DIR="/opt/homebrew/var/postgresql@18/backups"  # macOS Homebrew
 
 # 最低要求配置
 MIN_MEMORY_GB=8
@@ -29,21 +30,22 @@ MIN_DISK_SPACE_GB=10
 MIN_PG_VERSION="16"
 
 # 目标配置参数（用于对比）
-declare -A TARGET_CONFIG=(
-    ["shared_buffers"]="4GB"
-    ["effective_cache_size"]="12GB"
-    ["work_mem"]="16MB"
-    ["maintenance_work_mem"]="512MB"
-    ["max_wal_size"]="4GB"
-    ["min_wal_size"]="1GB"
-    ["checkpoint_timeout"]="15min"
-    ["random_page_cost"]="1.1"
-    ["effective_io_concurrency"]="200"
-    ["default_statistics_target"]="200"
-    ["max_connections"]="200"
-    ["shared_preload_libraries"]="pg_stat_statements"
-    ["log_min_duration_statement"]="1000"
-    ["logging_collector"]="on"
+# 使用普通数组兼容 bash 3.2（macOS 默认），格式：参数名|目标值
+TARGET_CONFIG=(
+    "shared_buffers|4GB"
+    "effective_cache_size|12GB"
+    "work_mem|16MB"
+    "maintenance_work_mem|512MB"
+    "max_wal_size|4GB"
+    "min_wal_size|1GB"
+    "checkpoint_timeout|15min"
+    "random_page_cost|1.1"
+    "effective_io_concurrency|200"
+    "default_statistics_target|200"
+    "max_connections|200"
+    "shared_preload_libraries|pg_stat_statements"
+    "log_min_duration_statement|1000"
+    "logging_collector|on"
 )
 
 # ==================== 颜色定义 ====================
@@ -222,29 +224,13 @@ check_current_config() {
         return
     fi
 
-    local params=(
-        "shared_buffers"
-        "effective_cache_size"
-        "work_mem"
-        "maintenance_work_mem"
-        "max_wal_size"
-        "min_wal_size"
-        "checkpoint_timeout"
-        "random_page_cost"
-        "effective_io_concurrency"
-        "default_statistics_target"
-        "max_connections"
-        "shared_preload_libraries"
-        "log_min_duration_statement"
-        "logging_collector"
-    )
-
     printf "%-30s %-20s %-20s %s\n" "参数名" "当前值" "目标值" "状态"
     printf "%-30s %-20s %-20s %s\n" "------" "------" "------" "----"
 
-    for param in "${params[@]}"; do
-        local current_value=$(sudo -u postgres psql -t -c "SHOW $param;" 2>/dev/null | tr -d '[:space:]' || echo "N/A")
-        local target_value=${TARGET_CONFIG[$param]}
+    for config_item in "${TARGET_CONFIG[@]}"; do
+        local param=$(echo "$config_item" | cut -d'|' -f1)
+        local target_value=$(echo "$config_item" | cut -d'|' -f2)
+        local current_value=$(psql -U air -d topems -t -c "SHOW $param;" 2>/dev/null | tr -d '[:space:]' || echo "N/A")
         local status="待修改"
 
         if [[ "$current_value" == "$target_value" ]]; then
@@ -265,8 +251,8 @@ check_connections() {
     fi
 
     # 总连接数
-    local total_connections=$(sudo -u postgres psql -t -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d '[:space:]' || echo "0")
-    local max_connections=$(sudo -u postgres psql -t -c "SHOW max_connections;" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    local total_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    local max_connections=$(psql -U air -d topems -t -c "SHOW max_connections;" 2>/dev/null | tr -d '[:space:]' || echo "0")
     local connection_usage=$(echo "scale=1; $total_connections * 100 / $max_connections" | bc 2>/dev/null || echo "0")
 
     log_info "总连接数: $total_connections / $max_connections (${connection_usage}%)"
@@ -278,7 +264,7 @@ check_connections() {
     fi
 
     # 活跃连接数
-    local active_connections=$(sudo -u postgres psql -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    local active_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null | tr -d '[:space:]' || echo "0")
     log_info "活跃连接数: $active_connections"
 
     if [[ "$active_connections" -gt 10 ]]; then
@@ -288,7 +274,7 @@ check_connections() {
     fi
 
     # 最长查询时间
-    local longest_query=$(sudo -u postgres psql -t -c "
+    local longest_query=$(psql -U air -d topems -t -c "
         SELECT COALESCE(max(EXTRACT(EPOCH FROM (now() - query_start))), 0)::int
         FROM pg_stat_activity
         WHERE state = 'active' AND pid != pg_backend_pid();
