@@ -415,3 +415,202 @@ pub fn cache_hit_rate(service: &str, entity: &str, operation: &str) -> f64 {
         hits as f64 / total as f64
     }
 }
+
+// ==================== 事件驱动缓存失效 ====================
+
+/// 缓存失效级别
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InvalidationLevel {
+    /// 精确失效指定的缓存键
+    Specific,
+    /// 通配符匹配失效（如 "erp:dict:*"）
+    Pattern,
+    /// 清空整个缓存
+    All,
+}
+
+impl InvalidationLevel {
+    /// 从字符串解析失效级别
+    pub fn from_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "specific" => InvalidationLevel::Specific,
+            "pattern" => InvalidationLevel::Pattern,
+            "all" => InvalidationLevel::All,
+            _ => InvalidationLevel::Pattern,
+        }
+    }
+}
+
+/// 缓存失效事件 payload（与 shared-event 中的 CacheInvalidatedPayload 对应）
+#[derive(Debug, Clone)]
+pub struct CacheInvalidationEvent {
+    /// 发起失效的服务名称
+    pub source_service: String,
+    /// 实例标识（hostname:pid），避免自身重复处理
+    pub source_instance: String,
+    /// 缓存键前缀，支持批量失效
+    pub cache_key_pattern: String,
+    /// 失效级别
+    pub invalidation_level: InvalidationLevel,
+    /// 失效原因
+    pub reason: Option<String>,
+}
+
+/// 缓存失效处理器 trait
+///
+/// 各服务实现此 trait，注册到 CacheInvalidationListener 中。
+/// 当接收到缓存失效事件时，监听器会调用所有注册的处理器。
+pub trait CacheInvalidationHandler: Send + Sync {
+    /// 获取处理器名称（用于日志和调试）
+    fn name(&self) -> &str;
+
+    /// 处理缓存失效事件
+    ///
+    /// # 参数
+    /// - `event`: 缓存失效事件
+    fn handle_invalidation(&self, event: &CacheInvalidationEvent);
+}
+
+/// 缓存失效监听器
+///
+/// 管理多个缓存失效处理器，接收缓存失效事件并分发到对应的处理器。
+/// 各服务在启动时创建此监听器，注册自己的缓存失效处理器，
+/// 然后使用 shared-event 的 EventSubscriber 订阅 CacheInvalidated 事件，
+/// 在事件回调中调用 `dispatch_invalidation` 方法。
+pub struct CacheInvalidationListener {
+    /// 当前服务名称（用于过滤自身发起的事件）
+    service_name: String,
+    /// 当前实例标识（hostname:pid，用于过滤自身发起的事件）
+    instance_id: String,
+    /// 注册的缓存失效处理器
+    handlers: Vec<Box<dyn CacheInvalidationHandler>>,
+}
+
+impl CacheInvalidationListener {
+    /// 创建新的缓存失效监听器
+    pub fn new(service_name: &str) -> Self {
+        use std::process::id;
+
+        let hostname = hostname::get()
+            .map(|h| h.to_string_lossy().to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+        let instance_id = format!("{}:{}", hostname, id());
+
+        Self {
+            service_name: service_name.to_string(),
+            instance_id,
+            handlers: Vec::new(),
+        }
+    }
+
+    /// 注册缓存失效处理器
+    pub fn register_handler<H: CacheInvalidationHandler + 'static>(&mut self, handler: H) {
+        tracing::info!(
+            "注册缓存失效处理器: {}",
+            handler.name()
+        );
+        self.handlers.push(Box::new(handler));
+    }
+
+    /// 分发缓存失效事件到所有注册的处理器
+    ///
+    /// 会自动过滤自身发起的事件（通过 source_instance 判断）。
+    pub fn dispatch_invalidation(&self, event: &CacheInvalidationEvent) {
+        // 过滤自身发起的事件，避免重复处理
+        if event.source_instance == self.instance_id {
+            tracing::debug!(
+                "忽略自身发起的缓存失效事件: service={}, pattern={}",
+                event.source_service,
+                event.cache_key_pattern
+            );
+            return;
+        }
+
+        tracing::info!(
+            "处理缓存失效事件: source_service={}, pattern={}, level={:?}, reason={:?}",
+            event.source_service,
+            event.cache_key_pattern,
+            event.invalidation_level,
+            event.reason
+        );
+
+        for handler in &self.handlers {
+            handler.handle_invalidation(event);
+        }
+    }
+
+    /// 获取当前实例标识
+    pub fn instance_id(&self) -> &str {
+        &self.instance_id
+    }
+
+    /// 获取当前服务名称
+    pub fn service_name(&self) -> &str {
+        &self.service_name
+    }
+}
+
+/// 通用的 InMemoryCache 失效处理器
+///
+/// 用于失效基于 InMemoryCache 的本地缓存。
+/// 支持三种失效级别：specific（精确键）、pattern（前缀匹配）、all（清空全部）。
+pub struct InMemoryCacheInvalidationHandler<T: Clone + Send + Sync + 'static> {
+    /// 处理器名称
+    name: String,
+    /// 缓存引用
+    cache: std::sync::Arc<InMemoryCache<T>>,
+    /// 缓存键前缀（用于 pattern 匹配，如 "erp:dict:"）
+    key_prefix: String,
+}
+
+impl<T: Clone + Send + Sync + 'static> InMemoryCacheInvalidationHandler<T> {
+    /// 创建新的 InMemoryCache 失效处理器
+    pub fn new(name: &str, cache: std::sync::Arc<InMemoryCache<T>>, key_prefix: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            cache,
+            key_prefix: key_prefix.to_string(),
+        }
+    }
+}
+
+impl<T: Clone + Send + Sync + 'static> CacheInvalidationHandler
+    for InMemoryCacheInvalidationHandler<T>
+{
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn handle_invalidation(&self, event: &CacheInvalidationEvent) {
+        match event.invalidation_level {
+            InvalidationLevel::All => {
+                // 清空整个缓存
+                self.cache.clear();
+                tracing::info!("缓存已全部清空: {}", self.name);
+            }
+            InvalidationLevel::Specific => {
+                // 精确失效指定的缓存键
+                self.cache.remove(&event.cache_key_pattern);
+                tracing::info!("缓存键已失效: {} -> {}", self.name, event.cache_key_pattern);
+            }
+            InvalidationLevel::Pattern => {
+                // 前缀匹配失效
+                // 注意：InMemoryCache 基于 moka，不支持直接的前缀匹配删除，
+                // 这里采用简化策略：如果事件的 pattern 以本缓存的 key_prefix 开头，
+                // 则清空整个缓存（因为无法精确删除前缀匹配的键）。
+                // 更精细的实现需要维护键索引。
+                if event.cache_key_pattern.starts_with(&self.key_prefix)
+                    || self.key_prefix.starts_with(&event.cache_key_pattern)
+                    || event.cache_key_pattern == "*"
+                {
+                    self.cache.clear();
+                    tracing::info!(
+                        "缓存已按前缀清空: {} (pattern={})",
+                        self.name,
+                        event.cache_key_pattern
+                    );
+                }
+            }
+        }
+    }
+}

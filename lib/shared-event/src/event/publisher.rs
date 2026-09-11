@@ -1,10 +1,11 @@
 use super::error::EventResult;
 use super::event_types::{
-    EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventType,
-    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
-    HrmEmployeeCreatedPayload, InboundOrderRequestedPayload, LimsInspectionAbnormalDetectedPayload,
-    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
-    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    CacheInvalidatedPayload, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
+    EventType, HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload,
+    HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload, InboundOrderRequestedPayload,
+    LimsInspectionAbnormalDetectedPayload, LimsInspectionResultSubmittedPayload,
+    LimsSampleRegisteredPayload, PmProjectCreatedPayload, PmProjectUpdatedPayload,
+    PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
     PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload, QmsCorrectiveActionCreatedPayload,
     QmsInspectionCompletedPayload, ReconciliationApprovedPayload, ReconciliationCreatedPayload,
     ReconciliationUpdatedPayload, SalesOrderApprovedPayload, SalesOrderCreatedPayload,
@@ -543,6 +544,47 @@ impl EventPublisher {
         payload: SettlementRejectedPayload,
     ) -> EventResult<()> {
         self.publish_event(EventType::SettlementRejected, payload)
+            .await
+    }
+
+    // --- 缓存失效事件（事件驱动缓存一致性） ---
+
+    /// 发布缓存失效事件
+    ///
+    /// 当主数据变更时，通过此方法发布缓存失效事件，通知其他服务失效相关本地缓存。
+    /// 支持三种失效级别：
+    /// - `specific`：精确失效指定的缓存键
+    /// - `pattern`：通配符匹配失效（如 "erp:dict:*"）
+    /// - `all`：清空整个缓存
+    ///
+    /// # 参数
+    /// - `cache_key_pattern`：缓存键或键模式
+    /// - `invalidation_level`：失效级别（specific/pattern/all）
+    /// - `reason`：失效原因（可选）
+    pub async fn publish_cache_invalidated(
+        &self,
+        cache_key_pattern: &str,
+        invalidation_level: &str,
+        reason: Option<&str>,
+    ) -> EventResult<()> {
+        use chrono::Utc;
+        use std::process::id;
+
+        let hostname = hostname::get()
+            .map(|h| h.to_string_lossy().to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
+        let source_instance = format!("{}:{}", hostname, id());
+
+        let payload = CacheInvalidatedPayload {
+            source_service: self.service_name.clone(),
+            source_instance,
+            cache_key_pattern: cache_key_pattern.to_string(),
+            invalidation_level: invalidation_level.to_string(),
+            reason: reason.map(|r| r.to_string()),
+            invalidated_at: Utc::now(),
+        };
+
+        self.publish_event(EventType::CacheInvalidated, payload)
             .await
     }
 }
