@@ -1,2 +1,2 @@
-// 统一使用 shared-core 的 InMemoryCache 实现（接受 Duration 作为 TTL）
-pub use topems_shared_core::cache::InMemoryCache;
+// 缓存已升级为 topems_shared_core::l2_cache::AsyncL2Cache，
+// 本文件保留为空模块以维持 shared::cache 路径兼容。

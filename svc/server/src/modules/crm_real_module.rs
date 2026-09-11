@@ -18,9 +18,9 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_crm::modules::{crm_plugin, ApiState};
-use topems_crm::shared::InMemoryCache;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::service_client::{
     ErpApi, TypedServiceClient, WmsApi, WorkflowApi,
 };
@@ -92,6 +92,22 @@ impl CrmRealModule {
             .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
 
         // 5. 构建业务 ApiState（与独立部署 main.rs 一致）
+        fn crm_l2_config(entity: &str) -> L2CacheConfig {
+            L2CacheConfig {
+                instance_prefix: "crm".to_string(),
+                l1_ttl: Duration::from_secs(60),
+                l2_ttl: Duration::from_secs(600),
+                l1_capacity: 10_000,
+                ..Default::default()
+            }
+            .with_metrics("crm", entity)
+        }
+        let customer_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("customer")));
+        let opportunity_cache =
+            Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("opportunity")));
+        let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(crm_l2_config("dict")));
+        let dashboard_cache =
+            Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("dashboard")));
         let state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
@@ -102,8 +118,10 @@ impl CrmRealModule {
             erp_client,
             wms_client,
             workflow_client,
-            customer_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
-            dashboard_cache: Arc::new(InMemoryCache::new(Duration::from_secs(300))),
+            customer_cache,
+            opportunity_cache,
+            dict_cache,
+            dashboard_cache,
         };
 
         // 6. 插件路由（lib 内 handler）

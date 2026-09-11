@@ -14,11 +14,11 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_lims::modules;
-use topems_lims::shared;
 use topems_lims::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;
 
 /// 真实 LIMS 模块：持有数据库连接池 + 完整业务路由
@@ -66,13 +66,33 @@ impl LimsRealModule {
         let health_config = SimpleHealthConfig::new("topems-lims").with_db(ctx.db.clone());
 
         // 5. 构建业务 AppState（与独立部署 main.rs 一致）
+        fn lims_l2_config(entity: &str) -> L2CacheConfig {
+            L2CacheConfig {
+                instance_prefix: "lims".to_string(),
+                l1_ttl: Duration::from_secs(60),
+                l2_ttl: Duration::from_secs(600),
+                l1_capacity: 10_000,
+                ..Default::default()
+            }
+            .with_metrics("lims", entity)
+        }
+        let sample_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("sample")));
+        let task_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("task")));
+        let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(lims_l2_config("dict")));
+        let test_method_cache =
+            Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("test_method")));
+        let instrument_cache =
+            Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("instrument")));
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
             health_config,
             event_publisher: ctx.event_publisher.clone(),
-            test_method_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(3600))),
-            instrument_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(1800))),
+            sample_cache,
+            task_cache,
+            dict_cache,
+            test_method_cache,
+            instrument_cache,
         };
 
         // 6. 业务路由（权限中间件 + 开发验证模拟认证）

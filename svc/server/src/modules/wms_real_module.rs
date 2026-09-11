@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
-use topems_shared_core::cache::InMemoryCache;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_wms::modules::{create_routes, ApiState};
 
 /// 真实 WMS 模块：持有数据库连接池 + 完整业务路由 + 缓存
@@ -63,15 +63,52 @@ impl WmsRealModule {
         }
 
         // 3. 构建业务 ApiState（与独立部署 main.rs 一致）
+        let redis_url = std::env::var("REDIS_URL").ok();
+        let warehouse_cache = match AsyncL2Cache::try_new(
+            L2CacheConfig {
+                instance_prefix: "wms".to_string(),
+                l1_ttl: Duration::from_secs(60),
+                l2_ttl: Duration::from_secs(600),
+                l1_capacity: 10_000,
+                ..Default::default()
+            }
+            .with_metrics("wms", "warehouse"),
+            redis_url.as_deref(),
+        )
+        .await
+        {
+            Ok(c) => Arc::new(c),
+            Err((c, _)) => Arc::new(c),
+        };
+        let inventory_cache = Arc::new(AsyncL2Cache::new_l1_only(
+            L2CacheConfig {
+                instance_prefix: "wms".to_string(),
+                l1_ttl: Duration::from_secs(60),
+                l2_ttl: Duration::from_secs(600),
+                l1_capacity: 10_000,
+                ..Default::default()
+            }
+            .with_metrics("wms", "inventory"),
+        ));
+        let dict_cache = Arc::new(AsyncL2Cache::new_l1_only(
+            L2CacheConfig {
+                instance_prefix: "wms".to_string(),
+                l1_ttl: Duration::from_secs(60),
+                l2_ttl: Duration::from_secs(600),
+                l1_capacity: 10_000,
+                ..Default::default()
+            }
+            .with_metrics("wms", "dict"),
+        ));
         let state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,
             event_publisher: ctx.event_publisher.clone(),
-            warehouse_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
-            inventory_cache: Arc::new(InMemoryCache::new(Duration::from_secs(3600))),
-            dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(1800))),
+            warehouse_cache,
+            inventory_cache,
+            dict_cache,
         };
 
         // 4. 业务路由（tenant 中间件 + 权限中间件 + with_state）

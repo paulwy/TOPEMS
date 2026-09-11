@@ -14,11 +14,11 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_ehs::modules;
-use topems_ehs::shared;
 use topems_ehs::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
@@ -75,16 +75,20 @@ impl EhsRealModule {
             }
         };
 
-        // 5. 内存缓存（与独立部署 main.rs 一致）
-        let hazard_cache = Arc::new(shared::cache::InMemoryCache::<serde_json::Value>::new(
-            Duration::from_secs(300),
-        ));
-        let training_cache = Arc::new(shared::cache::InMemoryCache::<serde_json::Value>::new(
-            Duration::from_secs(120),
-        ));
-        let dict_cache = Arc::new(shared::cache::InMemoryCache::<String>::new(
-            Duration::from_secs(600),
-        ));
+        // 5. 多级缓存（与独立部署 main.rs 一致，L1-only 模式）
+        fn ehs_l2_config(entity: &str) -> L2CacheConfig {
+            L2CacheConfig {
+                instance_prefix: "ehs".to_string(),
+                l1_ttl: Duration::from_secs(60),
+                l2_ttl: Duration::from_secs(600),
+                l1_capacity: 10_000,
+                ..Default::default()
+            }
+            .with_metrics("ehs", entity)
+        }
+        let hazard_cache = Arc::new(AsyncL2Cache::new_l1_only(ehs_l2_config("hazard")));
+        let training_cache = Arc::new(AsyncL2Cache::new_l1_only(ehs_l2_config("training")));
+        let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(ehs_l2_config("dict")));
 
         // 6. 健康检查配置
         let health_config = SimpleHealthConfig::new("topems-ehs").with_db(ctx.db.clone());
