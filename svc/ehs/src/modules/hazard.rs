@@ -17,7 +17,7 @@ use topems_shared_auth::get_tenant_id;
 use topems_shared_service_client::service_client::CreateInstanceRequest;
 
 fn hazard_cache_key(tenant_id: Uuid, id: &str) -> String {
-    format!("ehs:hazard:{}:{}", tenant_id, id)
+    format!("ehs:hazard:get:{}:{}", tenant_id, id)
 }
 
 fn hazards_list_cache_key(
@@ -29,7 +29,7 @@ fn hazards_list_cache_key(
     source: &Option<String>,
 ) -> String {
     format!(
-        "ehs:hazards:{}:page:{}:size:{}:status:{:?}:level:{:?}:source:{:?}",
+        "ehs:hazard:list:{}:page:{}:size:{}:status:{:?}:level:{:?}:source:{:?}",
         tenant_id, page, page_size, status, level, source
     )
 }

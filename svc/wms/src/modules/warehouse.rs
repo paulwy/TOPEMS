@@ -16,7 +16,7 @@ use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 fn warehouse_cache_key(tenant_id: Uuid, id: Uuid) -> String {
-    format!("warehouse:{}:{}", tenant_id, id)
+    format!("wms:warehouse:get:{}:{}", tenant_id, id)
 }
 
 fn warehouse_list_cache_key(
@@ -27,7 +27,7 @@ fn warehouse_list_cache_key(
     status: &Option<String>,
 ) -> String {
     format!(
-        "warehouses:{}:page:{}:size:{}:search:{:?}:status:{:?}",
+        "wms:warehouse:list:{}:page:{}:size:{}:search:{:?}:status:{:?}",
         tenant_id, page, page_size, search, status
     )
 }
@@ -527,8 +527,8 @@ mod tests {
         let tenant_id = Uuid::nil();
         let id = Uuid::nil();
         let key = warehouse_cache_key(tenant_id, id);
-        assert_eq!(key, format!("warehouse:{}:{}", tenant_id, id));
-        assert!(key.starts_with("warehouse:"));
+        assert_eq!(key, format!("wms:warehouse:get:{}:{}", tenant_id, id));
+        assert!(key.starts_with("wms:warehouse:get:"));
     }
 
     #[test]
@@ -551,7 +551,7 @@ mod tests {
             &Some("test".to_string()),
             &Some("active".to_string()),
         );
-        assert!(key.starts_with("warehouses:"));
+        assert!(key.starts_with("wms:warehouse:list:"));
         assert!(key.contains("page:1"));
         assert!(key.contains("size:20"));
         assert!(key.contains("search:"));
@@ -562,7 +562,7 @@ mod tests {
     fn test_warehouse_list_cache_key_default() {
         let tenant_id = Uuid::nil();
         let key = warehouse_list_cache_key(tenant_id, 1, 10, &None, &None);
-        assert!(key.starts_with("warehouses:"));
+        assert!(key.starts_with("wms:warehouse:list:"));
         assert!(key.contains("page:1"));
         assert!(key.contains("size:10"));
     }
