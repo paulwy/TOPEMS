@@ -63,6 +63,50 @@ async fn main() -> anyhow::Result<()> {
     let dict_cache = std::sync::Arc::new(topems_shared::LocalInMemoryCache::new(std::time::Duration::from_secs(600)));
     tracing::info!("💾 字典缓存初始化完成（PDM，TTL 600秒）");
 
+    // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
+    {
+        let cache = dict_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[pdm] 开始缓存预热...");
+
+            // 预热物料列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM materials WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'pagesize', 20
+                ) as data
+                FROM (
+                    SELECT m.* FROM materials m
+                    WHERE m.deleted_at IS NULL
+                    ORDER BY m.created_at DESC
+                    LIMIT 20 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "pdm:material:list:default:page:1:pagesize:20:search:None:status:None";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[pdm] 物料列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[pdm] 物料列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[pdm] 物料列表缓存预热失败: {}", e);
+                }
+            }
+
+            tracing::info!("[pdm] 缓存预热完成");
+        });
+    }
+
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), dict_cache.clone()).await {
         tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
     }

@@ -89,6 +89,50 @@ async fn main() -> anyhow::Result<()> {
     let dict_cache = std::sync::Arc::new(LocalInMemoryCache::new(std::time::Duration::from_secs(600)));
     tracing::info!("💾 字典缓存初始化完成（QMS，TTL 600秒）");
 
+    // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
+    {
+        let cache = dict_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[qms] 开始缓存预热...");
+
+            // 预热质量标准列表（第一页，默认参数）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM quality_standards WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'pagesize', 20
+                ) as data
+                FROM (
+                    SELECT qs.* FROM quality_standards qs
+                    WHERE qs.deleted_at IS NULL
+                    ORDER BY qs.created_at DESC
+                    LIMIT 20 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "qms:quality_standard:list:default:page:1:pagesize:20:category:None:status:None:search:None";
+                    cache.set(cache_key.to_string(), data);
+                    tracing::info!("[qms] 质量标准列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[qms] 质量标准列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[qms] 质量标准列表缓存预热失败: {}", e);
+                }
+            }
+
+            tracing::info!("[qms] 缓存预热完成");
+        });
+    }
+
     // 缓存失效事件订阅（事件驱动缓存一致性）
     {
         let mut cache_invalidation_listener = CacheInvalidationListener::new("qms");
