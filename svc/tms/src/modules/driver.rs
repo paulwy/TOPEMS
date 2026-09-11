@@ -206,7 +206,7 @@ pub async fn list_drivers(
     tag = "TMS - Driver"
 )]
 pub async fn create_driver(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -248,6 +248,23 @@ pub async fn create_driver(
                     return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
+
+            // 失效列表缓存（创建后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("tms:driver:*", "pattern", Some("driver_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success(driver, "司机创建成功"))
         }
         Err(e) => {

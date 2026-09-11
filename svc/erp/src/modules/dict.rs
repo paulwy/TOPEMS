@@ -355,6 +355,20 @@ pub async fn create_dict_type(
             let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
             state.dict_cache.remove(&cache_key);
             tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("erp:dict_type:*", "pattern", Some("dict_type_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             (
                 Json(ApiResponse::success(dict_type.clone(), "字典类型创建成功")),
                 "success".to_string(),
@@ -509,6 +523,20 @@ pub async fn update_dict_type(
             let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
             state.dict_cache.remove(&cache_key);
             tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("erp:dict_type:*", "pattern", Some("dict_type_updated"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             (
                 Json(ApiResponse::success(dict_type.clone(), "字典类型更新成功")),
                 "success".to_string(),
@@ -597,6 +625,20 @@ pub async fn delete_dict_type(
             let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
             state.dict_cache.remove(&cache_key);
             tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("erp:dict_type:*", "pattern", Some("dict_type_deleted"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             (
                 Json(ApiResponse::success("".to_string(), "字典类型删除成功")),
                 "success".to_string(),

@@ -189,6 +189,20 @@ pub async fn create_standard(
             }
             // 失效列表缓存（创建后列表数据可能变化）
             state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("qms:quality_standard:*", "pattern", Some("quality_standard_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success(data, "质量标准创建成功"))
         }
         Err(e) => {
@@ -285,6 +299,20 @@ pub async fn update_standard(
         Ok(data) => {
             // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("qms:quality_standard:*", "pattern", Some("quality_standard_updated"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success(data, "质量标准更新成功"))
         }
         Err(e) => {
@@ -333,6 +361,20 @@ pub async fn delete_standard(
         Ok(_) => {
             // 失效列表缓存（删除后列表数据可能变化）
             state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("qms:quality_standard:*", "pattern", Some("quality_standard_deleted"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             Json(ApiResponse::success(true, "质量标准删除成功"))
         }
         Err(e) => {

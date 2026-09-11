@@ -357,6 +357,19 @@ pub async fn create_supplier(
             state.supplier_cache.clear();
             tracing::debug!("🗑️ 供应商缓存已清空（创建供应商）");
 
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("srm:supplier:*", "pattern", Some("supplier_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             record_audit_log(
                 &state.db,
                 "suppliers",
@@ -619,6 +632,19 @@ pub async fn update_supplier(
             state.supplier_cache.clear();
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
 
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("srm:supplier:*", "pattern", Some("supplier_updated"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
             let new_data = serde_json::to_value(&supplier).ok();
             record_audit_log(
                 &state.db,
@@ -742,6 +768,19 @@ pub async fn delete_supplier(
             state.supplier_cache.remove(&cache_key);
             state.supplier_cache.clear();
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("srm:supplier:*", "pattern", Some("supplier_deleted"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
 
             record_audit_log(
                 &state.db,

@@ -415,22 +415,40 @@ pub async fn create_process_route(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
-            ProcessRouteResponse {
-                id: r.id.to_string(),
-                code: r.code,
-                name: r.name,
-                description: r.description,
-                version: None,
-                status: r.status,
-                estimated_time_minutes: None,
-                total_estimated_time_minutes: None,
-                process_count: None,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
-            },
-            "创建工艺路线成功",
-        )),
+        Ok(r) => {
+            // 失效列表缓存（创建后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("mes:process_route:*", "pattern", Some("process_route_created"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(
+                ProcessRouteResponse {
+                    id: r.id.to_string(),
+                    code: r.code,
+                    name: r.name,
+                    description: r.description,
+                    version: None,
+                    status: r.status,
+                    estimated_time_minutes: None,
+                    total_estimated_time_minutes: None,
+                    process_count: None,
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
+                },
+                "创建工艺路线成功",
+            ))
+        }
         Err(e) => {
             tracing::error!("Failed to create process route: {}", e);
             Json(ApiResponse::error(500, "创建工艺路线失败"))
@@ -478,22 +496,40 @@ pub async fn update_process_route(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
-            ProcessRouteResponse {
-                id: r.id.to_string(),
-                code: r.code,
-                name: r.name,
-                description: r.description,
-                version: None,
-                status: r.status,
-                estimated_time_minutes: None,
-                total_estimated_time_minutes: None,
-                process_count: None,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
-            },
-            "更新工艺路线成功",
-        )),
+        Ok(r) => {
+            // 失效列表缓存（更新后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("mes:process_route:*", "pattern", Some("process_route_updated"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(
+                ProcessRouteResponse {
+                    id: r.id.to_string(),
+                    code: r.code,
+                    name: r.name,
+                    description: r.description,
+                    version: None,
+                    status: r.status,
+                    estimated_time_minutes: None,
+                    total_estimated_time_minutes: None,
+                    process_count: None,
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
+                },
+                "更新工艺路线成功",
+            ))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺路线不存在")),
         Err(e) => {
             tracing::error!("Failed to update process route: {}", e);
@@ -530,7 +566,25 @@ pub async fn delete_process_route(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(id, "删除工艺路线成功")),
+        Ok(_) => {
+            // 失效列表缓存（删除后列表数据可能变化）
+            state.dict_cache.clear();
+
+            // 发布缓存失效事件，通知其他服务失效相关缓存
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = publisher
+                        .publish_cache_invalidated("mes:process_route:*", "pattern", Some("process_route_deleted"))
+                        .await
+                    {
+                        tracing::warn!("发布缓存失效事件失败: {}", e);
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(id, "删除工艺路线成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to delete process route: {}", e);
             Json(ApiResponse::error(500, "删除工艺路线失败"))

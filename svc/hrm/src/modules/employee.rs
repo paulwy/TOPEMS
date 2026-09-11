@@ -461,6 +461,20 @@ pub async fn update_employee(
 
     if result.code == 200 {
         state.employee_cache.remove(&employee_cache_key(&tenant_id, &id));
+
+        // 发布缓存失效事件，通知其他服务失效相关缓存
+        if let Some(ref publisher) = state.event_publisher {
+            let publisher = publisher.clone();
+            tokio::spawn(async move {
+                if let Err(e) = publisher
+                    .publish_cache_invalidated("hrm:employee:*", "pattern", Some("employee_updated"))
+                    .await
+                {
+                    tracing::warn!("发布缓存失效事件失败: {}", e);
+                }
+            });
+        }
+
         let _ = state
             .cache
             .set(
@@ -566,6 +580,19 @@ pub async fn delete_employee(
     if result.code == 200 {
         state.employee_cache.remove(&employee_cache_key(&tenant_id, &id));
         let _ = state.cache.delete(&employee_cache_key(&tenant_id, &id)).await;
+
+        // 发布缓存失效事件，通知其他服务失效相关缓存
+        if let Some(ref publisher) = state.event_publisher {
+            let publisher = publisher.clone();
+            tokio::spawn(async move {
+                if let Err(e) = publisher
+                    .publish_cache_invalidated("hrm:employee:*", "pattern", Some("employee_deleted"))
+                    .await
+                {
+                    tracing::warn!("发布缓存失效事件失败: {}", e);
+                }
+            });
+        }
 
         // 发布 MDM 主数据删除事件
         let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
