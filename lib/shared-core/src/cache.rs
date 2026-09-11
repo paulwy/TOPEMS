@@ -274,3 +274,80 @@ mod tests {
         assert_eq!(cache.get("a"), Some(1));
     }
 }
+
+/// 缓存操作类型，用于结构化日志
+#[derive(Debug, Clone, Copy)]
+pub enum CacheOperation {
+    /// 缓存命中
+    Hit,
+    /// 缓存未命中
+    Miss,
+    /// 缓存写入
+    Set,
+    /// 缓存失效（删除）
+    Remove,
+    /// 缓存清空
+    Clear,
+}
+
+impl CacheOperation {
+    /// 获取操作的描述字符串
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            CacheOperation::Hit => "缓存命中",
+            CacheOperation::Miss => "缓存未命中",
+            CacheOperation::Set => "缓存写入",
+            CacheOperation::Remove => "缓存失效",
+            CacheOperation::Clear => "缓存清空",
+        }
+    }
+}
+
+/// 统一的缓存结构化日志函数
+///
+/// 用于在所有服务中统一缓存日志格式，包含 service、entity、operation、tenant_id、cache_key 等结构化字段。
+///
+/// # 示例
+///
+/// ```rust
+/// use topems_shared_core::cache::{log_cache_operation, CacheOperation};
+///
+/// log_cache_operation("mes", "process_route", CacheOperation::Hit, "tenant-123", "mes:process_route:list:tenant-123:page:1:pagesize:10");
+/// ```
+pub fn log_cache_operation(
+    service: &str,
+    entity: &str,
+    operation: CacheOperation,
+    tenant_id: &str,
+    cache_key: &str,
+) {
+    tracing::debug!(
+        service = service,
+        entity = entity,
+        operation = operation.as_str(),
+        tenant_id = tenant_id,
+        cache_key = cache_key,
+        "{}",
+        operation.as_str()
+    );
+}
+
+/// 缓存命中日志（便捷函数）
+pub fn log_cache_hit(service: &str, entity: &str, tenant_id: &str, cache_key: &str) {
+    log_cache_operation(service, entity, CacheOperation::Hit, tenant_id, cache_key);
+}
+
+/// 缓存未命中日志（便捷函数）
+pub fn log_cache_miss(service: &str, entity: &str, tenant_id: &str, cache_key: &str) {
+    log_cache_operation(service, entity, CacheOperation::Miss, tenant_id, cache_key);
+}
+
+/// 缓存写入日志（便捷函数）
+pub fn log_cache_set(service: &str, entity: &str, tenant_id: &str, cache_key: &str) {
+    log_cache_operation(service, entity, CacheOperation::Set, tenant_id, cache_key);
+}
+
+/// 缓存失效日志（便捷函数）
+pub fn log_cache_remove(service: &str, entity: &str, tenant_id: &str, cache_key: &str) {
+    log_cache_operation(service, entity, CacheOperation::Remove, tenant_id, cache_key);
+}
