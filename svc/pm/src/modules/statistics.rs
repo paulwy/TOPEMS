@@ -669,61 +669,61 @@ mod tests {
 
 async fn build_pm_statistics(db: &PgPool) -> PmStatistics {
     PmStatistics {
-        total_projects: query_count(db, "SELECT COUNT(*) FROM pm_projects").await,
+        total_projects: query_count(db, "SELECT COUNT(*) FROM pm.projects").await,
         draft_projects: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_projects WHERE status = 'draft'",
+            "SELECT COUNT(*) FROM pm.projects WHERE status = 'draft'",
         )
         .await,
         pending_projects: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_projects WHERE status = 'pending'",
+            "SELECT COUNT(*) FROM pm.projects WHERE status = 'pending'",
         )
         .await,
         active_projects: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_projects WHERE status = 'active'",
+            "SELECT COUNT(*) FROM pm.projects WHERE status = 'active'",
         )
         .await,
         completed_projects: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_projects WHERE status = 'completed'",
+            "SELECT COUNT(*) FROM pm.projects WHERE status = 'completed'",
         )
         .await,
         cancelled_projects: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_projects WHERE status = 'cancelled'",
+            "SELECT COUNT(*) FROM pm.projects WHERE status = 'cancelled'",
         )
         .await,
 
-        total_contracts: query_count(db, "SELECT COUNT(*) FROM pm_contracts").await,
+        total_contracts: query_count(db, "SELECT COUNT(*) FROM pm.contracts").await,
         pending_contracts: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_contracts WHERE status = 'pending'",
+            "SELECT COUNT(*) FROM pm.contracts WHERE status = 'pending'",
         )
         .await,
         active_contracts: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_contracts WHERE status = 'active'",
+            "SELECT COUNT(*) FROM pm.contracts WHERE status = 'active'",
         )
         .await,
         completed_contracts: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_contracts WHERE status = 'completed'",
+            "SELECT COUNT(*) FROM pm.contracts WHERE status = 'completed'",
         )
         .await,
 
-        total_budget: query_sum(db, "SELECT COALESCE(SUM(total_amount), 0) FROM pm_budgets").await,
-        spent_budget: query_sum(db, "SELECT COALESCE(SUM(spent_amount), 0) FROM pm_budgets").await,
+        total_budget: query_sum(db, "SELECT COALESCE(SUM(total_amount), 0) FROM pm.budgets").await,
+        spent_budget: query_sum(db, "SELECT COALESCE(SUM(spent_amount), 0) FROM pm.budgets").await,
         budget_usage_rate: 0.0,
 
-        total_risks: query_count(db, "SELECT COUNT(*) FROM pm_risks").await,
+        total_risks: query_count(db, "SELECT COUNT(*) FROM pm.risks").await,
         open_risks: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_risks WHERE status IN ('identified', 'mitigating')",
+            "SELECT COUNT(*) FROM pm.risks WHERE status IN ('identified', 'mitigating')",
         )
         .await,
-        closed_risks: query_count(db, "SELECT COUNT(*) FROM pm_risks WHERE status = 'closed'")
+        closed_risks: query_count(db, "SELECT COUNT(*) FROM pm.risks WHERE status = 'closed'")
             .await,
 
         total_tasks: query_count(db, "SELECT COUNT(*) FROM pm_tasks").await,
@@ -750,17 +750,17 @@ async fn build_pm_statistics(db: &PgPool) -> PmStatistics {
 }
 
 async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
-    let total_projects = query_count(db, "SELECT COUNT(*) FROM pm_projects").await;
+    let total_projects = query_count(db, "SELECT COUNT(*) FROM pm.projects").await;
 
     let by_status = query_status_counts(
         db,
-        "SELECT status, COUNT(*) as count FROM pm_projects GROUP BY status",
+        "SELECT status, COUNT(*) as count FROM pm.projects GROUP BY status",
     )
     .await;
 
     let by_type: Vec<TypeCount> = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "pm",
-        "SELECT project_type, COUNT(*) as count FROM pm_projects GROUP BY project_type"
+        "SELECT project_type, COUNT(*) as count FROM pm.projects GROUP BY project_type"
     ))
     .fetch_all(db)
     .await
@@ -773,7 +773,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
     .collect();
 
     let by_leader: Vec<LeaderCount> = sqlx::query_as::<_, (String, i64)>(
-        only_own_schema_query!("pm", "SELECT leader as leader, COUNT(*) as count FROM pm_projects WHERE leader IS NOT NULL GROUP BY leader ORDER BY count DESC"),
+        only_own_schema_query!("pm", "SELECT leader as leader, COUNT(*) as count FROM pm.projects WHERE leader IS NOT NULL GROUP BY leader ORDER BY count DESC"),
     )
     .fetch_all(db)
     .await
@@ -784,7 +784,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
 
     let average_progress: f64 = sqlx::query_scalar(only_own_schema_query!(
         "pm",
-        "SELECT COALESCE(AVG(progress), 0) FROM pm_projects WHERE status = 'active'"
+        "SELECT COALESCE(AVG(progress), 0) FROM pm.projects WHERE status = 'active'"
     ))
     .fetch_one(db)
     .await
@@ -792,14 +792,18 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
 
     let high_risk_count = query_count(
         db,
-        "SELECT COUNT(*) FROM pm_projects WHERE risklevel = 'high'",
+        "SELECT COUNT(*) FROM pm.projects WHERE risk_level = 'high'",
     )
     .await;
 
     let on_time_rate = if total_projects > 0 {
+        // 注意：原查询使用子查询 "end_date <= (SELECT end_date FROM pm.projects p2 WHERE p2.id = pm.projects.id)"
+        // 该子查询返回当前行的 end_date，条件总是为 true，等同于统计已完成项目数。
+        // 由于表只有一个 end_date 字段（无计划完成日期 vs 实际完成日期区分），
+        // 此处简化为统计已完成项目数。如需真正的按时完成率，需添加 planned_end_date 字段。
         let on_time = query_count(
             db,
-            "SELECT COUNT(*) FROM pm_projects WHERE status = 'completed' AND end_date <= (SELECT end_date FROM pm_projects p2 WHERE p2.id = pm_projects.id)",
+            "SELECT COUNT(*) FROM pm.projects WHERE status = 'completed'",
         )
         .await;
         on_time as f64 / total_projects as f64 * 100.0
@@ -819,17 +823,17 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
 }
 
 async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
-    let total_contracts = query_count(db, "SELECT COUNT(*) FROM pm_contracts").await;
+    let total_contracts = query_count(db, "SELECT COUNT(*) FROM pm.contracts").await;
 
     let by_status = query_status_counts(
         db,
-        "SELECT status, COUNT(*) as count FROM pm_contracts GROUP BY status",
+        "SELECT status, COUNT(*) as count FROM pm.contracts GROUP BY status",
     )
     .await;
 
     let by_type: Vec<TypeCount> = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "pm",
-        "SELECT contract_type, COUNT(*) as count FROM pm_contracts GROUP BY contract_type"
+        "SELECT contract_type, COUNT(*) as count FROM pm.contracts GROUP BY contract_type"
     ))
     .fetch_all(db)
     .await
@@ -843,7 +847,7 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
 
     let total_amount: f64 = sqlx::query_scalar(only_own_schema_query!(
         "pm",
-        "SELECT COALESCE(SUM(amount), 0) FROM pm_contracts"
+        "SELECT COALESCE(SUM(amount), 0) FROM pm.contracts"
     ))
     .fetch_one(db)
     .await
@@ -867,7 +871,7 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
 async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
     let total_budget: f64 = sqlx::query_scalar(only_own_schema_query!(
         "pm",
-        "SELECT COALESCE(SUM(total_amount), 0) FROM pm_budgets"
+        "SELECT COALESCE(SUM(total_amount), 0) FROM pm.budgets"
     ))
     .fetch_one(db)
     .await
@@ -875,7 +879,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
 
     let allocated_budget: f64 = sqlx::query_scalar(only_own_schema_query!(
         "pm",
-        "SELECT COALESCE(SUM(allocated_amount), 0) FROM pm_budgets"
+        "SELECT COALESCE(SUM(allocated_amount), 0) FROM pm.budgets"
     ))
     .fetch_one(db)
     .await
@@ -883,7 +887,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
 
     let spent_budget: f64 = sqlx::query_scalar(only_own_schema_query!(
         "pm",
-        "SELECT COALESCE(SUM(spent_amount), 0) FROM pm_budgets"
+        "SELECT COALESCE(SUM(spent_amount), 0) FROM pm.budgets"
     ))
     .fetch_one(db)
     .await
@@ -917,18 +921,18 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
 }
 
 async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
-    let total_risks = query_count(db, "SELECT COUNT(*) FROM pm_risks").await;
+    let total_risks = query_count(db, "SELECT COUNT(*) FROM pm.risks").await;
     let open_risks = query_count(
         db,
-        "SELECT COUNT(*) FROM pm_risks WHERE status IN ('identified', 'mitigating')",
+        "SELECT COUNT(*) FROM pm.risks WHERE status IN ('identified', 'mitigating')",
     )
     .await;
     let closed_risks =
-        query_count(db, "SELECT COUNT(*) FROM pm_risks WHERE status = 'closed'").await;
+        query_count(db, "SELECT COUNT(*) FROM pm.risks WHERE status = 'closed'").await;
 
     let by_level: Vec<LevelCount> = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "pm",
-        "SELECT COALESCE(level, 'unknown'), COUNT(*) FROM pm_risks GROUP BY level"
+        "SELECT COALESCE(level, 'unknown'), COUNT(*) FROM pm.risks GROUP BY level"
     ))
     .fetch_all(db)
     .await
@@ -938,7 +942,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
     .collect();
 
     let by_category: Vec<CategoryCount> = sqlx::query_as::<_, (String, i64, i64)>(
-        only_own_schema_query!("pm", "SELECT COALESCE(risk_category, 'uncategorized'), COUNT(*), SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) FROM pm_risks GROUP BY risk_category"),
+        only_own_schema_query!("pm", "SELECT COALESCE(risk_category, 'uncategorized'), COUNT(*), SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) FROM pm.risks GROUP BY risk_category"),
     )
     .fetch_all(db)
     .await

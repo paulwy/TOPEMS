@@ -857,7 +857,7 @@ impl AntiFraudEngine {
     ) -> f64 {
         let _account_uuid = Uuid::parse_str(account_id).unwrap_or_else(|_| Uuid::new_v4());
         let count: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id IN (SELECT id FROM finance.finance_v54_fraud_scores WHERE transaction_id LIKE $2 || '%') AND scored_at > NOW() - INTERVAL '1 hour'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_fraud_scores WHERE tenant_id = $1 AND transaction_id LIKE $2 || '%' AND scored_at > NOW() - INTERVAL '1 hour'"),
         )
         .bind(tenant_id)
         .bind(account_id)

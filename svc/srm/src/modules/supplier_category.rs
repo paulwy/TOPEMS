@@ -480,7 +480,7 @@ pub async fn delete_category(
     }
 
     let supplier_count = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND category_id = (SELECT id FROM srm.supplier_categories WHERE id = $2 AND tenant_id = $1)", "srm")
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers s JOIN srm.supplier_categories c ON s.category_id = c.id WHERE s.tenant_id = $1 AND c.id = $2 AND c.tenant_id = $1", "srm")
     )
     .bind(tenant_id)
     .bind(id)
