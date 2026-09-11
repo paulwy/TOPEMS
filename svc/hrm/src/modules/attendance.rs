@@ -59,7 +59,7 @@ pub async fn get_today_status(
     // 如果传入 user_id，先解析为 employee_id（Mobile-BFF 数据迁移后统一走 hrm 表）
     let resolved_employee_id = if let Some(uid) = user_id {
         match sqlx::query_scalar::<_, Uuid>(
-            "SELECT id FROM hrm.employees WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1"
+            "SELECT id FROM hrm.employees WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1",
         )
         .bind(uid)
         .fetch_optional(&mut **txn)
@@ -100,7 +100,7 @@ pub async fn get_today_status(
         WHERE employee_id = $1 AND date::date = CURRENT_DATE
         ORDER BY date DESC
         LIMIT 1
-        "#
+        "#,
     )
     .bind(eid)
     .fetch_optional(&mut **txn)

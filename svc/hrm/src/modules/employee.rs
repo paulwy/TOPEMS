@@ -155,9 +155,11 @@ pub async fn get_employee(
     let tenant_id = get_tenant_id(&claims, &headers);
     let cache_key = employee_cache_key(&tenant_id, &id);
 
-    if let Some(cached) = state.employee_cache.get(&cache_key) {
+    if let Some(cached) = state.employee_cache.get(&cache_key).await {
         record_cache_hit("hrm", "employee", "get");
-        return Json(ApiResponse::success(cached, "从本地内存缓存获取员工成功"));
+        if let Ok(employee) = serde_json::from_value::<Employee>(cached) {
+            return Json(ApiResponse::success(employee, "从本地内存缓存获取员工成功"));
+        }
     }
 
     // 本地缓存未命中，记录指标
@@ -165,8 +167,10 @@ pub async fn get_employee(
 
     if let Ok(Some(cached)) = state.cache.get(&cache_key).await {
         if let Ok(employee) = serde_json::from_str::<Employee>(&cached) {
-            state.employee_cache.set(cache_key, employee.clone());
-            record_cache_set("hrm", "employee", "get");
+            if let Ok(value) = serde_json::to_value(&employee) {
+                state.employee_cache.set(cache_key, value).await;
+                record_cache_set("hrm", "employee", "get");
+            }
             return Json(ApiResponse::success(employee, "从缓存获取员工成功"));
         }
     }
@@ -180,10 +184,10 @@ pub async fn get_employee(
         ..
     } = &result
     {
-        state
-            .employee_cache
-            .set(cache_key.clone(), employee.clone());
-        record_cache_set("hrm", "employee", "get");
+        if let Ok(value) = serde_json::to_value(employee) {
+            state.employee_cache.set(cache_key.clone(), value).await;
+            record_cache_set("hrm", "employee", "get");
+        }
         let _ = state
             .cache
             .set(
@@ -460,14 +464,21 @@ pub async fn update_employee(
     let result = service.update_employee(&id, req, &mut *txn).await;
 
     if result.code == 200 {
-        state.employee_cache.remove(&employee_cache_key(&tenant_id, &id));
+        state
+            .employee_cache
+            .remove(&employee_cache_key(&tenant_id, &id))
+            .await;
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
             let publisher = publisher.clone();
             tokio::spawn(async move {
                 if let Err(e) = publisher
-                    .publish_cache_invalidated("hrm:employee:*", "pattern", Some("employee_updated"))
+                    .publish_cache_invalidated(
+                        "hrm:employee:*",
+                        "pattern",
+                        Some("employee_updated"),
+                    )
                     .await
                 {
                     tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -578,15 +589,25 @@ pub async fn delete_employee(
     let result = service.delete_employee(&id, &mut *txn).await;
 
     if result.code == 200 {
-        state.employee_cache.remove(&employee_cache_key(&tenant_id, &id));
-        let _ = state.cache.delete(&employee_cache_key(&tenant_id, &id)).await;
+        state
+            .employee_cache
+            .remove(&employee_cache_key(&tenant_id, &id))
+            .await;
+        let _ = state
+            .cache
+            .delete(&employee_cache_key(&tenant_id, &id))
+            .await;
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
             let publisher = publisher.clone();
             tokio::spawn(async move {
                 if let Err(e) = publisher
-                    .publish_cache_invalidated("hrm:employee:*", "pattern", Some("employee_deleted"))
+                    .publish_cache_invalidated(
+                        "hrm:employee:*",
+                        "pattern",
+                        Some("employee_deleted"),
+                    )
                     .await
                 {
                     tracing::warn!("发布缓存失效事件失败: {}", e);
@@ -768,7 +789,10 @@ mod tests {
         let id = Uuid::nil();
         let tenant_id = Uuid::new_v4();
         let key = employee_cache_key(&tenant_id, &id);
-        assert_eq!(key, format!("hrm:employee:get:{}:{}", tenant_id, Uuid::nil()));
+        assert_eq!(
+            key,
+            format!("hrm:employee:get:{}:{}", tenant_id, Uuid::nil())
+        );
     }
 
     #[test]
@@ -776,7 +800,10 @@ mod tests {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
         let tenant_id = Uuid::new_v4();
-        assert_ne!(employee_cache_key(&tenant_id, &id1), employee_cache_key(&tenant_id, &id2));
+        assert_ne!(
+            employee_cache_key(&tenant_id, &id1),
+            employee_cache_key(&tenant_id, &id2)
+        );
     }
 
     #[test]
@@ -794,7 +821,10 @@ mod tests {
         let tenant_b = Uuid::new_v4();
         let key1 = employee_cache_key(&tenant_a, &id);
         let key2 = employee_cache_key(&tenant_b, &id);
-        assert_ne!(key1, key2, "different tenants should have different cache keys");
+        assert_ne!(
+            key1, key2,
+            "different tenants should have different cache keys"
+        );
     }
 
     #[test]

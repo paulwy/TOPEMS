@@ -1,12 +1,11 @@
-use crate::models::Employee;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_auth::security::encryption::FieldEncryptionService;
-use topems_shared_core::cache::InMemoryCache;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::publisher::EventPublisher;
 use topems_shared_event::redis::CacheService;
 
@@ -28,8 +27,8 @@ pub mod position;
 pub mod recruitment;
 pub mod reports;
 pub mod salary_adjustment;
-pub mod setup;
 pub mod settings;
+pub mod setup;
 pub mod social_insurance_calc;
 pub mod training;
 
@@ -42,7 +41,7 @@ pub struct ApiState {
     pub cache: Arc<dyn CacheService + Send + Sync>,
     pub encryption: Arc<FieldEncryptionService>,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub employee_cache: Arc<InMemoryCache<Employee>>,
+    pub employee_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl FromRef<ApiState> for AuthState {

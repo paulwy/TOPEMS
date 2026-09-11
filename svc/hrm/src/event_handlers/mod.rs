@@ -1,29 +1,26 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::LocalInMemoryCache as InMemoryCache;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
-    InMemoryCacheInvalidationHandler,
 };
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
     PermissionChangedPayload, PositionCreatedPayload, PositionDeletedPayload,
     PositionUpdatedPayload,
 };
 
-use crate::models::employee::Employee;
-
 type HandlerResult = std::result::Result<(), String>;
 
 #[derive(Clone)]
 pub struct HrmEventHandlers {
     pub db: PgPool,
-    pub employee_cache: Arc<InMemoryCache<Employee>>,
+    pub employee_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl HrmEventHandlers {
-    pub fn new(db: PgPool, employee_cache: Arc<InMemoryCache<Employee>>) -> Self {
+    pub fn new(db: PgPool, employee_cache: Arc<AsyncL2Cache<serde_json::Value>>) -> Self {
         Self { db, employee_cache }
     }
 
@@ -205,18 +202,15 @@ impl HrmEventHandlers {
 
 pub async fn start_event_subscribers(
     db: PgPool,
-    employee_cache: Arc<InMemoryCache<Employee>>,
+    employee_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<(), String> {
     let handlers = HrmEventHandlers::new(db, employee_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
     // 创建缓存失效监听器，注册员工缓存处理器
     let mut cache_invalidation_listener = CacheInvalidationListener::new("hrm");
-    let employee_cache_handler = InMemoryCacheInvalidationHandler::new(
-        "hrm_employee_cache",
-        employee_cache,
-        "hrm:employee:",
-    );
+    let employee_cache_handler =
+        AsyncL2CacheInvalidationHandler::new("hrm_employee_cache", employee_cache, "hrm:employee:");
     cache_invalidation_listener.register_handler(employee_cache_handler);
     let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
 
@@ -239,7 +233,9 @@ pub async fn start_event_subscribers(
                         source_service: payload.source_service,
                         source_instance: payload.source_instance,
                         cache_key_pattern: payload.cache_key_pattern,
-                        invalidation_level: InvalidationLevel::from_str(&payload.invalidation_level),
+                        invalidation_level: InvalidationLevel::from_str(
+                            &payload.invalidation_level,
+                        ),
                         reason: payload.reason,
                     };
                     listener.dispatch_invalidation(&invalidation_event);

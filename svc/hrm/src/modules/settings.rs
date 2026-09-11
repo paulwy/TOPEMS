@@ -14,7 +14,10 @@ use super::ApiState;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
-    Router::new().route("/settings/{category}", get(get_settings).put(update_settings))
+    Router::new().route(
+        "/settings/{category}",
+        get(get_settings).put(update_settings),
+    )
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -31,10 +34,13 @@ pub async fn get_settings(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let result = sqlx::query(only_own_schema_query!("hrm", "SELECT key, value FROM hrm.module_settings WHERE category = $1"))
-        .bind(&category)
-        .fetch_all(&mut **txn)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "SELECT key, value FROM hrm.module_settings WHERE category = $1"
+    ))
+    .bind(&category)
+    .fetch_all(&mut **txn)
+    .await;
     match result {
         Ok(rows) => {
             let mut settings = HashMap::new();
@@ -43,7 +49,10 @@ pub async fn get_settings(
                 let value: String = row.try_get("value").unwrap_or_default();
                 settings.insert(key, value);
             }
-            Json(ApiResponse::success(serde_json::json!({ "category": category, "settings": settings }), "获取模块设置成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "category": category, "settings": settings }),
+                "获取模块设置成功",
+            ))
         }
         Err(e) => {
             tracing::error!("获取模块设置失败: {}", e);
@@ -81,5 +90,8 @@ pub async fn update_settings(
             }
         }
     }
-    Json(ApiResponse::success(serde_json::json!({ "category": category, "updated_count": updated, "settings": req.settings }), "模块设置更新成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({ "category": category, "updated_count": updated, "settings": req.settings }),
+        "模块设置更新成功",
+    ))
 }

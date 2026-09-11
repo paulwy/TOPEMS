@@ -12,13 +12,14 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared::{config::CacheConfig, LocalInMemoryCache as InMemoryCache};
+use topems_shared::config::CacheConfig;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::redis::{CacheService, RedisCacheService, RedisPool as RedisPoolTrait};
 
 #[tokio::main]
@@ -55,9 +56,32 @@ async fn main() -> Result<()> {
     let encryption = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化完成");
 
-    let employee_cache = Arc::new(InMemoryCache::new(Duration::from_secs(3600)));
+    // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
+    let l2_config = L2CacheConfig {
+        instance_prefix: "hrm".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(3600),
+        l1_capacity: 10_000,
+    };
+    let redis_url = std::env::var("REDIS_URL").ok();
+    let employee_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（HRM，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（HRM，纯 L1 模式，Redis 未配置）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（HRM）: {}", warn);
+            Arc::new(cache)
+        }
+    };
 
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone(), employee_cache.clone()).await {
+    if let Err(e) =
+        event_handlers::start_event_subscribers(ctx.db.clone(), employee_cache.clone()).await
+    {
         tracing::warn!("⚠️ HRM 事件订阅者启动失败: {}", e);
     }
 
