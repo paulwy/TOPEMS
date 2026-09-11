@@ -142,6 +142,23 @@ pub async fn list_capacities(
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims);
 
+    // 构建缓存 Key
+    let cache_key = format!(
+        "mes:capacities:{}:{}:{}:{}:{}:{}",
+        tenant_id,
+        page,
+        page_size,
+        params.search.clone().unwrap_or_else(|| "none".to_string()),
+        params.status.clone().unwrap_or_else(|| "all".to_string()),
+        params.work_center_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string())
+    );
+
+    // 检查缓存
+    if let Some(cached) = state.dict_cache.get(&cache_key) {
+        tracing::debug!("📋 产能列表缓存命中: {}", cache_key);
+        return Json(ApiResponse::success(cached, "获取产能列表成功"));
+    }
+
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let wc_filter = params.work_center_id;
@@ -187,13 +204,19 @@ pub async fn list_capacities(
             .await
             .unwrap_or(0);
 
+            let response_data = serde_json::json!({
+                "capacities": capacities,
+                "total": total,
+                "page": page,
+                "page_size": page_size
+            });
+
+            // 写入缓存
+            state.dict_cache.set(cache_key.clone(), response_data.clone());
+            tracing::debug!("💾 产能列表缓存写入: {}", cache_key);
+
             Json(ApiResponse::success(
-                serde_json::json!({
-                    "capacities": capacities,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
+                response_data,
                 "获取产能列表成功",
             ))
         }

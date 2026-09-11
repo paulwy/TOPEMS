@@ -152,6 +152,23 @@ pub async fn list_process_routes(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
+    // 构建缓存 Key
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let cache_key = format!(
+        "mes:process_routes:{}:{}:{}:{}:{}",
+        tenant_id,
+        page,
+        pagesize,
+        query.status.clone().unwrap_or_else(|| "all".to_string()),
+        query.search.clone().unwrap_or_else(|| "none".to_string())
+    );
+
+    // 检查缓存
+    if let Some(cached) = state.dict_cache.get(&cache_key) {
+        tracing::debug!("📋 工艺路线列表缓存命中: {}", cache_key);
+        return Json(ApiResponse::success(cached, "获取工艺路线列表成功"));
+    }
+
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE pr.deleted_at IS NULL");
 
@@ -251,13 +268,19 @@ pub async fn list_process_routes(
         })
         .collect();
 
+    let response_data = serde_json::json!({
+        "routes": routes,
+        "total": total.unwrap_or(0),
+        "page": page,
+        "page_size": pagesize,
+    });
+
+    // 写入缓存
+    state.dict_cache.set(cache_key.clone(), response_data.clone());
+    tracing::debug!("💾 工艺路线列表缓存写入: {}", cache_key);
+
     Json(ApiResponse::success(
-        serde_json::json!({
-            "routes": routes,
-            "total": total.unwrap_or(0),
-            "page": page,
-            "page_size": pagesize,
-        }),
+        response_data,
         "获取工艺路线列表成功",
     ))
 }
