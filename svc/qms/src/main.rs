@@ -11,7 +11,7 @@ pub mod modules;
 use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::{ApiResponse, AuthState, LocalInMemoryCache};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
@@ -31,6 +31,7 @@ pub struct AppState {
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<std::sync::Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
+    pub dict_cache: std::sync::Arc<LocalInMemoryCache<serde_json::Value>>,
 }
 
 impl axum::extract::FromRef<AppState> for AuthState {
@@ -79,12 +80,16 @@ async fn main() -> anyhow::Result<()> {
         .expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
+    let dict_cache = std::sync::Arc::new(LocalInMemoryCache::new(std::time::Duration::from_secs(600)));
+    tracing::info!("💾 字典缓存初始化完成（QMS，TTL 600秒）");
+
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
         health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
         workflow_client,
+        dict_cache,
     };
 
     // Public routes（需 AppState）

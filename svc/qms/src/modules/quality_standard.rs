@@ -12,6 +12,21 @@ use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
+/// 质量标准列表缓存 Key
+fn standards_list_cache_key(
+    tenant_id: &Uuid,
+    page: i64,
+    page_size: i64,
+    category: &Option<String>,
+    status: &Option<String>,
+    search: &Option<String>,
+) -> String {
+    format!(
+        "qms:quality_standard:list:{}:page:{}:pagesize:{}:category:{:?}:status:{:?}:search:{:?}",
+        tenant_id, page, page_size, category, status, search
+    )
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["qms:read"])),
@@ -39,6 +54,31 @@ pub async fn list_standards(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims, &headers);
+
+    // 构建缓存 Key 并检查缓存
+    let cache_key = standards_list_cache_key(
+        &tenant_id,
+        page,
+        page_size,
+        &query.category,
+        &query.status,
+        &query.search,
+    );
+    if let Some(cached) = state.dict_cache.get(&cache_key) {
+        tracing::debug!(
+            service = "qms",
+            entity = "quality_standard",
+            operation = "list",
+            tenant_id = %tenant_id,
+            cache_key = %cache_key,
+            "质量标准列表缓存命中"
+        );
+        // 将缓存的 serde_json::Value 转换为具体类型
+        if let Ok(response) = serde_json::from_value::<ListStandardsResponse>(cached) {
+            return Json(ApiResponse::success(response, "获取质量标准列表成功"));
+        }
+        // 转换失败时继续查询数据库
+    }
 
     let _params: Vec<serde_json::Value> = Vec::new();
     let where_clause = String::from(" WHERE tenant_id = $1");
@@ -77,15 +117,27 @@ pub async fn list_standards(
         .bind(offset);
 
     match fetch_query.fetch_all(&state.pool).await {
-        Ok(data) => Json(ApiResponse::success(
-            ListStandardsResponse {
+        Ok(data) => {
+            let response = ListStandardsResponse {
                 standards: data,
                 total: total.unwrap_or(0),
                 page,
                 page_size,
-            },
-            "获取质量标准列表成功",
-        )),
+            };
+            // 写入缓存
+            if let Ok(cached_value) = serde_json::to_value(&response) {
+                state.dict_cache.set(cache_key.clone(), cached_value);
+                tracing::debug!(
+                    service = "qms",
+                    entity = "quality_standard",
+                    operation = "list",
+                    tenant_id = %tenant_id,
+                    cache_key = %cache_key,
+                    "质量标准列表缓存写入"
+                );
+            }
+            Json(ApiResponse::success(response, "获取质量标准列表成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch standards: {}", e);
             Json(ApiResponse::error(500, "获取质量标准列表失败"))
@@ -129,6 +181,8 @@ pub async fn create_standard(
                 .execute(&state.pool)
                 .await;
             }
+            // 失效列表缓存（创建后列表数据可能变化）
+            state.dict_cache.clear();
             Json(ApiResponse::success(data, "质量标准创建成功"))
         }
         Err(e) => {
@@ -222,7 +276,11 @@ pub async fn update_standard(
     .await;
 
     match standard {
-        Ok(data) => Json(ApiResponse::success(data, "质量标准更新成功")),
+        Ok(data) => {
+            // 失效列表缓存（更新后列表数据可能变化）
+            state.dict_cache.clear();
+            Json(ApiResponse::success(data, "质量标准更新成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to update standard: {}", e);
             Json(ApiResponse::error(500, "质量标准更新失败"))
@@ -266,7 +324,11 @@ pub async fn delete_standard(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "质量标准删除成功")),
+        Ok(_) => {
+            // 失效列表缓存（删除后列表数据可能变化）
+            state.dict_cache.clear();
+            Json(ApiResponse::success(true, "质量标准删除成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to delete standard: {}", e);
             Json(ApiResponse::error(500, "质量标准删除失败"))

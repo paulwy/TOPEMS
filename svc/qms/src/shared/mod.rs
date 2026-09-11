@@ -80,6 +80,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared::AuthState;
+use topems_shared::LocalInMemoryCache;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
@@ -91,6 +92,7 @@ pub struct AppState {
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
+    pub dict_cache: Arc<LocalInMemoryCache<serde_json::Value>>,
 }
 
 impl FromRef<AppState> for AuthState {
