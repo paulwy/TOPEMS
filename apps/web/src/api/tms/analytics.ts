@@ -53,6 +53,29 @@ export interface DriverPerformanceItem {
   avg_freight: number;
 }
 
+export interface ShipmentTrendEnhancedItem {
+  month: string;
+  total: number;
+  delivered: number;
+  cancelled: number;
+  in_transit: number;
+  pending: number;
+}
+
+export interface VehicleUtilizationItem {
+  vehicle_id: string;
+  vehicle_no: string;
+  shipment_count: number;
+  utilization_rate: number;
+}
+
+export interface FreightCostTrendItem {
+  month: string;
+  total_freight: number;
+  shipment_count: number;
+  avg_freight: number;
+}
+
 // ===== API 函数 =====
 
 /**
@@ -103,6 +126,32 @@ export async function getDriverPerformance(): Promise<ApiResponse<DriverPerforma
   return apiClient.tms.get('/analytics/driver-performance');
 }
 
+/**
+ * 获取运单趋势增强版（最近12个月，按状态分组）
+ * GET /tms/analytics/shipment-trend-enhanced
+ */
+export async function getShipmentTrendEnhanced(): Promise<
+  ApiResponse<ShipmentTrendEnhancedItem[]>
+> {
+  return apiClient.tms.get('/analytics/shipment-trend-enhanced');
+}
+
+/**
+ * 获取车辆利用率
+ * GET /tms/analytics/vehicle-utilization
+ */
+export async function getVehicleUtilization(): Promise<ApiResponse<VehicleUtilizationItem[]>> {
+  return apiClient.tms.get('/analytics/vehicle-utilization');
+}
+
+/**
+ * 获取运费成本趋势
+ * GET /tms/analytics/freight-cost-trend
+ */
+export async function getFreightCostTrend(): Promise<ApiResponse<FreightCostTrendItem[]>> {
+  return apiClient.tms.get('/analytics/freight-cost-trend');
+}
+
 // ===== 统一导出 =====
 
 export const tmsAnalyticsApi = {
@@ -112,4 +161,7 @@ export const tmsAnalyticsApi = {
   getCarrierPerformance,
   getRouteEfficiency,
   getDriverPerformance,
+  getShipmentTrendEnhanced,
+  getVehicleUtilization,
+  getFreightCostTrend,
 };

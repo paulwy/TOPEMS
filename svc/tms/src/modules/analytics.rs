@@ -66,6 +66,32 @@ pub struct DriverPerformanceItem {
     pub avg_freight: f64,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ShipmentTrendEnhancedItem {
+    pub month: String,
+    pub total: i64,
+    pub delivered: i64,
+    pub cancelled: i64,
+    pub in_transit: i64,
+    pub pending: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VehicleUtilizationItem {
+    pub vehicle_id: String,
+    pub vehicle_no: String,
+    pub shipment_count: i64,
+    pub utilization_rate: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FreightCostTrendItem {
+    pub month: String,
+    pub total_freight: f64,
+    pub shipment_count: i64,
+    pub avg_freight: f64,
+}
+
 // ===== API 处理函数 =====
 
 /// 获取运输趋势（最近7天）
@@ -337,6 +363,175 @@ pub async fn get_driver_performance(
     Json(ApiResponse::success(items, "获取成功"))
 }
 
+/// 获取运单趋势增强版（最近12个月，按状态分组）
+pub async fn get_shipment_trend_enhanced(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<ShipmentTrendEnhancedItem>>> {
+    tracing::info!("获取TMS运单趋势增强数据");
+
+    let rows: Vec<(
+        Option<String>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+    )> = sqlx::query_as(
+        "SELECT 
+            TO_CHAR(months.month, 'YYYY-MM') as month,
+            COALESCE(s.total, 0) as total,
+            COALESCE(s.delivered, 0) as delivered,
+            COALESCE(s.cancelled, 0) as cancelled,
+            COALESCE(s.in_transit, 0) as in_transit,
+            COALESCE(s.pending, 0) as pending
+         FROM (
+             SELECT generate_series(
+                 DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months',
+                 DATE_TRUNC('month', CURRENT_DATE),
+                 '1 month'
+             )::date as month
+         ) months
+         LEFT JOIN (
+             SELECT 
+                 DATE_TRUNC('month', created_at)::date as month,
+                 COUNT(*) as total,
+                 COUNT(CASE WHEN status = 'delivered' THEN 1 END) as delivered,
+                 COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled,
+                 COUNT(CASE WHEN status = 'in_transit' THEN 1 END) as in_transit,
+                 COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending
+             FROM tms.tms_shipments
+             WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+             GROUP BY DATE_TRUNC('month', created_at)::date
+         ) s ON months.month = s.month
+         ORDER BY months.month"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<ShipmentTrendEnhancedItem> = rows
+        .into_iter()
+        .map(
+            |(month, total, delivered, cancelled, in_transit, pending)| {
+                ShipmentTrendEnhancedItem {
+                    month: month.unwrap_or_default(),
+                    total: total.unwrap_or(0),
+                    delivered: delivered.unwrap_or(0),
+                    cancelled: cancelled.unwrap_or(0),
+                    in_transit: in_transit.unwrap_or(0),
+                    pending: pending.unwrap_or(0),
+                }
+            },
+        )
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
+/// 获取车辆利用率
+pub async fn get_vehicle_utilization(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<VehicleUtilizationItem>>> {
+    tracing::info!("获取TMS车辆利用率数据");
+
+    // 先获取总运单数
+    let total_shipments: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM tms.tms_shipments WHERE vehicle_id IS NOT NULL"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    let rows: Vec<(Option<String>, Option<String>, Option<i64>)> = sqlx::query_as(
+        "SELECT 
+            v.id::text as vehicle_id,
+            v.vehicle_no,
+            COUNT(s.id) as shipment_count
+         FROM tms.tms_vehicles v
+         LEFT JOIN tms.tms_shipments s ON s.vehicle_id = v.id
+         GROUP BY v.id, v.vehicle_no
+         ORDER BY shipment_count DESC
+         LIMIT 20",
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<VehicleUtilizationItem> = rows
+        .into_iter()
+        .map(|(vehicle_id, vehicle_no, shipment_count)| {
+            let count = shipment_count.unwrap_or(0);
+            let utilization_rate = if total_shipments > 0 {
+                (count as f64 / total_shipments as f64) * 100.0
+            } else {
+                0.0
+            };
+            VehicleUtilizationItem {
+                vehicle_id: vehicle_id.unwrap_or_default(),
+                vehicle_no: vehicle_no.unwrap_or_else(|| "未知车辆".to_string()),
+                shipment_count: count,
+                utilization_rate: (utilization_rate * 10.0).round() / 10.0,
+            }
+        })
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
+/// 获取运费成本趋势
+pub async fn get_freight_cost_trend(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<FreightCostTrendItem>>> {
+    tracing::info!("获取TMS运费成本趋势数据");
+
+    let rows: Vec<(Option<String>, Option<f64>, Option<i64>)> = sqlx::query_as(
+        "SELECT 
+            TO_CHAR(months.month, 'YYYY-MM') as month,
+            COALESCE(s.total_freight, 0)::float8 as total_freight,
+            COALESCE(s.shipment_count, 0) as shipment_count
+         FROM (
+             SELECT generate_series(
+                 DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months',
+                 DATE_TRUNC('month', CURRENT_DATE),
+                 '1 month'
+             )::date as month
+         ) months
+         LEFT JOIN (
+             SELECT 
+                 DATE_TRUNC('month', created_at)::date as month,
+                 SUM(freight_amount) as total_freight,
+                 COUNT(*) as shipment_count
+             FROM tms.tms_shipments
+             WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+               AND freight_amount IS NOT NULL
+             GROUP BY DATE_TRUNC('month', created_at)::date
+         ) s ON months.month = s.month
+         ORDER BY months.month"
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let items: Vec<FreightCostTrendItem> = rows
+        .into_iter()
+        .map(|(month, total_freight, shipment_count)| {
+            let freight = total_freight.unwrap_or(0.0);
+            let count = shipment_count.unwrap_or(0);
+            FreightCostTrendItem {
+                month: month.unwrap_or_default(),
+                total_freight: freight,
+                shipment_count: count,
+                avg_freight: if count > 0 { freight / count as f64 } else { 0.0 },
+            }
+        })
+        .collect();
+
+    Json(ApiResponse::success(items, "获取成功"))
+}
+
 // ===== 路由注册 =====
 
 pub fn create_routes<S>() -> Router<S>
@@ -362,5 +557,17 @@ where
         .route(
             "/analytics/driver-performance",
             get(get_driver_performance),
+        )
+        .route(
+            "/analytics/shipment-trend-enhanced",
+            get(get_shipment_trend_enhanced),
+        )
+        .route(
+            "/analytics/vehicle-utilization",
+            get(get_vehicle_utilization),
+        )
+        .route(
+            "/analytics/freight-cost-trend",
+            get(get_freight_cost_trend),
         )
 }

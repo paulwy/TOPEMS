@@ -3,13 +3,14 @@ import { designTokens } from '@topems/tokens';
  * 车辆利用率分析页
  *
  * 使用 recharts BarChart 展示各车辆的使用率：
- * - 运行天数 / 总天数（%）
- * 数据为 mock 数据。
+ * - 利用率（%）和运单数量
+ * 数据来自后端 /tms/analytics/vehicle-utilization API。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { tmsApi } from '@/api/tms';
+import { tmsAnalyticsApi } from '@/api/tms';
+import type { VehicleUtilizationItem } from '@/api/tms';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import {
@@ -23,56 +24,37 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { Gauge, Truck, TrendingUp, TrendingDown } from 'lucide-react';
 
-const MOCK_DATA = [
-  { vehicleNo: 'V-001', utilization: 85, trips: 42 },
-  { vehicleNo: 'V-002', utilization: 72, trips: 35 },
-  { vehicleNo: 'V-003', utilization: 91, trips: 48 },
-  { vehicleNo: 'V-004', utilization: 65, trips: 28 },
-  { vehicleNo: 'V-005', utilization: 88, trips: 45 },
-  { vehicleNo: 'V-006', utilization: 78, trips: 38 },
-  { vehicleNo: 'V-007', utilization: 95, trips: 52 },
-  { vehicleNo: 'V-008', utilization: 60, trips: 25 },
-  { vehicleNo: 'V-009', utilization: 82, trips: 40 },
-  { vehicleNo: 'V-010', utilization: 70, trips: 32 },
-];
 export default function VehicleUtilizationPage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['tms', 'VehicleUtilizationPage'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['tms', 'vehicleUtilization'],
     queryFn: async () => {
-      try {
-        const res = await tmsApi.listVehicles();
-        const data = (res as { data?: unknown })?.data;
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray((data as { items?: unknown[] })?.items)
-            ? (data as { items: unknown[] }).items
-            : [];
-        return {
-          total: items.length,
-          utilization: {
-            active: items.filter((x: unknown) => (x as { status?: string })?.status === 'ACTIVE')
-              .length,
-          },
-        };
-      } catch {
-        return {};
-      }
+      const res = await tmsAnalyticsApi.getVehicleUtilization();
+      return (res?.data ?? []) as VehicleUtilizationItem[];
     },
   });
 
-  const data = useMemo(() => MOCK_DATA, []);
+  const data = useMemo(
+    () =>
+      (apiData ?? []).map((d) => ({
+        vehicleNo: d.vehicle_no,
+        utilization: d.utilization_rate,
+        trips: d.shipment_count,
+      })),
+    [apiData]
+  );
+
   const avgUtilization =
     data.length > 0
       ? Math.round((data.reduce((s, d) => s + d.utilization, 0) / data.length) * 10) / 10
       : 0;
   const totalTrips = data.reduce((s, d) => s + d.trips, 0);
-  const maxUtil = Math.max(...data.map((d) => d.utilization));
-  const minUtil = Math.min(...data.map((d) => d.utilization));
+  const maxUtil = data.length > 0 ? Math.max(...data.map((d) => d.utilization)) : 0;
+  const minUtil = data.length > 0 ? Math.min(...data.map((d) => d.utilization)) : 0;
 
   const statCards: StatCard[] = [
     {
@@ -107,6 +89,21 @@ export default function VehicleUtilizationPage() {
       color: 'error',
     },
   ];
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <StatsPageTemplate

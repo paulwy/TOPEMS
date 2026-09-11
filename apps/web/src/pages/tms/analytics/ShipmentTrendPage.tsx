@@ -2,16 +2,17 @@ import { designTokens } from '@topems/tokens';
 /**
  * 运单趋势分析页
  *
- * 使用 recharts LineChart 展示月度运单趋势：
+ * 使用 recharts BarChart 和 LineChart 展示月度运单趋势：
  * - 运单总量（柱状）
- * - 已送达量（折线）
- * - 取消量（折线）
- * 数据为 mock 数据。
+ * - 已送达量、取消量（柱状）
+ * - 送达率（折线）
+ * 数据来自后端 /tms/analytics/shipment-trend-enhanced API。
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { tmsApi } from '@/api/tms';
+import { tmsAnalyticsApi } from '@/api/tms';
+import type { ShipmentTrendEnhancedItem } from '@/api/tms';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import {
@@ -26,53 +27,32 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { Package, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
 
-const MOCK_DATA = [
-  { month: '2025-01', total: 120, delivered: 95, cancelled: 8 },
-  { month: '2025-02', total: 135, delivered: 110, cancelled: 10 },
-  { month: '2025-03', total: 150, delivered: 128, cancelled: 7 },
-  { month: '2025-04', total: 142, delivered: 120, cancelled: 12 },
-  { month: '2025-05', total: 168, delivered: 145, cancelled: 9 },
-  { month: '2025-06', total: 180, delivered: 160, cancelled: 6 },
-  { month: '2025-07', total: 195, delivered: 175, cancelled: 8 },
-  { month: '2025-08', total: 210, delivered: 188, cancelled: 10 },
-  { month: '2025-09', total: 225, delivered: 200, cancelled: 12 },
-  { month: '2025-10', total: 240, delivered: 215, cancelled: 9 },
-  { month: '2025-11', total: 255, delivered: 230, cancelled: 11 },
-  { month: '2025-12', total: 270, delivered: 245, cancelled: 8 },
-];
 export default function ShipmentTrendPage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['tms', 'ShipmentTrendPage'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['tms', 'shipmentTrendEnhanced'],
     queryFn: async () => {
-      try {
-        const allRes = await tmsApi.listShipments({ page: 1, pageSize: 2000 });
-        const extractItems = (res: unknown) => {
-          const data = (res as { data?: unknown })?.data;
-          if (Array.isArray(data)) return data as Record<string, unknown>[];
-          const items = (data as { items?: unknown[] })?.items;
-          return Array.isArray(items) ? (items as Record<string, unknown>[]) : [];
-        };
-        const items = extractItems(allRes);
-        const statusOf = (x: Record<string, unknown>) => String(x.status ?? '').toLowerCase();
-        const deliveredItems = items.filter((x) => statusOf(x).includes('deliver'));
-        const cancelledItems = items.filter((x) => statusOf(x).includes('cancel'));
-        return {
-          total: items.length,
-          delivered: deliveredItems.length,
-          cancelled: cancelledItems.length,
-        };
-      } catch {
-        return {};
-      }
+      const res = await tmsAnalyticsApi.getShipmentTrendEnhanced();
+      return (res?.data ?? []) as ShipmentTrendEnhancedItem[];
     },
   });
 
-  const data = useMemo(() => MOCK_DATA, []);
+  const data = useMemo(
+    () =>
+      (apiData ?? []).map((d) => ({
+        month: d.month,
+        total: d.total,
+        delivered: d.delivered,
+        cancelled: d.cancelled,
+        deliveryRate: d.total > 0 ? Math.round((d.delivered / d.total) * 1000) / 10 : 0,
+      })),
+    [apiData]
+  );
+
   const totalShipments = data.reduce((s, d) => s + d.total, 0);
   const totalDelivered = data.reduce((s, d) => s + d.delivered, 0);
   const totalCancelled = data.reduce((s, d) => s + d.cancelled, 0);
@@ -110,6 +90,21 @@ export default function ShipmentTrendPage() {
       color: 'warning',
     },
   ];
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <StatsPageTemplate
@@ -178,7 +173,7 @@ export default function ShipmentTrendPage() {
           </Typography>
           <ResponsiveContainer
             width='100%'
-            height={300}
+            height={250}
           >
             <LineChart
               data={data}
@@ -189,24 +184,21 @@ export default function ShipmentTrendPage() {
                 dataKey='month'
                 fontSize={11}
               />
-              <YAxis fontSize={11} />
-              <Tooltip />
+              <YAxis
+                unit='%'
+                fontSize={11}
+                domain={[0, 100]}
+              />
+              <Tooltip formatter={(value: unknown) => `${value}%`} />
               <Legend />
               <Line
                 type='monotone'
-                dataKey='delivered'
+                dataKey='deliveryRate'
                 name={t('tms.shipment_trend_page.k11')}
-                stroke={designTokens.colors.success.dark}
+                stroke={designTokens.colors.primary.main}
                 strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-              <Line
-                type='monotone'
-                dataKey='cancelled'
-                name={t('tms.shipment_trend_page.k12')}
-                stroke={designTokens.colors.error.main}
-                strokeWidth={2}
-                dot={{ r: 3 }}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>

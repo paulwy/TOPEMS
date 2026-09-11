@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 /**
  * 运费成本分析页
  *
- * 使用 recharts PieChart 展示运费成本结构：
- * - 燃油费 / 路桥费 / 人工费 / 车辆折旧 / 保险费 / 其他
- * 数据为 mock 数据。
+ * 使用 recharts PieChart 和 BarChart 展示运费成本：
+ * - 成本结构饼图（示例数据，数据库暂无细分字段）
+ * - 月度运费趋势图（真实数据，来自后端 API）
  */
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tmsApi } from '@/api/tms';
+import { tmsAnalyticsApi } from '@/api/tms';
+import type { FreightCostTrendItem } from '@/api/tms';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import {
@@ -26,8 +27,8 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { Box, Paper, Typography } from '@mui/material';
-import { DollarSign, TrendingUp, Flame, Layers } from 'lucide-react';
+import { Box, Paper, Typography, CircularProgress, Alert } from '@mui/material';
+import { DollarSign, TrendingUp, Package, Layers } from 'lucide-react';
 
 const COST_COLORS: Record<string, string> = {
   fuel: designTokens.colors.primary.main,
@@ -35,8 +36,9 @@ const COST_COLORS: Record<string, string> = {
   labor: designTokens.colors.success.dark,
   depreciation: designTokens.colors.secondary.main,
   insurance: designTokens.colors.error.main,
-  other: 'colors.grey.500',
+  other: designTokens.colors.grey[500],
 };
+
 function getCostLabels(): Record<string, string> {
   return {
     fuel: i18n.t('tms.freight_cost_page.k0'),
@@ -47,6 +49,8 @@ function getCostLabels(): Record<string, string> {
     other: i18n.t('tms.freight_cost_page.k5'),
   };
 }
+
+// 示例数据：成本结构（数据库暂无燃油费/路桥费等细分字段）
 const MOCK_COST_DATA = [
   { type: 'fuel', amount: 185000 },
   { type: 'toll', amount: 92000 },
@@ -55,45 +59,28 @@ const MOCK_COST_DATA = [
   { type: 'insurance', amount: 45000 },
   { type: 'other', amount: 34000 },
 ];
-const MOCK_MONTHLY = [
-  { month: '2025-07', fuel: 30000, toll: 15000, labor: 26000, other: 25000 },
-  { month: '2025-08', fuel: 32000, toll: 16000, labor: 26000, other: 26000 },
-  { month: '2025-09', fuel: 31000, toll: 15500, labor: 26000, other: 25500 },
-  { month: '2025-10', fuel: 30500, toll: 15250, labor: 26000, other: 25500 },
-  { month: '2025-11', fuel: 31500, toll: 15125, labor: 26000, other: 25000 },
-  { month: '2025-12', fuel: 30000, toll: 15125, labor: 26000, other: 27000 },
-];
+
 export default function FreightCostPage() {
   const { t } = useTranslation();
 
-  useQuery({
-    queryKey: ['tms', 'FreightCostPage'],
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['tms', 'freightCostTrend'],
     queryFn: async () => {
-      try {
-        const [shipmentsRes, routesRes, carriersRes] = await Promise.all([
-          tmsApi.listShipments(),
-          tmsApi.listRoutes(),
-          tmsApi.listCarriers(),
-        ]);
-        const extractItems = (res: unknown) => {
-          const data = (res as { data?: unknown })?.data;
-          if (Array.isArray(data)) return data;
-          const items = (data as { items?: unknown[] })?.items;
-          return Array.isArray(items) ? items : [];
-        };
-        const n1 = extractItems(shipmentsRes).length;
-        const n2 = extractItems(routesRes).length;
-        const n3 = extractItems(carriersRes).length;
-        return {
-          shipments: n1,
-          routes: n2,
-          carriers: n3,
-        };
-      } catch {
-        return {};
-      }
+      const res = await tmsAnalyticsApi.getFreightCostTrend();
+      return (res?.data ?? []) as FreightCostTrendItem[];
     },
   });
+
+  const monthlyData = useMemo(
+    () =>
+      (apiData ?? []).map((d) => ({
+        month: d.month,
+        totalFreight: Math.round(d.total_freight),
+        shipmentCount: d.shipment_count,
+        avgFreight: Math.round(d.avg_freight),
+      })),
+    [apiData]
+  );
 
   const costData = useMemo(
     () =>
@@ -103,37 +90,36 @@ export default function FreightCostPage() {
       })),
     []
   );
-  const monthlyData = useMemo(() => MOCK_MONTHLY, []);
+
+  const totalFreight = monthlyData.reduce((s, d) => s + d.totalFreight, 0);
+  const totalShipments = monthlyData.reduce((s, d) => s + d.shipmentCount, 0);
+  const avgFreight = totalShipments > 0 ? Math.round(totalFreight / totalShipments) : 0;
   const totalCost = costData.reduce((s, c) => s + c.amount, 0);
   const largestCost = [...costData].sort((a, b) => b.amount - a.amount)[0];
-  const fuelRatio =
-    totalCost > 0
-      ? Math.round(((costData.find((c) => c.type === 'fuel')?.amount ?? 0) / totalCost) * 1000) / 10
-      : 0;
 
   const statCards: StatCard[] = [
     {
-      id: 'totalCost',
+      id: 'totalFreight',
       title: t('tms.freight_cost_page.k8'),
-      value: totalCost.toLocaleString(),
+      value: totalFreight.toLocaleString(),
       prefix: '¥',
       icon: <DollarSign size={24} />,
       color: 'primary',
     },
     {
-      id: 'largestCost',
+      id: 'totalShipments',
       title: t('tms.freight_cost_page.k9'),
-      value: largestCost?.label ?? '-',
-      icon: <TrendingUp size={24} />,
-      color: 'warning',
+      value: totalShipments,
+      icon: <Package size={24} />,
+      color: 'success',
     },
     {
-      id: 'fuelRatio',
+      id: 'avgFreight',
       title: t('tms.freight_cost_page.k10'),
-      value: fuelRatio,
-      suffix: '%',
-      icon: <Flame size={24} />,
-      color: 'error',
+      value: avgFreight.toLocaleString(),
+      prefix: '¥',
+      icon: <TrendingUp size={24} />,
+      color: 'warning',
     },
     {
       id: 'costTypes',
@@ -143,6 +129,21 @@ export default function FreightCostPage() {
       color: 'info',
     },
   ];
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <StatsPageTemplate
@@ -156,6 +157,13 @@ export default function FreightCostPage() {
       showRefresh={false}
       showCharts={false}
     >
+      <Alert
+        severity='info'
+        sx={{ mb: 3 }}
+      >
+        {t('tms.freight_cost_page.k20')}
+      </Alert>
+
       <Box
         sx={{
           display: 'grid',
@@ -189,7 +197,7 @@ export default function FreightCostPage() {
                 {costData.map((entry) => (
                   <Cell
                     key={entry.type}
-                    fill={COST_COLORS[entry.type] ?? 'colors.grey.400'}
+                    fill={COST_COLORS[entry.type] ?? designTokens.colors.grey[400]}
                   />
                 ))}
               </Pie>
@@ -211,30 +219,23 @@ export default function FreightCostPage() {
             height={300}
           >
             <BarChart
-              data={costData}
-              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+              data={monthlyData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
             >
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis
-                dataKey='label'
+                dataKey='month'
                 fontSize={11}
               />
               <YAxis fontSize={11} />
               <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
               <Legend />
               <Bar
-                dataKey='amount'
+                dataKey='totalFreight'
                 name={t('tms.freight_cost_page.k14')}
-                fill={designTokens.colors.secondary.dark}
-                barSize={28}
-              >
-                {costData.map((entry) => (
-                  <Cell
-                    key={entry.type}
-                    fill={COST_COLORS[entry.type] ?? 'colors.grey.400'}
-                  />
-                ))}
-              </Bar>
+                fill={designTokens.colors.primary.main}
+                barSize={20}
+              />
             </BarChart>
           </ResponsiveContainer>
         </Paper>
@@ -249,7 +250,7 @@ export default function FreightCostPage() {
         </Typography>
         <ResponsiveContainer
           width='100%'
-          height={280}
+          height={250}
         >
           <BarChart
             data={monthlyData}
@@ -261,31 +262,19 @@ export default function FreightCostPage() {
               fontSize={11}
             />
             <YAxis fontSize={11} />
-            <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
+            <Tooltip />
             <Legend />
             <Bar
-              dataKey='fuel'
+              dataKey='shipmentCount'
               name={t('tms.freight_cost_page.k16')}
-              fill={COST_COLORS.fuel}
-              stackId='a'
+              fill={designTokens.colors.secondary.dark}
+              barSize={20}
             />
             <Bar
-              dataKey='toll'
+              dataKey='avgFreight'
               name={t('tms.freight_cost_page.k17')}
-              fill={COST_COLORS.toll}
-              stackId='a'
-            />
-            <Bar
-              dataKey='labor'
-              name={t('tms.freight_cost_page.k18')}
-              fill={COST_COLORS.labor}
-              stackId='a'
-            />
-            <Bar
-              dataKey='other'
-              name={t('tms.freight_cost_page.k19')}
-              fill={COST_COLORS.other}
-              stackId='a'
+              fill={designTokens.colors.success.dark}
+              barSize={20}
             />
           </BarChart>
         </ResponsiveContainer>
