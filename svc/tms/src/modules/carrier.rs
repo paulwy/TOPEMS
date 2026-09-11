@@ -16,6 +16,7 @@ use crate::shared::fsm::{carrier_can_transition, carrier_requires_approval};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -107,6 +108,7 @@ pub async fn list_carriers(
 
     // 检查缓存（在获取事务锁之前，避免不必要的锁等待）
     if let Some(cached) = state.dict_cache.get(&cache_key) {
+        record_cache_hit("tms", "carrier", "list");
         tracing::debug!(
             event_type = "cache_hit",
             service = "tms",
@@ -118,6 +120,9 @@ pub async fn list_carriers(
         );
         return Json(ApiResponse::success(cached, "获取承运商列表成功"));
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("tms", "carrier", "list");
 
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -167,6 +172,7 @@ pub async fn list_carriers(
 
             // 写入缓存
             state.dict_cache.set(cache_key.clone(), response_data.clone());
+            record_cache_set("tms", "carrier", "list");
             tracing::debug!(
                 event_type = "cache_set",
                 service = "tms",

@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
 
 /// 物料列表缓存 Key
@@ -96,6 +97,7 @@ pub async fn list_materials(
     // 构建缓存 Key 并检查缓存
     let cache_key = materials_list_cache_key(&tenant_id, page, page_size, &query.search, &query.status);
     if let Some(cached) = state.dict_cache.get(&cache_key) {
+        record_cache_hit("pdm", "material", "list");
         tracing::debug!(
             service = "pdm",
             entity = "material",
@@ -106,6 +108,9 @@ pub async fn list_materials(
         );
         return Json(ApiResponse::success(cached, "获取物料列表成功"));
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("pdm", "material", "list");
 
     let result = sqlx::query_as::<_, Material>(
         r#"
@@ -153,6 +158,7 @@ pub async fn list_materials(
 
             // 写入缓存
             state.dict_cache.set(cache_key.clone(), response_data.clone());
+            record_cache_set("pdm", "material", "list");
             tracing::debug!(
                 service = "pdm",
                 entity = "material",

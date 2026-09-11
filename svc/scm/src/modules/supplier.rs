@@ -22,6 +22,7 @@ use crate::modules::audit::log_audit_event;
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::{auth::Claims, ApiResponse};
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::api_error;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_event::event::{MasterDataAction, SupplierDataSyncRequestedPayload};
@@ -152,9 +153,13 @@ pub async fn list_suppliers(
     let cache_key = suppliers_list_cache_key(&tenant_id, page, page_size, &params.search, &params.status);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        record_cache_hit("scm", "supplier", "list");
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
         return Json(ApiResponse::success(cached, "获取供应商列表成功"));
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("scm", "supplier", "list");
 
     if let Some(cache) = &state.cache {
         if let Ok(Some(cached)) = cache.get(&cache_key).await {
@@ -408,11 +413,15 @@ pub async fn get_supplier(
     let cache_key = supplier_cache_key(&tenant_id, &id);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        record_cache_hit("scm", "supplier", "get");
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
         if let Ok(supplier) = serde_json::from_value::<Supplier>(cached) {
             return Json(ApiResponse::success(supplier, "获取供应商成功"));
         }
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("scm", "supplier", "get");
 
     if let Some(cache) = &state.cache {
         if let Ok(Some(cached)) = cache.get(&cache_key).await {

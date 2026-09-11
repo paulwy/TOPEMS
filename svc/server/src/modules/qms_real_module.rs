@@ -14,9 +14,12 @@
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
+use std::sync::Arc;
+use std::time::Duration;
 use topems_qms::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::cache::InMemoryCache;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -69,6 +72,7 @@ impl QmsRealModule {
             pool: ctx.db.clone(),
             health_config: SimpleHealthConfig::new("topems-qms").with_db(ctx.db.clone()),
             event_publisher: ctx.event_publisher.clone(),
+            dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(600))),
             workflow_client,
         };
 

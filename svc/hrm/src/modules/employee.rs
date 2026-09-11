@@ -11,6 +11,7 @@ use crate::services::employee_service::EmployeeService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::ListResponse;
@@ -155,12 +156,17 @@ pub async fn get_employee(
     let cache_key = employee_cache_key(&tenant_id, &id);
 
     if let Some(cached) = state.employee_cache.get(&cache_key) {
+        record_cache_hit("hrm", "employee", "get");
         return Json(ApiResponse::success(cached, "从本地内存缓存获取员工成功"));
     }
+
+    // 本地缓存未命中，记录指标
+    record_cache_miss("hrm", "employee", "get");
 
     if let Ok(Some(cached)) = state.cache.get(&cache_key).await {
         if let Ok(employee) = serde_json::from_str::<Employee>(&cached) {
             state.employee_cache.set(cache_key, employee.clone());
+            record_cache_set("hrm", "employee", "get");
             return Json(ApiResponse::success(employee, "从缓存获取员工成功"));
         }
     }
@@ -177,6 +183,7 @@ pub async fn get_employee(
         state
             .employee_cache
             .set(cache_key.clone(), employee.clone());
+        record_cache_set("hrm", "employee", "get");
         let _ = state
             .cache
             .set(

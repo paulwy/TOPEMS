@@ -21,6 +21,7 @@ use crate::shared::cache::InMemoryCache;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_event::event::{
     EventPublisher, EventType, SrmSupplierCreatedPayload, SrmSupplierRegisteredPayload,
     SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
@@ -172,9 +173,13 @@ pub async fn list_suppliers(
     );
 
     if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        record_cache_hit("srm", "supplier", "list");
         tracing::debug!("📋 供应商列表缓存命中: {}", cache_key);
         return Json(ApiResponse::success(cached, "获取供应商列表成功"));
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("srm", "supplier", "list");
 
     let search_pattern = params.base.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
@@ -246,6 +251,7 @@ pub async fn list_suppliers(
             });
 
             state.supplier_cache.set(cache_key, response_data.clone());
+            record_cache_set("srm", "supplier", "list");
 
             Json(ApiResponse::success(response_data, "获取供应商列表成功"))
         }
@@ -473,11 +479,15 @@ pub async fn get_supplier(
     let cache_key = supplier_cache_key(tenant_id, id);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        record_cache_hit("srm", "supplier", "get");
         tracing::debug!("📋 供应商缓存命中: {}", cache_key);
         if let Ok(supplier) = serde_json::from_value::<Supplier>(cached) {
             return Json(ApiResponse::success(supplier, "获取供应商成功"));
         }
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("srm", "supplier", "get");
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"

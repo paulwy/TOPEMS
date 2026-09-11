@@ -21,6 +21,7 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -223,6 +224,7 @@ pub async fn list_dict_types(
         && page_size >= 100
     {
         if let Some(cached) = state.dict_cache.get(&cache_key) {
+            record_cache_hit("erp", "dict_type", "dict");
             let total = cached.len() as i64;
             let dict_types = cached.into_iter().take(page_size as usize).collect();
             return Json(ApiResponse::success(
@@ -231,6 +233,9 @@ pub async fn list_dict_types(
             ));
         }
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("erp", "dict_type", "dict");
 
     let result = sqlx::query_as::<_, DictType>(only_own_schema_query!(
         "erp",
@@ -275,6 +280,7 @@ pub async fn list_dict_types(
                 state
                     .dict_cache
                     .set(cache_key.clone(), dict_types.clone());
+                record_cache_set("erp", "dict_type", "dict");
             }
 
             Json(ApiResponse::success(

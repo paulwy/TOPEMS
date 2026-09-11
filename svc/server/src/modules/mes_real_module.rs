@@ -12,9 +12,11 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
+use std::time::Duration;
 use topems_mes::{modules, AppState};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::cache::InMemoryCache;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedServiceClient};
@@ -77,6 +79,7 @@ impl MesRealModule {
             pool: ctx.db.clone(),
             health_config,
             event_publisher: ctx.event_publisher.clone(),
+            dict_cache: Arc::new(InMemoryCache::new(Duration::from_secs(600))),
             // 生产执行闭环：ERP 服务客户端（报工后回传生产进度，service token erp:admin；失败优雅降级）
             erp_client: TypedServiceClient::<ErpApi>::from_env_default()
                 .and_then(|c| {

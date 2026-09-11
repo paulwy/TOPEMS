@@ -10,6 +10,7 @@ use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::ApiResponse;
 
 /// 质量标准列表缓存 Key
@@ -65,6 +66,7 @@ pub async fn list_standards(
         &query.search,
     );
     if let Some(cached) = state.dict_cache.get(&cache_key) {
+        record_cache_hit("qms", "quality_standard", "list");
         tracing::debug!(
             service = "qms",
             entity = "quality_standard",
@@ -79,6 +81,9 @@ pub async fn list_standards(
         }
         // 转换失败时继续查询数据库
     }
+
+    // 缓存未命中，记录指标
+    record_cache_miss("qms", "quality_standard", "list");
 
     let _params: Vec<serde_json::Value> = Vec::new();
     let where_clause = String::from(" WHERE tenant_id = $1");
@@ -127,6 +132,7 @@ pub async fn list_standards(
             // 写入缓存
             if let Ok(cached_value) = serde_json::to_value(&response) {
                 state.dict_cache.set(cache_key.clone(), cached_value);
+                record_cache_set("qms", "quality_standard", "list");
                 tracing::debug!(
                     service = "qms",
                     entity = "quality_standard",
