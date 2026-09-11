@@ -36,12 +36,13 @@ const CACHE_PREFIX_SUPPLIER: &str = "scm:supplier";
 const CACHE_PREFIX_SUPPLIERS_LIST: &str = "scm:suppliers:list";
 
 /// 构建供应商缓存 key
-fn supplier_cache_key(id: &Uuid) -> String {
-    format!("{}:{}", CACHE_PREFIX_SUPPLIER, id)
+fn supplier_cache_key(tenant_id: &str, id: &Uuid) -> String {
+    format!("{}:{}:get:{}", CACHE_PREFIX_SUPPLIER, tenant_id, id)
 }
 
 /// 构建供应商列表缓存 key
 fn suppliers_list_cache_key(
+    tenant_id: &str,
     page: i64,
     page_size: i64,
     search: &Option<String>,
@@ -49,8 +50,8 @@ fn suppliers_list_cache_key(
 ) -> String {
     let search_pattern = search.clone().map(|s| format!("%{}%", s));
     format!(
-        "{}:page:{}:size:{}:search:{:?}:status:{:?}",
-        CACHE_PREFIX_SUPPLIERS_LIST, page, page_size, search_pattern, status
+        "{}:{}:page:{}:size:{}:search:{:?}:status:{:?}",
+        CACHE_PREFIX_SUPPLIERS_LIST, tenant_id, page, page_size, search_pattern, status
     )
 }
 
@@ -146,7 +147,9 @@ pub async fn list_suppliers(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let cache_key = suppliers_list_cache_key(page, page_size, &params.search, &params.status);
+    // 从 claims 中获取 tenant_id，用于多租户缓存隔离
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let cache_key = suppliers_list_cache_key(&tenant_id, page, page_size, &params.search, &params.status);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key) {
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
@@ -400,7 +403,9 @@ pub async fn get_supplier(
         Err(e) => return e,
     }
 
-    let cache_key = supplier_cache_key(&id);
+    // 从 claims 中获取 tenant_id，用于多租户缓存隔离
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let cache_key = supplier_cache_key(&tenant_id, &id);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key) {
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
@@ -554,7 +559,9 @@ pub async fn update_supplier(
     };
 
     if status_str == "success" {
-        let cache_key = supplier_cache_key(&id);
+        // 从 claims 中获取 tenant_id，用于多租户缓存隔离
+        let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+        let cache_key = supplier_cache_key(&tenant_id, &id);
         state.supplier_cache.remove(&cache_key);
         state.supplier_cache.clear();
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
@@ -695,7 +702,9 @@ pub async fn delete_supplier(
     };
 
     if status_str == "success" {
-        let cache_key = supplier_cache_key(&id);
+        // 从 claims 中获取 tenant_id，用于多租户缓存隔离
+        let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+        let cache_key = supplier_cache_key(&tenant_id, &id);
         state.supplier_cache.remove(&cache_key);
         state.supplier_cache.clear();
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
@@ -783,7 +792,8 @@ mod tests {
     #[test]
     fn supplier_cache_key_includes_id_with_prefix() {
         let id = Uuid::new_v4();
-        let key = supplier_cache_key(&id);
+        let tenant_id = "test-tenant";
+        let key = supplier_cache_key(tenant_id, &id);
         assert!(
             key.starts_with("scm:supplier:"),
             "key should start with prefix, got {}",
@@ -794,18 +804,33 @@ mod tests {
             "key should contain the uuid, got {}",
             key
         );
+        assert!(
+            key.contains(tenant_id),
+            "key should contain tenant_id, got {}",
+            key
+        );
     }
 
     #[test]
     fn supplier_cache_key_format_is_deterministic() {
         let id = Uuid::nil();
-        let key = supplier_cache_key(&id);
-        assert_eq!(key, format!("scm:supplier:{}", id));
+        let tenant_id = "test-tenant";
+        let key = supplier_cache_key(tenant_id, &id);
+        assert_eq!(key, format!("scm:supplier:{}:get:{}", tenant_id, id));
+    }
+
+    #[test]
+    fn supplier_cache_key_is_isolated_by_tenant() {
+        let id = Uuid::new_v4();
+        let key1 = supplier_cache_key("tenant-a", &id);
+        let key2 = supplier_cache_key("tenant-b", &id);
+        assert_ne!(key1, key2, "different tenants should have different cache keys");
     }
 
     #[test]
     fn suppliers_list_cache_key_includes_pagination_params() {
-        let key = suppliers_list_cache_key(2, 20, &None, &None);
+        let tenant_id = "test-tenant";
+        let key = suppliers_list_cache_key(tenant_id, 2, 20, &None, &None);
         assert!(
             key.contains("page:2"),
             "key should contain page, got {}",
@@ -821,12 +846,17 @@ mod tests {
             "key should start with prefix, got {}",
             key
         );
+        assert!(
+            key.contains(tenant_id),
+            "key should contain tenant_id, got {}",
+            key
+        );
     }
 
     #[test]
     fn suppliers_list_cache_key_includes_search_pattern() {
         let search = Some("acme".to_string());
-        let key = suppliers_list_cache_key(1, 10, &search, &None);
+        let key = suppliers_list_cache_key("test-tenant", 1, 10, &search, &None);
         assert!(
             key.contains("search:Some(\"%acme%\")"),
             "key should contain search pattern, got {}",
@@ -837,7 +867,7 @@ mod tests {
     #[test]
     fn suppliers_list_cache_key_includes_status_filter() {
         let status = Some("active".to_string());
-        let key = suppliers_list_cache_key(1, 10, &None, &status);
+        let key = suppliers_list_cache_key("test-tenant", 1, 10, &None, &status);
         assert!(
             key.contains("status:Some(\"active\")"),
             "key should contain status, got {}",
@@ -847,14 +877,21 @@ mod tests {
 
     #[test]
     fn suppliers_list_cache_key_distinct_for_different_params() {
-        let k1 = suppliers_list_cache_key(1, 10, &None, &None);
-        let k2 = suppliers_list_cache_key(2, 10, &None, &None);
+        let k1 = suppliers_list_cache_key("test-tenant", 1, 10, &None, &None);
+        let k2 = suppliers_list_cache_key("test-tenant", 2, 10, &None, &None);
         assert_ne!(k1, k2);
     }
 
     #[test]
+    fn suppliers_list_cache_key_is_isolated_by_tenant() {
+        let k1 = suppliers_list_cache_key("tenant-a", 1, 10, &None, &None);
+        let k2 = suppliers_list_cache_key("tenant-b", 1, 10, &None, &None);
+        assert_ne!(k1, k2, "different tenants should have different cache keys");
+    }
+
+    #[test]
     fn suppliers_list_cache_key_search_none_renders_none() {
-        let key = suppliers_list_cache_key(1, 10, &None, &None);
+        let key = suppliers_list_cache_key("test-tenant", 1, 10, &None, &None);
         assert!(
             key.contains("search:None"),
             "key should contain search:None, got {}",

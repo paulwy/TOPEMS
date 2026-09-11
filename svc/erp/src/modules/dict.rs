@@ -196,6 +196,7 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn list_dict_types(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<DictTypeQueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -211,13 +212,17 @@ pub async fn list_dict_types(
     let category_filter = params.category.clone();
     let status_filter = params.status.clone();
 
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:{operation}:{tenant_id}:{params}）
+    let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
+
     if search_pattern.is_none()
         && category_filter.is_none()
         && status_filter.is_none()
         && page == 1
         && page_size >= 100
     {
-        if let Some(cached) = state.dict_cache.get("all_dict_types") {
+        if let Some(cached) = state.dict_cache.get(&cache_key) {
             let total = cached.len() as i64;
             let dict_types = cached.into_iter().take(page_size as usize).collect();
             return Json(ApiResponse::success(
@@ -269,7 +274,7 @@ pub async fn list_dict_types(
             if search_pattern.is_none() && category_filter.is_none() && status_filter.is_none() {
                 state
                     .dict_cache
-                    .set("all_dict_types".to_string(), dict_types.clone());
+                    .set(cache_key.clone(), dict_types.clone());
             }
 
             Json(ApiResponse::success(
@@ -294,6 +299,7 @@ pub async fn list_dict_types(
 )]
 pub async fn create_dict_type(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -338,7 +344,11 @@ pub async fn create_dict_type(
                     return Json(api_error(500, "事务提交失败"));
                 }
             }
-            state.dict_cache.remove("all_dict_types");
+            // 失效当前租户的字典类型缓存
+            let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+            let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
+            state.dict_cache.remove(&cache_key);
+            tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
             (
                 Json(ApiResponse::success(dict_type.clone(), "字典类型创建成功")),
                 "success".to_string(),
@@ -431,6 +441,7 @@ pub async fn get_dict_type(
 )]
 pub async fn update_dict_type(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -487,7 +498,11 @@ pub async fn update_dict_type(
                     return Json(api_error(500, "事务提交失败"));
                 }
             }
-            state.dict_cache.remove("all_dict_types");
+            // 失效当前租户的字典类型缓存
+            let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+            let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
+            state.dict_cache.remove(&cache_key);
+            tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
             (
                 Json(ApiResponse::success(dict_type.clone(), "字典类型更新成功")),
                 "success".to_string(),
@@ -541,6 +556,7 @@ pub async fn update_dict_type(
 )]
 pub async fn delete_dict_type(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -570,7 +586,11 @@ pub async fn delete_dict_type(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => {
-            state.dict_cache.remove("all_dict_types");
+            // 失效当前租户的字典类型缓存
+            let tenant_id = claims.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+            let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
+            state.dict_cache.remove(&cache_key);
+            tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
             (
                 Json(ApiResponse::success("".to_string(), "字典类型删除成功")),
                 "success".to_string(),
