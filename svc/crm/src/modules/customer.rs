@@ -66,6 +66,40 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+/// 单条客户详情缓存 key（含 tenant_id 做租户隔离）
+fn customer_detail_cache_key(tenant_id: Uuid, id: Uuid) -> String {
+    format!("crm:customer:{}:{}", tenant_id, id)
+}
+
+/// 客户列表缓存 key（含 tenant_id 与查询参数 hash）
+fn customer_list_cache_key(
+    tenant_id: Uuid,
+    page: i64,
+    page_size: i64,
+    search: &Option<String>,
+) -> String {
+    format!(
+        "crm:customer:list:{}:page:{}:size:{}:search:{:?}",
+        tenant_id, page, page_size, search
+    )
+}
+
+/// 客户数据变更后失效本地缓存并发布跨实例失效事件
+///
+/// 列表缓存无法精确按键删除，因此清空本地 L1；
+/// 同时发布 `crm:customer:*` pattern 事件，驱动其它实例清空 L1。
+async fn invalidate_customer_cache(state: &ApiState, reason: &str) {
+    state.customer_cache.clear_l1();
+    if let Some(publisher) = &state.event_publisher {
+        if let Err(e) = publisher
+            .publish_cache_invalidated("crm:customer:*", "pattern", Some(reason))
+            .await
+        {
+            tracing::warn!("发布客户缓存失效事件失败: {}", e);
+        }
+    }
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["crm:customer:read"])),
@@ -103,6 +137,20 @@ pub async fn list_customers(
         .map(|s| s.trim()[..s.len().min(100)].to_string());
     let tenant_id = get_tenant_id(&claims, &headers);
 
+    // 缓存命中则直接返回（含 tenant_id 的隔离 key）
+    let list_cache_key = customer_list_cache_key(tenant_id, page, page_size, &search);
+    if let Some(cached) = state.customer_cache.get(&list_cache_key).await {
+        match serde_json::from_value::<ListResponse<Customer>>(cached) {
+            Ok(list_resp) => {
+                tracing::debug!("📋 客户列表缓存命中: {}", list_cache_key);
+                return Json(ApiResponse::success(list_resp, "获取客户列表成功"));
+            }
+            Err(_) => {
+                tracing::warn!("客户列表缓存反序列化失败，回源查询");
+            }
+        }
+    }
+
     let mut count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "crm",
         "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND deleted_at IS NULL"
@@ -126,6 +174,11 @@ pub async fn list_customers(
     let items: Vec<Customer> = list_qb.fetch_all(&mut **txn).await.unwrap_or_default();
 
     let body = ListResponse::with_pagination(items, total, page, page_size);
+
+    // 回填缓存
+    if let Ok(value) = serde_json::to_value(&body) {
+        state.customer_cache.set(list_cache_key, value).await;
+    }
 
     Json(ApiResponse::success(body, "获取客户列表成功"))
 }
@@ -201,6 +254,8 @@ async fn create_customer(
                     return Json(api_error(500, "事务提交失败"));
                 }
             }
+            // 创建客户后失效客户列表缓存
+            invalidate_customer_cache(&state, "customer_created").await;
             let request_data = serde_json::to_value(&req).ok();
             let response_data = serde_json::to_value(&customer).ok();
             tokio::spawn(async move {
@@ -261,6 +316,20 @@ async fn get_customer(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
+    // 缓存命中则直接返回
+    let detail_key = customer_detail_cache_key(tenant_id, id);
+    if let Some(cached) = state.customer_cache.get(&detail_key).await {
+        match serde_json::from_value::<Customer>(cached) {
+            Ok(customer) => {
+                tracing::debug!("📋 客户详情缓存命中: {}", detail_key);
+                return Json(ApiResponse::success(customer, "获取客户成功"));
+            }
+            Err(_) => {
+                tracing::warn!("客户详情缓存反序列化失败，回源查询");
+            }
+        }
+    }
+
     match sqlx::query_as::<_, Customer>(
         "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2"
     )
@@ -269,7 +338,12 @@ async fn get_customer(
     .fetch_optional(&mut **txn)
     .await
     {
-        Ok(Some(customer)) => Json(ApiResponse::success(customer, "获取客户成功")),
+        Ok(Some(customer)) => {
+            if let Ok(value) = serde_json::to_value(&customer) {
+                state.customer_cache.set(detail_key, value).await;
+            }
+            Json(ApiResponse::success(customer, "获取客户成功"))
+        }
         Ok(None) => Json(api_error(404, "客户不存在")),
         Err(e) => {
             tracing::error!("获取客户失败: {}", e);
@@ -363,6 +437,8 @@ async fn update_customer(
                 }
             }
             let response_data = serde_json::to_value(&customer).ok();
+            // 更新客户后失效客户详情与列表缓存
+            invalidate_customer_cache(&state, "customer_updated").await;
             tokio::spawn(async move {
                 let _ = log_audit_event(
                     &state.db,
@@ -436,6 +512,8 @@ async fn delete_customer(
                     return Json(api_error(500, "事务提交失败"));
                 }
             }
+            // 删除客户后失效缓存
+            invalidate_customer_cache(&state, "customer_deleted").await;
             let response_data = serde_json::json!({ "rows_affected": r.rows_affected() });
             tokio::spawn(async move {
                 let _ = log_audit_event(
@@ -516,6 +594,8 @@ async fn batch_delete_customers(
                     return Json(api_error(500, "事务提交失败"));
                 }
             }
+            // 批量删除客户后失效缓存
+            invalidate_customer_cache(&state, "customer_batch_deleted").await;
             let entity_ids = serde_json::to_value(&req.ids).ok();
             let response_data = serde_json::json!({ "rows_affected": r.rows_affected() });
             tokio::spawn(async move {

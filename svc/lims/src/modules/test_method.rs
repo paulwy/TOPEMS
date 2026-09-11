@@ -47,7 +47,7 @@ pub struct TestMethodQuery {
     pub method_code: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestMethod {
     pub id: String,
     pub tenant_id: String,
@@ -376,7 +376,7 @@ pub async fn get_method(
 
     let cache_key = test_method_cache_key(&ctx.tenant_id, &id.to_string());
 
-    if let Some(cached) = state.test_method_cache.get(&cache_key) {
+    if let Some(cached) = state.test_method_cache.get(&cache_key).await {
         return Json(ApiResponse::success(cached, "从内存缓存获取检测方法成功"));
     }
 
@@ -421,7 +421,7 @@ pub async fn get_method(
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
             };
-            state.test_method_cache.set(cache_key, method.clone());
+            state.test_method_cache.set(cache_key, method.clone()).await;
             Json(ApiResponse::success(method, "获取检测方法成功"))
         }
         Err(e) => {
@@ -487,7 +487,8 @@ pub async fn update_method(
         Ok(r) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()));
+                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()))
+                .await;
             Json(ApiResponse::success(
                 TestMethod {
                     id: r.get("id"),
@@ -546,7 +547,8 @@ pub async fn delete_method(
         Ok(_) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()));
+                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()))
+                .await;
             Json(ApiResponse::success(true, "检测方法删除成功"))
         }
         Err(e) => {

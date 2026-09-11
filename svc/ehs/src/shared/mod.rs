@@ -10,7 +10,7 @@ use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
-use crate::shared::cache::InMemoryCache;
+use topems_shared_core::l2_cache::AsyncL2Cache;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -19,9 +19,9 @@ pub struct AppState {
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
-    pub hazard_cache: Arc<InMemoryCache<serde_json::Value>>,
-    pub training_cache: Arc<InMemoryCache<serde_json::Value>>,
-    pub dict_cache: Arc<InMemoryCache<String>>,
+    pub hazard_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    pub training_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    pub dict_cache: Arc<AsyncL2Cache<String>>,
 }
 
 impl FromRef<AppState> for AuthState {

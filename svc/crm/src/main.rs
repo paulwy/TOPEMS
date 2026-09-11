@@ -9,6 +9,11 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+};
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
+use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 use topems_shared_service_client::service_client::{
     ErpApi, TypedServiceClient, WmsApi, WorkflowApi,
 };
@@ -59,6 +64,225 @@ async fn main() -> Result<()> {
     let encryption_service = topems_shared::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化成功");
 
+    // ===== 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）=====
+    let redis_url = std::env::var("REDIS_URL").ok();
+
+    let customer_l2_config = L2CacheConfig {
+        instance_prefix: "crm".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("crm", "customer");
+    let customer_cache =
+        match AsyncL2Cache::<serde_json::Value>::try_new(customer_l2_config, redis_url.as_deref())
+            .await
+        {
+            Ok(cache) => {
+                if cache.has_l2() {
+                    tracing::info!("💾 多级缓存初始化完成（CRM customer，L1+L2 Redis）");
+                } else {
+                    tracing::info!("💾 多级缓存初始化完成（CRM customer，纯 L1）");
+                }
+                Arc::new(cache)
+            }
+            Err((cache, warn)) => {
+                tracing::warn!("💾 多级缓存初始化降级（CRM customer）: {}", warn);
+                Arc::new(cache)
+            }
+        };
+
+    let opportunity_l2_config = L2CacheConfig {
+        instance_prefix: "crm".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("crm", "opportunity");
+    let opportunity_cache = match AsyncL2Cache::<serde_json::Value>::try_new(
+        opportunity_l2_config,
+        redis_url.as_deref(),
+    )
+    .await
+    {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（CRM opportunity，L1+L2 Redis）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（CRM opportunity，纯 L1）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（CRM opportunity）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
+    let dict_l2_config = L2CacheConfig {
+        instance_prefix: "crm".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("crm", "dict");
+    let dict_cache = match AsyncL2Cache::<String>::try_new(dict_l2_config, redis_url.as_deref()).await
+    {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（CRM dict，L1+L2 Redis）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（CRM dict，纯 L1）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（CRM dict）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
+    let dashboard_l2_config = L2CacheConfig {
+        instance_prefix: "crm".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(300),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("crm", "dashboard");
+    let dashboard_cache = match AsyncL2Cache::<serde_json::Value>::try_new(
+        dashboard_l2_config,
+        redis_url.as_deref(),
+    )
+    .await
+    {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（CRM dashboard，L1+L2 Redis）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（CRM dashboard，纯 L1）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（CRM dashboard）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
+    // 缓存预热：启动时异步加载客户列表默认页，避免首次请求缓存未命中
+    {
+        let cache = customer_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[crm] 开始客户列表缓存预热...");
+            // 预热使用默认租户占位（与 create_customer 中使用的组织 UUID 一致），
+            // 默认参数：page=1, page_size=25, search=None
+            let warmup_tenant =
+                "00000000-0000-0000-0000-000000000001".to_string();
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'items', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM crm.customers WHERE deleted_at IS NULL AND tenant_id = $1),
+                    'page', 1,
+                    'page_size', 25
+                ) as data
+                FROM (
+                    SELECT c.* FROM crm.customers c
+                    WHERE c.deleted_at IS NULL AND c.tenant_id = $1
+                    ORDER BY c.created_at DESC
+                    LIMIT 25 OFFSET 0
+                ) t
+                "#,
+            )
+            .bind(&warmup_tenant)
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = format!(
+                        "crm:customer:list:{}:page:1:size:25:search:None",
+                        warmup_tenant
+                    );
+                    cache.set(cache_key, data).await;
+                    tracing::info!("[crm] 客户列表缓存预热完成");
+                }
+                Ok(None) => tracing::info!("[crm] 客户列表为空，跳过预热"),
+                Err(e) => tracing::warn!("[crm] 客户列表缓存预热失败: {}", e),
+            }
+        });
+    }
+
+    // 缓存失效事件订阅（事件驱动缓存一致性）
+    {
+        let mut cache_invalidation_listener = CacheInvalidationListener::new("crm");
+        cache_invalidation_listener.register_handler(
+            AsyncL2CacheInvalidationHandler::new(
+                "crm_customer_cache",
+                customer_cache.clone(),
+                "crm:customer:",
+            ),
+        );
+        cache_invalidation_listener.register_handler(
+            AsyncL2CacheInvalidationHandler::new(
+                "crm_opportunity_cache",
+                opportunity_cache.clone(),
+                "crm:opportunity:",
+            ),
+        );
+        cache_invalidation_listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "crm_dict_cache",
+            dict_cache.clone(),
+            "crm:dict:",
+        ));
+        cache_invalidation_listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "crm_dashboard_cache",
+            dashboard_cache.clone(),
+            "crm:dashboard:",
+        ));
+        let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+        match EventSubscriber::new("crm-cache-invalidation") {
+            Ok(cache_subscriber) => {
+                let listener = cache_invalidation_listener.clone();
+                let cache_subscriber = cache_subscriber.subscribe(
+                    vec![EventType::CacheInvalidated],
+                    move |event| {
+                        let listener = listener.clone();
+                        Box::pin(async move {
+                            if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                                let invalidation_event = CacheInvalidationEvent {
+                                    source_service: payload.source_service,
+                                    source_instance: payload.source_instance,
+                                    cache_key_pattern: payload.cache_key_pattern,
+                                    invalidation_level: InvalidationLevel::from_str(
+                                        &payload.invalidation_level,
+                                    ),
+                                    reason: payload.reason,
+                                };
+                                listener.dispatch_invalidation(&invalidation_event);
+                            }
+                        })
+                    },
+                );
+
+                tokio::spawn(async move {
+                    if let Err(e) = cache_subscriber.start_listening().await {
+                        tracing::error!("[crm] 缓存失效事件订阅者异常退出: {}", e);
+                    }
+                });
+                tracing::info!("[crm] 缓存失效事件订阅者启动成功");
+            }
+            Err(e) => {
+                tracing::warn!("[crm] 缓存失效事件订阅者创建失败: {}", e);
+            }
+        }
+    }
+
     // 初始化 ERP / WMS 服务客户端（失败不阻塞启动，相关联动功能会优雅降级）
     let jwt_secret = ctx.auth_state.jwt_secret.clone();
     let erp_client = match TypedServiceClient::<ErpApi>::from_env_default()
@@ -104,8 +328,10 @@ async fn main() -> Result<()> {
         erp_client,
         wms_client,
         workflow_client,
-        customer_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(3600))),
-        dashboard_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(300))),
+        customer_cache,
+        opportunity_cache,
+        dict_cache,
+        dashboard_cache,
     };
 
     // 标准健康检查路由（使用 BootstrapAppState）

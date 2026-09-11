@@ -37,7 +37,25 @@ pub struct SampleQuery {
     pub sample_name: Option<String>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+/// 样品详情缓存 key（含 tenant_id）
+fn sample_detail_key(tenant_id: &Uuid, id: &str) -> String {
+    format!("lims:sample:{}:{}", tenant_id, id)
+}
+
+/// 样品列表缓存 key（按查询参数归一化，含 tenant_id）
+fn sample_list_key(tenant_id: &Uuid, query: &SampleQuery) -> String {
+    let page = query.page.unwrap_or(1);
+    let page_size = query.page_size.unwrap_or(10);
+    let status = query.status.as_deref().unwrap_or("all");
+    let sample_no = query.sample_no.as_deref().unwrap_or("all");
+    let sample_name = query.sample_name.as_deref().unwrap_or("all");
+    format!(
+        "lims:sample:list:{}:p:{}:ps:{}:s:{}:no:{}:nm:{}",
+        tenant_id, page, page_size, status, sample_no, sample_name
+    )
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Sample {
     pub id: String,
     pub tenant_id: String,
@@ -100,6 +118,15 @@ pub async fn list_samples(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
     let tenant_id = ctx.tenant_id;
+
+    // 缓存读取：先查多级缓存，miss 再回源数据库
+    let list_key = sample_list_key(&tenant_id, &query);
+    if let Some(cached) = state.sample_cache.get(&list_key).await {
+        match serde_json::from_value::<Vec<Sample>>(cached) {
+            Ok(data) => return Json(ApiResponse::success(data, "从缓存获取样品列表成功")),
+            Err(e) => tracing::warn!("样品列表缓存反序列化失败，回源: {}", e),
+        }
+    }
 
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
         (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
@@ -188,7 +215,13 @@ pub async fn list_samples(
     });
 
     match samples {
-        Ok(data) => Json(ApiResponse::success(data, "获取样品列表成功")),
+        Ok(data) => {
+            // 回填多级缓存
+            if let Ok(v) = serde_json::to_value(&data) {
+                state.sample_cache.set(list_key, v).await;
+            }
+            Json(ApiResponse::success(data, "获取样品列表成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch samples: {}", e);
             Json(ApiResponse::error(500, "获取样品列表失败"))
@@ -232,8 +265,8 @@ pub async fn register_sample(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            Sample {
+        Ok(r) => {
+            let sample = Sample {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 sample_no: r.get("sample_no"),
@@ -247,9 +280,23 @@ pub async fn register_sample(
                 expired_at: r.get("expired_at"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "样品登记成功",
-        )),
+            };
+            // 新样品入库，列表缓存失效（pattern 广播）
+            if let Some(publisher) = &state.event_publisher {
+                let publisher = publisher.clone();
+                let tenant = tenant_id.to_string();
+                tokio::spawn(async move {
+                    let _ = publisher
+                        .publish_cache_invalidated(
+                            &format!("lims:sample:list:{}:*", tenant),
+                            "pattern",
+                            Some("sample_registered"),
+                        )
+                        .await;
+                });
+            }
+            Json(ApiResponse::success(sample, "样品登记成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to create sample: {}", e);
             Json(ApiResponse::error(500, "样品登记失败"))
@@ -281,6 +328,15 @@ pub async fn get_sample(
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
     let tenant_id = ctx.tenant_id;
+    let cache_key = sample_detail_key(&tenant_id, &id.to_string());
+
+    // 缓存读取
+    if let Some(cached) = state.sample_cache.get(&cache_key).await {
+        match serde_json::from_value::<Sample>(cached) {
+            Ok(sample) => return Json(ApiResponse::success(sample, "从缓存获取样品成功")),
+            Err(e) => tracing::warn!("样品详情缓存反序列化失败，回源: {}", e),
+        }
+    }
 
     let row = sqlx::query(
         "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
@@ -291,8 +347,8 @@ pub async fn get_sample(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            Sample {
+        Ok(r) => {
+            let sample = Sample {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 sample_no: r.get("sample_no"),
@@ -306,9 +362,13 @@ pub async fn get_sample(
                 expired_at: r.get("expired_at"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "获取样品成功",
-        )),
+            };
+            // 回填缓存
+            if let Ok(v) = serde_json::to_value(&sample) {
+                state.sample_cache.set(cache_key, v).await;
+            }
+            Json(ApiResponse::success(sample, "获取样品成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch sample: {}", e);
             Json(ApiResponse::error(500, "获取样品失败"))
@@ -344,8 +404,8 @@ pub async fn update_sample(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            Sample {
+        Ok(r) => {
+            let sample = Sample {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 sample_no: r.get("sample_no"),
@@ -359,9 +419,29 @@ pub async fn update_sample(
                 expired_at: r.get("expired_at"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "样品更新成功",
-        )),
+            };
+            // 失效详情缓存并广播列表失效
+            let detail_key = sample_detail_key(&tenant_id, &id.to_string());
+            state.sample_cache.remove(&detail_key).await;
+            if let Some(publisher) = &state.event_publisher {
+                let publisher = publisher.clone();
+                let key = detail_key.clone();
+                let tenant = tenant_id.to_string();
+                tokio::spawn(async move {
+                    let _ = publisher
+                        .publish_cache_invalidated(&key, "specific", Some("sample_updated"))
+                        .await;
+                    let _ = publisher
+                        .publish_cache_invalidated(
+                            &format!("lims:sample:list:{}:*", tenant),
+                            "pattern",
+                            Some("sample_updated"),
+                        )
+                        .await;
+                });
+            }
+            Json(ApiResponse::success(sample, "样品更新成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to update sample: {}", e);
             Json(ApiResponse::error(500, "样品更新失败"))
@@ -389,7 +469,29 @@ pub async fn delete_sample(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "样品删除成功")),
+        Ok(_) => {
+            // 失效详情缓存并广播列表失效
+            let detail_key = sample_detail_key(&tenant_id, &id.to_string());
+            state.sample_cache.remove(&detail_key).await;
+            if let Some(publisher) = &state.event_publisher {
+                let publisher = publisher.clone();
+                let key = detail_key.clone();
+                let tenant = tenant_id.to_string();
+                tokio::spawn(async move {
+                    let _ = publisher
+                        .publish_cache_invalidated(&key, "specific", Some("sample_deleted"))
+                        .await;
+                    let _ = publisher
+                        .publish_cache_invalidated(
+                            &format!("lims:sample:list:{}:*", tenant),
+                            "pattern",
+                            Some("sample_deleted"),
+                        )
+                        .await;
+                });
+            }
+            Json(ApiResponse::success(true, "样品删除成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to delete sample: {}", e);
             Json(ApiResponse::error(500, "样品删除失败"))

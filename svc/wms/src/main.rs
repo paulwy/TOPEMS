@@ -18,8 +18,12 @@ use topems_shared_bootstrap::{
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 use modules::ApiState;
-use shared::cache::InMemoryCache;
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+};
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
+use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -50,10 +54,176 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let warehouse_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
-    let inventory_cache = Arc::new(InMemoryCache::new(Duration::from_secs(120)));
-    let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
-    tracing::info!("💾 内存缓存初始化完成（仓库/库存/字典）");
+    // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
+    let redis_url = std::env::var("REDIS_URL").ok();
+
+    let l2_config = L2CacheConfig {
+        instance_prefix: "wms".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("wms", "warehouse");
+    let warehouse_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（WMS warehouse，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（WMS warehouse，纯 L1 模式）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（WMS warehouse）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
+    let l2_config = L2CacheConfig {
+        instance_prefix: "wms".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("wms", "inventory");
+    let inventory_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（WMS inventory，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（WMS inventory，纯 L1 模式）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（WMS inventory）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
+    let l2_config = L2CacheConfig {
+        instance_prefix: "wms".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("wms", "dict");
+    let dict_cache = match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（WMS dict，L1+L2 Redis 已启用）");
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（WMS dict，纯 L1 模式）");
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（WMS dict）: {}", warn);
+            Arc::new(cache)
+        }
+    };
+
+    // 缓存预热：服务启动时异步加载仓库列表第一页数据，避免首次请求缓存未命中
+    {
+        let cache = warehouse_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[wms] 开始仓库列表缓存预热...");
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                r#"
+                SELECT json_build_object(
+                    'warehouses', COALESCE(json_agg(t), '[]'::json),
+                    'total', (SELECT COUNT(*) FROM wms.warehouses WHERE deleted_at IS NULL),
+                    'page', 1,
+                    'page_size', 20
+                ) as data
+                FROM (
+                    SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+                    FROM wms.warehouses
+                    WHERE deleted_at IS NULL
+                    ORDER BY created_at DESC
+                    LIMIT 20 OFFSET 0
+                ) t
+                "#,
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    let cache_key = "wms:warehouse:list:warmup:page:1:size:20";
+                    cache.set(cache_key.to_string(), data).await;
+                    tracing::info!("[wms] 仓库列表缓存预热完成");
+                }
+                Ok(None) => {
+                    tracing::info!("[wms] 仓库列表为空，跳过预热");
+                }
+                Err(e) => {
+                    tracing::warn!("[wms] 仓库列表缓存预热失败: {}", e);
+                }
+            }
+        });
+    }
+
+    // 缓存失效事件订阅（事件驱动缓存一致性）
+    {
+        let mut cache_invalidation_listener = CacheInvalidationListener::new("wms");
+        let warehouse_handler = AsyncL2CacheInvalidationHandler::new(
+            "wms_warehouse_cache",
+            warehouse_cache.clone(),
+            "wms:warehouse:",
+        );
+        cache_invalidation_listener.register_handler(warehouse_handler);
+        let inventory_handler = AsyncL2CacheInvalidationHandler::new(
+            "wms_inventory_cache",
+            inventory_cache.clone(),
+            "wms:inventory:",
+        );
+        cache_invalidation_listener.register_handler(inventory_handler);
+        let dict_handler = AsyncL2CacheInvalidationHandler::new(
+            "wms_dict_cache",
+            dict_cache.clone(),
+            "wms:dict:",
+        );
+        cache_invalidation_listener.register_handler(dict_handler);
+        let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+        match EventSubscriber::new("wms-cache-invalidation") {
+            Ok(cache_subscriber) => {
+                let listener = cache_invalidation_listener.clone();
+                let cache_subscriber =
+                    cache_subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
+                        let listener = listener.clone();
+                        Box::pin(async move {
+                            if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                                let invalidation_event = CacheInvalidationEvent {
+                                    source_service: payload.source_service,
+                                    source_instance: payload.source_instance,
+                                    cache_key_pattern: payload.cache_key_pattern,
+                                    invalidation_level: InvalidationLevel::from_str(
+                                        &payload.invalidation_level,
+                                    ),
+                                    reason: payload.reason,
+                                };
+                                listener.dispatch_invalidation(&invalidation_event);
+                            }
+                        })
+                    });
+
+                tokio::spawn(async move {
+                    if let Err(e) = cache_subscriber.start_listening().await {
+                        tracing::error!("[wms] 缓存失效事件订阅者异常退出: {}", e);
+                    }
+                });
+                tracing::info!("[wms] 缓存失效事件订阅者启动成功");
+            }
+            Err(e) => {
+                tracing::warn!("[wms] 缓存失效事件订阅者创建失败: {}", e);
+            }
+        }
+    }
 
     let api_state = ApiState {
         db: ctx.db.clone(),

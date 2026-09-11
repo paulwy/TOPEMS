@@ -1,2 +1,3 @@
-// 统一使用 shared-core 的 InMemoryCache 实现（moka，接受 Duration 作为 TTL）
-pub use topems_shared_core::cache::InMemoryCache;
+// 此文件已不再使用。
+// 所有缓存已升级为 topems_shared_core::l2_cache::AsyncL2Cache 多级缓存（L1 moka + L2 Redis）。
+// 保留此空文件以维持模块结构完整性。

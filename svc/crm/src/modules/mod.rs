@@ -1,5 +1,3 @@
-use crate::models::Customer;
-use crate::shared::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -7,6 +5,7 @@ use std::time::Instant;
 use topems_shared::AuthState;
 use topems_shared_auth::security::FieldEncryptionService;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_core::l2_cache::AsyncL2Cache;
 
 pub mod aftersales;
 pub mod analytics;
@@ -55,8 +54,10 @@ pub struct ApiState {
     pub workflow_client: topems_shared_service_client::service_client::TypedServiceClient<
         topems_shared_service_client::service_client::WorkflowApi,
     >,
-    pub customer_cache: Arc<InMemoryCache<Customer>>,
-    pub dashboard_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub customer_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    pub opportunity_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    pub dict_cache: Arc<AsyncL2Cache<String>>,
+    pub dashboard_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl FromRef<ApiState> for AuthState {

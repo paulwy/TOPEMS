@@ -3,10 +3,10 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::EventPublisher;
 pub mod cache;
 use crate::modules::test_method::TestMethod;
-pub use cache::InMemoryCache;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -14,8 +14,16 @@ pub struct AppState {
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub test_method_cache: Arc<InMemoryCache<TestMethod>>,
-    pub instrument_cache: Arc<InMemoryCache<serde_json::Value>>,
+    /// 样品详情/列表缓存（L1 moka + L2 Redis）
+    pub sample_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    /// 检测任务详情/列表缓存
+    pub task_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    /// 字典缓存
+    pub dict_cache: Arc<AsyncL2Cache<String>>,
+    /// 检测方法详情缓存（升级为多级缓存）
+    pub test_method_cache: Arc<AsyncL2Cache<TestMethod>>,
+    /// 仪器缓存（升级为多级缓存）
+    pub instrument_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 impl FromRef<AppState> for AuthState {

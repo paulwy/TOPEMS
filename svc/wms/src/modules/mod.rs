@@ -1,10 +1,10 @@
-use crate::shared::cache::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::EventPublisher;
 
 pub mod audit;
@@ -41,9 +41,9 @@ pub struct ApiState {
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub warehouse_cache: Arc<InMemoryCache<serde_json::Value>>,
-    pub inventory_cache: Arc<InMemoryCache<serde_json::Value>>,
-    pub dict_cache: Arc<InMemoryCache<String>>,
+    pub warehouse_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    pub inventory_cache: Arc<AsyncL2Cache<serde_json::Value>>,
+    pub dict_cache: Arc<AsyncL2Cache<String>>,
 }
 
 impl FromRef<ApiState> for AuthState {

@@ -23,10 +23,51 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
+use topems_shared_core::l2_cache::{
+    AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig,
+};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 
 pub use shared::*;
+
+// ==================== 多级缓存初始化辅助 ====================
+
+fn make_l2_config(entity: &str) -> L2CacheConfig {
+    L2CacheConfig {
+        instance_prefix: "lims".to_string(),
+        l1_ttl: Duration::from_secs(60),
+        l2_ttl: Duration::from_secs(600),
+        l1_capacity: 10_000,
+        ..Default::default()
+    }
+    .with_metrics("lims", entity)
+}
+
+async fn init_cache<T: Clone + Send + Sync + 'static>(
+    config: L2CacheConfig,
+    name: &str,
+) -> Arc<AsyncL2Cache<T>> {
+    let redis_url = std::env::var("REDIS_URL").ok();
+    match AsyncL2Cache::try_new(config, redis_url.as_deref()).await {
+        Ok(cache) => {
+            if cache.has_l2() {
+                tracing::info!("💾 多级缓存初始化完成（LIMS {}，L1+L2 Redis）", name);
+            } else {
+                tracing::info!("💾 多级缓存初始化完成（LIMS {}，纯 L1）", name);
+            }
+            Arc::new(cache)
+        }
+        Err((cache, warn)) => {
+            tracing::warn!("💾 多级缓存初始化降级（LIMS {}）: {}", name, warn);
+            Arc::new(cache)
+        }
+    }
+}
 
 // ==================== 主入口 ====================
 
@@ -57,13 +98,135 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("⚠️ LIMS 事件订阅者启动失败: {}", e);
     }
 
+    // 多级缓存初始化（L1: moka 进程内 + L2: Redis 跨实例共享）
+    let sample_cache = init_cache::<serde_json::Value>(make_l2_config("sample"), "sample").await;
+    let task_cache = init_cache::<serde_json::Value>(make_l2_config("task"), "task").await;
+    let dict_cache = init_cache::<String>(make_l2_config("dict"), "dict").await;
+    let test_method_cache = init_cache::<modules::test_method::TestMethod>(
+        make_l2_config("test_method"),
+        "test_method",
+    )
+    .await;
+    let instrument_cache =
+        init_cache::<serde_json::Value>(make_l2_config("instrument"), "instrument").await;
+
+    // 缓存预热：异步加载样品列表和任务列表首屏数据，避免首次请求缓存未命中
+    {
+        let sample_c = sample_cache.clone();
+        let task_c = task_cache.clone();
+        let pool = ctx.db.clone();
+        tokio::spawn(async move {
+            tracing::info!("[lims] 开始缓存预热...");
+
+            // 预热样品列表（最近 10 条）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    sample_c.set("lims:sample:list:warmup".to_string(), data).await;
+                    tracing::info!("[lims] 样品列表缓存预热完成");
+                }
+                Ok(None) => tracing::info!("[lims] 样品列表为空，跳过预热"),
+                Err(e) => tracing::warn!("[lims] 样品列表缓存预热失败: {}", e),
+            }
+
+            // 预热任务列表（最近 10 条）
+            match sqlx::query_scalar::<_, serde_json::Value>(
+                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT FROM qa_lab_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
+            )
+            .fetch_optional(&pool)
+            .await
+            {
+                Ok(Some(data)) => {
+                    task_c.set("lims:task:list:warmup".to_string(), data).await;
+                    tracing::info!("[lims] 任务列表缓存预热完成");
+                }
+                Ok(None) => tracing::info!("[lims] 任务列表为空，跳过预热"),
+                Err(e) => tracing::warn!("[lims] 任务列表缓存预热失败: {}", e),
+            }
+
+            tracing::info!("[lims] 缓存预热完成");
+        });
+    }
+
+    // 缓存失效事件订阅（事件驱动跨实例缓存一致性，5 个缓存统一注册）
+    {
+        let mut listener = CacheInvalidationListener::new("lims");
+        listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "lims_sample_cache",
+            sample_cache.clone(),
+            "lims:sample:",
+        ));
+        listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "lims_task_cache",
+            task_cache.clone(),
+            "lims:task:",
+        ));
+        listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "lims_dict_cache",
+            dict_cache.clone(),
+            "lims:dict:",
+        ));
+        listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "lims_test_method_cache",
+            test_method_cache.clone(),
+            "lims:test_method:",
+        ));
+        listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "lims_instrument_cache",
+            instrument_cache.clone(),
+            "lims:instrument:",
+        ));
+        let listener = Arc::new(listener);
+
+        match EventSubscriber::new("lims-cache-invalidation") {
+            Ok(subscriber) => {
+                let listener = listener.clone();
+                let subscriber =
+                    subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
+                        let listener = listener.clone();
+                        Box::pin(async move {
+                            if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                                let invalidation_event = CacheInvalidationEvent {
+                                    source_service: payload.source_service,
+                                    source_instance: payload.source_instance,
+                                    cache_key_pattern: payload.cache_key_pattern,
+                                    invalidation_level: InvalidationLevel::from_str(
+                                        &payload.invalidation_level,
+                                    ),
+                                    reason: payload.reason,
+                                };
+                                listener.dispatch_invalidation(&invalidation_event);
+                            }
+                        })
+                    });
+
+                tokio::spawn(async move {
+                    if let Err(e) = subscriber.start_listening().await {
+                        tracing::error!("[lims] 缓存失效事件订阅者异常退出: {}", e);
+                    }
+                });
+                tracing::info!("[lims] 缓存失效事件订阅者启动成功");
+            }
+            Err(e) => {
+                tracing::warn!("[lims] 缓存失效事件订阅者创建失败: {}", e);
+            }
+        }
+    }
+
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
         health_config: SimpleHealthConfig::new("topems-lims").with_db(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
-        test_method_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(3600))),
-        instrument_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(1800))),
+        sample_cache,
+        task_cache,
+        dict_cache,
+        test_method_cache,
+        instrument_cache,
     };
 
     // Public routes（stateful：/health + /api/plugins/*）

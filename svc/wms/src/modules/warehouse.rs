@@ -79,7 +79,7 @@ pub async fn list_warehouses(
     let cache_key =
         warehouse_list_cache_key(tenant_id, page, page_size, &params.search, &params.status);
 
-    if let Some(cached) = state.warehouse_cache.get(&cache_key) {
+    if let Some(cached) = state.warehouse_cache.get(&cache_key).await {
         tracing::debug!("📋 仓库列表缓存命中: {}", cache_key);
         return Json(ApiResponse::success(cached, "获取仓库列表成功"));
     }
@@ -131,7 +131,7 @@ pub async fn list_warehouses(
                 "page_size": page_size
             });
 
-            state.warehouse_cache.set(cache_key, response_data.clone());
+            state.warehouse_cache.set(cache_key, response_data.clone()).await;
 
             Json(ApiResponse::success(response_data, "获取仓库列表成功"))
         }
@@ -212,8 +212,17 @@ pub async fn create_warehouse(
     };
 
     if status == "success" {
-        state.warehouse_cache.clear();
+        state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库列表缓存已清空（创建仓库）");
+        if let Some(publisher) = &state.event_publisher {
+            let _ = publisher
+                .publish_cache_invalidated(
+                    &format!("wms:warehouse:{}", id),
+                    "specific",
+                    Some("warehouse_created"),
+                )
+                .await;
+        }
     }
 
     log_audit_event(
@@ -264,7 +273,7 @@ pub async fn get_warehouse(
     let tenant_id = get_tenant_id(&claims, &headers);
     let cache_key = warehouse_cache_key(tenant_id, id);
 
-    if let Some(cached) = state.warehouse_cache.get(&cache_key) {
+    if let Some(cached) = state.warehouse_cache.get(&cache_key).await {
         tracing::debug!("📋 仓库缓存命中: {}", cache_key);
         if let Ok(warehouse) = serde_json::from_value::<Warehouse>(cached) {
             return Json(ApiResponse::success(warehouse, "获取仓库成功"));
@@ -285,7 +294,7 @@ pub async fn get_warehouse(
     match result {
         Ok(Some(warehouse)) => {
             if let Ok(value) = serde_json::to_value(&warehouse) {
-                state.warehouse_cache.set(cache_key, value);
+                state.warehouse_cache.set(cache_key, value).await;
             }
             Json(ApiResponse::success(warehouse, "获取仓库成功"))
         }
@@ -397,9 +406,18 @@ pub async fn update_warehouse(
 
     if status_str == "success" {
         let cache_key = warehouse_cache_key(tenant_id, id);
-        state.warehouse_cache.remove(&cache_key);
-        state.warehouse_cache.clear();
+        state.warehouse_cache.remove(&cache_key).await;
+        state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
+        if let Some(publisher) = &state.event_publisher {
+            let _ = publisher
+                .publish_cache_invalidated(
+                    &format!("wms:warehouse:{}", id),
+                    "specific",
+                    Some("warehouse_updated"),
+                )
+                .await;
+        }
     }
 
     log_audit_event(
@@ -494,9 +512,18 @@ pub async fn delete_warehouse(
 
     if status_str == "success" {
         let cache_key = warehouse_cache_key(tenant_id, id);
-        state.warehouse_cache.remove(&cache_key);
-        state.warehouse_cache.clear();
+        state.warehouse_cache.remove(&cache_key).await;
+        state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
+        if let Some(publisher) = &state.event_publisher {
+            let _ = publisher
+                .publish_cache_invalidated(
+                    &format!("wms:warehouse:{}", id),
+                    "specific",
+                    Some("warehouse_deleted"),
+                )
+                .await;
+        }
     }
 
     log_audit_event(

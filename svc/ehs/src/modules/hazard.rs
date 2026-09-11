@@ -194,7 +194,7 @@ pub async fn list_hazards(
         &query.source,
     );
 
-    if let Some(cached) = state.hazard_cache.get(&cache_key) {
+    if let Some(cached) = state.hazard_cache.get(&cache_key).await {
         tracing::debug!("📋 隐患列表缓存命中: {}", cache_key);
         if let Ok(hazards) = serde_json::from_value::<Vec<Hazard>>(cached) {
             return Json(ApiResponse::success(hazards, "获取隐患列表成功"));
@@ -205,7 +205,7 @@ pub async fn list_hazards(
     let hazards = Vec::<Hazard>::new();
 
     if let Ok(value) = serde_json::to_value(&hazards) {
-        state.hazard_cache.set(cache_key, value);
+        state.hazard_cache.set(cache_key, value).await;
     }
 
     Json(ApiResponse::success(hazards, "获取隐患列表成功"))
@@ -317,8 +317,18 @@ pub async fn create_hazard(
         });
     }
 
-    state.hazard_cache.clear();
+    state.hazard_cache.clear_l1();
     tracing::debug!("🗑️ 隐患缓存已清空（创建隐患）");
+
+    if let Some(publisher) = &state.event_publisher {
+        let _ = publisher
+            .publish_cache_invalidated(
+                &format!("ehs:hazard:{}", hazard.id),
+                "specific",
+                Some("hazard_created"),
+            )
+            .await;
+    }
 
     Json(ApiResponse::success(hazard, "隐患上报成功"))
 }
@@ -343,7 +353,7 @@ pub async fn get_hazard(
     let tenant_id = get_tenant_id(&claims, &headers);
     let cache_key = hazard_cache_key(tenant_id, &id);
 
-    if let Some(cached) = state.hazard_cache.get(&cache_key) {
+    if let Some(cached) = state.hazard_cache.get(&cache_key).await {
         tracing::debug!("📋 隐患缓存命中: {}", cache_key);
         if let Ok(detail) = serde_json::from_value::<HazardDetail>(cached) {
             return Json(ApiResponse::success(detail, "获取隐患详情成功"));
@@ -392,7 +402,7 @@ pub async fn get_hazard(
     };
 
     if let Ok(value) = serde_json::to_value(&detail) {
-        state.hazard_cache.set(cache_key, value);
+        state.hazard_cache.set(cache_key, value).await;
     }
 
     Json(ApiResponse::success(detail, "获取隐患详情成功"))
@@ -421,9 +431,19 @@ pub async fn update_hazard(
     tracing::debug!("Updating hazard {}: {:?}", id, req);
 
     let cache_key = hazard_cache_key(tenant_id, &id);
-    state.hazard_cache.remove(&cache_key);
-    state.hazard_cache.clear();
+    state.hazard_cache.remove(&cache_key).await;
+    state.hazard_cache.clear_l1();
     tracing::debug!("🗑️ 隐患缓存已失效: {}", cache_key);
+
+    if let Some(publisher) = &state.event_publisher {
+        let _ = publisher
+            .publish_cache_invalidated(
+                &format!("ehs:hazard:{}", id),
+                "specific",
+                Some("hazard_updated"),
+            )
+            .await;
+    }
 
     Json(ApiResponse::success(
         Hazard {
@@ -472,9 +492,19 @@ pub async fn delete_hazard(
     tracing::debug!("Deleting hazard: {}", id);
 
     let cache_key = hazard_cache_key(tenant_id, &id);
-    state.hazard_cache.remove(&cache_key);
-    state.hazard_cache.clear();
+    state.hazard_cache.remove(&cache_key).await;
+    state.hazard_cache.clear_l1();
     tracing::debug!("🗑️ 隐患缓存已失效: {}", cache_key);
+
+    if let Some(publisher) = &state.event_publisher {
+        let _ = publisher
+            .publish_cache_invalidated(
+                &format!("ehs:hazard:{}", id),
+                "specific",
+                Some("hazard_deleted"),
+            )
+            .await;
+    }
 
     Json(ApiResponse::success((), "隐患删除成功"))
 }

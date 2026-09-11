@@ -23,7 +23,17 @@ pub fn create_routes() -> Router<AppState> {
         .route("/tasks/{id}/result", post(submit_result))
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+/// 任务详情缓存 key（含 tenant_id）
+fn task_detail_key(tenant_id: &Uuid, id: &str) -> String {
+    format!("lims:task:{}:{}", tenant_id, id)
+}
+
+/// 任务列表缓存 key（含 tenant_id）
+fn task_list_key(tenant_id: &Uuid) -> String {
+    format!("lims:task:list:{}", tenant_id)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct InspectionTask {
     pub id: String,
     pub tenant_id: String,
@@ -83,6 +93,17 @@ pub async fn list_tasks(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
 ) -> Json<ApiResponse<Vec<InspectionTask>>> {
+    let tenant_id = ctx.tenant_id;
+    let list_key = task_list_key(&tenant_id);
+
+    // 缓存读取
+    if let Some(cached) = state.task_cache.get(&list_key).await {
+        match serde_json::from_value::<Vec<InspectionTask>>(cached) {
+            Ok(data) => return Json(ApiResponse::success(data, "从缓存获取检测任务列表成功")),
+            Err(e) => tracing::warn!("任务列表缓存反序列化失败，回源: {}", e),
+        }
+    }
+
     let rows = sqlx::query(&format!(
         "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
         TASK_SELECT_COLS
@@ -115,6 +136,10 @@ pub async fn list_tasks(
                     updated_at: row.get("updated_at"),
                 })
                 .collect();
+            // 回填缓存
+            if let Ok(v) = serde_json::to_value(&tasks) {
+                state.task_cache.set(list_key, v).await;
+            }
             Json(ApiResponse::success(tasks, "获取检测任务列表成功"))
         }
         Err(e) => {
@@ -185,8 +210,8 @@ pub async fn create_task(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            InspectionTask {
+        Ok(r) => {
+            let task = InspectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
@@ -204,9 +229,23 @@ pub async fn create_task(
                 recorded_by: r.get("recorded_by"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "检测任务创建成功",
-        )),
+            };
+            // 新任务创建，列表缓存失效
+            if let Some(publisher) = &state.event_publisher {
+                let publisher = publisher.clone();
+                let tenant = ctx.tenant_id.to_string();
+                tokio::spawn(async move {
+                    let _ = publisher
+                        .publish_cache_invalidated(
+                            &format!("lims:task:list:{}", tenant),
+                            "pattern",
+                            Some("task_created"),
+                        )
+                        .await;
+                });
+            }
+            Json(ApiResponse::success(task, "检测任务创建成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to create task: {}", e);
             Json(ApiResponse::error(500, "检测任务创建失败"))
@@ -237,6 +276,15 @@ pub async fn get_task(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
+    let cache_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+
+    // 缓存读取
+    if let Some(cached) = state.task_cache.get(&cache_key).await {
+        match serde_json::from_value::<InspectionTask>(cached) {
+            Ok(task) => return Json(ApiResponse::success(task, "从缓存获取检测任务成功")),
+            Err(e) => tracing::warn!("任务详情缓存反序列化失败，回源: {}", e),
+        }
+    }
 
     let row = sqlx::query(&format!(
         "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
@@ -248,8 +296,8 @@ pub async fn get_task(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            InspectionTask {
+        Ok(r) => {
+            let task = InspectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
@@ -267,9 +315,13 @@ pub async fn get_task(
                 recorded_by: r.get("recorded_by"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "获取检测任务成功",
-        )),
+            };
+            // 回填缓存
+            if let Ok(v) = serde_json::to_value(&task) {
+                state.task_cache.set(cache_key, v).await;
+            }
+            Json(ApiResponse::success(task, "获取检测任务成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch task: {}", e);
             Json(ApiResponse::error(500, "获取检测任务失败"))
@@ -308,8 +360,8 @@ pub async fn update_task(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            InspectionTask {
+        Ok(r) => {
+            let task = InspectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
@@ -327,9 +379,29 @@ pub async fn update_task(
                 recorded_by: r.get("recorded_by"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "检测任务更新成功",
-        )),
+            };
+            // 失效详情缓存并广播列表失效
+            let detail_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+            state.task_cache.remove(&detail_key).await;
+            if let Some(publisher) = &state.event_publisher {
+                let publisher = publisher.clone();
+                let key = detail_key.clone();
+                let tenant = ctx.tenant_id.to_string();
+                tokio::spawn(async move {
+                    let _ = publisher
+                        .publish_cache_invalidated(&key, "specific", Some("task_updated"))
+                        .await;
+                    let _ = publisher
+                        .publish_cache_invalidated(
+                            &format!("lims:task:list:{}", tenant),
+                            "pattern",
+                            Some("task_updated"),
+                        )
+                        .await;
+                });
+            }
+            Json(ApiResponse::success(task, "检测任务更新成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to update task: {}", e);
             Json(ApiResponse::error(500, "检测任务更新失败"))
@@ -382,6 +454,10 @@ pub async fn submit_result(
                 updated_at: r.get("updated_at"),
             };
 
+            // 失效详情缓存
+            let detail_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+            state.task_cache.remove(&detail_key).await;
+
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 let tid = Uuid::parse_str(&task.id).unwrap_or_else(|_| Uuid::nil());
@@ -391,7 +467,16 @@ pub async fn submit_result(
                 let conclusion = task.conclusion.clone().unwrap_or_default();
                 let recorded_by = task.recorded_by.clone().unwrap_or_default();
                 let result_val = task.result.clone().unwrap_or(serde_json::Value::Null);
+                let cache_key = detail_key.clone();
+                let list_key = format!("lims:task:list:{}", ctx.tenant_id);
                 tokio::spawn(async move {
+                    // 缓存失效广播
+                    let _ = publisher
+                        .publish_cache_invalidated(&cache_key, "specific", Some("result_submitted"))
+                        .await;
+                    let _ = publisher
+                        .publish_cache_invalidated(&list_key, "pattern", Some("result_submitted"))
+                        .await;
                     let payload =
                         topems_shared_event::event::LimsInspectionResultSubmittedPayload {
                             task_id: tid,
@@ -446,7 +531,29 @@ pub async fn delete_task(
             .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "检测任务删除成功")),
+        Ok(_) => {
+            // 失效详情缓存并广播列表失效
+            let detail_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+            state.task_cache.remove(&detail_key).await;
+            if let Some(publisher) = &state.event_publisher {
+                let publisher = publisher.clone();
+                let key = detail_key.clone();
+                let tenant = ctx.tenant_id.to_string();
+                tokio::spawn(async move {
+                    let _ = publisher
+                        .publish_cache_invalidated(&key, "specific", Some("task_deleted"))
+                        .await;
+                    let _ = publisher
+                        .publish_cache_invalidated(
+                            &format!("lims:task:list:{}", tenant),
+                            "pattern",
+                            Some("task_deleted"),
+                        )
+                        .await;
+                });
+            }
+            Json(ApiResponse::success(true, "检测任务删除成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to delete task: {}", e);
             Json(ApiResponse::error(500, "检测任务删除失败"))

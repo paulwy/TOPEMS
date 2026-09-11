@@ -177,6 +177,39 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+/// 单条商机详情缓存 key（含 tenant_id 做租户隔离）
+fn opportunity_detail_cache_key(tenant_id: Uuid, id: Uuid) -> String {
+    format!("crm:opportunity:{}:{}", tenant_id, id)
+}
+
+/// 商机列表缓存 key（含 tenant_id 与查询参数 hash）
+fn opportunity_list_cache_key(
+    tenant_id: Uuid,
+    page: i64,
+    page_size: i64,
+    search: &Option<String>,
+    stage: &Option<String>,
+    customer_id: &Option<Uuid>,
+) -> String {
+    format!(
+        "crm:opportunity:list:{}:page:{}:size:{}:search:{:?}:stage:{:?}:customer:{:?}",
+        tenant_id, page, page_size, search, stage, customer_id
+    )
+}
+
+/// 商机数据变更后失效本地缓存并发布跨实例失效事件
+async fn invalidate_opportunity_cache(state: &ApiState, reason: &str) {
+    state.opportunity_cache.clear_l1();
+    if let Some(publisher) = &state.event_publisher {
+        if let Err(e) = publisher
+            .publish_cache_invalidated("crm:opportunity:*", "pattern", Some(reason))
+            .await
+        {
+            tracing::warn!("发布商机缓存失效事件失败: {}", e);
+        }
+    }
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["crm:read"])),
@@ -219,6 +252,20 @@ async fn list_opportunities(
     let customer_filter = params.customer_id;
     let tenant_id = get_tenant_id(&claims, &headers);
 
+    // 缓存命中则直接返回
+    let list_cache_key = opportunity_list_cache_key(
+        tenant_id,
+        page,
+        page_size,
+        &params.search,
+        &stage_filter,
+        &customer_filter,
+    );
+    if let Some(cached) = state.opportunity_cache.get(&list_cache_key).await {
+        tracing::debug!("📋 商机列表缓存命中: {}", list_cache_key);
+        return Json(ApiResponse::success(cached, "获取销售机会列表成功"));
+    }
+
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
@@ -260,15 +307,16 @@ async fn list_opportunities(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "items": opportunities,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
-                "获取销售机会列表成功",
-            ))
+            let data = serde_json::json!({
+                "items": opportunities,
+                "total": total,
+                "page": page,
+                "page_size": page_size
+            });
+            // 回填缓存
+            state.opportunity_cache.set(list_cache_key, data.clone()).await;
+
+            Json(ApiResponse::success(data, "获取销售机会列表成功"))
         }
         Err(e) => {
             tracing::error!("获取销售机会列表失败: {}", e);
@@ -376,6 +424,8 @@ async fn create_opportunity(
                 return Json(api_error(500, "事务提交失败"));
             }
         }
+        // 创建商机后失效商机列表缓存
+        invalidate_opportunity_cache(&state, "opportunity_created").await;
     }
 
     let request_data = serde_json::to_value(&req).ok();
@@ -424,6 +474,20 @@ async fn get_opportunity(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
+    // 缓存命中则直接返回
+    let detail_key = opportunity_detail_cache_key(tenant_id, id);
+    if let Some(cached) = state.opportunity_cache.get(&detail_key).await {
+        match serde_json::from_value::<Opportunity>(cached) {
+            Ok(opportunity) => {
+                tracing::debug!("📋 商机详情缓存命中: {}", detail_key);
+                return Json(ApiResponse::success(opportunity, "获取销售机会成功"));
+            }
+            Err(_) => {
+                tracing::warn!("商机详情缓存反序列化失败，回源查询");
+            }
+        }
+    }
+
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
@@ -436,7 +500,12 @@ async fn get_opportunity(
     .await;
 
     match result {
-        Ok(Some(opportunity)) => Json(ApiResponse::success(opportunity, "获取销售机会成功")),
+        Ok(Some(opportunity)) => {
+            if let Ok(value) = serde_json::to_value(&opportunity) {
+                state.opportunity_cache.set(detail_key, value).await;
+            }
+            Json(ApiResponse::success(opportunity, "获取销售机会成功"))
+        }
         Ok(None) => Json(api_error(404, "销售机会不存在")),
         Err(e) => {
             tracing::error!("获取销售机会失败: {}", e);
@@ -546,6 +615,8 @@ async fn update_opportunity(
                 return Json(api_error(500, "事务提交失败"));
             }
         }
+        // 更新商机后失效商机详情与列表缓存
+        invalidate_opportunity_cache(&state, "opportunity_updated").await;
     }
 
     let response_data = if let Ok(opportunity) = &result {
@@ -606,6 +677,11 @@ async fn delete_opportunity(
             tracing::error!("提交事务失败: {}", e);
             return Json(api_error(500, "事务提交失败"));
         }
+    }
+
+    // 删除成功后失效缓存
+    if matches!(&result, Ok(r) if r.rows_affected() > 0) {
+        invalidate_opportunity_cache(&state, "opportunity_deleted").await;
     }
 
     let (response, status_str, error_msg) = match &result {
@@ -691,6 +767,11 @@ async fn batch_delete_opportunities(
             tracing::error!("提交事务失败: {}", e);
             return Json(api_error(500, "事务提交失败"));
         }
+    }
+
+    // 批量删除成功后失效缓存
+    if result.is_ok() {
+        invalidate_opportunity_cache(&state, "opportunity_batch_deleted").await;
     }
 
     let (response, status_str, error_msg) = match &result {
@@ -1155,6 +1236,8 @@ async fn advance_opportunity(
                     return Json(api_error(500, "事务提交失败"));
                 }
             }
+            // 阶段推进后失效商机详情与列表缓存
+            invalidate_opportunity_cache(&state, "opportunity_advanced").await;
             let from_s = from_stage.as_str();
             let to_s = to_stage_str;
             let response_payload = serde_json::json!({
@@ -1334,6 +1417,8 @@ async fn rollback_opportunity(
                     return Json(api_error(500, "事务提交失败"));
                 }
             }
+            // 阶段回退后失效商机详情与列表缓存
+            invalidate_opportunity_cache(&state, "opportunity_rolled_back").await;
             let from_s = from_stage.as_str();
             let to_s = to_stage_str;
             let response_payload = serde_json::json!({

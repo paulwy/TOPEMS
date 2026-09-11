@@ -21,9 +21,13 @@ use topems_shared_bootstrap::{
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
-use shared::cache::InMemoryCache;
 use shared::AppState;
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_core::cache::{
+    CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
+};
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
+use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 
 use modules::ApiDoc;
 
@@ -67,16 +71,140 @@ async fn main() -> anyhow::Result<()> {
         .expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
-    let hazard_cache = Arc::new(InMemoryCache::<serde_json::Value>::new(
-        std::time::Duration::from_secs(300),
-    ));
-    let training_cache = Arc::new(InMemoryCache::<serde_json::Value>::new(
-        std::time::Duration::from_secs(120),
-    ));
-    let dict_cache = Arc::new(InMemoryCache::<String>::new(
-        std::time::Duration::from_secs(600),
-    ));
-    tracing::info!("💾 内存缓存初始化完成（隐患/培训/字典）");
+    let redis_url = std::env::var("REDIS_URL").ok();
+
+    let hazard_cache = {
+        let l2_config = L2CacheConfig {
+            instance_prefix: "ehs".to_string(),
+            l1_ttl: std::time::Duration::from_secs(60),
+            l2_ttl: std::time::Duration::from_secs(600),
+            l1_capacity: 10_000,
+            ..Default::default()
+        }
+        .with_metrics("ehs", "hazard");
+        match AsyncL2Cache::<serde_json::Value>::try_new(l2_config, redis_url.as_deref()).await {
+            Ok(cache) => {
+                if cache.has_l2() {
+                    tracing::info!("💾 多级缓存初始化完成（EHS hazard，L1+L2 Redis 已启用）");
+                } else {
+                    tracing::info!("💾 多级缓存初始化完成（EHS hazard，纯 L1 模式）");
+                }
+                Arc::new(cache)
+            }
+            Err((cache, warn)) => {
+                tracing::warn!("💾 多级缓存初始化降级（EHS hazard）: {}", warn);
+                Arc::new(cache)
+            }
+        }
+    };
+
+    let training_cache = {
+        let l2_config = L2CacheConfig {
+            instance_prefix: "ehs".to_string(),
+            l1_ttl: std::time::Duration::from_secs(60),
+            l2_ttl: std::time::Duration::from_secs(600),
+            l1_capacity: 10_000,
+            ..Default::default()
+        }
+        .with_metrics("ehs", "training");
+        match AsyncL2Cache::<serde_json::Value>::try_new(l2_config, redis_url.as_deref()).await {
+            Ok(cache) => {
+                if cache.has_l2() {
+                    tracing::info!("💾 多级缓存初始化完成（EHS training，L1+L2 Redis 已启用）");
+                } else {
+                    tracing::info!("💾 多级缓存初始化完成（EHS training，纯 L1 模式）");
+                }
+                Arc::new(cache)
+            }
+            Err((cache, warn)) => {
+                tracing::warn!("💾 多级缓存初始化降级（EHS training）: {}", warn);
+                Arc::new(cache)
+            }
+        }
+    };
+
+    let dict_cache = {
+        let l2_config = L2CacheConfig {
+            instance_prefix: "ehs".to_string(),
+            l1_ttl: std::time::Duration::from_secs(60),
+            l2_ttl: std::time::Duration::from_secs(600),
+            l1_capacity: 10_000,
+            ..Default::default()
+        }
+        .with_metrics("ehs", "dict");
+        match AsyncL2Cache::<String>::try_new(l2_config, redis_url.as_deref()).await {
+            Ok(cache) => {
+                if cache.has_l2() {
+                    tracing::info!("💾 多级缓存初始化完成（EHS dict，L1+L2 Redis 已启用）");
+                } else {
+                    tracing::info!("💾 多级缓存初始化完成（EHS dict，纯 L1 模式）");
+                }
+                Arc::new(cache)
+            }
+            Err((cache, warn)) => {
+                tracing::warn!("💾 多级缓存初始化降级（EHS dict）: {}", warn);
+                Arc::new(cache)
+            }
+        }
+    };
+    tracing::info!("💾 多级缓存初始化完成（EHS 隐患/培训/字典）");
+
+    // 缓存失效事件订阅（事件驱动缓存一致性）
+    {
+        let mut cache_invalidation_listener = CacheInvalidationListener::new("ehs");
+        let hazard_handler = AsyncL2CacheInvalidationHandler::new(
+            "ehs_hazard_cache",
+            hazard_cache.clone(),
+            "ehs:hazard:",
+        );
+        cache_invalidation_listener.register_handler(hazard_handler);
+        let training_handler = AsyncL2CacheInvalidationHandler::new(
+            "ehs_training_cache",
+            training_cache.clone(),
+            "ehs:training:",
+        );
+        cache_invalidation_listener.register_handler(training_handler);
+        let dict_handler = AsyncL2CacheInvalidationHandler::new(
+            "ehs_dict_cache",
+            dict_cache.clone(),
+            "ehs:dict:",
+        );
+        cache_invalidation_listener.register_handler(dict_handler);
+        let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
+
+        match EventSubscriber::new("ehs-cache-invalidation") {
+            Ok(cache_subscriber) => {
+                let listener = cache_invalidation_listener.clone();
+                let cache_subscriber =
+                    cache_subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
+                        let listener = listener.clone();
+                        Box::pin(async move {
+                            if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
+                                let invalidation_event = CacheInvalidationEvent {
+                                    source_service: payload.source_service,
+                                    source_instance: payload.source_instance,
+                                    cache_key_pattern: payload.cache_key_pattern,
+                                    invalidation_level: InvalidationLevel::from_str(
+                                        &payload.invalidation_level,
+                                    ),
+                                    reason: payload.reason,
+                                };
+                                listener.dispatch_invalidation(&invalidation_event);
+                            }
+                        })
+                    });
+                tokio::spawn(async move {
+                    if let Err(e) = cache_subscriber.start_listening().await {
+                        tracing::error!("[ehs] 缓存失效事件订阅者异常退出: {}", e);
+                    }
+                });
+                tracing::info!("[ehs] 缓存失效事件订阅者启动成功");
+            }
+            Err(e) => {
+                tracing::warn!("[ehs] 缓存失效事件订阅者创建失败: {}", e);
+            }
+        }
+    }
 
     let api_state = AppState {
         auth_state: ctx.auth_state.clone(),
