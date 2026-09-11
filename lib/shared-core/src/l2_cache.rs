@@ -40,6 +40,12 @@ pub struct L2CacheConfig {
     pub l2_ttl: Duration,
     /// L1 容量上限（0 = 无限制）
     pub l1_capacity: usize,
+    /// 可选：监控指标的服务名称（如 "mes"、"tms"）
+    /// 设置后会自动记录 L1/L2 缓存命中/未命中指标
+    pub metrics_service: Option<String>,
+    /// 可选：监控指标的实体名称（如 "process_route"、"driver"）
+    /// 设置后会自动记录 L1/L2 缓存命中/未命中指标
+    pub metrics_entity: Option<String>,
 }
 
 impl Default for L2CacheConfig {
@@ -49,7 +55,23 @@ impl Default for L2CacheConfig {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(600),
             l1_capacity: 10_000,
+            metrics_service: None,
+            metrics_entity: None,
         }
+    }
+}
+
+impl L2CacheConfig {
+    /// 启用监控指标，设置 service 和 entity 标签
+    pub fn with_metrics(mut self, service: &str, entity: &str) -> Self {
+        self.metrics_service = Some(service.to_string());
+        self.metrics_entity = Some(entity.to_string());
+        self
+    }
+
+    /// 检查是否启用了监控指标
+    fn metrics_enabled(&self) -> bool {
+        self.metrics_service.is_some() && self.metrics_entity.is_some()
     }
 }
 
@@ -89,6 +111,12 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
         } else {
             MokaL1::new(config.l1_ttl)
         };
+        // 设置 L2 连接状态为未连接
+        if config.metrics_enabled() {
+            if let Some(service) = config.metrics_service.as_ref() {
+                set_l2_cache_connected(service, false);
+            }
+        }
         Self {
             l1,
             l2: None,
@@ -111,6 +139,12 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
         };
 
         let Some(url) = redis_url else {
+            // 无 Redis URL，设置 L2 连接状态为未连接
+            if config.metrics_enabled() {
+                if let Some(service) = config.metrics_service.as_ref() {
+                    set_l2_cache_connected(service, false);
+                }
+            }
             return Ok(Self {
                 l1,
                 l2: None,
@@ -127,6 +161,12 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
                             manager,
                             prefix: config.instance_prefix.clone(),
                         };
+                        // 设置 L2 连接状态为已连接
+                        if config.metrics_enabled() {
+                            if let Some(service) = config.metrics_service.as_ref() {
+                                set_l2_cache_connected(service, true);
+                            }
+                        }
                         Ok(Self {
                             l1,
                             l2: Some(Arc::new(backend)),
@@ -135,6 +175,12 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
                     }
                     Err(e) => {
                         let warn = format!("Redis 连接管理器创建失败，回退到纯 L1 模式: {}", e);
+                        // 设置 L2 连接状态为未连接
+                        if config.metrics_enabled() {
+                            if let Some(service) = config.metrics_service.as_ref() {
+                                set_l2_cache_connected(service, false);
+                            }
+                        }
                         Err((
                             Self {
                                 l1,
@@ -148,6 +194,12 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
             }
             Err(e) => {
                 let warn = format!("Redis URL 无效，回退到纯 L1 模式: {}", e);
+                // 设置 L2 连接状态为未连接
+                if config.metrics_enabled() {
+                    if let Some(service) = config.metrics_service.as_ref() {
+                        set_l2_cache_connected(service, false);
+                    }
+                }
                 Err((
                     Self {
                         l1,
@@ -227,7 +279,26 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
     {
         // L1 命中直接返回
         if let Some(v) = self.l1.get(key) {
+            // 记录 L1 命中指标
+            if self.config.metrics_enabled() {
+                if let (Some(service), Some(entity)) = (
+                    self.config.metrics_service.as_ref(),
+                    self.config.metrics_entity.as_ref(),
+                ) {
+                    record_l1_cache_hit(service, entity, "get");
+                }
+            }
             return Some(v);
+        }
+
+        // 记录 L1 未命中指标
+        if self.config.metrics_enabled() {
+            if let (Some(service), Some(entity)) = (
+                self.config.metrics_service.as_ref(),
+                self.config.metrics_entity.as_ref(),
+            ) {
+                record_l1_cache_miss(service, entity, "get");
+            }
         }
 
         // L2 命中 → 回填 L1
@@ -236,7 +307,26 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
                 // 回填 L1（使用 L1 的 TTL）
                 self.l1
                     .set_with_ttl(key.to_string(), v.clone(), self.config.l1_ttl);
+                // 记录 L2 命中指标
+                if self.config.metrics_enabled() {
+                    if let (Some(service), Some(entity)) = (
+                        self.config.metrics_service.as_ref(),
+                        self.config.metrics_entity.as_ref(),
+                    ) {
+                        record_l2_cache_hit(service, entity, "get");
+                    }
+                }
                 return Some(v);
+            }
+        }
+
+        // 记录 L2 未命中指标（仅当启用了 L2 时）
+        if self.l2.is_some() && self.config.metrics_enabled() {
+            if let (Some(service), Some(entity)) = (
+                self.config.metrics_service.as_ref(),
+                self.config.metrics_entity.as_ref(),
+            ) {
+                record_l2_cache_miss(service, entity, "get");
             }
         }
         None
@@ -263,6 +353,15 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
         if self.l2.is_some() {
             if let Ok(serialized) = serde_json::to_string(&value) {
                 self.l2_set_raw(&key, &serialized, l2_ttl).await;
+                // 记录 L2 写入指标
+                if self.config.metrics_enabled() {
+                    if let (Some(service), Some(entity)) = (
+                        self.config.metrics_service.as_ref(),
+                        self.config.metrics_entity.as_ref(),
+                    ) {
+                        record_l2_cache_set(service, entity, "set");
+                    }
+                }
             }
         }
     }
@@ -271,6 +370,15 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
     pub async fn remove(&self, key: &str) {
         self.l1.remove(key);
         self.l2_delete_raw(key).await;
+        // 记录 L2 失效指标
+        if self.l2.is_some() && self.config.metrics_enabled() {
+            if let (Some(service), Some(entity)) = (
+                self.config.metrics_service.as_ref(),
+                self.config.metrics_entity.as_ref(),
+            ) {
+                record_l2_cache_remove(service, entity, "remove");
+            }
+        }
     }
 
     /// `remove` 的语义化别名
@@ -592,6 +700,7 @@ mod tests {
             l1_ttl: Duration::from_secs(10),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 500,
+            ..Default::default()
         };
         assert_eq!(cfg.instance_prefix, "svc-A");
         assert_eq!(cfg.l1_ttl, Duration::from_secs(10));
@@ -606,6 +715,7 @@ mod tests {
             l1_ttl: Duration::from_secs(30),
             l2_ttl: Duration::from_secs(900),
             l1_capacity: 200,
+            ..Default::default()
         };
         let cloned = cfg.clone();
         assert_eq!(cloned.instance_prefix, cfg.instance_prefix);
@@ -803,6 +913,7 @@ mod tests {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 1000,
+            ..Default::default()
         };
         let cache = match AsyncL2Cache::<String>::try_new(config, Some(&redis_url)).await {
             Ok(c) => c,
@@ -836,6 +947,7 @@ mod tests {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 1000,
+            ..Default::default()
         };
         let config_b = config_a.clone();
 
@@ -880,6 +992,7 @@ mod tests {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 1000,
+            ..Default::default()
         };
         let cache = match AsyncL2Cache::<u32>::try_new(config, Some(&redis_url)).await {
             Ok(c) => c,
@@ -913,6 +1026,7 @@ mod tests {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 1000,
+            ..Default::default()
         };
         let cache = match AsyncL2Cache::<u32>::try_new(config, Some("redis://127.0.0.1:1")).await {
             Ok(c) => c,
@@ -941,6 +1055,7 @@ mod tests {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 1000,
+            ..Default::default()
         };
         let cache = match AsyncL2Cache::<String>::try_new(config, Some(&redis_url)).await {
             Ok(c) => c,
@@ -978,6 +1093,7 @@ mod tests {
             l1_ttl: Duration::from_secs(60),
             l2_ttl: Duration::from_secs(300),
             l1_capacity: 10000,
+            ..Default::default()
         };
         let cache = Arc::new(match AsyncL2Cache::<u32>::try_new(config, Some(&redis_url)).await {
             Ok(c) => c,

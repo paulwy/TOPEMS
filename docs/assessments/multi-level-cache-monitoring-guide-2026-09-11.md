@@ -100,7 +100,51 @@ let rate = l2_cache_hit_rate("mes", "process_route", "list");
 
 ## 四、各服务集成指南
 
-### 4.1 集成步骤
+### 4.0 AsyncL2Cache 内部集成指标（推荐）
+
+AsyncL2Cache 已内置指标记录功能，只需在创建缓存时通过 `with_metrics()` 方法启用，即可自动记录 L1/L2 缓存命中/未命中/写入/失效指标和 L2 连接状态指标，无需在调用方手动记录。
+
+**启用方法**：
+
+```rust
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+
+// 创建配置并启用监控指标
+let config = L2CacheConfig::default()
+    .with_metrics("mes", "process_route");  // service=mes, entity=process_route
+
+// 创建缓存（带 L2）
+let cache = AsyncL2Cache::try_new(config, Some("redis://localhost:6379")).await
+    .unwrap_or_else(|(cache, warn)| {
+        tracing::warn!("{}", warn);
+        cache
+    });
+
+// 之后调用 cache.get()/set()/remove() 会自动记录指标
+```
+
+**自动记录的指标**：
+
+| 操作 | 自动记录的指标 |
+|------|---------------|
+| `get()` L1 命中 | `topems_l1_cache_hits_total{service,entity,operation="get"}` |
+| `get()` L1 未命中 | `topems_l1_cache_misses_total{service,entity,operation="get"}` |
+| `get()` L2 命中 | `topems_l2_cache_hits_total{service,entity,operation="get"}` |
+| `get()` L2 未命中 | `topems_l2_cache_misses_total{service,entity,operation="get"}` |
+| `set()` L2 写入 | `topems_l2_cache_sets_total{service,entity,operation="set"}` |
+| `remove()` L2 失效 | `topems_l2_cache_removals_total{service,entity,operation="remove"}` |
+| `try_new()` 成功 | `topems_l2_cache_connected{service}=1` |
+| `try_new()` 降级 | `topems_l2_cache_connected{service}=0` |
+| `new_l1_only()` | `topems_l2_cache_connected{service}=0` |
+
+**注意事项**：
+- `with_metrics()` 需要同时设置 `service` 和 `entity`，只有一个设置时不会启用指标记录
+- 指标记录是可选的，不设置 `with_metrics()` 时不会记录任何指标
+- 内部集成指标与手动记录指标可以共存，但建议选择一种方式，避免重复记录
+
+### 4.1 集成步骤（手动记录，不推荐）
+
+> **注意**：推荐使用 4.0 节的 AsyncL2Cache 内部集成指标，无需手动记录。以下手动记录方式仅用于兼容旧代码或特殊场景。
 
 1. **导入指标记录函数**
    ```rust
@@ -123,7 +167,7 @@ let rate = l2_cache_hit_rate("mes", "process_route", "list");
    
    // L1 miss，查 L2（AsyncL2Cache 内部会自动处理）
    // 如果 L2 命中，AsyncL2Cache 会回填 L1
-   // 注意：当前 AsyncL2Cache 内部不记录指标，需要在调用方记录
+   // 注意：如果使用了 AsyncL2Cache 内部集成指标，无需在此手动记录
    ```
 
 3. **在缓存写入中记录指标**
