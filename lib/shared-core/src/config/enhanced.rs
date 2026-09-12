@@ -618,8 +618,9 @@ mod tests {
     fn test_database_config_default() {
         let config = DatabaseConfig::default();
         assert!(!config.url.is_empty());
-        assert_eq!(config.max_connections, 4);
-        assert_eq!(config.min_connections, Some(1));
+        // 与 DatabaseConfig::default() 保持一致（bf3e292b8 性能优化后默认 10/2/10）
+        assert_eq!(config.max_connections, 10);
+        assert_eq!(config.min_connections, Some(2));
         assert_eq!(config.idle_timeout, Some(300));
     }
 
@@ -693,9 +694,9 @@ mod tests {
     fn database_config_default_values() {
         let c = DatabaseConfig::default();
         assert!(!c.url.is_empty());
-        assert_eq!(c.max_connections, 4);
-        assert_eq!(c.min_connections, Some(1));
-        assert_eq!(c.connect_timeout, Some(30));
+        assert_eq!(c.max_connections, 10);
+        assert_eq!(c.min_connections, Some(2));
+        assert_eq!(c.connect_timeout, Some(10));
         assert_eq!(c.idle_timeout, Some(300));
         assert_eq!(c.max_lifetime, Some(1800));
         assert_eq!(c.test_interval, Some(60));
