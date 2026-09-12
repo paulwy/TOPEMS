@@ -193,8 +193,9 @@ const VoucherCreatePage: React.FC = () => {
       attachment_count: number;
       summary: string;
       items: VoucherItemRequest[];
+      [key: string]: unknown;
     }) => {
-      const result = await voucherApi.create(data as unknown as CreateVoucherRequest);
+      const result = await voucherApi.create(data);
       if (!result.success) {
         throw new Error(result.message || t('finance.voucher_create_page.create'));
       }
