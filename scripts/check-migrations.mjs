@@ -5,7 +5,7 @@ import { execSync } from 'node:child_process';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'database', 'migrations');
 
-const RE_EARLY = /^(\d{3})-([A-Za-z0-9][A-Za-z0-9_-]*)\.sql$/;
+const RE_EARLY = /^(\d{3})[-_]([A-Za-z0-9][A-Za-z0-9_-]*)\.sql$/;
 const RE_NEW = /^(\d{8})(\d{6})_(.+)\.sql$/;
 
 const errors = [];
@@ -78,8 +78,9 @@ function checkEarlySeq(early) {
   }
   const nums = sorted.map((x) => x.num);
   if (nums.length > 0) {
+    // 早期格式允许从 0 开始（如 000_create_schemas.sql），期望 0..N-1 连续
     const expected = [];
-    for (let i = 1; i <= nums.length; i++) expected.push(i);
+    for (let i = 0; i < nums.length; i++) expected.push(i);
     const missing = [];
     for (const n of expected) {
       if (!nums.includes(n)) missing.push(n);
@@ -140,7 +141,9 @@ function checkNewSeq(neu) {
       if (!seen.has(s)) missing.push(s);
     }
     if (missing.length > 0) {
-      errors.push(
+      // 项目采用分段/步长编号（如 19xxxx/20xxxx、090001/100001 批次），
+      // 严格连续性无法可靠判定"删除"，降级为警告；重复序号仍为错误。
+      warnings.push(
         `新格式 ${date} 序号不连续: 范围 [${pad6(min)}..${pad6(max)}] 缺失 ${missing.length} 个 → ${collapseRanges(missing)}`
       );
     }
