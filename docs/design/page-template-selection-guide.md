@@ -3,7 +3,8 @@
 > 版本：V1.0  
 > 状态：草案 / 待评审  
 > 制定时间：2026-08-21  
-> 关联文档：[`design-system-implementation-plan.md`](./design-system-implementation-plan.md)、[`shared-component-guidelines.md`](./shared-component-guidelines.md)
+> 统一方案入口：[`docs/design/ui-navigation-unified-plan.md`](./ui-navigation-unified-plan.md)  
+> 关联文档：[`shared-component-guidelines.md`](./shared-component-guidelines.md)
 
 ---
 

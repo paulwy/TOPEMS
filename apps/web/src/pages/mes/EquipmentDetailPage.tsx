@@ -5,6 +5,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { QUERY_KEYS, queryClient, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Wrench } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
+import type { ApiResponse } from '@/api/client';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
@@ -47,7 +48,7 @@ const EquipmentDetailPage: React.FC = () => {
     : undefined;
   const deleteMutation = useMutation({
     mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
-    onSuccess: (res) => {
+    onSuccess: (res: ApiResponse<string>) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.ERP.ASSETS,
         exact: false,

@@ -3,6 +3,7 @@
 > 版本：v2.1.0 · 2026-08
 > 适用范围：apps/web（Web 管理端）
 > 设计基准：四层导航模型（L1 业务域 → L2 模块 → L3 子组 → L4 页面）
+> 统一方案入口：[`docs/design/ui-navigation-unified-plan.md`](./design/ui-navigation-unified-plan.md)
 > **唯一真值源**（代码即文档，文档与代码强制一致）：
 > - 类型枚举 & 排序字典：[types.ts](../apps/web/src/lib/navigation/types.ts)
 > - 导航注册表：[NavigationRegistryV2.ts](../apps/web/src/lib/navigation/NavigationRegistryV2.ts)

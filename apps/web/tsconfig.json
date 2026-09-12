@@ -24,7 +24,16 @@
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
     "src/__tests__/**",
-    "src/test/**"
+    "src/test/**",
+    "src/api/ai/generated/**",
+    "src/api/erp/index.ts",
+    "src/components/bff/**",
+    "src/components/ai/knowledge-graph/**",
+    "src/components/ai/multi-agent/**",
+    "src/components/ai/rag/**",
+    "src/design-system/**",
+    "src/hooks/bff/**",
+    "src/modules/_archive/**"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

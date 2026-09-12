@@ -1,5 +1,7 @@
 # TOPEMS 设计系统文档
 
+> 统一方案入口：[`docs/design/ui-navigation-unified-plan.md`](../../design/ui-navigation-unified-plan.md)
+
 ## 概述
 
 TOPEMS 采用 **MUI (Material UI)** 作为唯一的 UI 方案。本文档定义了统一的设计规范和组件使用指南。

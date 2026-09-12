@@ -1,5 +1,7 @@
 # TOPEMS 无障碍访问 (Accessibility / a11y) 规范
 
+> 统一方案入口：[`docs/design/ui-navigation-unified-plan.md`](../../design/ui-navigation-unified-plan.md)
+>
 > 本文档为 TOPEMS 设计系统的无障碍访问标准，基于 [WCAG 2.1 AA](https://www.w3.org/TR/WCAG21/) 标准，面向开发人员提供可执行的实施指南。
 
 ---

@@ -4,20 +4,73 @@ export const designTokens = {
       white: '#ffffff',
       black: '#000000',
     },
+    brand: {
+      /** Cobalt-indigo primary scale from design demo */
+      primary: {
+        50: '#eef4ff',
+        100: '#e0ebff',
+        200: '#c7daff',
+        300: '#a4c2fc',
+        400: '#769cf5',
+        500: '#4f78ed',
+        600: '#365ae3',
+        700: '#2a46c2',
+        800: '#263b9e',
+        900: '#24357d',
+      },
+      /** Warm slate neutral scale */
+      neutral: {
+        0: '#ffffff',
+        50: '#f8fafc',
+        100: '#f1f5f9',
+        150: '#e9eef4',
+        200: '#e2e8f0',
+        300: '#cbd5e1',
+        400: '#94a3b8',
+        500: '#64748b',
+        600: '#475569',
+        700: '#334155',
+        800: '#1e293b',
+        850: '#172033',
+        900: '#0f172a',
+        950: '#020617',
+      },
+      /** Semantic aliases aligned with design demo */
+      semantic: {
+        background: '#ffffff',
+        foreground: '#0f172a',
+        card: '#ffffff',
+        cardForeground: '#0f172a',
+        cardMuted: '#f8fafc',
+        popover: '#ffffff',
+        popoverForeground: '#0f172a',
+        primary: '#365ae3',
+        primaryForeground: '#ffffff',
+        primarySubtle: '#eef4ff',
+        muted: '#f1f5f9',
+        mutedForeground: '#64748b',
+        border: '#e2e8f0',
+        borderSubtle: '#e9eef4',
+        input: '#e2e8f0',
+        ring: '#769cf5',
+        overlay: 'rgba(15, 23, 42, 0.48)',
+        backdrop: 'rgba(15, 23, 42, 0.24)',
+      },
+    },
     primary: {
-      50: '#eff6ff',
-      100: '#dbeafe',
-      200: '#bfdbfe',
-      300: '#93c5fd',
-      400: '#60a5fa',
-      500: '#3b82f6',
-      600: '#2563eb',
-      700: '#1d4ed8',
-      800: '#1e40af',
-      900: '#1e3a8a',
-      main: '#3b82f6',
-      light: '#60a5fa',
-      dark: '#2563eb',
+      50: '#eef4ff',
+      100: '#e0ebff',
+      200: '#c7daff',
+      300: '#a4c2fc',
+      400: '#769cf5',
+      500: '#4f78ed',
+      600: '#365ae3',
+      700: '#2a46c2',
+      800: '#263b9e',
+      900: '#24357d',
+      main: '#365ae3',
+      light: '#769cf5',
+      dark: '#365ae3',
       contrastText: '#ffffff',
     },
     secondary: {
@@ -97,17 +150,17 @@ export const designTokens = {
       dark: '#0284c7',
     },
     grey: {
-      50: '#f9fafb',
-      100: '#f3f4f6',
-      200: '#e5e7eb',
-      300: '#d1d5db',
-      400: '#9ca3af',
-      500: '#6b7280',
-      600: '#4b5563',
-      700: '#374151',
-      800: '#1f2937',
-      900: '#111827',
-      950: '#030712',
+      50: '#f8fafc',
+      100: '#f1f5f9',
+      200: '#e2e8f0',
+      300: '#cbd5e1',
+      400: '#94a3b8',
+      500: '#64748b',
+      600: '#475569',
+      700: '#334155',
+      800: '#1e293b',
+      900: '#0f172a',
+      950: '#020617',
     },
     background: {
       default: '#f8fafc',
@@ -123,7 +176,7 @@ export const designTokens = {
       500: '#737373',
     },
     text: {
-      primary: '#1e293b',
+      primary: '#0f172a',
       secondary: '#64748b',
       muted: '#94a3b8',
       disabled: '#cbd5e1',
@@ -136,10 +189,10 @@ export const designTokens = {
     action: {
       hover: '#f1f5f9',
       active: '#e2e8f0',
-      selected: '#dbeafe',
+      selected: '#eef4ff',
       disabled: '#f1f5f9',
       disabledBackground: '#f8fafc',
-      focus: '#dbeafe',
+      focus: '#e0ebff',
     },
     orange: {
       50: '#fff7ed',
@@ -335,6 +388,26 @@ export const designTokens = {
     xl: 32,
     '2xl': 48,
     '3xl': 64,
+    /** 4px grid scale from design demo (numeric keys in px) */
+    scale: {
+      0: 0,
+      1: 4,
+      2: 8,
+      3: 12,
+      4: 16,
+      5: 20,
+      6: 24,
+      7: 28,
+      8: 32,
+      9: 36,
+      10: 40,
+      11: 44,
+      12: 48,
+      14: 56,
+      16: 64,
+      20: 80,
+      24: 96,
+    },
   },
 
   borderRadius: {
@@ -351,29 +424,31 @@ export const designTokens = {
 
   shadows: {
     none: 'none',
-    xs: '0 1px 2px 0 rgb(0 0 0 / 0.03)',
-    sm: '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.02)',
-    md: '0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -1px rgb(0 0 0 / 0.02)',
-    lg: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
-    xl: '0 20px 25px -5px rgb(0 0 0 / 0.08)',
-    '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.15)',
-    float: '0 25px 50px -12px rgb(0 0 0 / 0.15)',
-    '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.2)',
-    inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+    xs: '0 1px 2px 0 rgba(2, 6, 23, 0.04)',
+    sm: '0 1px 3px 0 rgba(2, 6, 23, 0.04), 0 1px 2px -1px rgba(2, 6, 23, 0.04)',
+    md: '0 4px 6px -1px rgba(2, 6, 23, 0.04), 0 2px 4px -2px rgba(2, 6, 23, 0.04)',
+    lg: '0 10px 15px -3px rgba(2, 6, 23, 0.04), 0 4px 6px -4px rgba(2, 6, 23, 0.04)',
+    xl: '0 20px 25px -5px rgba(2, 6, 23, 0.04), 0 8px 10px -6px rgba(2, 6, 23, 0.04)',
+    '2xl': '0 25px 50px -12px rgba(2, 6, 23, 0.08)',
+    float: '0 25px 50px -12px rgba(2, 6, 23, 0.08)',
+    '3xl': '0 35px 60px -15px rgba(2, 6, 23, 0.12)',
+    inner: 'inset 0 2px 4px 0 rgba(2, 6, 23, 0.04)',
+    glow: '0 0 20px rgba(79, 120, 237, 0.15)',
   },
 
   // 暗色模式专用阴影（alpha 更高以在深色背景上可见）
   darkShadows: {
     none: 'none',
-    xs: '0 1px 2px 0 rgb(0 0 0 / 0.2)',
-    sm: '0 4px 6px -1px rgb(0 0 0 / 0.25)',
-    md: '0 4px 6px -1px rgb(0 0 0 / 0.25)',
-    lg: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
-    xl: '0 20px 25px -5px rgb(0 0 0 / 0.35)',
-    '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.4)',
-    float: '0 25px 50px -12px rgb(0 0 0 / 0.3)',
-    '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.45)',
-    inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.15)',
+    xs: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+    sm: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
+    '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.12)',
+    float: '0 25px 50px -12px rgba(0, 0, 0, 0.12)',
+    '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.18)',
+    inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+    glow: '0 0 24px rgba(79, 120, 237, 0.25)',
   },
 
   // ─── Cyber 霓虹发光阴影 · V212-C1 扩展 ─────────────
@@ -411,7 +486,7 @@ export const designTokens = {
   motion: {
     duration: {
       instant: '0ms',
-      fast: '100ms',
+      fast: '150ms',
       normal: '200ms',
       slow: '300ms',
       deliberate: '500ms',
@@ -422,6 +497,13 @@ export const designTokens = {
       decelerate: 'cubic-bezier(0, 0, 0.2, 1)', // Enter
       accelerate: 'cubic-bezier(0.4, 0, 1, 1)', // Exit
       sharp: 'cubic-bezier(0.4, 0, 0.6, 1)', // Shared axis
+      bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+    },
+    transition: {
+      fast: '150ms cubic-bezier(0.4, 0, 0.2, 1)',
+      base: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
+      slow: '300ms cubic-bezier(0.4, 0, 0.2, 1)',
+      bounce: '300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
     },
   } as const,
 
@@ -478,6 +560,13 @@ export const designTokens = {
       tight: 1.25,
       normal: 1.5,
       relaxed: 1.75,
+      xs: '1rem',
+      sm: '1.25rem',
+      base: '1.5rem',
+      lg: '1.75rem',
+      xl: '1.75rem',
+      '2xl': '2rem',
+      '3xl': '2.25rem',
     },
     letterSpacing: {
       tighter: '-0.05em',
@@ -560,6 +649,14 @@ export const designTokens = {
     popover: 1600,
     snackbarContent: 1700,
     tooltipContent: 1800,
+    base: 0,
+    dropdown: 100,
+    sticky: 200,
+    fixed: 300,
+    popoverLayer: 400,
+    tooltipLayer: 500,
+    modalLayer: 600,
+    toastLayer: 700,
   },
 
   transitions: {
@@ -878,6 +975,53 @@ export const semanticTokens = {
       fontSize: designTokens.typography.fontSize.sm,
       gap: 8,
     },
+  },
+
+  /** Brand visual effect tokens from design demo */
+  brand: {
+    /** Glassmorphism header / panel */
+    glass: {
+      background: 'rgba(255, 255, 255, 0.85)',
+      backgroundDark: 'rgba(15, 23, 42, 0.80)',
+      backdropFilter: 'blur(12px) saturate(140%)',
+      border: 'rgba(226, 232, 240, 0.80)',
+      borderDark: 'rgba(51, 65, 85, 0.60)',
+    },
+    /** Glow effects */
+    glow: {
+      primary: '0 0 20px rgba(79, 120, 237, 0.15)',
+      primaryDark: '0 0 24px rgba(79, 120, 237, 0.25)',
+      primaryStrong: '0 0 0 1px #e0ebff, 0 0 20px rgba(79, 120, 237, 0.15)',
+      primaryStrongDark: '0 0 0 1px #2a46c2, 0 0 24px rgba(79, 120, 237, 0.25)',
+    },
+    /** Page background gradient */
+    pageGradient: {
+      light:
+        'radial-gradient(ellipse at 10% 0%, rgba(79, 120, 237, 0.06) 0%, transparent 50%), radial-gradient(ellipse at 90% 10%, rgba(54, 90, 227, 0.05) 0%, transparent 45%), #ffffff',
+      dark:
+        'radial-gradient(ellipse at 10% 0%, rgba(79, 120, 237, 0.10) 0%, transparent 50%), radial-gradient(ellipse at 90% 10%, rgba(54, 90, 227, 0.08) 0%, transparent 45%), #020617',
+    },
+    /** Inner glow card overlay */
+    innerGlow: {
+      light: 'radial-gradient(circle at 50% 0%, rgba(79, 120, 237, 0.08), transparent 60%)',
+      dark: 'radial-gradient(circle at 50% 0%, rgba(79, 120, 237, 0.12), transparent 60%)',
+    },
+    /** Gradient badge */
+    gradientBadge: {
+      light: 'linear-gradient(135deg, #eef4ff, rgba(224, 235, 255, 0.70))',
+      dark: 'linear-gradient(135deg, rgba(36, 53, 125, 0.60), rgba(38, 59, 158, 0.40))',
+      colorLight: '#2a46c2',
+      colorDark: '#a4c2fc',
+      borderLight: 'rgba(199, 218, 255, 0.60)',
+      borderDark: 'rgba(42, 70, 194, 0.50)',
+    },
+    /** Tab underline gradient */
+    tabUnderline: 'linear-gradient(90deg, #769cf5, #365ae3)',
+    /** Active tab glow line */
+    activeTabGlow: 'linear-gradient(90deg, transparent, #769cf5, transparent)',
+    /** Focus ring */
+    focusRing: '0 0 0 2px #ffffff, 0 0 0 4px #769cf5',
+    focusRingDark: '0 0 0 2px #020617, 0 0 0 4px #769cf5',
   },
 
   // ─── Cyber 风格语义层 · V212-C1 扩展 ─────────────────

@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剩余业务域导航映射</title>
+    <style id="theme-vars">
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand primary scale - refined cobalt-indigo */
+  --brand-primary-50: #eef4ff;
+  --brand-primary-100: #e0ebff;
+  --brand-primary-200: #c7daff;
+  --brand-primary-300: #a4c2fc;
+  --brand-primary-400: #769cf5;
+  --brand-primary-500: #4f78ed;
+  --brand-primary-600: #365ae3;
+  --brand-primary-700: #2a46c2;
+  --brand-primary-800: #263b9e;
+  --brand-primary-900: #24357d;
+
+  /* Neutral scale - warm slate, refined for UI density */
+  --brand-neutral-0: #ffffff;
+  --brand-neutral-50: #f8fafc;
+  --brand-neutral-100: #f1f5f9;
+  --brand-neutral-150: #e9eef4;
+  --brand-neutral-200: #e2e8f0;
+  --brand-neutral-300: #cbd5e1;
+  --brand-neutral-400: #94a3b8;
+  --brand-neutral-500: #64748b;
+  --brand-neutral-600: #475569;
+  --brand-neutral-700: #334155;
+  --brand-neutral-800: #1e293b;
+  --brand-neutral-850: #172033;
+  --brand-neutral-900: #0f172a;
+  --brand-neutral-950: #020617;
+
+  /* State colors - harmonious with primary */
+  --brand-state-success: #16a34a;
+  --brand-state-success-foreground: #ffffff;
+  --brand-state-success-subtle: #f0fdf4;
+  --brand-state-warning: #d97706;
+  --brand-state-warning-foreground: #ffffff;
+  --brand-state-warning-subtle: #fffbeb;
+  --brand-state-error: #dc2626;
+  --brand-state-error-foreground: #ffffff;
+  --brand-state-error-subtle: #fef2f2;
+  --brand-state-info: #365ae3;
+  --brand-state-info-foreground: #ffffff;
+  --brand-state-info-subtle: #eef4ff;
+
+  /* Semantic aliases */
+  --brand-background: var(--brand-neutral-0);
+  --brand-foreground: var(--brand-neutral-900);
+  --brand-card: var(--brand-neutral-0);
+  --brand-card-foreground: var(--brand-neutral-900);
+  --brand-card-muted: var(--brand-neutral-50);
+  --brand-popover: var(--brand-neutral-0);
+  --brand-popover-foreground: var(--brand-neutral-900);
+  --brand-primary: var(--brand-primary-600);
+  --brand-primary-foreground: var(--brand-neutral-0);
+  --brand-primary-subtle: var(--brand-primary-50);
+  --brand-muted: var(--brand-neutral-100);
+  --brand-muted-foreground: var(--brand-neutral-500);
+  --brand-border: var(--brand-neutral-200);
+  --brand-border-subtle: var(--brand-neutral-150);
+  --brand-input: var(--brand-neutral-200);
+  --brand-ring: var(--brand-primary-400);
+  --brand-overlay: rgba(15, 23, 42, 0.48);
+  --brand-backdrop: rgba(15, 23, 42, 0.24);
+
+  /* Radius scale - restrained */
+  --brand-radius-none: 0px;
+  --brand-radius-xs: 2px;
+  --brand-radius-sm: 4px;
+  --brand-radius-md: 8px;
+  --brand-radius-lg: 12px;
+  --brand-radius-xl: 16px;
+  --brand-radius-full: 9999px;
+
+  /* Typography - families */
+  --brand-font-sans: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --brand-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Typography - scale */
+  --brand-text-xs: 0.75rem;
+  --brand-text-xs-line: 1rem;
+  --brand-text-sm: 0.875rem;
+  --brand-text-sm-line: 1.25rem;
+  --brand-text-base: 1rem;
+  --brand-text-base-line: 1.5rem;
+  --brand-text-lg: 1.125rem;
+  --brand-text-lg-line: 1.75rem;
+  --brand-text-xl: 1.25rem;
+  --brand-text-xl-line: 1.75rem;
+  --brand-text-2xl: 1.5rem;
+  --brand-text-2xl-line: 2rem;
+  --brand-text-3xl: 1.875rem;
+  --brand-text-3xl-line: 2.25rem;
+
+  /* Typography - weights */
+  --brand-font-normal: 400;
+  --brand-font-medium: 500;
+  --brand-font-semibold: 600;
+  --brand-font-bold: 700;
+
+  /* Spacing - 4px grid */
+  --brand-space-0: 0px;
+  --brand-space-1: 4px;
+  --brand-space-2: 8px;
+  --brand-space-3: 12px;
+  --brand-space-4: 16px;
+  --brand-space-5: 20px;
+  --brand-space-6: 24px;
+  --brand-space-7: 28px;
+  --brand-space-8: 32px;
+  --brand-space-9: 36px;
+  --brand-space-10: 40px;
+  --brand-space-11: 44px;
+  --brand-space-12: 48px;
+  --brand-space-14: 56px;
+  --brand-space-16: 64px;
+  --brand-space-20: 80px;
+  --brand-space-24: 96px;
+
+  /* Elevation / shadows */
+  --brand-shadow-xs: 0 1px 2px 0 rgba(2, 6, 23, 0.04);
+  --brand-shadow-sm: 0 1px 3px 0 rgba(2, 6, 23, 0.04), 0 1px 2px -1px rgba(2, 6, 23, 0.04);
+  --brand-shadow-md: 0 4px 6px -1px rgba(2, 6, 23, 0.04), 0 2px 4px -2px rgba(2, 6, 23, 0.04);
+  --brand-shadow-lg: 0 10px 15px -3px rgba(2, 6, 23, 0.04), 0 4px 6px -4px rgba(2, 6, 23, 0.04);
+  --brand-shadow-xl: 0 20px 25px -5px rgba(2, 6, 23, 0.04), 0 8px 10px -6px rgba(2, 6, 23, 0.04);
+  --brand-shadow-inner: inset 0 2px 4px 0 rgba(2, 6, 23, 0.04);
+
+  /* Motion - transitions */
+  --brand-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --brand-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --brand-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --brand-transition-bounce: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --brand-transition-colors: color var(--brand-transition-base), background-color var(--brand-transition-base), border-color var(--brand-transition-base), fill var(--brand-transition-base), stroke var(--brand-transition-base);
+
+  /* Z-index scale */
+  --brand-z-base: 0;
+  --brand-z-dropdown: 100;
+  --brand-z-sticky: 200;
+  --brand-z-fixed: 300;
+  --brand-z-popover: 400;
+  --brand-z-tooltip: 500;
+  --brand-z-modal: 600;
+  --brand-z-toast: 700;
+}
+
+.dark {
+  --brand-background: var(--brand-neutral-950);
+  --brand-foreground: var(--brand-neutral-50);
+  --brand-card: var(--brand-neutral-900);
+  --brand-card-foreground: var(--brand-neutral-50);
+  --brand-card-muted: var(--brand-neutral-850);
+  --brand-popover: var(--brand-neutral-900);
+  --brand-popover-foreground: var(--brand-neutral-50);
+  --brand-primary: var(--brand-primary-500);
+  --brand-primary-foreground: var(--brand-neutral-0);
+  --brand-primary-subtle: var(--brand-primary-900);
+  --brand-muted: var(--brand-neutral-800);
+  --brand-muted-foreground: var(--brand-neutral-400);
+  --brand-border: var(--brand-neutral-800);
+  --brand-border-subtle: var(--brand-neutral-850);
+  --brand-input: var(--brand-neutral-800);
+  --brand-ring: var(--brand-primary-400);
+  --brand-overlay: rgba(2, 6, 23, 0.72);
+  --brand-backdrop: rgba(2, 6, 23, 0.48);
+
+  --brand-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --brand-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --brand-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --brand-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --brand-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --brand-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================================
+   Micro-interaction utilities
+   ============================================================ */
+
+/* Focus ring using brand tokens */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand-background), 0 0 0 4px var(--brand-ring);
+}
+
+/* Card hover / active */
+.interactive-card {
+  transition: transform var(--brand-transition-base), box-shadow var(--brand-transition-base), border-color var(--brand-transition-base);
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--brand-shadow-md);
+}
+.interactive-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* Tab hover / active with sliding underline */
+.interactive-tab {
+  position: relative;
+  transition: color var(--brand-transition-fast), background-color var(--brand-transition-fast);
+}
+.interactive-tab:hover {
+  background-color: var(--brand-muted);
+}
+.interactive-tab.active {
+  color: var(--brand-primary);
+  background-color: color-mix(in srgb, var(--brand-primary) 5%, transparent);
+}
+
+/* Sliding underline pseudo-element */
+.interactive-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-primary-400), var(--brand-primary-600));
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 -2px 8px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform var(--brand-transition-slow), opacity var(--brand-transition-fast);
+}
+
+/* Hover preview: underline expands from center */
+.interactive-tab:hover::after {
+  transform: scaleX(0.5);
+  opacity: 0.5;
+}
+
+/* Active tab: underline slides in from left */
+.interactive-tab.active::after {
+  transform: scaleX(1);
+  transform-origin: left;
+  opacity: 1;
+  animation: tabUnderlineSlide var(--brand-transition-slow) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes tabUnderlineSlide {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Sidebar / list item hover */
+.interactive-item {
+  transition: color var(--brand-transition-fast), background-color var(--brand-transition-fast), padding-left var(--brand-transition-fast), border-color var(--brand-transition-fast);
+}
+.interactive-item:hover {
+  background-color: var(--brand-muted);
+}
+.interactive-item.active {
+  color: var(--brand-primary);
+  background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+}
+
+/* Button hover / active */
+.interactive-btn {
+  transition: transform var(--brand-transition-fast), background-color var(--brand-transition-fast), color var(--brand-transition-fast);
+}
+.interactive-btn:hover {
+  background-color: var(--brand-muted);
+}
+.interactive-btn:active {
+  transform: scale(0.94);
+}
+
+/* Link hover underline */
+.interactive-link {
+  position: relative;
+  transition: color var(--brand-transition-fast);
+}
+.interactive-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--brand-transition-base);
+}
+.interactive-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Icon scale on parent hover */
+.icon-hover {
+  transition: transform var(--brand-transition-base);
+}
+.group:hover .icon-hover,
+.icon-hover:hover {
+  transform: scale(1.1);
+}
+
+/* Check badge animation */
+.check-badge {
+  transition: transform var(--brand-transition-bounce), opacity var(--brand-transition-fast);
+}
+.interactive-card:not(.selected) .check-badge {
+  transform: scale(0);
+  opacity: 0;
+}
+.interactive-card.selected .check-badge {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Tooltip fade / slide */
+.domain-tooltip {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity var(--brand-transition-fast), transform var(--brand-transition-fast);
+}
+.interactive-card:hover .domain-tooltip,
+.interactive-item:hover .domain-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered page load animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeInUp var(--brand-transition-slow) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 160ms; }
+.stagger-5 { animation-delay: 200ms; }
+.stagger-6 { animation-delay: 240ms; }
+.stagger-7 { animation-delay: 280ms; }
+.stagger-8 { animation-delay: 320ms; }
+
+/* ============================================================
+   Premium visual enhancement utilities
+   ============================================================ */
+
+/* Premium glassmorphism header */
+.glass-header {
+  background: color-mix(in srgb, var(--brand-card) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: color-mix(in srgb, var(--brand-border) 80%, transparent);
+}
+
+/* Subtle page background gradient */
+.page-gradient-bg {
+  background:
+    radial-gradient(ellipse at 10% 0%, color-mix(in srgb, var(--brand-primary) 6%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 10%, color-mix(in srgb, var(--brand-secondary) 5%, transparent) 0%, transparent 45%),
+    var(--brand-background);
+}
+
+/* Section card with subtle inner glow on hover */
+.glow-card {
+  position: relative;
+  overflow: hidden;
+}
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--brand-primary) 8%, transparent), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--brand-transition-slow);
+  pointer-events: none;
+}
+.glow-card:hover::before {
+  opacity: 1;
+}
+
+/* Selected card outer glow */
+.selected-glow {
+  box-shadow:
+    0 0 0 1px var(--brand-primary-200),
+    0 0 20px color-mix(in srgb, var(--brand-primary) 15%, transparent),
+    var(--brand-shadow-md);
+}
+.dark .selected-glow,
+html[class~="dark"] .selected-glow {
+  box-shadow:
+    0 0 0 1px var(--brand-primary-700),
+    0 0 24px color-mix(in srgb, var(--brand-primary) 25%, transparent),
+    var(--brand-shadow-md);
+}
+
+/* Gradient badge */
+.gradient-badge {
+  background: linear-gradient(135deg, var(--brand-primary-50), color-mix(in srgb, var(--brand-primary-100) 70%, transparent));
+  color: var(--brand-primary-700);
+  border: 1px solid color-mix(in srgb, var(--brand-primary-200) 60%, transparent);
+}
+.dark .gradient-badge,
+html[class~="dark"] .gradient-badge {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-primary-900) 60%, transparent), color-mix(in srgb, var(--brand-primary-800) 40%, transparent));
+  color: var(--brand-primary-200);
+  border-color: color-mix(in srgb, var(--brand-primary-700) 50%, transparent);
+}
+
+/* Gradient divider */
+.gradient-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand-border), transparent);
+  border: none;
+}
+
+/* Premium hover lift with shadow */
+.premium-hover {
+  transition: transform var(--brand-transition-fast), box-shadow var(--brand-transition-fast);
+}
+.premium-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--brand-shadow-lg);
+}
+
+/* Subtle shimmer on active tab */
+.active-tab-glow {
+  position: relative;
+}
+.active-tab-glow::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand-primary-400), transparent);
+  opacity: 0.6;
+}
+
+/* Lucide icon color consistency */
+.icon-brand {
+  color: var(--brand-primary);
+}
+.icon-muted {
+  color: var(--brand-muted-foreground);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--brand-background);
+    --color-foreground: var(--brand-foreground);
+    --color-card: var(--brand-card);
+    --color-card-foreground: var(--brand-card-foreground);
+    --color-popover: var(--brand-popover);
+    --color-popover-foreground: var(--brand-popover-foreground);
+    --color-primary: var(--brand-primary);
+    --color-primary-foreground: var(--brand-primary-foreground);
+    --color-muted: var(--brand-muted);
+    --color-muted-foreground: var(--brand-muted-foreground);
+    --color-border: var(--brand-border);
+    --color-input: var(--brand-input);
+    --color-ring: var(--brand-ring);
+    --radius-sm: var(--brand-radius-sm);
+    --radius-md: var(--brand-radius-md);
+    --radius-lg: var(--brand-radius-lg);
+    --radius-xl: var(--brand-radius-xl);
+  }
+  @layer base {
+    body { background: var(--brand-background); color: var(--brand-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--brand-background); }
+      .text-background { color: var(--brand-background); }
+      .border-background { border-color: var(--brand-background); }
+      .ring-background { --tw-ring-color: var(--brand-background); }
+      .bg-foreground { background-color: var(--brand-foreground); }
+      .text-foreground { color: var(--brand-foreground); }
+      .border-foreground { border-color: var(--brand-foreground); }
+      .ring-foreground { --tw-ring-color: var(--brand-foreground); }
+      .bg-card { background-color: var(--brand-card); }
+      .text-card { color: var(--brand-card); }
+      .border-card { border-color: var(--brand-card); }
+      .ring-card { --tw-ring-color: var(--brand-card); }
+      .bg-card-foreground { background-color: var(--brand-card-foreground); }
+      .text-card-foreground { color: var(--brand-card-foreground); }
+      .border-card-foreground { border-color: var(--brand-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--brand-card-foreground); }
+      .bg-popover { background-color: var(--brand-popover); }
+      .text-popover { color: var(--brand-popover); }
+      .border-popover { border-color: var(--brand-popover); }
+      .ring-popover { --tw-ring-color: var(--brand-popover); }
+      .bg-popover-foreground { background-color: var(--brand-popover-foreground); }
+      .text-popover-foreground { color: var(--brand-popover-foreground); }
+      .border-popover-foreground { border-color: var(--brand-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--brand-popover-foreground); }
+      .bg-primary { background-color: var(--brand-primary); }
+      .text-primary { color: var(--brand-primary); }
+      .border-primary { border-color: var(--brand-primary); }
+      .ring-primary { --tw-ring-color: var(--brand-primary); }
+      .bg-primary-foreground { background-color: var(--brand-primary-foreground); }
+      .text-primary-foreground { color: var(--brand-primary-foreground); }
+      .border-primary-foreground { border-color: var(--brand-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--brand-primary-foreground); }
+      .bg-muted { background-color: var(--brand-muted); }
+      .text-muted { color: var(--brand-muted); }
+      .border-muted { border-color: var(--brand-muted); }
+      .ring-muted { --tw-ring-color: var(--brand-muted); }
+      .bg-muted-foreground { background-color: var(--brand-muted-foreground); }
+      .text-muted-foreground { color: var(--brand-muted-foreground); }
+      .border-muted-foreground { border-color: var(--brand-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--brand-muted-foreground); }
+      .bg-border { background-color: var(--brand-border); }
+      .text-border { color: var(--brand-border); }
+      .border-border { border-color: var(--brand-border); }
+      .ring-border { --tw-ring-color: var(--brand-border); }
+      .bg-input { background-color: var(--brand-input); }
+      .text-input { color: var(--brand-input); }
+      .border-input { border-color: var(--brand-input); }
+      .ring-input { --tw-ring-color: var(--brand-input); }
+      .bg-ring { background-color: var(--brand-ring); }
+      .text-ring { color: var(--brand-ring); }
+      .border-ring { border-color: var(--brand-ring); }
+      .ring-ring { --tw-ring-color: var(--brand-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased page-gradient-bg">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-[800] px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium">跳转到主要内容</a>
+    <main class="flex flex-col min-h-screen">
+      <!-- Top App Header -->
+      <header class="sticky top-0 z-[500] h-14 flex-none flex items-center justify-between px-5 border-b bg-background glass-header" style="border-color: var(--brand-border);">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">T</div>
+          <h1 class="text-base font-semibold text-foreground">TOPEMS 统一导航</h1>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground interactive-btn focus-ring" data-search-trigger aria-label="搜索导航">
+            <i data-lucide="search" class="w-[18px] h-[18px]"></i>
+          </button>
+          <kbd class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono text-muted-foreground" style="border-color: var(--brand-border);">⌘K</kbd>
+          <button class="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground interactive-btn focus-ring relative" aria-label="通知">
+            <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary border-2 border-background" style="border-color: var(--brand-background);"></span>
+          </button>
+          <button type="button" class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium ml-1 focus-ring" aria-label="用户菜单">张</button>
+        </div>
+      </header>
+
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="flex-none px-5 py-2 border-b bg-background text-xs text-muted-foreground flex items-center gap-2" style="border-color: var(--brand-border);">
+        <a href="index.html" class="interactive-link hover:text-primary flex items-center gap-1">
+          <i data-lucide="home" class="w-3.5 h-3.5"></i>
+          <span>首页</span>
+        </a>
+        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+        <span class="text-foreground font-medium" aria-current="page">制造/质量/供应链/项目</span>
+      </nav>
+
+      <!-- L1 Business Domain Tabs -->
+      <nav aria-label="业务域" class="flex-none border-b bg-background" style="border-color: var(--brand-border);">
+        <div class="px-5 pt-3 pb-0">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-primary/10 gradient-badge text-primary">L1</span>
+            <span class="text-xs font-medium text-muted-foreground">业务域</span>
+          </div>
+          <nav class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">企业平台</button>
+            <button class="px-4 py-2 text-sm font-semibold text-primary bg-primary/5 interactive-tab rounded-t-md whitespace-nowrap inline-flex items-center gap-2 l1-domain-tab active-tab-glow active" tabIndex="0" role="tab" selected="true" aria-selected="true">制造域<span class="w-1.5 h-1.5 rounded-full bg-primary"></span></button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">质量域</button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">供应链域</button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">财务域</button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">人力域</button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">客户域</button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">项目域</button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">协同域</button>
+            <button class="px-4 py-2 text-sm font-medium text-muted-foreground interactive-tab rounded-t-md whitespace-nowrap l1-domain-tab" tabIndex="0" role="tab" selected="false" aria-selected="false">平台能力</button>
+          </nav>
+        </div>
+      </nav>
+
+      <!-- Service Mapping Content -->
+      <section id="main-content" tabindex="-1" class="flex-1 bg-muted/20 min-h-0 overflow-y-auto">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
+          <!-- Page Title Bar -->
+          <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                <i data-lucide="map" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h2 class="text-2xl font-semibold tracking-tight text-foreground">剩余业务域导航映射</h2>
+                <p class="text-sm text-muted-foreground mt-2 max-w-2xl leading-relaxed">覆盖制造、质量、供应链、项目四大业务域的四层模型归类</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mapping Diagram -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- 制造域 Column -->
+            <div class="rounded-lg border bg-card overflow-hidden flex flex-col" style="border-color: var(--brand-border);">
+              <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--brand-border); border-top: 3px solid var(--brand-primary);">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="factory" class="w-4 h-4 text-primary"></i>
+                  <span class="text-sm font-semibold text-foreground">制造域</span>
+                </div>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-primary/10 gradient-badge text-primary">6 服务</span>
+              </div>
+              <div class="p-3 space-y-3 flex-1 overflow-y-auto">
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-1 selected glow-card selected-glow" tabIndex="0" aria-selected="true" style="border-color: var(--brand-border);"><div class="domain-tooltip">生产执行、工单、报工与追溯</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5 text-primary icon-hover"></i>
+                    <span class="text-sm font-semibold text-foreground">MES 制造执行</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">概览</span> · 生产看板</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 物料、工序、BOM</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务流程</span> · 工单、排产</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 生产工单、报工单</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">统计分析</span> · 产量分析、设备效率</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-2 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">仓库、库位、出入库与盘点</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="warehouse" class="w-3.5 h-3.5 text-primary icon-hover"></i>
+                    <span class="text-sm font-semibold text-foreground">WMS 仓储管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 仓库、库位</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 入库单、出库单、盘点单</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-3 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">检验标准、检验单与不合格品</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-primary icon-hover"></i>
+                    <span class="text-sm font-semibold text-foreground">QMS 质量管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 检验标准</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 检验单、不合格品</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-4 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">排程、产能与计划优化</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="calendar-clock" class="w-3.5 h-3.5 text-primary icon-hover"></i>
+                    <span class="text-sm font-semibold text-foreground">APS 排程管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务流程</span> · 排程、产能</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-5 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">能耗采集、分析与节能</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="zap" class="w-3.5 h-3.5 text-primary icon-hover"></i>
+                    <span class="text-sm font-semibold text-foreground">能源管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">统计分析</span> · 能耗分析</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-6 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">设备台账、保养与维修</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="settings" class="w-3.5 h-3.5 text-primary icon-hover"></i>
+                    <span class="text-sm font-semibold text-foreground">设备管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 设备台账</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 质量域 Column -->
+            <div class="rounded-lg border bg-card overflow-hidden flex flex-col" style="border-color: var(--brand-border);">
+              <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--brand-border); border-top: 3px solid var(--brand-state-success);">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle" class="w-4 h-4" style="color: var(--brand-state-success);"></i>
+                  <span class="text-sm font-semibold text-foreground">质量域</span>
+                </div>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: color-mix(in srgb, var(--brand-state-success) 10%, transparent); color: var(--brand-state-success);">6 服务</span>
+              </div>
+              <div class="p-3 space-y-3 flex-1 overflow-y-auto">
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-7 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">来料检验与供应商质量</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="clipboard-check" class="w-3.5 h-3.5" style="color: var(--brand-state-success);"></i>
+                    <span class="text-sm font-semibold text-foreground">来料检验 (IQC)</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 来料检验单</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-8 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">过程巡检与工序质量</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="scan" class="w-3.5 h-3.5" style="color: var(--brand-state-success);"></i>
+                    <span class="text-sm font-semibold text-foreground">过程检验 (IPQC)</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 巡检记录</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-1 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">出货检验与放行管理</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="package-check" class="w-3.5 h-3.5" style="color: var(--brand-state-success);"></i>
+                    <span class="text-sm font-semibold text-foreground">出货检验 (OQC)</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 出货检验单</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-2 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">不合格品登记、评审与处置</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="x-octagon" class="w-3.5 h-3.5" style="color: var(--brand-state-success);"></i>
+                    <span class="text-sm font-semibold text-foreground">不合格品</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 不合格品处理</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-3 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">批次追溯与质量履历</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="route" class="w-3.5 h-3.5" style="color: var(--brand-state-success);"></i>
+                    <span class="text-sm font-semibold text-foreground">质量追溯</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务流程</span> · 追溯查询</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-4 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">控制图、过程能力与异常预警</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="activity" class="w-3.5 h-3.5" style="color: var(--brand-state-success);"></i>
+                    <span class="text-sm font-semibold text-foreground">SPC</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">统计分析</span> · 控制图</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 供应链域 Column -->
+            <div class="rounded-lg border bg-card overflow-hidden flex flex-col" style="border-color: var(--brand-border);">
+              <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--brand-border); border-top: 3px solid var(--brand-state-warning);">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="truck" class="w-4 h-4" style="color: var(--brand-state-warning);"></i>
+                  <span class="text-sm font-semibold text-foreground">供应链域</span>
+                </div>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: color-mix(in srgb, var(--brand-state-warning) 10%, transparent); color: var(--brand-state-warning);">5 服务</span>
+              </div>
+              <div class="p-3 space-y-3 flex-1 overflow-y-auto">
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-5 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">采购申请、订单与收货</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="shopping-cart" class="w-3.5 h-3.5" style="color: var(--brand-state-warning);"></i>
+                    <span class="text-sm font-semibold text-foreground">采购管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 采购申请、采购订单</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-6 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">库存、批次、出入库与调拨</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="package" class="w-3.5 h-3.5" style="color: var(--brand-state-warning);"></i>
+                    <span class="text-sm font-semibold text-foreground">库存管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 库存、批次</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 出入库、调拨</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-7 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">运输、配送与运费结算</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5" style="color: var(--brand-state-warning);"></i>
+                    <span class="text-sm font-semibold text-foreground">物流管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务流程</span> · 运输、配送</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-8 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">供应商档案、评估与协同</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="handshake" class="w-3.5 h-3.5" style="color: var(--brand-state-warning);"></i>
+                    <span class="text-sm font-semibold text-foreground">SRM 供应商关系</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 供应商档案</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 供应商评估</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-1 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">供应商准入与分级</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="users" class="w-3.5 h-3.5" style="color: var(--brand-state-warning);"></i>
+                    <span class="text-sm font-semibold text-foreground">供应商管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 供应商准入</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 项目域 Column -->
+            <div class="rounded-lg border bg-card overflow-hidden flex flex-col" style="border-color: var(--brand-border);">
+              <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--brand-border); border-top: 3px solid var(--brand-state-error);">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="target" class="w-4 h-4" style="color: var(--brand-state-error);"></i>
+                  <span class="text-sm font-semibold text-foreground">项目域</span>
+                </div>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded" style="background-color: color-mix(in srgb, var(--brand-state-error) 10%, transparent); color: var(--brand-state-error);">5 服务</span>
+              </div>
+              <div class="p-3 space-y-3 flex-1 overflow-y-auto">
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-2 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">项目档案、立项与范围</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="folder-kanban" class="w-3.5 h-3.5" style="color: var(--brand-state-error);"></i>
+                    <span class="text-sm font-semibold text-foreground">项目管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">主数据</span> · 项目档案</div>
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 项目立项</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-3 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">任务、子任务与工时</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="list-checks" class="w-3.5 h-3.5" style="color: var(--brand-state-error);"></i>
+                    <span class="text-sm font-semibold text-foreground">任务管理</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 任务、子任务</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-4 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">看板视图与迭代进度</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="layout-dashboard" class="w-3.5 h-3.5" style="color: var(--brand-state-error);"></i>
+                    <span class="text-sm font-semibold text-foreground">项目看板</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">概览</span> · 看板视图</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-5 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">进度计划与关键路径</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="bar-chart-2" class="w-3.5 h-3.5" style="color: var(--brand-state-error);"></i>
+                    <span class="text-sm font-semibold text-foreground">甘特图</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务流程</span> · 进度计划</div>
+                  </div>
+                </div>
+                <div class="rounded-md border p-4 selectable-card interactive-card animate-fade-in stagger-6 glow-card" tabIndex="0" style="border-color: var(--brand-border);"><div class="domain-tooltip">里程碑、交付物与风险</div><div class="check-badge"><i data-lucide="check" class="w-3 h-3 icon-hover"></i></div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="flag" class="w-3.5 h-3.5" style="color: var(--brand-state-error);"></i>
+                    <span class="text-sm font-semibold text-foreground">里程碑</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-muted-foreground"><span class="font-medium text-foreground">业务单据</span> · 里程碑、交付物</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compact Mapping Table -->
+          <div class="rounded-lg border bg-card overflow-hidden" style="border-color: var(--brand-border);">
+            <div class="px-4 py-3 border-b flex items-center gap-2" style="border-color: var(--brand-border);">
+              <i data-lucide="table" class="w-4 h-4 text-primary"></i>
+              <span class="text-sm font-semibold text-foreground">服务映射明细</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-muted/50">
+                  <tr>
+                    <th class="px-4 py-2.5 text-left font-semibold text-foreground">服务</th>
+                    <th class="px-4 py-2.5 text-left font-semibold text-foreground">所属 L1</th>
+                    <th class="px-4 py-2.5 text-left font-semibold text-foreground">所属 L2</th>
+                    <th class="px-4 py-2.5 text-left font-semibold text-foreground">示例 L3</th>
+                    <th class="px-4 py-2.5 text-left font-semibold text-foreground">示例 L4</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y" style="border-color: var(--brand-border);">
+                  <tr>
+                    <td class="px-4 py-2.5 font-medium text-foreground">MES</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">制造域</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">MES 制造执行</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">业务单据</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">生产工单</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2.5 font-medium text-foreground">WMS</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">制造域</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">WMS 仓储管理</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">业务单据</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">入库单、出库单</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2.5 font-medium text-foreground">IQC</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">质量域</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">来料检验</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">业务单据</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">来料检验单</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2.5 font-medium text-foreground">采购</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">供应链域</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">采购管理</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">业务单据</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">采购订单</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2.5 font-medium text-foreground">SRM</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">供应链域</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">供应商关系</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">主数据</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">供应商档案</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2.5 font-medium text-foreground">项目管理</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">项目域</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">项目管理</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">主数据</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">项目档案</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2.5 font-medium text-foreground">里程碑</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">项目域</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">里程碑</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">业务单据</td>
+                    <td class="px-4 py-2.5 text-muted-foreground">里程碑、交付物</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Layer Legend -->
+      <footer class="flex-none border-t bg-muted/20 px-5 py-3" style="border-color: var(--brand-border);">
+        <div class="flex items-center justify-center gap-8">
+          <div class="flex items-center gap-2.5">
+            <span class="w-5 h-5 rounded text-[11px] font-bold bg-primary text-primary-foreground flex items-center justify-center">1</span>
+            <div>
+              <div class="text-sm font-semibold text-foreground">L1 业务域</div>
+              <div class="text-[11px] text-muted-foreground">顶层业务分域</div>
+            </div>
+          </div>
+          <div class="w-px h-6 bg-border" style="background-color: var(--brand-border);"></div>
+          <div class="flex items-center gap-2.5">
+            <span class="w-5 h-5 rounded text-[11px] font-bold bg-primary/80 text-primary-foreground flex items-center justify-center">2</span>
+            <div>
+              <div class="text-sm font-semibold text-foreground">L2 模块</div>
+              <div class="text-[11px] text-muted-foreground">功能模块</div>
+            </div>
+          </div>
+          <div class="w-px h-6 bg-border" style="background-color: var(--brand-border);"></div>
+          <div class="flex items-center gap-2.5">
+            <span class="w-5 h-5 rounded text-[11px] font-bold bg-primary/60 text-primary-foreground flex items-center justify-center">3</span>
+            <div>
+              <div class="text-sm font-semibold text-foreground">L3 子组</div>
+              <div class="text-[11px] text-muted-foreground">页面归类</div>
+            </div>
+          </div>
+          <div class="w-px h-6 bg-border" style="background-color: var(--brand-border);"></div>
+          <div class="flex items-center gap-2.5">
+            <span class="w-5 h-5 rounded text-[11px] font-bold bg-primary/40 text-primary-foreground flex items-center justify-center">4</span>
+            <div>
+              <div class="text-sm font-semibold text-foreground">L4 页面</div>
+              <div class="text-[11px] text-muted-foreground">具体功能入口</div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+    <style id="l1-domain-tab-styles">
+      .l1-domain-tab {
+        cursor: pointer;
+        transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+      }
+      .l1-domain-tab:not(.active):hover {
+        background-color: var(--brand-muted);
+        color: var(--brand-foreground);
+        border-color: transparent;
+      }
+      .l1-domain-tab:not(.active):focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--brand-primary);
+      }
+      .l1-domain-tab.active {
+        color: var(--brand-primary);
+        background-color: color-mix(in srgb, var(--brand-primary) 5%, var(--brand-background));
+        border-bottom-color: var(--brand-primary);
+      }
+    </style>
+    <style id="selectable-card-interactions">
+      .selectable-card,
+      .core-domain-card {
+        position: relative;
+        cursor: pointer;
+        transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, background-color 200ms ease;
+      }
+      .selectable-card::before,
+      .core-domain-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        border-radius: 0 4px 4px 0;
+        background-color: transparent;
+        transition: background-color 200ms ease;
+      }
+      .selectable-card.selected,
+      .core-domain-card.selected {
+        background: linear-gradient(135deg, color-mix(in srgb, var(--brand-primary) 18%, var(--brand-card)) 0%, color-mix(in srgb, var(--brand-primary) 10%, var(--brand-card)) 100%) !important;
+        border-color: var(--brand-primary) !important;
+        box-shadow:
+          0 0 0 2px var(--brand-primary),
+          0 0 0 4px color-mix(in srgb, var(--brand-primary) 20%, transparent),
+          0 8px 24px color-mix(in srgb, var(--brand-primary) 28%, transparent);
+        transform: translateY(-2px);
+      }
+      .selectable-card.selected::before,
+      .core-domain-card.selected::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 10px;
+        bottom: 10px;
+        width: 5px;
+        border-radius: 0 6px 6px 0;
+        background-color: var(--brand-primary);
+        box-shadow: 0 0 8px color-mix(in srgb, var(--brand-primary) 60%, transparent);
+      }
+      .selectable-card.selected .domain-name,
+      .core-domain-card.selected .domain-name,
+      .selectable-card.selected .font-semibold.text-foreground,
+      .selectable-card.selected .text-foreground.font-medium,
+      .core-domain-card.selected h3,
+      .selectable-card.selected h3 {
+        color: var(--brand-primary) !important;
+      }
+      .selectable-card.selected .text-muted-foreground,
+      .core-domain-card.selected .text-muted-foreground {
+        color: color-mix(in srgb, var(--brand-primary) 80%, var(--brand-muted-foreground)) !important;
+      }
+      .selectable-card .check-badge,
+      .core-domain-card .check-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 20px;
+        height: 20px;
+        border-radius: 9999px;
+        background-color: var(--brand-primary);
+        color: var(--brand-primary-foreground);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: opacity 200ms ease, transform 200ms ease;
+        box-shadow: 0 2px 6px color-mix(in srgb, var(--brand-primary) 50%, transparent);
+      }
+      .selectable-card.selected .check-badge,
+      .core-domain-card.selected .check-badge {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .selectable-card:active:not(.selected),
+      .core-domain-card:active:not(.selected) {
+        transform: scale(0.98);
+      }
+      .selectable-card.selected:active,
+      .core-domain-card.selected:active {
+        transform: translateY(-1px) scale(0.99);
+      }
+      .selectable-card:focus-visible,
+      .core-domain-card:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--brand-background), 0 0 0 4px var(--brand-primary);
+      }
+      .selectable-card .domain-tooltip,
+      .core-domain-card .domain-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px) scale(0.95);
+        width: max-content;
+        max-width: 220px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background-color: var(--brand-foreground);
+        color: var(--brand-background);
+        font-size: 12px;
+        line-height: 1.5;
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 200ms ease, transform 200ms ease;
+        z-index: 50;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .selectable-card .domain-tooltip::after,
+      .core-domain-card .domain-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid var(--brand-foreground);
+      }
+      .selectable-card:hover .domain-tooltip,
+      .selectable-card:focus-visible .domain-tooltip,
+      .core-domain-card:hover .domain-tooltip,
+      .core-domain-card:focus-visible .domain-tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+      }
+    </style>
+    <script>
+      (function() {
+        const cards = document.querySelectorAll('.selectable-card');
+        cards.forEach(function(card) {
+          card.addEventListener('click', function() {
+            cards.forEach(function(c) { c.classList.remove('selected'); });
+            card.classList.add('selected');
+          });
+          card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              cards.forEach(function(c) { c.classList.remove('selected'); });
+              card.classList.add('selected');
+            }
+          });
+        });
+      })();
+    </script>
+    <script>
+      (function() {
+        const tabs = document.querySelectorAll('.l1-domain-tab');
+        tabs.forEach(function(tab) {
+          tab.addEventListener('click', function() {
+            tabs.forEach(function(t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+          });
+          tab.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              tabs.forEach(function(t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+              tab.classList.add('active');
+              tab.setAttribute('aria-selected', 'true');
+            }
+          });
+        });
+      })();
+    </script>
+    <script>lucide.createIcons();</script>
+    <!-- Search modal -->
+    <div id="search-modal" class="fixed inset-0 z-[700] hidden" role="dialog" aria-modal="true">
+      <div class="search-backdrop absolute inset-0 backdrop-blur-sm transition-opacity" style="background-color: var(--brand-overlay);"></div>
+      <div class="relative flex items-start justify-center pt-[15vh] px-4">
+        <div class="w-full max-w-2xl rounded-xl border shadow-2xl overflow-hidden flex flex-col max-h-[70vh]" style="border-color: var(--brand-border); background-color: var(--brand-card);">
+          <div class="flex items-center gap-3 px-4 py-3 border-b" style="border-color: var(--brand-border);">
+            <i data-lucide="search" class="w-5 h-5 text-muted-foreground flex-shrink-0"></i>
+            <input type="text" id="search-input" placeholder="搜索导航、模块、页面..." class="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground focus-ring" autocomplete="off" aria-autocomplete="list" aria-controls="search-results" aria-label="搜索导航">
+            <kbd class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono text-muted-foreground flex-shrink-0" style="border-color: var(--brand-border);">
+              <span>Esc</span>
+            </kbd>
+          </div>
+          <div id="search-results" class="flex-1 overflow-y-auto p-2">
+            <div id="search-empty" class="hidden py-8 text-center">
+              <i data-lucide="search-x" class="w-8 h-8 mx-auto mb-2 text-muted-foreground"></i>
+              <p class="text-sm text-muted-foreground">未找到匹配的导航项</p>
+            </div>
+            <div id="search-initial" class="py-6 px-2 text-center">
+              <p class="text-xs text-muted-foreground">输入关键词搜索 L1-L4 导航，或按 ↑ ↓ 选择、Enter 打开</p>
+            </div>
+          </div>
+          <div class="flex-none px-4 py-2 border-t text-[10px] text-muted-foreground flex items-center justify-between" style="border-color: var(--brand-border); background-color: color-mix(in srgb, var(--brand-muted) 30%, transparent);">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1"><kbd class="px-1 rounded border" style="border-color: var(--brand-border);">↑</kbd> <kbd class="px-1 rounded border" style="border-color: var(--brand-border);">↓</kbd> 选择</span>
+              <span class="flex items-center gap-1"><kbd class="px-1 rounded border" style="border-color: var(--brand-border);">↵</kbd> 打开</span>
+            </div>
+            <span class="flex items-center gap-1"><kbd class="px-1 rounded border" style="border-color: var(--brand-border);">Esc</kbd> 关闭</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>

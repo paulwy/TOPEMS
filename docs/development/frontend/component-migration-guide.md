@@ -1,5 +1,7 @@
 # TOPEMS 组件迁移指南
 
+> 统一方案入口：[`docs/design/ui-navigation-unified-plan.md`](../../design/ui-navigation-unified-plan.md)
+>
 > 本文档记录从旧组件迁移到新组件的规范，确保全平台组件使用一致性。
 
 | 项目 | 内容 |

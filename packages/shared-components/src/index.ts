@@ -42,6 +42,29 @@ export { CommandPalette, type CommandItem, type CommandGroup, type CommandPalett
 export { LazyImage, type LazyImageProps } from './components/LazyImage';
 
 export {
+  InteractiveCard,
+  type InteractiveCardProps,
+  type InteractiveCardVariant,
+  type InteractiveCardSize,
+} from './components/InteractiveCard';
+
+export {
+  InteractiveTabs,
+  type InteractiveTabItem,
+  type InteractiveTabsProps,
+} from './components/InteractiveTabs';
+
+export {
+  SidebarItem,
+  type SidebarItemProps,
+} from './components/SidebarItem';
+
+export {
+  GradientBadge,
+  type GradientBadgeProps,
+} from './components/GradientBadge';
+
+export {
   Responsive,
   ResponsiveValue,
   Hidden,

@@ -1,0 +1,95 @@
+{
+  "success": true,
+  "outcome": "passed",
+  "repairable": true,
+  "terminalViolations": [],
+  "terminalBlockingSummary": null,
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": "2026.07.06.8",
+    "version_source": "skill-release-manifest.json",
+    "runtime_skill_dir": null,
+    "recorded_at": null,
+    "expected_version": "2026.08.06.19.15.08",
+    "status": "mismatch",
+    "read_status": "ok"
+  },
+  "operatingMode": "free-explore",
+  "renderBlockingErrorCount": 0,
+  "softWarningCount": 0,
+  "renderBlockingErrors": [],
+  "errorSignatures": [],
+  "softWarnings": [],
+  "repairPlanHints": [],
+  "repairActionTable": [],
+  "errorCount": 0,
+  "warningCount": 0,
+  "errors": [],
+  "warnings": [],
+  "validationRunDisciplineStatus": {
+    "declared": true,
+    "restoreMode": false,
+    "maxFullValidationRuns": 2,
+    "validationHistoryCount": 0,
+    "repairLedgerCount": 0,
+    "softWarningsTriggerRepair": false,
+    "terminalState": null,
+    "nextAction": null,
+    "violations": [],
+    "success": true
+  },
+  "terminalState": null,
+  "nextCheck": {
+    "type": "finish-readiness",
+    "command": "node '/Users/xingzhai/.trae-cn/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs' '/Users/xingzhai/TOPEMS/navigation-menu-demo.design' --check=all",
+    "fullValidationAllowed": false,
+    "reason": "workspace validation passed; run complete finish readiness before final delivery"
+  },
+  "repairBatch": [],
+  "repairContextPacket": {
+    "schema_version": "1.0",
+    "purpose": "small-context repair packet; read this before full validation-report.json",
+    "success": true,
+    "terminalState": null,
+    "skillProvenance": {
+      "name": "solo-design",
+      "version": "2026.07.06.8",
+      "version_source": "skill-release-manifest.json",
+      "runtime_skill_dir": null,
+      "recorded_at": null,
+      "expected_version": "2026.08.06.19.15.08",
+      "status": "mismatch",
+      "read_status": "ok"
+    },
+    "renderBlockingErrorCount": 0,
+    "softWarningCount": 0,
+    "renderBlockingErrors": [],
+    "repairActionTable": [],
+    "nextCheck": {
+      "type": "finish-readiness",
+      "command": "node '/Users/xingzhai/.trae-cn/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs' '/Users/xingzhai/TOPEMS/navigation-menu-demo.design' --check=all",
+      "fullValidationAllowed": false,
+      "reason": "workspace validation passed; run complete finish readiness before final delivery"
+    },
+    "forbidden": [
+      "do not read validator source",
+      "do not rerun full validation when nextCheck.fullValidationAllowed=false",
+      "do not start preview/browser unless user explicitly asks",
+      "do not hand-edit repair ledger fields"
+    ]
+  },
+  "projectFileHashes": {
+    "project.design": "cbe4c7c0706ad41a9150664b12409a8530ba8ff779cf2769f028c579ecc8b9ef",
+    "colors_and_type.css": "e47133fae04fd6a3e18ffe105dfa7301fd7442e52336e7ee4d2aa1e0db64158d",
+    "runtime-orchestration-summary.json": "dc0a78e6cf36feabd238a12795434ae765b67b53d5ee07d6ca570970250beaa6",
+    "pages/finance-hr-crm-mapping.html": "10cda737f10c9c701c93c3b8f41c6f52e712af3b35a79af3283b32581f9efa75",
+    "pages/full-navigation-overview.html": "36d50c2a11dc27c84cfd0423f47577bde4117d27c52af4d95fb1fb9e7b7dc546",
+    "pages/index.html": "98cdf09d1021ad6288cc9d243083d2efb38402ae74fa67fdef1b80877007cdde",
+    "pages/platform-services-mapping.html": "043bcd33c6c86895ad451232a39fa8373a1f09dbbce109b2cdb702910d01f208",
+    "pages/remaining-domains-mapping.html": "411d812efa55b8cf8981bb868e7c934bec53f999b808a9573dcca20c495b77ce"
+  },
+  "designDir": "/Users/xingzhai/TOPEMS/navigation-menu-demo.design",
+  "expectedPages": null,
+  "requireInteractions": null,
+  "checkedAt": "2026-08-28T21:11:30.149Z"
+}

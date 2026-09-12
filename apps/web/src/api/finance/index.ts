@@ -41,6 +41,13 @@ export { accountingSubjectApi } from './accountingSubject';
 export type { Budget, BudgetItem } from './budget';
 export type { AccountingSubject, FinancialVoucher, VoucherItem, VoucherItemRequest } from './types';
 
+export type {
+  VoucherEntry,
+  VoucherStatus,
+  VoucherType,
+  CreateVoucherRequest,
+} from '@topems/shared-types';
+
 export interface FinanceDashboardStats {
   total_vouchers: number;
   draft_vouchers: number;

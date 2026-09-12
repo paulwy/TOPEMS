@@ -11,16 +11,20 @@
 
 export interface Budget {
   id: string;
+  code?: string;
+  name?: string;
+  period?: string;
   department_id?: string;
   budget_type?: string;
   fiscal_year?: string;
-  total_budget: number;
+  total_budget?: number;
+  total_amount?: number;
   used_amount?: number;
   remaining_amount?: number;
   usage_rate?: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AccountingSubject {

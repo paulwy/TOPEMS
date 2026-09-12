@@ -121,6 +121,21 @@ export type {
   GeneratedAuxiliaryAccount,
   // 适配类型
   AdaptedAccount,
+  // B1 API 迁移：财务分析类型
+  ProjectFinancialSummary,
+  KeyRatios,
+  BusinessOverview,
+  MonthlyTrend,
+  DepartmentFinancialSummary,
+  AgingAnalysis,
+  CashFlowAnalysis,
+  DepartmentExpense,
+  CategoryExpense,
+  MonthlyExpense,
+  ExpenseAnalysis,
+  MonthlyProfit,
+  ProfitAnalysis,
+  FinancialOverview,
 } from './finance';
 
 // 字段适配函数（值导出）

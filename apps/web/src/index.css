@@ -7,6 +7,7 @@
  * Import chain: main.tsx -> index.css -> theme/generated-tokens.css
  */
 @import './theme/generated-tokens.css';
+@import './theme/interactions.css';
 
 html {
   font-size: 16px;

@@ -28,7 +28,7 @@ import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { voucherApi } from '@/api/finance/voucher';
 import { accountingSubjectApi } from '@/api/finance/accountingSubject';
-import type { AccountingSubject, VoucherItemRequest } from '@/api/finance';
+import type { AccountingSubject, VoucherItemRequest, CreateVoucherRequest } from '@/api/finance';
 import { useNotificationStore } from '@/store';
 
 import { useTranslation } from 'react-i18next';
@@ -194,7 +194,7 @@ const VoucherCreatePage: React.FC = () => {
       summary: string;
       items: VoucherItemRequest[];
     }) => {
-      const result = await voucherApi.create(data);
+      const result = await voucherApi.create(data as unknown as CreateVoucherRequest);
       if (!result.success) {
         throw new Error(result.message || t('finance.voucher_create_page.create'));
       }

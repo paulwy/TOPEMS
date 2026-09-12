@@ -203,19 +203,20 @@ const CYBERPUNK_COLORS = {
 } as const;
 
 const customShadowsLight = {
-  card: `0 1px 2px 0 ${designTokens.colors.action.hover}, 0 1px 3px 0 rgba(0,0,0,0.03)`,
-  dropdown: `0 4px 12px ${designTokens.colors.action.selected}, 0 2px 4px ${designTokens.colors.action.hover}`,
-  dialog: `0 24px 48px rgba(0,0,0,0.16), 0 8px 16px ${designTokens.colors.action.selected}`,
-  focus: '0 0 0 3px rgba(59, 130, 246, 0.15)',
+  card: designTokens.shadows.sm,
+  dropdown: designTokens.shadows.lg,
+  dialog: designTokens.shadows.xl,
+  focus: `0 0 0 2px ${designTokens.colors.background.paper}, 0 0 0 4px ${designTokens.colors.primary[400]}`,
   dangerButton: '0 4px 12px rgba(239, 68, 68, 0.30)',
   dangerButtonHover: '0 6px 16px rgba(239, 68, 68, 0.40)',
 };
 
 const customShadowsDark = {
   ...customShadowsLight,
-  card: '0 1px 2px 0 rgba(0,0,0,0.30), 0 1px 3px 0 rgba(0,0,0,0.20)',
-  dropdown: '0 8px 24px rgba(0,0,0,0.40), 0 2px 6px rgba(0,0,0,0.30)',
-  dialog: '0 24px 48px rgba(0,0,0,0.50), 0 8px 16px rgba(0,0,0,0.40)',
+  card: '0 1px 2px 0 rgba(0,0,0,0.20), 0 1px 3px 0 rgba(0,0,0,0.15)',
+  dropdown: '0 8px 24px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.25)',
+  dialog: '0 24px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35)',
+  focus: `0 0 0 2px ${designTokens.colors.grey[950]}, 0 0 0 4px ${designTokens.colors.primary[400]}`,
 };
 
 const customShadowsCyberpunk = {
@@ -437,6 +438,14 @@ export const createCustomTheme = (): Theme => {
               borderRadius: semanticTokens.radius.card,
               boxShadow: semanticTokens.elevation.card,
               border: semanticTokens.border.card,
+              transition: `transform ${designTokens.motion.transition.base}, box-shadow ${designTokens.motion.transition.base}, border-color ${designTokens.motion.transition.base}`,
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: semanticTokens.elevation.cardHover,
+              },
+              '&:active': {
+                transform: 'translateY(0) scale(0.99)',
+              },
             },
           },
         },
@@ -580,8 +589,10 @@ export const createCustomTheme = (): Theme => {
               minHeight: 48,
             },
             indicator: {
-              height: 3,
-              borderRadius: 3,
+              height: 2,
+              borderRadius: '2px 2px 0 0',
+              background: semanticTokens.brand.tabUnderline,
+              boxShadow: `0 -2px 8px ${designTokens.colors.primary[400]}40`,
             },
           },
         },
@@ -592,6 +603,10 @@ export const createCustomTheme = (): Theme => {
               fontWeight: designTokens.typography.fontWeight.medium,
               minWidth: 'auto',
               padding: `${designTokens.spacing.md} 20px`,
+              transition: `color ${designTokens.motion.transition.fast}, background-color ${designTokens.motion.transition.fast}`,
+              '&:hover': {
+                backgroundColor: designTokens.colors.action.hover,
+              },
             },
           },
         },
@@ -635,9 +650,13 @@ export const createCustomTheme = (): Theme => {
             root: ({ theme }) => ({
               height: 56,
               boxShadow: designTokens.shadows.sm,
-              backgroundColor: designTokens.colors.background.paper,
+              backgroundColor: semanticTokens.brand.glass.background,
+              borderBottom: `1px solid ${semanticTokens.brand.glass.border}`,
+              backdropFilter: semanticTokens.brand.glass.backdropFilter,
+              WebkitBackdropFilter: semanticTokens.brand.glass.backdropFilter,
               ...theme.applyStyles('dark', {
-                backgroundColor: designTokens.colors.grey[800],
+                backgroundColor: semanticTokens.brand.glass.backgroundDark,
+                borderBottomColor: semanticTokens.brand.glass.borderDark,
               }),
             }),
           },
@@ -646,18 +665,18 @@ export const createCustomTheme = (): Theme => {
           styleOverrides: {
             root: ({ theme }) => ({
               borderRadius: designTokens.borderRadius.md,
-              transition: 'all 150ms ease',
+              transition: `color ${designTokens.motion.transition.fast}, background-color ${designTokens.motion.transition.fast}`,
               '&.Mui-selected': {
-                backgroundColor: designTokens.colors.primary[50],
+                backgroundColor: designTokens.colors.action.selected,
                 borderLeft: `3px solid ${designTokens.colors.primary.main}`,
                 color: designTokens.colors.primary.main,
                 '&:hover': {
-                  backgroundColor: designTokens.colors.primary[50],
+                  backgroundColor: designTokens.colors.action.selected,
                 },
                 ...theme.applyStyles('dark', {
-                  backgroundColor: 'background.selectedDark',
+                  backgroundColor: designTokens.colors.brand.semantic.primarySubtle,
                   '&:hover': {
-                    backgroundColor: 'background.selectedDark',
+                    backgroundColor: designTokens.colors.brand.semantic.primarySubtle,
                   },
                 }),
               },
