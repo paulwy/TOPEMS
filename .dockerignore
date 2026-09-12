@@ -2,8 +2,6 @@
 .gitignore
 node_modules
 target
-!target/release
-!target/linux-release
 dist
 .env
 *.log
@@ -16,3 +14,6 @@ coverage
 __pycache__
 *.pyc
 *.pyo
+tmp
+logs
+_archive

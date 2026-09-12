@@ -17,12 +17,12 @@
 deploy/
 ├── README.md                 # 本文档
 ├── docker/                   # Docker Compose 主部署配置
-│   ├── docker-compose.yml    # 主 compose 文件（核心服务）
-│   ├── docker-compose.full.yml       # 全量服务（含所有业务模块）
-│   ├── docker-compose.services.yml   # 业务服务 override
-│   ├── docker-compose.observability.yml  # 可观测性栈（Prometheus/Grafana/Loki）
-│   ├── docker-compose.domains.yml    # 多域名配置
-│   ├── docker-compose.dify.yml       # Dify AI 平台集成
+│   ├── docker-compose.yml    # 全量 compose 文件（含全部业务服务与中间件）
+│   ├── docker-compose.dify.yml       # Dify AI 平台集成（可选叠加）
+│   ├── etcd-compose.yml      # etcd 中间件独立栈（可选）
+│   ├── eureka-compose.yml    # Eureka 中间件独立栈（可选）
+│   ├── nacos-compose.yml     # Nacos 中间件独立栈（可选）
+│   ├── zookeeper-compose.yml # ZooKeeper 中间件独立栈（可选）
 │   ├── Dockerfile.service    # 统一服务 Dockerfile 模板
 │   ├── build-service.sh      # 统一服务构建脚本
 │   ├── prometheus/           # Prometheus 配置
@@ -48,15 +48,15 @@ deploy/
 ## 快速开始（Docker Compose）
 
 ```bash
-# 启动核心服务
+# 启动全量服务（docker-compose.yml 为单文件全量配置，含全部业务服务与中间件）
 cd deploy/docker
 docker compose up -d
 
-# 启动全量服务
-docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
+# 叠加 Dify AI 平台集成
+docker compose -f docker-compose.yml -f docker-compose.dify.yml up -d
 
-# 启动可观测性栈
-docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+# 启动可选中间件独立栈（etcd / eureka / nacos / zookeeper 按需）
+docker compose -f etcd-compose.yml up -d
 ```
 
 ## 构建服务镜像
