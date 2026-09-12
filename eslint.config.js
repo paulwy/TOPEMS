@@ -40,6 +40,15 @@ export default ts.config(
     },
   },
   {
+    // Node ESM 测试文件（node --test，如 packages/*/tests/*.test.mjs）
+    files: ['**/*.test.mjs', '**/*.spec.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     plugins: {
       'react-hooks': reactHooks,

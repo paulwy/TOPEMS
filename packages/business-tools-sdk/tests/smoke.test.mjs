@@ -38,6 +38,7 @@ test('permissions.verify POST body + 响应透传', async () => {
 
 test('auditLogs.stream NDJSON 逐行解析', async () => {
   let received = [];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- fetch 接口签名（url/init 为契约参数）
   const fetchImpl = async (url, init) => {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({

@@ -186,6 +186,14 @@ if [ "$MODE" == "check" ]; then
     fi
   done
   if [ "${#FAIL_CHECK[@]}" -gt 0 ]; then
+    # 区分 sccache 环境性故障（macOS 长驻 daemon 间歇 spawn 失败，重启即恢复）与真实 .sqlx/ 缓存缺失
+    if grep -q "No such file or directory (os error 2)" /tmp/sqlx-check-*.log 2>/dev/null; then
+      err "检测到 sccache spawn 故障（os error 2，通常为本地长驻 daemon 异常）：
+    sccache --stop-server
+然后重试本命令；若仍失败，可临时绕过 sccache：
+    cargo check -p <pkg> --config 'build.rustc-wrapper=\"\"'"
+      exit 1
+    fi
     err "以下 packages 离线 check 失败（通常 .sqlx/ 缓存缺失或过期），执行：
     ./scripts/dev/sqlx-prepare.sh -p ${FAIL_CHECK[*]}
 然后提交 .sqlx/ 变更：
