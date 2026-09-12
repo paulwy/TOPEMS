@@ -5,9 +5,57 @@ use uuid::Uuid;
 // 注意：本测试文件使用 #[sqlx::test] 宏，需要超级用户权限运行
 // 因为 sqlx::test 需要创建临时数据库（基于模板数据库），这需要 PostgreSQL 超级用户权限
 // 运行方式：DATABASE_URL="postgres://<superuser>@localhost:5432/topems" cargo test -p topems-crm rls_isolation_test
+// 说明：sqlx::test 临时库为空模板（不跑迁移），测试内幂等建表（DDL 与 database/migrations/20260908000006_crm_datalayer.sql 保持一致）
+
+/// 幂等准备 crm schema 与 customers 表（与根迁移 DDL 一致），供 sqlx::test 空模板库使用
+async fn ensure_crm_schema(pool: &PgPool) {
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS crm")
+        .execute(pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS crm.customers (
+            id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id       UUID NOT NULL,
+            org_id          UUID,
+            name            TEXT NOT NULL,
+            customer_type   TEXT,
+            industry        TEXT,
+            rating          TEXT DEFAULT 'C',
+            region          TEXT,
+            owner_id        UUID,
+            tags            TEXT[] DEFAULT '{}',
+            code            TEXT,
+            email           TEXT,
+            phone           TEXT,
+            website         TEXT,
+            address         TEXT,
+            city            TEXT,
+            province        TEXT,
+            country         TEXT,
+            company_size    TEXT,
+            employee_count  INTEGER,
+            revenue         DOUBLE PRECISION,
+            source          TEXT,
+            status          TEXT,
+            approval_status TEXT DEFAULT 'none',
+            created_at      TIMESTAMPTZ DEFAULT NOW(),
+            updated_at      TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at      TIMESTAMPTZ
+        )",
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_crm_customers_tenant ON crm.customers(tenant_id)")
+        .execute(pool)
+        .await
+        .unwrap();
+}
 
 #[sqlx::test]
 async fn customer_isolated_by_tenant(pool: PgPool) {
+    ensure_crm_schema(&pool).await;
     let tenant_a = Uuid::new_v4();
     let tenant_b = Uuid::new_v4();
 
@@ -65,6 +113,7 @@ async fn create_customer_for(pool: &PgPool, tenant_id: Uuid, name: &str) -> Cust
 
 #[sqlx::test]
 async fn rls_txn_context_isolates_tenant(pool: PgPool) {
+    ensure_crm_schema(&pool).await;
     let tenant_a = Uuid::new_v4();
     let tenant_b = Uuid::new_v4();
 
