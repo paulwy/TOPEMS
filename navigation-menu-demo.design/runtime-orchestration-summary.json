@@ -212,7 +212,7 @@
         "deterministicCommands": null,
         "sourceAuthorityLock": null,
         "preDispatchFileHashes": {
-          "project.design": "cbe4c7c0706ad41a9150664b12409a8530ba8ff779cf2769f028c579ecc8b9ef"
+          "project.design": "7696a4a2fb1dee6e199d251ee0b37d57d61e6912c75661d2dec4eaf515ca2f17"
         },
         "contextPreflight": {
           "workflowPath": "intent-workflows/intent-project-mutation/INTENT_WORKFLOW.md",
@@ -319,7 +319,7 @@
         "deterministicCommands": null,
         "sourceAuthorityLock": null,
         "preDispatchFileHashes": {
-          "project.design": "cbe4c7c0706ad41a9150664b12409a8530ba8ff779cf2769f028c579ecc8b9ef"
+          "project.design": "7696a4a2fb1dee6e199d251ee0b37d57d61e6912c75661d2dec4eaf515ca2f17"
         },
         "contextPreflight": {
           "workflowPath": "intent-workflows/intent-project-mutation/INTENT_WORKFLOW.md",
@@ -426,7 +426,7 @@
         "deterministicCommands": null,
         "sourceAuthorityLock": null,
         "preDispatchFileHashes": {
-          "project.design": "cbe4c7c0706ad41a9150664b12409a8530ba8ff779cf2769f028c579ecc8b9ef"
+          "project.design": "7696a4a2fb1dee6e199d251ee0b37d57d61e6912c75661d2dec4eaf515ca2f17"
         },
         "contextPreflight": {
           "workflowPath": "intent-workflows/intent-project-mutation/INTENT_WORKFLOW.md",
@@ -533,7 +533,7 @@
         "deterministicCommands": null,
         "sourceAuthorityLock": null,
         "preDispatchFileHashes": {
-          "project.design": "cbe4c7c0706ad41a9150664b12409a8530ba8ff779cf2769f028c579ecc8b9ef"
+          "project.design": "7696a4a2fb1dee6e199d251ee0b37d57d61e6912c75661d2dec4eaf515ca2f17"
         },
         "contextPreflight": {
           "workflowPath": "intent-workflows/intent-project-mutation/INTENT_WORKFLOW.md",
@@ -640,7 +640,7 @@
         "deterministicCommands": null,
         "sourceAuthorityLock": null,
         "preDispatchFileHashes": {
-          "project.design": "cbe4c7c0706ad41a9150664b12409a8530ba8ff779cf2769f028c579ecc8b9ef"
+          "project.design": "7696a4a2fb1dee6e199d251ee0b37d57d61e6912c75661d2dec4eaf515ca2f17"
         },
         "contextPreflight": {
           "workflowPath": "intent-workflows/intent-project-mutation/INTENT_WORKFLOW.md",

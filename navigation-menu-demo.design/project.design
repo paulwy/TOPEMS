@@ -86,6 +86,22 @@
         "htmlSrc": "pages/full-navigation-overview.html",
         "interactions": []
       }
+    },
+    {
+      "id": "page-global-search",
+      "title": "全局搜索中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1789203500000,
+      "canvasData": {
+        "x": 2400,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/global-search.html",
+        "interactions": []
+      }
     }
   ],
   "config": {

@@ -79,11 +79,12 @@
     ]
   },
   "projectFileHashes": {
-    "project.design": "cbe4c7c0706ad41a9150664b12409a8530ba8ff779cf2769f028c579ecc8b9ef",
+    "project.design": "7696a4a2fb1dee6e199d251ee0b37d57d61e6912c75661d2dec4eaf515ca2f17",
     "colors_and_type.css": "e47133fae04fd6a3e18ffe105dfa7301fd7442e52336e7ee4d2aa1e0db64158d",
-    "runtime-orchestration-summary.json": "dc0a78e6cf36feabd238a12795434ae765b67b53d5ee07d6ca570970250beaa6",
+    "runtime-orchestration-summary.json": "c2a20be0cc88067600bd89af1fdd6e88431a0c1fd00c8295b55bc8191c649e04",
     "pages/finance-hr-crm-mapping.html": "10cda737f10c9c701c93c3b8f41c6f52e712af3b35a79af3283b32581f9efa75",
     "pages/full-navigation-overview.html": "36d50c2a11dc27c84cfd0423f47577bde4117d27c52af4d95fb1fb9e7b7dc546",
+    "pages/global-search.html": "9083a09c8cf50b0be2edf4b58a782f0c58d1ade225ec627b85e2cd4e6b6b063b",
     "pages/index.html": "98cdf09d1021ad6288cc9d243083d2efb38402ae74fa67fdef1b80877007cdde",
     "pages/platform-services-mapping.html": "043bcd33c6c86895ad451232a39fa8373a1f09dbbce109b2cdb702910d01f208",
     "pages/remaining-domains-mapping.html": "411d812efa55b8cf8981bb868e7c934bec53f999b808a9573dcca20c495b77ce"
@@ -91,5 +92,5 @@
   "designDir": "/Users/xingzhai/TOPEMS/navigation-menu-demo.design",
   "expectedPages": null,
   "requireInteractions": null,
-  "checkedAt": "2026-08-28T21:11:30.149Z"
+  "checkedAt": "2026-09-12T08:59:27.129Z"
 }
