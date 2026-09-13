@@ -2,8 +2,6 @@
 # 用于开发和生产环境的数据库基础设施、API网关和监控系统
 # 版本: v5.0 - 与 plugin-architecture-design.md 端口规范同步
 
-version: '3.8'
-
 x-common-env: &common-env
   DATABASE_URL: postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
   MIGRATE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
