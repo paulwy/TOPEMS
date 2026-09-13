@@ -1365,7 +1365,7 @@ pub struct ServiceCircuitBreaker {
 }
 
 impl ServiceCircuitBreaker {
-    fn new(config: CircuitBreakerConfig) -> Self {
+    pub fn new(config: CircuitBreakerConfig) -> Self {
         let now = Utc::now();
         Self {
             state: CircuitBreakerState::Closed,

@@ -11,8 +11,10 @@ pub mod gateway_monitoring;
 pub mod gateway_security;
 pub mod graphql_cache;
 pub mod graphql_dataloader;
+pub mod graphql_federation;
 pub mod graphql_helpers;
 pub mod graphql_schema;
+pub mod graphql_security;
 pub mod graphql_types;
 // V68.1 A2.4.2: 帮助中心模块从 unified-core 迁移至门户（Portal BFF 用户服务域）
 pub mod help;
