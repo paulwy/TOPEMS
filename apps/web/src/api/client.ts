@@ -278,6 +278,18 @@ export const createAxiosClient = ({
   client.interceptors.request.use(
     (requestConfig: InternalAxiosRequestConfig) => {
       const token = localStorage.getItem('token');
+      // 防御：忽略 alg:none 伪 JWT（旧 dev 注入器遗留的 `{header}.{payload}.` token），
+      // 后端 jsonwebtoken 拒绝 none 算法并返回 401；此类 token 视为未登录。
+      const isNoneAlgToken = (t: string): boolean => {
+        try {
+          const [h] = t.split('.');
+          const header = JSON.parse(atob(h.replace(/-/g, '+').replace(/_/g, '/')));
+          return header?.alg === 'none';
+        } catch {
+          return false;
+        }
+      };
+      const effectiveToken = token && !isNoneAlgToken(token) ? token : null;
       const url = requestConfig.url || '';
       const requestBaseURL = requestConfig.baseURL || '';
       const fullUrl = `${requestBaseURL}${url}`;
@@ -285,8 +297,8 @@ export const createAxiosClient = ({
       apiLogger.info(
         `${i18n.t('shared.client.1_0')}${requestConfig.method?.toUpperCase()} ${fullUrl}`,
         {
-          hasToken: !!token,
-          tokenLength: token?.length || 0,
+          hasToken: !!effectiveToken,
+          tokenLength: effectiveToken?.length || 0,
           hasAuthHeader: !!requestConfig.headers['Authorization'],
           isPublicPath: isPublicPath(url),
           timestamp: new Date().toISOString(),
@@ -298,7 +310,7 @@ export const createAxiosClient = ({
           url: fullUrl,
           method: requestConfig.method?.toUpperCase(),
           baseURL: requestBaseURL,
-          tokenExists: !!token,
+          tokenExists: !!effectiveToken,
           isPublicPath: isPublicPath(url),
           params: requestConfig.params,
           data: requestConfig.data
@@ -309,8 +321,8 @@ export const createAxiosClient = ({
         });
       }
 
-      if (token && !requestConfig.headers['Authorization'] && !isPublicPath(url)) {
-        requestConfig.headers['Authorization'] = `Bearer ${token}`;
+      if (effectiveToken && !requestConfig.headers['Authorization'] && !isPublicPath(url)) {
+        requestConfig.headers['Authorization'] = `Bearer ${effectiveToken}`;
       }
 
       // Notification 只读接口（GET /notifications/*）在缺 token 时本地短路返回空数据：
