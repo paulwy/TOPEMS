@@ -4,7 +4,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   Box,
-  ClipboardList,
   Factory,
   FileText,
   Home,
@@ -45,7 +44,6 @@ const defaultItems: NavItem[] = [
   { id: 'gis', label: '地理信息', icon: Map },
   { id: 'doc', label: '文档协同', icon: FileText },
   { id: 'im', label: '消息中心', icon: MessageSquare, badge: 3 },
-  { id: 'tasks', label: '任务审批', icon: ClipboardList },
 ];
 
 export const SideRail: React.FC<SideRailProps> = ({

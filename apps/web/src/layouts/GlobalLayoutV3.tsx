@@ -14,7 +14,6 @@ import {
   Map,
   FileText,
   MessageSquare,
-  ClipboardList,
   Settings,
   User,
 } from 'lucide-react';
@@ -49,7 +48,6 @@ const navItems: NavItem[] = [
   { id: 'gis', label: '地理信息', icon: Map },
   { id: 'doc', label: '文档协同', icon: FileText },
   { id: 'im', label: '消息中心', icon: MessageSquare, badge: 3 },
-  { id: 'tasks', label: '任务审批', icon: ClipboardList },
 ];
 
 const footerItems: NavItem[] = [
@@ -81,8 +79,6 @@ const pathToNavId: Record<string, string> = {
   '/core/doc': 'doc',
   '/im': 'im',
   '/core/im': 'im',
-  '/tasks': 'tasks',
-  '/core/tasks': 'tasks',
   '/settings': 'settings',
   '/core/settings': 'settings',
   '/profile': 'profile',
@@ -125,7 +121,6 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({
       gis: '/gis',
       doc: '/doc',
       im: '/im',
-      tasks: '/tasks',
       settings: '/settings',
       profile: '/profile',
     };

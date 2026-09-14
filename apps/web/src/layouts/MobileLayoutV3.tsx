@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Home,
   Factory,
-  ClipboardList,
   MessageSquare,
   User,
 } from 'lucide-react';
@@ -36,7 +35,6 @@ interface MobileTabItem {
 const mobileTabs: MobileTabItem[] = [
   { id: 'home', label: '首页', icon: Home, path: '/dashboard' },
   { id: 'mes', label: '制造', icon: Factory, path: '/mes' },
-  { id: 'tasks', label: '审批', icon: ClipboardList, path: '/tasks' },
   { id: 'im', label: '消息', icon: MessageSquare, path: '/im', badge: 3 },
   { id: 'profile', label: '我的', icon: User, path: '/profile' },
 ];
