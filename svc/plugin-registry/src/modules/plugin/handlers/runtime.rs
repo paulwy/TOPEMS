@@ -60,8 +60,33 @@ pub async fn register_plugin(
     }
 
     // 1. 创建或更新插件记录（含依赖和导航配置）
+    // 插件注册是全局服务级操作（X-Plugin-Token 认证，非租户用户请求）：
+    // 在事务内显式设置 nil 租户上下文，满足 core_plugins 表 RLS 的 service 豁免条件
     let deps_json: serde_json::Value =
         serde_json::to_value(&req.dependencies).unwrap_or(serde_json::json!([]));
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to begin txn: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to create plugin: {}",
+                e
+            )));
+        }
+    };
+
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(uuid::Uuid::nil().to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("[Plugin] Failed to set nil tenant context: {}", e);
+        return Json(CoreResponse::error(&format!(
+            "Failed to create plugin: {}",
+            e
+        )));
+    }
 
     let plugin_result = sqlx::query_as(
         r#"
@@ -78,7 +103,7 @@ pub async fn register_plugin(
     .bind(&req.version)
     .bind(&deps_json)
     .bind(&req.category)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *txn)
     .await;
 
     let plugin: Plugin = match plugin_result {
@@ -108,7 +133,7 @@ pub async fn register_plugin(
         .bind(&perm.name)
         .bind(&perm.resource_type)
         .bind(&perm.action)
-        .execute(&state.pool)
+        .execute(&mut *txn)
         .await
         .ok();
     }
@@ -128,7 +153,7 @@ pub async fn register_plugin(
     .bind(plugin.id)
     .bind(&req.runtime_url)
     .bind(&base_path)
-    .execute(&state.pool)
+    .execute(&mut *txn)
     .await
     .ok();
 
@@ -144,9 +169,17 @@ pub async fn register_plugin(
         )
         .bind(&req.code)
         .bind(nav_config)
-        .execute(&state.pool)
+        .execute(&mut *txn)
         .await
         .ok();
+    }
+
+    if let Err(e) = txn.commit().await {
+        tracing::error!("[Plugin] Failed to commit txn: {}", e);
+        return Json(CoreResponse::error(&format!(
+            "Failed to create plugin: {}",
+            e
+        )));
     }
 
     tracing::info!("[Plugin] Plugin registered successfully: {}", req.code);

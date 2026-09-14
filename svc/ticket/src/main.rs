@@ -35,16 +35,17 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
     tracing::info!("🚀 TOPEMS Ticket Service starting...");
 
-    // ── 模块级数据库初始化 ────────────────────────────────────────────
-    handlers::init_ticket_tables(&ctx.db)
+    // ── 模块级数据库初始化（DDL 走 owner 迁移连接池，受限业务用户无表 owner 权限）────
+    let ddl_pool = ctx.migrate_pool.as_ref().unwrap_or(&ctx.db);
+    handlers::init_ticket_tables(ddl_pool)
         .await
         .expect("Failed to init ticket database");
-    handlers::init_sla_tables(&ctx.db)
+    handlers::init_sla_tables(ddl_pool)
         .await
         .expect("Failed to init SLA database");
 
     // ── Schema 防御：增量迁移 + 列一致性校验（7 张 ticket 表）──
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(&ctx.db).await {
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(ddl_pool).await {
         tracing::warn!("Ticket schema defense 失败（不阻塞启动）: {}", e);
     }
 

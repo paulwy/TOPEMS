@@ -166,10 +166,29 @@ pub async fn create_migrate_pool() -> Result<Option<PgPool>> {
     if url.trim().is_empty() {
         return Ok(None);
     }
-    let pool = PgPoolOptions::new()
+    // 与业务池保持一致：按 SEARCH_PATH 解析未限定表名，避免 DDL 落到 public schema
+    // 遗留同名表（如 public.core_tickets，owner 为受限用户）导致 "must be owner" 42501。
+    let search_path =
+        std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
+    let options = PgPoolOptions::new()
         .max_connections(3)
         .min_connections(0)
         .acquire_timeout(Duration::from_secs(15))
+        .after_connect(move |conn, _meta| {
+            let search_path = search_path.clone();
+            Box::pin(async move {
+                sqlx::query("SELECT set_config('search_path', $1, false)")
+                    .bind(&search_path)
+                    .execute(&mut *conn)
+                    .await
+                    .map_err(|e| {
+                        error!("Failed to set migrate pool search path: {}", e);
+                        e
+                    })?;
+                Ok(())
+            })
+        });
+    let pool = options
         .connect(&url)
         .await
         .map_err(|e| TopemsError::Database(format!("MIGRATE_URL 连接失败: {e}")))?;
