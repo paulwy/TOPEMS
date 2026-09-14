@@ -95,6 +95,14 @@ check_port() {
     netstat -ano 2>/dev/null | grep -qE "[:.]$1 .*LISTENING" && return 0
     return 1
 }
+# 获取监听指定端口的 PID（lsof 优先，Windows 用 netstat 兜底）
+get_port_pid() {
+    if command -v lsof &>/dev/null; then
+        lsof -ti:"$1" 2>/dev/null
+    elif [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
+        netstat -ano 2>/dev/null | grep -E "[:.]$1 .*LISTENING" | awk '{print $NF}' | sort -u
+    fi
+}
 get_service_pid() {
     local port=$2
     local executable_name=$(get_executable_name "$1")
@@ -1473,10 +1481,15 @@ start_dev_macos() {
 
 # 获取前端 dev 进程 PID（vite/tsc/node）
 get_frontend_pid() {
-    ps aux | grep -v grep \
-        | grep -E "(vite|tsc.*watch|topems-web\.log)" \
-        | grep -E "(apps/web|$PROJECT_ROOT/apps/web)" \
-        | awk '{print $2}' | sort -u | head -5
+    if [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
+        # Windows/Git Bash：用 PowerShell 按命令行匹配 vite/tsc
+        powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"name='node.exe'\" | Where-Object { \$_.CommandLine -match 'vite|tsc' -and \$_.CommandLine -match 'apps.web|topems-web' } | Select-Object -ExpandProperty ProcessId" 2>/dev/null | tr -d '\r'
+    else
+        ps aux | grep -v grep \
+            | grep -E "(vite|tsc.*watch|topems-web\.log)" \
+            | grep -E "(apps/web|$PROJECT_ROOT/apps/web)" \
+            | awk '{print $2}' | sort -u | head -5
+    fi
 }
 
 # 启动前端服务（带轮询等待，避免静态 sleep 5 与实际端口就绪不一致）
@@ -1549,23 +1562,29 @@ stop_frontend() {
     info "停止前端服务..."
     # 先按端口杀（已就绪态）
     local port_pid
-    port_pid=$(lsof -ti:3000 2>/dev/null)
+    port_pid=$(get_port_pid 3000)
     # 再按进程名杀（仍在编译、端口未开的 vite/tsc 进程）
     local proc_pid
     proc_pid=$(get_frontend_pid)
     local all_pid=$(echo "$port_pid $proc_pid" | tr ' ' '\n' | sort -u | grep -v "^$")
 
     if [ -n "$all_pid" ]; then
-        echo "$all_pid" | xargs -I{} kill {} 2>/dev/null || true
-        sleep 1
-        # 残留强杀
-        local remain=""
-        for p in $all_pid; do
-            kill -0 "$p" 2>/dev/null && remain="$remain $p"
-        done
-        if [ -n "$remain" ]; then
-            echo "$remain" | xargs -I{} kill -9 {} 2>/dev/null || true
+        if [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
+            # Windows：MSYS kill 对原生 node.exe 无效，使用 taskkill 强杀
+            for p in $all_pid; do taskkill //F //PID "$p" >/dev/null 2>&1 || true; done
             sleep 1
+        else
+            echo "$all_pid" | xargs -I{} kill {} 2>/dev/null || true
+            sleep 1
+            # 残留强杀
+            local remain=""
+            for p in $all_pid; do
+                kill -0 "$p" 2>/dev/null && remain="$remain $p"
+            done
+            if [ -n "$remain" ]; then
+                echo "$remain" | xargs -I{} kill -9 {} 2>/dev/null || true
+                sleep 1
+            fi
         fi
         success "前端服务已停止 (PID: $(echo "$all_pid" | tr '\n' ' '))"
     else
