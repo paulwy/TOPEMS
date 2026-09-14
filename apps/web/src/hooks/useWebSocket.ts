@@ -212,9 +212,13 @@ class WebSocketService {
   }
 
   private scheduleReconnect(): void {
+    // 达到最大重试次数后不永久放弃：重置计数并按最大退避持续低频重试，
+    // 使瞬时断连（如服务重启窗口）恢复后页面可自愈，无需手动刷新。
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      logger.error('[WebSocket] Max reconnect attempts reached');
-      return;
+      logger.warn(
+        `[WebSocket] Max reconnect attempts reached, continuing with backoff (attempt ${this.reconnectAttempts})`
+      );
+      this.reconnectAttempts = this.maxReconnectAttempts - 1;
     }
 
     // 使用指数退避 + 抖动算法
@@ -582,8 +586,17 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           );
           reconnectTimeoutRef.current = window.setTimeout(connect, delay);
         } else {
-          setConnectionStatus('error');
-          logger.error('[WebSocket] Max reconnect attempts reached');
+          // 达到上限不永久放弃：按最大退避持续低频重试，服务恢复后自愈
+          setConnectionStatus('reconnecting');
+          logger.warn(
+            `[WebSocket] Max reconnect attempts reached, continuing with backoff (attempt ${reconnectCountRef.current})`
+          );
+          const delay = calculateBackoffDelay(
+            reconnectAttempts - 1,
+            minReconnectDelay,
+            maxReconnectDelay
+          );
+          reconnectTimeoutRef.current = window.setTimeout(connect, delay);
         }
       }
     };
