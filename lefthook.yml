@@ -45,14 +45,10 @@ pre-commit:
         fi
 
     # [Gate E] Hardcoded CJK precise scan
+    # 外部脚本避免 lefthook sh -c 内联引号冲突（Windows 兼容）
     hardcoded-precise:
       tags: frontend i18n hardcoded
-      run: |
-        STAGED_TS_TSX=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(ts|tsx)$" | tr '\n' ' ')
-        [ -z "$STAGED_TS_TSX" ] && exit 0
-        if [ -f "scripts/i18n/scan-hardcoded-precise.cjs" ]; then
-          node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 30 $STAGED_TS_TSX
-        fi
+      run: bash scripts/ci/check-hardcoded-precise.sh
 
     # [Gate F/G/R] 重型检查（cargo test / clippy）已移至 pre-push hook，
     # 避免 pre-commit 超时（cargo test --workspace 需 3-5min，clippy --all-targets 需 2-3min）。
@@ -114,28 +110,10 @@ pre-commit:
         fi
 
     # [Gate N] Large files check (>1MB) — migrated from husky #1
+    # 外部脚本避免 lefthook sh -c 内联引号冲突（Windows 兼容）
     large-files:
       tags: files size
-      run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM)
-        MAX_SIZE=1048576
-        FOUND=""
-        for f in $STAGED; do
-          case "$f" in
-            pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*|docs/roadmap/TODO.md|packages/shared-types/src/generated/openapi.d.ts|docs/api/openapi-aggregated.*) continue ;;
-          esac
-          [ -f "$f" ] || continue
-          SIZE=$(wc -c < "$f")
-          if [ "$SIZE" -gt "$MAX_SIZE" ]; then
-            FOUND="$FOUND  - $f ($((SIZE/1024))KB)\n"
-          fi
-        done
-        if [ -n "$FOUND" ]; then
-          echo "❌ Large files detected:"
-          printf "$FOUND"
-          echo "   Please remove or use Git LFS."
-          exit 1
-        fi
+      run: bash scripts/ci/check-large-files.sh
 
     # [Gate O] Sensitive information scan — migrated from husky #2
     sensitive-info:

@@ -68,6 +68,9 @@ ticket      svc/ticket             topems-ticket               8086
 # [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型），原端口 8087 停用
 # [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
 master-data svc/master-data        topems-master-data          8090
+tms         svc/tms                topems-tms                  8073
+monitor     svc/monitor            topems-monitor              8095
+plugin-registry svc/plugin-registry    topems-plugin-registry  8096
 "
         CORE_SERVICES="iam"
     fi
@@ -78,7 +81,7 @@ load_services_config
 # 服务管理函数
 get_service_path() { echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $2}'; }
 get_service_port() { echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $4}'; }
-get_all_services() { echo "$SERVICES_CONFIG" | grep -v "^$" | awk '{print $1}' | sort; }
+get_all_services() { echo "$SERVICES_CONFIG" | grep -v "^#" | grep -v "^$" | awk '{print $1}' | sort; }
 get_executable_name() {
     local binary_name=$(echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $3}')
     echo "${binary_name:-topems-$1}"
@@ -89,8 +92,8 @@ get_service_pid() {
     local port=$2
     local executable_name=$(get_executable_name "$1")
     local pid=""
-    pid=$(lsof -ti:${port} 2>/dev/null)
-    [ -z "$pid" ] && pid=$(ps aux | grep -v grep | grep "$executable_name" | awk '{print $2}' 2>/dev/null)
+    pid=$(lsof -ti:${port} 2>/dev/null || true)
+    [ -z "$pid" ] && pid=$(ps aux | grep -v grep | grep "$executable_name" | awk '{print $2}' 2>/dev/null || true)
     echo "$pid"
 }
 
@@ -239,7 +242,7 @@ get_build_order() {
     # 层 1（核心：iam = unified-core）
     # 层 2（业务：finance/erp/crm/scm/srm/hrm/pm/qms/wms/mes/pdm/ehs/lims/rd/portal）
     # 层 3（分析/搜索/AI/集成等扩展）
-    echo "iam finance erp crm scm srm hrm pm qms wms mes pdm ehs lims rd portal master-data ticket communication mobile gis integration search ai bi"
+    echo "iam finance erp crm scm srm hrm pm qms wms mes pdm ehs lims rd portal master-data ticket communication mobile gis integration search ai bi tms monitor plugin-registry"
 }
 
 # 检测包管理器（pnpm > yarn）
@@ -786,7 +789,7 @@ get_port_env_var() {
         lims) echo "LIMS_PORT" ;;
         ehs) echo "EHS_PORT" ;;
         rd) echo "RD_PORT" ;;
-        bi|analytics) echo "ANALYTICS_PORT" ;;
+        bi|analytics) echo "BI_PORT" ;;
         portal) echo "PORTAL_PORT" ;;
         mobile) echo "MOBILE_PORT" ;;
         gis) echo "GIS_PORT" ;;
@@ -797,6 +800,7 @@ get_port_env_var() {
         # [V2026.08 已合并] feedback（原 FEEDBACK_PORT 8087，已合并至 ticket）
         master-data) echo "MASTER_DATA_PORT" ;;
         # [V2026.08 已移除] lowcode（原 LOWCODE_PORT）
+        tms) echo "TMS_PORT" ;;
         monitor) echo "MONITOR_PORT" ;;
         plugin-registry) echo "PLUGIN_REGISTRY_PORT" ;;
         *) echo "SERVER_PORT" ;;
@@ -812,7 +816,8 @@ _start_service_internal() {
     cd "$PROJECT_ROOT"
     
     if [ "$service_name" = "iam" ]; then
-        env CORE_PORT=$port $port_env_var=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+        # port_env_var 对 iam 即 CORE_PORT，无需重复赋值
+        env $port_env_var=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
     else
         env SERVER_PORT=$port $port_env_var=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
     fi
@@ -911,7 +916,7 @@ start_service() {
         else
             local failed_pid=$(get_service_pid "$service_name" "$port")
             if [ -n "$failed_pid" ]; then
-                kill -9 $failed_pid 2>/dev/null
+                kill -9 $failed_pid 2>/dev/null || true
                 sleep 1
             fi
             retries=$((retries + 1))
@@ -933,13 +938,13 @@ stop_service() {
     if check_port $port; then
         local pid=$(get_service_pid "$service_name" "$port")
         if [ -n "$pid" ]; then
-            kill $pid 2>/dev/null
+            kill $pid 2>/dev/null || true
             sleep 1
             if ! check_port $port; then
                 success "$service_name 服务已停止"
                 return 0
             else
-                kill -9 $pid 2>/dev/null
+                kill -9 $pid 2>/dev/null || true
                 sleep 1
                 ! check_port $port && success "$service_name 服务已强制停止" || error "无法停止 $service_name 服务"
             fi
@@ -1061,6 +1066,8 @@ register_plugin() {
         [ -n "$plugin_token" ] && token_header="-H \"X-Plugin-Token: $plugin_token\""
 
         local response
+        # curl 在连接失败时返回非零（如 exit 7=连接拒绝），set -e 会直接退出函数，
+        # 导致 L1082 的空响应兜底分支不可达；用 || true 确保 curl 失败不触发 set -e
         response=$(eval curl -s --connect-timeout 5 --max-time 10 -X POST \
             "\"$registry_url/dev/runtime/${service_name}/register\"" \
             -H "\"Content-Type: application/json\"" \
@@ -1073,7 +1080,7 @@ register_plugin() {
                 \"runtime_url\": \"${runtime_url}\",
                 \"permissions\": [],
                 \"category\": \"business\"
-            }'" 2>/dev/null)
+            }'" 2>/dev/null || true)
 
         if [ -z "$response" ]; then
             attempt=$((attempt + 1))
@@ -1171,12 +1178,14 @@ get_service_display_name() {
         mobile) echo "移动服务" ;;
         gis) echo "地理信息" ;;
         integration) echo "集成服务" ;;
+        tms) echo "运输管理" ;;
         communication) echo "通讯服务" ;;
         master-data) echo "主数据服务" ;;
         search) echo "搜索服务" ;;
         ticket) echo "工单服务" ;;
         # [V2026.08 已移除] lowcode（原低代码平台）
-        *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
+        # 注意：\U 是 GNU sed 扩展，macOS BSD sed 不支持，改用 awk toupper
+        *) echo "$1" | awk '{print toupper(substr($0,1,1)) substr($0,2) "服务"}' ;;
     esac
 }
 
@@ -1204,12 +1213,14 @@ get_service_description() {
         mobile) echo "移动应用服务" ;;
         gis) echo "地理信息服务" ;;
         integration) echo "系统集成服务" ;;
+        tms) echo "运输管理服务" ;;
         communication) echo "IM/通知/邮件/短信等通讯能力统一服务" ;;
         master-data) echo "企业级主数据统一管理服务" ;;
         search) echo "Elasticsearch全文检索与搜索聚合服务" ;;
         ticket) echo "工单与服务请求流程引擎服务" ;;
         # [V2026.08 已移除] lowcode（原低代码应用搭建与表单引擎平台）
-        *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
+        # 注意：\U 是 GNU sed 扩展，macOS BSD sed 不支持，改用 awk toupper
+        *) echo "$1" | awk '{print toupper(substr($0,1,1)) substr($0,2) "服务"}' ;;
     esac
 }
 
@@ -1249,10 +1260,10 @@ wait_for_core_services() {
     info "等待核心服务就绪..."
     local max_wait=60
     local wait_interval=2
-    local elapsed=0
 
     for service in $CORE_SERVICES; do
         local port=$(get_service_port "$service")
+        local elapsed=0
         while [ $elapsed -lt $max_wait ]; do
             if check_port $port && curl -s -f "http://localhost:$port/health" >/dev/null 2>&1; then
                 success "$service 服务就绪"
@@ -1434,7 +1445,7 @@ start_dev_macos() {
     if ! check_port 3000; then
         ensure_frontend_deps "$pkg_cmd" || return 1
         # stdin=/dev/null 避免 TTY 关闭导致 Vite readline 触发 EIO 崩溃
-        cd "$FRONTEND_DIR" && \
+        cd "$PROJECT_ROOT/apps/web" && \
             nohup "$pkg_cmd" run dev -- \
                 --port 3000 \
                 --host "${FRONTEND_BIND_HOST:-::}" \
@@ -1481,7 +1492,7 @@ start_frontend() {
     else
         # 用 nohup + stdin=/dev/null 脱离 TTY，防止 TTY 关闭后 Vite readline 读到 EIO 崩溃
         # 使用 -- 透传参数到 vite（pnpm 自身参数不会误传入 vite）
-        cd "$FRONTEND_DIR" && \
+        cd "$PROJECT_ROOT/apps/web" && \
             nohup "$pkg_cmd" run dev -- \
                 --port 3000 \
                 --host "${FRONTEND_BIND_HOST:-::}" \
@@ -1790,6 +1801,7 @@ redis_stop() {
 # 数据库迁移
 db_migrate() {
     info "运行数据库迁移..."
+    cd "$PROJECT_ROOT"
 
     load_env
     parse_database_url
@@ -1978,23 +1990,24 @@ db_defense_check_all() {
     echo "===================================================================="
     local total=0 pass=0 warn=0 fail=0
     # 第1批（已落地，P0）
+    local b1_total=0 b1_pass=0 b1_warn=0 b1_fail=0
     for svc in gis ehs portal finance; do
-        total=$((total + 1))
-        if db_defense_check "$svc"; then pass=$((pass + 1))
+        b1_total=$((b1_total + 1)); total=$((total + 1))
+        if db_defense_check "$svc"; then pass=$((pass + 1)); b1_pass=$((b1_pass + 1))
         else
             local exit_code=$?
             local rc=$exit_code
             case "$rc" in
-                1) warn=$((warn + 1)) ;;
-                *) fail=$((fail + 1)) ;;
+                1) warn=$((warn + 1)); b1_warn=$((b1_warn + 1)) ;;
+                *) fail=$((fail + 1)); b1_fail=$((b1_fail + 1)) ;;
             esac
         fi
         echo "--------------------------------------------------------------------"
     done
     echo
-    info "第1批（核心4服务）汇总：通过 $pass / 警告 $warn / 失败 $fail （共 ${total} 服务）"
+    info "第1批（核心4服务）汇总：通过 $b1_pass / 警告 $b1_warn / 失败 $b1_fail （共 ${b1_total} 服务）"
     echo
-    # 第2批（高频业务10服务 — V69.3 shared-db 抽象，已落地）
+    # 第2批（高频业务11服务 — V69.3 shared-db 抽象，已落地）
     local b2_total=0 b2_pass=0 b2_warn=0 b2_fail=0
     for svc in erp hrm crm pm scm wms srm pdm mes qms lims; do
         b2_total=$((b2_total + 1)); total=$((total + 1))
@@ -2012,7 +2025,7 @@ db_defense_check_all() {
     echo
     info "第2批（高频业务11服务）汇总：通过 $b2_pass / 警告 $b2_warn / 失败 $b2_fail （共 ${b2_total} 服务）"
     echo
-    # 第3批（业务7服务 — V69.3 shared-db 抽象，已落地）
+    # 第3批（业务5服务 — V69.3 shared-db 抽象，已落地）
     local batch3="ai rd ticket plugin-registry mobile"
     local b3_total=0 b3_pass=0 b3_warn=0 b3_fail=0
     for svc in $batch3; do
@@ -2029,7 +2042,7 @@ db_defense_check_all() {
         echo "--------------------------------------------------------------------"
     done
     echo
-    info "第3批（业务7服务 — V69.3 shared-db 抽象）汇总：通过 $b3_pass / 警告 $b3_warn / 失败 $b3_fail （共 ${b3_total} 服务）"
+    info "第3批（业务5服务 — V69.3 shared-db 抽象）汇总：通过 $b3_pass / 警告 $b3_warn / 失败 $b3_fail （共 ${b3_total} 服务）"
     echo
     # 第4批（平台5服务 — V69.3 shared-db 抽象，已落地）
     local batch4="unified-core integration master-data communication analytics"
@@ -2450,13 +2463,11 @@ clean_project() {
         info "================================================"
         echo ""
 
-        # 1. 杀后台 cargo 进程
-        _kill_background_cargo
-        [ $? -ne 0 ] && issues=$((issues + 1))
+        # 1. 杀后台 cargo 进程（函数在清理后返回 1，不能让 set -e 误判为失败）
+        if ! _kill_background_cargo; then issues=$((issues + 1)); fi
 
-        # 2. 清 coverage 残留
-        _clean_cov_remnants
-        [ $? -ne 0 ] && issues=$((issues + 1))
+        # 2. 清 coverage 残留（同理：清理过则返回 1）
+        if ! _clean_cov_remnants; then issues=$((issues + 1)); fi
 
         # 3. 磁盘守卫
         _check_disk_space || return 1
@@ -2954,10 +2965,10 @@ WebSocket:
   topems db backup            备份数据库
   topems db defense-check <svc>   单服务 Schema 防御自检（build+启动10s+grep自检日志）
                                         染色输出 ✓/⚠/✗；exit 0/1/2
-  topems db defense-check-all       全量 Schema 防御自检（4 批共 26 服务）
+  topems db defense-check-all       全量 Schema 防御自检（4 批共 25 服务）
                                         第1批 核心4: gis ehs portal finance
-                                        第2批 业务10: erp hrm crm pm scm wms srm pdm mes qms
-                                        第3批 业务6: ai rd ticket plugin-registry mobile
+                                        第2批 业务11: erp hrm crm pm scm wms srm pdm mes qms lims
+                                        第3批 业务5: ai rd ticket plugin-registry mobile
                                         第4批 平台5: unified-core integration master-data communication analytics
   topems dev                  启动开发环境
   topems reset-password       重置 admin 密码为 admin123
