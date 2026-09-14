@@ -1437,7 +1437,7 @@ start_dev_macos() {
         cd "$FRONTEND_DIR" && \
             nohup "$pkg_cmd" run dev -- \
                 --port 3000 \
-                --host "${FRONTEND_BIND_HOST:-127.0.0.1}" \
+                --host "${FRONTEND_BIND_HOST:-::}" \
                 < /dev/null \
                 > "/tmp/topems-web.log" 2>&1 &
         cd - > /dev/null
@@ -1484,7 +1484,7 @@ start_frontend() {
         cd "$FRONTEND_DIR" && \
             nohup "$pkg_cmd" run dev -- \
                 --port 3000 \
-                --host "${FRONTEND_BIND_HOST:-127.0.0.1}" \
+                --host "${FRONTEND_BIND_HOST:-::}" \
                 < /dev/null \
                 > "/tmp/topems-web.log" 2>&1 &
         cd - > /dev/null

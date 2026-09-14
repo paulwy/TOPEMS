@@ -1784,11 +1784,12 @@ export default defineConfig({
   },
   server: {
     port: BACKEND_PORTS.web, // 3000，从 ports.ts 单一信源读取
-    host: '127.0.0.1',
+    // 监听 :: 双栈（IPv6 + IPv4-mapped）：Firefox 将 localhost 解析为 ::1，
+    // 仅监听 127.0.0.1 会导致 Firefox 的 WS/HTTP 连接失败（IPv4/IPv6 差异）。
+    // Node 的 :: 监听默认 dual-stack，同时接受 IPv4 与 IPv6 连接。
+    host: '::',
     strictPort: true,
-    // HMR: 显式指定 host 确保 Firefox WebSocket 连接正常
-    // Firefox 默认将 localhost 解析为 ::1 (IPv6)，但 Vite 仅监听 IPv4
-    // 因此统一使用 127.0.0.1 强制 IPv4
+    // HMR: 跟随 127.0.0.1（IPv4），Vite 双栈监听下 IPv4 连接仍被接受
     // 不指定 port，让 Vite 自动跟随 server.port（避免 --port 命令行覆盖后 HMR 仍连旧端口）
     hmr: {
       host: '127.0.0.1',
