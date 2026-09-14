@@ -135,6 +135,23 @@ impl TypedServiceClient<ErpApi> {
         self.get(&self.build_path(&path)).await
     }
 
+    /// 获取销售订单详情
+    pub async fn get_sales_order(
+        &self,
+        id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/sales-orders/{}", id);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 创建采购订单
+    pub async fn create_purchase_order(
+        &self,
+        data: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/purchase-orders"), data).await
+    }
+
     /// 创建对账记录
     pub async fn create_reconciliation(
         &self,

@@ -39,12 +39,31 @@ impl Default for WsEventBridgeConfig {
 
 /// WebSocket 事件桥接器
 ///
-/// 订阅 Redis 事件频道，将事件实时转发到 WebSocket 客户端。
+/// 订阅 Redis 事件总线，将事件实时转发到 WebSocket 客户端。
+/// 默认消费 Redis Stream（与事件总线 stream 模式对齐，消息持久化 + ACK）；
+/// 通过 `EVENT_BRIDGE_MODE=pubsub` 可显式降级回 Redis Pub/Sub 频道订阅。
 pub struct WsEventBridge {
     ws_state: Arc<WsState>,
     config: WsEventBridgeConfig,
     shutdown_tx: Option<mpsc::Sender<()>>,
 }
+
+/// 桥接转发的 Stream 事件类型（与旧 pubsub 频道 `topems:events:Portal* / Ehs* / Permission*` 一一对应）
+const BRIDGE_STREAM_EVENT_TYPES: &[topems_shared_event::event::EventType] = &[
+    // Portal 通知/菜单/页面
+    topems_shared_event::event::EventType::PortalNotificationPublished,
+    topems_shared_event::event::EventType::PortalMenuUpdated,
+    topems_shared_event::event::EventType::PortalPageCreated,
+    // EHS 安全告警
+    topems_shared_event::event::EventType::EhsHazardReported,
+    topems_shared_event::event::EventType::EhsHazardRectified,
+    topems_shared_event::event::EventType::EhsHazardVerified,
+    topems_shared_event::event::EventType::EhsAccidentReported,
+    topems_shared_event::event::EventType::EhsAccidentInvestigated,
+    // 权限变更
+    topems_shared_event::event::EventType::PermissionChanged,
+    topems_shared_event::event::EventType::PermissionMetadataChanged,
+];
 
 impl WsEventBridge {
     pub fn new(ws_state: Arc<WsState>, config: WsEventBridgeConfig) -> Self {
@@ -56,7 +75,67 @@ impl WsEventBridge {
     }
 
     /// 启动事件桥接（阻塞运行）
+    ///
+    /// 事件总线默认已切 Redis Stream（`EVENT_BUS_MODE` 默认 stream），
+    /// 桥接默认跟随 Stream 消费（`EVENT_BRIDGE_MODE` 默认 stream），
+    /// 避免"发布端 XADD / 桥接端 PSUBSCRIBE 旧频道"的链路断裂。
     pub async fn start(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let mode = std::env::var("EVENT_BRIDGE_MODE").unwrap_or_else(|_| "stream".to_string());
+        if mode.eq_ignore_ascii_case("pubsub") {
+            self.start_pubsub().await
+        } else {
+            self.start_stream().await
+        }
+    }
+
+    /// Stream 消费模式：订阅 `topems:stream:events:{EventType}`，XREADGROUP + ACK
+    async fn start_stream(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use topems_shared_event::event::stream_subscriber::StreamEventSubscriber;
+        use topems_shared_event::event::Event;
+
+        let (shutdown_tx, mut shutdown_rx) = mpsc::channel::<()>(1);
+        self.shutdown_tx = Some(shutdown_tx);
+
+        let ws_state = self.ws_state.clone();
+        let mut subscriber = StreamEventSubscriber::new("unified-core-ws-bridge")?;
+
+        for event_type in BRIDGE_STREAM_EVENT_TYPES {
+            let ws_state = ws_state.clone();
+            subscriber = subscriber.subscribe(*event_type, move |event: Event| {
+                let ws_state = ws_state.clone();
+                async move {
+                    // 与 pubsub 载荷同构：channel 名 + Event JSON，复用统一转发逻辑
+                    let channel = format!("topems:events:{}", event.event_type);
+                    let payload = serde_json::to_string(&event).unwrap_or_default();
+                    Self::handle_event(&ws_state, &channel, &payload).await;
+                    Ok(())
+                }
+            });
+        }
+
+        info!(
+            "WebSocket 事件桥接器已启动（Stream 模式），订阅事件类型: {:?}",
+            BRIDGE_STREAM_EVENT_TYPES
+                .iter()
+                .map(|t| t.to_string())
+                .collect::<Vec<_>>()
+        );
+
+        tokio::select! {
+            result = subscriber.start_listening() => {
+                result?;
+            }
+            _ = shutdown_rx.recv() => {
+                info!("WebSocket 事件桥接器收到关闭信号（Stream 模式）");
+            }
+        }
+
+        info!("WebSocket 事件桥接器已停止");
+        Ok(())
+    }
+
+    /// Pub/Sub 消费模式（显式降级，`EVENT_BRIDGE_MODE=pubsub`）
+    async fn start_pubsub(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let client = redis::Client::open(self.config.redis_url.clone())?;
         let mut pubsub = client.get_async_connection().await?.into_pubsub();
 

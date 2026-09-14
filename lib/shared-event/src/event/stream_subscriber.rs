@@ -10,6 +10,8 @@ use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
 use super::master_data::{MasterDataDomain, MasterDataEvent};
+use super::schema_registry::SchemaRegistry;
+use super::versioning::EventVersionRegistry;
 use redis::Client;
 use std::collections::HashMap;
 use std::env;
@@ -74,6 +76,10 @@ pub struct StreamEventSubscriber {
     config: ConsumerConfig,
     /// 死信队列
     dlq: Option<DeadLetterQueue>,
+    /// 事件 Schema 注册表（可选：启用后消费回调前校验 payload）
+    schema_registry: Option<Arc<SchemaRegistry>>,
+    /// 事件版本注册表（可选：启用后消费前检查事件版本兼容性）
+    event_versions: Option<Arc<EventVersionRegistry>>,
 }
 
 impl StreamEventSubscriber {
@@ -104,7 +110,21 @@ impl StreamEventSubscriber {
             mdm_handlers: HashMap::new(),
             config,
             dlq: None,
+            schema_registry: None,
+            event_versions: None,
         })
+    }
+
+    /// 启用事件 Schema 校验（消费回调前校验 payload，校验失败进入重试/DLQ 流程）
+    pub fn with_schema_registry(mut self, registry: Arc<SchemaRegistry>) -> Self {
+        self.schema_registry = Some(registry);
+        self
+    }
+
+    /// 启用事件版本兼容性检查（消费前检查事件类型是否已废弃，已废弃时记录警告但仍处理）
+    pub fn with_event_versions(mut self, registry: Arc<EventVersionRegistry>) -> Self {
+        self.event_versions = Some(registry);
+        self
     }
 
     /// 设置消费者配置
@@ -218,6 +238,36 @@ impl StreamEventSubscriber {
             return Ok(());
         }
 
+        // 消费前 Schema 校验（启用且事件已注册 Schema 时）
+        if let Some(registry) = &self.schema_registry {
+            let et = event_type.to_string();
+            if registry.get(&et).is_some() {
+                let result = registry.validate(&et, &event.payload);
+                if !result.valid {
+                    error!(
+                        "事件 Schema 校验失败，进入重试/DLQ 流程 - 类型: {:?}, 消息ID: {}, 错误: {:?}",
+                        event_type, message_id, result.errors
+                    );
+                    // 与处理失败同路径：重试计数 / 超限进 DLQ
+                    self.settle_failed(event, message_id, stream_key, &event_type).await?;
+                    return Ok(());
+                }
+            }
+        }
+
+        // 消费前版本兼容性检查（启用时：已废弃事件类型记录警告但仍处理，保证向后兼容）
+        if let Some(versions) = &self.event_versions {
+            let et = event_type.to_string();
+            if let Some(latest) = versions.get_latest_version(&et) {
+                if latest.deprecated {
+                    warn!(
+                        "消费已废弃事件类型 - 类型: {:?}, 最新版本: {}, 消息ID: {}（仍处理以保证向后兼容）",
+                        event_type, latest.version, message_id
+                    );
+                }
+            }
+        }
+
         let handlers = handlers.unwrap();
         let mut all_succeeded = true;
 
@@ -260,33 +310,46 @@ impl StreamEventSubscriber {
             self.ack_message(stream_key, message_id).await?;
         } else {
             // 处理失败，检查重试次数
-            let retry_count = self.get_retry_count(stream_key, message_id).await?;
+            self.settle_failed(event, message_id, stream_key, &event_type).await?;
+        }
 
-            if retry_count >= self.config.max_retries {
-                // 超过最大重试次数，进入死信队列
-                error!(
-                    "事件超过最大重试次数，进入死信队列 - 类型: {:?}, 消息ID: {}, 重试次数: {}",
-                    event_type, message_id, retry_count
-                );
+        Ok(())
+    }
 
-                if let Some(dlq) = &self.dlq {
-                    if let Err(e) = dlq.push(event, "max retries exceeded").await {
-                        error!("推入死信队列失败: {}", e);
-                    }
+    /// 处理失败后的结算：未超重试则计数不 ACK（重新投递）；超限则进 DLQ 并 ACK
+    async fn settle_failed(
+        &self,
+        event: Event,
+        message_id: &str,
+        stream_key: &str,
+        event_type: &EventType,
+    ) -> EventResult<()> {
+        let retry_count = self.get_retry_count(stream_key, message_id).await?;
+
+        if retry_count >= self.config.max_retries {
+            // 超过最大重试次数，进入死信队列
+            error!(
+                "事件超过最大重试次数，进入死信队列 - 类型: {:?}, 消息ID: {}, 重试次数: {}",
+                event_type, message_id, retry_count
+            );
+
+            if let Some(dlq) = &self.dlq {
+                if let Err(e) = dlq.push(event, "max retries exceeded").await {
+                    error!("推入死信队列失败: {}", e);
                 }
-
-                // ACK 消息，避免重复处理
-                self.ack_message(stream_key, message_id).await?;
-            } else {
-                // 增加重试计数，不 ACK，消息会被重新投递
-                self.increment_retry_count(stream_key, message_id).await?;
-                warn!(
-                    "事件将被重试 - 类型: {:?}, 消息ID: {}, 当前重试次数: {}",
-                    event_type,
-                    message_id,
-                    retry_count + 1
-                );
             }
+
+            // ACK 消息，避免重复处理
+            self.ack_message(stream_key, message_id).await?;
+        } else {
+            // 增加重试计数，不 ACK，消息会被重新投递
+            self.increment_retry_count(stream_key, message_id).await?;
+            warn!(
+                "事件将被重试 - 类型: {:?}, 消息ID: {}, 当前重试次数: {}",
+                event_type,
+                message_id,
+                retry_count + 1
+            );
         }
 
         Ok(())
@@ -891,5 +954,68 @@ mod tests {
             .query_async(&mut cleanup_con)
             .await
             .unwrap();
+    }
+
+    #[test]
+    fn test_with_event_versions_sets_registry() {
+        use crate::event::versioning::{EventVersion, EventVersionEntry, EventVersionRegistry};
+
+        let registry = Arc::new(EventVersionRegistry::new());
+        let entry = EventVersionEntry::new(
+            "SalesOrderCreated",
+            EventVersion::v1(),
+            serde_json::json!({}),
+            "初始版本",
+        );
+        registry.register(entry).unwrap();
+
+        let subscriber = StreamEventSubscriber::new("test-service")
+            .unwrap()
+            .with_event_versions(registry.clone());
+
+        assert!(subscriber.event_versions.is_some());
+        let versions = subscriber.event_versions.as_ref().unwrap();
+        assert!(versions.get_latest_version("SalesOrderCreated").is_some());
+        assert_eq!(
+            versions.get_latest_version("SalesOrderCreated").unwrap().version,
+            EventVersion::v1()
+        );
+    }
+
+    #[test]
+    fn test_version_check_deprecated_event_detected() {
+        use crate::event::versioning::{EventVersion, EventVersionEntry, EventVersionRegistry};
+
+        let registry = Arc::new(EventVersionRegistry::new());
+        let entry = EventVersionEntry::new(
+            "SalesOrderCreated",
+            EventVersion::v1(),
+            serde_json::json!({}),
+            "已废弃版本",
+        );
+        registry.register(entry).unwrap();
+        registry
+            .deprecate("SalesOrderCreated", EventVersion::v1(), "请迁移到 v2", None)
+            .unwrap();
+
+        let latest = registry.get_latest_version("SalesOrderCreated").unwrap();
+        assert!(latest.deprecated, "v1 应已标记为废弃");
+    }
+
+    #[test]
+    fn test_version_check_non_deprecated_event_passes() {
+        use crate::event::versioning::{EventVersion, EventVersionEntry, EventVersionRegistry};
+
+        let registry = Arc::new(EventVersionRegistry::new());
+        let entry = EventVersionEntry::new(
+            "SalesOrderCreated",
+            EventVersion::v1(),
+            serde_json::json!({}),
+            "活跃版本",
+        );
+        registry.register(entry).unwrap();
+
+        let latest = registry.get_latest_version("SalesOrderCreated").unwrap();
+        assert!(!latest.deprecated, "v1 应为活跃状态");
     }
 }

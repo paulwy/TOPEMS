@@ -28,6 +28,8 @@ pub enum FeatureCondition {
     UserPercentage(u8),
     /// 按环境（dev/staging/prod）
     Environment(String),
+    /// 按订阅层级（free/basic/advanced）
+    PlanTier(String),
     /// 组合条件（AND）
     And(Vec<FeatureCondition>),
     /// 组合条件（OR）
@@ -53,6 +55,8 @@ pub struct FeatureContext {
     pub tenant_id: Option<Uuid>,
     pub user_id: Option<Uuid>,
     pub environment: String,
+    /// 订阅层级（free/basic/advanced），用于 PlanTier 条件判断
+    pub plan_tier: Option<String>,
     pub metadata: HashMap<String, String>,
 }
 
@@ -148,6 +152,9 @@ impl FeatureFlagService {
                 })
             }
             FeatureCondition::Environment(env) => context.environment == *env,
+            FeatureCondition::PlanTier(tier) => {
+                context.plan_tier.as_ref().is_some_and(|t| t == tier)
+            }
             FeatureCondition::And(conditions) => conditions
                 .iter()
                 .all(|c| self.evaluate_condition(c, context)),
@@ -193,6 +200,7 @@ mod tests {
             tenant_id: None,
             user_id: None,
             environment: "test".to_string(),
+            plan_tier: None,
             metadata: HashMap::new(),
         }
     }
@@ -264,6 +272,46 @@ mod tests {
         ctx.environment = "prod".to_string();
         assert!(svc.is_enabled("f1", &ctx));
         ctx.environment = "dev".to_string();
+        assert!(!svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_conditional_plan_tier() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::PlanTier("advanced".to_string())],
+        ));
+        let mut ctx = empty_context();
+        // advanced 层级应该开启
+        ctx.plan_tier = Some("advanced".to_string());
+        assert!(svc.is_enabled("f1", &ctx));
+        // basic 层级不应该开启
+        ctx.plan_tier = Some("basic".to_string());
+        assert!(!svc.is_enabled("f1", &ctx));
+        // 无 plan_tier 不应该开启
+        ctx.plan_tier = None;
+        assert!(!svc.is_enabled("f1", &ctx));
+    }
+
+    #[test]
+    fn test_conditional_plan_tier_or_combination() {
+        let svc = FeatureFlagService::new();
+        svc.register(make_flag(
+            "f1",
+            FeatureState::Conditional,
+            vec![FeatureCondition::Or(vec![
+                FeatureCondition::PlanTier("basic".to_string()),
+                FeatureCondition::PlanTier("advanced".to_string()),
+            ])],
+        ));
+        let mut ctx = empty_context();
+        ctx.plan_tier = Some("basic".to_string());
+        assert!(svc.is_enabled("f1", &ctx));
+        ctx.plan_tier = Some("advanced".to_string());
+        assert!(svc.is_enabled("f1", &ctx));
+        ctx.plan_tier = Some("free".to_string());
         assert!(!svc.is_enabled("f1", &ctx));
     }
 

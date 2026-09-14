@@ -1,121 +1,81 @@
 {
-  "timestamp": "2026-08-30T06:00:57.676922",
+  "timestamp": "2026-09-13T09:55:16.265662+00:00",
   "url": "http://localhost:8099",
+  "scenario": "average",
   "concurrent": 20,
-  "duration": 120.0708498954773,
-  "total_requests": 135739,
-  "total_success": 135739,
+  "duration": 60.04,
+  "total_requests": 154159,
+  "total_success": 154159,
   "success_rate": 100.0,
-  "throughput_rps": 1130.49087366469,
+  "throughput_rps": 2567.47,
+  "global_p50_ms": 4.12,
+  "global_p95_ms": 13.23,
+  "global_p99_ms": 14.79,
   "stable_after": true,
   "endpoints": {
     "/api/server/health": {
-      "requests": 16968,
+      "requests": 19276,
       "success_rate": 100.0,
-      "p50_ms": 17.03,
-      "p95_ms": 20.65,
-      "p99_ms": 23.23,
-      "rps": 141.32
+      "p50_ms": 3.63,
+      "p95_ms": 4.82,
+      "p99_ms": 5.69,
+      "rps": 0.01
     },
     "/api/crm/customers": {
-      "requests": 16968,
+      "requests": 19275,
       "success_rate": 100.0,
-      "p50_ms": 17.76,
-      "p95_ms": 21.52,
-      "p99_ms": 26.2,
-      "rps": 141.32
+      "p50_ms": 3.74,
+      "p95_ms": 5.0,
+      "p99_ms": 5.98,
+      "rps": 0.01
     },
     "/api/erp/sales-orders": {
-      "requests": 16968,
+      "requests": 19274,
       "success_rate": 100.0,
-      "p50_ms": 16.79,
-      "p95_ms": 20.48,
-      "p99_ms": 24.16,
-      "rps": 141.32
+      "p50_ms": 3.84,
+      "p95_ms": 5.01,
+      "p99_ms": 6.05,
+      "rps": 0.01
     },
     "/api/finance/vouchers": {
-      "requests": 16967,
+      "requests": 19274,
       "success_rate": 100.0,
-      "p50_ms": 17.15,
-      "p95_ms": 20.81,
-      "p99_ms": 24.0,
-      "rps": 141.31
+      "p50_ms": 3.65,
+      "p95_ms": 4.88,
+      "p99_ms": 5.73,
+      "rps": 0.01
     },
-    "/api/qms/checks": {
-      "requests": 16967,
+    "/api/ai/dsh/chat": {
+      "requests": 19270,
       "success_rate": 100.0,
-      "p50_ms": 17.59,
-      "p95_ms": 21.31,
-      "p99_ms": 24.58,
-      "rps": 141.31
+      "p50_ms": 5.04,
+      "p95_ms": 6.48,
+      "p99_ms": 7.51,
+      "rps": 0.01
     },
-    "/api/scm/suppliers": {
-      "requests": 16967,
+    "/api/bi/dashboard": {
+      "requests": 19268,
       "success_rate": 100.0,
-      "p50_ms": 16.88,
-      "p95_ms": 20.56,
-      "p99_ms": 23.88,
-      "rps": 141.31
+      "p50_ms": 12.92,
+      "p95_ms": 15.11,
+      "p99_ms": 19.11,
+      "rps": 0.0
     },
-    "/api/wms/inventory": {
-      "requests": 16967,
+    "/api/portal/graphql": {
+      "requests": 19263,
       "success_rate": 100.0,
-      "p50_ms": 17.85,
-      "p95_ms": 21.62,
-      "p99_ms": 25.56,
-      "rps": 141.31
+      "p50_ms": 4.26,
+      "p95_ms": 5.5,
+      "p99_ms": 6.39,
+      "rps": 0.01
     },
     "/api/hrm/employees": {
-      "requests": 16967,
+      "requests": 19259,
       "success_rate": 100.0,
-      "p50_ms": 17.49,
-      "p95_ms": 21.22,
-      "p99_ms": 25.57,
-      "rps": 141.31
+      "p50_ms": 4.12,
+      "p95_ms": 5.3,
+      "p99_ms": 6.39,
+      "rps": 0.01
     }
-  },
-  "acceptance": {
-    "/api/server/health": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/crm/customers": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/erp/sales-orders": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/finance/vouchers": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/qms/checks": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/scm/suppliers": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/wms/inventory": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/hrm/employees": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "overall": true,
-    "service_stable": true
   }
 }

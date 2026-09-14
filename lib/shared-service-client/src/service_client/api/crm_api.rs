@@ -75,6 +75,14 @@ impl TypedServiceClient<CrmApi> {
         self.get(&self.build_path(&path)).await
     }
 
+    /// 创建商机
+    pub async fn create_opportunity(
+        &self,
+        data: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/opportunities"), data).await
+    }
+
     /// 获取仪表盘统计
     pub async fn get_dashboard_stats(&self) -> ServiceClientResult<serde_json::Value> {
         self.get(&self.build_path("/dashboard/stats")).await

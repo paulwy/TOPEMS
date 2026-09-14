@@ -844,13 +844,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_permission_denied_without_user() {
-        // 匿名用户（未注入身份）不可调用受限工具 finance.create_invoice
+        // 匿名用户（未注入身份）不可调用受限工具 finance.create_voucher
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
         let resp = server
             .handle_request(call_tool_req(
-                "finance.create_invoice",
-                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+                "finance.create_voucher",
+                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
             ))
             .await
             .unwrap();
@@ -873,8 +873,8 @@ mod tests {
             .await;
         let resp = server
             .handle_request(call_tool_req(
-                "finance.create_invoice",
-                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+                "finance.create_voucher",
+                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
             ))
             .await
             .unwrap();
@@ -896,12 +896,12 @@ mod tests {
             .await;
         let resp = server
             .handle_request(call_tool_req(
-                "finance.create_invoice",
-                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+                "finance.create_voucher",
+                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
             ))
             .await
             .unwrap();
-        assert!(resp.is_success(), "finance 角色用户应可创建发票");
+        assert!(resp.is_success(), "finance 角色用户应可创建凭证");
     }
 
     #[tokio::test]
@@ -918,17 +918,17 @@ mod tests {
             .await;
         let resp = server
             .handle_request(call_tool_req(
-                "finance.create_invoice",
-                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+                "finance.create_voucher",
+                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
             ))
             .await
             .unwrap();
-        assert!(resp.is_success(), "admin 用户应可创建发票");
+        assert!(resp.is_success(), "admin 用户应可创建凭证");
     }
 
     #[tokio::test]
     async fn test_unrestricted_tool_not_blocked() {
-        // 无权限用户调用无权限要求的工具（finance.list_transactions）不受影响
+        // 无权限用户调用无权限要求的工具（finance.list_receivables）不受影响
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
         server
@@ -940,7 +940,7 @@ mod tests {
             .await;
         let resp = server
             .handle_request(call_tool_req(
-                "finance.list_transactions",
+                "finance.list_receivables",
                 json!({"page": 1, "page_size": 5}),
             ))
             .await

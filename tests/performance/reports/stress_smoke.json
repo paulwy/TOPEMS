@@ -1,121 +1,81 @@
 {
-  "timestamp": "2026-08-30T05:55:40.557521",
+  "timestamp": "2026-09-13T09:54:02.789378+00:00",
   "url": "http://localhost:8099",
+  "scenario": "smoke",
   "concurrent": 10,
-  "duration": 15.02635908126831,
-  "total_requests": 22688,
-  "total_success": 22688,
+  "duration": 15.02,
+  "total_requests": 39220,
+  "total_success": 39220,
   "success_rate": 100.0,
-  "throughput_rps": 1509.8800632471643,
+  "throughput_rps": 2610.86,
+  "global_p50_ms": 1.74,
+  "global_p95_ms": 6.32,
+  "global_p99_ms": 7.78,
   "stable_after": true,
   "endpoints": {
     "/api/server/health": {
-      "requests": 2836,
+      "requests": 4906,
       "success_rate": 100.0,
-      "p50_ms": 6.06,
-      "p95_ms": 6.96,
-      "p99_ms": 8.69,
-      "rps": 188.74
+      "p50_ms": 1.44,
+      "p95_ms": 2.06,
+      "p99_ms": 3.02,
+      "rps": 0.13
     },
     "/api/crm/customers": {
-      "requests": 2836,
+      "requests": 4905,
       "success_rate": 100.0,
-      "p50_ms": 6.62,
-      "p95_ms": 7.47,
-      "p99_ms": 9.94,
-      "rps": 188.74
+      "p50_ms": 1.61,
+      "p95_ms": 2.23,
+      "p99_ms": 3.01,
+      "rps": 0.12
     },
     "/api/erp/sales-orders": {
-      "requests": 2836,
+      "requests": 4905,
       "success_rate": 100.0,
-      "p50_ms": 6.52,
-      "p95_ms": 7.38,
-      "p99_ms": 9.73,
-      "rps": 188.74
+      "p50_ms": 1.77,
+      "p95_ms": 2.36,
+      "p99_ms": 3.09,
+      "rps": 0.11
     },
     "/api/finance/vouchers": {
-      "requests": 2836,
+      "requests": 4904,
       "success_rate": 100.0,
-      "p50_ms": 6.16,
-      "p95_ms": 7.03,
-      "p99_ms": 8.83,
-      "rps": 188.74
+      "p50_ms": 1.44,
+      "p95_ms": 2.01,
+      "p99_ms": 2.73,
+      "rps": 0.14
     },
-    "/api/qms/checks": {
-      "requests": 2836,
+    "/api/ai/dsh/chat": {
+      "requests": 4902,
       "success_rate": 100.0,
-      "p50_ms": 6.63,
-      "p95_ms": 7.37,
-      "p99_ms": 8.95,
-      "rps": 188.74
+      "p50_ms": 1.81,
+      "p95_ms": 2.67,
+      "p99_ms": 3.46,
+      "rps": 0.11
     },
-    "/api/scm/suppliers": {
-      "requests": 2836,
+    "/api/bi/dashboard": {
+      "requests": 4902,
       "success_rate": 100.0,
-      "p50_ms": 6.46,
-      "p95_ms": 7.27,
-      "p99_ms": 8.91,
-      "rps": 188.74
+      "p50_ms": 6.05,
+      "p95_ms": 8.0,
+      "p99_ms": 9.65,
+      "rps": 0.03
     },
-    "/api/wms/inventory": {
-      "requests": 2836,
+    "/api/portal/graphql": {
+      "requests": 4898,
       "success_rate": 100.0,
-      "p50_ms": 6.63,
-      "p95_ms": 7.42,
-      "p99_ms": 9.85,
-      "rps": 188.74
+      "p50_ms": 1.67,
+      "p95_ms": 2.36,
+      "p99_ms": 3.26,
+      "rps": 0.12
     },
     "/api/hrm/employees": {
-      "requests": 2836,
+      "requests": 4898,
       "success_rate": 100.0,
-      "p50_ms": 6.62,
-      "p95_ms": 7.52,
-      "p99_ms": 10.34,
-      "rps": 188.74
+      "p50_ms": 2.07,
+      "p95_ms": 2.72,
+      "p99_ms": 3.84,
+      "rps": 0.1
     }
-  },
-  "acceptance": {
-    "/api/server/health": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/crm/customers": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/erp/sales-orders": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/finance/vouchers": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/qms/checks": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/scm/suppliers": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/wms/inventory": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "/api/hrm/employees": {
-      "p95_lt_2s": true,
-      "success_rate_ge_99": true,
-      "pass": true
-    },
-    "overall": true,
-    "service_stable": true
   }
 }

@@ -6,12 +6,54 @@
 //! - ACK 机制（确保消息至少被处理一次）
 //! - 死信队列（处理失败的消息）
 
-use super::error::EventResult;
+use super::error::{EventError, EventResult};
 use super::event_types::{Event, EventType};
+use super::schema_registry::SchemaRegistry;
+use super::versioning::EventVersionRegistry;
 use redis::Client;
 use serde::Serialize;
 use std::env;
+use std::sync::Arc;
 use tracing::info;
+
+/// 发布前事件校验（Schema + 版本）
+///
+/// - 已注册 Schema 的事件类型 → 校验 payload，不匹配返回 `ValidationError`
+/// - 已注册版本的事件类型 → 校验最新版本未废弃
+/// - 都未注册 → `Ok(())`（向后兼容，不影响未治理的事件）
+pub fn validate_event_for_publish(
+    schema_registry: Option<&SchemaRegistry>,
+    event_versions: Option<&EventVersionRegistry>,
+    event_type: &EventType,
+    payload: &serde_json::Value,
+) -> EventResult<()> {
+    let event_type_str = event_type.to_string();
+
+    if let Some(registry) = schema_registry {
+        if registry.get(&event_type_str).is_some() {
+            let result = registry.validate(&event_type_str, payload);
+            if !result.valid {
+                return Err(EventError::ValidationError(format!(
+                    "事件 {} payload 校验失败: {:?}",
+                    event_type_str, result.errors
+                )));
+            }
+        }
+    }
+
+    if let Some(versions) = event_versions {
+        if let Some(latest) = versions.get_latest_version(&event_type_str) {
+            if latest.deprecated {
+                return Err(EventError::ValidationError(format!(
+                    "事件 {} 的最新版本 {} 已废弃，拒绝发布",
+                    event_type_str, latest.version
+                )));
+            }
+        }
+    }
+
+    Ok(())
+}
 
 /// Redis Stream 事件发布者
 pub struct StreamEventPublisher {
@@ -21,6 +63,10 @@ pub struct StreamEventPublisher {
     stream_prefix: String,
     /// 最大流长度（近似值，用于自动裁剪）
     max_stream_length: Option<u64>,
+    /// 事件 Schema 注册表（可选：启用后发布前校验 payload）
+    schema_registry: Option<Arc<SchemaRegistry>>,
+    /// 事件版本注册表（可选：启用后发布前校验版本未废弃）
+    event_versions: Option<Arc<EventVersionRegistry>>,
 }
 
 impl StreamEventPublisher {
@@ -40,7 +86,21 @@ impl StreamEventPublisher {
             service_name: service_name.to_string(),
             stream_prefix: "topems:stream:events".to_string(),
             max_stream_length,
+            schema_registry: None,
+            event_versions: None,
         })
+    }
+
+    /// 启用事件 Schema 校验（发布前校验 payload，需先在注册表注册事件 Schema）
+    pub fn with_schema_registry(mut self, registry: Arc<SchemaRegistry>) -> Self {
+        self.schema_registry = Some(registry);
+        self
+    }
+
+    /// 启用事件版本治理（发布前校验最新版本未废弃）
+    pub fn with_event_versions(mut self, registry: Arc<EventVersionRegistry>) -> Self {
+        self.event_versions = Some(registry);
+        self
     }
 
     /// 获取事件类型对应的 Stream 键
@@ -57,6 +117,13 @@ impl StreamEventPublisher {
         payload: impl Serialize,
     ) -> EventResult<String> {
         let payload_json = serde_json::to_value(&payload)?;
+        // 发布前校验（Schema + 版本），失败拒绝发布
+        validate_event_for_publish(
+            self.schema_registry.as_deref(),
+            self.event_versions.as_deref(),
+            &event_type,
+            &payload_json,
+        )?;
         let trace_id: Option<String> = None;
         let event =
             Event::new(event_type, &self.service_name, payload_json).with_trace_id(trace_id);
@@ -105,6 +172,13 @@ impl StreamEventPublisher {
         payload: impl Serialize,
     ) -> EventResult<String> {
         let payload_json = serde_json::to_value(&payload)?;
+        // 发布前校验（Schema + 版本），失败拒绝发布
+        validate_event_for_publish(
+            self.schema_registry.as_deref(),
+            self.event_versions.as_deref(),
+            &event_type,
+            &payload_json,
+        )?;
         let trace_id: Option<String> = None;
         let event =
             Event::new(event_type, &self.service_name, payload_json).with_trace_id(trace_id);
@@ -216,6 +290,138 @@ mod tests {
         assert!(json.contains("SalesOrderCreated"));
         assert!(json.contains("test-service"));
         assert!(json.contains("123"));
+    }
+
+    // --- 事件类型版本化管理接入 Stream：Schema + 版本校验（纯函数，无需 Redis） ---
+
+    fn sales_order_schema() -> serde_json::Value {
+        json!({
+            "type": "object",
+            "required": ["order_id"],
+            "properties": {
+                "order_id": {"type": "string"},
+                "amount": {"type": "number"}
+            },
+            "additionalProperties": true
+        })
+    }
+
+    #[test]
+    fn test_validate_no_registry_ok() {
+        // 未启用 Schema/版本治理 → 校验通过（向后兼容）
+        let result = validate_event_for_publish(
+            None,
+            None,
+            &EventType::SalesOrderCreated,
+            &json!({"order_id": "SO-001"}),
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_unregistered_event_type_ok() {
+        // 注册表存在但事件类型未注册 → 跳过校验
+        let registry = SchemaRegistry::new();
+        let result = validate_event_for_publish(
+            Some(&registry),
+            None,
+            &EventType::SalesOrderCreated,
+            &json!({"whatever": true}),
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_matching_payload_ok() {
+        let registry = SchemaRegistry::new();
+        registry
+            .register(
+                "SalesOrderCreated",
+                sales_order_schema(),
+                "销售订单创建事件",
+            )
+            .unwrap();
+        let result = validate_event_for_publish(
+            Some(&registry),
+            None,
+            &EventType::SalesOrderCreated,
+            &json!({"order_id": "SO-001", "amount": 100}),
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_mismatched_payload_rejected() {
+        let registry = SchemaRegistry::new();
+        registry
+            .register(
+                "SalesOrderCreated",
+                sales_order_schema(),
+                "销售订单创建事件",
+            )
+            .unwrap();
+        // 缺少必填字段 order_id
+        let result = validate_event_for_publish(
+            Some(&registry),
+            None,
+            &EventType::SalesOrderCreated,
+            &json!({"amount": 100}),
+        );
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            EventError::ValidationError(_)
+        ));
+    }
+
+    #[test]
+    fn test_validate_deprecated_version_rejected() {
+        use crate::event::versioning::{EventVersion, EventVersionEntry, EventVersionRegistry};
+        let versions = EventVersionRegistry::new();
+        versions
+            .register(EventVersionEntry::new(
+                "SalesOrderCreated",
+                EventVersion::v1(),
+                sales_order_schema(),
+                "v1",
+            ))
+            .unwrap();
+        versions
+            .deprecate("SalesOrderCreated", EventVersion::v1(), "升级至 v2", None)
+            .unwrap();
+        // 最新版本（v1 唯一版本）已废弃 → 拒绝发布
+        let result = validate_event_for_publish(
+            None,
+            Some(&versions),
+            &EventType::SalesOrderCreated,
+            &json!({"order_id": "SO-001"}),
+        );
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            EventError::ValidationError(_)
+        ));
+    }
+
+    #[test]
+    fn test_validate_active_version_ok() {
+        use crate::event::versioning::{EventVersion, EventVersionEntry, EventVersionRegistry};
+        let versions = EventVersionRegistry::new();
+        versions
+            .register(EventVersionEntry::new(
+                "SalesOrderCreated",
+                EventVersion::v2(),
+                sales_order_schema(),
+                "v2",
+            ))
+            .unwrap();
+        let result = validate_event_for_publish(
+            None,
+            Some(&versions),
+            &EventType::SalesOrderCreated,
+            &json!({"order_id": "SO-001"}),
+        );
+        assert!(result.is_ok());
     }
 
     #[tokio::test]

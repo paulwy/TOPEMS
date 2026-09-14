@@ -1097,4 +1097,16 @@ impl TypedServiceClient<FinanceApi> {
         let path = format!("/aging/trend?direction={}&months={}", direction, months);
         self.get(&self.build_path(&path)).await
     }
+
+    /// 获取账户余额（按科目编码，不传则返回全部科目余额汇总）
+    pub async fn get_account_balance(
+        &self,
+        subject_code: Option<&str>,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let path = match subject_code {
+            Some(code) => format!("/account-balance/{}", code),
+            None => "/account-balance".to_string(),
+        };
+        self.get(&self.build_path(&path)).await
+    }
 }

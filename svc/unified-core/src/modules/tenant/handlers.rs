@@ -202,7 +202,22 @@ pub async fn create_tenant(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(tenant) => Json(CoreResponse::success(tenant, "Tenant created")),
+        Ok(tenant) => {
+            // P0-3: 租户创建后自动同步默认权限集（基于 plan tier）
+            let plan_tier = crate::modules::subscription::PlanTier::from_str(&tenant.plan)
+                .unwrap_or(crate::modules::subscription::PlanTier::Basic);
+            let sync_result = crate::modules::subscription::TierPermissionService::sync_permissions_for_tenant(
+                tenant.id,
+                &plan_tier,
+            );
+            tracing::info!(
+                "Tenant created with permission sync: roles={:?}, permissions={}, modules_enabled={}",
+                sync_result.roles_synced,
+                sync_result.permissions_synced,
+                sync_result.modules_enabled.len()
+            );
+            Json(CoreResponse::success(tenant, "Tenant created"))
+        }
         Err(e) => {
             tracing::error!("Failed to create tenant: {}", e);
             Json(CoreResponse::error(&format!("Failed to create tenant: {}", e)))
@@ -540,7 +555,24 @@ pub async fn update_tenant(
     .unwrap_or(None);
 
     match tenant {
-        Some(t) => Json(CoreResponse::success(t, "Tenant updated")),
+        Some(t) => {
+            // P0-3: 如果 plan 变更，重新同步默认权限集
+            if req.plan.is_some() {
+                let plan_tier = crate::modules::subscription::PlanTier::from_str(&t.plan)
+                    .unwrap_or(crate::modules::subscription::PlanTier::Basic);
+                let sync_result = crate::modules::subscription::TierPermissionService::sync_permissions_for_tenant(
+                    t.id,
+                    &plan_tier,
+                );
+                tracing::info!(
+                    "Tenant plan updated with permission resync: plan={}, roles={:?}, permissions={}",
+                    t.plan,
+                    sync_result.roles_synced,
+                    sync_result.permissions_synced
+                );
+            }
+            Json(CoreResponse::success(t, "Tenant updated"))
+        }
         None => Json(CoreResponse::error("Tenant not found")),
     }
 }

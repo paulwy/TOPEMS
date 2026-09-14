@@ -100,12 +100,12 @@ async fn main() -> anyhow::Result<()> {
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM materials WHERE deleted_at IS NULL),
+                    'total', (SELECT COUNT(*) FROM pdm_materials WHERE deleted_at IS NULL),
                     'page', 1,
                     'pagesize', 20
                 ) as data
                 FROM (
-                    SELECT m.* FROM materials m
+                    SELECT m.* FROM pdm_materials m
                     WHERE m.deleted_at IS NULL
                     ORDER BY m.created_at DESC
                     LIMIT 20 OFFSET 0

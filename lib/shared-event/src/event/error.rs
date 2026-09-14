@@ -30,4 +30,7 @@ pub enum EventError {
 
     #[error("发布错误: {0}")]
     PublishError(String),
+
+    #[error("事件 Schema/版本校验失败: {0}")]
+    ValidationError(String),
 }

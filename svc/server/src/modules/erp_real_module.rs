@@ -17,6 +17,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use topems_erp::modules::ApiState;
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::notification::NotificationServiceClient;
@@ -141,8 +142,12 @@ impl ErpRealModule {
                 }),
         };
 
-        // 5. 构建完整业务路由（应用 api_prefix + 权限中间件 + 开发验证模拟认证）
+        // 5. 构建完整业务路由（应用 api_prefix + 租户事务中间件 + 权限中间件 + 开发验证模拟认证）
         let protected_routes = topems_erp::modules::create_routes()
+            .layer(axum::middleware::from_fn_with_state(
+                api_state.db.clone(),
+                tenant_middleware(),
+            ))
             .layer(axum::middleware::from_fn(require_permission("erp:admin")))
             .with_state(api_state.clone());
         let routes = axum::Router::new()

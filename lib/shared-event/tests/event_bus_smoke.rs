@@ -84,3 +84,93 @@ async fn subscriber_consumes_event_smoke() {
     let _ = publisher.delete_stream(&event_type).await;
     listener.abort();
 }
+
+/// 场景 4：发布端 Schema 校验拦截（版本化管理接入 Stream 路径的端到端验证）
+/// - 注册 schema 的 publisher 发布不匹配 payload → ValidationError（拒绝 XADD）
+/// - 未注册的事件类型 → 正常发布（向后兼容）
+#[tokio::test]
+#[ignore = "requires Redis"]
+async fn stream_publish_schema_validation_smoke() {
+    use std::sync::Arc;
+    use topems_shared_event::event::schema_registry::SchemaRegistry;
+    use topems_shared_event::event::EventError;
+
+    let event_type = EventType::QmsInspectionCompleted;
+    let registry = Arc::new(SchemaRegistry::new());
+    registry
+        .register(
+            "QmsInspectionCompleted",
+            json!({
+                "type": "object",
+                "required": ["result_id"],
+                "properties": {"result_id": {"type": "string"}}
+            }),
+            "质检完成事件",
+        )
+        .unwrap();
+
+    let publisher = StreamEventPublisher::new("smoke-test-svc")
+        .unwrap()
+        .with_schema_registry(registry);
+
+    // 不匹配 payload → 拒绝发布，Stream 长度不变
+    let before = publisher.stream_length(&event_type).await.unwrap();
+    let rejected = publisher
+        .publish_event(event_type.clone(), json!({"sample_no": "X"}))
+        .await;
+    assert!(
+        matches!(rejected, Err(EventError::ValidationError(_))),
+        "schema 不匹配应返回 ValidationError，实际: {:?}",
+        rejected
+    );
+    let after = publisher.stream_length(&event_type).await.unwrap();
+    assert_eq!(before, after, "校验失败的事件不应写入 Stream");
+
+    // 匹配 payload → 正常发布
+    let ok = publisher
+        .publish_event(event_type.clone(), json!({"result_id": "R-001"}))
+        .await;
+    assert!(ok.is_ok(), "schema 匹配应发布成功: {:?}", ok);
+
+    let _ = publisher.delete_stream(&event_type).await;
+}
+
+/// 场景 5：发布端版本治理——废弃版本事件拒绝发布
+#[tokio::test]
+#[ignore = "requires Redis"]
+async fn stream_publish_deprecated_version_smoke() {
+    use std::sync::Arc;
+    use topems_shared_event::event::EventError;
+    use topems_shared_event::event::versioning::{
+        EventVersion, EventVersionEntry, EventVersionRegistry,
+    };
+
+    let event_type = EventType::StockAdjusted;
+    let versions = Arc::new(EventVersionRegistry::new());
+    versions
+        .register(EventVersionEntry::new(
+            "StockAdjusted",
+            EventVersion::v1(),
+            json!({"type": "object"}),
+            "v1",
+        ))
+        .unwrap();
+    versions
+        .deprecate("StockAdjusted", EventVersion::v1(), "升级至 v2", None)
+        .unwrap();
+
+    let publisher = StreamEventPublisher::new("smoke-test-svc")
+        .unwrap()
+        .with_event_versions(versions);
+
+    let result = publisher
+        .publish_event(event_type.clone(), json!({"sku": "SKU-1"}))
+        .await;
+    assert!(
+        matches!(result, Err(EventError::ValidationError(_))),
+        "已废弃版本的事件应拒绝发布，实际: {:?}",
+        result
+    );
+
+    let _ = publisher.delete_stream(&event_type).await;
+}

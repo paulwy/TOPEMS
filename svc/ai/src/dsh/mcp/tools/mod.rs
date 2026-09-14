@@ -10,6 +10,8 @@
 //! - Finance：待实现（V337+）
 
 use std::collections::HashMap;
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::Arc;
 
 use serde_json::Value;
@@ -52,10 +54,19 @@ pub use scm::register_scm_tools;
 pub use wms::register_wms_tools;
 
 /// 工具处理函数类型
+/// 工具处理函数（同步）
 ///
 /// 接收工具参数（JSON Value），返回工具执行结果。
 pub type ToolHandler =
     Arc<dyn Fn(Value) -> Result<McpToolResult, ToolExecutionError> + Send + Sync + 'static>;
+
+/// 工具处理函数（异步）——用于 TypedServiceClient 等 async 业务调用
+pub type AsyncToolHandler = Arc<
+    dyn Fn(Value) -> Pin<Box<dyn Future<Output = Result<McpToolResult, ToolExecutionError>> + Send>>
+        + Send
+        + Sync
+        + 'static,
+>;
 
 /// 工具执行错误
 #[derive(Debug, thiserror::Error)]
@@ -78,8 +89,10 @@ pub enum ToolExecutionError {
 struct RegisteredTool {
     /// 工具元数据
     definition: McpTool,
-    /// 工具处理函数
+    /// 工具处理函数（同步）
     handler: ToolHandler,
+    /// 工具处理函数（异步，优先于同步 handler）
+    async_handler: Option<AsyncToolHandler>,
     /// 所需权限（可选）
     required_permission: Option<String>,
 }
@@ -112,7 +125,73 @@ impl ToolRegistry {
                 input_schema,
             },
             handler: Arc::new(handler),
+            async_handler: None,
             required_permission: None,
+        };
+
+        self.tools.write().await.insert(name.to_string(), tool);
+    }
+
+    /// 注册异步工具（handler 返回 Future，用于 TypedServiceClient 等 async 调用）
+    pub async fn register_async<F, Fut>(
+        &self,
+        name: &str,
+        description: &str,
+        input_schema: Value,
+        handler: F,
+    ) where
+        F: Fn(Value) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Result<McpToolResult, ToolExecutionError>> + Send + 'static,
+    {
+        let async_handler: AsyncToolHandler =
+            Arc::new(move |args| Box::pin(handler(args)));
+        // 同步 handler 占位（不会被调用，因为 async_handler 优先）
+        let sync_handler: ToolHandler = Arc::new(|_| {
+            Err(ToolExecutionError::Execution(
+                "async tool called via sync path".to_string(),
+            ))
+        });
+        let tool = RegisteredTool {
+            definition: McpTool {
+                name: name.to_string(),
+                description: description.to_string(),
+                input_schema,
+            },
+            handler: sync_handler,
+            async_handler: Some(async_handler),
+            required_permission: None,
+        };
+
+        self.tools.write().await.insert(name.to_string(), tool);
+    }
+
+    /// 注册带权限要求的异步工具
+    pub async fn register_async_with_permission<F, Fut>(
+        &self,
+        name: &str,
+        description: &str,
+        input_schema: Value,
+        required_permission: &str,
+        handler: F,
+    ) where
+        F: Fn(Value) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Result<McpToolResult, ToolExecutionError>> + Send + 'static,
+    {
+        let async_handler: AsyncToolHandler = Arc::new(move |args| Box::pin(handler(args)));
+        let sync_handler: ToolHandler = Arc::new(|_| {
+            Err(ToolExecutionError::Execution(
+                "async tool called via sync path".to_string(),
+            ))
+        });
+        let tool = RegisteredTool {
+            definition: McpTool {
+                name: name.to_string(),
+                description: description.to_string(),
+                input_schema,
+            },
+            handler: sync_handler,
+            async_handler: Some(async_handler),
+            required_permission: Some(required_permission.to_string()),
         };
 
         self.tools.write().await.insert(name.to_string(), tool);
@@ -136,6 +215,7 @@ impl ToolRegistry {
                 input_schema,
             },
             handler: Arc::new(handler),
+            async_handler: None,
             required_permission: Some(required_permission.to_string()),
         };
 
@@ -187,7 +267,11 @@ impl ToolRegistry {
             .get(name)
             .ok_or_else(|| ToolExecutionError::NotFound(name.to_string()))?;
 
-        (tool.handler)(arguments)
+        if let Some(async_handler) = &tool.async_handler {
+            async_handler(arguments).await
+        } else {
+            (tool.handler)(arguments)
+        }
     }
 
     /// 获取已注册工具数量

@@ -18,6 +18,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use topems_qms::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -83,8 +84,12 @@ impl QmsRealModule {
             workflow_client,
         };
 
-        // 5. 构建完整业务路由（应用 api_prefix + 权限中间件 + 开发验证模拟认证）
+        // 5. 构建完整业务路由（应用 api_prefix + 租户事务中间件 + 权限中间件 + 开发验证模拟认证）
         let protected_routes = topems_qms::modules::create_routes()
+            .layer(axum::middleware::from_fn_with_state(
+                state.pool.clone(),
+                tenant_middleware(),
+            ))
             .layer(axum::middleware::from_fn(require_permission("qms:admin")))
             .with_state(state.clone());
         let routes = axum::Router::new()

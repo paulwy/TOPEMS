@@ -16,6 +16,7 @@ use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use topems_finance::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -77,13 +78,16 @@ impl FinanceRealModule {
             event_publisher: ctx.event_publisher.clone(),
         };
 
-        // 5. 构建完整业务路由（应用 api_prefix，与独立部署的 build_application 一致）
-        //    开发验证模式：注入模拟 Claims（生产环境应叠加真实 auth_middleware）
+        // 5. 构建完整业务路由（应用 api_prefix + 租户事务中间件 + 权限中间件，与独立部署一致）
         let protected_routes = topems_finance::modules::create_routes()
-            .with_state(state.clone())
+            .layer(axum::middleware::from_fn_with_state(
+                state.pool.clone(),
+                tenant_middleware(),
+            ))
             .layer(axum::middleware::from_fn(require_permission(
                 "finance:admin",
-            )));
+            )))
+            .with_state(state.clone());
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
             .layer(axum::middleware::from_fn(inject_dev_claims));

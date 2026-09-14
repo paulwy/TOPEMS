@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-09-13T09:58:22.195701+00:00",
+  "url": "http://localhost:8099",
+  "scenario": "stress",
+  "concurrent": 50,
+  "duration": 180.11,
+  "total_requests": 414997,
+  "total_success": 414948,
+  "success_rate": 99.99,
+  "throughput_rps": 2304.15,
+  "global_p50_ms": 11.77,
+  "global_p95_ms": 37.48,
+  "global_p99_ms": 41.27,
+  "stable_after": false,
+  "endpoints": {
+    "/api/server/health": {
+      "requests": 51894,
+      "success_rate": 100.0,
+      "p50_ms": 10.38,
+      "p95_ms": 13.35,
+      "p99_ms": 17.72,
+      "rps": 0.0
+    },
+    "/api/crm/customers": {
+      "requests": 51890,
+      "success_rate": 100.0,
+      "p50_ms": 10.76,
+      "p95_ms": 13.68,
+      "p99_ms": 15.77,
+      "rps": 0.0
+    },
+    "/api/erp/sales-orders": {
+      "requests": 51885,
+      "success_rate": 100.0,
+      "p50_ms": 10.74,
+      "p95_ms": 13.8,
+      "p99_ms": 16.4,
+      "rps": 0.0
+    },
+    "/api/finance/vouchers": {
+      "requests": 51878,
+      "success_rate": 100.0,
+      "p50_ms": 10.69,
+      "p95_ms": 13.56,
+      "p99_ms": 16.15,
+      "rps": 0.0
+    },
+    "/api/ai/dsh/chat": {
+      "requests": 51872,
+      "success_rate": 100.0,
+      "p50_ms": 15.26,
+      "p95_ms": 18.16,
+      "p99_ms": 24.87,
+      "rps": 0.0
+    },
+    "/api/bi/dashboard": {
+      "requests": 51868,
+      "success_rate": 100.0,
+      "p50_ms": 36.74,
+      "p95_ms": 42.08,
+      "p99_ms": 55.37,
+      "rps": 0.0
+    },
+    "/api/portal/graphql": {
+      "requests": 51858,
+      "success_rate": 100.0,
+      "p50_ms": 12.65,
+      "p95_ms": 15.62,
+      "p99_ms": 18.43,
+      "rps": 0.0
+    },
+    "/api/hrm/employees": {
+      "requests": 51852,
+      "success_rate": 99.91,
+      "p50_ms": 10.99,
+      "p95_ms": 14.13,
+      "p99_ms": 17.63,
+      "rps": 0.0
+    }
+  }
+}

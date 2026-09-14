@@ -181,3 +181,214 @@ pub fn demand_forecast_requires_approval(from: &str, to: &str) -> bool {
 pub fn is_valid_demand_forecast_status(s: &str) -> bool {
     DEMAND_FORECAST.is_valid_status(s)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ==================== FSM-1: ProductionPlan ====================
+    #[test]
+    fn production_plan_valid_transitions() {
+        assert!(production_plan_can_transition("draft", "pending_approval").is_ok());
+        assert!(production_plan_can_transition("pending_approval", "approved").is_ok());
+        assert!(production_plan_can_transition("pending_approval", "draft").is_ok());
+        assert!(production_plan_can_transition("approved", "in_progress").is_ok());
+        assert!(production_plan_can_transition("in_progress", "completed").is_ok());
+    }
+
+    #[test]
+    fn production_plan_cancel_from_any_active() {
+        assert!(production_plan_can_transition("draft", "cancelled").is_ok());
+        assert!(production_plan_can_transition("pending_approval", "cancelled").is_ok());
+        assert!(production_plan_can_transition("approved", "cancelled").is_ok());
+        assert!(production_plan_can_transition("in_progress", "cancelled").is_ok());
+    }
+
+    #[test]
+    fn production_plan_invalid_transitions() {
+        assert!(production_plan_can_transition("draft", "approved").is_err());
+        assert!(production_plan_can_transition("approved", "completed").is_err());
+        assert!(production_plan_can_transition("completed", "in_progress").is_err());
+        assert!(production_plan_can_transition("cancelled", "draft").is_err());
+        assert!(production_plan_can_transition("in_progress", "approved").is_err());
+    }
+
+    #[test]
+    fn production_plan_same_status_rejected() {
+        // FsmDef 不隐式允许同状态转换，需显式声明
+        assert!(production_plan_can_transition("draft", "draft").is_err());
+        assert!(production_plan_can_transition("completed", "completed").is_err());
+    }
+
+    #[test]
+    fn test_production_plan_requires_approval() {
+        assert!(production_plan_requires_approval("pending_approval", "approved"));
+        assert!(!production_plan_requires_approval("draft", "pending_approval"));
+        assert!(!production_plan_requires_approval("approved", "in_progress"));
+    }
+
+    #[test]
+    fn production_plan_valid_status() {
+        assert!(is_valid_production_plan_status("draft"));
+        assert!(is_valid_production_plan_status("completed"));
+        assert!(!is_valid_production_plan_status("unknown"));
+        assert!(!is_valid_production_plan_status(""));
+    }
+
+    // ==================== FSM-2: Schedule ====================
+    #[test]
+    fn schedule_valid_transitions() {
+        assert!(schedule_can_transition("pending", "released").is_ok());
+        assert!(schedule_can_transition("released", "running").is_ok());
+        assert!(schedule_can_transition("running", "completed").is_ok());
+        assert!(schedule_can_transition("released", "pending").is_ok());
+    }
+
+    #[test]
+    fn schedule_cancel_transitions() {
+        assert!(schedule_can_transition("pending", "cancelled").is_ok());
+        assert!(schedule_can_transition("released", "cancelled").is_ok());
+        assert!(schedule_can_transition("running", "cancelled").is_ok());
+    }
+
+    #[test]
+    fn schedule_invalid_transitions() {
+        assert!(schedule_can_transition("pending", "running").is_err());
+        assert!(schedule_can_transition("running", "released").is_err());
+        assert!(schedule_can_transition("completed", "running").is_err());
+        assert!(schedule_can_transition("cancelled", "pending").is_err());
+    }
+
+    #[test]
+    fn test_schedule_requires_approval() {
+        assert!(schedule_requires_approval("pending", "released"));
+        assert!(!schedule_requires_approval("released", "running"));
+        assert!(!schedule_requires_approval("running", "completed"));
+    }
+
+    #[test]
+    fn schedule_valid_status() {
+        assert!(is_valid_schedule_status("pending"));
+        assert!(is_valid_schedule_status("completed"));
+        assert!(!is_valid_schedule_status("draft"));
+        assert!(!is_valid_schedule_status("invalid"));
+    }
+
+    // ==================== FSM-3: Capacity ====================
+    #[test]
+    fn capacity_valid_transitions() {
+        assert!(capacity_can_transition("available", "allocated").is_ok());
+        assert!(capacity_can_transition("allocated", "consumed").is_ok());
+        assert!(capacity_can_transition("allocated", "released").is_ok());
+        assert!(capacity_can_transition("available", "maintenance").is_ok());
+        assert!(capacity_can_transition("maintenance", "available").is_ok());
+        assert!(capacity_can_transition("released", "available").is_ok());
+    }
+
+    #[test]
+    fn capacity_invalid_transitions() {
+        assert!(capacity_can_transition("available", "consumed").is_err());
+        assert!(capacity_can_transition("allocated", "available").is_err());
+        assert!(capacity_can_transition("consumed", "available").is_err());
+        assert!(capacity_can_transition("maintenance", "allocated").is_err());
+        assert!(capacity_can_transition("released", "allocated").is_err());
+    }
+
+    #[test]
+    fn test_capacity_requires_approval() {
+        assert!(capacity_requires_approval("available", "allocated"));
+        assert!(!capacity_requires_approval("allocated", "consumed"));
+        assert!(!capacity_requires_approval("available", "maintenance"));
+    }
+
+    #[test]
+    fn capacity_valid_status() {
+        assert!(is_valid_capacity_status("available"));
+        assert!(is_valid_capacity_status("consumed"));
+        assert!(is_valid_capacity_status("maintenance"));
+        assert!(!is_valid_capacity_status("pending"));
+    }
+
+    // ==================== FSM-4: MaterialPlan ====================
+    #[test]
+    fn material_plan_valid_transitions() {
+        assert!(material_plan_can_transition("pending", "requisitioned").is_ok());
+        assert!(material_plan_can_transition("requisitioned", "sourced").is_ok());
+        assert!(material_plan_can_transition("sourced", "satisfied").is_ok());
+        assert!(material_plan_can_transition("pending", "shortage").is_ok());
+        assert!(material_plan_can_transition("shortage", "requisitioned").is_ok());
+    }
+
+    #[test]
+    fn material_plan_cancel_transitions() {
+        assert!(material_plan_can_transition("pending", "cancelled").is_ok());
+        assert!(material_plan_can_transition("requisitioned", "cancelled").is_ok());
+        assert!(material_plan_can_transition("sourced", "cancelled").is_ok());
+    }
+
+    #[test]
+    fn material_plan_invalid_transitions() {
+        assert!(material_plan_can_transition("pending", "sourced").is_err());
+        assert!(material_plan_can_transition("requisitioned", "satisfied").is_err());
+        assert!(material_plan_can_transition("satisfied", "sourced").is_err());
+        assert!(material_plan_can_transition("shortage", "sourced").is_err());
+        assert!(material_plan_can_transition("cancelled", "pending").is_err());
+    }
+
+    #[test]
+    fn test_material_plan_requires_approval() {
+        assert!(material_plan_requires_approval("pending", "requisitioned"));
+        assert!(!material_plan_requires_approval("requisitioned", "sourced"));
+        assert!(!material_plan_requires_approval("sourced", "satisfied"));
+    }
+
+    #[test]
+    fn material_plan_valid_status() {
+        assert!(is_valid_material_plan_status("pending"));
+        assert!(is_valid_material_plan_status("shortage"));
+        assert!(is_valid_material_plan_status("satisfied"));
+        assert!(!is_valid_material_plan_status("approved"));
+    }
+
+    // ==================== FSM-5: DemandForecast ====================
+    #[test]
+    fn demand_forecast_valid_transitions() {
+        assert!(demand_forecast_can_transition("draft", "calculated").is_ok());
+        assert!(demand_forecast_can_transition("calculated", "validated").is_ok());
+        assert!(demand_forecast_can_transition("validated", "adopted").is_ok());
+        assert!(demand_forecast_can_transition("calculated", "draft").is_ok());
+        assert!(demand_forecast_can_transition("adopted", "superseded").is_ok());
+    }
+
+    #[test]
+    fn demand_forecast_cancel_transitions() {
+        assert!(demand_forecast_can_transition("draft", "cancelled").is_ok());
+        assert!(demand_forecast_can_transition("calculated", "cancelled").is_ok());
+        assert!(demand_forecast_can_transition("validated", "cancelled").is_ok());
+    }
+
+    #[test]
+    fn demand_forecast_invalid_transitions() {
+        assert!(demand_forecast_can_transition("draft", "validated").is_err());
+        assert!(demand_forecast_can_transition("calculated", "adopted").is_err());
+        assert!(demand_forecast_can_transition("adopted", "validated").is_err());
+        assert!(demand_forecast_can_transition("superseded", "draft").is_err());
+        assert!(demand_forecast_can_transition("cancelled", "draft").is_err());
+    }
+
+    #[test]
+    fn test_demand_forecast_requires_approval() {
+        assert!(demand_forecast_requires_approval("validated", "adopted"));
+        assert!(!demand_forecast_requires_approval("draft", "calculated"));
+        assert!(!demand_forecast_requires_approval("calculated", "validated"));
+    }
+
+    #[test]
+    fn demand_forecast_valid_status() {
+        assert!(is_valid_demand_forecast_status("draft"));
+        assert!(is_valid_demand_forecast_status("superseded"));
+        assert!(is_valid_demand_forecast_status("adopted"));
+        assert!(!is_valid_demand_forecast_status("approved"));
+        assert!(!is_valid_demand_forecast_status(""));
+    }
+}

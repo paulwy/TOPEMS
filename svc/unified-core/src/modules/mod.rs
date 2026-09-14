@@ -32,3 +32,4 @@ pub mod openapi;
 // pub mod plugin;
 pub mod system_audit;
 pub mod tenant;
+pub mod subscription;

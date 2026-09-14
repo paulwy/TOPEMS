@@ -1488,4 +1488,42 @@ mod tests {
         };
         roundtrip(&info);
     }
+
+    #[test]
+    fn test_validate_state_transition_same_status() {
+        assert!(validate_state_transition("pending", "pending").is_ok());
+        assert!(validate_state_transition("in_progress", "in_progress").is_ok());
+    }
+
+    #[test]
+    fn test_validate_state_transition_valid_paths() {
+        assert!(validate_state_transition("pending", "released").is_ok());
+        assert!(validate_state_transition("pending", "cancelled").is_ok());
+        assert!(validate_state_transition("released", "in_progress").is_ok());
+        assert!(validate_state_transition("released", "cancelled").is_ok());
+        assert!(validate_state_transition("in_progress", "completed").is_ok());
+        assert!(validate_state_transition("in_progress", "paused").is_ok());
+        assert!(validate_state_transition("paused", "in_progress").is_ok());
+        assert!(validate_state_transition("paused", "cancelled").is_ok());
+        assert!(validate_state_transition("completed", "closed").is_ok());
+    }
+
+    #[test]
+    fn test_validate_state_transition_invalid_paths() {
+        assert!(validate_state_transition("pending", "in_progress").is_err());
+        assert!(validate_state_transition("pending", "completed").is_err());
+        assert!(validate_state_transition("released", "completed").is_err());
+        assert!(validate_state_transition("in_progress", "released").is_err());
+        assert!(validate_state_transition("completed", "in_progress").is_err());
+        assert!(validate_state_transition("cancelled", "released").is_err());
+        assert!(validate_state_transition("closed", "completed").is_err());
+    }
+
+    #[test]
+    fn test_validate_state_transition_error_message() {
+        let err = validate_state_transition("pending", "completed").unwrap_err();
+        assert!(err.contains("Invalid state transition"));
+        assert!(err.contains("pending"));
+        assert!(err.contains("completed"));
+    }
 }
