@@ -8,7 +8,8 @@ use topems_shared_core::response::ApiResponse;
 pub struct GisStatistics {
     pub device_points: i64,
     pub pipelines: i64,
-    pub warehouses: i64,
+    pub storage_locations: i64,
+    pub evidence_records: i64,
     pub business_locations: i64,
     pub factory_maps: i64,
     pub map_markers: i64,
@@ -36,9 +37,18 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
 
-    let warehouses: i64 = sqlx::query(only_own_schema_query!(
+    let storage_locations: i64 = sqlx::query(only_own_schema_query!(
         "gis",
         "SELECT COUNT(*) FROM gis.warehouse_locations"
+    ))
+    .fetch_one(&pool)
+    .await
+    .map(|row| row.get::<i64, _>(0))
+    .unwrap_or(0);
+
+    let evidence_records: i64 = sqlx::query(only_own_schema_query!(
+        "gis",
+        "SELECT COUNT(*) FROM gis.evidence_records"
     ))
     .fetch_one(&pool)
     .await
@@ -102,7 +112,8 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
     let stats = GisStatistics {
         device_points,
         pipelines,
-        warehouses,
+        storage_locations,
+        evidence_records,
         business_locations,
         factory_maps,
         map_markers,
