@@ -87,7 +87,14 @@ get_executable_name() {
     echo "${binary_name:-topems-$1}"
 }
 
-check_port() { lsof -Pi ":$1" -sTCP:LISTEN -t >/dev/null 2>&1 && return 0 || return 1; }
+check_port() {
+    if command -v lsof &>/dev/null; then
+        lsof -Pi ":$1" -sTCP:LISTEN -t >/dev/null 2>&1 && return 0 || return 1
+    fi
+    # Windows/Git Bash 兜底：netstat 检查 LISTENING
+    netstat -ano 2>/dev/null | grep -qE "[:.]$1 .*LISTENING" && return 0
+    return 1
+}
 get_service_pid() {
     local port=$2
     local executable_name=$(get_executable_name "$1")
@@ -1697,6 +1704,7 @@ parse_database_url() {
     local db_url=${DATABASE_URL:-"postgres://topems:topems_secret@localhost:5432/topems"}
     # 格式: postgres://user:password@host:port/database
     DB_USER=$(echo "$db_url" | sed -n 's|postgres://\([^:]*\):.*|\1|p')
+    DB_PASSWORD=$(echo "$db_url" | sed -n 's|postgres://[^:]*:\([^@]*\)@.*|\1|p')
     DB_HOST=$(echo "$db_url" | sed -n 's|.*@\([^:]*\):.*|\1|p')
     DB_PORT=$(echo "$db_url" | sed -n 's|.*@.*:\([0-9]*\)/.*|\1|p')
     DB_NAME=$(echo "$db_url" | sed -n 's|.*/\([^/]*\)$|\1|p')
@@ -1719,10 +1727,24 @@ db_start() {
         sleep 2
     elif command -v systemctl &> /dev/null; then
         sudo systemctl start postgresql 2>/dev/null || true
+    elif [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
+        # Windows/Git Bash：PostgreSQL 通常已注册为 Windows 服务，仅需探测 psql
+        local psql_bin=$(command -v psql 2>/dev/null)
+        if [ -z "$psql_bin" ]; then
+            for pg_dir in "/c/Program Files/PostgreSQL"/*/bin "/d/Program Files/PostgreSQL"/*/bin; do
+                if [ -x "$pg_dir/psql" ]; then psql_bin="$pg_dir/psql"; break; fi
+            done
+        fi
+        if [ -z "$psql_bin" ]; then
+            error "未找到 psql，请安装 PostgreSQL 并将其 bin 目录加入 PATH（或使用 topems.ps1）"
+            return 1
+        fi
+        PSQL_BIN="$psql_bin"
     fi
 
     parse_database_url
-    if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
+    local psql_cmd=${PSQL_BIN:-psql}
+    if PGPASSWORD=$DB_PASSWORD "$psql_cmd" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
         success "PostgreSQL 已启动"
         return 0
     else
@@ -1778,7 +1800,18 @@ redis_start() {
         sudo systemctl start redis 2>/dev/null || true
     fi
 
-    if redis-cli ping &> /dev/null; then
+    local redis_cli=$(command -v redis-cli 2>/dev/null)
+    if [ -z "$redis_cli" ] && { [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; }; then
+        # Windows/Git Bash：探测常见 Redis 安装（含禅道 Zbox 自带 Redis）
+        for rdir in "/e/ZenTao/bin/redis" "/c/Program Files/Redis" "/d/Program Files/Redis" "/c/Program Files/Memurai"; do
+            if [ -x "$rdir/redis-cli.exe" ]; then redis_cli="$rdir/redis-cli.exe"; break; fi
+        done
+    fi
+    if [ -z "$redis_cli" ]; then
+        error "未找到 redis-cli，请安装 Redis 并将其 bin 目录加入 PATH（或使用 topems.ps1）"
+        return 1
+    fi
+    if "$redis_cli" ping &> /dev/null; then
         success "Redis 已启动"
         return 0
     else
