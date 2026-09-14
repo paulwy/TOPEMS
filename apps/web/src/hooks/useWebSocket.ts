@@ -434,11 +434,27 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const reconnectTimeoutRef = useRef<number | null>(null);
   const connectTimeoutRef = useRef<number | null>(null);
   const heartbeatMonitorRef = useRef<HeartbeatMonitor | null>(null);
+  // 重连计数 ref：handleClose 闭包跨渲染单调递增，onopen/effect 初始化时清零
+  const reconnectCountRef = useRef(0);
+  // 回调 ref：避免 onMessage/onOpen/onClose/onError/authMessage/shouldReconnect 引用变化触发 effect 重建
+  const callbacksRef = useRef({
+    onMessage,
+    onOpen,
+    onClose,
+    onError,
+    authMessage,
+    shouldReconnect,
+  });
+  callbacksRef.current = { onMessage, onOpen, onClose, onError, authMessage, shouldReconnect };
   const authToken = useAuthToken();
   const token = autoAuthToken ? authToken : null;
 
   useEffect(() => {
     if (!enabled) return;
+
+    // 首次/配置变化时重置重连计数（重连循环由 handleClose 驱动）
+    reconnectCountRef.current = 0;
+    setReconnectCount(0);
 
     const url = wsPath
       ? `${(import.meta.env.VITE_WS_URL as string | undefined) || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`}${wsPath}`
@@ -500,10 +516,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         }
         setIsConnected(true);
         setConnectionStatus('connected');
+        reconnectCountRef.current = 0;
         setReconnectCount(0);
         setError(null);
-        authMessage?.();
-        onOpen?.();
+        callbacksRef.current.authMessage?.();
+        callbacksRef.current.onOpen?.();
         startHeartbeat(socketRef.current!);
       };
 
@@ -533,7 +550,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         } catch (e) {
           console.error('[WebSocket] Failed to parse incoming message', e);
         }
-        onMessage?.(message);
+        callbacksRef.current.onMessage?.(message);
       };
 
       socketRef.current.onclose = handleClose;
@@ -544,16 +561,24 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       stopHeartbeat();
       setIsConnected(false);
       setConnectionStatus('disconnected');
-      onClose?.(event);
+      callbacksRef.current.onClose?.(event);
 
-      if (enabled && (!shouldReconnect || shouldReconnect(event.code))) {
-        if (reconnectCount < reconnectAttempts) {
+      if (
+        enabled &&
+        (!callbacksRef.current.shouldReconnect || callbacksRef.current.shouldReconnect(event.code))
+      ) {
+        if (reconnectCountRef.current < reconnectAttempts) {
           // 使用指数退避 + 抖动算法
-          const delay = calculateBackoffDelay(reconnectCount, minReconnectDelay, maxReconnectDelay);
-          setReconnectCount((prev) => prev + 1);
+          const delay = calculateBackoffDelay(
+            reconnectCountRef.current,
+            minReconnectDelay,
+            maxReconnectDelay
+          );
+          reconnectCountRef.current += 1;
+          setReconnectCount(reconnectCountRef.current);
           setConnectionStatus('reconnecting');
           logger.info(
-            `[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCount + 1}/${reconnectAttempts})...`
+            `[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCountRef.current}/${reconnectAttempts})...`
           );
           reconnectTimeoutRef.current = window.setTimeout(connect, delay);
         } else {
@@ -566,7 +591,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     const handleError = (event: Event) => {
       setError(event);
       setConnectionStatus('error');
-      onError?.(event);
+      callbacksRef.current.onError?.(event);
     };
 
     connect();
@@ -585,17 +610,10 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     enabled,
     wsPath,
     queryParams,
-    authMessage,
-    onMessage,
-    onOpen,
-    onClose,
-    onError,
-    reconnectCount,
     reconnectAttempts,
     maxReconnectDelay,
     minReconnectDelay,
     connectionTimeout,
-    shouldReconnect,
     enableHeartbeat,
     heartbeatInterval,
     heartbeatTimeout,
@@ -617,7 +635,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
   const connect = useCallback(() => {
     if (socketRef.current?.readyState !== WebSocket.OPEN) {
-      setReconnectCount(0);
       setAuthStatus('pending');
       const url = wsPath
         ? `${(import.meta.env.VITE_WS_URL as string | undefined) || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`}${wsPath}`
