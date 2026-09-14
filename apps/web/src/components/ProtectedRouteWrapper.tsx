@@ -2,6 +2,7 @@ import React from 'react';
 import { ModuleGate } from './PermissionGate';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { SmartLayout } from '../layouts/SmartLayout';
+import { AdaptiveLayout, isUIV3Enabled } from '../layouts';
 import type { RouteConfig } from '../routes';
 
 interface ProtectedRouteWrapperProps {
@@ -12,17 +13,21 @@ interface ProtectedRouteWrapperProps {
 const ProtectedRouteWrapper: React.FC<ProtectedRouteWrapperProps> = ({ route, children }) => {
   const permissions = route.requiredPermissions || [];
   const hasModuleGate = route.module && route.action;
+  const v3Enabled = isUIV3Enabled();
 
   const renderContent = (withLayout: boolean) => {
+    // V3 布局：使用 AdaptiveLayout（GlobalLayoutV3 / MobileLayoutV3）
+    const LayoutWrapper = v3Enabled ? AdaptiveLayout : SmartLayout;
+
     const content = hasModuleGate ? (
       <ModuleGate
         module={route.module!}
         action={route.action!}
       >
-        {withLayout ? <SmartLayout>{children}</SmartLayout> : children}
+        {withLayout ? <LayoutWrapper>{children}</LayoutWrapper> : children}
       </ModuleGate>
     ) : withLayout ? (
-      <SmartLayout>{children}</SmartLayout>
+      <LayoutWrapper>{children}</LayoutWrapper>
     ) : (
       children
     );

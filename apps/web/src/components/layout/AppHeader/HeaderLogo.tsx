@@ -3,6 +3,7 @@ import { Box, IconButton, Typography } from '@mui/material';
 import { Menu as MenuIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { gradientTextSx } from '@/theme/effects';
 import i18n from '@/i18n';
 
 interface HeaderLogoProps {
@@ -70,14 +71,11 @@ export const HeaderLogo: React.FC<HeaderLogoProps> = ({
         <Typography
           variant='h6'
           className='app-header-title'
-          sx={{
+          sx={(theme) => ({
+            ...gradientTextSx(theme),
             fontWeight: 700,
-            background: 'linear-gradient(135deg, primary.main, secondary.main)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
             display: { xs: 'none', sm: 'block' },
-          }}
+          })}
         >
           {title || 'TOPEMS'}
         </Typography>

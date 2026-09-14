@@ -223,7 +223,8 @@
       "result_count": "{{count}} 个结果",
       "navigate": "导航",
       "select": "选择",
-      "close": "关闭"
+      "close": "关闭",
+      "k15": "当前域"
     },
     "filter_bar": {
       "all": "全部",

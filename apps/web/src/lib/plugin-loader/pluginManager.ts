@@ -107,7 +107,6 @@ const PLUGIN_ICON_MAP: Record<string, string> = {
   oa: 'FileText',
   im: 'MessageSquare',
   admin: 'Settings',
-  lowcode: 'Blocks',
   plugin: 'Puzzle',
 };
 
@@ -207,7 +206,6 @@ export class PluginManager {
       oa: 'shared.plugin_manager.k25',
       im: 'shared.plugin_manager.k26',
       admin: 'shared.plugin_manager.k27',
-      lowcode: 'shared.plugin_manager.k28',
       plugin: 'shared.plugin_manager.k29',
     };
     return keys[code] || '';

@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '../components/auth/ProtectedRoute';
 import { GlobalLayout } from '../components/layout';
+import { AdaptiveLayout, isUIV3Enabled } from '../layouts';
 import DynamicRoutes from '../components/DynamicRoutes';
 import ProtectedRouteWrapper from '../components/ProtectedRouteWrapper';
 import PageLoader from '../components/PageLoader';
@@ -19,6 +20,7 @@ import i18n from '@/i18n';
 const TemplateDemoPage = createSafeLazy(() =>
   import('../components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
 );
+const RedesignDemoPage = createSafeLazy(() => import('../pages/RedesignDemo'));
 const DynamicRouter = createSafeLazy(() => import('../lib/plugin-loader/DynamicRouter'));
 const { lazy: PerformanceTestPage } = lazyWithPreload(
   () => import('../pages/performance/PerformanceTestPage')
@@ -124,9 +126,15 @@ const AppRoutes: React.FC = () => {
             path='/core/*'
             element={
               <ProtectedRoute>
-                <GlobalLayout>
-                  <DynamicRouter />
-                </GlobalLayout>
+                {isUIV3Enabled() ? (
+                  <AdaptiveLayout>
+                    <DynamicRouter />
+                  </AdaptiveLayout>
+                ) : (
+                  <GlobalLayout>
+                    <DynamicRouter />
+                  </GlobalLayout>
+                )}
               </ProtectedRoute>
             }
           />
@@ -136,27 +144,51 @@ const AppRoutes: React.FC = () => {
             path='/core/*'
             element={
               <ProtectedRoute>
-                <GlobalLayout>
-                  <div style={{ padding: 5 }}>
-                    <h2>{i18n.t('routes.app_routes.k0')}</h2>
-                    <p>
-                      {i18n.t('routes.app_routes.k1')}
-                      Module Federation。
-                    </p>
-                    <p>{i18n.t('routes.app_routes.k2')}</p>
-                    <ul>
-                      <li>
-                        <a href={HRM_PATHS.root}>{i18n.t('routes.app_routes.k3')}</a>
-                      </li>
-                      <li>
-                        <a href={CRM_PATHS.root}>{i18n.t('routes.app_routes.k4')}</a>
-                      </li>
-                      <li>
-                        <a href={DASHBOARD_PATHS.dashboard}>{i18n.t('routes.app_routes.k5')}</a>
-                      </li>
-                    </ul>
-                  </div>
-                </GlobalLayout>
+                {isUIV3Enabled() ? (
+                  <AdaptiveLayout>
+                    <div style={{ padding: 5 }}>
+                      <h2>{i18n.t('routes.app_routes.k0')}</h2>
+                      <p>
+                        {i18n.t('routes.app_routes.k1')}
+                        Module Federation。
+                      </p>
+                      <p>{i18n.t('routes.app_routes.k2')}</p>
+                      <ul>
+                        <li>
+                          <a href={HRM_PATHS.root}>{i18n.t('routes.app_routes.k3')}</a>
+                        </li>
+                        <li>
+                          <a href={CRM_PATHS.root}>{i18n.t('routes.app_routes.k4')}</a>
+                        </li>
+                        <li>
+                          <a href={DASHBOARD_PATHS.dashboard}>{i18n.t('routes.app_routes.k5')}</a>
+                        </li>
+                      </ul>
+                    </div>
+                  </AdaptiveLayout>
+                ) : (
+                  <GlobalLayout>
+                    <div style={{ padding: 5 }}>
+                      <h2>{i18n.t('routes.app_routes.k0')}</h2>
+                      <p>
+                        {i18n.t('routes.app_routes.k1')}
+                        Module Federation。
+                      </p>
+                      <p>{i18n.t('routes.app_routes.k2')}</p>
+                      <ul>
+                        <li>
+                          <a href={HRM_PATHS.root}>{i18n.t('routes.app_routes.k3')}</a>
+                        </li>
+                        <li>
+                          <a href={CRM_PATHS.root}>{i18n.t('routes.app_routes.k4')}</a>
+                        </li>
+                        <li>
+                          <a href={DASHBOARD_PATHS.dashboard}>{i18n.t('routes.app_routes.k5')}</a>
+                        </li>
+                      </ul>
+                    </div>
+                  </GlobalLayout>
+                )}
               </ProtectedRoute>
             }
           />
@@ -167,6 +199,14 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <TemplateDemoPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/redesign-demo'
+          element={
+            <ProtectedRoute>
+              <RedesignDemoPage />
             </ProtectedRoute>
           }
         />

@@ -146,4 +146,19 @@ describe('AppHeader', () => {
     expect(screen.queryByTestId('header-notifications')).not.toBeInTheDocument();
     expect(screen.queryByTestId('header-user-menu')).not.toBeInTheDocument();
   });
+
+  it('renders BusinessDomainTabs L1 tablist with business domain tabs', () => {
+    renderWithProviders(<AppHeader checkPermission={() => true} />);
+    const tablist = screen.getByRole('tablist');
+    expect(tablist).toBeInTheDocument();
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.length).toBeGreaterThan(0);
+    // 当前路由无匹配模块时兜底高亮默认域（enterprise），至少一个 tab 处于选中态
+    expect(tabs.some((tab) => tab.getAttribute('aria-selected') === 'true')).toBe(true);
+  });
+
+  it('BusinessDomainTabs renders without checkPermission (no permission filtering)', () => {
+    renderWithProviders(<AppHeader />);
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+  });
 });

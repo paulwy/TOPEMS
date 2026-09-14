@@ -151,7 +151,8 @@ describe('NotificationItem', () => {
     );
     const rootDiv = container.firstChild as HTMLElement;
     expect(rootDiv).toBeTruthy();
-    expect(rootDiv.style.backgroundColor).toBe('rgba(59, 130, 246, 0.05)');
+    // 项目自定义主题 primary.main = #365ae3，而非 MUI 默认蓝
+    expect(rootDiv.style.backgroundColor).toBe('rgba(54, 90, 227, 0.05)');
   });
 
   it('does not apply unread background style when notification is read', () => {

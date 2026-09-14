@@ -2311,6 +2311,8 @@
   "shared.shortcuts.k45": "Search",
   "shared.shortcuts.k46": "After Oneitem Result",
   "shared.shortcuts.k47": "Search",
+  "shared.shortcuts.k48": "Go to home",
+  "shared.shortcuts.k49": "Navigation",
   "shared.use_ai_helper.k0": "Request failed",
   "shared.use_auto_breadcrumbs.k0": "Home",
   "shared.use_auto_breadcrumbs.k1": "Details",
@@ -9509,5 +9511,7 @@
   "shared.config.ai_business_copilot": "Business Copilot",
   "shared.config.ai_governance_dashboard": "AI Governance Dashboard",
   "shared.config.ai_business_copilot_desc": "One-stop AI assistant integrating business module selection, smart forms and document intelligence",
-  "shared.config.ai_governance_dashboard_desc": "Comprehensive monitoring of AI system security, compliance, cost and performance"
+  "shared.config.ai_governance_dashboard_desc": "Comprehensive monitoring of AI system security, compliance, cost and performance",
+  "shared.business_domain_tabs.k0": "Business domains",
+  "shared.language_selector.k0": "Change language"
 }

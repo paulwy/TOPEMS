@@ -1,0 +1,507 @@
+/**
+ * TOPEMS Industrial OS — Global Styles v3
+ * 
+ * 用途：新版 UI 的全局重置、基础样式、keyframes、工具类。
+ * 依赖：redesign-tokens.css（必须先加载）。
+ */
+
+/* ============================================================
+   0. 字体加载（Google Fonts）
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400..700&family=Sora:wght@400..700&display=swap');
+
+/* ============================================================
+   1. 重置与基础
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  isolation: isolate;
+}
+
+/* 暗色模式默认（ Industrial OS 主体验） */
+html,
+body {
+  color-scheme: dark;
+}
+
+[data-theme='light'],
+.redesign-light {
+  color-scheme: light;
+}
+
+/* 图片与媒体 */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+a {
+  color: var(--accent-secondary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--accent-secondary-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-secondary);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   2. 排版工具类
+   ============================================================ */
+.font-brand { font-family: var(--font-brand); }
+.font-ui { font-family: var(--font-ui); }
+.font-mono { font-family: var(--font-mono); }
+
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-md { font-size: var(--text-md); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+
+.leading-none { line-height: var(--leading-none); }
+.leading-tight { line-height: var(--leading-tight); }
+.leading-snug { line-height: var(--leading-snug); }
+.leading-normal { line-height: var(--leading-normal); }
+.leading-relaxed { line-height: var(--leading-relaxed); }
+
+.tracking-tight { letter-spacing: var(--tracking-tight); }
+.tracking-wide { letter-spacing: var(--tracking-wide); }
+.tracking-wider { letter-spacing: var(--tracking-wider); }
+
+.uppercase-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   3. 颜色工具类
+   ============================================================ */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-disabled { color: var(--text-disabled); }
+.text-accent { color: var(--accent-primary); }
+.text-cyan { color: var(--accent-secondary); }
+.text-success { color: var(--success-500); }
+.text-warning { color: var(--warning-500); }
+.text-error { color: var(--error-500); }
+.text-info { color: var(--info-500); }
+
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-elevated { background-color: var(--bg-elevated); }
+.bg-surface-1 { background-color: var(--surface-1); }
+.bg-surface-2 { background-color: var(--surface-2); }
+.bg-surface-3 { background-color: var(--surface-3); }
+
+.border-default { border-color: var(--border-default); }
+.border-hover { border-color: var(--border-hover); }
+
+/* ============================================================
+   4. 布局工具类
+   ============================================================ */
+.stack-xs > * + * { margin-top: var(--space-1); }
+.stack-sm > * + * { margin-top: var(--space-2); }
+.stack-md > * + * { margin-top: var(--space-3); }
+.stack-lg > * + * { margin-top: var(--space-4); }
+.stack-xl > * + * { margin-top: var(--space-6); }
+
+.row-xs { display: flex; gap: var(--space-1); }
+.row-sm { display: flex; gap: var(--space-2); }
+.row-md { display: flex; gap: var(--space-3); }
+.row-lg { display: flex; gap: var(--space-4); }
+.row-xl { display: flex; gap: var(--space-6); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================================
+   5. Keyframes
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+  50% {
+    box-shadow: 0 0 16px 2px rgba(245, 158, 11, 0.25);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes tab-underline {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   6. 动画工具类
+   ============================================================ */
+.animate-fade-in {
+  animation: fadeIn var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s var(--ease-in-out) infinite;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s var(--ease-in-out) infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* 级联入场延迟 */
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 160ms; }
+.stagger-5 { animation-delay: 200ms; }
+.stagger-6 { animation-delay: 240ms; }
+.stagger-7 { animation-delay: 280ms; }
+.stagger-8 { animation-delay: 320ms; }
+
+/* ============================================================
+   7. 骨架屏
+   ============================================================ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   8. 滚动条
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-4);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   9. 装饰性背景
+   ============================================================ */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.bg-dot {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-radial-glow {
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 90% 10%, rgba(6, 182, 212, 0.06) 0%, transparent 45%),
+    var(--bg-primary);
+}
+
+/* ============================================================
+   10. Reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   11. 响应式网格工具类
+   ============================================================ */
+
+.r-grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-4);
+}
+
+.r-col-12 { grid-column: span 12; }
+.r-col-8 { grid-column: span 12; }
+.r-col-6 { grid-column: span 12; }
+.r-col-4 { grid-column: span 12; }
+.r-col-3 { grid-column: span 12; }
+
+@media (min-width: 1024px) {
+  .r-col-lg-8 { grid-column: span 8; }
+  .r-col-lg-6 { grid-column: span 6; }
+  .r-col-lg-4 { grid-column: span 4; }
+  .r-col-lg-3 { grid-column: span 3; }
+}
+
+/* ============================================================
+   12. Redesign 组件交互样式
+   ============================================================ */
+
+/* Button */
+.redesign-button:hover {
+  border-color: var(--border-hover);
+}
+
+.redesign-button[data-variant='primary']:hover {
+  background-color: var(--accent-primary-hover);
+  border-color: var(--accent-primary-hover);
+  box-shadow: var(--glow-amber-sm);
+}
+
+.redesign-button[data-variant='secondary']:hover {
+  background-color: var(--surface-2);
+  border-color: var(--border-hover);
+}
+
+.redesign-button[data-variant='ghost']:hover {
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.redesign-button[data-variant='danger']:hover {
+  background-color: var(--error-500);
+  border-color: var(--error-500);
+  box-shadow: var(--glow-error);
+}
+
+.redesign-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Card */
+.redesign-card-interactive:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.redesign-card-interactive[data-accent='amber']:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: var(--glow-amber-sm);
+}
+
+.redesign-card-interactive[data-accent='cyan']:hover {
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: var(--glow-cyan-sm);
+}
+
+/* Input */
+.redesign-input-wrapper > div:focus-within {
+  border-color: var(--accent-secondary);
+  box-shadow: var(--glow-cyan-sm);
+}
+
+.redesign-input-wrapper > div[data-error='true'] {
+  border-color: var(--error-500);
+}
+
+/* Tag remove button */
+.redesign-tag button:hover {
+  opacity: 1;
+}
+
+/* ============================================================
+   12. 旧 MUI 覆盖清理标记
+   说明：当新组件全面替换 MUI 后，以下覆盖应删除。
+   ============================================================ */
+/* 
+ * TODO(v3-cleanup):
+ * - 删除 index.css 中所有 .dark .MuiPaper-root / .dark .MuiCard-root 覆盖
+ * - 删除 .cyber-page-enter / .cyber-hud-* 相关动画
+ * - 删除 .MuiButton-root:active 缩放覆盖（已内建到新 Button 组件）
+ */

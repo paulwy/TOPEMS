@@ -56,7 +56,7 @@ const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps) => {
           {i18n.t('components.shortcuts_help_panel.k0')}{' '}
           <Chip
             size='small'
-            label='Ctrl + ?'
+            label={getShortcutKeyLabel(GLOBAL_SHORTCUTS.OPEN_HELP)}
           />{' '}
           {i18n.t('components.shortcuts_help_panel.k1')}
         </Typography>

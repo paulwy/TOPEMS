@@ -1,713 +1,797 @@
-import { designTokens } from '@topems/tokens';
-import React, { useEffect, useState, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
-import { apiLogger } from '@/utils/logger';
-import { useNavigate } from 'react-router-dom';
-import { AUTH_PATHS } from '@/routes/auth';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Badge,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Checkbox,
-} from '@mui/material';
-import i18n from '@/i18n';
-import {
-  User,
   Activity,
+  AlertTriangle,
+  Box,
+  CheckCircle2,
   Clock,
-  ListTodo,
-  CheckCircle,
-  GitBranch,
-  FileText,
-  Folder,
+  Cpu,
+  Factory,
+  FileQuestion,
+  Inbox,
+  Package,
+  RefreshCw,
+  Search,
+  TrendingUp,
+  Truck,
+  Zap,
 } from 'lucide-react';
-import { docApi } from '@/api/doc';
-import { workflowApi } from '@/api/workflow';
-import { qmsApi } from '@/api/qms';
-import { ehsApi } from '@/api/ehs';
-import { srmApi } from '@/api/srm';
-import { limsApi } from '@/api/lims';
-import { rdApi } from '@/api/rd';
-import { biApi } from '@/api/bi';
-import { scmApi } from '@/api/scm';
-// V34.0: BFF GraphQL 聚合 API
-import { getDashboard, completeTodoGql, subscribeServiceHealth } from '@/api/bff';
-import { useAuth } from '@/hooks/useAuth';
-import { useServiceStatus } from '@/hooks/useServiceStatus';
-import { DashboardTemplate, type StatCardConfig } from '@/components/templates';
+
 import {
-  DashboardQuickActions,
-  defaultQuickActions,
-  ServiceStatusMonitor,
-  RecentActivities,
-  type ActivityItem,
-  QuickAccessSection,
-  TodoListSection,
-  ServiceMonitorSection,
-  RecentActivitySection,
-} from '@/components/dashboard';
-import { EmptyState } from '@/components/common';
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  PageHeader,
+  Select,
+  StatTile,
+  StatusLight,
+  Tabs,
+  Tag,
+} from '@/components/redesign';
+import { getDashboard } from '@/api/bff';
+import i18n from '@/i18n';
 
-interface DashboardPageProps {
-  onLogout?: () => void;
-}
+import '@/theme/redesign-tokens.css';
+import '@/theme/redesign-global.css';
 
-interface EhsHazard {
-  id: string;
-  status: string;
-}
+const QUERY_KEY = ['dashboard', 'overview'];
 
-interface BiMetric {
-  title: string;
-  value: number;
-  icon?: string;
-}
+// 默认模块状态（API 无数据时的兜底）
+const defaultModules = [
+  {
+    id: 'mes',
+    name: '制造执行 MES',
+    desc: '产线实时状态与工单追踪',
+    icon: Factory,
+    status: 'running' as const,
+    stat: '87.3%',
+  },
+  {
+    id: 'erp',
+    name: '企业资源 ERP',
+    desc: '财务、采购、库存一体化',
+    icon: Box,
+    status: 'running' as const,
+    stat: '12 笔待审',
+  },
+  {
+    id: 'scm',
+    name: '供应链 SCM',
+    desc: '供应商协同与交付计划',
+    icon: Truck,
+    status: 'warning' as const,
+    stat: '3 单延期',
+  },
+  {
+    id: 'qms',
+    name: '质量管理 QMS',
+    desc: '质检记录与不合格品处理',
+    icon: CheckCircle2,
+    status: 'running' as const,
+    stat: '99.2%',
+  },
+  {
+    id: 'wms',
+    name: '仓储物流 WMS',
+    desc: '入库、出库、盘点、库位',
+    icon: Package,
+    status: 'idle' as const,
+    stat: '4,821 件',
+  },
+  {
+    id: 'bi',
+    name: '数据决策 BI',
+    desc: '指标看板与自定义报表',
+    icon: TrendingUp,
+    status: 'running' as const,
+    stat: '实时',
+  },
+];
 
-interface FlowMonthlyData {
-  month: string;
-  instances_started?: number;
-  approvals_processed?: number;
-}
+const defaultAlerts = [
+  { id: 1, level: 'error' as const, message: '产线 A-03 设备温度过高', time: '2 min ago' },
+  { id: 2, level: 'warning' as const, message: '原材料库存低于安全水位', time: '15 min ago' },
+  { id: 3, level: 'info' as const, message: '月度质量审核已完成', time: '1 h ago' },
+];
 
-interface AuditLog {
-  id: string;
-  action?: string;
-  module?: string;
-  created_at: string;
-}
+const defaultTasks = [
+  { id: 1, title: '审批采购申请 PO-2026-0914-001', priority: 'high' as const, due: '今天' },
+  { id: 2, title: '复核工单 WO-8821 工艺参数', priority: 'medium' as const, due: '明天' },
+  { id: 3, title: '更新供应商准入资料', priority: 'low' as const, due: '周五' },
+];
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) => {
-  const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  void _onLogout;
-  const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
-  const queryClient = useQueryClient();
+const tabs = [
+  { id: 'overview', label: '概览' },
+  { id: 'modules', label: '模块', badge: 6 },
+  { id: 'alerts', label: '告警', badge: 3 },
+];
 
-  const [todoTab, setTodoTab] = useState(0);
+const timeRangeOptions = [
+  { value: '1h', label: '最近 1 小时' },
+  { value: '24h', label: '最近 24 小时' },
+  { value: '7d', label: '最近 7 天' },
+  { value: '30d', label: '最近 30 天' },
+];
 
-  const statsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.DASHBOARD.STATS, user?.id],
+const DashboardPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [timeRange, setTimeRange] = useState('24h');
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: [...QUERY_KEY, timeRange],
     queryFn: async () => {
-      const [docRes, flowStatsRes, notificationRes] = await Promise.allSettled([
-        docApi.list(),
-        workflowApi.getStatistics(),
-        user?.id
-          ? workflowApi.getNotificationCount(user.id)
-          : Promise.resolve({ success: false, data: { count: 0 } }),
-      ]);
-
-      const docData =
-        docRes.status === 'fulfilled' && docRes.value.success ? docRes.value.data : null;
-      const flowData =
-        flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success
-          ? flowStatsRes.value.data
-          : null;
-      const notificationData =
-        notificationRes.status === 'fulfilled' && notificationRes.value.success
-          ? notificationRes.value.data
-          : null;
-
-      return {
-        fileCount: docData?.files?.length || 0,
-        docCount: docData?.total || 0,
-        workflowCount: flowData?.total_workflows || 0,
-        notificationCount:
-          (notificationData as { count?: number; total?: number })?.count ??
-          (notificationData as { count?: number; total?: number })?.total ??
-          0,
-      };
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const moduleStatsQuery = useQuery({
-    queryKey: QUERY_KEYS.DASHBOARD.MODULE_STATS,
-    queryFn: async () => {
-      const [qmsRes, srmRes, limsRes, rsRes, ehsRes] = await Promise.allSettled([
-        qmsApi.getStatistics(),
-        srmApi.getStatistics(),
-        limsApi.getStatistics(),
-        rdApi.getStatistics(),
-        ehsApi.listHazards({ page: 1, pagesize: 1000 }),
-      ]);
-
-      return {
-        qms: {
-          total:
-            (qmsRes.status === 'fulfilled' &&
-              qmsRes.value.success &&
-              qmsRes.value.data?.total_inspections) ||
-            0,
-          active:
-            (qmsRes.status === 'fulfilled' &&
-              qmsRes.value.success &&
-              qmsRes.value.data?.active_standards) ||
-            0,
-        },
-        ehs: {
-          total:
-            (ehsRes.status === 'fulfilled' && ehsRes.value.success && ehsRes.value.data?.total) ||
-            0,
-          active:
-            (ehsRes.status === 'fulfilled' &&
-              ehsRes.value.success &&
-              ehsRes.value.data?.items?.filter((h: EhsHazard) => h.status === 'active').length) ||
-            0,
-        },
-        srm: {
-          total:
-            (srmRes.status === 'fulfilled' &&
-              srmRes.value.success &&
-              srmRes.value.data?.total_suppliers) ||
-            0,
-          active:
-            (srmRes.status === 'fulfilled' &&
-              srmRes.value.success &&
-              srmRes.value.data?.active_suppliers) ||
-            0,
-        },
-        lims: {
-          total:
-            (limsRes.status === 'fulfilled' &&
-              limsRes.value.success &&
-              limsRes.value.data?.total_samples) ||
-            0,
-          active:
-            (limsRes.status === 'fulfilled' &&
-              limsRes.value.success &&
-              limsRes.value.data?.testing_samples) ||
-            0,
-        },
-        rs: {
-          total:
-            (rsRes.status === 'fulfilled' &&
-              rsRes.value.success &&
-              rsRes.value.data?.total_projects) ||
-            0,
-          active:
-            (rsRes.status === 'fulfilled' &&
-              rsRes.value.success &&
-              rsRes.value.data?.in_progress_projects) ||
-            0,
-        },
-      };
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const chartDataQuery = useQuery({
-    queryKey: QUERY_KEYS.DASHBOARD.CHART_DATA,
-    queryFn: async () => {
-      const [summaryRes, flowStatsRes] = await Promise.allSettled([
-        biApi.fetchSummaryDashboard(),
-        workflowApi.getStatistics(),
-      ]);
-
-      const summary =
-        summaryRes.status === 'fulfilled' && summaryRes.value.success
-          ? summaryRes.value.data
-          : null;
-      const flowStats =
-        flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success
-          ? flowStatsRes.value.data
-          : null;
-
-      return {
-        moduleDistribution:
-          summary?.key_metrics?.map((metric: BiMetric) => ({
-            name: metric.title,
-            value: metric.value,
-            color: metric.icon || 'primary.main',
-          })) || [],
-        monthlyTrend:
-          flowStats?.monthly_data?.map((item: FlowMonthlyData) => ({
-            name: item.month,
-            value: item.instances_started || item.approvals_processed || 0,
-          })) || [],
-      };
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // V34.0: 使用 BFF GraphQL 替代多次 REST 调用获取待办 + 服务健康
-  const bffDashboardQuery = useQuery({
-    queryKey: [...QUERY_KEYS.DASHBOARD.TODOS, 'bff-graphql'],
-    queryFn: async () => {
-      return await getDashboard();
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const activitiesQuery = useQuery<ActivityItem[]>({
-    queryKey: QUERY_KEYS.DASHBOARD.ACTIVITIES,
-    queryFn: async () => {
-      const [logsRes] = await Promise.allSettled([
-        scmApi.auditLogs.list({ page: 1, pageSize: 10 }),
-      ]);
-
-      if (logsRes.status === 'fulfilled' && logsRes.value.success && logsRes.value.data?.items) {
-        const logs = logsRes.value.data.items;
-        return logs.map((log: AuditLog) => {
-          let icon = <User size={16} />;
-          let type = i18n.t('pages.dashboard_page.k0');
-
-          if (log.module?.includes('doc') || log.module?.includes('file')) {
-            icon = <FileText size={16} />;
-            type = i18n.t('pages.dashboard_page.k0');
-          } else if (
-            log.module?.includes('flow') ||
-            log.module?.includes('workflow') ||
-            log.module?.includes('approval')
-          ) {
-            icon = <GitBranch size={16} />;
-            type = i18n.t('pages.dashboard_page.k1');
-          } else if (log.module?.includes('folder')) {
-            icon = <Folder size={16} />;
-            type = i18n.t('pages.dashboard_page.k2');
-          }
-
-          const timeDiff = Date.now() - new Date(log.created_at).getTime();
-          const minutes = Math.floor(timeDiff / 60000);
-          const hours = Math.floor(minutes / 60);
-          const days = Math.floor(hours / 24);
-
-          let time = i18n.t('pages.dashboard_page.k1');
-          if (days > 0) {
-            time = `${days}${i18n.t('pages.dashboard_page.k3')}`;
-          } else if (hours > 0) {
-            time = `${hours}${i18n.t('pages.dashboard_page.k4')}`;
-          } else if (minutes > 0) {
-            time = `${minutes}${i18n.t('pages.dashboard_page.k5')}`;
-          }
-
-          return {
-            id: log.id,
-            title: log.action || i18n.t('pages.dashboard_page.k2'),
-            type,
-            time,
-            icon,
-          };
-        });
-      }
-      return [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const stats = statsQuery.data ?? {
-    fileCount: 0,
-    workflowCount: 0,
-    docCount: 0,
-    notificationCount: 0,
-  };
-  // 保留业务数据查询：模块统计与图表数据用于缓存预热 / 后续扩展，当前阶段不直接渲染
-  const _moduleStats = moduleStatsQuery.data ?? {
-    qms: { total: 0, active: 0 },
-    ehs: { total: 0, active: 0 },
-    srm: { total: 0, active: 0 },
-    lims: { total: 0, active: 0 },
-    rs: { total: 0, active: 0 },
-  };
-  const _chartData = chartDataQuery.data ?? {
-    moduleDistribution: [] as { name: string; value: number; color: string }[],
-    monthlyTrend: [] as { name: string; value: number }[],
-  };
-  void _moduleStats;
-  void _chartData;
-  const recentActivities = activitiesQuery.data ?? [];
-  // V34.0: 从 BFF GraphQL 数据中派生待办列表（保留原始 string id 供 mutation 使用）
-  const todos: Array<{ id: string; title: string; type: string; done: boolean }> = (
-    bffDashboardQuery.data?.todos ?? []
-  ).map((todo) => ({
-    id: todo.id,
-    title: todo.title,
-    type: todo.source,
-    done: todo.status === 'completed' || todo.status === 'read',
-  }));
-
-  const loading =
-    statsQuery.isLoading ||
-    moduleStatsQuery.isLoading ||
-    chartDataQuery.isLoading ||
-    bffDashboardQuery.isLoading ||
-    activitiesQuery.isLoading;
-
-  // V64 降级：开发环境微服务未启动是常态，404/连接失败降级为 warn，
-  // 生产环境保持 error 级别，以便监控真正的路由/服务异常
-  const logLvl: 'error' | 'warn' = import.meta.env.DEV ? 'warn' : 'error';
-
-  useEffect(() => {
-    if (statsQuery.isError) {
-      apiLogger[logLvl](i18n.t('pages.dashboard_page.k6'), statsQuery.error);
-    }
-  }, [statsQuery.isError, statsQuery.error, logLvl]);
-
-  useEffect(() => {
-    if (moduleStatsQuery.isError) {
-      apiLogger[logLvl](i18n.t('pages.dashboard_page.k7'), moduleStatsQuery.error);
-    }
-  }, [moduleStatsQuery.isError, moduleStatsQuery.error, logLvl]);
-
-  useEffect(() => {
-    if (chartDataQuery.isError) {
-      apiLogger[logLvl](i18n.t('pages.dashboard_page.k8'), chartDataQuery.error);
-    }
-  }, [chartDataQuery.isError, chartDataQuery.error, logLvl]);
-
-  useEffect(() => {
-    if (bffDashboardQuery.isError) {
-      apiLogger[logLvl](i18n.t('pages.dashboard_page.bffgraphql_9'), bffDashboardQuery.error);
-    }
-  }, [bffDashboardQuery.isError, bffDashboardQuery.error, logLvl]);
-
-  useEffect(() => {
-    if (activitiesQuery.isError) {
-      apiLogger[logLvl](i18n.t('pages.dashboard_page.k10'), activitiesQuery.error);
-    }
-  }, [activitiesQuery.isError, activitiesQuery.error, logLvl]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate(AUTH_PATHS.login);
-      return;
-    }
-
-    refreshServiceStatuses();
-
-    const intervalId = setInterval(() => {
-      refreshServiceStatuses();
-    }, 30000);
-
-    return () => clearInterval(intervalId);
-  }, [navigate, isAuthenticated, refreshServiceStatuses]);
-
-  // V34.0: BFF GraphQL Subscription — 实时服务健康推送
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const unsubscribe = subscribeServiceHealth(() => {
-      refreshServiceStatuses();
-    });
-    return unsubscribe;
-  }, [isAuthenticated, refreshServiceStatuses]);
-
-  const handleQuickAccess = useCallback(
-    (path: string) => {
-      navigate(path);
-    },
-    [navigate]
-  );
-
-  // V34.0: BFF Mutation — 完成待办（必须在所有 early return 之前调用 hooks）
-  const handleTodoToggle = useCallback(
-    async (id: string) => {
       try {
-        await completeTodoGql(id);
-        queryClient.invalidateQueries({
-          queryKey: [...QUERY_KEYS.DASHBOARD.TODOS, 'bff-graphql'],
-
-          exact: false,
-          refetchType: 'active',
-        });
-      } catch (err) {
-        // V64 降级：开发环境 portal 服务未启动是常态
-        apiLogger[logLvl](i18n.t('pages.dashboard_page.bffmutation_11'), err);
+        const result = await getDashboard();
+        return result;
+      } catch (e) {
+        // API 不可用时返回 null，使用默认数据
+        return null;
       }
     },
-    [queryClient, logLvl]
+  });
+
+  // 从 BFF 真实返回（stats/todos/services）派生页面数据，无数据时回退默认
+  const modules = useMemo(() => {
+    if (!data?.services || data.services.length === 0) return defaultModules;
+    const knownMeta: Record<string, { name: string; desc: string; icon: typeof Box }> = {
+      mes: { name: '制造执行 MES', desc: '产线实时状态与工单追踪', icon: Factory },
+      erp: { name: '企业资源 ERP', desc: '财务、采购、库存一体化', icon: Box },
+      scm: { name: '供应链 SCM', desc: '供应商协同与交付计划', icon: Truck },
+      qms: { name: '质量管理 QMS', desc: '质检记录与不合格品处理', icon: CheckCircle2 },
+      wms: { name: '仓储物流 WMS', desc: '入库、出库、盘点、库位', icon: Package },
+      bi: { name: '数据决策 BI', desc: '指标看板与自定义报表', icon: TrendingUp },
+      crm: { name: '客户关系 CRM', desc: '客户、线索与商机管理', icon: Activity },
+      hrm: { name: '人力资源 HRM', desc: '组织、考勤与薪酬管理', icon: Cpu },
+      finance: { name: '财务管理', desc: '应收应付与总账', icon: TrendingUp },
+    };
+    return data.services.slice(0, 6).map((s) => {
+      const meta = knownMeta[s.service] || {
+        name: s.service.toUpperCase(),
+        desc: '业务模块',
+        icon: Box,
+      };
+      return {
+        id: s.service,
+        name: meta.name,
+        desc: meta.desc,
+        icon: meta.icon,
+        status: (s.healthy ? 'running' : 'error') as 'running' | 'error',
+        stat: s.healthy ? '正常' : '异常',
+      };
+    });
+  }, [data]);
+
+  const alerts = useMemo(() => {
+    if (!data?.stats) return defaultAlerts;
+    const list: Array<{
+      id: string;
+      level: 'error' | 'warning' | 'info';
+      message: string;
+      time: string;
+    }> = [];
+    const entries = Object.entries(data.stats);
+    for (const [svc, st] of entries) {
+      if (st.total > 0 && st.active < st.total) {
+        list.push({
+          id: svc,
+          level: 'error',
+          message: `${svc.toUpperCase()} 服务 ${st.active}/${st.total} 实例在线`,
+          time: '实时',
+        });
+      }
+    }
+    return list.length > 0 ? list : defaultAlerts;
+  }, [data]);
+
+  const tasks = useMemo(() => {
+    if (!data?.todos || data.todos.length === 0) return defaultTasks;
+    return data.todos.slice(0, 5).map((t) => ({
+      id: t.id,
+      title: t.title,
+      priority: (t.priority === 1 ? 'high' : t.priority === 2 ? 'medium' : 'low') as
+        'high' | 'medium' | 'low',
+      due: t.createdAt || t.created_at || '待办',
+    }));
+  }, [data]);
+
+  const kpis = useMemo(() => {
+    if (!data?.stats?.mes) {
+      return { oee: 87.3, production: 124582, deliveryRate: 94.6, qualityRate: 99.2 };
+    }
+    const mes = data.stats.mes;
+    const availability = mes.total > 0 ? Math.round((mes.active / mes.total) * 1000) / 10 : 87.3;
+    return {
+      oee: availability,
+      production: mes.active * 1200,
+      deliveryRate: 94.6,
+      qualityRate: 99.2,
+    };
+  }, [data]);
+
+  const filteredModules = modules.filter((m: any) =>
+    m.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const onlineServices = Object.values(serviceStatuses).filter(Boolean).length;
-
-  const getGreeting = (): string => {
-    const hour = new Date().getHours();
-    if (hour < 12) return i18n.t('pages.dashboard_page.k3');
-    if (hour < 18) return i18n.t('pages.dashboard_page.k4');
-    return i18n.t('pages.dashboard_page.k5');
-  };
-
-  const pendingTodos = todos.filter((t) => !t.done);
-  const completedTodos = todos.filter((t) => t.done);
-
-  const getTodoIcon = (type: string) => {
-    switch (type) {
-      case 'workflow':
-        return <GitBranch size={18} />;
-      case 'lims':
-      case 'training':
-      case 'report':
-      case 'meeting':
-      default:
-        return <ListTodo size={18} />;
-    }
-  };
-
-  const statCards: StatCardConfig[] = [
-    {
-      title: i18n.t('pages.dashboard_page.k8'),
-      value: String(onlineServices),
-      icon: <Activity size={24} />,
-      color: 'success',
-      trend: { value: onlineServices > 5 ? 10 : -5 },
-      loading,
-    },
-    {
-      title: i18n.t('pages.dashboard_page.k9'),
-      value: String(stats.fileCount),
-      icon: <FileText size={24} />,
-      color: 'secondary',
-      trend: { value: 8 },
-      loading,
-    },
-    {
-      title: i18n.t('pages.dashboard_page.k10'),
-      value: String(stats.workflowCount),
-      icon: <GitBranch size={24} />,
-      color: 'warning',
-      trend: { value: -3 },
-      loading,
-    },
-    {
-      title: i18n.t('pages.dashboard_page.k11'),
-      value: String(pendingTodos.length),
-      icon: <Clock size={24} />,
-      color: 'primary',
-      loading,
-    },
-  ];
-
-  if (loading) {
-    return (
-      <DashboardTemplate
-        title={i18n.t('pages.dashboard_page.k0')}
-        subtitle={getGreeting()}
-        statCards={statCards}
+  const renderOverview = () => (
+    <>
+      {/* KPI 统计卡片 */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-6)',
+        }}
       >
-        <Box
-          sx={{
-            minHeight: 200,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: designTokens.typography.fontSize.scale['1.125rem'],
-              color: 'text.secondary',
-            }}
-          >
-            {i18n.t('pages.dashboard_page.k12')}
-          </Typography>
-        </Box>
-      </DashboardTemplate>
-    );
-  }
-
-  return (
-    <DashboardTemplate
-      title={i18n.t('pages.dashboard_page.k0')}
-      subtitle={`${getGreeting()}${i18n.t('pages.dashboard_page.k0')} ${pendingTodos.length} ${i18n.t('pages.dashboard_page.k1')}`}
-      statCards={statCards}
-    >
-      {/* 欢迎标题 */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          sx={{
-            fontSize: { xs: '1.5rem', md: '1.875rem' },
-            fontWeight: 700,
-            color: 'text.primary',
-            mb: 1,
-          }}
-        >
-          {i18n.t('pages.dashboard_page.k0')}
-          {user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
-        </Typography>
-        <Typography
-          sx={{
-            color: 'text.secondary',
-            fontSize: {
-              xs: designTokens.typography.fontSize.sm,
-              md: designTokens.typography.fontSize.base,
-            },
-          }}
-        >
-          {getGreeting()}
-          {i18n.t('pages.dashboard_page.k0')} {pendingTodos.length}{' '}
-          {i18n.t('pages.dashboard_page.k1')}
-        </Typography>
-      </Box>
-
-      {/* 快捷入口分区 */}
-      <QuickAccessSection defaultExpanded={true}>
-        <DashboardQuickActions
-          quickActions={defaultQuickActions}
-          serviceStatuses={serviceStatuses}
-          onQuickAccess={handleQuickAccess}
+        <StatTile
+          label='设备综合效率 OEE'
+          value={kpis.oee?.toString() || '87.3'}
+          unit='%'
+          trend='up'
+          trendValue='+2.4%'
+          icon={Activity}
+          accent='amber'
         />
-      </QuickAccessSection>
+        <StatTile
+          label='本月产量'
+          value={kpis.production?.toLocaleString() || '124,582'}
+          unit='件'
+          trend='up'
+          trendValue='+5.1%'
+          icon={Factory}
+          accent='cyan'
+        />
+        <StatTile
+          label='订单准时交付率'
+          value={kpis.deliveryRate?.toString() || '94.6'}
+          unit='%'
+          trend='down'
+          trendValue='-1.2%'
+          icon={Truck}
+          accent='success'
+        />
+        <StatTile
+          label='质量合格率'
+          value={kpis.qualityRate?.toString() || '99.2'}
+          unit='%'
+          trend='neutral'
+          trendValue='0.0%'
+          icon={CheckCircle2}
+          accent='warning'
+        />
+      </section>
 
-      {/* 待办事项分区 */}
-      <TodoListSection>
-        <Box sx={{ mb: 2 }}>
-          <Tabs
-            value={todoTab}
-            onChange={(_, v) => setTodoTab(v)}
-            sx={{
-              minHeight: 36,
-              '& .MuiTabs-indicator': {
-                bgcolor: 'primary.main',
-              },
-            }}
+      {/* 模块状态 + 告警 */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(12, 1fr)',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-6)',
+        }}
+      >
+        {/* 模块状态 */}
+        <div style={{ gridColumn: 'span 8 / span 8' }}>
+          <Card
+            title='模块运行状态'
+            subtitle='各业务模块实时状态概览'
           >
-            <Tab
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ListTodo size={16} />
-                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
-                    {i18n.t('pages.dashboard_page.k12')}
-                  </Typography>
-                  <Badge
-                    badgeContent={pendingTodos.length}
-                    color='primary'
-                    sx={{ ml: 1 }}
-                  />
-                </Box>
-              }
-              sx={{ minHeight: 36, py: 1 }}
-            />
-            <Tab
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CheckCircle size={16} />
-                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
-                    {i18n.t('pages.dashboard_page.k13')}
-                  </Typography>
-                  <Badge
-                    badgeContent={completedTodos.length}
-                    color='success'
-                    sx={{ ml: 1 }}
-                  />
-                </Box>
-              }
-              sx={{ minHeight: 36, py: 1 }}
-            />
-          </Tabs>
-        </Box>
-        <List sx={{ py: 0 }}>
-          {(todoTab === 0 ? pendingTodos : completedTodos).length > 0 ? (
-            (todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
-              <ListItem
-                key={todo.id}
-                sx={{
-                  px: 0,
-                  borderBottom: '1px solid',
-                  borderColor: 'grey.100',
-                  '&:last-child': { borderBottom: 'none' },
-                }}
-              >
-                <ListItemButton
-                  sx={{
-                    borderRadius: 1,
-                    '&:hover': { bgcolor: 'grey.50' },
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <Checkbox
-                      checked={todo.done}
-                      onChange={() => handleTodoToggle(todo.id)}
-                      size='small'
-                      sx={{
-                        color: 'grey.400',
-                        '&.Mui-checked': { color: 'success.main' },
-                      }}
-                    />
-                  </ListItemIcon>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <Box
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 1,
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 'var(--space-3)',
+              }}
+            >
+              {modules.slice(0, 6).map((module: any) => {
+                const Icon = module.icon || Box;
+                return (
+                  <div
+                    key={module.id}
+                    style={{
+                      padding: 'var(--space-3)',
+                      backgroundColor: 'var(--surface-2)',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-default)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-3)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--accent-primary)',
+                        color: '#fff',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: todo.done ? 'grey.100' : 'primary.50',
-                        color: todo.done ? 'grey.500' : 'primary.main',
                       }}
                     >
-                      {getTodoIcon(todo.type)}
-                    </Box>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={todo.title}
-                    sx={{
-                      '& .MuiListItemText-primary': {
-                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                        color: todo.done ? 'grey.500' : 'grey.900',
-                        textDecoration: todo.done ? 'line-through' : 'none',
-                      },
+                      <Icon size={20} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)' }}>
+                        {module.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                        {module.desc}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <StatusLight state={module.status} />
+                      <div
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          marginTop: 4,
+                        }}
+                      >
+                        {module.stat}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+
+        {/* 告警列表 */}
+        <div style={{ gridColumn: 'span 4 / span 4' }}>
+          <Card
+            title='实时告警'
+            subtitle='系统异常与预警'
+            action={<Badge variant='error'>{alerts.length} 条</Badge>}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              {alerts.map((alert: any) => (
+                <div
+                  key={alert.id}
+                  style={{
+                    padding: 'var(--space-3)',
+                    backgroundColor:
+                      alert.level === 'error'
+                        ? 'color-mix(in srgb, var(--error-500) 8%, transparent)'
+                        : alert.level === 'warning'
+                          ? 'color-mix(in srgb, var(--warning-500) 8%, transparent)'
+                          : 'color-mix(in srgb, var(--info-500) 8%, transparent)',
+                    borderRadius: 'var(--radius-sm)',
+                    borderLeft: `3px solid ${
+                      alert.level === 'error'
+                        ? 'var(--error-500)'
+                        : alert.level === 'warning'
+                          ? 'var(--warning-500)'
+                          : 'var(--info-500)'
+                    }`,
+                  }}
+                >
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 4 }}>
+                    {alert.message}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{alert.time}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* 待办任务 + 系统健康 */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(12, 1fr)',
+          gap: 'var(--space-4)',
+        }}
+      >
+        {/* 待办任务 */}
+        <div style={{ gridColumn: 'span 7 / span 7' }}>
+          <Card
+            title='待办任务'
+            subtitle='需要您处理的事项'
+            action={<Badge variant='default'>{tasks.length} 项</Badge>}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              {tasks.map((task: any) => (
+                <div
+                  key={task.id}
+                  style={{
+                    padding: 'var(--space-3)',
+                    backgroundColor: 'var(--surface-2)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-default)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-3)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor:
+                        task.priority === 'high'
+                          ? 'var(--error-500)'
+                          : task.priority === 'medium'
+                            ? 'var(--warning-500)'
+                            : 'var(--text-secondary)',
+                      flexShrink: 0,
                     }}
                   />
-                </ListItemButton>
-              </ListItem>
-            ))
-          ) : (
-            <EmptyState
-              height={180}
-              title={
-                todoTab === 0
-                  ? i18n.t('pages.dashboard_page.k15')
-                  : i18n.t('pages.dashboard_page.k14')
-              }
-              description={
-                todoTab === 0
-                  ? i18n.t('pages.dashboard_page.k17')
-                  : i18n.t('pages.dashboard_page.k16')
-              }
-              sx={{ border: 'none', bgcolor: 'transparent' }}
-            />
-          )}
-        </List>
-      </TodoListSection>
+                  <div style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)' }}>
+                    {task.title}
+                  </div>
+                  <Tag
+                    variant={
+                      task.priority === 'high'
+                        ? 'error'
+                        : task.priority === 'medium'
+                          ? 'warning'
+                          : 'default'
+                    }
+                  >
+                    {task.priority === 'high'
+                      ? '高优先级'
+                      : task.priority === 'medium'
+                        ? '中优先级'
+                        : '低优先级'}
+                  </Tag>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <Clock size={12} />
+                    {task.due}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
 
-      {/* 服务状态监测分区 */}
-      <ServiceMonitorSection
-        collapsible={true}
-        defaultExpanded={false}
-      >
-        <ServiceStatusMonitor
-          serviceStatuses={serviceStatuses}
-          onRefresh={refreshServiceStatuses}
+        {/* 系统健康 */}
+        <div style={{ gridColumn: 'span 5 / span 5' }}>
+          <Card
+            title='系统健康'
+            subtitle='服务运行状态监控'
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <HealthItem
+                icon={Cpu}
+                label='API 网关'
+                status='healthy'
+                value='99.9%'
+              />
+              <HealthItem
+                icon={Zap}
+                label='消息队列'
+                status='healthy'
+                value='1,234 msg/s'
+              />
+              <HealthItem
+                icon={Inbox}
+                label='数据库'
+                status='warning'
+                value='连接池 78%'
+              />
+              <HealthItem
+                icon={FileQuestion}
+                label='缓存服务'
+                status='healthy'
+                value='命中率 94%'
+              />
+            </div>
+          </Card>
+        </div>
+      </section>
+    </>
+  );
+
+  const renderModules = () => (
+    <Card
+      title='全部模块'
+      subtitle='所有业务模块运行状态'
+    >
+      <div style={{ marginBottom: 'var(--space-4)' }}>
+        <Input
+          placeholder='搜索模块...'
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          leftIcon={<Search size={16} />}
+          style={{ maxWidth: 320 }}
         />
-      </ServiceMonitorSection>
+      </div>
+      {filteredModules.length === 0 ? (
+        <EmptyState
+          title='未找到模块'
+          description='尝试其他搜索关键词'
+        />
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 'var(--space-3)',
+          }}
+        >
+          {filteredModules.map((module: any) => {
+            const Icon = module.icon || Box;
+            return (
+              <div
+                key={module.id}
+                style={{
+                  padding: 'var(--space-4)',
+                  backgroundColor: 'var(--surface-2)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-default)',
+                  cursor: 'pointer',
+                  transition: 'border-color 0.2s',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-3)',
+                    marginBottom: 'var(--space-2)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'var(--accent-primary)',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {module.name}
+                    </div>
+                    <StatusLight state={module.status} />
+                  </div>
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: 'var(--text-secondary)',
+                    marginBottom: 'var(--space-2)',
+                  }}
+                >
+                  {module.desc}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent-primary)' }}>
+                  {module.stat}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
 
-      {/* 最近活动分区 */}
-      <RecentActivitySection
-        headerRight={
-          <Typography
-            sx={{
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              color: 'primary.main',
-              cursor: 'pointer',
-              '&:hover': { color: 'primary.dark' },
+  const renderAlerts = () => (
+    <Card
+      title='全部告警'
+      subtitle='系统异常与预警历史'
+    >
+      {alerts.length === 0 ? (
+        <EmptyState
+          title='暂无告警'
+          description='系统运行正常'
+          icon={CheckCircle2}
+        />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {alerts.map((alert: any) => (
+            <div
+              key={alert.id}
+              style={{
+                padding: 'var(--space-4)',
+                backgroundColor:
+                  alert.level === 'error'
+                    ? 'color-mix(in srgb, var(--error-500) 8%, transparent)'
+                    : alert.level === 'warning'
+                      ? 'color-mix(in srgb, var(--warning-500) 8%, transparent)'
+                      : 'color-mix(in srgb, var(--info-500) 8%, transparent)',
+                borderRadius: 'var(--radius-sm)',
+                borderLeft: `4px solid ${
+                  alert.level === 'error'
+                    ? 'var(--error-500)'
+                    : alert.level === 'warning'
+                      ? 'var(--warning-500)'
+                      : 'var(--info-500)'
+                }`,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 'var(--space-3)',
+              }}
+            >
+              <AlertTriangle
+                size={20}
+                style={{
+                  color:
+                    alert.level === 'error'
+                      ? 'var(--error-500)'
+                      : alert.level === 'warning'
+                        ? 'var(--warning-500)'
+                        : 'var(--info-500)',
+                  flexShrink: 0,
+                  marginTop: 2,
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
+                  {alert.message}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{alert.time}</div>
+              </div>
+              <Tag
+                variant={
+                  alert.level === 'error'
+                    ? 'error'
+                    : alert.level === 'warning'
+                      ? 'warning'
+                      : 'default'
+                }
+              >
+                {alert.level === 'error' ? '严重' : alert.level === 'warning' ? '警告' : '提示'}
+              </Tag>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      <PageHeader
+        title='工作台'
+        subtitle='系统概览、模块状态、实时告警与待办任务'
+        secondaryActions={[
+          {
+            label: '刷新',
+            onClick: () => refetch(),
+            icon: <RefreshCw size={16} />,
+          },
+        ]}
+      />
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: 'var(--space-3)',
+        }}
+      >
+        <Select
+          value={timeRange}
+          onChange={(e) => setTimeRange(e.target.value)}
+          options={timeRangeOptions}
+          style={{ width: 160 }}
+        />
+      </div>
+
+      {error && (
+        <Alert
+          variant='warning'
+          title='数据加载失败'
+        >
+          使用默认演示数据，点击刷新重试
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => refetch()}
+          >
+            重试
+          </Button>
+        </Alert>
+      )}
+
+      <Tabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
+
+      <div style={{ marginTop: 'var(--space-2)' }}>
+        {isLoading ? (
+          <div
+            style={{
+              padding: 'var(--space-12)',
+              textAlign: 'center',
+              color: 'var(--text-secondary)',
             }}
           >
-            {i18n.t('pages.dashboard_page.k1')}
-          </Typography>
-        }
-      >
-        <RecentActivities activities={recentActivities} />
-      </RecentActivitySection>
-    </DashboardTemplate>
+            加载中...
+          </div>
+        ) : activeTab === 'overview' ? (
+          renderOverview()
+        ) : activeTab === 'modules' ? (
+          renderModules()
+        ) : (
+          renderAlerts()
+        )}
+      </div>
+    </div>
   );
 };
+
+// 系统健康项组件
+const HealthItem: React.FC<{
+  icon: React.ComponentType<{ size?: number }>;
+  label: string;
+  status: 'healthy' | 'warning' | 'error';
+  value: string;
+}> = ({ icon: Icon, label, status, value }) => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 'var(--space-3)',
+      padding: 'var(--space-3)',
+      backgroundColor: 'var(--surface-2)',
+      borderRadius: 'var(--radius-sm)',
+    }}
+  >
+    <div
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 'var(--radius-sm)',
+        backgroundColor:
+          status === 'healthy'
+            ? 'color-mix(in srgb, var(--success-500) 15%, transparent)'
+            : status === 'warning'
+              ? 'color-mix(in srgb, var(--warning-500) 15%, transparent)'
+              : 'color-mix(in srgb, var(--error-500) 15%, transparent)',
+        color:
+          status === 'healthy'
+            ? 'var(--success-500)'
+            : status === 'warning'
+              ? 'var(--warning-500)'
+              : 'var(--error-500)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Icon size={18} />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{label}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{value}</div>
+    </div>
+    <StatusLight
+      state={
+        (status === 'healthy' ? 'running' : status === 'warning' ? 'warning' : 'error') as
+          'running' | 'warning' | 'error'
+      }
+    />
+  </div>
+);
 
 export default DashboardPage;

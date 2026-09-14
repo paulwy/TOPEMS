@@ -458,3 +458,110 @@ button:disabled {
 .dark .MuiBadge-badge {
   box-shadow: var(--cyber-shadow-badge);
 }
+
+/* ============================================================
+   Design demo 迁移（navigation-menu-demo.design）
+   来源：colors_and_type.css 微交互 / 质感工具类
+   使用：focus-ring 焦点环、glass-header 玻璃头部、page-gradient-bg 页面渐变、
+        selected-glow 选中光晕、tabUnderlineSlide 滑动下划线、fadeInUp 级联入场
+   ============================================================ */
+
+/* 焦点环 — design demo `.focus-ring`，用品牌 token 绘制双层圆环 */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-background, #ffffff),
+    0 0 0 4px var(--color-primary-400, #769cf5);
+}
+/* 全局兜底：所有可交互元素在键盘聚焦时均显示可见焦点环（WCAG 2.4.7） */
+:where(button, [role='button'], a, input, select, textarea, [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--color-primary-400, #769cf5);
+  outline-offset: 2px;
+}
+
+/* 滑动下划线动画 — design demo `tabUnderlineSlide` */
+@keyframes tabUnderlineSlide {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* 级联入场动画 — design demo `fadeInUp` */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 玻璃拟态头部 — design demo `.glass-header` */
+.glass-header {
+  background: color-mix(in srgb, var(--color-background, #ffffff) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: color-mix(in srgb, var(--color-border, rgba(0, 0, 0, 0.12)) 80%, transparent);
+}
+
+/* 页面渐变背景 — design demo `.page-gradient-bg`（双椭圆品牌色径向渐变） */
+.page-gradient-bg {
+  background:
+    radial-gradient(
+      ellipse at 10% 0%,
+      color-mix(in srgb, var(--color-primary, #3b82f6) 6%, transparent) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 90% 10%,
+      color-mix(in srgb, var(--color-secondary, #8b5cf6) 5%, transparent) 0%,
+      transparent 45%
+    ),
+    var(--color-background, #ffffff);
+}
+
+/* 选中外发光 — design demo `.selected-glow`（浅色 / 暗色双态） */
+.selected-glow {
+  box-shadow:
+    0 0 0 1px var(--color-primary-200, #c7daff),
+    0 0 20px color-mix(in srgb, var(--color-primary, #3b82f6) 15%, transparent),
+    var(--shadow-md, 0 4px 6px -1px rgba(2, 6, 23, 0.04));
+}
+.dark .selected-glow,
+html[class~='dark'] .selected-glow {
+  box-shadow:
+    0 0 0 1px var(--color-primary-700, #2a46c2),
+    0 0 24px color-mix(in srgb, var(--color-primary, #3b82f6) 25%, transparent),
+    var(--shadow-md, 0 4px 6px -1px rgba(2, 6, 23, 0.04));
+}
+
+/* 图标随父级 hover 轻微放大 — design demo `.icon-hover` */
+.icon-hover {
+  display: inline-flex;
+  align-items: center;
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.group:hover .icon-hover,
+.icon-hover:hover,
+a:hover .icon-hover,
+button:hover .icon-hover {
+  transform: scale(1.08);
+}
+
+/* 按钮按下缩放反馈 — design demo `.interactive-btn:active`（仅 MUI Button 容器，不侵入其他控件） */
+.MuiButton-root {
+  transition:
+    transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.MuiButton-root:active:not(.Mui-disabled) {
+  transform: scale(0.97);
+}

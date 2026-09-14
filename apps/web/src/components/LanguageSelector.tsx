@@ -48,6 +48,9 @@ const LanguageSelector: React.FC = () => {
         variant='text'
         size='small'
         onClick={handleMenuOpen}
+        aria-label={i18n.t('shared.language_selector.k0', { defaultValue: '切换语言' })}
+        aria-haspopup='menu'
+        aria-expanded={Boolean(anchorEl)}
         sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
       >
         <Globe style={{ width: 20, height: 20 }} />

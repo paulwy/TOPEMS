@@ -45,7 +45,6 @@ const moduleLabelMap: Record<string, string> = {
   hrm: i18n.t('shared.copilot_context.k7'),
   im: i18n.t('shared.copilot_context.k8'),
   lims: i18n.t('shared.copilot_context.k9'),
-  lowcode: i18n.t('shared.copilot_context.k10'),
   mes: i18n.t('shared.copilot_context.k11'),
   mobile: i18n.t('shared.copilot_context.k12'),
   monitor: i18n.t('shared.copilot_context.k13'),

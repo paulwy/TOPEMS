@@ -8,6 +8,8 @@ interface ShortcutConfig {
   shift?: boolean;
   description: string;
   category: string;
+  /** 组合键序列（如 "G → H"），提供时优先于单键渲染 */
+  sequence?: string;
 }
 
 export const GLOBAL_SHORTCUTS: Record<string, ShortcutConfig> = {
@@ -112,11 +114,17 @@ export const GLOBAL_SHORTCUTS: Record<string, ShortcutConfig> = {
     category: i18n.t('shared.shortcuts.k29'),
   },
   OPEN_HELP: {
-    key: '?',
+    key: '/',
     ctrl: true,
     meta: true,
     description: i18n.t('shared.shortcuts.k30'),
     category: i18n.t('shared.shortcuts.k31'),
+  },
+  GO_HOME: {
+    key: 'g',
+    sequence: 'G → H',
+    description: i18n.t('shared.shortcuts.k48'),
+    category: i18n.t('shared.shortcuts.k49'),
   },
 };
 
@@ -205,6 +213,9 @@ function isMacOS(): boolean {
 }
 
 export function getShortcutKeyLabel(config: ShortcutConfig): string {
+  if (config.sequence) {
+    return config.sequence;
+  }
   const parts: string[] = [];
   const mac = isMacOS();
 

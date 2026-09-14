@@ -223,7 +223,8 @@
       "result_count": "{{count}} results",
       "navigate": "Navigate",
       "select": "Select",
-      "close": "Close"
+      "close": "Close",
+      "k15": "Current domain"
     },
     "filter_bar": {
       "all": "All",

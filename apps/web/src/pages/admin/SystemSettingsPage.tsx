@@ -1,32 +1,35 @@
-/**
- * 系统设置页面
- * 管理系统基础配置、邮件设置、短信设置、日志设置
- * 缺口#22：从静态硬编码改为 apiClient 持久化（/api/erp/system/settings）
- */
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { apiLogger } from '@/utils/logger';
-import { Box, Tabs, Tab, Paper, CircularProgress, Alert } from '@mui/material';
-import { Settings, Mail, MessageSquare, FileText } from 'lucide-react';
-import FormPageTemplate from '@/components/templates/FormPageTemplate';
-import type {
-  FormSection,
-  FormField,
-  FieldDependency,
-} from '@/components/templates/FormPageTemplate';
-import i18n from '@/i18n';
-import { PageContainer } from '@/components/common';
-import { ADMIN_PATHS } from '@/modules/admin/config';
-import { systemSettingApi } from '@/api/admin/systemSetting';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Settings, Mail, MessageSquare, FileText, Save, RefreshCw } from 'lucide-react';
 
-// ============ 默认值（API 无数据时的兜底） ============
+import {
+  Button,
+  Card,
+  FormPageTemplate,
+  Input,
+  Select,
+  Tabs,
+  ToastContainer,
+  Toggle,
+} from '@/components/redesign';
+import type { Toast } from '@/components/redesign';
+import { systemSettingApi } from '@/api/admin/systemSetting';
+import i18n from '@/i18n';
+
+import '@/theme/redesign-tokens.css';
+import '@/theme/redesign-global.css';
+
+const QUERY_KEY = ['admin', 'system-settings'];
+
+// 默认设置
 const defaultSettings = {
   basic: {
-    systemName: i18n.t('pages.system_settings_page.topems_0'),
+    systemName: 'TOPEMS 工业操作系统',
     systemLogo: '',
-    companyName: i18n.t('admin.system_settings_page.k0'),
+    companyName: '示例科技有限公司',
     contactEmail: 'admin@example.com',
     contactPhone: '400-123-4567',
-    address: i18n.t('admin.system_settings_page.123_1'),
+    address: '北京市朝阳区示例路 123 号',
   },
   mail: {
     enabled: true,
@@ -36,7 +39,7 @@ const defaultSettings = {
     smtpPassword: '',
     useTLS: true,
     fromEmail: 'noreply@example.com',
-    fromName: i18n.t('pages.system_settings_page.topems_1'),
+    fromName: 'TOPEMS 系统通知',
   },
   sms: {
     enabled: false,
@@ -57,364 +60,457 @@ const defaultSettings = {
 type SettingsType = typeof defaultSettings;
 type TabKey = keyof SettingsType;
 
-interface TabConfig {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-}
-
-const tabsConfig: TabConfig[] = [
-  { id: 'basic', label: i18n.t('admin.system_settings_page.k2'), icon: Settings },
-  { id: 'mail', label: i18n.t('admin.system_settings_page.k3'), icon: Mail },
-  { id: 'sms', label: i18n.t('admin.system_settings_page.k4'), icon: MessageSquare },
-  { id: 'log', label: i18n.t('admin.system_settings_page.k5'), icon: FileText },
+const tabsConfig = [
+  { id: 'basic', label: '基础设置', icon: Settings },
+  { id: 'mail', label: '邮件设置', icon: Mail },
+  { id: 'sms', label: '短信设置', icon: MessageSquare },
+  { id: 'log', label: '日志设置', icon: FileText },
 ];
 
-// ============ 表单字段定义 ============
-const getBasicFields = (): FormField[] => [
-  { name: 'systemName', label: i18n.t('admin.system_settings_page.k6'), type: 'text' },
-  { name: 'companyName', label: i18n.t('admin.system_settings_page.k7'), type: 'text' },
-  { name: 'contactEmail', label: i18n.t('admin.system_settings_page.k8'), type: 'email' },
-  { name: 'contactPhone', label: i18n.t('admin.system_settings_page.k9'), type: 'text' },
-  { name: 'address', label: i18n.t('admin.system_settings_page.k10'), type: 'textarea', rows: 2 },
-];
-
-const getMailFields = (): FormField[] => [
-  { name: 'enabled', label: i18n.t('admin.system_settings_page.k11'), type: 'switch' },
-  {
-    name: 'smtpHost',
-    label: i18n.t('pages.system_settings_page.smtp_2'),
-    type: 'text',
-    dependsOn: ['enabled'],
-  },
-  {
-    name: 'smtpPort',
-    label: i18n.t('pages.system_settings_page.smtp_3'),
-    type: 'number',
-    dependsOn: ['enabled'],
-  },
-  {
-    name: 'smtpUsername',
-    label: i18n.t('admin.system_settings_page.k12'),
-    type: 'text',
-    dependsOn: ['enabled'],
-  },
-  {
-    name: 'smtpPassword',
-    label: i18n.t('admin.system_settings_page.k13'),
-    type: 'password',
-    dependsOn: ['enabled'],
-  },
-  {
-    name: 'useTLS',
-    label: i18n.t('admin.system_settings_page.tls_14'),
-    type: 'switch',
-    dependsOn: ['enabled'],
-  },
-  {
-    name: 'fromEmail',
-    label: i18n.t('admin.system_settings_page.k15'),
-    type: 'email',
-    dependsOn: ['enabled'],
-  },
-  {
-    name: 'fromName',
-    label: i18n.t('admin.system_settings_page.k16'),
-    type: 'text',
-    dependsOn: ['enabled'],
-  },
-];
-
-const getSmsFields = (): FormField[] => [
-  { name: 'enabled', label: i18n.t('admin.system_settings_page.k17'), type: 'switch' },
-  {
-    name: 'provider',
-    label: i18n.t('admin.system_settings_page.k18'),
-    type: 'select',
-    options: [
-      { label: i18n.t('admin.system_settings_page.k19'), value: 'aliyun' },
-      { label: i18n.t('admin.system_settings_page.k20'), value: 'tencent' },
-      { label: i18n.t('admin.system_settings_page.k21'), value: 'huawei' },
-    ],
-    dependsOn: ['enabled'],
-  },
-  { name: 'accessKeyId', label: 'AccessKey ID', type: 'text', dependsOn: ['enabled'] },
-  { name: 'accessKeySecret', label: 'AccessKey Secret', type: 'password', dependsOn: ['enabled'] },
-  {
-    name: 'signName',
-    label: i18n.t('admin.system_settings_page.k22'),
-    type: 'text',
-    dependsOn: ['enabled'],
-  },
-];
-
-const getLogFields = (): FormField[] => [
-  {
-    name: 'level',
-    label: i18n.t('admin.system_settings_page.k23'),
-    type: 'select',
-    options: [
-      { label: 'Debug', value: 'debug' },
-      { label: 'Info', value: 'info' },
-      { label: 'Warning', value: 'warn' },
-      { label: 'Error', value: 'error' },
-    ],
-  },
-  { name: 'retentionDays', label: i18n.t('admin.system_settings_page.k24'), type: 'number' },
-  { name: 'enableAccessLog', label: i18n.t('admin.system_settings_page.k25'), type: 'switch' },
-  { name: 'enableOperationLog', label: i18n.t('admin.system_settings_page.k26'), type: 'switch' },
-  { name: 'enableSecurityLog', label: i18n.t('admin.system_settings_page.k27'), type: 'switch' },
-];
-
-const getSections = (tabId: string): FormSection[] => {
-  switch (tabId) {
-    case 'basic':
-      return [
-        { id: 'basic', title: i18n.t('admin.system_settings_page.k28'), fields: getBasicFields() },
-      ];
-    case 'mail':
-      return [
-        { id: 'mail', title: i18n.t('admin.system_settings_page.k29'), fields: getMailFields() },
-      ];
-    case 'sms':
-      return [
-        { id: 'sms', title: i18n.t('admin.system_settings_page.k30'), fields: getSmsFields() },
-      ];
-    case 'log':
-      return [
-        { id: 'log', title: i18n.t('admin.system_settings_page.k31'), fields: getLogFields() },
-      ];
-    default:
-      return [];
-  }
-};
-
-// 将 API 返回的扁平 key-value 列表转换为嵌套结构
-function flattenToNested(items: Array<{ key: string; value: string }>): SettingsType {
-  const result: SettingsType = JSON.parse(JSON.stringify(defaultSettings));
-  for (const item of items) {
-    const dotIndex = item.key.indexOf('.');
-    if (dotIndex > 0) {
-      const category = item.key.substring(0, dotIndex) as TabKey;
-      const field = item.key.substring(dotIndex + 1);
-      if (result[category] && field in result[category]) {
-        const target = result[category] as Record<string, unknown>;
-        const currentValue = target[field];
-        if (typeof currentValue === 'boolean') {
-          target[field] = item.value === 'true';
-        } else if (typeof currentValue === 'number') {
-          target[field] = Number(item.value) || 0;
-        } else {
-          target[field] = item.value;
-        }
-      }
-    }
-  }
-  return result;
-}
-
-// 将嵌套结构转换为扁平 key-value 用于批量保存
-function nestedToFlatten(settings: SettingsType): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const category of Object.keys(settings) as TabKey[]) {
-    const categoryData = settings[category] as Record<string, unknown>;
-    for (const field of Object.keys(categoryData)) {
-      const value = categoryData[field];
-      result[`${category}.${field}`] =
-        typeof value === 'boolean' ? String(value) : String(value ?? '');
-    }
-  }
-  return result;
-}
-
-export default function SystemSettingsPage() {
-  const [activeTab, setActiveTab] = useState('basic');
+const SystemSettingsPage: React.FC = () => {
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<TabKey>('basic');
   const [settings, setSettings] = useState<SettingsType>(defaultSettings);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // 从 API 加载设置
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await systemSettingApi.listSettings();
-        if (!cancelled && res.data) {
-          setSettings(flattenToNested(res.data));
-        }
-      } catch (e) {
-        if (!cancelled) {
-          apiLogger.error('加载系统设置失败', e);
-          setError('加载设置失败，使用默认值');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const dependencies = useMemo(() => {
-    const deps: FieldDependency[] = [];
-    if (activeTab === 'mail') {
-      [
-        'smtpHost',
-        'smtpPort',
-        'smtpUsername',
-        'smtpPassword',
-        'useTLS',
-        'fromEmail',
-        'fromName',
-      ].forEach((field) => {
-        deps.push({
-          sourceField: 'enabled',
-          targetField: field,
-          type: 'disabled' as const,
-          condition: { type: 'equals' as const, value: false },
-          effect: { disabled: true },
-        });
-      });
-    }
-    if (activeTab === 'sms') {
-      ['provider', 'accessKeyId', 'accessKeySecret', 'signName'].forEach((field) => {
-        deps.push({
-          sourceField: 'enabled',
-          targetField: field,
-          type: 'disabled' as const,
-          condition: { type: 'equals' as const, value: false },
-          effect: { disabled: true },
-        });
-      });
-    }
-    return deps;
-  }, [activeTab]);
-
-  const defaultValues = useMemo(
-    () => settings[activeTab as keyof typeof settings],
-    [activeTab, settings]
-  );
-  const sections = useMemo(() => getSections(activeTab), [activeTab]);
-
-  const handleSubmit = useCallback(
-    async (data: unknown) => {
-      const formData = data as unknown as Record<string, unknown>;
-      const updatedSettings = {
-        ...settings,
-        [activeTab]: { ...settings[activeTab as keyof typeof settings], ...formData },
-      };
-      setSettings(updatedSettings);
-      try {
-        setSaving(true);
-        setSaveSuccess(false);
-        setError(null);
-        const flat = nestedToFlatten(updatedSettings);
-        await systemSettingApi.batchUpdateSettings(flat);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-      } catch (e) {
-        apiLogger.error('保存系统设置失败', e);
-        setError('保存设置失败，请重试');
-      } finally {
-        setSaving(false);
-      }
-      apiLogger.info(i18n.t('pages.system_settings_page.k4'), { tab: activeTab, data });
-    },
-    [activeTab, settings]
-  );
-
-  const handleReset = useCallback(() => {
-    setSettings((prev) => ({
-      ...prev,
-      [activeTab]: defaultSettings[activeTab as keyof typeof defaultSettings],
-    }));
-  }, [activeTab]);
-
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
-    setActiveTab(newValue);
+  const pushToast = (type: Toast['variant'], message: string) => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, variant: type, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
   };
 
-  if (loading) {
-    return (
-      <PageContainer
-        title={i18n.t('admin.system_settings_page.k32')}
-        subtitle={i18n.t('admin.system_settings_page.k33')}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      </PageContainer>
-    );
-  }
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: async () => {
+      try {
+        const response = await systemSettingApi.listSettings();
+        if (response.success && response.data) {
+          const merged: SettingsType = { ...defaultSettings };
+          // 后端为扁平 key-value（如 mail.smtpHost），按分组路径写入
+          for (const item of response.data) {
+            const parts = item.key.split('.');
+            if (parts.length < 2) continue;
+            const [group, field] = parts as [keyof SettingsType, string];
+            const grp = merged[group] as Record<string, unknown>;
+            if (grp && field in grp) {
+              const current = grp[field];
+              if (typeof current === 'boolean')
+                grp[field] = item.value === 'true' || item.value === '1';
+              else if (typeof current === 'number') grp[field] = Number(item.value);
+              else grp[field] = item.value;
+            }
+          }
+          return merged;
+        }
+      } catch (e) {
+        // API 不可用时使用默认值
+      }
+      return defaultSettings;
+    },
+  });
+
+  useEffect(() => {
+    if (data) {
+      setSettings(data);
+    }
+  }, [data]);
+
+  const saveMutation = useMutation({
+    mutationFn: (newSettings: SettingsType) =>
+      systemSettingApi.updateSystemConfig(newSettings as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      pushToast('success', '系统设置保存成功');
+    },
+    onError: (err: Error) => pushToast('error', `保存失败：${err.message}`),
+  });
+
+  const handleSave = () => {
+    saveMutation.mutate(settings);
+  };
+
+  const updateField = (tab: TabKey, field: string, value: any) => {
+    setSettings((prev) => ({
+      ...prev,
+      [tab]: {
+        ...prev[tab],
+        [field]: value,
+      },
+    }));
+  };
+
+  const renderBasicTab = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <FieldGroup title='系统信息'>
+        <FormField
+          label='系统名称'
+          required
+        >
+          <Input
+            value={settings.basic.systemName}
+            onChange={(e) => updateField('basic', 'systemName', e.target.value)}
+            placeholder='请输入系统名称'
+          />
+        </FormField>
+        <FormField label='公司名称'>
+          <Input
+            value={settings.basic.companyName}
+            onChange={(e) => updateField('basic', 'companyName', e.target.value)}
+            placeholder='请输入公司名称'
+          />
+        </FormField>
+      </FieldGroup>
+
+      <FieldGroup title='联系方式'>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <FormField label='联系邮箱'>
+            <Input
+              type='email'
+              value={settings.basic.contactEmail}
+              onChange={(e) => updateField('basic', 'contactEmail', e.target.value)}
+              placeholder='请输入联系邮箱'
+            />
+          </FormField>
+          <FormField label='联系电话'>
+            <Input
+              value={settings.basic.contactPhone}
+              onChange={(e) => updateField('basic', 'contactPhone', e.target.value)}
+              placeholder='请输入联系电话'
+            />
+          </FormField>
+        </div>
+        <FormField label='公司地址'>
+          <Input
+            value={settings.basic.address}
+            onChange={(e) => updateField('basic', 'address', e.target.value)}
+            placeholder='请输入公司地址'
+          />
+        </FormField>
+      </FieldGroup>
+    </div>
+  );
+
+  const renderMailTab = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <FieldGroup title='邮件服务'>
+        <FormField label='启用邮件服务'>
+          <Toggle
+            checked={settings.mail.enabled}
+            onChange={(checked) => updateField('mail', 'enabled', checked)}
+            label={settings.mail.enabled ? '已启用' : '已禁用'}
+          />
+        </FormField>
+      </FieldGroup>
+
+      <FieldGroup title='SMTP 配置'>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-3)' }}>
+          <FormField
+            label='SMTP 服务器'
+            required
+          >
+            <Input
+              value={settings.mail.smtpHost}
+              onChange={(e) => updateField('mail', 'smtpHost', e.target.value)}
+              placeholder='smtp.example.com'
+              disabled={!settings.mail.enabled}
+            />
+          </FormField>
+          <FormField
+            label='端口'
+            required
+          >
+            <Input
+              type='number'
+              value={settings.mail.smtpPort.toString()}
+              onChange={(e) => updateField('mail', 'smtpPort', parseInt(e.target.value) || 465)}
+              disabled={!settings.mail.enabled}
+            />
+          </FormField>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <FormField label='用户名'>
+            <Input
+              value={settings.mail.smtpUsername}
+              onChange={(e) => updateField('mail', 'smtpUsername', e.target.value)}
+              placeholder='noreply@example.com'
+              disabled={!settings.mail.enabled}
+            />
+          </FormField>
+          <FormField label='密码'>
+            <Input
+              type='password'
+              value={settings.mail.smtpPassword}
+              onChange={(e) => updateField('mail', 'smtpPassword', e.target.value)}
+              placeholder='请输入 SMTP 密码'
+              disabled={!settings.mail.enabled}
+            />
+          </FormField>
+        </div>
+        <FormField label='启用 TLS'>
+          <Toggle
+            checked={settings.mail.useTLS}
+            onChange={(checked) => updateField('mail', 'useTLS', checked)}
+            label={settings.mail.useTLS ? '已启用 TLS' : '未启用 TLS'}
+            disabled={!settings.mail.enabled}
+          />
+        </FormField>
+      </FieldGroup>
+
+      <FieldGroup title='发件人配置'>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <FormField label='发件人邮箱'>
+            <Input
+              value={settings.mail.fromEmail}
+              onChange={(e) => updateField('mail', 'fromEmail', e.target.value)}
+              placeholder='noreply@example.com'
+              disabled={!settings.mail.enabled}
+            />
+          </FormField>
+          <FormField label='发件人名称'>
+            <Input
+              value={settings.mail.fromName}
+              onChange={(e) => updateField('mail', 'fromName', e.target.value)}
+              placeholder='TOPEMS 系统通知'
+              disabled={!settings.mail.enabled}
+            />
+          </FormField>
+        </div>
+      </FieldGroup>
+    </div>
+  );
+
+  const renderSmsTab = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <FieldGroup title='短信服务'>
+        <FormField label='启用短信服务'>
+          <Toggle
+            checked={settings.sms.enabled}
+            onChange={(checked) => updateField('sms', 'enabled', checked)}
+            label={settings.sms.enabled ? '已启用' : '已禁用'}
+          />
+        </FormField>
+      </FieldGroup>
+
+      <FieldGroup title='服务商配置'>
+        <FormField label='短信服务商'>
+          <Select
+            value={settings.sms.provider}
+            onChange={(e) => updateField('sms', 'provider', e.target.value)}
+            options={[
+              { value: 'aliyun', label: '阿里云短信' },
+              { value: 'tencent', label: '腾讯云短信' },
+              { value: 'huawei', label: '华为云短信' },
+            ]}
+            disabled={!settings.sms.enabled}
+          />
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <FormField label='Access Key ID'>
+            <Input
+              value={settings.sms.accessKeyId}
+              onChange={(e) => updateField('sms', 'accessKeyId', e.target.value)}
+              placeholder='请输入 Access Key ID'
+              disabled={!settings.sms.enabled}
+            />
+          </FormField>
+          <FormField label='Access Key Secret'>
+            <Input
+              type='password'
+              value={settings.sms.accessKeySecret}
+              onChange={(e) => updateField('sms', 'accessKeySecret', e.target.value)}
+              placeholder='请输入 Access Key Secret'
+              disabled={!settings.sms.enabled}
+            />
+          </FormField>
+        </div>
+        <FormField label='短信签名'>
+          <Input
+            value={settings.sms.signName}
+            onChange={(e) => updateField('sms', 'signName', e.target.value)}
+            placeholder='TOPEMS'
+            disabled={!settings.sms.enabled}
+          />
+        </FormField>
+      </FieldGroup>
+    </div>
+  );
+
+  const renderLogTab = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <FieldGroup title='日志级别'>
+        <FormField label='日志级别'>
+          <Select
+            value={settings.log.level}
+            onChange={(e) => updateField('log', 'level', e.target.value)}
+            options={[
+              { value: 'debug', label: 'Debug（详细调试）' },
+              { value: 'info', label: 'Info（常规信息）' },
+              { value: 'warn', label: 'Warn（警告）' },
+              { value: 'error', label: 'Error（仅错误）' },
+            ]}
+          />
+        </FormField>
+        <FormField label='日志保留天数'>
+          <Input
+            type='number'
+            value={settings.log.retentionDays.toString()}
+            onChange={(e) => updateField('log', 'retentionDays', parseInt(e.target.value) || 30)}
+            min={1}
+            max={365}
+          />
+        </FormField>
+      </FieldGroup>
+
+      <FieldGroup title='日志类型'>
+        <FormField label='访问日志'>
+          <Toggle
+            checked={settings.log.enableAccessLog}
+            onChange={(checked) => updateField('log', 'enableAccessLog', checked)}
+            label={settings.log.enableAccessLog ? '已启用' : '已禁用'}
+          />
+        </FormField>
+        <FormField label='操作日志'>
+          <Toggle
+            checked={settings.log.enableOperationLog}
+            onChange={(checked) => updateField('log', 'enableOperationLog', checked)}
+            label={settings.log.enableOperationLog ? '已启用' : '已禁用'}
+          />
+        </FormField>
+        <FormField label='安全日志'>
+          <Toggle
+            checked={settings.log.enableSecurityLog}
+            onChange={(checked) => updateField('log', 'enableSecurityLog', checked)}
+            label={settings.log.enableSecurityLog ? '已启用' : '已禁用'}
+          />
+        </FormField>
+      </FieldGroup>
+    </div>
+  );
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'basic':
+        return renderBasicTab();
+      case 'mail':
+        return renderMailTab();
+      case 'sms':
+        return renderSmsTab();
+      case 'log':
+        return renderLogTab();
+      default:
+        return null;
+    }
+  };
 
   return (
-    <PageContainer
-      title={i18n.t('admin.system_settings_page.k32')}
-      subtitle={i18n.t('admin.system_settings_page.k33')}
-    >
-      {error && (
-        <Alert
-          severity='error'
-          sx={{ mb: 2 }}
-          onClose={() => setError(null)}
-        >
-          {error}
-        </Alert>
-      )}
-      {saveSuccess && (
-        <Alert
-          severity='success'
-          sx={{ mb: 2 }}
-        >
-          设置已保存
-        </Alert>
-      )}
-      <Paper sx={{ borderRadius: 2, mb: 3 }}>
+    <>
+      <FormPageTemplate
+        header={{
+          title: '系统设置',
+          subtitle: '管理系统基础配置、邮件服务、短信服务和日志设置',
+        }}
+        onSubmit={handleSave}
+        loading={saveMutation.isPending}
+        submitLabel='保存设置'
+        actions={
+          <Button
+            variant='ghost'
+            leftIcon={<RefreshCw size={16} />}
+            onClick={() => refetch()}
+          >
+            重置
+          </Button>
+        }
+      >
         <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          sx={{ borderBottom: 1, borderColor: 'divider', '& .MuiTab-root': { minHeight: 56 } }}
-        >
-          {tabsConfig.map((tab) => {
-            const Icon = tab.icon as React.ComponentType<{ style?: React.CSSProperties }>;
-            return (
-              <Tab
-                key={tab.id}
-                value={tab.id}
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Icon style={{ width: 18, height: 18 }} />
-                    <span>{tab.label}</span>
-                  </Box>
-                }
-              />
-            );
-          })}
-        </Tabs>
-        <Box sx={{ p: 3 }}>
-          <FormPageTemplate
-            title=''
-            subtitle=''
-            backHref={ADMIN_PATHS.system}
-            sections={sections}
-            defaultValues={defaultValues}
-            dependencies={dependencies}
-            onSubmit={handleSubmit}
-            onReset={handleReset}
-            submitText={saving ? '保存中...' : i18n.t('admin.system_settings_page.k34')}
-            resetText={i18n.t('admin.system_settings_page.k35')}
-            columns={2}
-            stickyFooter={true}
-            showGroupTabs={false}
-            showProgress={false}
-          />
-        </Box>
-      </Paper>
-    </PageContainer>
+          tabs={tabsConfig.map((t) => ({ id: t.id, label: t.label }))}
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as TabKey)}
+        />
+
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          {isLoading ? (
+            <div
+              style={{
+                padding: 'var(--space-8)',
+                textAlign: 'center',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              加载中...
+            </div>
+          ) : error ? (
+            <div
+              style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--error-500)' }}
+            >
+              加载失败，使用默认设置
+            </div>
+          ) : (
+            renderTabContent()
+          )}
+        </div>
+      </FormPageTemplate>
+
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
+      />
+    </>
   );
-}
+};
+
+// 表单字段分组组件
+const FieldGroup: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => (
+  <div
+    style={{
+      padding: 'var(--space-4)',
+      backgroundColor: 'var(--surface-2)',
+      borderRadius: 'var(--radius-sm)',
+      border: '1px solid var(--border-default)',
+    }}
+  >
+    <h4
+      style={{
+        margin: '0 0 var(--space-3) 0',
+        fontSize: 14,
+        fontWeight: 600,
+        color: 'var(--text-primary)',
+      }}
+    >
+      {title}
+    </h4>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      {children}
+    </div>
+  </div>
+);
+
+// 表单字段组件
+const FormField: React.FC<{ label: string; required?: boolean; children: React.ReactNode }> = ({
+  label,
+  required,
+  children,
+}) => (
+  <div>
+    <label
+      style={{
+        display: 'block',
+        marginBottom: 'var(--space-1)',
+        fontSize: 13,
+        fontWeight: 500,
+        color: 'var(--text-secondary)',
+      }}
+    >
+      {label}
+      {required && <span style={{ color: 'var(--error-500)', marginLeft: 2 }}>*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+export default SystemSettingsPage;

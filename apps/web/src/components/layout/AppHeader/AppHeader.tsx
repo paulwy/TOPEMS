@@ -1,11 +1,13 @@
 import React from 'react';
 import { Box, useTheme, useMediaQuery } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import { glassSx } from '@/theme/effects';
 import { HeaderLogo } from './HeaderLogo';
 import { HeaderSearch } from './HeaderSearch';
 import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderUserMenu } from './HeaderUserMenu';
 import { HeaderBreadcrumbs } from './HeaderBreadcrumbs';
+import { BusinessDomainTabs } from './BusinessDomainTabs';
 import LanguageSelector from '@/components/LanguageSelector';
 
 interface AppHeaderProps {
@@ -23,6 +25,8 @@ interface AppHeaderProps {
   onBack?: () => void;
   title?: string;
   rightActions?: React.ReactNode;
+  /** 权限校验函数（透传给 L1 业务域 Tabs 过滤模块） */
+  checkPermission?: (permission: string) => boolean;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -35,6 +39,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onBack,
   title,
   rightActions,
+  checkPermission,
 }) => {
   const headerTheme = useTheme();
   const isMobileNav = useMediaQuery(headerTheme.breakpoints.down('md'));
@@ -42,15 +47,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <Box
       component='header'
-      sx={{
-        backgroundColor: 'background.paper',
+      sx={(theme) => ({
+        ...glassSx(theme),
         borderBottom: 1,
         borderColor: 'divider',
         position: 'sticky',
         top: 0,
         zIndex: 1100,
         boxShadow: `0 1px 2px 0 ${alpha(headerTheme.palette.common.black, 0.03)}`,
-      }}
+      })}
     >
       <Box
         sx={{
@@ -70,6 +75,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           isMobileNav={isMobileNav}
           onMobileMenuOpen={onMobileMenuOpen}
         />
+
+        <BusinessDomainTabs checkPermission={checkPermission} />
 
         <HeaderSearch />
 
@@ -98,7 +105,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </Box>
       </Box>
 
-      <HeaderBreadcrumbs />
+      <HeaderBreadcrumbs checkPermission={checkPermission} />
     </Box>
   );
 };

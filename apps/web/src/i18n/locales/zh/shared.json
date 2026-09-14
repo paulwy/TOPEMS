@@ -2510,6 +2510,8 @@
   "shared.shortcuts.k45": "搜索",
   "shared.shortcuts.k46": "跳转到最后一个结果",
   "shared.shortcuts.k47": "搜索",
+  "shared.shortcuts.k48": "回到首页",
+  "shared.shortcuts.k49": "导航",
   "shared.use_ai_helper.k0": "请求失败",
   "shared.use_auto_breadcrumbs.k0": "首页",
   "shared.use_auto_breadcrumbs.k1": "详情",
@@ -4536,5 +4538,7 @@
   "shared.config.ai_business_copilot": "业务 Copilot",
   "shared.config.ai_governance_dashboard": "AI 治理仪表盘",
   "shared.config.ai_business_copilot_desc": "集成业务模块选择、智能表单、文档智能的一站式 AI 助手",
-  "shared.config.ai_governance_dashboard_desc": "全面监控 AI 系统的安全、合规、成本和性能"
+  "shared.config.ai_governance_dashboard_desc": "全面监控 AI 系统的安全、合规、成本和性能",
+  "shared.business_domain_tabs.k0": "业务域导航",
+  "shared.language_selector.k0": "切换语言"
 }

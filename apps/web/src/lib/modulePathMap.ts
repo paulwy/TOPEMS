@@ -25,7 +25,6 @@ export const MODULE_ROOT_TO_DASHBOARD: Readonly<Record<string, string>> = Object
   '/im': '/im/dashboard',
   '/integration': '/integration/dashboard',
   '/lims': '/lims/dashboard',
-  '/lowcode': '/lowcode/dashboard',
   '/mes': '/mes/dashboard',
   '/mobile': '/mobile/home',
   '/monitor': '/monitor/dashboard',

@@ -1,0 +1,213 @@
+/**
+ * TOPEMS Industrial OS — Design Tokens v3
+ * 
+ * 用途：为新版 UI 提供单一事实来源的 CSS 自定义属性。
+ * 加载方式：在 main.tsx 中按需 import './theme/redesign-tokens.css'。
+ * 注意：本文件与 redesign-global.css 配对使用；旧 generated-tokens.css 待废弃。
+ */
+
+:root {
+  /* ============================================================
+     1. 核心色彩 — Industrial OS 深色优先
+     ============================================================ */
+
+  /* 背景层 */
+  --bg-primary: #09090b;
+  --bg-secondary: #0e0e10;
+  --bg-elevated: #111113;
+
+  /* 表面层 */
+  --surface-1: #111113;
+  --surface-2: #1a1a1d;
+  --surface-3: #232326;
+  --surface-4: #2c2c30;
+
+  /* 文字 */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-disabled: #52525b;
+  --text-inverse: #09090b;
+
+  /* 边框与分隔 */
+  --border-default: #27272a;
+  --border-hover: #3f3f46;
+  --border-active: #52525b;
+  --divider: rgba(255, 255, 255, 0.08);
+
+  /* Accent — 琥珀（能量、主行动） */
+  --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-200: #fde68a;
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --amber-600: #d97706;
+  --amber-700: #b45309;
+  --amber-800: #92400e;
+  --amber-900: #78350f;
+
+  /* Accent — 青蓝（数据、信息、焦点） */
+  --cyan-50: #ecfeff;
+  --cyan-100: #cffafe;
+  --cyan-200: #a5f3fc;
+  --cyan-300: #67e8f9;
+  --cyan-400: #22d3ee;
+  --cyan-500: #06b6d4;
+  --cyan-600: #0891b2;
+  --cyan-700: #0e7490;
+  --cyan-800: #155e75;
+  --cyan-900: #164e63;
+
+  /* 语义色 */
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --error-500: #ef4444;
+  --error-600: #dc2626;
+  --info-500: #3b82f6;
+  --info-600: #2563eb;
+
+  /* 快捷别名 */
+  --accent-primary: var(--amber-500);
+  --accent-primary-hover: var(--amber-400);
+  --accent-primary-active: var(--amber-600);
+  --accent-secondary: var(--cyan-500);
+  --accent-secondary-hover: var(--cyan-400);
+  --accent-secondary-active: var(--cyan-600);
+
+  /* 发光与阴影 */
+  --glow-amber: 0 0 24px rgba(245, 158, 11, 0.25);
+  --glow-amber-sm: 0 0 12px rgba(245, 158, 11, 0.18);
+  --glow-cyan: 0 0 24px rgba(6, 182, 212, 0.25);
+  --glow-cyan-sm: 0 0 12px rgba(6, 182, 212, 0.18);
+  --glow-error: 0 0 20px rgba(239, 68, 68, 0.2);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.55);
+
+  /* ============================================================
+     2. 字体系统
+     ============================================================ */
+  --font-brand: 'Sora', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* 字号 */
+  --text-xs: 0.6875rem;   /* 11px */
+  --text-sm: 0.75rem;     /* 12px */
+  --text-base: 0.875rem;  /* 14px */
+  --text-md: 1rem;        /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.25rem;     /* 20px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-3xl: 2rem;       /* 32px */
+  --text-4xl: 3rem;       /* 48px */
+
+  /* 字重 */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* 行高 */
+  --leading-none: 1;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* 字间距 */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.08em;
+
+  /* ============================================================
+     3. 间距系统 — 4px 网格
+     ============================================================ */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ============================================================
+     4. 尺寸与圆角
+     ============================================================ */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  --topbar-height: 64px;
+  --siderail-width: 72px;
+  --siderail-expanded-width: 280px;
+  --bottomrail-height: 64px;
+
+  /* ============================================================
+     5. 动效 token
+     ============================================================ */
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ============================================================
+     6. Z-Index 层
+     ============================================================ */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-popover: 400;
+  --z-tooltip: 500;
+  --z-modal-backdrop: 600;
+  --z-modal: 700;
+  --z-toast: 800;
+  --z-devtools: 9000;
+}
+
+/* 浅色降级模式（可选，用于打印/后台管理场景） */
+[data-theme='light'],
+.redesign-light {
+  --bg-primary: #fafafa;
+  --bg-secondary: #f4f4f5;
+  --bg-elevated: #ffffff;
+
+  --surface-1: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #e4e4e7;
+  --surface-4: #d4d4d8;
+
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-tertiary: #71717a;
+  --text-disabled: #a1a1aa;
+  --text-inverse: #ffffff;
+
+  --border-default: #e4e4e7;
+  --border-hover: #d4d4d8;
+  --border-active: #a1a1aa;
+  --divider: rgba(0, 0, 0, 0.08);
+
+  --glow-amber: 0 0 20px rgba(245, 158, 11, 0.18);
+  --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.18);
+}

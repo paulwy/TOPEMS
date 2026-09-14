@@ -21,8 +21,10 @@ import { MobileNav } from './MobileNav';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { CommandPalette } from '../ui/CommandPalette';
+import ShortcutsHelpPanel from '../common/ShortcutsHelpPanel';
 import { BottomTabBar, type TabItem } from '../mobile/BottomTabBar';
 import { PageTransition } from '../mobile/PageTransition';
+import { pageGradientBgSx } from '@/theme/effects';
 import { Home, ListTodo, ScanLine, CheckSquare, User } from 'lucide-react';
 import { DASHBOARD_PATHS, MOBILE_TAB_PATHS } from '@/routes/dashboard';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -91,6 +93,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   }, [checkPermission]);
 
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), []);
   const closeCommandPalette = useCallback(() => setCommandPaletteOpen(false), []);
   const openAiCopilot = useCallback(() => {
@@ -112,7 +115,18 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       // Cmd/Ctrl + K: 打开命令面板
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
+        setShortcutHelpOpen(false);
         openCommandPalette();
+        return;
+      }
+
+      // Cmd/Ctrl + /: 显示快捷键帮助
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        if (commandPaletteOpen) {
+          closeCommandPalette();
+        }
+        setShortcutHelpOpen((v) => !v);
         return;
       }
 
@@ -132,8 +146,12 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           return;
         }
 
-        // Esc: 关闭命令面板或移动端菜单
+        // Esc: 关闭命令面板 / 快捷键帮助 / 移动端菜单
         if (e.key === 'Escape') {
+          if (shortcutHelpOpen) {
+            setShortcutHelpOpen(false);
+            return;
+          }
           if (commandPaletteOpen) {
             closeCommandPalette();
           }
@@ -172,6 +190,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     closeCommandPalette,
     openAiCopilot,
     commandPaletteOpen,
+    shortcutHelpOpen,
     mobileMenuOpen,
     toggleSidebarCollapsed,
     navigate,
@@ -255,6 +274,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         onMobileMenuClose={() => setMobileMenuOpen(false)}
         mobileNavComponent={MobileNav}
         showCentralNav
+        checkPermission={checkPermission}
       />
 
       {/* 赛博朋克 HUD 装饰元素 — 仅在 cyberpunk 主题下渲染 */}
@@ -295,16 +315,16 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         <Box
           component='main'
           id='main-content'
-          sx={{
+          sx={(theme) => ({
+            ...pageGradientBgSx(theme),
             flex: 1,
-            backgroundColor: 'background.default',
             p: { xs: 2, sm: 3, lg: 4 },
             maxWidth: 1800,
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
             pb: { xs: 9, sm: 3, lg: 4 },
-          }}
+          })}
         >
           {isMobile ? (
             <PageTransition>{children}</PageTransition>
@@ -389,6 +409,11 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       <CommandPalette
         open={commandPaletteOpen}
         onClose={closeCommandPalette}
+      />
+
+      <ShortcutsHelpPanel
+        isOpen={shortcutHelpOpen}
+        onClose={() => setShortcutHelpOpen(false)}
       />
 
       {isMobile && activeMobileTab && (

@@ -111,7 +111,9 @@ const MicroFrontendDevTools: React.FC = () => {
           left: 16,
           right: 220,
           zIndex: 9998,
-          display: 'flex',
+          // 移动端（<sm）隐藏：窄视口下按钮换行堆叠为超高面板，
+          // 从底部溢出遮挡 Header 左侧导航按钮（Phase 5 移动端 e2e 发现）
+          display: { xs: 'none', sm: 'flex' },
           flexWrap: 'wrap',
           gap: 1,
           fontFamily: 'system-ui, -apple-system, sans-serif',

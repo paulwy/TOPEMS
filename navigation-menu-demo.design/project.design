@@ -14,8 +14,8 @@
           "version": 1,
           "contentHeight": 900,
           "viewportWidth": 1440,
-          "sourceHash": "fnv1a-dad26217",
-          "measuredAt": 1787925451115
+          "sourceHash": "fnv1a-30a99f7b",
+          "measuredAt": 1789333932227
         }
       },
       "devMetadata": {
@@ -32,7 +32,14 @@
       "canvasData": {
         "x": 480,
         "y": 0,
-        "group": 0
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1431,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-e1c1473f",
+          "measuredAt": 1789333932227
+        }
       },
       "devMetadata": {
         "htmlSrc": "pages/platform-services-mapping.html",
@@ -48,7 +55,14 @@
       "canvasData": {
         "x": 960,
         "y": 0,
-        "group": 0
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1618,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-ee7d3157",
+          "measuredAt": 1789333932227
+        }
       },
       "devMetadata": {
         "htmlSrc": "pages/finance-hr-crm-mapping.html",
@@ -64,7 +78,14 @@
       "canvasData": {
         "x": 1440,
         "y": 0,
-        "group": 0
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 2052,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-c1cd820d",
+          "measuredAt": 1789333932227
+        }
       },
       "devMetadata": {
         "htmlSrc": "pages/remaining-domains-mapping.html",
@@ -80,7 +101,14 @@
       "canvasData": {
         "x": 1920,
         "y": 0,
-        "group": 0
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1136,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-fe4e3d4e",
+          "measuredAt": 1789333932227
+        }
       },
       "devMetadata": {
         "htmlSrc": "pages/full-navigation-overview.html",
@@ -96,7 +124,14 @@
       "canvasData": {
         "x": 2400,
         "y": 0,
-        "group": 0
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1067,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-bc338a2b",
+          "measuredAt": 1789333932227
+        }
       },
       "devMetadata": {
         "htmlSrc": "pages/global-search.html",

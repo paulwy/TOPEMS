@@ -1,4 +1,4 @@
-type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
+export type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
 
 export type TenantPlan = 'basic' | 'professional' | 'enterprise';
 

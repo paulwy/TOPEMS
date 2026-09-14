@@ -93,7 +93,6 @@ export const L2_MODULE_ORDER: Record<string, number> = {
   gis: 4,
   admin: 1,
   monitor: 2,
-  lowcode: 3,
   plugin: 4,
   mobile: 1,
 };

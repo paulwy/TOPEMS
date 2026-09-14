@@ -11,6 +11,7 @@ import { NAV_GROUPS, SUITE_GROUPS } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { navItemSx, getNavigablePath } from './shared';
 import { SidebarServiceStatus } from './SidebarServiceStatus';
+import { SidebarItem } from './SidebarItem';
 import i18n from '@/i18n';
 
 interface SidebarModuleTreeProps {
@@ -79,6 +80,21 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
       .map(([groupKey]) => [groupKey as NavGroup, grouped[groupKey as NavGroup] || []] as const)
       .filter(([, items]) => items.length > 0);
   }, [collapsedModuleCode, checkPermission]);
+
+  // 展开态模块模式：将当前模块的导航项按 L3 子组（NavGroup）分组渲染
+  // （数据源与折叠态 Popover 一致，均为 NavItem.group 字段；此处直接对已翻译的
+  //   moduleNavItems 分组，避免二次拉取导致 label 未翻译）
+  const groupedModuleItems = useMemo(() => {
+    const result: Record<string, NavItem[]> = {};
+    for (const item of moduleNavItems) {
+      const groupKey = (item.group || 'other') as string;
+      if (!result[groupKey]) {
+        result[groupKey] = [];
+      }
+      result[groupKey].push(item);
+    }
+    return result;
+  }, [moduleNavItems]);
 
   const clearCollapsedPopoverCloseTimer = () => {
     if (collapsedPopoverCloseTimer.current) {
@@ -208,7 +224,6 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                       key={navItem.code}
                       component='button'
                       type='button'
-                      role='menuitem'
                       onClick={() => navigateFromCollapsedPopover(navItem.path)}
                       sx={{
                         width: '100%',
@@ -300,7 +315,6 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
           <>
             <Box
               component='button'
-              role='menuitem'
               tabIndex={0}
               onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
               onKeyDown={(e) => {
@@ -383,7 +397,6 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                       const NavButton = (
                         <Box
                           component='button'
-                          role='menuitem'
                           tabIndex={0}
                           key={item.code || `${item.label}-${index}`}
                           onClick={() => item.path && navigate(item.path)}
@@ -477,64 +490,142 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
           </>
         )}
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          {displayNavItems.map((item: NavItem, index: number) => {
-            const isActive = Boolean(
-              item.path === location.pathname ||
-              (item.path && location.pathname.startsWith(`${item.path}/`))
-            );
-            const NavButton = (
-              <Box
-                component='button'
-                role='menuitem'
-                tabIndex={0}
-                key={item.code || `${item.label}-${index}`}
-                onClick={() => item.path && navigate(item.path)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    item.path && navigate(item.path);
-                  }
-                }}
-                aria-current={isActive ? 'page' : undefined}
-                sx={navItemSx(collapsed, isActive, item.path ? true : false)}
-              >
-                {item.icon ? (
-                  renderIcon(item.icon, 18)
-                ) : (
+        {isModuleMode && !collapsed && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            {Object.entries(NAV_GROUPS).map(([groupKey, groupDef]) => {
+              const items = groupedModuleItems[groupKey] || [];
+              if (items.length === 0) return null;
+              const groupInfo = translatedNavGroups[groupKey] || groupDef;
+              return (
+                <Box
+                  key={groupKey}
+                  sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}
+                >
                   <Typography
                     sx={{
-                      width: 18,
-                      height: 18,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 14,
-                      fontWeight: 600,
+                      px: 2,
+                      pt: 1,
+                      pb: 0.5,
+                      fontSize: designTokens.typography.fontSize.scale['0.6875rem'],
+                      fontWeight: 700,
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      userSelect: 'none',
                     }}
                   >
-                    {item.label.charAt(0)}
+                    {groupInfo.label}
                   </Typography>
-                )}
-                {!collapsed && (
-                  <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{item.label}</Typography>
-                )}
-              </Box>
-            );
-            return collapsed ? (
-              <Tooltip
-                key={item.code || `${item.label}-${index}`}
-                title={item.label}
-                placement='right'
-                arrow
-              >
-                {NavButton}
-              </Tooltip>
-            ) : (
-              NavButton
-            );
-          })}
-        </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    {items.map((item: NavItem, index: number) => {
+                      const isActive = Boolean(
+                        item.path === location.pathname ||
+                        (item.path && location.pathname.startsWith(`${item.path}/`))
+                      );
+                      return (
+                        <SidebarItem
+                          key={item.code || `${item.label}-${index}`}
+                          active={isActive}
+                          collapsed={false}
+                          onClick={() => item.path && navigate(item.path)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              item.path && navigate(item.path);
+                            }
+                          }}
+                          ariaCurrent={isActive ? 'page' : undefined}
+                          icon={
+                            item.icon ? (
+                              renderIcon(item.icon, 18)
+                            ) : (
+                              <Typography
+                                sx={{
+                                  width: 18,
+                                  height: 18,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: 14,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {item.label.charAt(0)}
+                              </Typography>
+                            )
+                          }
+                          label={
+                            <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
+                              {item.label}
+                            </Typography>
+                          }
+                        />
+                      );
+                    })}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+
+        {isModuleMode && collapsed && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            {displayNavItems.map((item: NavItem, index: number) => {
+              const isActive = Boolean(
+                item.path === location.pathname ||
+                (item.path && location.pathname.startsWith(`${item.path}/`))
+              );
+              const NavButton = (
+                <SidebarItem
+                  key={item.code || `${item.label}-${index}`}
+                  active={isActive}
+                  collapsed={collapsed}
+                  onClick={() => item.path && navigate(item.path)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      item.path && navigate(item.path);
+                    }
+                  }}
+                  ariaCurrent={isActive ? 'page' : undefined}
+                  icon={
+                    item.icon ? (
+                      renderIcon(item.icon, 18)
+                    ) : (
+                      <Typography
+                        sx={{
+                          width: 18,
+                          height: 18,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 14,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.label.charAt(0)}
+                      </Typography>
+                    )
+                  }
+                  label={
+                    <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{item.label}</Typography>
+                  }
+                />
+              );
+              return (
+                <Tooltip
+                  key={item.code || `${item.label}-${index}`}
+                  title={item.label}
+                  placement='right'
+                  arrow
+                >
+                  {NavButton}
+                </Tooltip>
+              );
+            })}
+          </Box>
+        )}
       </Box>
     </>
   );

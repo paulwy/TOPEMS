@@ -125,14 +125,15 @@ describe('ShortcutsHelpPanel', () => {
     expect(handleClose).toHaveBeenCalled();
   });
 
-  it('renders Ctrl + ? chip hint', () => {
+  it('renders shortcut help chip hint (Cmd/Ctrl + /)', () => {
     renderWithProviders(
       <ShortcutsHelpPanel
         isOpen
         onClose={vi.fn()}
       />
     );
-    expect(screen.getByText('Ctrl + ?')).toBeInTheDocument();
+    // 非 macOS 环境渲染为 "Ctrl + /"（macOS 渲染为 "⌘/"）
+    expect(screen.getByText(/Ctrl \+ \/|⌘\//)).toBeInTheDocument();
   });
 
   it('renders keyboard icon in header', () => {

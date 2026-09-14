@@ -1,88 +1,464 @@
-// V66.7 P2-1 双实现说明：
-// - 本文件是 pages/iam/ 目录的主实现（由 Admin 控制台 /admin/iam 路由统一调度）
-// - 旧的兼容实现位于 src/iam/ 目录（由 App 根路由 /iam 访问，保留向后兼容）
-// - 如非必要，请优先修改 pages/iam/ 中的新页面版本
-/**
- * 用户管理页面 — Schema 驱动的 CRUD 页面
- *
- * 使用 userSchema 配置 + CrudPage 组件，
- * 代码量从 ~910 行缩减到 ~100 行，减少约 89%。
- */
+import React, { useEffect, useMemo, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Edit2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 
-import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { userSchema } from '@/schemas/iam/user';
+import {
+  Badge,
+  Button,
+  Card,
+  Drawer,
+  FilterChip,
+  Input,
+  ListPageTemplate,
+  Modal,
+  Select,
+  ToastContainer,
+} from '@/components/redesign';
+import type { DataTableColumn, Toast } from '@/components/redesign';
 import { authApi } from '@/api/iam';
+import type { User } from '@/api/iam';
 import { IAM_PATHS } from '@/modules/iam/config';
 import i18n from '@/i18n';
 
-/**
- * 用户管理 API 适配器
- */
-const userApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await authApi.listUsers({
-      page: params?.page,
-      pagesize: params?.pageSize,
-      search: params?.search,
-    });
-    if (!response.success) {
-      throw new Error(response.message || i18n.t('iam.user_management_page.k0'));
-    }
-    const data = response.data;
-    return {
-      data: (data?.users || []) as unknown as Record<string, unknown>[],
-      total: data?.total || 0,
-    };
-  },
+import '@/theme/redesign-tokens.css';
+import '@/theme/redesign-global.css';
 
-  create: async (data) => {
-    const response = await authApi.createUser({
-      username: String(data.username),
-      email: String(data.email),
-      password: String(data.password),
-      full_name: data.full_name ? String(data.full_name) : undefined,
-    });
-    if (!response.success) {
-      throw new Error(response.message || i18n.t('iam.user_management_page.k1'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
+const QUERY_KEY = ['iam', 'users'];
 
-  update: async (id, data) => {
-    const response = await authApi.updateUser(id, {
-      full_name: data.full_name ? String(data.full_name) : undefined,
-      email: String(data.email),
-      isactive: Boolean(data.isactive),
-    });
-    if (!response.success) {
-      throw new Error(response.message || i18n.t('iam.user_management_page.k2'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-
-  delete: async (id) => {
-    const response = await authApi.deleteUser(id);
-    if (!response.success) {
-      throw new Error(response.message || i18n.t('iam.user_management_page.k3'));
-    }
-  },
+const formatDateTime = (value?: string) => {
+  if (!value) return '-';
+  try {
+    const d = new Date(value);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return value;
+  }
 };
 
-/**
- * 用户管理页面组件
- */
 const UserManagementPage: React.FC = () => {
+  const queryClient = useQueryClient();
+
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: [...QUERY_KEY, debouncedSearch, statusFilter],
+    queryFn: async () => {
+      const response = await authApi.listUsers({
+        page: 1,
+        pagesize: 50,
+        search: debouncedSearch || undefined,
+      });
+      if (!response.success) {
+        throw new Error(response.message || i18n.t('iam.user_management_page.k0'));
+      }
+      const allUsers = response.data?.users || [];
+      const filtered =
+        statusFilter === 'all'
+          ? allUsers
+          : allUsers.filter((u) => (statusFilter === 'active' ? u.isactive : !u.isactive));
+      return {
+        users: filtered,
+        total: response.data?.total || 0,
+      };
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: authApi.createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      setDrawerOpen(false);
+      pushToast('success', i18n.t('iam.user_management_page.k1'));
+    },
+    onError: (err: Error) => pushToast('error', err.message),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof authApi.updateUser>[1] }) =>
+      authApi.updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      setDrawerOpen(false);
+      setEditingUser(null);
+      pushToast('success', i18n.t('iam.user_management_page.k2'));
+    },
+    onError: (err: Error) => pushToast('error', err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: authApi.deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      setDeleteTarget(null);
+      pushToast('success', i18n.t('iam.user_management_page.k3'));
+    },
+    onError: (err: Error) => pushToast('error', err.message),
+  });
+
+  const pushToast = (variant: Toast['variant'], message: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts((prev) => [...prev, { id, variant, message }]);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    setDrawerOpen(true);
+  };
+
+  const handleCreate = () => {
+    setEditingUser(null);
+    setDrawerOpen(true);
+  };
+
+  const handleSubmit = (formData: UserFormData) => {
+    if (editingUser) {
+      updateMutation.mutate({
+        id: editingUser.id,
+        data: {
+          full_name: formData.full_name,
+          email: formData.email,
+          isactive: formData.isactive,
+        },
+      });
+    } else {
+      createMutation.mutate({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+      });
+    }
+  };
+
+  const columns: DataTableColumn<User>[] = useMemo(
+    () => [
+      {
+        key: 'username',
+        header: i18n.t('iam.user_management_page.k7'),
+        render: (row) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)' }}>
+              {row.username}
+            </span>
+            {row.full_name && (
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+                {row.full_name}
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: 'email',
+        header: i18n.t('iam.user_management_page.k8'),
+      },
+      {
+        key: 'isactive',
+        header: i18n.t('iam.user_management_page.k9'),
+        align: 'center',
+        render: (row) => (
+          <Badge variant={row.isactive ? 'success' : 'default'}>
+            {row.isactive ? '启用' : '禁用'}
+          </Badge>
+        ),
+      },
+      {
+        key: 'created_at',
+        header: i18n.t('iam.user_management_page.k10'),
+        render: (row) => (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>
+            {formatDateTime(row.created_at)}
+          </span>
+        ),
+      },
+      {
+        key: 'actions',
+        header: i18n.t('iam.user_management_page.k11'),
+        align: 'right',
+        render: (row) => (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => handleEdit(row)}
+              aria-label='Edit user'
+            >
+              <Edit2 size={14} />
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => setDeleteTarget(row)}
+              aria-label='Delete user'
+            >
+              <Trash2 size={14} />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  const toolbar = (
+    <>
+      <div
+        style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}
+      >
+        <div style={{ width: '260px' }}>
+          <Input
+            placeholder={i18n.t('iam.user_management_page.k12')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftIcon={
+              <Search
+                size={16}
+                style={{ color: 'var(--text-tertiary)' }}
+              />
+            }
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <FilterChip
+            label='全部'
+            active={statusFilter === 'all'}
+            onRemove={statusFilter === 'all' ? undefined : () => setStatusFilter('all')}
+            onClick={() => setStatusFilter('all')}
+          />
+          <FilterChip
+            label='启用'
+            active={statusFilter === 'active'}
+            onRemove={statusFilter === 'active' ? undefined : () => setStatusFilter('all')}
+            onClick={() => setStatusFilter('active')}
+          />
+          <FilterChip
+            label='禁用'
+            active={statusFilter === 'inactive'}
+            onRemove={statusFilter === 'inactive' ? undefined : () => setStatusFilter('all')}
+            onClick={() => setStatusFilter('inactive')}
+          />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+        <Button
+          variant='secondary'
+          leftIcon={<RefreshCw size={16} />}
+          onClick={() => refetch()}
+        >
+          {i18n.t('iam.user_management_page.k13')}
+        </Button>
+        <Button
+          variant='primary'
+          leftIcon={<Plus size={16} />}
+          onClick={handleCreate}
+        >
+          {i18n.t('iam.user_management_page.k14')}
+        </Button>
+      </div>
+    </>
+  );
+
   return (
-    <CrudPage
-      schema={userSchema}
-      apiAdapter={userApiAdapter}
-      breadcrumbs={[
-        { label: i18n.t('iam.user_management_page.k4'), href: '/dashboard' },
-        { label: i18n.t('iam.user_management_page.k5'), href: IAM_PATHS.root },
-        { label: i18n.t('iam.user_management_page.k6') },
-      ]}
-    />
+    <>
+      <ListPageTemplate<User>
+        header={{
+          title: i18n.t('iam.user_management_page.k6'),
+          subtitle: i18n.t('iam.user_management_page.k15'),
+          breadcrumbs: [
+            { label: i18n.t('iam.user_management_page.k4'), href: '/dashboard' },
+            { label: i18n.t('iam.user_management_page.k5'), href: IAM_PATHS.root },
+            { label: i18n.t('iam.user_management_page.k6') },
+          ],
+        }}
+        toolbar={toolbar}
+        columns={columns}
+        data={data?.users || []}
+        rowKey='id'
+        loading={isLoading}
+        error={error instanceof Error ? error.message : null}
+        emptyTitle={i18n.t('iam.user_management_page.k16')}
+        emptyDescription={i18n.t('iam.user_management_page.k17')}
+        emptyAction={{ label: i18n.t('iam.user_management_page.k14'), onClick: handleCreate }}
+      />
+
+      <UserDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        user={editingUser}
+        onSubmit={handleSubmit}
+        loading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={i18n.t('iam.user_management_page.k18')}
+        description={
+          deleteTarget
+            ? `${i18n.t('iam.user_management_page.k19')}「${deleteTarget.username}」？此操作不可撤销。`
+            : ''
+        }
+        size='sm'
+        footer={
+          <>
+            <Button
+              variant='secondary'
+              onClick={() => setDeleteTarget(null)}
+            >
+              {i18n.t('iam.user_management_page.k20')}
+            </Button>
+            <Button
+              variant='danger'
+              loading={deleteMutation.isPending}
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+            >
+              {i18n.t('iam.user_management_page.k21')}
+            </Button>
+          </>
+        }
+      >
+        <></>
+      </Modal>
+
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={dismissToast}
+        position='top-right'
+      />
+    </>
+  );
+};
+
+interface UserFormData {
+  username: string;
+  email: string;
+  password: string;
+  full_name: string;
+  isactive: boolean;
+}
+
+const UserDrawer: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  user: User | null;
+  onSubmit: (data: UserFormData) => void;
+  loading: boolean;
+}> = ({ open, onClose, user, onSubmit, loading }) => {
+  const [formData, setFormData] = useState<UserFormData>({
+    username: '',
+    email: '',
+    password: '',
+    full_name: '',
+    isactive: true,
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        username: user.username,
+        email: user.email,
+        password: '',
+        full_name: user.full_name || '',
+        isactive: user.isactive,
+      });
+    } else {
+      setFormData({ username: '', email: '', password: '', full_name: '', isactive: true });
+    }
+  }, [user, open]);
+
+  const isEdit = !!user;
+
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      title={
+        isEdit ? i18n.t('iam.user_management_page.k22') : i18n.t('iam.user_management_page.k23')
+      }
+      description={
+        isEdit ? i18n.t('iam.user_management_page.k24') : i18n.t('iam.user_management_page.k25')
+      }
+      size='md'
+      footer={
+        <>
+          <Button
+            variant='secondary'
+            onClick={onClose}
+          >
+            {i18n.t('iam.user_management_page.k20')}
+          </Button>
+          <Button
+            variant='primary'
+            loading={loading}
+            onClick={() => onSubmit(formData)}
+          >
+            {isEdit
+              ? i18n.t('iam.user_management_page.k26')
+              : i18n.t('iam.user_management_page.k27')}
+          </Button>
+        </>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <Card>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <Input
+              label={i18n.t('iam.user_management_page.k28')}
+              value={formData.username}
+              disabled={isEdit}
+              onChange={(e) => setFormData((d) => ({ ...d, username: e.target.value }))}
+            />
+            <Input
+              label={i18n.t('iam.user_management_page.k29')}
+              value={formData.email}
+              onChange={(e) => setFormData((d) => ({ ...d, email: e.target.value }))}
+            />
+            <Input
+              label={i18n.t('iam.user_management_page.k30')}
+              value={formData.full_name}
+              onChange={(e) => setFormData((d) => ({ ...d, full_name: e.target.value }))}
+            />
+            {!isEdit && (
+              <Input
+                label={i18n.t('iam.user_management_page.k31')}
+                type='password'
+                value={formData.password}
+                onChange={(e) => setFormData((d) => ({ ...d, password: e.target.value }))}
+              />
+            )}
+            <Select
+              label={i18n.t('iam.user_management_page.k32')}
+              value={formData.isactive ? 'active' : 'inactive'}
+              options={[
+                { value: 'active', label: '启用' },
+                { value: 'inactive', label: '禁用' },
+              ]}
+              onChange={(e) =>
+                setFormData((d) => ({ ...d, isactive: e.target.value === 'active' }))
+              }
+            />
+          </div>
+        </Card>
+      </div>
+    </Drawer>
   );
 };
 
