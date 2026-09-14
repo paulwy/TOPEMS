@@ -982,7 +982,7 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_connection)
                 .delete(delete_connection),
         )
-        .nest("/{entity}-mappings", entity_mappings)
+        .nest("/mappings/{entity}", entity_mappings)
         .nest("/preview", preview);
 
     let sync = Router::new().route("/{entity}", post(sync_entity));

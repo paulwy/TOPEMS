@@ -352,6 +352,18 @@ impl Default for SubscriptionStatus {
 /// 管理订阅的周期计算、到期检查、自动降级和状态变更。
 pub struct SubscriptionLifecycleService;
 
+/// 订阅状态变更结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubscriptionChangeResult {
+    pub tenant_id: Uuid,
+    pub old_status: SubscriptionStatus,
+    pub new_status: SubscriptionStatus,
+    pub old_tier: PlanTier,
+    pub new_tier: PlanTier,
+    pub permissions_resynced: bool,
+    pub reason: String,
+}
+
 impl SubscriptionLifecycleService {
     /// 计算订阅剩余天数
     ///
@@ -404,18 +416,6 @@ impl SubscriptionLifecycleService {
     }
 
     /// 订阅状态变更结果
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct SubscriptionChangeResult {
-        pub tenant_id: Uuid,
-        pub old_status: SubscriptionStatus,
-        pub new_status: SubscriptionStatus,
-        pub old_tier: PlanTier,
-        pub new_tier: PlanTier,
-        pub permissions_resynced: bool,
-        pub reason: String,
-    }
-
-    /// 处理订阅到期（自动降级到 free）
     pub fn handle_expiration(subscription: &mut TenantSubscription) -> SubscriptionChangeResult {
         let old_status = subscription.status;
         let old_tier = subscription.plan_tier;
@@ -522,6 +522,17 @@ impl SubscriptionLifecycleService {
 /// 在租户创建/升级时根据 plan tier 自动分配默认角色和权限集。
 pub struct TierPermissionService;
 
+/// 权限同步结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PermissionSyncResult {
+    pub tenant_id: Uuid,
+    pub plan_tier: PlanTier,
+    pub roles_synced: Vec<String>,
+    pub permissions_synced: usize,
+    pub modules_enabled: Vec<String>,
+    pub modules_disabled: Vec<String>,
+}
+
 impl TierPermissionService {
     /// 获取指定层级的默认角色列表
     pub fn default_roles_for_tier(tier: &PlanTier) -> Vec<&'static str> {
@@ -597,17 +608,6 @@ impl TierPermissionService {
         TierFeatureMatrix::is_module_available(module, &subscription.plan_tier)
     }
 
-    /// 权限同步结果
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct PermissionSyncResult {
-        pub tenant_id: Uuid,
-        pub plan_tier: PlanTier,
-        pub roles_synced: Vec<String>,
-        pub permissions_synced: usize,
-        pub modules_enabled: Vec<String>,
-        pub modules_disabled: Vec<String>,
-    }
-
     /// 为租户同步默认权限集（基于 plan tier）
     ///
     /// 在租户创建或升级时调用，根据 plan tier 自动分配默认角色和权限集。
@@ -644,8 +644,8 @@ impl TierPermissionService {
             plan_tier: *plan_tier,
             roles_synced: roles.into_iter().map(|r| r.to_string()).collect(),
             permissions_synced: permissions.len(),
-            modules_enabled,
-            modules_disabled,
+            modules_enabled: enabled_modules,
+            modules_disabled: disabled_modules,
         }
     }
 }
