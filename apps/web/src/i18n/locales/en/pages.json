@@ -4364,6 +4364,7 @@
   "pages.production_cost_page.k13": "UnitCost",
   "pages.alarm_list.k0": "Real-time",
   "pages.alarm_list.k1": "CurrentNone, Run",
+  "pages.alarm_list.k2": "Latest {{count}} entries",
   "pages.production_gantt.k0": "ProductionProgressGantt Chart",
   "pages.production_gantt.k1": "NoProduction SchedulingPlan",
   "pages.production_gantt.k2": "Quantity",

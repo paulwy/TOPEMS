@@ -4364,6 +4364,7 @@
   "pages.production_cost_page.k13": "单位成本",
   "pages.alarm_list.k0": "实时报警",
   "pages.alarm_list.k1": "当前无报警，运行平稳",
+  "pages.alarm_list.k2": "最近 {{count}} 条",
   "pages.production_gantt.k0": "生产进度甘特图",
   "pages.production_gantt.k1": "暂无排产计划",
   "pages.production_gantt.k2": "数量",
