@@ -63,8 +63,8 @@ pub struct CreateEquipmentRequest {
     pub manufacturer: Option<String>,
     pub location: Option<String>,
     pub purchase_date: Option<chrono::NaiveDate>,
-    pub warranty_end_date: Option<chrono::NaiveDate>,
-    pub maintenance_cycle: Option<i32>,
+    pub warranty_expiry_date: Option<chrono::NaiveDate>,
+    pub maintenance_frequency_days: Option<i32>,
     pub description: Option<String>,
 }
 
@@ -76,8 +76,8 @@ pub struct UpdateEquipmentRequest {
     pub location: Option<String>,
     pub status: Option<String>,
     pub purchase_date: Option<chrono::NaiveDate>,
-    pub warranty_end_date: Option<chrono::NaiveDate>,
-    pub maintenance_cycle: Option<i32>,
+    pub warranty_expiry_date: Option<chrono::NaiveDate>,
+    pub maintenance_frequency_days: Option<i32>,
     pub last_maintenance_date: Option<chrono::NaiveDate>,
     pub next_maintenance_date: Option<chrono::NaiveDate>,
     pub description: Option<String>,
@@ -93,8 +93,8 @@ pub struct EquipmentResponse {
     pub status: String,
     pub location: Option<String>,
     pub purchase_date: Option<String>,
-    pub warranty_end_date: Option<String>,
-    pub maintenance_cycle: i32,
+    pub warranty_expiry_date: Option<String>,
+    pub maintenance_frequency_days: i32,
     pub last_maintenance_date: Option<String>,
     pub next_maintenance_date: Option<String>,
     pub description: Option<String>,
@@ -152,13 +152,13 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
                 .ok()
                 .flatten(),
         ),
-        warranty_end_date: naive_date_to_string(
-            r.try_get::<Option<chrono::NaiveDate>, _>("warranty_end_date")
+        warranty_expiry_date: naive_date_to_string(
+            r.try_get::<Option<chrono::NaiveDate>, _>("warranty_expiry_date")
                 .ok()
                 .flatten(),
         ),
-        maintenance_cycle: r
-            .try_get::<Option<i32>, _>("maintenance_cycle")
+        maintenance_frequency_days: r
+            .try_get::<Option<i32>, _>("maintenance_frequency_days")
             .ok()
             .flatten()
             .unwrap_or(30),
@@ -262,8 +262,8 @@ pub async fn list_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date,
-            maintenance_cycle, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
         {}
@@ -333,9 +333,9 @@ pub async fn create_equipment(
         )
     });
 
-    let maintenance_cycle = req.maintenance_cycle.unwrap_or(30);
+    let maintenance_frequency_days = req.maintenance_frequency_days.unwrap_or(30);
     let next_maintenance_date = req.purchase_date.map(|d| {
-        let days = chrono::Duration::days(maintenance_cycle as i64);
+        let days = chrono::Duration::days(maintenance_frequency_days as i64);
         d + days
     });
 
@@ -343,14 +343,14 @@ pub async fn create_equipment(
         r#"
         INSERT INTO equipment (
             equipment_code, equipment_name, model, manufacturer, status,
-            location, purchase_date, warranty_end_date,
-            maintenance_cycle, last_maintenance_date, next_maintenance_date,
+            location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date,
-            maintenance_cycle, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
     )
@@ -360,8 +360,8 @@ pub async fn create_equipment(
     .bind(&req.manufacturer)
     .bind(&req.location)
     .bind(req.purchase_date)
-    .bind(req.warranty_end_date)
-    .bind(maintenance_cycle)
+    .bind(req.warranty_expiry_date)
+    .bind(maintenance_frequency_days)
     .bind(next_maintenance_date)
     .bind(&req.description)
     .bind(now.naive_utc())
@@ -408,8 +408,8 @@ pub async fn get_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date,
-            maintenance_cycle, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
         WHERE id = $1
@@ -470,8 +470,8 @@ pub async fn update_equipment(
             status = COALESCE($5, status),
             location = COALESCE($6, location),
             purchase_date = COALESCE($7, purchase_date),
-            warranty_end_date = COALESCE($8, warranty_end_date),
-            maintenance_cycle = COALESCE($9, maintenance_cycle),
+            warranty_expiry_date = COALESCE($8, warranty_expiry_date),
+            maintenance_frequency_days = COALESCE($9, maintenance_frequency_days),
             last_maintenance_date = COALESCE($10, last_maintenance_date),
             next_maintenance_date = COALESCE($11, next_maintenance_date),
             description = COALESCE($12, description),
@@ -479,8 +479,8 @@ pub async fn update_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date,
-            maintenance_cycle, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
     )
@@ -491,8 +491,8 @@ pub async fn update_equipment(
     .bind(&req.status)
     .bind(&req.location)
     .bind(req.purchase_date)
-    .bind(req.warranty_end_date)
-    .bind(req.maintenance_cycle)
+    .bind(req.warranty_expiry_date)
+    .bind(req.maintenance_frequency_days)
     .bind(req.last_maintenance_date)
     .bind(req.next_maintenance_date)
     .bind(&req.description)
@@ -603,8 +603,8 @@ pub async fn maintenance_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date,
-            maintenance_cycle, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
     )

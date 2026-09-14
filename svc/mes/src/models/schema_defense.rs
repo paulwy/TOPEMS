@@ -341,7 +341,9 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         "work_stations",
         &[
             ("organization_id", "UUID"),
+            ("station_no", "VARCHAR(100)"),
             ("station_code", "VARCHAR(100)"),
+            ("workshop_id", "UUID"),
             ("station_name", "VARCHAR(255) NOT NULL"),
             ("station_type", "VARCHAR(50)"),
             ("description", "TEXT"),
@@ -355,6 +357,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("supervisor", "VARCHAR(255)"),
             ("supervisor_id", "UUID"),
             ("team", "VARCHAR(100)"),
+            ("equipment_id", "UUID"),
+            ("process_id", "UUID"),
             ("equipment_ids", "JSONB"),
             ("available_skills", "JSONB"),
             ("available_tools", "JSONB"),

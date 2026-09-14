@@ -235,7 +235,7 @@ pub async fn list_work_stations(
             ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
             ws.description, ws.created_at, ws.updated_at,
-            e.name as equipment_name,
+            e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name
         FROM work_stations ws
@@ -368,7 +368,7 @@ pub async fn get_work_station(
             ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
             ws.description, ws.created_at, ws.updated_at,
-            e.name as equipment_name,
+            e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name
         FROM work_stations ws
