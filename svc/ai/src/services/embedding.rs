@@ -135,7 +135,14 @@ pub async fn generate_embeddings(
     let config = CONFIG.get().ok_or("Config not initialized")?;
     let client = CLIENT.get().ok_or("Client not initialized")?;
 
-    let embedding_url = format!("{}/embeddings", config.base_url);
+    // Ollama 的 OpenAI 兼容嵌入端点是 /v1/embeddings；base_url 为根地址时需补 /v1，
+    // 否则会请求到 /embeddings 返回 404（Ollama 无此路径）。
+    // 请求/响应为 OpenAI 兼容格式（input + data[].embedding），与 /v1/embeddings 匹配。
+    let embedding_url = if config.use_ollama && !config.base_url.ends_with("/v1") {
+        format!("{}/v1/embeddings", config.base_url)
+    } else {
+        format!("{}/embeddings", config.base_url)
+    };
 
     let request = EmbeddingRequest {
         model: config.embedding_model.clone(),
