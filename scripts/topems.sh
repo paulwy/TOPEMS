@@ -1034,14 +1034,25 @@ _safe_json_field() {
     local json="$1"
     local field="$2"
     local default="${3:-}"
-    echo "$json" | python3 -c "
+    local py_cmd=""
+    # runtime probe: python3 may be a silent Microsoft Store stub on Windows/Git Bash
+    if command -v python3 >/dev/null 2>&1 && echo '{}' | python3 -c "import sys,json" >/dev/null 2>&1; then
+        py_cmd=python3
+    elif command -v python >/dev/null 2>&1 && echo '{}' | python -c "import sys,json" >/dev/null 2>&1; then
+        py_cmd=python
+    fi
+    if [ -n "$py_cmd" ]; then
+        echo "$json" | "$py_cmd" -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
     print(data.get('$field', '$default'))
-except (json.JSONDecodeError, Exception):
+except Exception:
     print('$default')
 " 2>/dev/null || echo "$default"
+    else
+        echo "$default"
+    fi
 }
 
 # 服务注册到 plugin-registry（含重试与指数退避）
@@ -1080,6 +1091,21 @@ register_plugin() {
         local token_header=""
         [ -n "$plugin_token" ] && token_header="-H \"X-Plugin-Token: $plugin_token\""
 
+        # Windows/Git Bash: payload via temp file to avoid MSYS arg mangling of UTF-8
+        local tmp_body
+        tmp_body=$(mktemp /tmp/topems-register-body.XXXXXX 2>/dev/null || mktemp 2>/dev/null)
+        cat > "$tmp_body" <<JSON
+{
+    "code": "${service_name}",
+    "name": "${service_display_name}",
+    "description": "${description}",
+    "version": "0.1.0",
+    "runtime_url": "${runtime_url}",
+    "permissions": [],
+    "category": "business"
+}
+JSON
+
         local response
         # curl 在连接失败时返回非零（如 exit 7=连接拒绝），set -e 会直接退出函数，
         # 导致 L1082 的空响应兜底分支不可达；用 || true 确保 curl 失败不触发 set -e
@@ -1087,15 +1113,8 @@ register_plugin() {
             "\"$registry_url/dev/runtime/${service_name}/register\"" \
             -H "\"Content-Type: application/json\"" \
             $token_header \
-            -d "'{
-                \"code\": \"${service_name}\",
-                \"name\": \"${service_display_name}\",
-                \"description\": \"${description}\",
-                \"version\": \"0.1.0\",
-                \"runtime_url\": \"${runtime_url}\",
-                \"permissions\": [],
-                \"category\": \"business\"
-            }'" 2>/dev/null || true)
+            -d "@$tmp_body" 2>/dev/null || true)
+        rm -f "$tmp_body"
 
         if [ -z "$response" ]; then
             attempt=$((attempt + 1))
