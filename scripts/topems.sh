@@ -87,27 +87,67 @@ get_executable_name() {
     echo "${binary_name:-topems-$1}"
 }
 
+# ============ 跨平台工具（Windows/Git Bash · Linux · macOS） ============
+# OS 判定：Git Bash/MSYS2/Cygwin => windows；Darwin => macos；其余(含 WSL) => linux
+detect_os() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*) echo windows ;;
+        Darwin*) echo macos ;;
+        *) echo linux ;;
+    esac
+}
+_is_windows() { [ "$(detect_os)" = "windows" ]; }
+
 check_port() {
+    local port=$1
     if command -v lsof &>/dev/null; then
-        lsof -Pi ":$1" -sTCP:LISTEN -t >/dev/null 2>&1 && return 0 || return 1
+        lsof -Pi ":$port" -sTCP:LISTEN -t >/dev/null 2>&1 && return 0 || return 1
     fi
-    # Windows/Git Bash 兜底：netstat 检查 LISTENING
-    netstat -ano 2>/dev/null | grep -qE "[:.]$1 .*LISTENING" && return 0
+    case "$(detect_os)" in
+        windows)
+            netstat -ano 2>/dev/null | grep -qE "[:.]${port} .*LISTENING" && return 0 ;;
+        darwin)
+            netstat -an 2>/dev/null | grep -qE "\.${port} .*LISTEN" && return 0 ;;
+        linux)
+            if command -v ss &>/dev/null; then
+                ss -tln 2>/dev/null | grep -qE ":${port}[[:space:]]" && return 0
+            else
+                netstat -tln 2>/dev/null | grep -qE ":${port}[[:space:]]" && return 0
+            fi ;;
+    esac
     return 1
 }
-# 获取监听指定端口的 PID（lsof 优先，Windows 用 netstat 兜底）
+# 获取监听指定端口的 PID（lsof 优先，其余按 OS 用 ss/netstat 兜底）
 get_port_pid() {
+    local port=$1
     if command -v lsof &>/dev/null; then
-        lsof -ti:"$1" 2>/dev/null
-    elif [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
-        netstat -ano 2>/dev/null | grep -E "[:.]$1 .*LISTENING" | awk '{print $NF}' | sort -u
+        lsof -ti:"$port" 2>/dev/null
+        return 0
     fi
+    case "$(detect_os)" in
+        windows)
+            netstat -ano 2>/dev/null | grep -E "[:.]${port} .*LISTENING" | awk '{print $NF}' | sort -u ;;
+        darwin)
+            # macOS 系统自带 lsof 且 netstat 不输出 PID，此分支仅兜底监听判断
+            : ;;
+        linux)
+            if command -v ss &>/dev/null; then
+                ss -tlnp 2>/dev/null | grep -E ":${port}[[:space:]]" | grep -oE "pid=[0-9]+" | cut -d= -f2 | sort -u
+            else
+                netstat -tlnp 2>/dev/null | grep -E ":${port}[[:space:]]" | grep -oE "pid=[0-9]+" | cut -d= -f2 | sort -u
+            fi ;;
+    esac
 }
 get_service_pid() {
     local port=$2
     local executable_name=$(get_executable_name "$1")
     local pid=""
-    pid=$(lsof -ti:${port} 2>/dev/null || true)
+    if _is_windows; then
+        # Windows/Git Bash: use netstat for the real Windows PID (MSYS ps PID is not usable)
+        pid=$(get_port_pid "$port" | head -1)
+    else
+        pid=$(lsof -ti:${port} 2>/dev/null || true)
+    fi
     [ -z "$pid" ] && pid=$(ps aux | grep -v grep | grep "$executable_name" | awk '{print $2}' 2>/dev/null || true)
     echo "$pid"
 }
@@ -953,13 +993,13 @@ stop_service() {
     if check_port $port; then
         local pid=$(get_service_pid "$service_name" "$port")
         if [ -n "$pid" ]; then
-            kill $pid 2>/dev/null || true
+            if _is_windows; then taskkill //F //PID "$pid" >/dev/null 2>&1 || true; else kill $pid 2>/dev/null || true; fi
             sleep 1
             if ! check_port $port; then
                 success "$service_name 服务已停止"
                 return 0
             else
-                kill -9 $pid 2>/dev/null || true
+                if _is_windows; then taskkill //F //PID "$pid" >/dev/null 2>&1 || true; else kill -9 $pid 2>/dev/null || true; fi
                 sleep 1
                 ! check_port $port && success "$service_name 服务已强制停止" || error "无法停止 $service_name 服务"
             fi
@@ -1500,7 +1540,7 @@ start_dev_macos() {
 
 # 获取前端 dev 进程 PID（vite/tsc/node）
 get_frontend_pid() {
-    if [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
+    if _is_windows; then
         # Windows/Git Bash：用 PowerShell 按命令行匹配 vite/tsc
         powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"name='node.exe'\" | Where-Object { \$_.CommandLine -match 'vite|tsc' -and \$_.CommandLine -match 'apps.web|topems-web' } | Select-Object -ExpandProperty ProcessId" 2>/dev/null | tr -d '\r'
     else
@@ -1588,7 +1628,7 @@ stop_frontend() {
     local all_pid=$(echo "$port_pid $proc_pid" | tr ' ' '\n' | sort -u | grep -v "^$")
 
     if [ -n "$all_pid" ]; then
-        if [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
+        if _is_windows; then
             # Windows：MSYS kill 对原生 node.exe 无效，使用 taskkill 强杀
             for p in $all_pid; do taskkill //F //PID "$p" >/dev/null 2>&1 || true; done
             sleep 1
@@ -1765,7 +1805,7 @@ db_start() {
         sleep 2
     elif command -v systemctl &> /dev/null; then
         sudo systemctl start postgresql 2>/dev/null || true
-    elif [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; then
+    elif _is_windows; then
         # Windows/Git Bash：PostgreSQL 通常已注册为 Windows 服务，仅需探测 psql
         local psql_bin=$(command -v psql 2>/dev/null)
         if [ -z "$psql_bin" ]; then
@@ -1839,7 +1879,7 @@ redis_start() {
     fi
 
     local redis_cli=$(command -v redis-cli 2>/dev/null)
-    if [ -z "$redis_cli" ] && { [ -n "$MSYSTEM" ] || [ -n "$WINDIR" ]; }; then
+    if [ -z "$redis_cli" ] && _is_windows; then
         # Windows/Git Bash：探测常见 Redis 安装（含禅道 Zbox 自带 Redis）
         for rdir in "/e/ZenTao/bin/redis" "/c/Program Files/Redis" "/d/Program Files/Redis" "/c/Program Files/Memurai"; do
             if [ -x "$rdir/redis-cli.exe" ]; then redis_cli="$rdir/redis-cli.exe"; break; fi
