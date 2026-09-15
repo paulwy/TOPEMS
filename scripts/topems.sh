@@ -1792,6 +1792,80 @@ parse_database_url() {
     DB_NAME=${DB_NAME:-topems}
 }
 
+# =============================================
+# 数据库/缓存状态检查（跨平台：Windows/Git Bash · Linux · macOS）
+# =============================================
+
+# 定位 psql（跨平台）：PATH → 常见安装目录
+find_psql_bin() {
+    local p=$(command -v psql 2>/dev/null)
+    if [ -z "$p" ] && _is_windows; then
+        for pg_dir in "/c/Program Files/PostgreSQL"/*/bin "/d/Program Files/PostgreSQL"/*/bin "/e/Program Files/PostgreSQL"/*/bin; do
+            if [ -x "$pg_dir/psql" ]; then p="$pg_dir/psql"; break; fi
+        done
+    fi
+    [ -n "$p" ] && echo "$p"
+}
+
+# 分层检查 PostgreSQL 是否就绪（跨平台）
+# 第一层 pg_isready（官方工具，最快；0=接受连接 1=拒绝连接 2=无响应）
+# 缺失时回退 psql SELECT 1
+# 返回: 0=接受连接 1=运行中但拒绝 2=未运行/无响应
+db_is_ready() {
+    parse_database_url
+    local psql_cmd=${PSQL_BIN:-$(find_psql_bin)}
+    local pg_isready_cmd=""
+    if command -v pg_isready &>/dev/null; then
+        pg_isready_cmd="pg_isready"
+    elif [ -n "$psql_cmd" ]; then
+        local pi="$(dirname "$psql_cmd")/pg_isready"
+        [ -x "$pi" ] && pg_isready_cmd="$pi"
+    fi
+
+    if [ -n "$pg_isready_cmd" ]; then
+        "$pg_isready_cmd" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" >/dev/null 2>&1
+        local code=$?
+        case $code in
+            0) return 0 ;;
+            1) return 1 ;;
+            *) return 2 ;;
+        esac
+    fi
+
+    if [ -n "$psql_cmd" ] && PGPASSWORD=$DB_PASSWORD "$psql_cmd" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" >/dev/null 2>&1; then
+        return 0
+    fi
+    return 2
+}
+
+# 定位 redis-cli（跨平台）：PATH → 常见安装目录
+find_redis_cli() {
+    local rcli=$(command -v redis-cli 2>/dev/null)
+    if [ -z "$rcli" ] && _is_windows; then
+        for rdir in "/e/ZenTao/bin/redis" "/c/Program Files/Redis" "/d/Program Files/Redis" "/c/Program Files/Memurai"; do
+            if [ -x "$rdir/redis-cli.exe" ]; then rcli="$rdir/redis-cli.exe"; break; fi
+        done
+    fi
+    [ -n "$rcli" ] && echo "$rcli"
+}
+
+# 从 REDIS_URL 提取密码（无密码输出空）
+redis_auth_arg() {
+    [ -n "$REDIS_URL" ] && echo "$REDIS_URL" | sed -n 's|redis://:\([^@]*\)@.*|\1|p'
+}
+
+# Redis 是否就绪（带密码 ping，跨平台）
+redis_is_ready() {
+    local rcli=$(find_redis_cli)
+    [ -z "$rcli" ] && return 2
+    local rpass=$(redis_auth_arg)
+    if [ -n "$rpass" ]; then
+        "$rcli" -a "$rpass" ping >/dev/null 2>&1
+    else
+        "$rcli" ping >/dev/null 2>&1
+    fi
+}
+
 # 启动 PostgreSQL
 db_start() {
     info "启动 PostgreSQL..."
@@ -1807,12 +1881,7 @@ db_start() {
         sudo systemctl start postgresql 2>/dev/null || true
     elif _is_windows; then
         # Windows/Git Bash：PostgreSQL 通常已注册为 Windows 服务，仅需探测 psql
-        local psql_bin=$(command -v psql 2>/dev/null)
-        if [ -z "$psql_bin" ]; then
-            for pg_dir in "/c/Program Files/PostgreSQL"/*/bin "/d/Program Files/PostgreSQL"/*/bin; do
-                if [ -x "$pg_dir/psql" ]; then psql_bin="$pg_dir/psql"; break; fi
-            done
-        fi
+        local psql_bin=$(find_psql_bin)
         if [ -z "$psql_bin" ]; then
             error "未找到 psql，请安装 PostgreSQL 并将其 bin 目录加入 PATH（或使用 topems.ps1）"
             return 1
@@ -1821,12 +1890,16 @@ db_start() {
     fi
 
     parse_database_url
-    local psql_cmd=${PSQL_BIN:-psql}
-    if PGPASSWORD=$DB_PASSWORD "$psql_cmd" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
+    db_is_ready
+    local rc=$?
+    if [ "$rc" -eq 0 ]; then
         success "PostgreSQL 已启动"
         return 0
+    elif [ "$rc" -eq 1 ]; then
+        warn "PostgreSQL 运行中但拒绝新连接（连接数可能已满或正在恢复），请检查 max_connections"
+        return 1
     else
-        error "PostgreSQL 启动失败"
+        error "PostgreSQL 未启动（端口 ${DB_PORT} 无响应）"
         return 1
     fi
 }
@@ -1834,6 +1907,11 @@ db_start() {
 # 停止 PostgreSQL
 db_stop() {
     info "停止 PostgreSQL..."
+    if _is_windows; then
+        # Windows：PostgreSQL 是系统服务，脚本不管理其生命周期
+        warn "Windows 下 PostgreSQL 由系统服务管理，请用管理员终端执行: Stop-Service postgresql-x64-* -Force"
+        return 1
+    fi
     if command -v brew &> /dev/null; then
         local pg_version=$(brew list | grep -E '^postgresql@[0-9]+$' | sort -r | head -1)
         if [ -n "$pg_version" ]; then
@@ -1850,21 +1928,48 @@ db_stop() {
 # 数据库状态
 db_status() {
     parse_database_url
+    local psql_cmd=${PSQL_BIN:-$(find_psql_bin)}
     info "=== PostgreSQL 状态 ==="
-    if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
-        success "PostgreSQL 运行中"
-        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT version();" 2>/dev/null | head -3
+    db_is_ready
+    local rc=$?
+    if [ "$rc" -eq 0 ]; then
+        success "PostgreSQL 运行中并接受连接"
+        [ -n "$psql_cmd" ] && PGPASSWORD=$DB_PASSWORD "$psql_cmd" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT version();" 2>/dev/null | head -1
+        case "$(detect_os)" in
+            windows)
+                local pid=$(netstat -ano 2>/dev/null | grep -E "[:.]${DB_PORT} .*LISTENING" | awk '{print $NF}' | sort -u | head -1)
+                [ -n "$pid" ] && detail "端口 ${DB_PORT} 由 postgres (PID ${pid}) 监听"
+                ;;
+            linux)
+                local act=$(systemctl is-active postgresql 2>/dev/null || true)
+                [ -n "$act" ] && detail "systemd 服务状态: ${act}"
+                ;;
+            darwin)
+                local brewst=$(brew services list 2>/dev/null | grep -iE 'postgres' | head -1 || true)
+                [ -n "$brewst" ] && detail "${brewst}"
+                ;;
+        esac
+    elif [ "$rc" -eq 1 ]; then
+        warn "PostgreSQL 运行中但拒绝新连接（连接数可能已满或正在恢复）"
     else
-        error "PostgreSQL 未运行"
+        error "PostgreSQL 未运行（端口 ${DB_PORT} 无响应）"
     fi
 
     echo ""
     info "=== Redis 状态 ==="
-    if redis-cli ping &> /dev/null; then
+    if redis_is_ready; then
+        local rcli=$(find_redis_cli)
+        local rpass=$(redis_auth_arg)
+        local rver=""
+        if [ -n "$rpass" ]; then
+            rver=$("$rcli" -a "$rpass" info server 2>/dev/null | grep "redis_version" | head -1)
+        else
+            rver=$("$rcli" info server 2>/dev/null | grep "redis_version" | head -1)
+        fi
         success "Redis 运行中"
-        redis-cli info server 2>/dev/null | grep "redis_version" | head -1
+        [ -n "$rver" ] && detail "Redis 版本: ${rver#redis_version:}"
     else
-        error "Redis 未运行"
+        error "Redis 未运行或认证失败（请检查 REDIS_URL 与 redis-server）"
     fi
 }
 
@@ -1878,22 +1983,16 @@ redis_start() {
         sudo systemctl start redis 2>/dev/null || true
     fi
 
-    local redis_cli=$(command -v redis-cli 2>/dev/null)
-    if [ -z "$redis_cli" ] && _is_windows; then
-        # Windows/Git Bash：探测常见 Redis 安装（含禅道 Zbox 自带 Redis）
-        for rdir in "/e/ZenTao/bin/redis" "/c/Program Files/Redis" "/d/Program Files/Redis" "/c/Program Files/Memurai"; do
-            if [ -x "$rdir/redis-cli.exe" ]; then redis_cli="$rdir/redis-cli.exe"; break; fi
-        done
-    fi
+    local redis_cli=$(find_redis_cli)
     if [ -z "$redis_cli" ]; then
         error "未找到 redis-cli，请安装 Redis 并将其 bin 目录加入 PATH（或使用 topems.ps1）"
         return 1
     fi
-    if "$redis_cli" ping &> /dev/null; then
+    if redis_is_ready; then
         success "Redis 已启动"
         return 0
     else
-        error "Redis 启动失败"
+        error "Redis 启动失败（ping 不通或认证失败）"
         return 1
     fi
 }
@@ -1901,6 +2000,10 @@ redis_start() {
 # 停止 Redis
 redis_stop() {
     info "停止 Redis..."
+    if _is_windows; then
+        warn "Windows 下 Redis 由系统服务/禅道等自带进程管理，请自行停止对应服务或进程（脚本不代为停止）"
+        return 1
+    fi
     if command -v brew &> /dev/null; then
         brew services stop redis 2>/dev/null
     elif command -v systemctl &> /dev/null; then
