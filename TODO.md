@@ -78,3 +78,4 @@
 | WebSocket 连接中断 | ⚠️ 已知 | 重连时偶发，自动恢复 |
 | MUI elevation 警告 | ⚠️ 警告 | 不影响功能 |
 | GIS 认证 | ✅ 已修复 (fbcc1c6e9) | auth layer 顺序修正 + business-locations CRUD 闭环 |
+| finance 真实模块降级（must be owner） | ✅ 已修复 | 全库业务 schema/表 owner 统一为 topems_app；MIGRATE_URL 迁移池用户统一（topems→topems_app），portal schema 防御 permission denied 同步消除 |
