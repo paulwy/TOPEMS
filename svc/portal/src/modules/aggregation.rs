@@ -277,12 +277,18 @@ async fn fetch_hrm_stats(state: &AppState) -> HrmStats {
 
     let employees = match client.list_employees().await {
         Ok(emps) => emps.len() as u64,
-        Err(_) => 0,
+        Err(e) => {
+            tracing::error!("aggregation hrm list_employees failed: {:?}", e);
+            0
+        }
     };
 
     let departments = match client.list_departments().await {
         Ok(deps) => deps.len() as u64,
-        Err(_) => 0,
+        Err(e) => {
+            tracing::error!("aggregation hrm list_departments failed: {:?}", e);
+            0
+        }
     };
 
     HrmStats {
@@ -293,11 +299,14 @@ async fn fetch_hrm_stats(state: &AppState) -> HrmStats {
 }
 
 async fn fetch_finance_stats(state: &AppState, user_id: &str, token: Option<&str>) -> FinanceStats {
-    let client = state.erp_client.clone();
+    let client = state.finance_client.clone();
 
-    let vouchers = match client.list_vouchers(1, 1).await {
+    let vouchers = match client.list_vouchers("", "").await {
         Ok(r) => r.len() as u64,
-        Err(_) => 0,
+        Err(e) => {
+            tracing::error!("aggregation finance list_vouchers failed: {:?}", e);
+            0
+        }
     };
 
     let pending_approvals = if let Some(t) = token {
@@ -327,10 +336,10 @@ async fn fetch_mes_stats(state: &AppState) -> MesStats {
 
     let wip = match client.get_wip_summary().await {
         Ok(data) => data
-            .get("total_count")
-            .and_then(|v| v.as_u64())
-            .or_else(|| data.get("count").and_then(|v| v.as_u64()))
-            .unwrap_or(0),
+            .get("data")
+            .and_then(|v| v.get("total_wip"))
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0) as u64,
         Err(_) => 0,
     };
 

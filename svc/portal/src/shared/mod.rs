@@ -131,7 +131,7 @@ impl AppState {
                 }),
             finance_client: Self::build_client::<FinanceApi>(&mono_base)
                 .and_then(|c| {
-                    c.with_service_token(&jwt_secret, "portal-service", &["finance:read"])
+                    c.with_service_token(&jwt_secret, "portal-service", &["finance:admin"])
                 })
                 .unwrap_or_else(|_| {
                     TypedServiceClient::new(FinanceApi, "http://localhost:8011".to_string())
