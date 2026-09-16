@@ -13,10 +13,29 @@ use super::ApiState;
 
 #[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
 pub struct SearchParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+        #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+        #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
+        #[serde(default, alias = "sort", alias = "sortBy", alias = "sortby")]
+    pub sort_by: Option<String>,
+        #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    pub sort_dir: Option<String>,
     pub query: String,
 }
+
+impl SearchParams {
+    fn page_or_default(&self) -> i64 { self.page.unwrap_or(1).max(1) }
+    fn page_size_or_default(&self) -> i64 { self.page_size.unwrap_or(20).clamp(1, 100) }
+    fn offset(&self) -> i64 { (self.page_or_default() - 1) * self.page_size_or_default() }
+    fn limit(&self) -> i64 { self.page_size_or_default() }
+    fn normalized_sort_dir(&self) -> String {
+        match self.sort_dir.as_deref() { Some("asc") => "asc".into(), _ => "desc".into() }
+    }
+}
+
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
@@ -47,7 +66,7 @@ async fn global_search(
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let limit = params.base.page_size_or_default();
+    let limit = params.page_size_or_default();
     let query = params.query.to_lowercase();
     let search_pattern = format!("%{}%", query);
 
@@ -56,7 +75,7 @@ async fn global_search(
     let material_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, material_code as description, 'material' as module, 
+        SELECT id, name as title, material_code as description, 'material' as module,
                '/erp/materials' as path, '物料' as type_name
         FROM core_erp_materials
         WHERE LOWER(name) LIKE $1 OR LOWER(material_code) LIKE $1 OR LOWER(specification) LIKE $1
@@ -81,7 +100,7 @@ async fn global_search(
     let customer_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, contact_person as description, 'customer' as module, 
+        SELECT id, name as title, contact_person as description, 'customer' as module,
                '/crm/customers' as path, '客户' as type_name
         FROM crm.core_crm_customers
         WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
@@ -107,7 +126,7 @@ async fn global_search(
     let supplier_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, contact_person as description, 'supplier' as module, 
+        SELECT id, name as title, contact_person as description, 'supplier' as module,
                '/srm/suppliers' as path, '供应商' as type_name
         FROM core_erp_suppliers
         WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
@@ -148,7 +167,7 @@ mod tests {
         let json = r#"{"query":"laptop","limit":10}"#;
         let params: SearchParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.query, "laptop");
-        assert_eq!(params.base.page_size, Some(10));
+        assert_eq!(params.page_size, Some(10));
     }
 
     #[test]
@@ -156,7 +175,7 @@ mod tests {
         let json = r#"{"query":"test"}"#;
         let params: SearchParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.query, "test");
-        assert_eq!(params.base.page_size, None);
+        assert_eq!(params.page_size, None);
     }
 
     #[test]

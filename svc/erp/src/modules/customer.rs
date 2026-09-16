@@ -20,11 +20,30 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct CustomerListParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+        #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+        #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
+        #[serde(default, alias = "sort", alias = "sortBy", alias = "sortby")]
+    pub sort_by: Option<String>,
+        #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub customer_type: Option<String>,
 }
+
+impl CustomerListParams {
+    fn page_or_default(&self) -> i64 { self.page.unwrap_or(1).max(1) }
+    fn page_size_or_default(&self) -> i64 { self.page_size.unwrap_or(20).clamp(1, 100) }
+    fn offset(&self) -> i64 { (self.page_or_default() - 1) * self.page_size_or_default() }
+    fn limit(&self) -> i64 { self.page_size_or_default() }
+    fn normalized_sort_dir(&self) -> String {
+        match self.sort_dir.as_deref() { Some("asc") => "asc".into(), _ => "desc".into() }
+    }
+}
+
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -73,16 +92,16 @@ pub async fn list_customers(
         return e;
     }
 
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
-    let search_pattern = build_search_pattern(params.base.search.as_deref());
+    let search_pattern = build_search_pattern(params.search.as_deref());
     let status_filter = params.status.clone();
     let customer_type_filter = params.customer_type.clone();
 
     let customers_result = if has_customer_filters(
-        params.base.search.as_deref(),
+        params.search.as_deref(),
         status_filter.as_deref(),
         customer_type_filter.as_deref(),
     ) {
@@ -91,8 +110,8 @@ pub async fn list_customers(
         let customer_type = customer_type_filter.clone();
 
         sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("erp", r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at 
-               FROM erp.customers 
+            only_own_schema_query!("erp", r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at
+               FROM erp.customers
                WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
                  AND ($2 = '' OR status = $2)
                  AND ($3 = '' OR customer_type = $3)
@@ -107,7 +126,7 @@ pub async fn list_customers(
         .await
     } else {
         sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at FROM erp.customers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -126,7 +145,7 @@ pub async fn list_customers(
     let total = match sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR customer_type = $3)"#)
     )
-    .bind(params.base.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))
     .bind(customer_type_filter.as_deref().unwrap_or(""))
     .fetch_one(&mut **txn)
@@ -173,7 +192,7 @@ pub async fn get_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -214,7 +233,7 @@ pub async fn create_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -274,7 +293,7 @@ pub async fn update_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW() WHERE id = $15 RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW() WHERE id = $15 RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.short_name)
@@ -431,7 +450,7 @@ struct CustomerRecentResponse {
     pagesize: i64,
 }
 
-const CUSTOMER_SELECT_COLS: &str = "id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at";
+const CUSTOMER_SELECT_COLS: &str = "id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at";
 
 async fn batch_list_customers(
     State(state): State<ApiState>,
@@ -493,7 +512,7 @@ async fn batch_create_customers(
     for req in &body.customers {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"
+            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
         ))
         .bind(&req.code).bind(&req.name).bind(&req.short_name).bind(&req.contact_person)
         .bind(&req.contact_phone).bind(&req.email).bind(&req.address).bind(&req.province)
@@ -531,7 +550,7 @@ async fn batch_update_customers(
     for item in &body.updates {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW() WHERE id = $15 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"
+            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW() WHERE id = $15 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
         ))
         .bind(&item.payload.name).bind(&item.payload.short_name).bind(&item.payload.contact_person)
         .bind(&item.payload.contact_phone).bind(&item.payload.email).bind(&item.payload.address)
@@ -613,7 +632,7 @@ async fn change_customer_status(
     }
     let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
         "erp",
-        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at"
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
     ))
     .bind(&body.status).bind(id).fetch_optional(&mut **txn).await;
     match result {
@@ -651,7 +670,7 @@ async fn batch_change_status(
         .map(|i| format!("${}", i))
         .collect();
     let sql = format!(
-        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at",
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
@@ -693,7 +712,7 @@ async fn batch_change_category(
         .map(|i| format!("${}", i))
         .collect();
     let sql = format!(
-        "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at",
+        "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
@@ -782,7 +801,7 @@ async fn list_recent_customers(
         return e;
     }
     let limit = params.limit.unwrap_or(20).clamp(1, 100);
-    let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).fetch_all(&mut **txn).await.unwrap_or_default();
+    let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).fetch_all(&mut **txn).await.unwrap_or_default();
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
         "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL"

@@ -24,11 +24,30 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct SupplierListParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+        #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+        #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
+        #[serde(default, alias = "sort", alias = "sortBy", alias = "sortby")]
+    pub sort_by: Option<String>,
+        #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub supplier_type: Option<String>,
 }
+
+impl SupplierListParams {
+    fn page_or_default(&self) -> i64 { self.page.unwrap_or(1).max(1) }
+    fn page_size_or_default(&self) -> i64 { self.page_size.unwrap_or(20).clamp(1, 100) }
+    fn offset(&self) -> i64 { (self.page_or_default() - 1) * self.page_size_or_default() }
+    fn limit(&self) -> i64 { self.page_size_or_default() }
+    fn normalized_sort_dir(&self) -> String {
+        match self.sort_dir.as_deref() { Some("asc") => "asc".into(), _ => "desc".into() }
+    }
+}
+
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -64,11 +83,11 @@ pub async fn list_suppliers(
         return e;
     }
 
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
-    let search_pattern = params.base.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let supplier_type_filter = params.supplier_type.clone();
 
@@ -81,8 +100,8 @@ pub async fn list_suppliers(
         let supplier_type = supplier_type_filter.clone();
 
         sqlx::query_as::<_, Supplier>(
-            only_own_schema_query!("erp", r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at 
-               FROM erp.suppliers 
+            only_own_schema_query!("erp", r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at
+               FROM erp.suppliers
                WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
                  AND ($2 = '' OR status = $2)
                  AND ($3 = '' OR supplier_type = $3)
@@ -116,7 +135,7 @@ pub async fn list_suppliers(
     let total = match sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.suppliers WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR supplier_type = $3)"#)
     )
-    .bind(params.base.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))
     .bind(supplier_type_filter.as_deref().unwrap_or(""))
     .fetch_one(&mut **txn)

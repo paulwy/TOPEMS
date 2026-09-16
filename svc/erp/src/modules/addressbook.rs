@@ -87,7 +87,7 @@ impl From<HrmEmployee> for AddressbookEntry {
             name: e.name,
             code: None,
             position: None,
-            email: Some(e.email),
+            email: e.email,
             phone: e.phone,
             department_id: e.department_id.map(|id| id.to_string()),
             department_name: None,

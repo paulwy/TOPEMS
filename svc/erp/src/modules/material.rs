@@ -17,11 +17,30 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct MaterialListParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+        #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+        #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
+        #[serde(default, alias = "sort", alias = "sortBy", alias = "sortby")]
+    pub sort_by: Option<String>,
+        #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub category: Option<String>,
 }
+
+impl MaterialListParams {
+    fn page_or_default(&self) -> i64 { self.page.unwrap_or(1).max(1) }
+    fn page_size_or_default(&self) -> i64 { self.page_size.unwrap_or(20).clamp(1, 100) }
+    fn offset(&self) -> i64 { (self.page_or_default() - 1) * self.page_size_or_default() }
+    fn limit(&self) -> i64 { self.page_size_or_default() }
+    fn normalized_sort_dir(&self) -> String {
+        match self.sort_dir.as_deref() { Some("asc") => "asc".into(), _ => "desc".into() }
+    }
+}
+
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -66,11 +85,11 @@ pub async fn list_materials(
         return e;
     }
 
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
-    let search_pattern = params.base.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let category_filter = params.category.clone();
 
@@ -83,8 +102,8 @@ pub async fn list_materials(
         let category = category_filter.clone();
 
         sqlx::query_as::<_, Material>(
-            only_own_schema_query!("erp", r#"SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at 
-               FROM erp.materials 
+            only_own_schema_query!("erp", r#"SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at
+               FROM erp.materials
                WHERE (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1)
                  AND ($2 = '' OR status = $2)
                  AND ($3 = '' OR category = $3)
@@ -118,7 +137,7 @@ pub async fn list_materials(
     let total = match sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.materials WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category = $3)"#)
     )
-    .bind(params.base.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))
     .bind(category_filter.as_deref().unwrap_or(""))
     .fetch_one(&mut **txn)

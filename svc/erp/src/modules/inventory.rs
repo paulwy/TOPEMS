@@ -98,7 +98,7 @@ pub async fn list_inventory(
     let total = match sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.inventory WHERE deleted_at IS NULL AND (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1) AND ($2 = '' OR status = $2)"#)
     )
-    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))
     .fetch_one(&mut **txn)
     .await
