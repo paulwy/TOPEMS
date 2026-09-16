@@ -36,7 +36,7 @@ impl TypedServiceClient<ErpApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/assets?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取单个资产
@@ -52,7 +52,7 @@ impl TypedServiceClient<ErpApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/vouchers?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 创建凭证
@@ -75,7 +75,7 @@ impl TypedServiceClient<ErpApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/customers?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取财务汇总
@@ -96,7 +96,7 @@ impl TypedServiceClient<ErpApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/suppliers?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取单个供应商
@@ -112,7 +112,7 @@ impl TypedServiceClient<ErpApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/materials?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 列出采购订单
@@ -122,7 +122,7 @@ impl TypedServiceClient<ErpApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/purchase-orders?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 列出销售订单
@@ -132,7 +132,7 @@ impl TypedServiceClient<ErpApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/sales-orders?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取销售订单详情
@@ -171,7 +171,7 @@ impl TypedServiceClient<ErpApi> {
             "/finance/reconciliation?ref_id={}&ref_type={}",
             ref_id, ref_type
         );
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// MES 回传生产进度（POST /api/erp/production-orders/sync/mes-progress）

@@ -41,8 +41,19 @@ impl TypedServiceClient<FinanceApi> {
         status: &str,
         period: &str,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
-        let path = format!("/vouchers?status={}&period={}", status, period);
-        self.get(&self.build_path(&path)).await
+        let mut query = String::new();
+        if !status.is_empty() {
+            query.push_str(&format!("status={}&", status));
+        }
+        if !period.is_empty() {
+            query.push_str(&format!("period={}&", period));
+        }
+        let path = if query.is_empty() {
+            "/vouchers".to_string()
+        } else {
+            format!("/vouchers?{}", query.trim_end_matches('&'))
+        };
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 创建凭证
@@ -516,7 +527,7 @@ impl TypedServiceClient<FinanceApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/budgets?page={}&page_size={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取预算

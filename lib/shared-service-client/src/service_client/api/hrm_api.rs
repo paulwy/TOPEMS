@@ -20,10 +20,10 @@ define_service_api!(
 pub struct HrmEmployee {
     pub id: Uuid,
     pub name: String,
-    pub email: String,
+    pub email: Option<String>,
     pub phone: Option<String>,
     pub department_id: Option<Uuid>,
-    pub company_id: Uuid,
+    pub company_id: Option<Uuid>,
     pub status: String,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
@@ -34,7 +34,7 @@ pub struct HrmDepartment {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    pub company_id: Uuid,
+    pub company_id: Option<Uuid>,
     pub parent_id: Option<Uuid>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
@@ -96,7 +96,7 @@ impl TypedServiceClient<HrmApi> {
 
     /// 列出员工
     pub async fn list_employees(&self) -> ServiceClientResult<Vec<HrmEmployee>> {
-        self.get(&self.build_path("/employees")).await
+        self.get_items(&self.build_path("/employees")).await
     }
 
     /// 获取部门
@@ -107,7 +107,7 @@ impl TypedServiceClient<HrmApi> {
 
     /// 列出部门
     pub async fn list_departments(&self) -> ServiceClientResult<Vec<HrmDepartment>> {
-        self.get(&self.build_path("/departments")).await
+        self.get_items(&self.build_path("/departments")).await
     }
 
     /// 获取公司
@@ -118,7 +118,7 @@ impl TypedServiceClient<HrmApi> {
 
     /// 列出公司
     pub async fn list_companies(&self) -> ServiceClientResult<Vec<HrmCompany>> {
-        self.get(&self.build_path("/companies")).await
+        self.get_items(&self.build_path("/companies")).await
     }
 
     /// 获取考勤汇总

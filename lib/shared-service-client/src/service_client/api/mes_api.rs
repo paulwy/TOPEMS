@@ -29,13 +29,13 @@ impl TypedServiceClient<MesApi> {
         page: i32,
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
-        let path = format!("/production-orders?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        let path = format!("/orders?page={}&pagesize={}", page, page_size);
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取生产订单
     pub async fn get_production_order(&self, id: &str) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/production-orders/{}", id);
+        let path = format!("/orders/{}", id);
         self.get(&self.build_path(&path)).await
     }
 
@@ -45,8 +45,8 @@ impl TypedServiceClient<MesApi> {
         page: i32,
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
-        let path = format!("/work-stations?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        let path = format!("/workstations?page={}&pagesize={}", page, page_size);
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 列出设备
@@ -61,7 +61,7 @@ impl TypedServiceClient<MesApi> {
 
     /// 获取在制品汇总
     pub async fn get_wip_summary(&self) -> ServiceClientResult<serde_json::Value> {
-        self.get(&self.build_path("/wip/summary")).await
+        self.get(&self.build_path("/wips/statistics")).await
     }
 
     /// 获取设备 OEE
@@ -75,7 +75,7 @@ impl TypedServiceClient<MesApi> {
         &self,
         batch_no: &str,
     ) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/quality-traceability/{}", batch_no);
+        let path = format!("/traceability/backward/{}", batch_no);
         self.get(&self.build_path(&path)).await
     }
 

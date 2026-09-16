@@ -263,6 +263,25 @@ impl<T: ServiceApi> TypedServiceClient<T> {
             .ok_or_else(|| TopemsError::Config("API response missing `data` field".into()))
     }
 
+    /// GET 请求并解包分页列表：优先取 `data.items`，兼容 `data.orders` 与 `data` 直接为数组的形态。
+    pub async fn get_items<R: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<Vec<R>> {
+        let resp: ApiResponse<serde_json::Value> = self.inner.get(path).await?;
+        let data = resp
+            .data
+            .ok_or_else(|| TopemsError::Config("API response missing `data` field".into()))?;
+        let arr = if let Some(a) = data.as_array() {
+            a.clone()
+        } else {
+            ["items", "orders"]
+                .iter()
+                .find_map(|k| data.get(k).and_then(|v| v.as_array()).cloned())
+                .unwrap_or_default()
+        };
+        arr.into_iter()
+            .map(|v| serde_json::from_value::<R>(v).map_err(TopemsError::from))
+            .collect()
+    }
+
     /// POST 请求并解包 `ApiResponse<T>` 的 `data` 字段。
     pub async fn post_and_unwrap<R: DeserializeOwned, B: Serialize>(
         &self,
