@@ -3,6 +3,7 @@ pub mod app_state;
 pub mod audit_log;
 pub mod billing;
 pub mod contact;
+pub mod contract;
 pub mod customer;
 pub mod customer_scoring;
 pub mod interaction;
@@ -13,6 +14,7 @@ pub mod tag;
 pub use audit_log::AuditLog;
 pub use billing::{BillingQueryParams, BillingRecord, UpdateBillingRequest};
 pub use contact::{Contact, CreateContactRequest, UpdateContactRequest};
+pub use contract::{Contract, ContractQueryParams, CreateContractRequest, UpdateContractRequest};
 pub use customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 pub use customer_scoring::{
     CreateCustomerScoreRequest, CustomerScore, CustomerScoringQueryParams,

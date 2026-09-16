@@ -12,6 +12,7 @@ pub mod analytics;
 pub mod audit;
 pub mod billing;
 pub mod contact;
+pub mod contract;
 pub mod crm_plugin;
 pub mod customer;
 pub mod customer_profile;
@@ -89,6 +90,7 @@ pub fn create_routes() -> Router<ApiState> {
         // .merge(customer_segmentation::create_routes())
         // .merge(customer_recommendation::create_routes())
         .merge(contact::create_routes())
+        .merge(contract::create_routes())
         .merge(opportunity::create_routes())
         .merge(interaction::create_routes())
         .merge(aftersales::create_routes())

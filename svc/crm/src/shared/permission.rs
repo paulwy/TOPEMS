@@ -20,6 +20,8 @@ pub enum CrmPermission {
     ReturnWrite,
     BillingRead,
     BillingWrite,
+    ContractRead,
+    ContractWrite,
     All,
 }
 
@@ -60,6 +62,12 @@ impl CrmPermission {
                 SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
             }
             CrmPermission::BillingWrite => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
+            }
+            CrmPermission::ContractRead => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
+            }
+            CrmPermission::ContractWrite => {
                 SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
             }
             CrmPermission::All => {
@@ -105,6 +113,8 @@ mod tests {
             CrmPermission::ReturnWrite,
             CrmPermission::BillingRead,
             CrmPermission::BillingWrite,
+            CrmPermission::ContractRead,
+            CrmPermission::ContractWrite,
             CrmPermission::All,
         ];
         for v in &variants {
@@ -175,6 +185,8 @@ mod tests {
             CrmPermission::ReturnWrite,
             CrmPermission::BillingRead,
             CrmPermission::BillingWrite,
+            CrmPermission::ContractRead,
+            CrmPermission::ContractWrite,
             CrmPermission::All,
         ];
         for v in &all {
