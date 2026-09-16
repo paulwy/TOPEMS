@@ -1,4 +1,4 @@
-﻿//! 真实 HRM 服务接入模块（HrmRealModule）—— Phase B3 扩展
+//! 真实 HRM 服务接入模块（HrmRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-hrm` 服务（lib 形态）作为模块接入统一入口。
 //! 与 FinanceRealModule / ErpRealModule / QmsRealModule / CrmRealModule 相同模式：
@@ -11,7 +11,6 @@
 #![cfg(feature = "module-hrm")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
@@ -118,7 +117,10 @@ impl HrmRealModule {
         // 8. 组装路由：api_prefix + 插件路由 + 开发验证模拟认证
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes.merge(plugin_routes))
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 hrm 模块已接入统一入口（db={}，prefix={}）",

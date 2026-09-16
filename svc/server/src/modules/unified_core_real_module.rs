@@ -43,10 +43,7 @@ impl UnifiedCoreRealModule {
         // 嵌入模式无独立 public 入口（server 统一提供 /health /metrics）
         let routes = build_router(ctx.db.clone(), None, Router::new()).await?;
 
-        Ok(Self {
-            routes,
-            db: ctx.db,
-        })
+        Ok(Self { routes, db: ctx.db })
     }
 }
 

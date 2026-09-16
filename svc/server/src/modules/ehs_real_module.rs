@@ -9,7 +9,6 @@
 #![cfg(feature = "module-ehs")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
@@ -113,10 +112,12 @@ impl EhsRealModule {
             ))
             .layer(axum::middleware::from_fn(require_permission("ehs:admin")))
             .with_state(state);
-
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 ehs 模块已接入统一入口（db={}，prefix={}）",

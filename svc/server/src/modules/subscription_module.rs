@@ -12,7 +12,6 @@
 #![cfg(feature = "module-subscription")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -270,10 +269,12 @@ impl SubscriptionModule {
                 "subscription:admin",
             )));
         let protected = read_routes.merge(write_routes).with_state(state);
-
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected)
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!("✅ 订阅模块已接入（prefix={}）", config.api_prefix);
         Ok(Self {

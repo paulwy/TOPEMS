@@ -11,7 +11,6 @@
 #![cfg(feature = "module-portal")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use topems_portal::shared::AppState;
@@ -57,8 +56,6 @@ impl PortalRealModule {
             public_routes,
         )
         .await?;
-
-        let routes = routes.layer(axum::middleware::from_fn(inject_dev_claims));
 
         tracing::info!(
             "✅ 真实 portal 模块已接入统一入口（db={}，prefix={}）",

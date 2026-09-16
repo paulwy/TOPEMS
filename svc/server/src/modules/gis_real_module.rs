@@ -9,7 +9,6 @@
 #![cfg(feature = "module-gis")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use topems_gis::embedded::{self, AppState};
@@ -69,7 +68,6 @@ impl GisRealModule {
 
         let routes = Router::new()
             .nest(config.api_prefix, business_routes)
-            .layer(axum::middleware::from_fn(inject_dev_claims))
             .with_state(state);
 
         tracing::info!(

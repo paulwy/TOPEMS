@@ -8,7 +8,6 @@
 #![cfg(feature = "module-communication")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use topems_communication::{im, mail, notification};
@@ -42,44 +41,134 @@ impl CommunicationRealModule {
         // ===== 通知读取路由 =====
         let notification_read = Router::new()
             .route("/notify/list", get(notification::list_notifications))
-            .route("/notification/notifications", get(notification::get_notifications))
-            .route("/notification/notifications/unread-count", get(notification::get_unread_count))
-            .route("/notification/notifications/unread", get(notification::get_unread_notifications))
-            .route("/notification/notifications/{id}", get(notification::get_notification))
-            .route("/notification/notifications/stats/me", get(notification::get_notification_stats))
-            .route("/notification/notifications/archived", get(notification::list_archived_notifications))
-            .route("/notification/notifications/archive/config", get(notification::get_archive_config))
-            .route("/notification/notification-templates", get(notification::list_templates))
-            .route("/notification/notification-templates/{id}", get(notification::get_template))
+            .route(
+                "/notification/notifications",
+                get(notification::get_notifications),
+            )
+            .route(
+                "/notification/notifications/unread-count",
+                get(notification::get_unread_count),
+            )
+            .route(
+                "/notification/notifications/unread",
+                get(notification::get_unread_notifications),
+            )
+            .route(
+                "/notification/notifications/{id}",
+                get(notification::get_notification),
+            )
+            .route(
+                "/notification/notifications/stats/me",
+                get(notification::get_notification_stats),
+            )
+            .route(
+                "/notification/notifications/archived",
+                get(notification::list_archived_notifications),
+            )
+            .route(
+                "/notification/notifications/archive/config",
+                get(notification::get_archive_config),
+            )
+            .route(
+                "/notification/notification-templates",
+                get(notification::list_templates),
+            )
+            .route(
+                "/notification/notification-templates/{id}",
+                get(notification::get_template),
+            )
             .route("/notification/channels", get(notification::list_channels))
-            .route("/notification/channels/{id}", get(notification::get_channel))
-            .route("/notification/channels/{id}/metrics", get(notification::get_channel_metrics));
+            .route(
+                "/notification/channels/{id}",
+                get(notification::get_channel),
+            )
+            .route(
+                "/notification/channels/{id}/metrics",
+                get(notification::get_channel_metrics),
+            );
 
         // ===== 通知写入路由 =====
         let notification_write = Router::new()
             .route("/notify/send", post(notification::send_notification))
-            .route("/notification/notifications", post(notification::create_notification))
-            .route("/notify/broadcast", post(notification::broadcast_notification))
+            .route(
+                "/notification/notifications",
+                post(notification::create_notification),
+            )
+            .route(
+                "/notify/broadcast",
+                post(notification::broadcast_notification),
+            )
             .route("/notify/{id}/read", post(notification::mark_as_read))
             .route("/notify/read-all", post(notification::mark_all_as_read))
-            .route("/notification/notifications/{id}", put(notification::mark_as_read))
-            .route("/notification/notifications/read-all", put(notification::mark_all_as_read))
-            .route("/notification/notifications/{id}/unread", put(notification::mark_as_unread))
-            .route("/notification/notifications/bulk-read", post(notification::bulk_mark_read))
-            .route("/notification/notifications/bulk-delete", delete(notification::bulk_delete))
-            .route("/notification/notifications/{id}/archive", post(notification::archive_notification))
-            .route("/notification/notifications/{id}/unarchive", post(notification::unarchive_notification))
-            .route("/notification/notifications/{id}", delete(notification::delete_notification))
-            .route("/notification/notifications", delete(notification::delete_all_notifications))
-            .route("/notification/notifications/archive/config", put(notification::update_archive_config))
-            .route("/notification/notifications/archive/run", post(notification::run_auto_archive))
-            .route("/notification/notification-templates", post(notification::create_template))
-            .route("/notification/notification-templates/{id}", put(notification::update_template))
-            .route("/notification/notification-templates/{id}", delete(notification::delete_template))
+            .route(
+                "/notification/notifications/{id}",
+                put(notification::mark_as_read),
+            )
+            .route(
+                "/notification/notifications/read-all",
+                put(notification::mark_all_as_read),
+            )
+            .route(
+                "/notification/notifications/{id}/unread",
+                put(notification::mark_as_unread),
+            )
+            .route(
+                "/notification/notifications/bulk-read",
+                post(notification::bulk_mark_read),
+            )
+            .route(
+                "/notification/notifications/bulk-delete",
+                delete(notification::bulk_delete),
+            )
+            .route(
+                "/notification/notifications/{id}/archive",
+                post(notification::archive_notification),
+            )
+            .route(
+                "/notification/notifications/{id}/unarchive",
+                post(notification::unarchive_notification),
+            )
+            .route(
+                "/notification/notifications/{id}",
+                delete(notification::delete_notification),
+            )
+            .route(
+                "/notification/notifications",
+                delete(notification::delete_all_notifications),
+            )
+            .route(
+                "/notification/notifications/archive/config",
+                put(notification::update_archive_config),
+            )
+            .route(
+                "/notification/notifications/archive/run",
+                post(notification::run_auto_archive),
+            )
+            .route(
+                "/notification/notification-templates",
+                post(notification::create_template),
+            )
+            .route(
+                "/notification/notification-templates/{id}",
+                put(notification::update_template),
+            )
+            .route(
+                "/notification/notification-templates/{id}",
+                delete(notification::delete_template),
+            )
             .route("/notification/channels", post(notification::create_channel))
-            .route("/notification/channels/{id}", put(notification::update_channel))
-            .route("/notification/channels/{id}", delete(notification::delete_channel))
-            .route("/notification/channels/{id}/test", post(notification::test_channel));
+            .route(
+                "/notification/channels/{id}",
+                put(notification::update_channel),
+            )
+            .route(
+                "/notification/channels/{id}",
+                delete(notification::delete_channel),
+            )
+            .route(
+                "/notification/channels/{id}/test",
+                post(notification::test_channel),
+            );
 
         // ===== IM 核心路由 =====
         let im_routes = Router::new()
@@ -104,10 +193,8 @@ impl CommunicationRealModule {
             .route("/mail/templates", post(mail::create_template));
 
         // 公开路由
-        let public_routes = Router::new().route(
-            "/health",
-            get(|| async { "Communication Service OK" }),
-        );
+        let public_routes =
+            Router::new().route("/health", get(|| async { "Communication Service OK" }));
 
         // 合并所有路由
         let protected_routes = Router::new()
@@ -120,13 +207,13 @@ impl CommunicationRealModule {
                 topems_shared_auth::tenant_middleware(),
             ))
             .with_state(ctx.db.clone());
-
-        let routes = public_routes
-            .merge(protected_routes)
-            // Claims 注入：与 finance/srm/pm 等 real_module 一致（模块化单体开发
-            // 验证阶段统一入口尚未接入完整认证，由 inject_dev_claims 注入模拟 Claims，
-            // 使 tenant_middleware 正常建立租户上下文；生产须替换为 auth_middleware）
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+        let routes =
+            public_routes
+                .merge(protected_routes)
+                .layer(axum::middleware::from_fn_with_state(
+                    ctx.auth_state.clone(),
+                    topems_shared_auth::auth::auth_middleware,
+                ));
 
         Ok(Self {
             routes,

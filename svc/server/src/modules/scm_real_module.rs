@@ -1,4 +1,4 @@
-﻿//! 真实 SCM 服务接入模块（ScmRealModule）—— Phase B3 扩展
+//! 真实 SCM 服务接入模块（ScmRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-scm` 服务（lib 形态）作为模块接入统一入口。
 //! 与 FinanceRealModule / ErpRealModule / QmsRealModule / CrmRealModule / HrmRealModule
@@ -9,7 +9,6 @@
 #![cfg(feature = "module-scm")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
@@ -106,7 +105,10 @@ impl ScmRealModule {
         // 5. 组装路由：api_prefix + 开发验证模拟认证
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 scm 模块已接入统一入口（db={}，prefix={}）",

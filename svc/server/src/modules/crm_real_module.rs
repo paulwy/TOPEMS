@@ -13,7 +13,6 @@
 #![cfg(feature = "module-crm")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
@@ -103,11 +102,9 @@ impl CrmRealModule {
             .with_metrics("crm", entity)
         }
         let customer_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("customer")));
-        let opportunity_cache =
-            Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("opportunity")));
+        let opportunity_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("opportunity")));
         let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(crm_l2_config("dict")));
-        let dashboard_cache =
-            Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("dashboard")));
+        let dashboard_cache = Arc::new(AsyncL2Cache::new_l1_only(crm_l2_config("dashboard")));
         let state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
@@ -148,7 +145,10 @@ impl CrmRealModule {
         // 8. 组装路由：api_prefix + 插件路由 + 开发验证模拟认证
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes.merge(plugin_routes))
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 crm 模块已接入统一入口（db={}，prefix={}）",

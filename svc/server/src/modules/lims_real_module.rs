@@ -1,4 +1,4 @@
-﻿//! 真实 LIMS 服务接入模块（LimsRealModule）—— Phase B3 扩展
+//! 真实 LIMS 服务接入模块（LimsRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-lims` 服务（lib 形态，AppState 直传模式）作为模块接入统一入口。
 //! lims 的 `modules::create_api_routes() -> Router<AppState>` 无参，
@@ -9,7 +9,6 @@
 #![cfg(feature = "module-lims")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
@@ -79,10 +78,8 @@ impl LimsRealModule {
         let sample_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("sample")));
         let task_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("task")));
         let dict_cache = Arc::new(AsyncL2Cache::<String>::new_l1_only(lims_l2_config("dict")));
-        let test_method_cache =
-            Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("test_method")));
-        let instrument_cache =
-            Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("instrument")));
+        let test_method_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("test_method")));
+        let instrument_cache = Arc::new(AsyncL2Cache::new_l1_only(lims_l2_config("instrument")));
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
@@ -103,10 +100,12 @@ impl LimsRealModule {
             ))
             .layer(axum::middleware::from_fn(require_permission("lims:admin")))
             .with_state(state);
-
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 lims 模块已接入统一入口（db={}，prefix={}）",

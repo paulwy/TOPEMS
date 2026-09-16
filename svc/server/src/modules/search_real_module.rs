@@ -11,8 +11,8 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
 use topems_search::handlers;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 
 /// 真实 Search 模块：持有数据库连接池 + 完整搜索路由
 pub struct SearchRealModule {
@@ -40,8 +40,7 @@ impl SearchRealModule {
         let _conn = ctx.db.acquire().await?;
 
         // 公开路由（无状态）
-        let public_routes = Router::new()
-            .route("/health", get(handlers::health_handler));
+        let public_routes = Router::new().route("/health", get(handlers::health_handler));
 
         // 受保护路由（需要 State<PgPool>）
         let protected_routes = Router::new()

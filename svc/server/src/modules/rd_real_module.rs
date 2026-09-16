@@ -1,4 +1,4 @@
-﻿//! 真实 RD 服务接入模块（RdRealModule）—— feature flag 控制
+//! 真实 RD 服务接入模块（RdRealModule）—— feature flag 控制
 //!
 //! 将真实 `topems-rd` 服务（lib 形态）作为模块接入统一入口。
 //! rd 路由使用自定义 `modules::ApiState`（db/auth_state/config/metrics/start_time/event_publisher）。
@@ -8,7 +8,6 @@
 #![cfg(feature = "module-rd")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use topems_rd::modules::{create_routes, ApiState};
@@ -75,10 +74,12 @@ impl RdRealModule {
             ))
             .layer(axum::middleware::from_fn(require_permission("rd:admin")))
             .with_state(api_state);
-
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 rd 模块已接入统一入口（db={}，prefix={}）",

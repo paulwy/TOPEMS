@@ -594,6 +594,8 @@ pub(crate) fn is_public_path(path: &str) -> bool {
         || path.starts_with("/api/integration/webhooks")
         || path.starts_with("/api/v1/core/iam/auth/")
         || path.starts_with("/api/v1/integration/webhooks")
+        // 各服务/模块挂载后的健康检查端点（如 /api/finance/health），无敏感信息
+        || path.ends_with("/health")
         // 服务间内部集成端点（仅内网可达；供 integration 等服务编排调用，须与网关/反代配合限制公网暴露）
         || path.starts_with("/api/internal/")
 }

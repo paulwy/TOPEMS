@@ -1,4 +1,4 @@
-﻿//! 真实 Analytics 服务接入模块（AnalyticsRealModule）—— advanced 组挂载
+//! 真实 Analytics 服务接入模块（AnalyticsRealModule）—— advanced 组挂载
 //!
 //! 将真实 `topems-analytics` 服务（lib 形态）作为模块接入统一入口。
 //! analytics 使用 `routes::create_protected_routes() -> Router`（内部已含
@@ -9,7 +9,6 @@
 #![cfg(feature = "module-advanced")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use topems_analytics::{modules, routes, shared::AppState};
@@ -74,10 +73,12 @@ impl AnalyticsRealModule {
 
         // 5. 业务路由（create_protected_routes 已含 require_permission + with_state）
         let protected_routes = routes::create_protected_routes(app_state);
-
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 analytics 模块已接入统一入口（db={}，prefix={}）",

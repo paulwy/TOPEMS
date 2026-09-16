@@ -1,4 +1,4 @@
-﻿//! 真实 TMS 服务接入模块（TmsRealModule）—— P3 feature flag 控制
+//! 真实 TMS 服务接入模块（TmsRealModule）—— P3 feature flag 控制
 //!
 //! 将真实 `topems-tms` 服务（lib 形态）作为模块接入统一入口。
 //! tms 的 `modules::create_routes::<AppState>()` 泛型路由 + `shared::AppState`。
@@ -8,11 +8,11 @@
 #![cfg(feature = "module-tms")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use crate::modules::dev_claims::inject_dev_claims;
 use axum::Router;
 use std::sync::Arc;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_tms::modules;
 use topems_tms::shared::AppState;
@@ -56,12 +56,28 @@ impl TmsRealModule {
         }
 
         // 3. 构建业务 AppState（与独立部署 main.rs 一致）
+        //    多级缓存初始化（L1: moka + L2: Redis，server 嵌入未配置 Redis 时降级纯 L1）
+        let dict_cache = {
+            let l2_config = L2CacheConfig::default().with_metrics("tms", "dict");
+            let redis_url = std::env::var("REDIS_URL").ok();
+            match AsyncL2Cache::try_new(l2_config, redis_url.as_deref()).await {
+                Ok(cache) => {
+                    tracing::info!("💾 多级缓存初始化完成（TMS 嵌入模式）");
+                    Arc::new(cache)
+                }
+                Err((cache, warn)) => {
+                    tracing::warn!("💾 多级缓存初始化降级（TMS 嵌入模式）: {}", warn);
+                    Arc::new(cache)
+                }
+            }
+        };
         let state = AppState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,
             event_publisher: ctx.event_publisher.clone(),
+            dict_cache,
         };
 
         // 4. 业务路由（权限中间件 + 开发验证模拟认证）
@@ -72,10 +88,12 @@ impl TmsRealModule {
             ))
             .layer(axum::middleware::from_fn(require_permission("tms:admin")))
             .with_state(state);
-
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
-            .layer(axum::middleware::from_fn(inject_dev_claims));
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 tms 模块已接入统一入口（db={}，prefix={}）",

@@ -5,7 +5,6 @@
 //! - `dashboard_module`：业务看板模块，通过进程内 trait 调用 finance（非 HTTP）
 //! - `finance_real_module`：真实 finance 服务接入（feature `module-finance` 门控，Phase B3）
 //! - `erp_real_module`：真实 erp 服务接入（feature `module-erp` 门控，Phase B3 扩展）
-//! - `dev_claims`：开发验证模式的模拟认证中间件（真实模块共用）
 //!
 //! 真实服务接入模板：见 `real_service_adapter.rs` 与两个真实模块实现。
 
@@ -17,7 +16,6 @@ pub mod communication_real_module;
 #[cfg(feature = "module-crm")]
 pub mod crm_real_module;
 pub mod dashboard_module;
-pub mod dev_claims;
 #[cfg(feature = "module-ehs")]
 pub mod ehs_real_module;
 #[cfg(feature = "module-erp")]
@@ -33,18 +31,18 @@ pub mod hrm_real_module;
 pub mod integration_real_module;
 #[cfg(feature = "module-lims")]
 pub mod lims_real_module;
-#[cfg(feature = "module-mobile")]
-pub mod mobile_real_module;
 #[cfg(feature = "module-advanced")]
 pub mod master_data_real_module;
 #[cfg(feature = "module-mes")]
 pub mod mes_real_module;
+#[cfg(feature = "module-mobile")]
+pub mod mobile_real_module;
 #[cfg(feature = "module-monitor")]
 pub mod monitor_real_module;
-#[cfg(feature = "module-pm")]
-pub mod pm_real_module;
 #[cfg(feature = "module-plugin-registry")]
 pub mod plugin_registry_real_module;
+#[cfg(feature = "module-pm")]
+pub mod pm_real_module;
 #[cfg(feature = "module-portal")]
 pub mod portal_real_module;
 #[cfg(feature = "module-qms")]
