@@ -26,6 +26,9 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from service_topology import HTML_TMPL  # noqa: E402 复用拓扑图谱模板（含矩阵表格渲染）
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT_DIR = os.path.join(REPO, "docs", "architecture", "service-topology")
 
@@ -170,8 +173,40 @@ def main():
     with open(md_path, "w", encoding="utf-8") as f:
         f.write("\n".join(md))
 
+    # ------------------------------------------------------------------
+    # 跨库图谱 HTML（复用 service_topology 模板，跨库边红色高亮）
+    # ------------------------------------------------------------------
+    graph = json.load(open(out_json, encoding="utf-8"))
+    opt = {
+        "series": [{
+            "type": "graph", "layout": "force",
+            "data": graph["nodes"], "links": graph["links"],
+            "lineStyle": {"color": "source", "curveness": 0.12, "opacity": 0.7},
+            "emphasis": {"focus": "adjacency", "lineStyle": {"width": 6}},
+            "edgeSymbol": ["none", "arrow"], "edgeSymbolSize": [0, 9],
+        }]
+    }
+    opt_json = json.dumps(opt, ensure_ascii=False, indent=2)
+    matrix = {}
+    for l in graph["links"]:
+        matrix.setdefault(l["source"], {})[l["target"]] = l.get("value", 1)
+    matrix_json = json.dumps(matrix, ensure_ascii=False)
+    static_list = "\n".join(
+        f"{l['source']} → {l['target']} {'（跨库！）' if l.get('crossDb') else ''}"
+        for l in graph["links"]
+    )
+    html = HTML_TMPL.format(
+        mode="跨库标记（拆分预案叠加）",
+        srcnote="设计边（service_topology.py --static）叠加物理库拆分预案分组；红色虚线 = 拆分后跨库边（需改走服务 API / 集成事件）",
+        option=opt_json, matrix=matrix_json, staticlist=static_list,
+    )
+    html_path = os.path.join(args.out, "service-topology.cross-db.html")
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
     print(f"  JSON: {out_json}")
     print(f"  MD  : {md_path}")
+    print(f"  HTML: {html_path}")
     print("\n=== 跨库调用（前 12 条）===")
     for r in rows[:12]:
         print(f"  {r['from']} ({r['fromDb']}) → {r['to']} ({r['toDb']})")

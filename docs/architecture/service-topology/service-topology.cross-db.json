@@ -27,10 +27,18 @@
     {
       "id": "hrm-service",
       "name": "hrm-service",
-      "category": "被调用平台服务",
+      "category": "调用方服务",
       "symbolSize": 34,
       "db": "topems_business",
       "dbLabel": "business（业务综合库）"
+    },
+    {
+      "id": "mes-service",
+      "name": "mes-service",
+      "category": "调用方服务",
+      "symbolSize": 34,
+      "db": "topems_manufacturing",
+      "dbLabel": "manufacturing（制造库）"
     },
     {
       "id": "crm-service",
@@ -55,14 +63,6 @@
       "symbolSize": 34,
       "db": "topems_business",
       "dbLabel": "business（业务综合库）"
-    },
-    {
-      "id": "mes-service",
-      "name": "mes-service",
-      "category": "被调用平台服务",
-      "symbolSize": 34,
-      "db": "topems_manufacturing",
-      "dbLabel": "manufacturing（制造库）"
     },
     {
       "id": "qms-service",
@@ -183,6 +183,14 @@
       "symbolSize": 26,
       "db": "topems_manufacturing",
       "dbLabel": "manufacturing（制造库）"
+    },
+    {
+      "id": "unified-core-service",
+      "name": "unified-core-service",
+      "category": "调用方服务",
+      "symbolSize": 34,
+      "db": "unknown",
+      "dbLabel": "unknown"
     }
   ],
   "links": [
@@ -226,6 +234,36 @@
       "sourceFlag": "design",
       "sourceDb": "topems_finance",
       "targetDb": "topems_business",
+      "crossDb": true
+    },
+    {
+      "source": "erp-service",
+      "target": "mes-service",
+      "value": 1,
+      "lineStyle": {
+        "color": "#d64541",
+        "width": 2,
+        "type": "dashed",
+        "curveness": 0.12
+      },
+      "sourceFlag": "design",
+      "sourceDb": "topems_finance",
+      "targetDb": "topems_manufacturing",
+      "crossDb": true
+    },
+    {
+      "source": "mes-service",
+      "target": "erp-service",
+      "value": 1,
+      "lineStyle": {
+        "color": "#d64541",
+        "width": 2,
+        "type": "dashed",
+        "curveness": 0.12
+      },
+      "sourceFlag": "design",
+      "sourceDb": "topems_manufacturing",
+      "targetDb": "topems_finance",
       "crossDb": true
     },
     {
@@ -433,6 +471,21 @@
       "sourceFlag": "design",
       "sourceDb": "topems_manufacturing",
       "targetDb": "topems_core",
+      "crossDb": true
+    },
+    {
+      "source": "hrm-service",
+      "target": "erp-service",
+      "value": 1,
+      "lineStyle": {
+        "color": "#d64541",
+        "width": 2,
+        "type": "dashed",
+        "curveness": 0.12
+      },
+      "sourceFlag": "design",
+      "sourceDb": "topems_business",
+      "targetDb": "topems_finance",
       "crossDb": true
     },
     {
@@ -709,6 +762,21 @@
       "sourceFlag": "design",
       "sourceDb": "topems_manufacturing",
       "targetDb": "topems_core",
+      "crossDb": true
+    },
+    {
+      "source": "unified-core-service",
+      "target": "portal-service",
+      "value": 1,
+      "lineStyle": {
+        "color": "#d64541",
+        "width": 2,
+        "type": "dashed",
+        "curveness": 0.12
+      },
+      "sourceFlag": "design",
+      "sourceDb": "unknown",
+      "targetDb": "topems_business",
       "crossDb": true
     }
   ]

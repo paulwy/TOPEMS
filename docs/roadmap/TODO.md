@@ -564,3 +564,16 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 - **分批全过**（22 域 + __tests__ 前 11 文件）：admin 137 / pm 16 / wms 2 / lims 2 / plugin 21 / monitor 1 / ai 40 / system 8 / automation 8 / shared 22 / iam 6 / gis 12 / erp 18 / oa 5 / finance 7 / bi 8 / mes 21 / ehs 7 / workflow 1 / report 25 / qms 1 / hrm 7 / doc 22 / mobile 55 全绿。
 - **vitest 4.1.10 全量运行在本机 macOS 死锁**（pool 0 CPU，maxWorkers=1 同样）；单独文件/目录运行正常 → 环境工具问题，非测试失败。已抽查 BIDataSourcePage/CrmMobDbg/CrmOpportunity 等此前疑似挂起文件均单跑通过。
 - 遗留：全量并发回归建议在 CI（Linux forks pool）执行；本地分批验证为准。
+
+### 下一阶段：服务调用拓扑生成（2026-09-17 落地）
+
+- [x] **① 服务调用拓扑生成落地**——聚合 design 边 + 跨库标记，输出服务依赖矩阵 / 调用图谱：
+  - design 拓扑重生成（`service_topology.py --static`）：**40 条边 / 24 节点**（含 09-05 后新增 erp→mes 接线、portal 联邦等边）；产物 `service-topology.design.html/.json` + `service-dependency-matrix.design.csv`
+  - **cross-db.html 生成修复**（mark_cross_db.py 此前只写 JSON/MD，HTML 停留 09-01 旧版）：补 HTML 生成（复用 service_topology 模板 + cross-db.json 红色虚线高亮跨库边 + 依赖矩阵表格）→ 跨库清单/图谱刷新（跨库 31 / 同库 9，workflow 14 条跨库调用方高亮）
+  - 跨库清单 `cross-db-calls.md` 含拆分前置治理优先级（按被调用方聚合：workflow 14 调用方为拆分最大成本）
+  - **runtime 采集形态说明**：mono 模式（:8099 单进程聚合，独立端口 8000-8020 不监听、进程内调用不打 svc_call 指标）无法采集 runtime 边——`--collect` 属容器/独立部署模式能力（09-04 已验证匹配 3/仅 runtime 2）；每日巡检 `check_split_threshold.py --topology auto` 在容器模式自动比对 runtime vs design
+- [ ] **② 告警消费落地**——ServiceCallMonitor（未知服务/高频/降级）接飞书通知，治理观测闭环
+- [ ] **③ RLS 受限用户切换端到端回归**（V521 遗留）——5433 topems_app 全服务回归（登录/业务流/服务间调用）
+- [ ] **④ 配置单一真相源 CI 校验**（P0-3）——ports/services.yaml/Cargo.toml/vite.config 一致性门禁
+- [ ] **⑤ 拆分前置治理深化**——integration 直写改 API 编排剩余、跨域白名单设计性保留复核
+- [ ] **⑥ 事件通道选型规则**（P1-1）——Redis Pub/Sub vs RabbitMQ 决策矩阵
