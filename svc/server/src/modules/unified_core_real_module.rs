@@ -41,7 +41,17 @@ impl UnifiedCoreRealModule {
         let _conn = ctx.db.acquire().await?;
 
         // 嵌入模式无独立 public 入口（server 统一提供 /health /metrics）
-        let routes = build_router(ctx.db.clone(), None, Router::new()).await?;
+        // unified-core 内部路由挂根（/health /api /metrics /iam/* /flow/*），
+        // 必须 nest 到 api_prefix 隔离，避免与 server 聚合路由冲突
+        let routes = axum::Router::new()
+            .nest(
+                config.api_prefix,
+                build_router(ctx.db.clone(), None, Router::new()).await?,
+            )
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         Ok(Self { routes, db: ctx.db })
     }

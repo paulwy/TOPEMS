@@ -427,7 +427,25 @@ async fn main() -> Result<()> {
         }
     }
 
-    // 27. 真实 portal 服务接入（Core 组，feature `module-portal` 门控，默认启用）
+    // 27. 真实 unified-core 服务接入（Core 组，feature `module-core` 门控，默认启用）
+    // [2026-09-16] 认证/登录/流程/IAM 等统一入口（routes 已 nest /api/core 隔离根路径冲突）
+    #[cfg(feature = "module-core")]
+    {
+        use topems_server::modules::unified_core_real_module::UnifiedCoreRealModule;
+        match UnifiedCoreRealModule::build().await {
+            Ok(real_core) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_core));
+                tracing::info!(
+                    "✅ 真实 unified-core 服务已注册（unified-core-real，含 IAM/Flow/File/Tenant 路由）"
+                );
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 unified-core 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 28. 真实 portal 服务接入（Core 组，feature `module-portal` 门控，默认启用）
     // [2026-09-08] portal 嵌入模块化单体：业务组装链由 lib 侧 embedded::build_router 统一提供，
     // 独立部署 main.rs 与 server 嵌入共用同一实现，消除双轨漂移
     #[cfg(feature = "module-portal")]
