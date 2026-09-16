@@ -11,7 +11,7 @@ use crate::shared::AppState;
 use topems_shared_auth::get_tenant_id;
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new().route("/health", get(list_records).post(create_record))
+    Router::new().route("/health-records", get(list_records).post(create_record))
 }
 
 #[derive(Debug, Deserialize)]
@@ -37,7 +37,7 @@ pub struct HealthRecord {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/health",
+    path = "/api/ehs/health-records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -57,7 +57,7 @@ pub async fn list_records(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/health",
+    path = "/api/ehs/health-records",
     request_body = serde_json::Value,
     tag = "ehs",
     responses((status = 200, description = "OK")),
