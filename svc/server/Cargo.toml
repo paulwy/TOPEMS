@@ -85,6 +85,8 @@ default = [
     # [2026-09-08] portal 嵌入模块化单体（embedded::build_router 统一组装链）
     "module-portal",
     # [边界治理] module-ai 仍为幽灵 feature（无 real_module），从 default 移除；待 ai 真实接入后再启用
+    # [2026-09-16] communication real_module 已就绪，接入模块化单体
+    "module-communication",
 ]
 module-core = ["dep:topems-unified-core"]
 # 真实业务服务接入：monitor 模块（监控告警，core 组）

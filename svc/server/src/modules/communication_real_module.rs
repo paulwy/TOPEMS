@@ -208,8 +208,11 @@ impl CommunicationRealModule {
             ))
             .with_state(ctx.db.clone());
         let routes =
-            public_routes
-                .merge(protected_routes)
+            axum::Router::new()
+                .nest(
+                    config.api_prefix,
+                    public_routes.merge(protected_routes),
+                )
                 .layer(axum::middleware::from_fn_with_state(
                     ctx.auth_state.clone(),
                     topems_shared_auth::auth::auth_middleware,

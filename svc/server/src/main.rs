@@ -335,7 +335,24 @@ async fn main() -> Result<()> {
         }
     }
 
-    // 21. 真实 portal 服务接入（Core 组，feature `module-portal` 门控，默认启用）
+    // 21. 真实 communication 服务接入（Core 组，feature `module-communication` 门控，默认启用）
+    #[cfg(feature = "module-communication")]
+    {
+        use topems_server::modules::communication_real_module::CommunicationRealModule;
+        match CommunicationRealModule::build().await {
+            Ok(real_comm) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_comm));
+                tracing::info!(
+                    "✅ 真实 communication 服务已注册（communication-real，含数据库/IM 通知路由）"
+                );
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 communication 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 22. 真实 portal 服务接入（Core 组，feature `module-portal` 门控，默认启用）
     // [2026-09-08] portal 嵌入模块化单体：业务组装链由 lib 侧 embedded::build_router 统一提供，
     // 独立部署 main.rs 与 server 嵌入共用同一实现，消除双轨漂移
     #[cfg(feature = "module-portal")]
