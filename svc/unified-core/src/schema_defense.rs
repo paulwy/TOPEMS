@@ -115,6 +115,9 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("comment", "TEXT"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
             ("completed_at", "TIMESTAMP"),
+            ("priority", "TEXT"),
+            ("due_time", "TIMESTAMPTZ"),
+            ("claimed_at", "TIMESTAMPTZ"),
         ],
     ),
     (
