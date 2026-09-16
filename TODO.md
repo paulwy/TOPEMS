@@ -62,6 +62,7 @@
 - [ ] 办公自动化（OA）
 
 ### 技术优化
+- [x] crm contracts 后端实现（2026-09-16：CrmContractRedesignPage known_gap 转 matched，GET/POST/PUT /contracts + 迁移 + RLS）
 - [ ] GIS 服务认证问题修复
 - [ ] MUI elevation 警告修复
 - [ ] 更多模块的业务 API 实现
