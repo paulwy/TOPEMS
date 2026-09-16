@@ -26,7 +26,7 @@ pub async fn list_location_photos(
     State(pool): State<PgPool>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, LocationPhoto>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos ORDER BY created_at DESC"),
     )
     .fetch_all(&pool)
     .await
@@ -46,7 +46,7 @@ pub async fn get_location_photo(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<LocationPhoto>> {
-    match sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1"))
+    match sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -119,7 +119,7 @@ pub async fn list_location_photos_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, LocationPhoto>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE map_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)

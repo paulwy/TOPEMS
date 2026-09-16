@@ -435,7 +435,7 @@ pub async fn nearest_query(
 
     // Query features from geodata
     match sqlx::query_as::<_, crate::models::GeoFeature>(
-        only_own_schema_query!("gis", "id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC LIMIT $2"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC LIMIT $2"),
     )
     .bind(&payload.geodata_id)
     .bind(payload.limit.unwrap_or(10))

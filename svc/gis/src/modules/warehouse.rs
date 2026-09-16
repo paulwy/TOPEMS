@@ -34,14 +34,14 @@ pub async fn list_warehouse_locations(
 
     let query = if !search.is_empty() {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(format!("%{}%", search))
         .bind(page_size)
         .bind(offset)
     } else {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
         .bind(page_size)
         .bind(offset)
@@ -114,7 +114,7 @@ pub async fn get_warehouse_location(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
     match sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -191,7 +191,7 @@ pub async fn list_warehouse_locations_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)

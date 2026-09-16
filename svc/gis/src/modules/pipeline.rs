@@ -33,7 +33,7 @@ pub async fn list_pipelines(
     let offset = (page - 1) * page_size;
 
     match sqlx::query_as::<_, Pipeline>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
@@ -96,7 +96,7 @@ pub async fn get_pipeline(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Pipeline>> {
     match sqlx::query_as::<_, Pipeline>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -174,7 +174,7 @@ pub async fn list_pipelines_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Pipeline>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)

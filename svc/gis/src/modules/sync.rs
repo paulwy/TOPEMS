@@ -271,7 +271,7 @@ pub async fn download_offline_data(
     // 下载设备数据
     if payload.include_devices {
         match sqlx::query_as::<_, DeviceLocation>(
-            only_own_schema_query!("gis", "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC"),
         )
         .bind(ctx.tenant_id)
         .fetch_all(&pool)
@@ -313,7 +313,7 @@ pub async fn download_offline_data(
         if !tracks.is_empty() {
             let track_ids: Vec<Uuid> = tracks.iter().map(|t| t.id).collect();
             match sqlx::query_as::<_, TrackPosition>(
-                only_own_schema_query!("gis", "id, track_id, position, altitude, speed, heading, accuracy, battery_level, timestamp, created_at FROM gis.track_positions WHERE track_id = ANY($1) ORDER BY timestamp ASC"),
+                only_own_schema_query!("gis", "SELECT id, track_id, position, altitude, speed, heading, accuracy, battery_level, timestamp, created_at FROM gis.track_positions WHERE track_id = ANY($1) ORDER BY timestamp ASC"),
             )
             .bind(&track_ids)
             .fetch_all(&pool)
@@ -330,7 +330,7 @@ pub async fn download_offline_data(
     // 下载取证数据
     if payload.include_evidence {
         match sqlx::query_as::<_, EvidenceRecord>(
-            only_own_schema_query!("gis", "id, tenant_id, title, evidence_type, position, file_url, thumbnail_url, duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata, created_at, updated_at FROM gis.evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, title, evidence_type, position, file_url, thumbnail_url, duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata, created_at, updated_at FROM gis.evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC"),
         )
         .bind(ctx.tenant_id)
         .fetch_all(&pool)

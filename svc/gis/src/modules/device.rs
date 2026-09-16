@@ -106,7 +106,7 @@ pub async fn register_device(
     )
 )]
 pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC"))
+    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC"))
         .fetch_all(&pool)
         .await
     {
@@ -141,7 +141,7 @@ pub async fn get_device(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Device>> {
     match sqlx::query_as::<_, Device>(
-        only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -230,7 +230,7 @@ pub async fn update_device_location(
         return e;
     }
 
-    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"))
+    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -433,7 +433,7 @@ pub async fn report_device_location(
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocationRecord>> {
     match sqlx::query_as::<_, Device>(
-        only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"),
     )
     .bind(&device_code)
     .fetch_one(&pool)

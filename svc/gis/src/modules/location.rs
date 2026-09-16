@@ -113,7 +113,7 @@ pub async fn create_location(
 )]
 pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Location>(
-        only_own_schema_query!("gis", "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations ORDER BY created_at DESC"),
     )
     .fetch_all(&pool)
     .await
@@ -149,7 +149,7 @@ pub async fn get_location(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Location>> {
     match sqlx::query_as::<_, Location>(
-        only_own_schema_query!("gis", "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -272,7 +272,7 @@ pub async fn nearby_locations(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Get all locations and filter by distance
     match sqlx::query_as::<_, Location>(
-        only_own_schema_query!("gis", "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND status = 'active'"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND status = 'active'"),
     )
     .fetch_all(&pool)
     .await

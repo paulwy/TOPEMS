@@ -201,7 +201,7 @@ async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> R
 pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let mut features: Vec<serde_json::Value> = Vec::new();
 
-    if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(only_own_schema_query!("gis", "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations"))
+    if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations"))
         .fetch_all(&pool)
         .await
     {
@@ -220,7 +220,7 @@ pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serd
         }
     }
 
-    if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines"))
+    if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines"))
         .fetch_all(&pool)
         .await
     {
@@ -240,7 +240,7 @@ pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serd
     }
 
     if let Ok(warehouses) =
-        sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations"))
+        sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations"))
             .fetch_all(&pool)
             .await
     {
@@ -259,7 +259,7 @@ pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serd
         }
     }
 
-    if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>(only_own_schema_query!("gis", "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations"))
+    if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations"))
         .fetch_all(&pool)
         .await
     {
