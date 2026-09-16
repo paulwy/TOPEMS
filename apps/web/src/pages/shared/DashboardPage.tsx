@@ -43,80 +43,75 @@ import '@/theme/redesign-global.css';
 const QUERY_KEY = ['dashboard', 'overview'];
 
 // 默认模块状态（API 无数据时的兜底）
-const defaultModules = [
+const getDefaultModules = (): Array<{
+  id: string;
+  name: string;
+  desc: string;
+  icon: any;
+  status: 'running' | 'warning' | 'idle' | 'error';
+  stat: string;
+}> => [
   {
     id: 'mes',
-    name: '制造执行 MES',
-    desc: '产线实时状态与工单追踪',
+    name: i18n.t('dashboard.dash_mes_name'),
+    desc: i18n.t('dashboard.dash_mes_desc'),
     icon: Factory,
     status: 'running' as const,
-    stat: '87.3%',
+    stat: '',
   },
   {
     id: 'erp',
-    name: '企业资源 ERP',
-    desc: '财务、采购、库存一体化',
+    name: i18n.t('dashboard.dash_erp_name'),
+    desc: i18n.t('dashboard.dash_erp_desc'),
     icon: Box,
     status: 'running' as const,
-    stat: '12 笔待审',
+    stat: '',
   },
   {
     id: 'scm',
-    name: '供应链 SCM',
-    desc: '供应商协同与交付计划',
+    name: i18n.t('dashboard.dash_scm_name'),
+    desc: i18n.t('dashboard.dash_scm_desc'),
     icon: Truck,
     status: 'warning' as const,
-    stat: '3 单延期',
+    stat: '',
   },
   {
     id: 'qms',
-    name: '质量管理 QMS',
-    desc: '质检记录与不合格品处理',
+    name: i18n.t('dashboard.dash_qms_name'),
+    desc: i18n.t('dashboard.dash_qms_desc'),
     icon: CheckCircle2,
     status: 'running' as const,
-    stat: '99.2%',
+    stat: '',
   },
   {
     id: 'wms',
-    name: '仓储物流 WMS',
-    desc: '入库、出库、盘点、库位',
+    name: i18n.t('dashboard.dash_wms_name'),
+    desc: i18n.t('dashboard.dash_wms_desc'),
     icon: Package,
     status: 'idle' as const,
-    stat: '4,821 件',
+    stat: '',
   },
   {
     id: 'bi',
-    name: '数据决策 BI',
-    desc: '指标看板与自定义报表',
+    name: i18n.t('dashboard.dash_bi_name'),
+    desc: i18n.t('dashboard.dash_bi_desc'),
     icon: TrendingUp,
     status: 'running' as const,
-    stat: '实时',
+    stat: '',
   },
 ];
 
-const defaultAlerts = [
-  { id: 1, level: 'error' as const, message: '产线 A-03 设备温度过高', time: '2 min ago' },
-  { id: 2, level: 'warning' as const, message: '原材料库存低于安全水位', time: '15 min ago' },
-  { id: 3, level: 'info' as const, message: '月度质量审核已完成', time: '1 h ago' },
-];
-
-const defaultTasks = [
-  { id: 1, title: '审批采购申请 PO-2026-0914-001', priority: 'high' as const, due: '今天' },
-  { id: 2, title: '复核工单 WO-8821 工艺参数', priority: 'medium' as const, due: '明天' },
-  { id: 3, title: '更新供应商准入资料', priority: 'low' as const, due: '周五' },
-];
-
 const tabs = [
-  { id: 'overview', label: '概览' },
-  { id: 'modules', label: '模块', badge: 6 },
-  { id: 'alerts', label: '告警', badge: 3 },
+  { id: 'overview', labelKey: 'dashboard.dash_overview' },
+  { id: 'modules', labelKey: 'dashboard.dash_modules', badge: 6 },
+  { id: 'alerts', labelKey: 'dashboard.dash_alerts', badge: 3 },
 ];
 
 const timeRangeOptions = [
-  { value: '1h', label: '最近 1 小时' },
-  { value: '24h', label: '最近 24 小时' },
-  { value: '7d', label: '最近 7 天' },
-  { value: '30d', label: '最近 30 天' },
+  { value: '1h', labelKey: 'dashboard.dash_time_1h' },
+  { value: '24h', labelKey: 'dashboard.dash_time_24h' },
+  { value: '7d', labelKey: 'dashboard.dash_time_7d' },
+  { value: '30d', labelKey: 'dashboard.dash_time_30d' },
 ];
 
 const DashboardPage: React.FC = () => {
@@ -141,22 +136,58 @@ const DashboardPage: React.FC = () => {
 
   // 从 BFF 真实返回（stats/todos/services）派生页面数据，无数据时回退默认
   const modules = useMemo(() => {
-    if (!data?.services || data.services.length === 0) return defaultModules;
+    if (!data?.services || data.services.length === 0) return getDefaultModules();
     const knownMeta: Record<string, { name: string; desc: string; icon: typeof Box }> = {
-      mes: { name: '制造执行 MES', desc: '产线实时状态与工单追踪', icon: Factory },
-      erp: { name: '企业资源 ERP', desc: '财务、采购、库存一体化', icon: Box },
-      scm: { name: '供应链 SCM', desc: '供应商协同与交付计划', icon: Truck },
-      qms: { name: '质量管理 QMS', desc: '质检记录与不合格品处理', icon: CheckCircle2 },
-      wms: { name: '仓储物流 WMS', desc: '入库、出库、盘点、库位', icon: Package },
-      bi: { name: '数据决策 BI', desc: '指标看板与自定义报表', icon: TrendingUp },
-      crm: { name: '客户关系 CRM', desc: '客户、线索与商机管理', icon: Activity },
-      hrm: { name: '人力资源 HRM', desc: '组织、考勤与薪酬管理', icon: Cpu },
-      finance: { name: '财务管理', desc: '应收应付与总账', icon: TrendingUp },
+      mes: {
+        name: i18n.t('dashboard.dash_mes_name'),
+        desc: i18n.t('dashboard.dash_mes_desc'),
+        icon: Factory,
+      },
+      erp: {
+        name: i18n.t('dashboard.dash_erp_name'),
+        desc: i18n.t('dashboard.dash_erp_desc'),
+        icon: Box,
+      },
+      scm: {
+        name: i18n.t('dashboard.dash_scm_name'),
+        desc: i18n.t('dashboard.dash_scm_desc'),
+        icon: Truck,
+      },
+      qms: {
+        name: i18n.t('dashboard.dash_qms_name'),
+        desc: i18n.t('dashboard.dash_qms_desc'),
+        icon: CheckCircle2,
+      },
+      wms: {
+        name: i18n.t('dashboard.dash_wms_name'),
+        desc: i18n.t('dashboard.dash_wms_desc'),
+        icon: Package,
+      },
+      bi: {
+        name: i18n.t('dashboard.dash_bi_name'),
+        desc: i18n.t('dashboard.dash_bi_desc'),
+        icon: TrendingUp,
+      },
+      crm: {
+        name: i18n.t('dashboard.dash_crm_name'),
+        desc: i18n.t('dashboard.dash_crm_desc'),
+        icon: Activity,
+      },
+      hrm: {
+        name: i18n.t('dashboard.dash_hrm_name'),
+        desc: i18n.t('dashboard.dash_hrm_desc'),
+        icon: Cpu,
+      },
+      finance: {
+        name: i18n.t('dashboard.dash_finance_name'),
+        desc: i18n.t('dashboard.dash_finance_desc'),
+        icon: TrendingUp,
+      },
     };
     return data.services.slice(0, 6).map((s) => {
       const meta = knownMeta[s.service] || {
         name: s.service.toUpperCase(),
-        desc: '业务模块',
+        desc: i18n.t('dashboard.dash_business_module'),
         icon: Box,
       };
       return {
@@ -165,13 +196,13 @@ const DashboardPage: React.FC = () => {
         desc: meta.desc,
         icon: meta.icon,
         status: (s.healthy ? 'running' : 'error') as 'running' | 'error',
-        stat: s.healthy ? '正常' : '异常',
+        stat: s.healthy ? i18n.t('dashboard.dash_running') : i18n.t('dashboard.dash_error'),
       };
     });
   }, [data]);
 
   const alerts = useMemo(() => {
-    if (!data?.stats) return defaultAlerts;
+    if (!data?.stats) return [];
     const list: Array<{
       id: string;
       level: 'error' | 'warning' | 'info';
@@ -184,36 +215,40 @@ const DashboardPage: React.FC = () => {
         list.push({
           id: svc,
           level: 'error',
-          message: `${svc.toUpperCase()} 服务 ${st.active}/${st.total} 实例在线`,
-          time: '实时',
+          message: i18n.t('dashboard.dash_service_online', {
+            svc: svc.toUpperCase(),
+            active: st.active,
+            total: st.total,
+          }),
+          time: i18n.t('dashboard.dash_realtime'),
         });
       }
     }
-    return list.length > 0 ? list : defaultAlerts;
+    return list;
   }, [data]);
 
   const tasks = useMemo(() => {
-    if (!data?.todos || data.todos.length === 0) return defaultTasks;
+    if (!data?.todos || data.todos.length === 0) return [];
     return data.todos.slice(0, 5).map((t) => ({
       id: t.id,
       title: t.title,
       priority: (t.priority === 1 ? 'high' : t.priority === 2 ? 'medium' : 'low') as
         'high' | 'medium' | 'low',
-      due: t.createdAt || t.created_at || '待办',
+      due: t.createdAt || t.created_at || i18n.t('dashboard.dash_pending'),
     }));
   }, [data]);
 
   const kpis = useMemo(() => {
     if (!data?.stats?.mes) {
-      return { oee: 87.3, production: 124582, deliveryRate: 94.6, qualityRate: 99.2 };
+      return { oee: 0, production: 0, deliveryRate: 0, qualityRate: 0 };
     }
     const mes = data.stats.mes;
-    const availability = mes.total > 0 ? Math.round((mes.active / mes.total) * 1000) / 10 : 87.3;
+    const availability = mes.total > 0 ? Math.round((mes.active / mes.total) * 1000) / 10 : 0;
     return {
       oee: availability,
       production: mes.active * 1200,
-      deliveryRate: 94.6,
-      qualityRate: 99.2,
+      deliveryRate: 0,
+      qualityRate: 0,
     };
   }, [data]);
 
@@ -233,8 +268,8 @@ const DashboardPage: React.FC = () => {
         }}
       >
         <StatTile
-          label='设备综合效率 OEE'
-          value={kpis.oee?.toString() || '87.3'}
+          label={i18n.t('dashboard.dash_kpi_oee')}
+          value={kpis.oee?.toString() || '--'}
           unit='%'
           trend='up'
           trendValue='+2.4%'
@@ -242,17 +277,17 @@ const DashboardPage: React.FC = () => {
           accent='amber'
         />
         <StatTile
-          label='本月产量'
-          value={kpis.production?.toLocaleString() || '124,582'}
-          unit='件'
+          label={i18n.t('dashboard.dash_kpi_production')}
+          value={kpis.production?.toLocaleString() || '--'}
+          unit={i18n.t('dashboard.dash_unit_pcs')}
           trend='up'
           trendValue='+5.1%'
           icon={Factory}
           accent='cyan'
         />
         <StatTile
-          label='订单准时交付率'
-          value={kpis.deliveryRate?.toString() || '94.6'}
+          label={i18n.t('dashboard.dash_kpi_delivery')}
+          value={kpis.deliveryRate?.toString() || '--'}
           unit='%'
           trend='down'
           trendValue='-1.2%'
@@ -260,8 +295,8 @@ const DashboardPage: React.FC = () => {
           accent='success'
         />
         <StatTile
-          label='质量合格率'
-          value={kpis.qualityRate?.toString() || '99.2'}
+          label={i18n.t('dashboard.dash_kpi_quality')}
+          value={kpis.qualityRate?.toString() || '--'}
           unit='%'
           trend='neutral'
           trendValue='0.0%'
@@ -282,8 +317,8 @@ const DashboardPage: React.FC = () => {
         {/* 模块状态 */}
         <div style={{ gridColumn: 'span 8 / span 8' }}>
           <Card
-            title='模块运行状态'
-            subtitle='各业务模块实时状态概览'
+            title={i18n.t('dashboard.dash_modules_title')}
+            subtitle={i18n.t('dashboard.dash_modules_subtitle')}
           >
             <div
               style={{
@@ -352,9 +387,13 @@ const DashboardPage: React.FC = () => {
         {/* 告警列表 */}
         <div style={{ gridColumn: 'span 4 / span 4' }}>
           <Card
-            title='实时告警'
-            subtitle='系统异常与预警'
-            action={<Badge variant='error'>{alerts.length} 条</Badge>}
+            title={i18n.t('dashboard.dash_alerts_title')}
+            subtitle={i18n.t('dashboard.dash_alerts_subtitle')}
+            action={
+              <Badge variant='error'>
+                {alerts.length} {i18n.t('dashboard.dash_count_unit')}
+              </Badge>
+            }
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
               {alerts.map((alert: any) => (
@@ -400,9 +439,13 @@ const DashboardPage: React.FC = () => {
         {/* 待办任务 */}
         <div style={{ gridColumn: 'span 7 / span 7' }}>
           <Card
-            title='待办任务'
-            subtitle='需要您处理的事项'
-            action={<Badge variant='default'>{tasks.length} 项</Badge>}
+            title={i18n.t('dashboard.dash_todos_title')}
+            subtitle={i18n.t('dashboard.dash_todos_subtitle')}
+            action={
+              <Badge variant='default'>
+                {tasks.length} {i18n.t('dashboard.dash_item_unit')}
+              </Badge>
+            }
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
               {tasks.map((task: any) => (
@@ -445,10 +488,10 @@ const DashboardPage: React.FC = () => {
                     }
                   >
                     {task.priority === 'high'
-                      ? '高优先级'
+                      ? i18n.t('dashboard.dash_priority_high')
                       : task.priority === 'medium'
-                        ? '中优先级'
-                        : '低优先级'}
+                        ? i18n.t('dashboard.dash_priority_medium')
+                        : i18n.t('dashboard.dash_priority_low')}
                   </Tag>
                   <div
                     style={{
@@ -471,33 +514,33 @@ const DashboardPage: React.FC = () => {
         {/* 系统健康 */}
         <div style={{ gridColumn: 'span 5 / span 5' }}>
           <Card
-            title='系统健康'
-            subtitle='服务运行状态监控'
+            title={i18n.t('dashboard.dash_health_title')}
+            subtitle={i18n.t('dashboard.dash_health_subtitle')}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               <HealthItem
                 icon={Cpu}
-                label='API 网关'
+                label={i18n.t('dashboard.dash_health_api_gateway')}
                 status='healthy'
-                value='99.9%'
+                value='--'
               />
               <HealthItem
                 icon={Zap}
-                label='消息队列'
+                label={i18n.t('dashboard.dash_health_message_queue')}
                 status='healthy'
-                value='1,234 msg/s'
+                value='--'
               />
               <HealthItem
                 icon={Inbox}
-                label='数据库'
+                label={i18n.t('dashboard.dash_health_database')}
                 status='warning'
-                value='连接池 78%'
+                value='--'
               />
               <HealthItem
                 icon={FileQuestion}
-                label='缓存服务'
+                label={i18n.t('dashboard.dash_health_cache')}
                 status='healthy'
-                value='命中率 94%'
+                value='--'
               />
             </div>
           </Card>
@@ -508,12 +551,12 @@ const DashboardPage: React.FC = () => {
 
   const renderModules = () => (
     <Card
-      title='全部模块'
-      subtitle='所有业务模块运行状态'
+      title={i18n.t('dashboard.dash_all_modules')}
+      subtitle={i18n.t('dashboard.dash_all_modules_subtitle')}
     >
       <div style={{ marginBottom: 'var(--space-4)' }}>
         <Input
-          placeholder='搜索模块...'
+          placeholder={i18n.t('dashboard.dash_search_placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           leftIcon={<Search size={16} />}
@@ -522,8 +565,8 @@ const DashboardPage: React.FC = () => {
       </div>
       {filteredModules.length === 0 ? (
         <EmptyState
-          title='未找到模块'
-          description='尝试其他搜索关键词'
+          title={i18n.t('dashboard.dash_no_modules')}
+          description={i18n.t('dashboard.dash_no_modules_desc')}
         />
       ) : (
         <div
@@ -598,13 +641,13 @@ const DashboardPage: React.FC = () => {
 
   const renderAlerts = () => (
     <Card
-      title='全部告警'
-      subtitle='系统异常与预警历史'
+      title={i18n.t('dashboard.dash_all_alerts')}
+      subtitle={i18n.t('dashboard.dash_alerts_subtitle_hist')}
     >
       {alerts.length === 0 ? (
         <EmptyState
-          title='暂无告警'
-          description='系统运行正常'
+          title={i18n.t('dashboard.dash_no_alerts')}
+          description={i18n.t('dashboard.dash_no_alerts_desc')}
           icon={CheckCircle2}
         />
       ) : (
@@ -661,7 +704,11 @@ const DashboardPage: React.FC = () => {
                       : 'default'
                 }
               >
-                {alert.level === 'error' ? '严重' : alert.level === 'warning' ? '警告' : '提示'}
+                {alert.level === 'error'
+                  ? i18n.t('dashboard.dash_level_error')
+                  : alert.level === 'warning'
+                    ? i18n.t('dashboard.dash_level_warning')
+                    : i18n.t('dashboard.dash_level_info')}
               </Tag>
             </div>
           ))}
@@ -673,11 +720,11 @@ const DashboardPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <PageHeader
-        title='工作台'
-        subtitle='系统概览、模块状态、实时告警与待办任务'
+        title={i18n.t('dashboard.dash_workspace')}
+        subtitle={i18n.t('dashboard.dash_workspace_subtitle')}
         secondaryActions={[
           {
-            label: '刷新',
+            label: i18n.t('dashboard.dash_refresh'),
             onClick: () => refetch(),
             icon: <RefreshCw size={16} />,
           },
@@ -701,14 +748,14 @@ const DashboardPage: React.FC = () => {
               onChange={setCustomDateRange}
               presets={[
                 {
-                  label: '今天',
+                  label: i18n.t('dashboard.dash_today'),
                   value: () => {
                     const d = new Date().toISOString().split('T')[0];
                     return { start: d, end: d };
                   },
                 },
                 {
-                  label: '最近7天',
+                  label: i18n.t('dashboard.dash_recent_7d'),
                   value: () => {
                     const e = new Date();
                     const s = new Date();
@@ -720,7 +767,7 @@ const DashboardPage: React.FC = () => {
                   },
                 },
                 {
-                  label: '最近30天',
+                  label: i18n.t('dashboard.dash_recent_30d'),
                   value: () => {
                     const e = new Date();
                     const s = new Date();
@@ -747,7 +794,10 @@ const DashboardPage: React.FC = () => {
               setTimeRange(val);
             }
           }}
-          options={[...timeRangeOptions, { value: 'custom', label: '自定义范围' }]}
+          options={[
+            ...timeRangeOptions.map((o) => ({ ...o, label: i18n.t(o.labelKey) })),
+            { value: 'custom', label: i18n.t('dashboard.dash_custom_range') },
+          ]}
           style={{ width: 160 }}
         />
       </div>
@@ -755,21 +805,25 @@ const DashboardPage: React.FC = () => {
       {error && (
         <Alert
           variant='warning'
-          title='数据加载失败'
+          title={i18n.t('dashboard.dash_load_error')}
         >
-          使用默认演示数据，点击刷新重试
+          {i18n.t('dashboard.dash_load_error_desc')}
           <Button
             size='sm'
             variant='ghost'
             onClick={() => refetch()}
           >
-            重试
+            {i18n.t('dashboard.dash_retry')}
           </Button>
         </Alert>
       )}
 
       <Tabs
-        tabs={tabs}
+        tabs={tabs.map((t) => ({
+          ...t,
+          label: i18n.t(t.labelKey),
+          badge: t.id === 'modules' ? modules.length : t.id === 'alerts' ? alerts.length : t.badge,
+        }))}
         activeTab={activeTab}
         onChange={setActiveTab}
       />
@@ -783,7 +837,7 @@ const DashboardPage: React.FC = () => {
               color: 'var(--text-secondary)',
             }}
           >
-            加载中...
+            {i18n.t('dashboard.dash_loading')}
           </div>
         ) : activeTab === 'overview' ? (
           renderOverview()

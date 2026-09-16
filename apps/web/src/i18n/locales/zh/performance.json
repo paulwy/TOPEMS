@@ -4,7 +4,6 @@
   "metrics": "指标",
   "alerts": "告警",
   "reports": "报告",
-  "dashboard": "仪表盘",
   "response_time": "响应时间",
   "throughput": "吞吐量",
   "error_rate": "错误率",
@@ -91,5 +90,6 @@
   "performance.title.overview": "Overview",
   "performance.title.best_supplier": "Best Supplier",
   "performance.title.score_value": "{{value}}",
-  "performance.breadcrumb": "Breadcrumb"
+  "performance.breadcrumb": "Breadcrumb",
+  "performance_dashboard": "仪表盘"
 }

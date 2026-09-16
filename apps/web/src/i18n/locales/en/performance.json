@@ -4,7 +4,6 @@
   "metrics": "Metrics",
   "alerts": "Alerts",
   "reports": "Reports",
-  "dashboard": "Dashboard",
   "response_time": "Response Time",
   "throughput": "Throughput",
   "error_rate": "Error Rate",
@@ -126,5 +125,6 @@
   "performance.title.overview": "Overview",
   "performance.title.best_supplier": "Best Supplier",
   "performance.title.score_value": "{{value}}",
-  "performance.breadcrumb": "Breadcrumb"
+  "performance.breadcrumb": "Breadcrumb",
+  "performance_dashboard": "Dashboard"
 }
