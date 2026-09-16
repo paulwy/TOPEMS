@@ -8,6 +8,7 @@
 #![cfg(feature = "module-communication")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
+use crate::modules::dev_claims::inject_dev_claims;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use topems_communication::{im, mail, notification};
@@ -120,7 +121,12 @@ impl CommunicationRealModule {
             ))
             .with_state(ctx.db.clone());
 
-        let routes = public_routes.merge(protected_routes);
+        let routes = public_routes
+            .merge(protected_routes)
+            // Claims 注入：与 finance/srm/pm 等 real_module 一致（模块化单体开发
+            // 验证阶段统一入口尚未接入完整认证，由 inject_dev_claims 注入模拟 Claims，
+            // 使 tenant_middleware 正常建立租户上下文；生产须替换为 auth_middleware）
+            .layer(axum::middleware::from_fn(inject_dev_claims));
 
         Ok(Self {
             routes,
