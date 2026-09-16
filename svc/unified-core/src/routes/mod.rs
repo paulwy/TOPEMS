@@ -73,6 +73,7 @@ use crate::AppState;
 pub fn create_routes(
     state: &AppState,
     metrics_render: impl Fn() -> String + Clone + Send + Sync + 'static,
+    embed_mode: bool,
 ) -> Router<AppState> {
     // ===== Public routes (no auth required, outside of /api/core/ dual-rail) =====
     let public_routes = Router::new()
@@ -194,12 +195,19 @@ pub fn create_routes(
     let core_routes = core_public_routes.merge(core_protected_routes);
 
     // ===== Apply dual-rail registration (new: /api/core/, legacy: /api/v1/core/) =====
-    let core_router = register_routes_with_legacy_alias(
-        Router::new(),
-        "/api/core",
-        &["/api/v1/core"],
-        core_routes,
-    );
+    // embed_mode（模块化单体嵌入）：core 业务路由挂根（/iam/* /flow/* 等），由 server 的
+    // unified_core_real_module nest /api/core 提供统一前缀；跳过 public 冲突路由（/、/health、
+    // /api、/metrics）与 wms/mes/scm 业务（server 已有真实模块），避免 Overlapping method route。
+    let core_router = if embed_mode {
+        core_routes
+    } else {
+        register_routes_with_legacy_alias(
+            Router::new(),
+            "/api/core",
+            &["/api/v1/core"],
+            core_routes,
+        )
+    };
 
     // ===== V289: R4/R6 32 stub 路由删除 =====
     // 原 stubs 段：/internal/stubs/{mod} × 32 纯空壳（{mod}:dashboard:read + 异步 "ok"）。
@@ -207,15 +215,21 @@ pub fn create_routes(
     // 后续若需新增业务模块路由，请在 core_protected_routes 中 merge 真实路由，不要复用
     // 「空壳路由 + require_permission 中间件占位」模式。
 
-    Router::new()
-        .merge(public_routes)
-        .merge(core_router)
-        // WMS 业务 API
-        .merge(wms_routes::wms_routes())
-        // MES 业务 API
-        .merge(mes_routes::mes_routes())
-        // SCM 业务 API
-        .merge(scm_routes::scm_routes())
+    let base_router = if embed_mode {
+        // 嵌入模式：仅 core 业务路由（public 冲突路由与 wms/mes/scm 由 server 统一提供）
+        Router::new().merge(core_router)
+    } else {
+        Router::new()
+            .merge(public_routes)
+            .merge(core_router)
+            // WMS 业务 API
+            .merge(wms_routes::wms_routes())
+            // MES 业务 API
+            .merge(mes_routes::mes_routes())
+            // SCM 业务 API
+            .merge(scm_routes::scm_routes())
+    };
+    base_router
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::input_validation::input_validation_middleware,

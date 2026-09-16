@@ -719,7 +719,7 @@ async fn main() -> anyhow::Result<()> {
     let cors = create_cors_layer();
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    let app = routes::create_routes(&state, move || metric_handle.render())
+    let app = routes::create_routes(&state, move || metric_handle.render(), false)
         .layer(axum::middleware::from_fn(request_context_middleware))
         .with_telemetry()
         .layer(cors)

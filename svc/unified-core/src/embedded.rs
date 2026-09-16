@@ -24,6 +24,24 @@ pub async fn build_router(
     event_publisher: Option<Arc<EventPublisher>>,
     public_routes: Router<AppState>,
 ) -> anyhow::Result<Router> {
+    build_router_inner(db, event_publisher, public_routes, false).await
+}
+
+/// 嵌入模式构建：core 业务路由挂根（由 server nest /api/core），跳过 public 冲突路由
+pub async fn build_router_embedded(
+    db: sqlx::PgPool,
+    event_publisher: Option<Arc<EventPublisher>>,
+    public_routes: Router<AppState>,
+) -> anyhow::Result<Router> {
+    build_router_inner(db, event_publisher, public_routes, true).await
+}
+
+async fn build_router_inner(
+    db: sqlx::PgPool,
+    event_publisher: Option<Arc<EventPublisher>>,
+    public_routes: Router<AppState>,
+    embed_mode: bool,
+) -> anyhow::Result<Router> {
     std::env::set_var("SEARCH_PATH", "public");
 
     let config = ServiceConfig {
@@ -240,7 +258,7 @@ pub async fn build_router(
     // Build the full application router
     let cors = topems_shared::create_cors_layer();
 
-    let app = crate::routes::create_routes(&state, move || String::new())
+    let app = crate::routes::create_routes(&state, move || String::new(), embed_mode)
         .layer(axum::middleware::from_fn(topems_shared_core::logging::request_context_middleware))
         .layer(cors)
         .with_state(state);
