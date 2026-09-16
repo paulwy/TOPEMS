@@ -14,13 +14,35 @@
 
 // ── 后端服务 / 基础设施端口（80xx + 其他） ──────────────────────────
 // 与 config/ports.env 完全对齐；端口权威来源为 ports.env
+// 模块化单体模式：统一 core 入口由 topems-server(:8099) 承载，用 VITE_CORE_PORT 覆盖；
+// 独立部署模式：unified-core 独立进程监听 8000（默认值）。
+// 兼容双上下文：vite.config 加载（process.env）与浏览器运行时（import.meta.env）。
+declare const process: { env?: Record<string, string | undefined> } | undefined;
+function _envCorePort(): number {
+  try {
+    if (typeof process !== 'undefined' && process.env && process.env.VITE_CORE_PORT) {
+      return Number(process.env.VITE_CORE_PORT);
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CORE_PORT) {
+      return Number(import.meta.env.VITE_CORE_PORT);
+    }
+  } catch {
+    /* ignore */
+  }
+  return 0;
+}
+const _corePort = _envCorePort() || 8000;
 export const BACKEND_PORTS: Record<string, number> = {
-  // Core virtual services (统一入口 8000)
-  core: 8000,
-  iam: 8000,
-  doc: 8000,
-  file: 8000,
-  flow: 8000,
+  // Core virtual services (统一入口 8000 / 模块化单体 VITE_CORE_PORT)
+  core: _corePort,
+  iam: _corePort,
+  doc: _corePort,
+  file: _corePort,
+  flow: _corePort,
   // Extension services (8082-8090)
   search: 8082,
   communication: 8084,
