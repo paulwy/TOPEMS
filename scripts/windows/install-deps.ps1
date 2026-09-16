@@ -146,19 +146,19 @@ function Test-RedisInstalled {
     if ($zt) {
         # 禅道服务若已停止且禁用, 视为已处理, 继续检测官方 Redis
         if ($zt.Status -ne 'Stopped' -or $zt.StartType -ne 'Disabled') {
-            return @{ Installed = $true; Detail = ("禅道 Zbox 自带 Redis (服务 " + $zt.Name + ", 状态 " + $zt.Status + ", 启动类型 " + $zt.StartType + ")"); ZenTaoSvc = $zt.Name }
+            return @{ Installed = $true; Detail = ("禅道 Zbox 自带 Redis (服务 " + $zt.Name + ", 状态 " + $zt.Status + ", 启动类型 " + $zt.StartType + ")"); ZenTaoSvc = $zt.Name; OfficialInstalled = $false }
         }
     }
     if ($port) {
-        return @{ Installed = $true; Detail = '端口 6379 已有监听'; ZenTaoSvc = $null }
+        return @{ Installed = $true; Detail = '端口 6379 已有监听'; ZenTaoSvc = $null; OfficialInstalled = $true }
     }
     if ($clipper -or (Get-Command redis-cli -ErrorAction SilentlyContinue)) {
-        return @{ Installed = $true; Detail = 'redis-cli 可用'; ZenTaoSvc = $null }
+        return @{ Installed = $true; Detail = '官方 Redis 已安装 (redis-cli 可用)'; ZenTaoSvc = $null; OfficialInstalled = $true }
     }
     if ($svc) {
-        return @{ Installed = $true; Detail = ("服务 " + ($svc.Name -join ',') + " 存在"); ZenTaoSvc = $null }
+        return @{ Installed = $true; Detail = ("服务 " + ($svc.Name -join ',') + " 存在"); ZenTaoSvc = $null; OfficialInstalled = $true }
     }
-    return @{ Installed = $false; Detail = ''; ZenTaoSvc = $null }
+    return @{ Installed = $false; Detail = ''; ZenTaoSvc = $null; OfficialInstalled = $false }
 }
 
 function Install-Redis {
@@ -336,6 +336,12 @@ if ($redis.Installed) {
             Install-Redis
         } else {
             Write-Warn "跳过: 保留禅道 Redis (请确保 .env REDIS_URL 密码与其一致)"
+        }
+    } elseif ($redis.OfficialInstalled) {
+        if (Confirm-Prompt "检测到官方 Redis 已安装但可能未完成配置(requirepass/服务)。是否执行配置?" $true) {
+            Install-Redis
+        } else {
+            Write-Warn "跳过 Redis 配置"
         }
     } else {
         if (Confirm-Prompt "是否重新安装 Redis?" $false) {
