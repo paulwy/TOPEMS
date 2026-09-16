@@ -75,4 +75,4 @@
 |------|------|------|
 | WebSocket 连接中断 | ⚠️ 已知 | 重连时偶发，自动恢复 |
 | MUI elevation 警告 | ⚠️ 警告 | 不影响功能 |
-| GIS 认证 500 | ⚠️ 待修复 | 缺少 Claims 扩展 |
+| GIS 认证 | ✅ 已修复 (fbcc1c6e9) | auth layer 顺序修正 + business-locations CRUD 闭环 |
