@@ -69,6 +69,7 @@
 - [x] communication/ai 服务接入 server（2026-09-16：communication 已接，routes 补 nest(api_prefix) 修复 404，commit 8ce227f15；core 组 search/monitor/plugin-registry/integration/mobile 批量接入，commit e9126d983，已注册模块 24→29）
 - [x] ai 服务接入 server（2026-09-16：AiRealModule 复用独立部署 AppState 组装链，create_routes 加 include_api_info 参数避免 /api、/api-docs 冲突；冒烟 /api/ai/analysis/history、/api/ai/connectors、/api/ai/agent/tools 200；模块 30→31 全量闭环，commit 0b807c9d6 + 01776b3d8）
 - [x] unified-core 接入 server（2026-09-16：build_router 挂根路径冲突风险高，nest /api/core 隔离；/api/core/health、/api/core/api、/api/core/metrics 200，模块 29→30，commit e9da724ed）
+- [x] unified-core 嵌入模式重构 + 端到端登录链路打通（2026-09-16：create_routes 增加 embed_mode 参数，嵌入时 core 业务路由挂根、跳过 public 冲突路由与 wms/mes/scm，修复 /api/core 双重前缀致登录 404；unified_core_real_module 改用 build_router_embedded；前端 VITE_CORE_PORT=8099 支持模块化单体代理；实测 POST /api/core/iam/auth/login 200 登录成功、users/me 200、permissions/metadata 200，前端 :3000 → vite proxy → 8099 全链路打通；commits 5653676fa/ec13cc90c/b2039af74）
 - [ ] MUI elevation 警告修复
 - [ ] 更多模块的业务 API 实现
 - [ ] dashboard 等演示模块认证一致性（当前无 token 可访问演示数据，低风险；后续可挂只读认证或隐藏）
