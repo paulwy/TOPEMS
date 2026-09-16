@@ -10,7 +10,7 @@ define_service_api!(
     "topems-notification",
     8000,
     Some("NOTIFICATION_SERVICE_URL"),
-    "/api/core/notification"
+    "/api/communication/notification"
 );
 
 // ============ 业务数据类型 ============

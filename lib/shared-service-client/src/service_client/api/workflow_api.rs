@@ -16,7 +16,7 @@ define_service_api!(
     "topems-workflow",
     8000,
     Some("WORKFLOW_SERVICE_URL"),
-    ""
+    "/api/core/flow"
 );
 
 // ============ 业务数据类型（与旧 workflow_client.rs 完全一致）============
@@ -105,7 +105,7 @@ impl TypedServiceClient<WorkflowApi> {
         page_size: i64,
     ) -> ServiceClientResult<PaginatedResponse<WorkflowTask>> {
         let path = format!("/tasks/my/pending?page={}&page_size={}", page, page_size);
-        self.get_and_unwrap(&path).await
+        self.get_and_unwrap(&self.build_path(&path)).await
     }
 
     /// 获取我的已完成任务
@@ -115,43 +115,43 @@ impl TypedServiceClient<WorkflowApi> {
         page_size: i64,
     ) -> ServiceClientResult<PaginatedResponse<WorkflowTask>> {
         let path = format!("/tasks/my/completed?page={}&page_size={}", page, page_size);
-        self.get_and_unwrap(&path).await
+        self.get_and_unwrap(&self.build_path(&path)).await
     }
 
     /// 获取我的任务统计
     pub async fn get_my_task_stats(&self) -> ServiceClientResult<TaskStats> {
-        self.get_and_unwrap("/tasks/my/stats").await
+        self.get_and_unwrap(&self.build_path("/tasks/my/stats")).await
     }
 
     /// 获取我的任务数量
     pub async fn get_my_task_count(&self) -> ServiceClientResult<i64> {
-        self.get_and_unwrap("/tasks/my/count").await
+        self.get_and_unwrap(&self.build_path("/tasks/my/count")).await
     }
 
     /// 获取任务详情
     pub async fn get_task(&self, id: Uuid) -> ServiceClientResult<WorkflowTask> {
         let path = format!("/tasks/{}", id);
-        self.get_and_unwrap(&path).await
+        self.get_and_unwrap(&self.build_path(&path)).await
     }
 
     /// 审批通过
     pub async fn approve_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         let path = format!("/tasks/{}/approve", id);
-        self.post_and_check_success(&path, &body).await
+        self.post_and_check_success(&self.build_path(&path), &body).await
     }
 
     /// 审批拒绝
     pub async fn reject_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         let path = format!("/tasks/{}/reject", id);
-        self.post_and_check_success(&path, &body).await
+        self.post_and_check_success(&self.build_path(&path), &body).await
     }
 
     /// 签收任务
     pub async fn claim_task(&self, id: Uuid) -> ServiceClientResult<bool> {
         let path = format!("/tasks/{}/claim", id);
-        self.post_and_check_success(&path, &serde_json::Value::Null)
+        self.post_and_check_success(&self.build_path(&path), &serde_json::Value::Null)
             .await
     }
 
@@ -167,28 +167,28 @@ impl TypedServiceClient<WorkflowApi> {
             "reason": reason,
         });
         let path = format!("/tasks/{}/delegate", id);
-        self.post_and_check_success(&path, &body).await
+        self.post_and_check_success(&self.build_path(&path), &body).await
     }
 
     /// 获取工作流统计
     pub async fn get_statistics(&self) -> ServiceClientResult<WorkflowStatistics> {
-        self.get_and_unwrap("/statistics").await
+        self.get_and_unwrap(&self.build_path("/statistics")).await
     }
 
-    // ============ 实例级工作流操作（/api/flow/instances） ============
+    // ============ 实例级工作流操作（/instances） ============
 
     /// 创建流程实例
     pub async fn create_instance(
         &self,
         request: CreateInstanceRequest,
     ) -> ServiceClientResult<WorkflowInstance> {
-        self.post_and_unwrap("/api/flow/instances", &request).await
+        self.post_and_unwrap(&self.build_path("/instances"), &request).await
     }
 
     /// 获取流程实例详情
     pub async fn get_instance(&self, instance_id: Uuid) -> ServiceClientResult<WorkflowInstance> {
-        let path = format!("/api/flow/instances/{}", instance_id);
-        self.get_and_unwrap(&path).await
+        let path = format!("/instances/{}", instance_id);
+        self.get_and_unwrap(&self.build_path(&path)).await
     }
 
     /// 列出流程实例（分页）
@@ -198,7 +198,7 @@ impl TypedServiceClient<WorkflowApi> {
         page_size: i64,
     ) -> ServiceClientResult<PaginatedResponse<WorkflowInstance>> {
         let path = format!("/instances?page={}&page_size={}", page, page_size);
-        self.get_and_unwrap(&path).await
+        self.get_and_unwrap(&self.build_path(&path)).await
     }
 
     /// 列出指定用户的待办流程实例
@@ -206,8 +206,8 @@ impl TypedServiceClient<WorkflowApi> {
         &self,
         user_id: &str,
     ) -> ServiceClientResult<Vec<WorkflowInstance>> {
-        let path = format!("/api/flow/tasks/todo?user_id={}", user_id);
-        self.get_and_unwrap(&path).await
+        let path = format!("/tasks/todo?user_id={}", user_id);
+        self.get_and_unwrap(&self.build_path(&path)).await
     }
 
     /// 审批通过流程实例
@@ -217,8 +217,8 @@ impl TypedServiceClient<WorkflowApi> {
         comment: Option<String>,
     ) -> ServiceClientResult<WorkflowInstance> {
         let body = TaskActionRequest { comment };
-        let path = format!("/api/flow/instances/{}/approve", instance_id);
-        self.post_and_unwrap(&path, &body).await
+        let path = format!("/instances/{}/approve", instance_id);
+        self.post_and_unwrap(&self.build_path(&path), &body).await
     }
 
     /// 审批拒绝流程实例
@@ -228,8 +228,8 @@ impl TypedServiceClient<WorkflowApi> {
         comment: Option<String>,
     ) -> ServiceClientResult<WorkflowInstance> {
         let body = TaskActionRequest { comment };
-        let path = format!("/api/flow/instances/{}/reject", instance_id);
-        self.post_and_unwrap(&path, &body).await
+        let path = format!("/instances/{}/reject", instance_id);
+        self.post_and_unwrap(&self.build_path(&path), &body).await
     }
 }
 
