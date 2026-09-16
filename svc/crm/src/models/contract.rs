@@ -28,6 +28,7 @@ pub struct Contract {
     #[serde(default)]
     pub owner: Option<String>,
     #[serde(default, rename = "type")]
+    #[sqlx(rename = "type")]
     pub contract_type: Option<String>,
     #[serde(default)]
     pub remark: Option<String>,

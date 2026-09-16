@@ -193,6 +193,15 @@ async fn create_contract(
     .fetch_one(&mut **txn)
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "合同创建失败"));
+            }
+        }
+    }
+
     let (response, status_str, error_msg) = match &result {
         Ok(contract) => (
             Json(ApiResponse::success(contract.clone(), "合同创建成功")),
@@ -361,6 +370,15 @@ async fn update_contract(
     .fetch_optional(&mut **txn)
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "合同更新失败"));
+            }
+        }
+    }
+
     match result {
         Ok(Some(contract)) => Json(ApiResponse::success(contract, "合同更新成功")),
         Ok(None) => Json(api_error(404, "合同不存在")),
@@ -413,6 +431,15 @@ async fn delete_contract(
     .bind(now)
     .execute(&mut **txn)
     .await;
+
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return Json(api_error(500, "删除合同失败"));
+            }
+        }
+    }
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
