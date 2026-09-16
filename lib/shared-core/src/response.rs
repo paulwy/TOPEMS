@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 #[schema(as = ApiResponse)]
 pub struct ApiResponse<T> {
     #[schema(example = 200)]
+    #[serde(default = "default_code")]
     pub code: u16,
     #[schema(example = true)]
     pub success: bool,
@@ -13,7 +14,12 @@ pub struct ApiResponse<T> {
     #[schema(example = "操作成功")]
     pub message: String,
     #[schema(example = "2024-01-01T00:00:00Z")]
+    #[serde(default)]
     pub timestamp: String,
+}
+
+fn default_code() -> u16 {
+    200
 }
 
 impl<T> ApiResponse<T> {
