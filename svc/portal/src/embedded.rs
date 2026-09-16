@@ -3102,6 +3102,12 @@ pub async fn build_router(
     )
     .layer(axum::middleware::from_fn(telemetry_middleware))
     .layer(axum::middleware::from_fn(request_context_middleware))
+    // V65: Portal BFF 统一认证——graphql/管理端点此前绕过 auth 链（无 token 可查业务数据），
+    // 在最外层补 auth_middleware（is_public_path 豁免 /health、login 等；cors 在其外保证预检放行）
+    .layer(axum::middleware::from_fn_with_state(
+        app_state.auth_state.clone(),
+        auth_middleware,
+    ))
     .layer(cors)
     .layer(tower_cookies::CookieManagerLayer::new());
 
