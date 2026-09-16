@@ -5,6 +5,7 @@
 
 use crate::modules::graphql_types::ServiceStatsGql;
 use crate::shared::AppState;
+use topems_shared_auth::service::issue_service_token;
 use topems_shared_observability::telemetry::TracedRequestExt;
 
 // ==================== 跨服务统计获取 ====================
@@ -177,6 +178,90 @@ static SHARED_HTTP_CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::Onc
 
 pub fn shared_http_client() -> &'static reqwest::Client {
     SHARED_HTTP_CLIENT.get_or_init(reqwest::Client::new)
+}
+
+/// portal 启动时注册 JWT_SECRET，供联邦实体解析 / 跨服务聚合读签发 service token。
+/// （与 announcements 模块走 AppState.auth_state 的方式等价，但可被无 Context 的
+/// 独立函数（如 resolve_federated_entity）全局访问。）
+static SERVICE_JWT_SECRET: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+pub fn init_service_auth(jwt_secret: &str) {
+    let _ = SERVICE_JWT_SECRET.set(jwt_secret.to_string());
+}
+
+/// 签发 portal-service 身份 token；未注册或签发失败时返回 None（调用方降级匿名，保持现状）。
+pub fn service_token(permissions: &[&str]) -> Option<String> {
+    let jwt = SERVICE_JWT_SECRET.get()?;
+    issue_service_token(jwt, "portal-service", permissions, None).ok()
+}
+
+/// 联邦实体解析 / 批量聚合读的统一权限集（portal 作为 BFF 可读各业务域；
+/// 与 shared/mod.rs 中 portal-service 客户端的多权限声明保持一致）。
+pub const FEDERATION_READ_PERMS: &[&str] = &[
+    "erp:read",
+    "crm:read",
+    "hrm:read",
+    "finance:read",
+    "wms:read",
+    "mes:read",
+    "qms:read",
+    "pdm:read",
+    "lims:read",
+    "ehs:read",
+    "scm:read",
+    "monitor:read",
+    "communication:read",
+];
+
+/// 联邦网关写路径（跨服务变更）统一走 admin 级权限（与 shared/mod.rs
+/// portal-service 客户端的 admin 声明保持一致）。
+pub const FEDERATION_WRITE_PERMS: &[&str] = &[
+    "erp:admin",
+    "crm:admin",
+    "hrm:admin",
+    "finance:admin",
+    "wms:admin",
+    "mes:admin",
+    "qms:admin",
+    "pdm:admin",
+    "lims:admin",
+    "ehs:admin",
+    "scm:admin",
+];
+
+/// 带服务身份的任意方法请求（GET 之外还覆盖 batch POST / 写 PUT / DELETE）。
+pub fn service_request(
+    method: reqwest::Method,
+    url: &str,
+    permissions: &[&str],
+) -> reqwest::RequestBuilder {
+    let builder = shared_http_client().request(method, url).with_trace();
+    match service_token(permissions) {
+        Some(t) => builder.bearer_auth(t),
+        None => builder,
+    }
+}
+
+/// 带服务身份 GET：联邦实体解析 / 跨服务聚合读统一走 portal-service service token，
+/// 对端按服务身份审计 / RLS 豁免，不再匿名调用。
+pub async fn service_auth_get(
+    url: &str,
+    permissions: &[&str],
+) -> Result<reqwest::Response, reqwest::Error> {
+    let builder = shared_http_client().get(url).with_trace();
+    match service_token(permissions) {
+        Some(t) => builder.bearer_auth(t).send().await,
+        None => builder.send().await,
+    }
+}
+
+/// 带服务身份的请求构造（供 `let client = shared_http_client()` 形式的调用点使用）。
+pub fn service_auth_builder(url: &str, permissions: &[&str]) -> reqwest::RequestBuilder {
+    let builder = shared_http_client().get(url).with_trace();
+    match service_token(permissions) {
+        Some(t) => builder.bearer_auth(t),
+        None => builder,
+    }
 }
 
 pub async fn check_service_health(url: &str) -> bool {

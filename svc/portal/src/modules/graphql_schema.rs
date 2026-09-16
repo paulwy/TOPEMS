@@ -59,7 +59,6 @@ pub use crate::modules::schema_versioning::*;
 // 原 schema 本地副本为 `-> bool` 版本，与 graphql_federation 一致，故显式指向该版本）
 use crate::modules::graphql_federation::reset_circuit_breaker;
 use crate::shared::AppState;
-use topems_shared_observability::telemetry::TracedRequestExt;
 
 // ==================== V37.0 Phase 7: Apollo Federation v2 实体类型 ====================
 //
@@ -89,7 +88,7 @@ impl CustomerEntityGql {
             "http://localhost:8010/api/erp/orders?customer_id={}",
             self.id
         );
-        match shared_http_client().get(&url).with_trace().send().await {
+        match service_auth_get(&url, &["erp:read"]).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = match resp.json().await {
                     Ok(j) => j,
@@ -152,7 +151,7 @@ impl CustomerEntityGql {
             "http://localhost:8029/api/crm/contacts?customer_id={}",
             self.id
         );
-        match shared_http_client().get(&url).with_trace().send().await {
+        match service_auth_get(&url, &["crm:read"]).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = match resp.json().await {
                     Ok(j) => j,
@@ -242,7 +241,7 @@ impl EmployeeEntityGql {
             "http://localhost:8020/api/hrm/departments?name={}",
             self.department
         );
-        match shared_http_client().get(&url).with_trace().send().await {
+        match service_auth_get(&url, &["hrm:read"]).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = match resp.json().await {
                     Ok(j) => j,
@@ -310,7 +309,7 @@ impl VoucherEntityGql {
             "http://localhost:8011/api/finance/accounts?voucher_id={}",
             self.id
         );
-        match shared_http_client().get(&url).with_trace().send().await {
+        match service_auth_get(&url, &["finance:read"]).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = match resp.json().await {
                     Ok(j) => j,
@@ -667,13 +666,11 @@ async fn batch_resolve_entities(
 
     if !batch_path.is_empty() {
         let url = format!("{}{}", base_url, batch_path);
-        let client = shared_http_client();
+        let client = service_request(reqwest::Method::POST, &url, FEDERATION_READ_PERMS);
         if let Ok(Ok(resp)) = tokio::time::timeout(
             std::time::Duration::from_secs(5),
             client
-                .post(&url)
                 .json(&serde_json::json!({ "ids": &uncached_ids }))
-                .with_trace()
                 .send(),
         )
         .await
@@ -722,7 +719,7 @@ async fn batch_resolve_entities(
                 _ => format!("/api/{}/{}/{}", service, entity_type, id),
             };
             let url = format!("{}{}", base_url, path);
-            let data = match shared_http_client().get(&url).with_trace().send().await {
+            let data = match service_auth_get(&url, FEDERATION_READ_PERMS).await {
                 Ok(resp) if resp.status().is_success() => resp
                     .json::<serde_json::Value>()
                     .await
@@ -1130,7 +1127,7 @@ impl QueryRoot {
 
         let futures = modules.iter().map(|(name, base, path)| async move {
             let url = format!("{}{}", base, path);
-            match shared_http_client().get(&url).with_trace().send().await {
+            match service_auth_get(&url, FEDERATION_READ_PERMS).await {
                 Ok(resp) if resp.status().is_success() => {
                     let json: serde_json::Value = match resp.json().await {
                         Ok(j) => j,
@@ -1234,7 +1231,7 @@ impl QueryRoot {
         };
 
         let url = format!("{}{}", base_url, path);
-        let data = match shared_http_client().get(&url).with_trace().send().await {
+        let data = match service_auth_get(&url, FEDERATION_READ_PERMS).await {
             Ok(resp) if resp.status().is_success() => {
                 match resp.json::<serde_json::Value>().await {
                     Ok(j) => j,
@@ -1398,14 +1395,12 @@ impl QueryRoot {
         };
 
         let url = format!("{}{}", base_url, path);
-        let client = shared_http_client();
+        let client = service_request(reqwest::Method::POST, &url, FEDERATION_READ_PERMS);
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(5),
             client
-                .post(&url)
                 .json(&serde_json::json!({ "ids": ids }))
-                .with_trace()
                 .send(),
         )
         .await
@@ -1483,7 +1478,7 @@ impl QueryRoot {
                             _ => format!("/api/{}/{}/{}", service, entity_type, id),
                         };
                         let single_url = format!("{}{}", base_url, single_path);
-                        let data = match shared_http_client().get(&single_url).with_trace().send().await {
+                        let data = match service_auth_get(&single_url, FEDERATION_READ_PERMS).await {
                             Ok(resp) if resp.status().is_success() => {
                                 resp.json::<serde_json::Value>().await.unwrap_or(serde_json::json!({"error": "parse error"}))
                             }
@@ -1509,7 +1504,7 @@ impl QueryRoot {
         id: String,
     ) -> async_graphql::Result<Option<CustomerEntityGql>> {
         let url = format!("http://localhost:8010/api/erp/customers/{}", id);
-        match shared_http_client().get(&url).with_trace().send().await {
+        match service_auth_get(&url, FEDERATION_READ_PERMS).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = match resp.json().await {
                     Ok(j) => j,
@@ -1565,7 +1560,7 @@ impl QueryRoot {
         id: String,
     ) -> async_graphql::Result<Option<EmployeeEntityGql>> {
         let url = format!("http://localhost:8020/api/hrm/employees/{}", id);
-        match shared_http_client().get(&url).with_trace().send().await {
+        match service_auth_get(&url, FEDERATION_READ_PERMS).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = match resp.json().await {
                     Ok(j) => j,
@@ -1623,7 +1618,7 @@ impl QueryRoot {
         id: String,
     ) -> async_graphql::Result<Option<VoucherEntityGql>> {
         let url = format!("http://localhost:8011/api/finance/vouchers/{}", id);
-        match shared_http_client().get(&url).with_trace().send().await {
+        match service_auth_get(&url, FEDERATION_READ_PERMS).await {
             Ok(resp) if resp.status().is_success() => {
                 let json: serde_json::Value = match resp.json().await {
                     Ok(j) => j,
@@ -2699,11 +2694,11 @@ impl MutationRoot {
         };
 
         let url = format!("{}{}", base_url, path);
-        let client = shared_http_client();
+        let client = service_request(reqwest::Method::POST, &url, FEDERATION_WRITE_PERMS);
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
-            client.post(&url).json(&data).with_trace().send(),
+            client.json(&data).send(),
         )
         .await
         {
@@ -2759,11 +2754,11 @@ impl MutationRoot {
         };
 
         let url = format!("{}{}", base_url, path);
-        let client = shared_http_client();
+        let client = service_request(reqwest::Method::PUT, &url, FEDERATION_WRITE_PERMS);
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
-            client.put(&url).json(&data).with_trace().send(),
+            client.json(&data).send(),
         )
         .await
         {
@@ -2818,11 +2813,11 @@ impl MutationRoot {
         };
 
         let url = format!("{}{}", base_url, path);
-        let client = shared_http_client();
+        let client = service_request(reqwest::Method::DELETE, &url, FEDERATION_WRITE_PERMS);
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
-            client.delete(&url).with_trace().send(),
+            client.send(),
         )
         .await
         {
@@ -4711,7 +4706,7 @@ async fn resolve_federated_entity(typename: &str, id: &str) -> serde_json::Value
     };
 
     let url = format!("{}{}", base_url, path);
-    match shared_http_client().get(&url).with_trace().send().await {
+    match service_auth_get(&url, FEDERATION_READ_PERMS).await {
         Ok(resp) if resp.status().is_success() => {
             resp.json::<serde_json::Value>().await.unwrap_or_else(|_| {
                 serde_json::json!({"error": "failed to parse response", "__typename": typename, "id": id})

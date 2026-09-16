@@ -554,10 +554,10 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 **遗留**：
 - [ ] 前端批 2 页面单测评审（剩余最高优先）
 - [ ] 统一认证专项收尾（#17 ④ health 豁免 + shared-auth 一致性）
-- [ ] 服务间认证批量扩展（crm→erp、portal→各服务 with_service_token 应用）
+- [x] 服务间认证批量扩展（crm→erp、portal→各服务 with_service_token 应用）——**已闭环（2026-09-17）**：① TypedServiceClient 缺口服务全清零——最后缺口 ai 服务（crm/erp/finance MCP 业务工具）已补 `with_service_token(jwt_secret,"ai-service",&["<svc>:read","<svc>:write"])`（Box::leak &'static str + move 闭包满足 Fn+'static；JWT_SECRET 经 AppState（HTTP）/env（stdio）注入；ai 209 tests passed，commit `8f7608246`）；② portal 手工调用审计（46 处口径）——**联邦实体解析/批量聚合读 20 处匿名 GET/POST 全部接入 portal-service service token**（graphql_helpers 新增 `init_service_auth/service_token/service_auth_get/service_request` + `FEDERATION_READ_PERMS/FEDERATION_WRITE_PERMS`，JWT_SECRET 于 AppState::new 全局注册；graphql_schema 17 处 + graphql_federation 3 处；health 探测 2 处保留匿名、announcements 8 处此前已带 erp_auth、shared/mod.rs 用户级转发（cached_my_task_stats/forward）按 BFF 语义保留、portal_plugin X-Plugin-Token 专用保留）；portal check EXIT=0 + 605 tests passed；③ erp 内部手工 reqwest 均为外部 ERP 系统适配（SAP/金蝶/用友各自凭证），无需 TopEMS service token——无缺口
 - [ ] 搜索降级指标接入 ServiceCallMonitor 告警（P2）
 - [ ] workflow 拆分评估 P2（API 熔断）/ P3（流程定义只读副本）
-- [ ] erp→mes 生产执行闭环接线（方案已批，待实施）
+- [x] erp→mes 生产执行闭环接线（**已闭环 2026-09-04**，归档 TODO-archived-workbench L157 详录：下达/回传/RLS 事务/镜像/端到端验证全通过）——本条为过期残留，已修正状态
 
 ### V531 补充：前端单测验证结论（2026-09-17）
 
