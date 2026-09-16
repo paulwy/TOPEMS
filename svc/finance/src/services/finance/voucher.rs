@@ -398,7 +398,7 @@ impl FinanceService {
         period: Option<String>,
     ) -> Result<Vec<Voucher>, TopemsError> {
         let mut query =
-            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1"
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
                 .to_string();
         let status_provided = status.is_some();
         let period_provided = period.is_some();
