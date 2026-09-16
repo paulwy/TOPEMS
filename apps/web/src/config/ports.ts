@@ -18,24 +18,27 @@
 // 独立部署模式：unified-core 独立进程监听 8000（默认值）。
 // 兼容双上下文：vite.config 加载（process.env）与浏览器运行时（import.meta.env）。
 declare const process: { env?: Record<string, string | undefined> } | undefined;
-function _envCorePort(): number {
+function _envPort(name: string, fallback: number): number {
   try {
-    if (typeof process !== 'undefined' && process.env && process.env.VITE_CORE_PORT) {
-      return Number(process.env.VITE_CORE_PORT);
+    if (typeof process !== 'undefined' && process.env) {
+      const v = process.env[`VITE_${name}_PORT`];
+      if (v) return Number(v);
     }
   } catch {
     /* ignore */
   }
   try {
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CORE_PORT) {
-      return Number(import.meta.env.VITE_CORE_PORT);
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      const v = import.meta.env[`VITE_${name}_PORT`];
+      if (v) return Number(v);
     }
   } catch {
     /* ignore */
   }
-  return 0;
+  return fallback;
 }
-const _corePort = _envCorePort() || 8000;
+const _corePort = _envPort('CORE', 8000);
+const _portalPort = _envPort('PORTAL', 8063);
 export const BACKEND_PORTS: Record<string, number> = {
   // Core virtual services (统一入口 8000 / 模块化单体 VITE_CORE_PORT)
   core: _corePort,
@@ -75,7 +78,7 @@ export const BACKEND_PORTS: Record<string, number> = {
   // Analytics/Portal (8060-8069)
   bi: 8060,
   analytics: 8060,
-  portal: 8063,
+  portal: _portalPort,
   // Infra (8070-8079)
   mobile: 8070,
   gis: 8071,

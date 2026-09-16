@@ -37,6 +37,10 @@ interface ServiceConfig {
 
 const CORE_PORT = BACKEND_PORTS.core; // 8000，从 ports.ts 单一信源读取
 
+// 模块化单体模式：所有后端服务由 topems-server(:8099) 统一承载（VITE_MONOLITH=1）。
+// 独立部署模式（默认）：各服务按 ports.ts 独立端口代理。
+const MONO_TARGET = process.env.VITE_MONOLITH === '1' ? 'http://localhost:8099' : null;
+
 const SERVICES: ServiceConfig[] = [
   // 核心服务
   // NOTE: unified-core (8000) 同时承载 WebSocket：/ws/core/im（IM 实时推送）、/ws/core（通用 WS）。
@@ -396,12 +400,12 @@ const buildServiceProxies = (): Record<string, any> => {
   // Vite 8 按插入顺序匹配 proxy key，不排序。如果 /api/core 先注册，
   // 会抢先匹配 /api/core/plugin/* /api/core/monitor/* /api/core/dict/*
   proxies['/api/core/plugin'] = {
-    target: `http://localhost:${BACKEND_PORTS['plugin-registry']}`,
+    target: MONO_TARGET || `http://localhost:${BACKEND_PORTS['plugin-registry']}`,
     changeOrigin: true,
     rewrite: (path: string) => path.replace(/^\/api\/core\/plugin/, '/api/plugin'),
   };
   proxies['/api/core/monitor'] = {
-    target: `http://localhost:${BACKEND_PORTS.monitor}`,
+    target: MONO_TARGET || `http://localhost:${BACKEND_PORTS.monitor}`,
     changeOrigin: true,
     rewrite: (path: string) => path.replace(/^\/api\/core\/monitor/, '/api/monitor'),
   };
@@ -410,7 +414,7 @@ const buildServiceProxies = (): Record<string, any> => {
   // 实际后端路径为 /api/master-data/dict/*；前端仍通过 /api/core/dict/* 访问，
   // 此处 rewrite 为 /api/master-data/dict/*（与 monitor/plugin 外迁模式一致）。
   proxies['/api/core/dict'] = {
-    target: `http://localhost:${BACKEND_PORTS['master-data']}`,
+    target: MONO_TARGET || `http://localhost:${BACKEND_PORTS['master-data']}`,
     changeOrigin: true,
     rewrite: (path: string) => path.replace(/^\/api\/core\/dict/, '/api/master-data/dict'),
   };
@@ -420,7 +424,7 @@ const buildServiceProxies = (): Record<string, any> => {
   // （/api/finance/dashboard 匹配 /api/finance/ 前缀 → 转发到 8011）
 
   for (const svc of SERVICES) {
-    const target = `http://localhost:${svc.port}`;
+    const target = MONO_TARGET || `http://localhost:${svc.port}`;
 
     // 1. 新 API 路径: /api/{service}/* 或 /api/core/{service}/*
     if (svc.apiPrefix) {
@@ -461,12 +465,12 @@ const buildServiceProxies = (): Record<string, any> => {
 
   // 核心服务 /api/core（通配代理，兼容代理已在函数开头注册）
   proxies['/api/core'] = {
-    target: `http://localhost:${CORE_PORT}`,
+    target: MONO_TARGET || `http://localhost:${CORE_PORT}`,
     changeOrigin: true,
   };
 
   // 通用 health 端点
-  proxies['/health'] = { target: `http://localhost:${CORE_PORT}`, changeOrigin: true };
+  proxies['/health'] = { target: MONO_TARGET || `http://localhost:${CORE_PORT}`, changeOrigin: true };
 
   // Module Federation remotes - proxy all remoteEntry.js requests through the host
   // This prevents CORS issues when loading remote modules
@@ -496,18 +500,18 @@ const buildServiceProxies = (): Record<string, any> => {
 
   // ERP 插件代理（通过 unified-core）
   proxies['/api/plugins/erp'] = {
-    target: `http://localhost:${CORE_PORT}`,
+    target: MONO_TARGET || `http://localhost:${CORE_PORT}`,
     changeOrigin: true,
   };
 
   // 通讯服务向后兼容
   proxies['/comm/api'] = {
-    target: `http://localhost:${BACKEND_PORTS.communication}`,
+    target: MONO_TARGET || `http://localhost:${BACKEND_PORTS.communication}`,
     changeOrigin: true,
     rewrite: (path: string) => path.replace(/^\/comm/, '/api/communication'),
   };
   proxies['/comm/health'] = {
-    target: `http://localhost:${BACKEND_PORTS.communication}`,
+    target: MONO_TARGET || `http://localhost:${BACKEND_PORTS.communication}`,
     changeOrigin: true,
   };
 
