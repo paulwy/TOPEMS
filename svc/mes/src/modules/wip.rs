@@ -972,7 +972,7 @@ pub async fn get_wip_statistics(
         return e;
     }
 
-    let total_result = sqlx::query!(
+    let total_result = sqlx::query(
         r#"
         SELECT 
             COUNT(*) as total_wip,
@@ -985,17 +985,19 @@ pub async fn get_wip_statistics(
     .await;
 
     let (total_wip, total_quantity) = match total_result {
-        Ok(r) => (
-            r.total_wip.unwrap_or(0),
-            big_decimal_to_f64(r.total_quantity),
-        ),
+        Ok(row) => {
+            let tw: Option<i64> = row.try_get("total_wip").ok();
+            let tq: Option<BigDecimal> = row.try_get("total_quantity").ok();
+            tracing::debug!("WIP stats raw: total_wip={:?} total_quantity={:?}", tw, tq);
+            (tw.unwrap_or(0), big_decimal_to_f64(tq))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch WIP statistics: {}", e);
             return Json(ApiResponse::error(500, "获取WIP统计失败"));
         }
     };
 
-    let status_result = sqlx::query!(
+    let status_result = sqlx::query(
         r#"
         SELECT 
             status,
@@ -1013,9 +1015,9 @@ pub async fn get_wip_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| WipStatusCount {
-                status: r.status.unwrap_or_else(|| "unknown".to_string()),
-                count: r.count.unwrap_or(0),
-                quantity: big_decimal_to_f64(r.quantity),
+                status: r.try_get::<String, _>("status").ok().unwrap_or_else(|| "unknown".to_string()),
+                count: r.try_get::<i64, _>("count").ok().unwrap_or(0),
+                quantity: big_decimal_to_f64(r.try_get("quantity").ok()),
             })
             .collect(),
         Err(e) => {
@@ -1024,7 +1026,7 @@ pub async fn get_wip_statistics(
         }
     };
 
-    let process_result = sqlx::query!(
+    let process_result = sqlx::query(
         r#"
         SELECT 
             w.current_process_id,
@@ -1045,10 +1047,10 @@ pub async fn get_wip_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| WipProcessCount {
-                process_id: r.current_process_id,
-                process_name: r.process_name,
-                count: r.count.unwrap_or(0),
-                quantity: big_decimal_to_f64(r.quantity),
+                process_id: r.try_get("current_process_id").ok(),
+                process_name: r.try_get::<String, _>("process_name").ok().unwrap_or_default(),
+                count: r.try_get::<i64, _>("count").ok().unwrap_or(0),
+                quantity: big_decimal_to_f64(r.try_get("quantity").ok()),
             })
             .collect(),
         Err(e) => {
