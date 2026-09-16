@@ -43,6 +43,7 @@ pub fn create_routes(
     pool: sqlx::PgPool,
     prometheus_layer: PrometheusMetricLayer<'static>,
     metric_handle: PrometheusHandle,
+    include_api_info: bool,
 ) -> Router {
     let cors = create_cors_layer();
 
@@ -706,9 +707,17 @@ pub fn create_routes(
         &["/api/v1/ai", "/api/ai"],
         all_protected_routes,
     )
-    .merge(create_api_info_router("topems-ai"))
+    .merge(if include_api_info {
+        create_api_info_router("topems-ai")
+    } else {
+        Router::new()
+    })
     .route(
-        "/api-docs/openapi.json",
+        if include_api_info {
+            "/api-docs/openapi.json"
+        } else {
+            "/__ai_docs_disabled__"
+        },
         get(|| async {
             serde_json::to_string_pretty(&AiApiDoc::openapi()).unwrap_or_else(|e| {
                 tracing::error!("Failed to serialize OpenAPI spec: {}", e);
