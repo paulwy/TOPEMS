@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            i.material_code,\n            i.material_name,\n            COUNT(*) as alert_count\n        FROM wms.inventory i\n        WHERE i.deleted_at IS NULL\n          AND (\n            (i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity)\n            OR (i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity)\n            OR (i.reorder_point IS NOT NULL AND i.quantity <= i.reorder_point)\n            OR i.quantity <= 0\n          )\n        GROUP BY i.material_code, i.material_name\n        ORDER BY COUNT(*) DESC\n        LIMIT 10\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "material_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "material_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "alert_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "31f9005d72a2dec10c0af6b8de777495ad3d6d42aa6024a8a391de3e158da70b"
+}

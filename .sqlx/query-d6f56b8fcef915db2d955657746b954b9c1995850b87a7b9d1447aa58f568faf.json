@@ -1,0 +1,143 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT cf.credit_limit, cf.credit_used, cf.credit_available,\n                   cf.credit_term_days, cf.receivable_balance, cf.accounts_receivable,\n                   cf.overdue_amount, cf.overdue_receivable, cf.avg_collection_days,\n                   cf.total_sales, cf.total_received, cf.last_transaction_date,\n                   cf.payment_terms, cf.risklevel, cf.status, cf.bank_name,\n                   cf.bank_account, cf.account_name, cf.tax_number, cf.customer_name,\n                   COALESCE(c.name, cf.customer_name) AS resolved_name\n            FROM crm.customer_finance cf\n            LEFT JOIN crm.customers c ON c.id = cf.customer_id\n            WHERE cf.customer_id = $1 AND cf.tenant_id = $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "credit_limit",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 1,
+        "name": "credit_used",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 2,
+        "name": "credit_available",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 3,
+        "name": "credit_term_days",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "receivable_balance",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 5,
+        "name": "accounts_receivable",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "overdue_amount",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 7,
+        "name": "overdue_receivable",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 8,
+        "name": "avg_collection_days",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "total_sales",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 10,
+        "name": "total_received",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_transaction_date",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 12,
+        "name": "payment_terms",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "risklevel",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 14,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 15,
+        "name": "bank_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 16,
+        "name": "bank_account",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 17,
+        "name": "account_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 18,
+        "name": "tax_number",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 19,
+        "name": "customer_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 20,
+        "name": "resolved_name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "d6f56b8fcef915db2d955657746b954b9c1995850b87a7b9d1447aa58f568faf"
+}

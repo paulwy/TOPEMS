@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO analytics_drilldown_paths \n        (id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n        RETURNING id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "datasource_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "levels",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "measures",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 6,
+        "name": "owner_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Text",
+        "Uuid",
+        "Jsonb",
+        "Jsonb",
+        "Varchar",
+        "Timestamp",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "821520ee6a5549cf39c1f8f6db2f5b011be5692a4f0f2833a3ffe79a69f594ba"
+}
