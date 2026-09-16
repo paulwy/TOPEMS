@@ -42,18 +42,18 @@ pub async fn list_quality_costs(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
-    params.push(serde_json::Value::String(tenant_id.to_string()));
+    let mut params: Vec<String> = Vec::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
+    params.push(tenant_id.to_string());
 
     if let Some(category) = &query.cost_category {
         where_clause.push_str(&format!(" AND cost_category = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(category.clone()));
+        params.push(category.clone());
     }
 
     if let Some(dept) = &query.department {
         where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(dept.clone()));
+        params.push(dept.clone());
     }
 
     if let Some(start) = &query.start_date {
@@ -61,7 +61,7 @@ pub async fn list_quality_costs(
             " AND incurred_date::date >= ${}::date",
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(start.clone()));
+        params.push(start.clone());
     }
 
     if let Some(end) = &query.end_date {
@@ -69,7 +69,7 @@ pub async fn list_quality_costs(
             " AND incurred_date::date <= ${}::date",
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(end.clone()));
+        params.push(end.clone());
     }
 
     let count_sql = format!("SELECT COUNT(*) FROM qms.qa_quality_costs{}", where_clause);
@@ -315,18 +315,18 @@ pub async fn get_cost_statistics(
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> Json<ApiResponse<QualityCostStatistics>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
-    params.push(serde_json::Value::String(tenant_id.to_string()));
+    let mut params: Vec<String> = Vec::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
+    params.push(tenant_id.to_string());
 
     if let Some(category) = &query.cost_category {
         where_clause.push_str(&format!(" AND cost_category = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(category.clone()));
+        params.push(category.clone());
     }
 
     if let Some(dept) = &query.department {
         where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(dept.clone()));
+        params.push(dept.clone());
     }
 
     if let Some(start) = &query.start_date {
@@ -334,7 +334,7 @@ pub async fn get_cost_statistics(
             " AND incurred_date::date >= ${}::date",
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(start.clone()));
+        params.push(start.clone());
     }
 
     if let Some(end) = &query.end_date {
@@ -342,7 +342,7 @@ pub async fn get_cost_statistics(
             " AND incurred_date::date <= ${}::date",
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(end.clone()));
+        params.push(end.clone());
     }
 
     let total_sql = format!(
@@ -464,23 +464,23 @@ pub async fn get_cost_trend(
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> Json<ApiResponse<Vec<CostTrendItem>>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
-    params.push(serde_json::Value::String(tenant_id.to_string()));
+    let mut params: Vec<String> = Vec::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
+    params.push(tenant_id.to_string());
 
     if let Some(start) = &query.start_date {
         where_clause.push_str(&format!(
             " AND incurred_date::date >= ${}::date",
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(start.clone()));
+        params.push(start.clone());
     }
     if let Some(end) = &query.end_date {
         where_clause.push_str(&format!(
             " AND incurred_date::date <= ${}::date",
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(end.clone()));
+        params.push(end.clone());
     }
     if query.start_date.is_none() && query.end_date.is_none() {
         where_clause
@@ -489,12 +489,12 @@ pub async fn get_cost_trend(
 
     if let Some(category) = &query.cost_category {
         where_clause.push_str(&format!(" AND cost_category = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(category.clone()));
+        params.push(category.clone());
     }
 
     if let Some(dept) = &query.department {
         where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(dept.clone()));
+        params.push(dept.clone());
     }
 
     let sql = format!(

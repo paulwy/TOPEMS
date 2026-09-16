@@ -91,7 +91,7 @@ async fn list_contacts(
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         FROM crm.contacts
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR first_name ILIKE $2 OR last_name ILIKE $2)
@@ -272,7 +272,7 @@ async fn get_contact(
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         FROM crm.contacts WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -312,7 +312,7 @@ async fn update_contact(
 
     let existing = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at FROM crm.contacts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at FROM crm.contacts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)

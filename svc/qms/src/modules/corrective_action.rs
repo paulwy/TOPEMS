@@ -28,24 +28,24 @@ pub async fn list_actions(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
-    params.push(serde_json::Value::String(tenant_id.to_string()));
+    let mut params: Vec<String> = Vec::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
+    params.push(tenant_id.to_string());
 
     if let Some(status) = &query.status {
         where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(status.clone()));
+        params.push(status.clone());
     }
 
     if let Some(priority) = &query.priority {
         where_clause.push_str(&format!(" AND priority = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(priority.clone()));
+        params.push(priority.clone());
     }
 
     if let Some(issue) = issue_id {
         let issue_str = issue.to_string();
         where_clause.push_str(&format!(" AND issue_id = ${}::uuid", params.len() + 1));
-        params.push(serde_json::Value::String(issue_str));
+        params.push(issue_str);
     }
 
     if let Some(search) = &query.search {
@@ -55,7 +55,7 @@ pub async fn list_actions(
             params.len() + 1,
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     let count_sql = format!(

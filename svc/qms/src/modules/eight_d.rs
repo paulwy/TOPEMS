@@ -30,23 +30,23 @@ pub async fn list_eightd_reports(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
-    params.push(serde_json::Value::String(tenant_id.to_string()));
+    let mut params: Vec<String> = Vec::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
+    params.push(tenant_id.to_string());
 
     if let Some(status) = &query.status {
         where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(status.clone()));
+        params.push(status.clone());
     }
 
     if let Some(severity) = &query.severity {
         where_clause.push_str(&format!(" AND severity = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(severity.clone()));
+        params.push(severity.clone());
     }
 
     if let Some(assignee) = &query.assignee {
         where_clause.push_str(&format!(" AND assignee = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(assignee.clone()));
+        params.push(assignee.clone());
     }
 
     if let Some(search) = &query.search {
@@ -56,7 +56,7 @@ pub async fn list_eightd_reports(
             params.len() + 1,
             params.len() + 1
         ));
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     let count_sql = format!(
