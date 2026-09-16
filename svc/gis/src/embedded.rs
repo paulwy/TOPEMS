@@ -405,6 +405,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/fences/{id}",
             axum::routing::delete(modules::geofence::delete_geofence),
         )
+        .layer(axum::middleware::from_fn(require_permission("gis:admin")))
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
             topems_shared_auth::tenant_middleware(),
@@ -412,8 +413,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             topems_shared_auth::auth::auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(require_permission("gis:admin")));
+        ));
 
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)
@@ -435,7 +435,7 @@ async fn list_device_locations_by_map(
     Path(map_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, DeviceLocation>(
-        only_own_schema_query!("gis", "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)

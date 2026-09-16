@@ -37,14 +37,14 @@ pub async fn list_business_locations(
 
     let query = if let Some(ref bt) = business_type {
         sqlx::query_as::<_, BusinessLocation>(
-            only_own_schema_query!("gis", "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(bt)
         .bind(page_size)
         .bind(offset)
     } else {
         sqlx::query_as::<_, BusinessLocation>(
-            only_own_schema_query!("gis", "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
         .bind(page_size)
         .bind(offset)
@@ -89,19 +89,24 @@ pub async fn create_business_location(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
+    let external_id: Option<Uuid> = payload
+        .external_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     match sqlx::query_as::<_, BusinessLocation>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.business_locations (business_name, business_code, business_type, position, external_system, external_id, status, description)
+        INSERT INTO gis.business_locations (tenant_id, business_name, business_code, business_type, position, external_id, status, description)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
         "#),
     )
+    .bind(tenant_id)
     .bind(&payload.business_name)
     .bind(&payload.business_code)
     .bind(&payload.business_type)
     .bind(&payload.position)
-    .bind(&payload.external_system)
-    .bind(&payload.external_id)
+    .bind(external_id)
     .bind(&status)
     .bind(&payload.description)
     .fetch_one(&pool)
@@ -117,7 +122,7 @@ pub async fn get_business_location(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BusinessLocation>> {
     match sqlx::query_as::<_, BusinessLocation>(
-        only_own_schema_query!("gis", "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -139,11 +144,15 @@ pub async fn update_business_location(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
+    let external_id: Option<Uuid> = payload
+        .external_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     match sqlx::query_as::<_, BusinessLocation>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.business_locations 
-        SET business_name = $1, business_code = $2, business_type = $3, position = $4, external_system = $5, external_id = $6, status = $7, description = $8, updated_at = NOW()
-        WHERE id = $9
+        SET business_name = $1, business_code = $2, business_type = $3, position = $4, external_id = $5, status = $6, description = $7, updated_at = NOW()
+        WHERE id = $8
         RETURNING *
         "#),
     )
@@ -151,8 +160,7 @@ pub async fn update_business_location(
     .bind(&payload.business_code)
     .bind(&payload.business_type)
     .bind(&payload.position)
-    .bind(&payload.external_system)
-    .bind(&payload.external_id)
+    .bind(external_id)
     .bind(&status)
     .bind(&payload.description)
     .bind(id)
@@ -197,7 +205,7 @@ pub async fn list_business_locations_by_type(
     Path(business_type): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, BusinessLocation>(
-        only_own_schema_query!("gis", "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC"),
     )
     .bind(business_type)
     .fetch_all(&pool)
