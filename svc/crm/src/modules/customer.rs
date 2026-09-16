@@ -14,7 +14,7 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::response::{api_error, ApiResponse, ListResponse};
-use topems_shared_auth::middleware::tenant::get_tenant_id;
+use topems_shared_auth::middleware::tenant::{get_tenant_id, is_tenant_scoped};
 use topems_shared_boundary::only_own_schema_query;
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -153,25 +153,28 @@ pub async fn list_customers(
 
     let mut count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "crm",
-        "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND deleted_at IS NULL"
     ));
     let mut list_qb = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("crm", "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3")
+        only_own_schema_query!("crm", "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3")
     );
     count_qb = count_qb.bind(tenant_id);
     list_qb = list_qb.bind(tenant_id).bind(page_size).bind(offset);
 
     if let Some(s) = search.clone() {
         let like = format!("%{}%", s.replace('%', "\\%").replace('_', "\\_"));
-        count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!("crm", "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND name ILIKE $2 AND deleted_at IS NULL"))
+        count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!("crm", "SELECT COUNT(*) FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND name ILIKE $2 AND deleted_at IS NULL"))
             .bind(tenant_id).bind(like.clone());
         list_qb = sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("crm", "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE tenant_id = $1 AND name ILIKE $2 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $3 OFFSET $4")
+            only_own_schema_query!("crm", "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND name ILIKE $2 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $3 OFFSET $4")
         ).bind(tenant_id).bind(like).bind(page_size).bind(offset);
     }
 
     let total: i64 = count_qb.fetch_one(&mut **txn).await.unwrap_or(0);
-    let items: Vec<Customer> = list_qb.fetch_all(&mut **txn).await.unwrap_or_default();
+    let items: Vec<Customer> = match list_qb.fetch_all(&mut **txn).await {
+        Ok(v) => v,
+        Err(e) => { tracing::error!(?e, "crm list_customers decode failed"); vec![] }
+    };
 
     let body = ListResponse::with_pagination(items, total, page, page_size);
 
@@ -225,7 +228,7 @@ async fn create_customer(
         only_own_schema_query!("crm", r#"
         INSERT INTO crm.customers (tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, org_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at
+        RETURNING id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at
         "#
         )
     )
@@ -331,7 +334,7 @@ async fn get_customer(
     }
 
     match sqlx::query_as::<_, Customer>(
-        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2"
+        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2"
     )
     .bind(id)
     .bind(tenant_id)
@@ -385,7 +388,7 @@ async fn update_customer(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, Customer>(
-        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2"
+        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2"
     )
     .bind(id)
     .bind(tenant_id)
@@ -413,7 +416,7 @@ async fn update_customer(
         UPDATE crm.customers SET
             name = $2, customer_type = $3, industry = $4, rating = $5, region = $6, owner_id = $7, tags = $8, updated_at = $9
         WHERE id = $1 AND tenant_id = $10
-        RETURNING id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at
+        RETURNING id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at
         "#
     )
     .bind(id)
@@ -675,7 +678,7 @@ async fn start_customer_approval(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -798,7 +801,7 @@ async fn approve_customer(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -897,7 +900,7 @@ async fn reject_customer(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
