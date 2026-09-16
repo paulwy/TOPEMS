@@ -40,13 +40,18 @@ impl UnifiedCoreRealModule {
         let ctx = topems_shared_bootstrap::bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 
-        // 嵌入模式无独立 public 入口（server 统一提供 /health /metrics）
-        // unified-core 内部路由挂根（/health /api /metrics /iam/* /flow/*），
-        // 必须 nest 到 api_prefix 隔离，避免与 server 聚合路由冲突
+        // 嵌入模式（build_router_embedded）：core 业务路由挂根（/iam/* /flow/* 等），
+        // 由本模块 nest /api/core 提供统一前缀；跳过 public 冲突路由（/、/health、/api、/metrics）
+        // 与 wms/mes/scm（server 已有真实模块），避免双重 /api/core 前缀与 Overlapping route。
         let routes = axum::Router::new()
             .nest(
                 config.api_prefix,
-                build_router(ctx.db.clone(), None, Router::new()).await?,
+                topems_unified_core::embedded::build_router_embedded(
+                    ctx.db.clone(),
+                    None,
+                    Router::new(),
+                )
+                .await?,
             )
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
