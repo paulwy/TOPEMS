@@ -427,7 +427,25 @@ async fn main() -> Result<()> {
         }
     }
 
-    // 27. 真实 unified-core 服务接入（Core 组，feature `module-core` 门控，默认启用）
+    // 27. 真实 ai 服务接入（Core 组，feature `module-ai` 门控，默认启用）
+    // [2026-09-16] AI 智能服务（知识库/QA/分析/Agent/DSH 编排），AppState 组装复用独立部署 main.rs
+    #[cfg(feature = "module-ai")]
+    {
+        use topems_server::modules::ai_real_module::AiRealModule;
+        match AiRealModule::build().await {
+            Ok(real_ai) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_ai));
+                tracing::info!(
+                    "✅ 真实 ai 服务已注册（ai-real，含知识库/QA/Analysis/Agent 路由）"
+                );
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 ai 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 28. 真实 unified-core 服务接入（Core 组，feature `module-core` 门控，默认启用）
     // [2026-09-16] 认证/登录/流程/IAM 等统一入口（routes 已 nest /api/core 隔离根路径冲突）
     #[cfg(feature = "module-core")]
     {

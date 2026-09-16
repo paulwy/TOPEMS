@@ -10,6 +10,7 @@
 
 // [V2026.08 已合并] aps_real_module 已移除（aps 合并至 mes，由 module-mes 承载）
 #[cfg(feature = "module-advanced")]
+pub mod ai_real_module;
 pub mod analytics_real_module;
 #[cfg(feature = "module-communication")]
 pub mod communication_real_module;

@@ -8,6 +8,7 @@ description = "TOPEMS 模块化单体统一入口服务（P0 架构优化）"
 [dependencies]
 topems-shared = { workspace = true }
 topems-shared-core = { workspace = true }
+topems-shared-ai = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-observability = { workspace = true }
@@ -39,6 +40,7 @@ topems-unified-core = { path = "../unified-core", optional = true }
 topems-monitor = { path = "../monitor", optional = true }
 topems-plugin-registry = { path = "../plugin-registry", optional = true }
 topems-search = { path = "../search", optional = true }
+topems-ai = { path = "../ai", optional = true }
 topems-communication = { path = "../communication", optional = true }
 topems-integration = { path = "../integration", optional = true }
 topems-mobile = { path = "../mobile", optional = true }
@@ -57,6 +59,8 @@ anyhow.workspace = true
 async-trait.workspace = true
 futures.workspace = true
 prometheus.workspace = true
+reqwest.workspace = true
+axum-prometheus.workspace = true
 
 # ================================================
 # 模块化单体 Feature Flags（与根 Cargo.toml 对齐）
@@ -84,7 +88,8 @@ default = [
     "module-advanced",
     # [2026-09-08] portal 嵌入模块化单体（embedded::build_router 统一组装链）
     "module-portal",
-    # [边界治理] module-ai 仍为幽灵 feature（无 real_module），从 default 移除；待 ai 真实接入后再启用
+    # [2026-09-16] ai real_module 已接入
+    "module-ai",
     # [2026-09-16] communication real_module 已就绪，接入模块化单体
     "module-communication",
     # [2026-09-16] core 组剩余服务批量接入（search/monitor/plugin-registry/integration/mobile）
@@ -147,7 +152,7 @@ module-portal = ["dep:topems-portal"]
 module-subscription = []
 # advanced 组真实接入：master-data + analytics（2026-09-01 挂载）
 module-advanced = ["dep:topems-master-data", "dep:topems-analytics"]
-module-ai = []
+module-ai = ["dep:topems-ai"]
 # 私有化部署模式（进程内 trait 调用）
 private-deployment = []
 # SaaS 模式（HTTP 服务间调用）
