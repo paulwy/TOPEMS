@@ -25,15 +25,15 @@ pnpm dev
 访问以下页面验证新布局是否正常：
 
 - `/dashboard` — 工作台首页
-- `/iam/users` — 用户管理
-- `/iam/roles` — 角色管理
-- `/admin/tenants` — 租户管理
-- `/admin/settings` — 系统设置
-- `/notifications` — 消息中心
+- `/iam/user` — 用户管理
+- `/iam/role` — 角色管理
+- `/admin/tenant` — 租户管理
+- `/admin/system-settings` — 系统设置
+- `/notification/center` — 消息中心
 - `/workflow/approvals` — 审批中心
 - `/oa/announcements` — 公告管理
 - `/mes/work-orders` — 工单管理
-- `/erp/purchase-orders` — 采购订单
+- `/erp/purchase-order` — 采购订单
 
 ### 3. 回退到旧布局
 

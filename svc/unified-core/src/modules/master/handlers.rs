@@ -4,6 +4,7 @@
 //! 所有变更操作都会通过 Redis Pub/Sub 发布 MasterDataEvent。
 
 use std::str::FromStr;
+use topems_shared_core::TopemsError;
 
 use axum::{
     extract::{Path, Query, State},
@@ -992,7 +993,10 @@ pub async fn create_ref_handler(
 
     match service.create_ref(tenant_id, req, Some(operator)).await {
         Ok(r) => Json(ApiResponse::success(r, "主数据引用创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "create_ref_handler",
+            e,
+        ))),
     }
 }
 
@@ -1012,7 +1016,10 @@ pub async fn update_ref_handler(
         .await
     {
         Ok(r) => Json(ApiResponse::success(r, "主数据引用更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "update_ref_handler",
+            e,
+        ))),
     }
 }
 
@@ -1031,7 +1038,10 @@ pub async fn delete_ref_handler(
         .await
     {
         Ok(b) => Json(ApiResponse::success(b, "主数据引用已删除")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "delete_ref_handler",
+            e,
+        ))),
     }
 }
 
@@ -1047,7 +1057,10 @@ pub async fn get_ref_handler(
     match service.get_ref(tenant_id, &master_data_id).await {
         Ok(Some(r)) => Json(ApiResponse::success(r, "查询成功")),
         Ok(None) => Json(ApiResponse::error(404, "主数据引用不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "get_ref_handler",
+            e,
+        ))),
     }
 }
 
@@ -1063,7 +1076,10 @@ pub async fn get_ref_by_code_handler(
     match service.get_ref_by_code(tenant_id, &domain, &code).await {
         Ok(Some(r)) => Json(ApiResponse::success(r, "查询成功")),
         Ok(None) => Json(ApiResponse::error(404, "主数据引用不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "get_ref_by_code_handler",
+            e,
+        ))),
     }
 }
 
@@ -1089,7 +1105,10 @@ pub async fn list_refs_handler(
             },
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_refs_handler",
+            e,
+        ))),
     }
 }
 
@@ -1104,7 +1123,10 @@ pub async fn list_changes_handler(
 
     match service.list_changes(tenant_id, &master_data_id, 50).await {
         Ok(changes) => Json(ApiResponse::success(changes, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_changes_handler",
+            e,
+        ))),
     }
 }
 
@@ -1118,7 +1140,10 @@ pub async fn get_overall_stats_handler(
 
     match service.get_overall_stats(tenant_id).await {
         Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "get_overall_stats_handler",
+            e,
+        ))),
     }
 }
 
@@ -1132,7 +1157,10 @@ pub async fn get_sync_status_handler(
 
     match service.get_sync_status(tenant_id).await {
         Ok(status) => Json(ApiResponse::success(status, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "get_sync_status_handler",
+            e,
+        ))),
     }
 }
 
@@ -1150,7 +1178,10 @@ pub async fn get_quality_report_handler(
 
     match service.get_quality_report(tenant_id, stale_hours).await {
         Ok(report) => Json(ApiResponse::success(report, "质量报告生成成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "get_quality_report_handler",
+            e,
+        ))),
     }
 }
 
@@ -1164,7 +1195,10 @@ pub async fn list_duplicates_handler(
 
     match service.list_duplicates(tenant_id).await {
         Ok(dups) => Json(ApiResponse::success(dups, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_duplicates_handler",
+            e,
+        ))),
     }
 }
 
@@ -1180,7 +1214,10 @@ pub async fn list_stale_handler(
 
     match service.list_stale(tenant_id, threshold).await {
         Ok(records) => Json(ApiResponse::success(records, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_stale_handler",
+            e,
+        ))),
     }
 }
 
@@ -1196,7 +1233,10 @@ pub async fn run_reconciliation_handler(
 
     match service.run_reconciliation(tenant_id).await {
         Ok(result) => Json(ApiResponse::success(result, "对账完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "run_reconciliation_handler",
+            e,
+        ))),
     }
 }
 
@@ -1216,7 +1256,10 @@ pub async fn list_reconciliation_logs_handler(
         .await
     {
         Ok(logs) => Json(ApiResponse::success(logs, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_reconciliation_logs_handler",
+            e,
+        ))),
     }
 }
 
@@ -1235,7 +1278,10 @@ pub async fn resolve_reconciliation_issue_handler(
     {
         Ok(true) => Json(ApiResponse::success(true, "对账问题已标记为解决")),
         Ok(false) => Json(ApiResponse::error(404, "对账问题不存在或已解决")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "resolve_reconciliation_issue_handler",
+            e,
+        ))),
     }
 }
 
@@ -1279,7 +1325,10 @@ pub async fn create_approval_handler(
 
     match service.create_approval(tenant_id, req, requested_by).await {
         Ok(approval) => Json(ApiResponse::success(approval, "审批请求已创建")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "create_approval_handler",
+            e,
+        ))),
     }
 }
 
@@ -1307,7 +1356,10 @@ pub async fn review_approval_handler(
             Json(ApiResponse::success(approval, msg))
         }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "审批请求不存在或已处理")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "review_approval_handler",
+            e,
+        ))),
     }
 }
 
@@ -1326,7 +1378,10 @@ pub async fn list_pending_approvals_handler(
         .await
     {
         Ok(approvals) => Json(ApiResponse::success(approvals, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_pending_approvals_handler",
+            e,
+        ))),
     }
 }
 
@@ -1344,7 +1399,10 @@ pub async fn list_approval_history_handler(
         .await
     {
         Ok(history) => Json(ApiResponse::success(history, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_approval_history_handler",
+            e,
+        ))),
     }
 }
 

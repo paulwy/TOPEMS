@@ -1,9 +1,8 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
 import UserManagementPage from '../UserManagementPage';
-import { authApi } from '@/api/iam';
 
 vi.mock('react-i18next', () => {
   const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
@@ -51,56 +50,31 @@ vi.mock('@/i18n', () => {
   };
 });
 
-let capturedProps: any = null;
-
-vi.mock('@/components/templates/CrudPage', () => {
-  return {
-    default: (props: any) => {
-      capturedProps = props;
-      return (
-        <div data-testid='crud-page'>
-          <span data-testid='crud-schema'>
-            {props.schema?.name || props.schema?.entity || 'unknown'}
-          </span>
-          <span data-testid='crud-breadcrumbs'>
-            {props.breadcrumbs?.map((b: any) => b.label).join(' / ')}
-          </span>
-        </div>
-      );
-    },
-  };
-});
-
-vi.mock('@/schemas/iam/user', () => ({
-  userSchema: { name: 'User', entity: 'user', fields: [] },
+vi.mock('@/api/iam', () => ({
+  authApi: {
+    list: vi.fn().mockResolvedValue({ data: { items: [], total: 0 } }),
+    delete: vi.fn(),
+  },
 }));
 
 vi.mock('@/modules/iam/config', () => ({
   IAM_PATHS: { root: '/admin/iam', users: '/admin/iam/users' },
 }));
 
-vi.mock('@/api/iam', () => ({
-  authApi: {
-    listUsers: vi.fn(),
-    createUser: vi.fn(),
-    updateUser: vi.fn(),
-    deleteUser: vi.fn(),
-  },
-}));
-
 describe('UserManagementPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    capturedProps = null;
-  });
-
-  it('renders CrudPage with user schema and breadcrumbs', () => {
+  it('renders page title', () => {
     renderWithProviders(<UserManagementPage />);
 
-    expect(screen.getByTestId('crud-page')).toBeInTheDocument();
-    expect(screen.getByTestId('crud-schema')).toHaveTextContent('User');
-    expect(screen.getByTestId('crud-breadcrumbs')).toHaveTextContent('首页');
-    expect(screen.getByTestId('crud-breadcrumbs')).toHaveTextContent('身份管理');
-    expect(screen.getByTestId('crud-breadcrumbs')).toHaveTextContent('用户管理');
+    // 页面标题应该显示（h1 元素）
+    const headings = screen.getAllByText('用户管理');
+    expect(headings.length).toBeGreaterThan(0);
+  });
+
+  it('renders breadcrumbs', () => {
+    renderWithProviders(<UserManagementPage />);
+
+    // 面包屑应该显示首页和身份管理
+    expect(screen.getByText('首页')).toBeInTheDocument();
+    expect(screen.getByText('身份管理')).toBeInTheDocument();
   });
 });

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import {
+  Avatar,
   Badge,
   Button,
   Card,
@@ -155,23 +156,12 @@ const TenantManagementPage: React.FC = () => {
       header: '租户名称',
       sortable: true,
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--accent-primary)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 600,
-              fontSize: 14,
-            }}
-          >
-            {row.name.charAt(0).toUpperCase()}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <Avatar
+            name={row.name}
+            size='sm'
+            variant='rounded'
+          />
           <div>
             <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.name}</div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{row.code}</div>
@@ -432,6 +422,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
     >
       <div>
         <label
+          htmlFor='tenant-name'
           style={{
             display: 'block',
             marginBottom: 'var(--space-1)',
@@ -442,6 +433,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
           租户名称 *
         </label>
         <Input
+          id='tenant-name'
           value={formData.name || ''}
           onChange={(e) => handleChange('name', e.target.value)}
           placeholder='请输入租户名称'
@@ -451,6 +443,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
 
       <div>
         <label
+          htmlFor='tenant-code'
           style={{
             display: 'block',
             marginBottom: 'var(--space-1)',
@@ -461,6 +454,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
           租户编码 *
         </label>
         <Input
+          id='tenant-code'
           value={formData.code || ''}
           onChange={(e) => handleChange('code', e.target.value)}
           placeholder='请输入租户编码（英文小写）'
@@ -472,6 +466,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
         <div>
           <label
+            htmlFor='tenant-plan'
             style={{
               display: 'block',
               marginBottom: 'var(--space-1)',
@@ -482,6 +477,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
             订阅计划
           </label>
           <Select
+            id='tenant-plan'
             value={formData.plan || 'basic'}
             onChange={(e) => handleChange('plan', e.target.value)}
             options={[
@@ -493,6 +489,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
         </div>
         <div>
           <label
+            htmlFor='tenant-status'
             style={{
               display: 'block',
               marginBottom: 'var(--space-1)',
@@ -503,6 +500,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
             状态
           </label>
           <Select
+            id='tenant-status'
             value={formData.status || 'active'}
             onChange={(e) => handleChange('status', e.target.value)}
             options={[
@@ -517,6 +515,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
 
       <div>
         <label
+          htmlFor='tenant-quota'
           style={{
             display: 'block',
             marginBottom: 'var(--space-1)',
@@ -527,6 +526,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
           用户配额
         </label>
         <Input
+          id='tenant-quota'
           type='number'
           value={formData.quota_users?.toString() || '10'}
           onChange={(e) => handleChange('quota_users', parseInt(e.target.value) || 0)}

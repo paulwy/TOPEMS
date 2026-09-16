@@ -51,7 +51,7 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
               width: 16,
               height: 16,
               borderRadius: '50%',
-              backgroundColor: '#fff',
+              backgroundColor: 'var(--bg-elevated)',
               boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
               transition: 'left var(--duration-fast) var(--ease-out)',
             }}

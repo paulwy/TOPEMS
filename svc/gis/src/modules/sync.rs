@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -164,7 +164,7 @@ pub async fn batch_upload_positions(
                 &format!("成功同步 {} 个位置", synced_count),
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("位置同步失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("位置同步失败", e))),
     }
 }
 
@@ -279,10 +279,7 @@ pub async fn download_offline_data(
         {
             Ok(data) => devices = data,
             Err(e) => {
-                return Json(ApiResponse::error(
-                    500,
-                    &format!("下载设备数据失败: {}", e),
-                ))
+                return Json(ApiResponse::from(TopemsError::internal("下载设备数据失败", e)))
             }
         }
     }
@@ -309,7 +306,7 @@ pub async fn download_offline_data(
 
         match q.fetch_all(&pool).await {
             Ok(data) => tracks = data,
-            Err(e) => return Json(ApiResponse::error(500, &format!("下载轨迹数据失败: {}", e))),
+            Err(e) => return Json(ApiResponse::from(TopemsError::internal("下载轨迹数据失败", e))),
         }
 
         // 下载轨迹位置点
@@ -324,10 +321,7 @@ pub async fn download_offline_data(
             {
                 Ok(data) => track_positions = data,
                 Err(e) => {
-                    return Json(ApiResponse::error(
-                        500,
-                        &format!("下载轨迹位置数据失败: {}", e),
-                    ))
+                    return Json(ApiResponse::from(TopemsError::internal("下载轨迹位置数据失败", e)))
                 }
             }
         }
@@ -343,7 +337,7 @@ pub async fn download_offline_data(
         .await
         {
             Ok(data) => evidence = data,
-            Err(e) => return Json(ApiResponse::error(500, &format!("下载取证数据失败: {}", e))),
+            Err(e) => return Json(ApiResponse::from(TopemsError::internal("下载取证数据失败", e))),
         }
     }
 

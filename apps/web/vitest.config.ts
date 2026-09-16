@@ -50,6 +50,13 @@ function fixReactTransitionGroup(): Plugin {
         ),
       ];
       for (const root of fallbackRoots) {
+        // 处理 MUI 9.4+ 的直接 cjs/* 路径导入（如 react-transition-group/cjs/TransitionGroupContext.js）
+        if (id.startsWith('react-transition-group/cjs/')) {
+          const fileName = id.replace('react-transition-group/cjs/', '');
+          const p = path.resolve(root, 'cjs', fileName);
+          console.log(`[fixReactTransitionGroup] Trying ${id} -> ${p} (exists: ${fs.existsSync(p)})`);
+          if (fs.existsSync(p)) return p;
+        }
         if (RTG_SUB_PATHS[id]) {
           const p = path.resolve(root, `cjs/${RTG_SUB_PATHS[id]}`);
           if (fs.existsSync(p)) return p;

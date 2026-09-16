@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import clsx from 'clsx';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -9,7 +9,10 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, leftIcon, rightIcon, className, style, ...rest }, ref) => {
+  ({ label, error, leftIcon, rightIcon, className, style, id, ...rest }, ref) => {
+    const autoId = useId();
+    const inputId = id || autoId;
+
     return (
       <div
         className={clsx('redesign-input-wrapper', className)}
@@ -23,6 +26,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       >
         {label && (
           <label
+            htmlFor={inputId}
             style={{
               fontSize: 'var(--text-xs)',
               fontWeight: 'var(--font-semibold)',
@@ -56,6 +60,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             ref={ref}
+            id={inputId}
             style={{
               flex: 1,
               minWidth: 0,

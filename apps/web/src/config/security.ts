@@ -85,7 +85,7 @@ export const securityConfig: SecurityConfig = {
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
         "font-src 'self' https://fonts.gstatic.com",
-        "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
+        "connect-src 'self' data: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
         "object-src 'none'",
         "frame-src 'self' https://*.amap.com",
         "form-action 'self'",

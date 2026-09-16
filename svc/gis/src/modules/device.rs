@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,7 +90,7 @@ pub async fn register_device(
     .await
     {
         Ok(device) => Json(ApiResponse::success(device, "注册设备成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("注册设备失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("注册设备失败", e))),
     }
 }
 
@@ -117,7 +117,7 @@ pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
             }),
             "获取设备列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -149,7 +149,7 @@ pub async fn get_device(
     {
         Ok(device) => Json(ApiResponse::success(device, "获取设备成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -185,7 +185,7 @@ pub async fn update_device(
     {
         Ok(device) => Json(ApiResponse::success(device, "更新设备成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -214,7 +214,7 @@ pub async fn delete_device(
                 Json(ApiResponse::error(404, "设备未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
 
@@ -267,11 +267,11 @@ pub async fn update_device_location(
                     ws_manager.broadcast_location_update(ws_msg).await;
                     Json(ApiResponse::success(record, "更新设备位置成功"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("更新位置失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("更新位置失败", e))),
             }
         }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询设备失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询设备失败", e))),
     }
 }
 
@@ -366,7 +366,7 @@ pub async fn get_device_tracking(
                 "获取设备轨迹成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询轨迹失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询轨迹失败", e))),
     }
 }
 
@@ -421,7 +421,7 @@ pub async fn get_device_history(
                 "获取设备历史位置成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询历史位置失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询历史位置失败", e))),
     }
 }
 
@@ -471,10 +471,10 @@ pub async fn report_device_location(
                     ws_manager.broadcast_location_update(ws_msg).await;
                     Json(ApiResponse::success(record, "上报位置成功"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("上报位置失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("上报位置失败", e))),
             }
         }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询设备失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询设备失败", e))),
     }
 }

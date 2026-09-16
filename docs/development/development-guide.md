@@ -26,57 +26,71 @@ TOPEMS（TOP Enterprise Management System）是一个企业级智能管理系统
 | CI/CD | GitHub Actions | - | 自动化构建部署 |
 | 测试 | Playwright + k6 | - | E2E 测试和性能测试 |
 
-### 1.3 项目架构
+### 1.3 项目架构（v5.15.0+ 模块化单体）
+
+> **架构变化**：从 32 个独立微服务迁移到模块化单体架构，统一入口为 `svc/server/`。
 
 ```
 TOPEMS/
 ├── apps/
-│   ├── backend/          # 后端服务（Rust）
+│   └── web/              # 前端应用（React + TypeScript + Vite）
+│       ├── src/
+│       │   ├── components/    # 公共组件
+│       │   │   ├── common/     # 通用组件（DataTable, Dialog, FormBuilder 等）
+│       │   │   ├── templates/  # 页面模板（ListPageTemplate, DetailPageTemplate 等）
+│       │   │   └── layout/     # 布局组件（AppShell, SideRail, TopBar 等）
+│       │   ├── pages/         # 页面（按模块组织）
+│       │   │   ├── erp/       # ERP 模块页面
+│       │   │   ├── crm/       # CRM 模块页面
+│       │   │   ├── hrm/       # HRM 模块页面
+│       │   │   ├── mes/       # MES 模块页面
+│       │   │   ├── wms/       # WMS 模块页面
+│       │   │   ├── qms/       # QMS 模块页面
+│       │   │   └── ...        # 其他模块页面
+│       │   ├── api/           # API 客户端
+│       │   ├── hooks/         # React Hooks
+│       │   ├── stores/        # 状态管理（Zustand）
+│       │   ├── utils/         # 工具函数
+│       │   └── types/         # TypeScript 类型
+│       ├── public/
+│       └── package.json
+├── svc/                  # 后端服务（Rust）
+│   ├── server/           # **统一入口（模块化单体）**
 │   │   ├── src/
 │   │   │   ├── main.rs
 │   │   │   ├── config/
-│   │   │   ├── handlers/
-│   │   │   ├── models/
-│   │   │   ├── services/
-│   │   │   ├── repositories/
-│   │   │   ├── middleware/
-│   │   │   └── utils/
-│   │   ├── tests/
-│   │   └── Cargo.toml
-│   └── web/              # 前端应用（React + TypeScript）
-│       ├── src/
-│       │   ├── components/
-│       │   ├── pages/
-│       │   ├── hooks/
-│       │   ├── services/
-│       │   ├── stores/
-│       │   ├── utils/
-│       │   └── types/
-│       ├── public/
-│       └── package.json
+│   │   │   ├── modules/       # **模块适配器（27 个模块）**
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── unified_core_real_module.rs
+│   │   │   │   ├── monitor_real_module.rs
+│   │   │   │   ├── plugin_registry_real_module.rs
+│   │   │   │   ├── search_real_module.rs
+│   │   │   │   ├── communication_real_module.rs
+│   │   │   │   ├── integration_real_module.rs
+│   │   │   │   ├── mobile_real_module.rs
+│   │   │   │   └── ...        # 其他模块适配器
+│   │   │   └── ...
+│   │   └── Cargo.toml         # **Feature Flags（可选模块启用）**
+│   ├── unified-core/    # 核心服务（IAM, Doc, Flow, File, Monitor 等虚拟服务）
+│   ├── erp/              # ERP 服务
+│   ├── crm/              # CRM 服务
+│   ├── hrm/              # HRM 服务
+│   ├── mes/              # MES 服务
+│   ├── wms/              # WMS 服务
+│   ├── qms/              # QMS 服务
+│   └── ...               # 其他服务
 ├── packages/              # 共享包
 │   ├── shared/            # 共享类型和工具
 │   └── ui/                # 共享 UI 组件
 ├── config/                # 配置文件
-│   ├── development.env
-│   ├── staging.env
-│   └── production.env.example
+│   ├── ports.env          # 端口单一信源
+│   └── env/               # 环境配置模板
 ├── deploy/                # 部署配置
-│   ├── docker/
-│   ├── systemd/
-│   ├── nginx/
-│   └── kubernetes/
+│   ├── docker/            # Docker Compose
+│   └── ...
 ├── scripts/               # 脚本
-│   ├── deploy/
-│   ├── operations/
-│   ├── backup/
-│   └── performance/
-├── tests/                 # 测试
-│   ├── e2e/
-│   ├── performance/
-│   └── integration/
 ├── docs/                  # 文档
-├── migrations/            # 数据库迁移
+└── migrations/            # 数据库迁移
 ├── .github/               # GitHub 配置
 │   └── workflows/         # CI/CD 工作流
 ├── Cargo.toml             # Rust 工作空间配置

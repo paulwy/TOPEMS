@@ -27,6 +27,12 @@ mod sse;
 pub mod business_tools;
 // V440: OpenAPI 文档路由 - 提供 API 文档 JSON 和交互式查看器
 mod openapi;
+// WMS: 仓储管理系统业务 API
+mod wms_routes;
+// MES: 制造执行系统业务 API
+mod mes_routes;
+// SCM: 供应链管理业务 API
+mod scm_routes;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -95,6 +101,11 @@ pub fn create_routes(
         .route(
             "/ws/core/im",
             get(modules::communication::ws::websocket_handler),
+        )
+        // MES Dashboard WebSocket（公共路由，无需认证）
+        .route(
+            "/ws/mes/dashboard",
+            get(modules::mes::ws::mes_dashboard_ws),
         )
         // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
         .route("/api/sse/connect", get(sse::sse_connect_handler))
@@ -199,6 +210,12 @@ pub fn create_routes(
     Router::new()
         .merge(public_routes)
         .merge(core_router)
+        // WMS 业务 API
+        .merge(wms_routes::wms_routes())
+        // MES 业务 API
+        .merge(mes_routes::mes_routes())
+        // SCM 业务 API
+        .merge(scm_routes::scm_routes())
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::input_validation::input_validation_middleware,

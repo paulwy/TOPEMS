@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-09-14",
+  "baselineRevision": "V517.3",
+  "note": "统一错误出口存量基线。数字只应下降；上升说明新增了违规，--changed-only 模式会在 CI 直接拦截。规则见 docs/architecture/unified-error-handling-decision.md",
+  "rules": {
+    "apiResponseErrorTotal": "全 svc 层手写 ApiResponse::error(...) 调用总数",
+    "leakInternalError": "把原始错误 format! 进客户端响应的处数（信息泄露）",
+    "rawErrorToString": "客户端响应里直接 <err>.to_string() 的处数（信息泄露，更直白）",
+    "anyhowInBusinessLayer": "svc/*/src/{modules,services,handlers,repositories} 下 anyhow:: 出现次数"
+  },
+  "detectionGranularity": "statement（括号配平，覆盖跨行调用）",
+  "baselineHistory": [
+    {
+      "revision": "V517",
+      "leakInternalError": 307,
+      "note": "单行正则口径；经复核漏检 85 处跨行 ApiResponse::error(...) 调用"
+    },
+    {
+      "revision": "V517.1",
+      "leakInternalError": 392,
+      "note": "升级为语句级（括号配平）口径。+85 全部为此前被漏检的跨行调用，非新增违规；已用独立实现交叉核对一致"
+    },
+    {
+      "revision": "V517.2",
+      "leakInternalError": 306,
+      "note": "首个服务迁移（svc/gis，86 处）完成。-86；ApiResponse::error 总数同步 -86。迁移工具 scripts/migrations/migrate_error_leaks.py"
+    },
+    {
+      "revision": "V517.3",
+      "leakInternalError": 241,
+      "note": "第二个服务迁移（svc/integration，65 处）完成。-65（60 机械 + 5 人工 400 类）。integration 已从泄露分布中清零"
+    }
+  ],
+  "leakByService": {
+    "finance": 386,
+    "ticket": 59,
+    "unified-core": 44,
+    "erp": 37,
+    "mobile": 23,
+    "lims": 23,
+    "mes": 18,
+    "rd": 9,
+    "communication": 8,
+    "pm": 6,
+    "wms": 3,
+    "server": 3,
+    "analytics": 2,
+    "tms": 1,
+    "scm": 1,
+    "master-data": 1,
+    "crm": 1,
+    "ai": 1
+  },
+  "leakByServiceNote": "含两种形态：format! 拼接 + <err>.to_string() 直出。finance 的 386 以 to_string 形态为主（364），需先定「无上下文文案」策略再迁移。可用 --by-service 复算。",
+  "apiResponseErrorTotal": 3407,
+  "leakInternalError": 241,
+  "rawErrorToString": 385,
+  "anyhowInBusinessLayer": 60,
+  "leakSurfaceTotal": 626
+}

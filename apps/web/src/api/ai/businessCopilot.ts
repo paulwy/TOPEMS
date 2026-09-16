@@ -111,6 +111,7 @@ export interface SendMessageRequest {
   module: BusinessModuleType;
   session_id: string;
   user_input: string;
+  user_id?: string;
 }
 
 /** Copilot 响应 */
@@ -226,7 +227,11 @@ export async function deleteSession(session_id: string): Promise<ApiResponse<voi
 export async function sendMessage(
   request: SendMessageRequest
 ): Promise<ApiResponse<CopilotResponse>> {
-  return apiClient.post(`${BASE_PATH}/chat`, request);
+  return apiClient.post(`${BASE_PATH}/sessions/${request.session_id}/messages`, {
+    message: request.user_input,
+    module: request.module,
+    user_id: request.user_id || 'anonymous',
+  });
 }
 
 /**
@@ -236,7 +241,7 @@ export async function recognizeIntent(
   text: string,
   module?: BusinessModuleType
 ): Promise<ApiResponse<IntentRecognitionResult>> {
-  return apiClient.post(`${BASE_PATH}/intent`, { text, module });
+  return apiClient.post(`${BASE_PATH}/intent/recognize`, { text, module });
 }
 
 /**

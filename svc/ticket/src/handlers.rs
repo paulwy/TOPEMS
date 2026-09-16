@@ -10,7 +10,7 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::models::{
     AddCommentRequest, AutomationRule, CreateAutomationRuleRequest, CreateKnowledgeArticleRequest,
@@ -623,7 +623,7 @@ pub async fn create_ticket_handler(
 
     match service.create_ticket(tenant_id, reporter_id, req).await {
         Ok(ticket) => Json(ApiResponse::success(ticket, "工单创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建工单失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建工单失败", e))),
     }
 }
 
@@ -655,7 +655,7 @@ pub async fn list_tickets_handler(
 
     match service.list_tickets(tenant_id, query).await {
         Ok(list) => Json(ApiResponse::success(list, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询工单失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
     }
 }
 
@@ -683,7 +683,10 @@ pub async fn get_ticket_handler(
 
     match service.get_ticket(tenant_id, id).await {
         Ok(ticket) => Json(ApiResponse::success(ticket, "查询成功")),
-        Err(e) => Json(ApiResponse::error(404, &format!("工单不存在: {}", e))),
+        Err(e) => Json(ApiResponse::from({
+            tracing::warn!("工单不存在: {}", e);
+            TopemsError::ResourceNotFound("工单不存在".to_string())
+        })),
     }
 }
 
@@ -714,7 +717,7 @@ pub async fn update_ticket_handler(
 
     match service.update_ticket(tenant_id, id, user_id, req).await {
         Ok(ticket) => Json(ApiResponse::success(ticket, "工单更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新工单失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新工单失败", e))),
     }
 }
 
@@ -748,7 +751,7 @@ pub async fn delete_ticket_handler(
             "工单已取消",
         )),
         Ok(false) => Json(ApiResponse::error(404, "工单不存在或已关闭")),
-        Err(e) => Json(ApiResponse::error(500, &format!("取消工单失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("取消工单失败", e))),
     }
 }
 
@@ -787,7 +790,7 @@ pub async fn add_comment_handler(
         .await
     {
         Ok(comment) => Json(ApiResponse::success(comment, "评论已添加")),
-        Err(e) => Json(ApiResponse::error(500, &format!("添加评论失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("添加评论失败", e))),
     }
 }
 
@@ -815,7 +818,7 @@ pub async fn list_comments_handler(
 
     match service.list_comments(tenant_id, id).await {
         Ok(list) => Json(ApiResponse::success(list, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询评论失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询评论失败", e))),
     }
 }
 
@@ -830,7 +833,7 @@ pub async fn list_activities_handler(
 
     match service.list_activities(tenant_id, id).await {
         Ok(list) => Json(ApiResponse::success(list, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询活动失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询活动失败", e))),
     }
 }
 
@@ -854,7 +857,7 @@ pub async fn get_stats_handler(
 
     match service.get_stats(tenant_id).await {
         Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询统计失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询统计失败", e))),
     }
 }
 
@@ -872,12 +875,15 @@ pub async fn get_ticket_sla_handler(
 
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(404, &format!("工单不存在: {}", e))),
+        Err(e) => return Json(ApiResponse::from({
+            tracing::warn!("工单不存在: {}", e);
+            TopemsError::ResourceNotFound("工单不存在".to_string())
+        })),
     };
 
     match sla_service.calculate_sla(&ticket).await {
         Ok(sla) => Json(ApiResponse::success(sla, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("计算SLA失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("计算SLA失败", e))),
     }
 }
 
@@ -893,12 +899,15 @@ pub async fn trigger_sla_escalation_handler(
 
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(404, &format!("工单不存在: {}", e))),
+        Err(e) => return Json(ApiResponse::from({
+            tracing::warn!("工单不存在: {}", e);
+            TopemsError::ResourceNotFound("工单不存在".to_string())
+        })),
     };
 
     match sla_service.check_and_escalate(&ticket).await {
         Ok(events) => Json(ApiResponse::success(events, "SLA 升级检查完成")),
-        Err(e) => Json(ApiResponse::error(500, &format!("SLA 升级检查失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("SLA 升级检查失败", e))),
     }
 }
 
@@ -912,7 +921,7 @@ pub async fn get_sla_stats_handler(
 
     match service.get_sla_stats(tenant_id).await {
         Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询SLA统计失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA统计失败", e))),
     }
 }
 
@@ -938,7 +947,7 @@ pub async fn create_sla_policy_handler(
 
     match service.create_policy(tenant_id, req).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建SLA策略失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建SLA策略失败", e))),
     }
 }
 
@@ -962,7 +971,7 @@ pub async fn list_sla_policies_handler(
 
     match service.list_policies(tenant_id).await {
         Ok(policies) => Json(ApiResponse::success(policies, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询SLA策略失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA策略失败", e))),
     }
 }
 
@@ -977,7 +986,10 @@ pub async fn get_sla_policy_handler(
 
     match service.get_policy(tenant_id, id).await {
         Ok(policy) => Json(ApiResponse::success(policy, "查询成功")),
-        Err(e) => Json(ApiResponse::error(404, &format!("SLA策略不存在: {}", e))),
+        Err(e) => Json(ApiResponse::from({
+            tracing::warn!("SLA策略不存在: {}", e);
+            TopemsError::ResourceNotFound("SLA策略不存在".to_string())
+        })),
     }
 }
 
@@ -993,7 +1005,7 @@ pub async fn update_sla_policy_handler(
 
     match service.update_policy(tenant_id, id, req).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新SLA策略失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新SLA策略失败", e))),
     }
 }
 
@@ -1012,7 +1024,7 @@ pub async fn delete_sla_policy_handler(
             "SLA策略已删除",
         )),
         Ok(false) => Json(ApiResponse::error(404, "SLA策略不存在或为默认策略不可删除")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除SLA策略失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除SLA策略失败", e))),
     }
 }
 
@@ -1237,10 +1249,7 @@ pub async fn create_automation_rule_handler(
     .await;
     match result {
         Ok(rule) => Json(ApiResponse::success(rule, "自动化规则创建成功")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("创建自动化规则失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建自动化规则失败", e))),
     }
 }
 
@@ -1259,7 +1268,7 @@ pub async fn list_automation_rules_handler(
     .await
     {
         Ok(rules) => Json(ApiResponse::success(rules, "自动化规则列表获取成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("获取自动化规则列表失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取自动化规则列表失败", e))),
     }
 }
 
@@ -1281,7 +1290,7 @@ pub async fn get_automation_rule_handler(
     {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则获取成功")),
         Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("获取自动化规则失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取自动化规则失败", e))),
     }
 }
 
@@ -1324,10 +1333,7 @@ pub async fn update_automation_rule_handler(
     match result {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("更新自动化规则失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新自动化规则失败", e))),
     }
 }
 
@@ -1349,10 +1355,7 @@ pub async fn delete_automation_rule_handler(
             "自动化规则已删除",
         )),
         Ok(_) => Json(ApiResponse::error(404, "自动化规则不存在")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("删除自动化规则失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除自动化规则失败", e))),
     }
 }
 
@@ -1385,7 +1388,7 @@ pub async fn create_knowledge_article_handler(
     .await;
     match result {
         Ok(article) => Json(ApiResponse::success(article, "知识文章创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建知识文章失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建知识文章失败", e))),
     }
 }
 
@@ -1407,10 +1410,7 @@ pub async fn list_knowledge_articles_handler(
     {
         Ok(a) => a,
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
-                &format!("获取知识文章列表失败: {}", e),
-            ))
+            return Json(ApiResponse::from(TopemsError::internal("获取知识文章列表失败", e)))
         }
     };
     if q.trim().is_empty() {
@@ -1450,7 +1450,7 @@ pub async fn get_knowledge_article_handler(
     {
         Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章获取成功")),
         Ok(None) => Json(ApiResponse::error(404, "知识文章不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("获取知识文章失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取知识文章失败", e))),
     }
 }
 
@@ -1485,7 +1485,7 @@ pub async fn update_knowledge_article_handler(
     match result {
         Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "知识文章不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新知识文章失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新知识文章失败", e))),
     }
 }
 
@@ -1507,7 +1507,7 @@ pub async fn delete_knowledge_article_handler(
             "知识文章已删除",
         )),
         Ok(_) => Json(ApiResponse::error(404, "知识文章不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除知识文章失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除知识文章失败", e))),
     }
 }
 

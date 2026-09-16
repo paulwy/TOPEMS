@@ -16,7 +16,7 @@ use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 const API_KEY_PREFIX: &str = "api_key_";
@@ -106,10 +106,10 @@ pub async fn list_api_keys(
         }
         Err(e) => {
             tracing::error!("Failed to list API keys: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("获取 API Key 列表失败: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "获取 API Key 列表失败",
+                e,
+            )))
         }
     }
 }
@@ -154,10 +154,10 @@ pub async fn create_api_key(
     let serialized = match serde_json::to_string(&entry) {
         Ok(s) => s,
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
-                &format!("序列化 API Key 失败: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "序列化 API Key 失败",
+                e,
+            )));
         }
     };
 
@@ -175,10 +175,10 @@ pub async fn create_api_key(
 
     if let Err(e) = result {
         tracing::error!("Failed to create API key: {}", e);
-        return Json(ApiResponse::error(
-            500,
-            &format!("创建 API Key 失败: {}", e),
-        ));
+        return Json(ApiResponse::from(TopemsError::internal(
+            "创建 API Key 失败",
+            e,
+        )));
     }
 
     // Return the entry with a masked secret (mask the plaintext, not the
@@ -212,10 +212,10 @@ pub async fn delete_api_key(
         Ok(_) => Json(ApiResponse::error(404, "API Key 不存在")),
         Err(e) => {
             tracing::error!("Failed to delete API key: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("删除 API Key 失败: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "删除 API Key 失败",
+                e,
+            )))
         }
     }
 }

@@ -4,7 +4,7 @@
 use axum::extract::{Path, State};
 use axum::Json;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 use crate::models::{AppState, CreateErpMappingRequest, ErpMapping, UpdateErpMappingRequest};
@@ -24,7 +24,7 @@ pub async fn list_mappings(State(state): State<AppState>) -> Json<ApiResponse<Ve
         Ok(rows) => Json(ApiResponse::success(rows, "映射列表获取成功")),
         Err(e) => {
             tracing::error!("list_mappings error: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -47,7 +47,7 @@ pub async fn get_mapping(
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "获取成功")),
         Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -84,7 +84,7 @@ pub async fn create_mapping(
     .await
     {
         Ok(m) => Json(ApiResponse::success(m, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
 
@@ -130,7 +130,7 @@ pub async fn update_mapping(
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -150,6 +150,6 @@ pub async fn delete_mapping(
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "映射不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }

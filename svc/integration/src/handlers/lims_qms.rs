@@ -4,7 +4,7 @@ use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
 
@@ -36,10 +36,7 @@ pub async fn list_lims_qms_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch LIMS↔QMS syncs: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch LIMS↔QMS syncs: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to fetch LIMS↔QMS syncs", e)))
         }
     }
 }
@@ -64,10 +61,10 @@ pub async fn create_lims_qms_sync(
     let lims_uuid = match Uuid::parse_str(&req.lims_sample_id) {
         Ok(u) => u,
         Err(e) => {
-            return Json(ApiResponse::error(
-                400,
-                &format!("Invalid LIMS sample ID: {}", e),
-            ))
+            tracing::warn!("Invalid LIMS sample ID: {}", e);
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "Invalid LIMS sample ID".to_string(),
+            )));
         }
     };
 
@@ -99,10 +96,7 @@ pub async fn create_lims_qms_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to create LIMS↔QMS sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to create LIMS↔QMS sync: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to create LIMS↔QMS sync", e)))
         }
     }
 }
@@ -139,10 +133,7 @@ pub async fn get_lims_qms_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch sync: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to fetch sync", e)))
         }
     }
 }
@@ -182,10 +173,7 @@ pub async fn sync_lims_qms(
         Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            return Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch sync: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal("Failed to fetch sync", e)));
         }
     };
 
@@ -212,10 +200,7 @@ pub async fn sync_lims_qms(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::error(
-                500,
-                &format!("Failed to update sync: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal("Failed to update sync", e)));
         }
     };
 

@@ -71,14 +71,14 @@ function getRemoteEntry(name: string, _port: number): string {
     return '';
   }
 
-  // 3. module-federation / hybrid 模式：
+  // 3. module-federation 模式：
   //    - 开发环境：Vite 同源代理 /remote/<name> -> localhost:<port>
   //    - 生产环境：  同源路径，由网关/Nginx 分发到对应子应用
   //                  （如生产为独立子域名，用 VITE_REMOTE_<NAME> 环境变量覆盖）
   if (isDev()) {
     return `/remote/${name}/remoteEntry.js`;
   }
-  if (deploymentMode === 'module-federation' || deploymentMode === 'hybrid') {
+  if (deploymentMode === 'module-federation') {
     return `/remote/${name}/remoteEntry.js`;
   }
 

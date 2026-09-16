@@ -17,7 +17,7 @@ use lettre::{Message, Transport};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 const SMTP_CONFIG_KEY: &str = "smtp_config";
 const PASSWORD_MASK: &str = "********";
@@ -109,10 +109,10 @@ pub async fn get_smtp_config(
         )),
         Err(e) => {
             tracing::error!("Failed to load SMTP config: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("获取 SMTP 配置失败: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "获取 SMTP 配置失败",
+                e,
+            )))
         }
     }
 }
@@ -153,10 +153,10 @@ pub async fn update_smtp_config(
     let serialized = match serde_json::to_string(&to_store) {
         Ok(s) => s,
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
-                &format!("序列化 SMTP 配置失败: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "序列化 SMTP 配置失败",
+                e,
+            )));
         }
     };
 
@@ -176,10 +176,10 @@ pub async fn update_smtp_config(
 
     if let Err(e) = result {
         tracing::error!("Failed to save SMTP config: {}", e);
-        return Json(ApiResponse::error(
-            500,
-            &format!("保存 SMTP 配置失败: {}", e),
-        ));
+        return Json(ApiResponse::from(TopemsError::internal(
+            "保存 SMTP 配置失败",
+            e,
+        )));
     }
 
     // Return the config with a masked password.
@@ -265,11 +265,17 @@ pub async fn test_smtp_config(
         )),
         Ok(Err(e)) => {
             tracing::error!("Test email failed: {}", e);
-            Json(ApiResponse::error(500, &format!("测试邮件发送失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "测试邮件发送失败",
+                e,
+            )))
         }
         Err(e) => {
             tracing::error!("Test email task failed: {}", e);
-            Json(ApiResponse::error(500, &format!("测试邮件任务异常: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "测试邮件任务异常",
+                e,
+            )))
         }
     }
 }

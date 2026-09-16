@@ -109,6 +109,20 @@ pre-commit:
           node scripts/ci/page-audit.cjs --diff --strict
         fi
 
+    # [Gate T] 统一错误出口（V517）— 报告模式，不阻断提交
+    # 背景：svc 层存量 692 处把原始 SQL/IO 错误回给客户端（307 format! 拼接 +
+    #       385 处 <err>.to_string()），按基线逐步清退，故此处只报告不阻断。
+    # CI 侧由 error-handling-gate（--changed-only）拦截新增。
+    # 决策依据：docs/architecture/unified-error-handling-decision.md
+    error-handling:
+      tags: rust errors
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        if [ -f "scripts/ci/check-error-handling.cjs" ]; then
+          node scripts/ci/check-error-handling.cjs
+        fi
+
     # [Gate N] Large files check (>1MB) — migrated from husky #1
     # 外部脚本避免 lefthook sh -c 内联引号冲突（Windows 兼容）
     large-files:

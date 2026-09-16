@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -96,7 +96,7 @@ pub async fn create_location(
     .await
     {
         Ok(location) => Json(ApiResponse::success(location, "创建位置成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建位置失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建位置失败", e))),
     }
 }
 
@@ -125,7 +125,7 @@ pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serd
             }),
             "获取位置列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -157,7 +157,7 @@ pub async fn get_location(
     {
         Ok(location) => Json(ApiResponse::success(location, "获取位置成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "位置未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -195,7 +195,7 @@ pub async fn update_location(
     {
         Ok(location) => Json(ApiResponse::success(location, "更新位置成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "位置未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -224,7 +224,7 @@ pub async fn delete_location(
                 Json(ApiResponse::error(404, "位置未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
 
@@ -261,7 +261,7 @@ pub async fn search_locations(
             }),
             "搜索完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("搜索失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("搜索失败", e))),
     }
 }
 
@@ -316,7 +316,7 @@ pub async fn nearby_locations(
                 "附近位置查询完成",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 

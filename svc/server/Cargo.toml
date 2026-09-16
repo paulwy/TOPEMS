@@ -35,6 +35,13 @@ topems-gis = { path = "../gis", optional = true }
 topems-portal = { path = "../portal", optional = true }
 topems-master-data = { path = "../master-data", optional = true }
 topems-analytics = { path = "../analytics", optional = true }
+topems-unified-core = { path = "../unified-core", optional = true }
+topems-monitor = { path = "../monitor", optional = true }
+topems-plugin-registry = { path = "../plugin-registry", optional = true }
+topems-search = { path = "../search", optional = true }
+topems-communication = { path = "../communication", optional = true }
+topems-integration = { path = "../integration", optional = true }
+topems-mobile = { path = "../mobile", optional = true }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -79,7 +86,19 @@ default = [
     "module-portal",
     # [边界治理] module-ai 仍为幽灵 feature（无 real_module），从 default 移除；待 ai 真实接入后再启用
 ]
-module-core = []
+module-core = ["dep:topems-unified-core"]
+# 真实业务服务接入：monitor 模块（监控告警，core 组）
+module-monitor = ["dep:topems-monitor"]
+# 真实业务服务接入：plugin-registry 模块（插件注册，core 组）
+module-plugin-registry = ["dep:topems-plugin-registry"]
+# 真实业务服务接入：search 模块（全文搜索，core 组）
+module-search = ["dep:topems-search"]
+# 真实业务服务接入：communication 模块（消息通知，core 组）
+module-communication = ["dep:topems-communication"]
+# 真实业务服务接入：integration 模块（系统集成，core 组）
+module-integration = ["dep:topems-integration"]
+# 真实业务服务接入：mobile 模块（移动端，core 组）
+module-mobile = ["dep:topems-mobile"]
 # 真实业务服务接入：finance 模块（Phase B3）
 module-finance = ["dep:topems-finance"]
 # 真实业务服务接入：erp 模块（Phase B3 扩展）

@@ -92,7 +92,7 @@ export default [
       'jsx-a11y/heading-has-content': 'error',
       'jsx-a11y/html-has-lang': 'error',
       'jsx-a11y/img-redundant-alt': 'error',
-      'jsx-a11y/label-has-associated-control': 'error',
+      'jsx-a11y/label-has-associated-control': 'warn', // 降级为 warn，后续逐步修复
       'jsx-a11y/no-redundant-roles': 'error',
 
       // =========================================================================

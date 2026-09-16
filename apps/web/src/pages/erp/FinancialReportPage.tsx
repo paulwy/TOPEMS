@@ -108,8 +108,8 @@ const FinancialReportPage: React.FC = () => {
     });
   };
 
-  const formatCurrency = (amount: number) =>
-    `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (amount?: number | null) =>
+    `¥${(amount ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
   const handleExport = () => {
     addNotification({
@@ -199,18 +199,20 @@ const FinancialReportPage: React.FC = () => {
       ];
     }
     if (activeTab === 'income-statement' && incomeStatement) {
+      const revenues = incomeStatement.revenues ?? [];
+      const expenses = incomeStatement.expenses ?? [];
       return [
         {
           id: 'revenue',
           title: i18n.t('pages.financial_report_page.k3'),
-          value: formatCurrency(incomeStatement.revenues.reduce((sum, r) => sum + r.amount, 0)),
+          value: formatCurrency(revenues.reduce((sum, r) => sum + (r.amount ?? 0), 0)),
           icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
           color: 'success',
         },
         {
           id: 'cost',
           title: i18n.t('pages.financial_report_page.k4'),
-          value: formatCurrency(incomeStatement.expenses.reduce((sum, e) => sum + e.amount, 0)),
+          value: formatCurrency(expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0)),
           icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
           color: 'error',
         },
@@ -219,7 +221,7 @@ const FinancialReportPage: React.FC = () => {
           title: i18n.t('pages.financial_report_page.k6'),
           value: formatCurrency(incomeStatement.net_income),
           icon: <DollarSign sx={{ width: 24, height: 24 }} />,
-          color: incomeStatement.net_income >= 0 ? 'success' : 'error',
+          color: (incomeStatement.net_income ?? 0) >= 0 ? 'success' : 'error',
         },
       ];
     }

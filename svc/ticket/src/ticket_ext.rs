@@ -12,7 +12,7 @@ use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::models::is_valid_ticket_transition;
 
@@ -138,7 +138,7 @@ async fn get_ticket_transitions(
         Ok(None) => {
             return Json(ApiResponse::error(404, "工单不存在"));
         }
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let current: String = row.get("status");
     let mut targets: Vec<String> = Vec::new();
@@ -172,7 +172,7 @@ async fn apply_transition(
     {
         Ok(Some(s)) => s,
         Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !is_valid_ticket_transition(&current, &req.to_status) {
@@ -196,7 +196,7 @@ async fn apply_transition(
 
     let mut txn = match pool.begin().await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(500, &format!("事务失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("事务失败", e))),
     };
 
     if let Err(e) = sqlx::query(
@@ -212,7 +212,7 @@ async fn apply_transition(
     .execute(&mut *txn)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("更新失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("更新失败", e)));
     }
 
     if let Err(e) = sqlx::query(
@@ -228,7 +228,7 @@ async fn apply_transition(
     .execute(&mut *txn)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("活动记录失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("活动记录失败", e)));
     }
 
     if let Some(comment) = &req.comment {
@@ -244,13 +244,13 @@ async fn apply_transition(
             .execute(&mut *txn)
             .await
             {
-                return Json(ApiResponse::error(500, &format!("备注失败: {}", e)));
+                return Json(ApiResponse::from(TopemsError::internal("备注失败", e)));
             }
         }
     }
 
     if let Err(e) = txn.commit().await {
-        return Json(ApiResponse::error(500, &format!("提交失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("提交失败", e)));
     }
 
     Json(ApiResponse::success(
@@ -282,7 +282,7 @@ async fn get_ticket_tags(
     {
         Ok(Some(t)) => t,
         Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     Json(ApiResponse::success(
         json!({"tags": tags.unwrap_or_default()}),
@@ -311,7 +311,7 @@ async fn add_ticket_tag(
     {
         Ok(Some(t)) => t,
         Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let mut tags = current.unwrap_or_default();
     if !tags.iter().any(|t| t == &tag) {
@@ -326,7 +326,7 @@ async fn add_ticket_tag(
     .execute(&pool)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("更新失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("更新失败", e)));
     }
     Json(ApiResponse::success(json!({"tags": tags}), "标签已添加"))
 }
@@ -347,7 +347,7 @@ async fn remove_ticket_tag(
     {
         Ok(Some(t)) => t,
         Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let tags: Vec<String> = current
         .unwrap_or_default()
@@ -363,7 +363,7 @@ async fn remove_ticket_tag(
     .execute(&pool)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("更新失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("更新失败", e)));
     }
     Json(ApiResponse::success(json!({"tags": tags}), "标签已移除"))
 }
@@ -383,7 +383,7 @@ async fn list_tag_directory(
     .await;
     let rows = match rows {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -421,7 +421,7 @@ async fn get_tag_stub(
     .await
     {
         Ok(c) => c,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     Json(ApiResponse::success(
         json!({"name": tag, "count": count}),
@@ -495,7 +495,7 @@ async fn batch_update_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("批量更新失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量更新失败", e))),
     };
     Json(ApiResponse::success(
         json!({"updated": affected}),
@@ -525,7 +525,7 @@ async fn batch_assign_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("批量指派失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量指派失败", e))),
     };
     Json(ApiResponse::success(
         json!({"updated": affected}),
@@ -550,7 +550,7 @@ async fn batch_close_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("批量关闭失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量关闭失败", e))),
     };
     Json(ApiResponse::success(
         json!({"closed": affected}),
@@ -575,7 +575,7 @@ async fn batch_delete_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("批量删除失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量删除失败", e))),
     };
     Json(ApiResponse::success(
         json!({"deleted": affected}),
@@ -600,7 +600,7 @@ async fn batch_escalate_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("批量升级失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量升级失败", e))),
     };
     Json(ApiResponse::success(
         json!({"escalated": affected}),
@@ -653,7 +653,7 @@ async fn list_attachments(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -708,7 +708,7 @@ async fn upload_attachment(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &format!("上传失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("上传失败", e))),
     };
     let attachment_id: Uuid = row.get("id");
     Json(ApiResponse::success(
@@ -736,7 +736,7 @@ async fn get_attachment(
     {
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::error(404, "附件不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     Json(ApiResponse::success(
         json!({
@@ -780,7 +780,7 @@ async fn update_attachment(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     };
     if affected == 0 {
         return Json(ApiResponse::error(404, "附件不存在"));
@@ -808,7 +808,7 @@ async fn delete_attachment(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     };
     if affected == 0 {
         return Json(ApiResponse::error(404, "附件不存在"));
@@ -830,7 +830,7 @@ async fn batch_upload_attachments(
     let mut created = 0usize;
     let mut txn = match pool.begin().await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(500, &format!("事务失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("事务失败", e))),
     };
     for item in &req.attachments {
         let data = item
@@ -854,12 +854,12 @@ async fn batch_upload_attachments(
         .execute(&mut *txn)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("批量上传失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::internal("批量上传失败", e)));
         }
         created += 1;
     }
     if let Err(e) = txn.commit().await {
-        return Json(ApiResponse::error(500, &format!("提交失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("提交失败", e)));
     }
     Json(ApiResponse::success(
         json!({"created": created}),
@@ -888,7 +888,7 @@ async fn batch_delete_attachments(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("批量删除失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量删除失败", e))),
     };
     Json(ApiResponse::success(
         json!({"deleted": affected}),
@@ -913,7 +913,7 @@ async fn get_attachment_stats(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     Json(ApiResponse::success(
         json!({
@@ -943,7 +943,7 @@ async fn get_attachments_by_type(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let items: Vec<serde_json::Value> = rows
         .iter()

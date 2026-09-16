@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +38,7 @@ pub async fn list_factory_maps(
             }),
             "获取厂区地图列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -67,7 +67,7 @@ pub async fn create_factory_map(
         .await
     {
         Ok(map) => Json(ApiResponse::success(map, "创建厂区地图成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
     }
 }
 
@@ -83,7 +83,7 @@ pub async fn get_factory_map(
     match service.get_factory_map(id).await {
         Ok(Some(map)) => Json(ApiResponse::success(map, "获取厂区地图成功")),
         Ok(None) => Json(ApiResponse::error(404, "厂区地图未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -125,7 +125,7 @@ pub async fn update_factory_map(
     {
         Ok(Some(map)) => Json(ApiResponse::success(map, "更新厂区地图成功")),
         Ok(None) => Json(ApiResponse::error(404, "厂区地图未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
 
@@ -145,6 +145,6 @@ pub async fn delete_factory_map(
     match service.delete_factory_map(id).await {
         Ok(true) => Json(ApiResponse::success("".to_string(), "删除厂区地图成功")),
         Ok(false) => Json(ApiResponse::error(404, "厂区地图未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
     }
 }

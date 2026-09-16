@@ -1,6 +1,20 @@
-import React from 'react';
-import { Bell, Menu, Search, Settings, User } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Bell,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+  Settings,
+  User,
+  LogOut,
+  UserCircle,
+  Settings as SettingsIcon,
+} from 'lucide-react';
 import { Button } from '../primitives';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { AUTH_PATHS } from '@/routes/auth';
 
 export interface TopBarProps {
   onMenuToggle?: () => void;
@@ -8,6 +22,8 @@ export interface TopBarProps {
   onNotificationsOpen?: () => void;
   onSettingsOpen?: () => void;
   onProfileOpen?: () => void;
+  onToggleSidebar?: () => void;
+  sidebarExpanded?: boolean;
   title?: React.ReactNode;
 }
 
@@ -17,8 +33,45 @@ export const TopBar: React.FC<TopBarProps> = ({
   onNotificationsOpen,
   onSettingsOpen,
   onProfileOpen,
+  onToggleSidebar,
+  sidebarExpanded = true,
   title = 'TOPEMS',
 }) => {
+  const handleToggle = onToggleSidebar || onMenuToggle;
+  const ToggleIcon = sidebarExpanded ? PanelLeftClose : PanelLeftOpen;
+
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate(AUTH_PATHS.login);
+    setUserMenuOpen(false);
+  };
+
+  const handleProfileClick = () => {
+    setUserMenuOpen(false);
+    onProfileOpen?.();
+  };
+
+  const handleSettingsClick = () => {
+    setUserMenuOpen(false);
+    onSettingsOpen?.();
+  };
+
   return (
     <header
       style={{
@@ -39,14 +92,14 @@ export const TopBar: React.FC<TopBarProps> = ({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-        {onMenuToggle && (
+        {handleToggle && (
           <Button
             variant='ghost'
             size='sm'
-            onClick={onMenuToggle}
-            aria-label='Toggle navigation'
+            onClick={handleToggle}
+            aria-label={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           >
-            <Menu size={18} />
+            <ToggleIcon size={18} />
           </Button>
         )}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
@@ -118,14 +171,121 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Settings size={18} />
         </Button>
 
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={onProfileOpen}
-          aria-label='Profile'
+        {/* 用户菜单 */}
+        <div
+          style={{ position: 'relative' }}
+          ref={userMenuRef}
         >
-          <User size={18} />
-        </Button>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            aria-label='Profile'
+          >
+            <User size={18} />
+          </Button>
+
+          {userMenuOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '8px',
+                minWidth: '200px',
+                backgroundColor: 'var(--bg-primary)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                zIndex: 1000,
+                overflow: 'hidden',
+              }}
+            >
+              {/* 用户信息 */}
+              <div
+                style={{
+                  padding: '12px 16px',
+                  borderBottom: '1px solid var(--border-default)',
+                }}
+              >
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {user?.name || user?.username || '用户'}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                  {user?.email || ''}
+                </div>
+              </div>
+
+              {/* 菜单选项 */}
+              <div style={{ padding: '4px 0' }}>
+                <button
+                  onClick={handleProfileClick}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '8px 16px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <UserCircle size={16} />
+                  个人中心
+                </button>
+
+                <button
+                  onClick={handleSettingsClick}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '8px 16px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <SettingsIcon size={16} />
+                  账号设置
+                </button>
+              </div>
+
+              {/* 退出登录 */}
+              <div
+                style={{
+                  borderTop: '1px solid var(--border-default)',
+                  padding: '4px 0',
+                }}
+              >
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '8px 16px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: 'var(--error)',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <LogOut size={16} />
+                  退出登录
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

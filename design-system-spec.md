@@ -1,7 +1,17 @@
 # TOPEMS 设计系统规范（Design System Spec）
 
+> ⚠️ **本文档为 v2 旧版规范，已废弃**
+> 
+> 新版设计系统请参考：
+> - [UI_REDESIGN_v3.md](./UI_REDESIGN_v3.md) — Industrial OS v3 设计系统规范
+> - `apps/web/src/theme/redesign-tokens.css` — v3 可消费 Design Tokens
+> - `apps/web/src/theme/redesign-global.css` — v3 全局样式
+> - `apps/web/src/components/redesign/` — v3 组件库
+> 
+> 本文档保留作为历史参考，新功能开发请勿使用本文档中的规范。
+
 > 来源：`navigation-menu-demo.design`（7 HTML 页面 + `colors_and_type.css` + `search.js`）
-> 版本：v2 · 2026-09-13 · 状态：随实施持续更新（v2：补 effects 映射、焦点基线、验收清单、灰度回滚）
+> 版本：v2 · 2026-09-13 · 状态：**已废弃**（v3 已上线）
 > 可消费 token：`navigation-menu-demo.design/design-tokens.json`（自 `colors_and_type.css` 自动解析生成）
 
 ---

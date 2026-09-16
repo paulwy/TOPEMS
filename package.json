@@ -32,6 +32,8 @@
     "install:all": "./scripts/install-deps.sh",
     "generate:tokens": "tsx scripts/generate-tokens.ts",
     "check:design-system": "bash scripts/check-design-system.sh",
+    "check:error-handling": "node scripts/ci/check-error-handling.cjs",
+    "check:error-handling:changed": "node scripts/ci/check-error-handling.cjs --changed-only",
     "check:design-tokens": "node scripts/check-design-tokens.mjs",
     "check:design-tokens:ci": "node scripts/ci/check-design-tokens.cjs --strict --changed-only",
     "check:design-tokens:ci-full": "node scripts/ci/check-design-tokens.cjs --strict",

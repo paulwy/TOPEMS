@@ -62,36 +62,35 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           {children}
         </div>
 
-        {actions ?? (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 'var(--space-3)',
-              paddingTop: 'var(--space-4)',
-              borderTop: '1px solid var(--border-default)',
-            }}
-          >
-            {onCancel && (
-              <Button
-                variant='secondary'
-                type='button'
-                onClick={onCancel}
-              >
-                {cancelLabel}
-              </Button>
-            )}
-            {onSubmit && (
-              <Button
-                variant='primary'
-                type='submit'
-                loading={loading}
-              >
-                {submitLabel}
-              </Button>
-            )}
-          </div>
-        )}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 'var(--space-3)',
+            paddingTop: 'var(--space-4)',
+            borderTop: '1px solid var(--border-default)',
+          }}
+        >
+          {actions}
+          {onCancel && (
+            <Button
+              variant='secondary'
+              type='button'
+              onClick={onCancel}
+            >
+              {cancelLabel}
+            </Button>
+          )}
+          {onSubmit && (
+            <Button
+              variant='primary'
+              type='submit'
+              loading={loading}
+            >
+              {submitLabel}
+            </Button>
+          )}
+        </div>
       </form>
     </div>
   );

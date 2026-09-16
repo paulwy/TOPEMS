@@ -13,7 +13,7 @@ use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::models::DeviceLocation;
 use crate::modules;
@@ -448,7 +448,7 @@ async fn list_device_locations_by_map(
             }),
             "获取设备位置列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -484,10 +484,7 @@ async fn create_device_location(
     .await
     {
         Ok(location) => Json(ApiResponse::success(location, "创建设备位置成功")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库插入失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
     }
 }
 
@@ -529,10 +526,7 @@ async fn update_device_location(
         Err(sqlx::Error::RowNotFound) => {
             Json(ApiResponse::error(404, "设备位置未找到"))
         }
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("数据库更新失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
 
@@ -565,6 +559,6 @@ async fn delete_device_location(
                 Json(ApiResponse::error(404, "设备位置未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
     }
 }

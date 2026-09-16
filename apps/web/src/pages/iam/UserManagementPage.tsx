@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 
 import {
+  Avatar,
   Badge,
   Button,
   Card,
@@ -11,6 +12,7 @@ import {
   Input,
   ListPageTemplate,
   Modal,
+  Pagination,
   Select,
   ToastContainer,
 } from '@/components/redesign';
@@ -42,6 +44,8 @@ const UserManagementPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -154,15 +158,22 @@ const UserManagementPage: React.FC = () => {
         key: 'username',
         header: i18n.t('iam.user_management_page.k7'),
         render: (row) => (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-            <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)' }}>
-              {row.username}
-            </span>
-            {row.full_name && (
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-                {row.full_name}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <Avatar
+              name={row.full_name || row.username}
+              size='sm'
+              status={row.isactive ? 'online' : 'offline'}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+              <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)' }}>
+                {row.username}
               </span>
-            )}
+              {row.full_name && (
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+                  {row.full_name}
+                </span>
+              )}
+            </div>
           </div>
         ),
       },
@@ -217,6 +228,16 @@ const UserManagementPage: React.FC = () => {
     ],
     []
   );
+
+  // 分页数据计算
+  const allUsers = data?.users || [];
+  const totalPages = Math.max(1, Math.ceil(allUsers.length / pageSize));
+  const pagedUsers = allUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // 搜索或筛选变化时重置页码
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, statusFilter]);
 
   const toolbar = (
     <>
@@ -290,7 +311,7 @@ const UserManagementPage: React.FC = () => {
         }}
         toolbar={toolbar}
         columns={columns}
-        data={data?.users || []}
+        data={pagedUsers}
         rowKey='id'
         loading={isLoading}
         error={error instanceof Error ? error.message : null}
@@ -298,6 +319,24 @@ const UserManagementPage: React.FC = () => {
         emptyDescription={i18n.t('iam.user_management_page.k17')}
         emptyAction={{ label: i18n.t('iam.user_management_page.k14'), onClick: handleCreate }}
       />
+
+      {allUsers.length > 0 && (
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <Pagination
+            current={currentPage}
+            total={totalPages}
+            pageSize={pageSize}
+            totalItems={allUsers.length}
+            onChange={setCurrentPage}
+            showSizeChanger
+            pageSizeOptions={[10, 20, 50]}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
 
       <UserDrawer
         open={drawerOpen}

@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import AppLayout from './components/layout/AppLayout';
 import AppRoutes from './routes/appRoutes';
 import I18nReadyGate from './components/I18nReadyGate';
@@ -87,6 +87,19 @@ if (import.meta.env.DEV) {
  */
 const DevPanels: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const [showDevTools, setShowDevTools] = useState(false);
+
+  // 快捷键切换：Ctrl + Shift + D
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setShowDevTools((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!isAuthenticated) return null;
 
@@ -105,9 +118,10 @@ const DevPanels: React.FC = () => {
         aria-hidden='true'
         style={{
           width: '100%',
-          height: 320,
+          height: showDevTools ? 320 : 0,
           flexShrink: 0,
           pointerEvents: 'none',
+          transition: 'height 0.3s ease',
         }}
       />
       {ObservabilityPanel && (
@@ -115,7 +129,7 @@ const DevPanels: React.FC = () => {
           <ObservabilityPanel />
         </Suspense>
       )}
-      {MicroFrontendDevTools && (
+      {MicroFrontendDevTools && showDevTools && (
         <Suspense fallback={null}>
           <MicroFrontendDevTools />
         </Suspense>

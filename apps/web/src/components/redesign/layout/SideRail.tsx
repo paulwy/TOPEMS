@@ -1,16 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
+  AlertTriangle,
   BarChart3,
   Box,
+  Boxes,
+  ChevronDown,
+  ChevronRight,
+  ClipboardList,
+  Cpu,
+  DollarSign,
   Factory,
   FileText,
   Home,
   Layers,
   Map,
   MessageSquare,
+  Package,
   ShieldCheck,
+  ShoppingCart,
+  Target,
+  TrendingUp,
   Truck,
   Users,
 } from 'lucide-react';
@@ -21,6 +32,10 @@ export interface NavItem {
   icon: LucideIcon;
   badge?: number | string;
   active?: boolean;
+  /** 子菜单（两级菜单） */
+  children?: NavItem[];
+  /** 点击后的导航路径 */
+  path?: string;
 }
 
 export interface SideRailProps extends React.HTMLAttributes<HTMLElement> {
@@ -28,22 +43,99 @@ export interface SideRailProps extends React.HTMLAttributes<HTMLElement> {
   activeId?: string;
   onItemClick?: (id: string) => void;
   footerItems?: NavItem[];
+  /** 是否展开侧边栏（显示完整菜单文字） */
+  expanded?: boolean;
   /** 操作区（不传递给 DOM 元素） */
   action?: React.ReactNode;
 }
 
 const defaultItems: NavItem[] = [
-  { id: 'home', label: '首页', icon: Home },
-  { id: 'mes', label: '制造执行', icon: Factory },
-  { id: 'erp', label: '企业资源', icon: Layers },
-  { id: 'scm', label: '供应链', icon: Truck },
-  { id: 'crm', label: '客户管理', icon: Users },
-  { id: 'qms', label: '质量管理', icon: ShieldCheck },
-  { id: 'wms', label: '仓储物流', icon: Box },
-  { id: 'bi', label: '数据决策', icon: BarChart3 },
-  { id: 'gis', label: '地理信息', icon: Map },
-  { id: 'doc', label: '文档协同', icon: FileText },
-  { id: 'im', label: '消息中心', icon: MessageSquare, badge: 3 },
+  { id: 'home', label: '首页', icon: Home, path: '/dashboard' },
+  {
+    id: 'mes',
+    label: '制造执行',
+    icon: Factory,
+    path: '/mes/dashboard',
+    children: [
+      { id: 'mes-dashboard', label: '生产看板', icon: BarChart3, path: '/mes/dashboard' },
+      {
+        id: 'mes-production-orders',
+        label: '生产订单',
+        icon: FileText,
+        path: '/mes/production-orders',
+      },
+      { id: 'mes-work-orders', label: '工单管理', icon: ClipboardList, path: '/mes/work-orders' },
+      { id: 'mes-equipment', label: '设备管理', icon: Cpu, path: '/mes/equipment' },
+      { id: 'mes-quality', label: '质量检验', icon: ShieldCheck, path: '/mes/quality' },
+      { id: 'mes-wip', label: '在制品', icon: Box, path: '/mes/wip' },
+      { id: 'mes-report', label: '生产报表', icon: BarChart3, path: '/mes/production-record' },
+    ],
+  },
+  {
+    id: 'erp',
+    label: '企业资源',
+    icon: Layers,
+    path: '/erp/dashboard',
+    children: [
+      { id: 'erp-purchase', label: '采购管理', icon: ShoppingCart, path: '/erp/purchase-order' },
+      { id: 'erp-sales', label: '销售管理', icon: TrendingUp, path: '/erp/sales-order' },
+      { id: 'erp-inventory', label: '库存管理', icon: Package, path: '/erp/inventory' },
+      { id: 'erp-finance', label: '财务管理', icon: DollarSign, path: '/erp/finance' },
+    ],
+  },
+  {
+    id: 'scm',
+    label: '供应链',
+    icon: Truck,
+    path: '/scm/dashboard',
+    children: [
+      { id: 'scm-supplier', label: '供应商管理', icon: Truck, path: '/scm/suppliers' },
+      { id: 'scm-purchase', label: '采购管理', icon: ShoppingCart, path: '/scm/purchasing' },
+      { id: 'scm-logistics', label: '物流管理', icon: Truck, path: '/scm/logistics' },
+    ],
+  },
+  {
+    id: 'crm',
+    label: '客户管理',
+    icon: Users,
+    path: '/crm/dashboard',
+    children: [
+      { id: 'crm-customers', label: '客户列表', icon: Users, path: '/crm/customers' },
+      { id: 'crm-opportunities', label: '商机管理', icon: Target, path: '/crm/opportunities' },
+      { id: 'crm-contracts', label: '合同管理', icon: FileText, path: '/crm/contracts' },
+    ],
+  },
+  {
+    id: 'qms',
+    label: '质量管理',
+    icon: ShieldCheck,
+    path: '/qms/dashboard',
+    children: [
+      { id: 'qms-inspection', label: '检验管理', icon: ShieldCheck, path: '/qms/inspection' },
+      {
+        id: 'qms-nonconformance',
+        label: '不合格品',
+        icon: AlertTriangle,
+        path: '/qms/nonconformance',
+      },
+      { id: 'qms-eight-d', label: '8D 报告', icon: FileText, path: '/qms/eight-d' },
+    ],
+  },
+  {
+    id: 'wms',
+    label: '仓储物流',
+    icon: Box,
+    path: '/wms/dashboard',
+    children: [
+      { id: 'wms-inbound', label: '入库管理', icon: Package, path: '/wms/inbound-orders' },
+      { id: 'wms-outbound', label: '出库管理', icon: Package, path: '/wms/outbound-orders' },
+      { id: 'wms-inventory', label: '库存管理', icon: Boxes, path: '/wms/inventory' },
+    ],
+  },
+  { id: 'bi', label: '数据决策', icon: BarChart3, path: '/bi/dashboard' },
+  { id: 'gis', label: '地理信息', icon: Map, path: '/gis/dashboard' },
+  { id: 'doc', label: '文档协同', icon: FileText, path: '/doc/list' },
+  { id: 'im', label: '消息中心', icon: MessageSquare, badge: 3, path: '/im' },
 ];
 
 export const SideRail: React.FC<SideRailProps> = ({
@@ -51,11 +143,39 @@ export const SideRail: React.FC<SideRailProps> = ({
   activeId,
   onItemClick,
   footerItems,
+  expanded = true,
   className,
   style,
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }) => {
+  const railWidth = expanded ? 'var(--siderail-expanded-width)' : 'var(--siderail-width)';
+
+  // 管理展开的菜单组
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleItemClick = (item: NavItem) => {
+    if (item.children && item.children.length > 0) {
+      // 有子菜单：只展开/折叠，不自动导航
+      toggleGroup(item.id);
+    } else {
+      // 没有子菜单：直接导航
+      onItemClick?.(item.id);
+    }
+  };
+
   return (
     <nav
       className={clsx('redesign-siderail', className)}
@@ -65,15 +185,17 @@ export const SideRail: React.FC<SideRailProps> = ({
         left: 0,
         bottom: 0,
         zIndex: 'var(--z-sticky)',
-        width: 'var(--siderail-width)',
+        width: railWidth,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
+        alignItems: expanded ? 'stretch' : 'center',
         padding: 'var(--space-3) 0',
-        backgroundColor: 'var(--bg-secondary)',
+        backgroundColor: 'var(--bg-elevated)',
         borderRight: '1px solid var(--border-default)',
+        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.3)',
         overflowY: 'auto',
         overflowX: 'hidden',
+        transition: 'width var(--duration-base) var(--ease-out)',
         ...style,
       }}
       aria-label='Main navigation'
@@ -83,7 +205,7 @@ export const SideRail: React.FC<SideRailProps> = ({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 'var(--space-2)',
+          gap: 'var(--space-1)',
           width: '100%',
           padding: '0 var(--space-2)',
         }}
@@ -91,68 +213,153 @@ export const SideRail: React.FC<SideRailProps> = ({
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeId === item.id || item.active;
+          const hasChildren = item.children && item.children.length > 0;
+          const isExpanded = expandedGroups.has(item.id);
+          const hasActiveChild =
+            hasChildren && item.children!.some((child) => child.id === activeId);
+          const showActive = isActive || hasActiveChild;
+
           return (
-            <button
-              key={item.id}
-              type='button'
-              onClick={() => onItemClick?.(item.id)}
-              aria-current={isActive ? 'page' : undefined}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--space-1)',
-                width: '100%',
-                height: '60px',
-                padding: 'var(--space-2)',
-                backgroundColor: isActive ? 'var(--surface-3)' : 'transparent',
-                border: '1px solid',
-                borderColor: isActive ? 'var(--border-hover)' : 'transparent',
-                borderRadius: 'var(--radius-sm)',
-                color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                transition: 'all var(--duration-fast) var(--ease-out)',
-                cursor: 'pointer',
-              }}
-            >
-              <Icon
-                size={20}
-                strokeWidth={isActive ? 2.5 : 2}
-              />
-              <span
+            <div key={item.id}>
+              <button
+                type='button'
+                onClick={() => handleItemClick(item)}
+                aria-current={isActive ? 'page' : undefined}
                 style={{
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: isActive ? 'var(--font-semibold)' : 'var(--font-normal)',
-                  whiteSpace: 'nowrap',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: expanded ? 'row' : 'column',
+                  alignItems: 'center',
+                  justifyContent: expanded ? 'space-between' : 'center',
+                  gap: 'var(--space-3)',
+                  width: '100%',
+                  margin: '0 var(--space-2)',
+                  height: '44px',
+                  padding: expanded ? '0 var(--space-3)' : 'var(--space-2)',
+                  backgroundColor: showActive ? 'var(--accent-primary)' : 'transparent',
+                  border: '1px solid transparent',
+                  borderColor: showActive ? 'var(--accent-primary)' : 'transparent',
+                  borderRadius: 'var(--radius-md)',
+                  color: showActive ? '#000000' : 'var(--text-primary)',
+                  transition: 'all var(--duration-fast) var(--ease-out)',
+                  cursor: 'pointer',
+                  textAlign: expanded ? 'left' : 'center',
                 }}
               >
-                {item.label}
-              </span>
-              {item.badge !== undefined && (
-                <span
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <Icon
+                    size={20}
+                    strokeWidth={showActive ? 2.5 : 2}
+                    style={{
+                      flexShrink: 0,
+                      color: showActive ? '#000000' : undefined,
+                    }}
+                  />
+                  {expanded && (
+                    <span
+                      style={{
+                        fontSize: 'var(--text-base)',
+                        fontWeight: showActive ? 'var(--font-semibold)' : 'var(--font-normal)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        color: showActive ? '#000000' : undefined,
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  )}
+                </div>
+
+                {item.badge !== undefined && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: expanded ? '50%' : '6px',
+                      right: expanded ? '8px' : '6px',
+                      transform: expanded ? 'translateY(-50%)' : 'none',
+                      minWidth: '16px',
+                      height: '16px',
+                      padding: '0 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '10px',
+                      fontWeight: 'var(--font-bold)',
+                      color: 'var(--text-inverse)',
+                      backgroundColor: 'var(--error-500)',
+                      borderRadius: 'var(--radius-full)',
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+
+                {hasChildren && expanded && (
+                  <span style={{ color: showActive ? '#000000' : 'var(--text-secondary)' }}>
+                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </span>
+                )}
+              </button>
+
+              {/* 子菜单 */}
+              {hasChildren && expanded && isExpanded && (
+                <div
                   style={{
-                    position: 'absolute',
-                    top: '6px',
-                    right: '6px',
-                    minWidth: '16px',
-                    height: '16px',
-                    padding: '0 4px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '10px',
-                    fontWeight: 'var(--font-bold)',
-                    color: 'var(--text-inverse)',
-                    backgroundColor: 'var(--error-500)',
-                    borderRadius: 'var(--radius-full)',
+                    flexDirection: 'column',
+                    gap: '2px',
+                    marginTop: '4px',
+                    marginLeft: '24px',
+                    paddingLeft: '12px',
+                    borderLeft: '1px solid var(--border-default)',
                   }}
                 >
-                  {item.badge}
-                </span>
+                  {item.children!.map((child) => {
+                    const ChildIcon = child.icon;
+                    const isChildActive = activeId === child.id;
+                    return (
+                      <button
+                        key={child.id}
+                        type='button'
+                        onClick={() => onItemClick?.(child.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--space-2)',
+                          width: '100%',
+                          height: '36px',
+                          padding: '0 var(--space-3)',
+                          backgroundColor: isChildActive ? 'var(--bg-hover)' : 'transparent',
+                          border: 'none',
+                          borderRadius: 'var(--radius-sm)',
+                          color: isChildActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                          fontSize: 'var(--text-sm)',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all var(--duration-fast) var(--ease-out)',
+                        }}
+                      >
+                        <ChildIcon
+                          size={16}
+                          style={{ flexShrink: 0 }}
+                        />
+                        <span
+                          style={{
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {child.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -178,21 +385,25 @@ export const SideRail: React.FC<SideRailProps> = ({
                 onClick={() => onItemClick?.(item.id)}
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: expanded ? 'row' : 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--space-1)',
+                  justifyContent: expanded ? 'flex-start' : 'center',
+                  gap: 'var(--space-3)',
                   width: '100%',
-                  height: '60px',
-                  padding: 'var(--space-2)',
+                  height: '44px',
+                  padding: expanded ? '0 var(--space-3)' : 'var(--space-2)',
                   backgroundColor: isActive ? 'var(--surface-3)' : 'transparent',
                   border: '1px solid transparent',
                   borderRadius: 'var(--radius-sm)',
                   color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  textAlign: expanded ? 'left' : 'center',
                 }}
               >
-                <Icon size={20} />
-                <span style={{ fontSize: 'var(--text-xs)' }}>{item.label}</span>
+                <Icon
+                  size={20}
+                  style={{ flexShrink: 0 }}
+                />
+                {expanded && <span style={{ fontSize: 'var(--text-base)' }}>{item.label}</span>}
               </button>
             );
           })}

@@ -10,7 +10,7 @@ use super::services::{DocumentService, FolderService, TemplateService};
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
     match sqlx::query_scalar(&format!(
@@ -103,7 +103,10 @@ pub async fn list_documents(
     let service = DocumentService::new(state.pool.clone());
     match service.list_documents(tenant_id).await {
         Ok(documents) => Json(ApiResponse::success(documents, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_documents",
+            e,
+        ))),
     }
 }
 
@@ -129,7 +132,7 @@ pub async fn get_document(
     let service = DocumentService::new(state.pool.clone());
     match service.get_document(tenant_id, document_id).await {
         Ok(document) => Json(ApiResponse::success(document, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("get_document", e))),
     }
 }
 
@@ -154,7 +157,10 @@ pub async fn create_document(
     let created_by = claims.username.clone();
     match service.create_document(tenant_id, req, &created_by).await {
         Ok(document) => Json(ApiResponse::success(document, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "create_document",
+            e,
+        ))),
     }
 }
 
@@ -182,7 +188,10 @@ pub async fn update_document(
     let service = DocumentService::new(state.pool.clone());
     match service.update_document(tenant_id, document_id, req).await {
         Ok(document) => Json(ApiResponse::success(document, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "update_document",
+            e,
+        ))),
     }
 }
 
@@ -208,7 +217,10 @@ pub async fn delete_document(
     let service = DocumentService::new(state.pool.clone());
     match service.delete_document(tenant_id, document_id).await {
         Ok(deleted) => Json(ApiResponse::success(deleted, "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "delete_document",
+            e,
+        ))),
     }
 }
 
@@ -230,7 +242,10 @@ pub async fn list_templates(
     let service = TemplateService::new(state.pool.clone());
     match service.list_templates(tenant_id).await {
         Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_templates",
+            e,
+        ))),
     }
 }
 
@@ -252,7 +267,10 @@ pub async fn list_template_categories(
     let service = TemplateService::new(state.pool.clone());
     match service.list_categories(tenant_id).await {
         Ok(categories) => Json(ApiResponse::success(categories, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "list_template_categories",
+            e,
+        ))),
     }
 }
 
@@ -278,7 +296,7 @@ pub async fn get_template(
     let service = TemplateService::new(state.pool.clone());
     match service.get_template(tenant_id, template_id).await {
         Ok(template) => Json(ApiResponse::success(template, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("get_template", e))),
     }
 }
 
@@ -303,7 +321,10 @@ pub async fn create_template(
     let created_by = claims.username.clone();
     match service.create_template(tenant_id, req, &created_by).await {
         Ok(template) => Json(ApiResponse::success(template, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "create_template",
+            e,
+        ))),
     }
 }
 
@@ -331,7 +352,10 @@ pub async fn update_template(
     let service = TemplateService::new(state.pool.clone());
     match service.update_template(tenant_id, template_id, req).await {
         Ok(template) => Json(ApiResponse::success(template, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "update_template",
+            e,
+        ))),
     }
 }
 
@@ -357,7 +381,10 @@ pub async fn delete_template(
     let service = TemplateService::new(state.pool.clone());
     match service.delete_template(tenant_id, template_id).await {
         Ok(deleted) => Json(ApiResponse::success(deleted, "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "delete_template",
+            e,
+        ))),
     }
 }
 
@@ -379,7 +406,7 @@ pub async fn list_folders(
     let service = FolderService::new(state.pool.clone());
     match service.list_folders(tenant_id).await {
         Ok(folders) => Json(ApiResponse::success(folders, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("list_folders", e))),
     }
 }
 
@@ -405,7 +432,7 @@ pub async fn get_folder(
     let service = FolderService::new(state.pool.clone());
     match service.get_folder(tenant_id, folder_id).await {
         Ok(folder) => Json(ApiResponse::success(folder, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("get_folder", e))),
     }
 }
 
@@ -430,7 +457,7 @@ pub async fn create_folder(
     let created_by = claims.username.clone();
     match service.create_folder(tenant_id, req, &created_by).await {
         Ok(folder) => Json(ApiResponse::success(folder, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("create_folder", e))),
     }
 }
 
@@ -458,7 +485,7 @@ pub async fn update_folder(
     let service = FolderService::new(state.pool.clone());
     match service.update_folder(tenant_id, folder_id, req).await {
         Ok(folder) => Json(ApiResponse::success(folder, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("update_folder", e))),
     }
 }
 
@@ -484,7 +511,7 @@ pub async fn delete_folder(
     let service = FolderService::new(state.pool.clone());
     match service.delete_folder(tenant_id, folder_id).await {
         Ok(deleted) => Json(ApiResponse::success(deleted, "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("delete_folder", e))),
     }
 }
 

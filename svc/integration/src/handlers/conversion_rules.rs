@@ -5,7 +5,7 @@ use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::conversion_rules::{
     get_rule_executions, insert_conversion_rule, list_conversion_rules, ConversionExecution,
@@ -33,10 +33,7 @@ pub async fn list_conversion_rules_api(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rules: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch conversion rules: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to fetch conversion rules", e)))
         }
     }
 }
@@ -69,10 +66,7 @@ pub async fn get_conversion_rule_api(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rule: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch conversion rule: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to fetch conversion rule", e)))
         }
     }
 }
@@ -126,10 +120,7 @@ pub async fn create_conversion_rule_api(
         )),
         Err(e) => {
             tracing::error!("Failed to create conversion rule: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to create conversion rule: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to create conversion rule", e)))
         }
     }
 }
@@ -205,10 +196,7 @@ pub async fn update_conversion_rule_api(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to update conversion rule: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to update conversion rule: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to update conversion rule", e)))
         }
     }
 }
@@ -250,10 +238,7 @@ pub async fn delete_conversion_rule_api(
         }
         Err(e) => {
             tracing::error!("Failed to delete conversion rule: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to delete conversion rule: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to delete conversion rule", e)))
         }
     }
 }
@@ -282,10 +267,7 @@ pub async fn get_rule_executions_api(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch rule executions: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch rule executions: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to fetch rule executions", e)))
         }
     }
 }
@@ -322,10 +304,7 @@ pub async fn execute_conversion_rule_api(
         }
         Err(e) => {
             tracing::error!("Failed to fetch rule: {}", e);
-            return Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch rule: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal("Failed to fetch rule", e)));
         }
     };
 
@@ -406,7 +385,7 @@ pub async fn enable_conversion_rule_api(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to enable conversion rule: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to enable conversion rule: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("Failed to enable conversion rule", e)))
         }
     }
 }
@@ -440,7 +419,7 @@ pub async fn disable_conversion_rule_api(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to disable conversion rule: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to disable conversion rule: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("Failed to disable conversion rule", e)))
         }
     }
 }

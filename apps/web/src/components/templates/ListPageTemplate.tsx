@@ -927,17 +927,22 @@ export function ListPageTemplate<
     });
   }, [crud, internalListStateResult]);
   // 当启用 crud 时，用内部状态驱动列表查询
+  const lastFetchParamsRef = useRef<string>('');
   useEffect(() => {
     if (!crud || !internalListStateResult) return;
-    crudResult.fetch(buildCrudFetchParams());
+    const fetchParams = buildCrudFetchParams();
+    // 序列化为字符串做比较，避免对象引用变化导致无限循环
+    const paramsKey = JSON.stringify(fetchParams);
+    if (paramsKey === lastFetchParamsRef.current) return;
+    lastFetchParamsRef.current = paramsKey;
+    crudResult.fetch(fetchParams);
   }, [
     crud,
-    crudResult,
+    crudResult.fetch,
     internalListStateResult?.debouncedSearch,
     internalListStateResult?.sortBy,
     internalListStateResult?.sortOrder,
     internalListStateResult?.filters,
-    internalListStateResult,
     buildCrudFetchParams,
   ]);
   // crud 数据加载回调

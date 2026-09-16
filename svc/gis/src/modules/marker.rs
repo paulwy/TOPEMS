@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,7 +39,7 @@ pub async fn list_map_markers(State(pool): State<PgPool>) -> Json<ApiResponse<se
             }),
             "获取地图标记列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -76,7 +76,7 @@ pub async fn create_map_marker(
     .await
     {
         Ok(marker) => Json(ApiResponse::success(marker, "创建地图标记成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
     }
 }
 
@@ -91,7 +91,7 @@ pub async fn get_map_marker(
     {
         Ok(marker) => Json(ApiResponse::success(marker, "获取地图标记成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图标记未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -132,7 +132,7 @@ pub async fn update_map_marker(
     {
         Ok(marker) => Json(ApiResponse::success(marker, "更新地图标记成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图标记未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
 
@@ -159,7 +159,7 @@ pub async fn delete_map_marker(
                 Json(ApiResponse::error(404, "地图标记未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
     }
 }
 

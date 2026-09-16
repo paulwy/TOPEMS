@@ -12,3 +12,6 @@ export type { FilterChipProps } from './FilterChip';
 
 export { TrendLine } from './TrendLine';
 export type { TrendLineProps } from './TrendLine';
+
+export { Pagination } from './Pagination';
+export type { PaginationProps } from './Pagination';

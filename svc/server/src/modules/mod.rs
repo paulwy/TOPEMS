@@ -12,6 +12,8 @@
 // [V2026.08 已合并] aps_real_module 已移除（aps 合并至 mes，由 module-mes 承载）
 #[cfg(feature = "module-advanced")]
 pub mod analytics_real_module;
+#[cfg(feature = "module-communication")]
+pub mod communication_real_module;
 #[cfg(feature = "module-crm")]
 pub mod crm_real_module;
 pub mod dashboard_module;
@@ -27,14 +29,22 @@ pub mod finance_real_module;
 pub mod gis_real_module;
 #[cfg(feature = "module-hrm")]
 pub mod hrm_real_module;
+#[cfg(feature = "module-integration")]
+pub mod integration_real_module;
 #[cfg(feature = "module-lims")]
 pub mod lims_real_module;
+#[cfg(feature = "module-mobile")]
+pub mod mobile_real_module;
 #[cfg(feature = "module-advanced")]
 pub mod master_data_real_module;
 #[cfg(feature = "module-mes")]
 pub mod mes_real_module;
+#[cfg(feature = "module-monitor")]
+pub mod monitor_real_module;
 #[cfg(feature = "module-pm")]
 pub mod pm_real_module;
+#[cfg(feature = "module-plugin-registry")]
+pub mod plugin_registry_real_module;
 #[cfg(feature = "module-portal")]
 pub mod portal_real_module;
 #[cfg(feature = "module-qms")]
@@ -44,6 +54,8 @@ pub mod rd_real_module;
 pub mod real_service_adapter;
 #[cfg(feature = "module-scm")]
 pub mod scm_real_module;
+#[cfg(feature = "module-search")]
+pub mod search_real_module;
 #[cfg(feature = "module-srm")]
 pub mod srm_real_module;
 #[cfg(feature = "module-subscription")]
@@ -55,3 +67,6 @@ pub mod tms_real_module;
 
 #[cfg(feature = "module-wms")]
 pub mod wms_real_module;
+
+#[cfg(feature = "module-core")]
+pub mod unified_core_real_module;

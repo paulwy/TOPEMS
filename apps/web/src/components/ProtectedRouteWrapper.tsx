@@ -13,7 +13,8 @@ interface ProtectedRouteWrapperProps {
 const ProtectedRouteWrapper: React.FC<ProtectedRouteWrapperProps> = ({ route, children }) => {
   const permissions = route.requiredPermissions || [];
   const hasModuleGate = route.module && route.action;
-  const v3Enabled = isUIV3Enabled();
+  // 临时修复：强制使用 V3 布局
+  const v3Enabled = true;
 
   const renderContent = (withLayout: boolean) => {
     // V3 布局：使用 AdaptiveLayout（GlobalLayoutV3 / MobileLayoutV3）

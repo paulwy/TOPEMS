@@ -3057,7 +3057,7 @@ TOPEMS 服务管理工具
   build <服务> [--online|--offline|--dev]  编译服务
   build-all [选项]        全量编译所有服务（后端+前端）
                             --prepare         先刷新 sqlx 缓存（需要 DATABASE_URL）
-                            --only-core       只编核心服务（iam finance erp scm srm crm）
+                            --only-core       只编核心服务（iam=unified-core）
                             --online          强制在线编译（无缓存也可）
                             --offline         强制离线编译（失败立即停止）
                             --dev|--debug     编 debug 版（默认 release）

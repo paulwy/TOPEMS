@@ -21,3 +21,12 @@ export type { TabsProps, TabItem } from './Tabs';
 
 export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
+
+export { Avatar } from './Avatar';
+export type { AvatarProps, AvatarSize, AvatarStatus, AvatarVariant } from './Avatar';
+
+export { FileUpload } from './FileUpload';
+export type { FileUploadProps, UploadFile } from './FileUpload';
+
+export { DateRangePicker, defaultPresets } from './DateRangePicker';
+export type { DateRangePickerProps, DateRange } from './DateRangePicker';

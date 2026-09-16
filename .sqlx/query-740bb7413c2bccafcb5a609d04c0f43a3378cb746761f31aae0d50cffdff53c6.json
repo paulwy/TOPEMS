@@ -1,1 +1,0 @@
-{"db_name":"PostgreSQL","query":"\n            SELECT COUNT(*) as count\n            FROM tenant_permissions\n            WHERE deleted_at IS NULL\n            ","describe":{"columns":[{"ordinal":0,"name":"count","type_info":"Int8"}],"parameters":{"Left":[]},"nullable":[true]},"hash":"740bb7413c2bccafcb5a609d04c0f43a3378cb746761f31aae0d50cffdff53c6"}

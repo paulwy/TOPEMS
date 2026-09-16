@@ -18,13 +18,12 @@ import {
   Divider,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { Sun, Moon, Sparkles, Monitor, Check } from 'lucide-react';
+import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { useThemeStore, getThemeList, type Theme, THEME_ICON_KEYS } from '@/store';
 
 const THEME_ICON_COMPONENTS: Record<Theme, React.ReactNode> = {
   light: <Sun style={{ width: 18, height: 18 }} />,
   dark: <Moon style={{ width: 18, height: 18 }} />,
-  cyberpunk: <Sparkles style={{ width: 18, height: 18 }} />,
   system: <Monitor style={{ width: 18, height: 18 }} />,
 };
 
@@ -40,11 +39,6 @@ const THEME_LABEL_KEYS: Record<Theme, { iconKey: string; title: string; selectTh
   dark: {
     iconKey: 'components.theme_selector.k1',
     title: 'components.theme_selector.k1',
-    selectTheme: 'components.theme_selector.k4',
-  },
-  cyberpunk: {
-    iconKey: 'components.theme_selector.k2',
-    title: 'components.theme_selector.k2',
     selectTheme: 'components.theme_selector.k4',
   },
   system: {
@@ -107,7 +101,6 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
             width: 36,
             height: 36,
             '&:hover': { bgcolor: 'action.hover' },
-            color: theme === 'cyberpunk' ? 'primary.main' : 'inherit',
           }}
           size='small'
         >

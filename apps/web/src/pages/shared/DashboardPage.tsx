@@ -23,6 +23,7 @@ import {
   Badge,
   Button,
   Card,
+  DateRangePicker,
   EmptyState,
   Input,
   PageHeader,
@@ -32,6 +33,7 @@ import {
   Tabs,
   Tag,
 } from '@/components/redesign';
+import type { DateRange } from '@/components/redesign';
 import { getDashboard } from '@/api/bff';
 import i18n from '@/i18n';
 
@@ -121,6 +123,8 @@ const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [timeRange, setTimeRange] = useState('24h');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
+  const [showCustomRange, setShowCustomRange] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...QUERY_KEY, timeRange],
@@ -684,13 +688,66 @@ const DashboardPage: React.FC = () => {
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
+          alignItems: 'flex-end',
           marginBottom: 'var(--space-3)',
+          gap: 'var(--space-3)',
+          flexWrap: 'wrap',
         }}
       >
+        {showCustomRange && (
+          <div style={{ width: 320 }}>
+            <DateRangePicker
+              value={customDateRange}
+              onChange={setCustomDateRange}
+              presets={[
+                {
+                  label: '今天',
+                  value: () => {
+                    const d = new Date().toISOString().split('T')[0];
+                    return { start: d, end: d };
+                  },
+                },
+                {
+                  label: '最近7天',
+                  value: () => {
+                    const e = new Date();
+                    const s = new Date();
+                    s.setDate(s.getDate() - 7);
+                    return {
+                      start: s.toISOString().split('T')[0],
+                      end: e.toISOString().split('T')[0],
+                    };
+                  },
+                },
+                {
+                  label: '最近30天',
+                  value: () => {
+                    const e = new Date();
+                    const s = new Date();
+                    s.setDate(s.getDate() - 30);
+                    return {
+                      start: s.toISOString().split('T')[0],
+                      end: e.toISOString().split('T')[0],
+                    };
+                  },
+                },
+              ]}
+            />
+          </div>
+        )}
         <Select
           value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
-          options={timeRangeOptions}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === 'custom') {
+              setShowCustomRange(true);
+            } else {
+              setShowCustomRange(false);
+              setCustomDateRange(undefined);
+              setTimeRange(val);
+            }
+          }}
+          options={[...timeRangeOptions, { value: 'custom', label: '自定义范围' }]}
           style={{ width: 160 }}
         />
       </div>

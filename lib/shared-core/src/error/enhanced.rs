@@ -383,15 +383,38 @@ impl ErrorStatistics {
     }
 }
 
-/// Axum IntoResponse implementation for TopemsError
-///
-/// V184 统一错误体：使用 ErrorPayload 替代历史私有 ErrorResponse 结构。
-/// 解决 code 类型不一致（string vs number）、缺少 timestamp/data 等问题。
-impl axum::response::IntoResponse for TopemsError {
-    fn into_response(self) -> axum::response::Response {
+impl TopemsError {
+    /// 收敛内部错误：`context`（业务上下文）与底层细节**只进服务端日志**，
+    /// 客户端只会收到 [`TopemsError::classify`] 输出的通用文案「内部服务器错误」。
+    ///
+    /// 这是替代历史泄露写法的标准姿势：
+    ///
+    /// ```ignore
+    /// // ❌ 迁移前：sqlx 原始错误（含表名/列名/SQL 片段）直接回给客户端
+    /// Err(e) => Json(ApiResponse::error(500, &format!("查询设备失败: {}", e))),
+    ///
+    /// // ✅ 迁移后：上下文进日志，客户端只收到通用文案
+    /// Err(e) => Json(ApiResponse::from(TopemsError::internal("查询设备失败", e))),
+    /// ```
+    ///
+    /// 需要 `?` 风格的等价写法见 [`ErrorContext::with_context`]。
+    pub fn internal<E: std::fmt::Display>(context: &str, error: E) -> Self {
+        Self::Internal(format!("{}: {}", context, error))
+    }
+
+    /// 错误分类：`(HTTP 状态码, 面向客户端的消息, 机器可读错误码)`
+    ///
+    /// **单一映射源**：`IntoResponse`、`ApiResponse::from`、错误日志均复用本方法，
+    /// 新增错误变体只需在这里补充一次。
+    ///
+    /// 安全约定（重要）：涉及内部实现的变体（数据库 / IO / 序列化 / Redis / 内部错误）
+    /// 只在服务端 `tracing::error!` 记录细节，**返回给客户端的 message 不含内部细节**。
+    /// 新增变体时必须遵守该约定，参见 `test_classify_does_not_leak_internal_details`。
+    #[must_use]
+    pub fn classify(&self) -> (axum::http::StatusCode, String, Option<String>) {
         use axum::http::StatusCode;
 
-        let (status, message, error_code) = match &self {
+        match self {
             TopemsError::DatabaseConnection(msg) => {
                 tracing::error!("数据库连接错误: {}", msg);
                 (
@@ -638,7 +661,18 @@ impl axum::response::IntoResponse for TopemsError {
                     Some("REDIS_ERROR".to_string()),
                 )
             }
-        };
+        }
+    }
+}
+
+/// Axum `IntoResponse` implementation for `TopemsError`
+///
+/// V184 统一错误体：使用 `ErrorPayload` 替代历史私有 `ErrorResponse` 结构。
+/// 解决 code 类型不一致（string vs number）、缺少 timestamp/data 等问题。
+/// 映射逻辑统一复用 [`TopemsError::classify`]，不再在此重复。
+impl axum::response::IntoResponse for TopemsError {
+    fn into_response(self) -> axum::response::Response {
+        let (status, message, error_code) = self.classify();
 
         let http_code = status.as_u16();
         let mut payload = crate::response::ErrorPayload::new(http_code, &message);
@@ -646,6 +680,51 @@ impl axum::response::IntoResponse for TopemsError {
             payload = payload.with_error_code(&ec);
         }
         (status, axum::Json(payload)).into_response()
+    }
+}
+
+// =============================================================================
+// V517 统一错误出口（落地脚手架）
+// =============================================================================
+// 目标契约（详见 docs/architecture/unified-error-handling-decision.md）：
+//
+//   service / 业务层 : Result<T, TopemsError>
+//   handler   层     : ApiResult<T>            ← 新别名，`?` 一站式收敛
+//   main / bootstrap : anyhow 允许（进程边界，直接 panic/退出）
+//
+// 两者都是**纯加法**，不改变任何既有行为，存量代码可逐个文件迁移。
+// =============================================================================
+
+/// handler 层推荐返回类型。
+///
+/// 成功 → `ApiResponse` 信封（既有前端契约不变）
+/// 失败 → `TopemsError`，由 `IntoResponse` 输出 V184 `ErrorPayload`
+///        （含 `errorCode` 机器可读码，且**不泄露内部错误细节**）
+///
+/// 命名说明：不叫 `ApiResult` —— `svc/portal/src/modules/adaptive_execution.rs`
+/// 已有一个语义不同的 `ApiResult<T>` 结构体（成功信封），避免"一名两义"。
+///
+/// 用法：
+/// ```ignore
+/// pub async fn get_receivable(...) -> HandlerResult<Value> {
+///     let data = service.get_receivable(id).await?;   // TopemsError 自动上抛
+///     Ok(Json(ApiResponse::success(data, "查询成功")))
+/// }
+/// ```
+pub type HandlerResult<T> = StdResult<axum::Json<crate::response::ApiResponse<T>>, TopemsError>;
+
+/// `TopemsError` → `ApiResponse` 桥接。
+///
+/// 用于**不改函数签名**的最小改动路径：把
+/// `ApiResponse::error(500, &format!("查询失败: {}", e))`（会泄露 SQL 细节）
+/// 换成 `ApiResponse::from(TopemsError::from(e))`。
+///
+/// 注意：`ApiResponse` 没有 `errorCode` 字段，走本路径会丢失机器可读错误码。
+/// 需要 `errorCode` 时请把 handler 返回类型改为 [`HandlerResult`]。
+impl<T> From<TopemsError> for crate::response::ApiResponse<T> {
+    fn from(error: TopemsError) -> Self {
+        let (status, message, _error_code) = error.classify();
+        crate::response::ApiResponse::error(status.as_u16(), &message)
     }
 }
 
@@ -1158,5 +1237,184 @@ mod tests {
         let val: Option<String> = Some("hello".to_string());
         let r = SafeErrorHandler::safe_unwrap_option(val, "missing");
         assert_eq!(r.unwrap(), "hello");
+    }
+
+    // ---------- classify() 单一映射源（V517 统一错误出口）----------
+    #[test]
+    fn test_classify_status_and_error_code() {
+        use axum::http::StatusCode;
+
+        let cases: Vec<(TopemsError, StatusCode, &str)> = vec![
+            (
+                TopemsError::DatabaseRecordNotFound("x".to_string()),
+                StatusCode::NOT_FOUND,
+                "NOT_FOUND",
+            ),
+            (
+                TopemsError::AuthenticationFailed("x".to_string()),
+                StatusCode::UNAUTHORIZED,
+                "AUTHENTICATION_FAILED",
+            ),
+            (
+                TopemsError::PermissionDenied {
+                    required: "perm".to_string(),
+                },
+                StatusCode::FORBIDDEN,
+                "PERMISSION_DENIED",
+            ),
+            (
+                TopemsError::ValidationFailed("x".to_string()),
+                StatusCode::BAD_REQUEST,
+                "VALIDATION_FAILED",
+            ),
+            (
+                TopemsError::ResourceAlreadyExists("x".to_string()),
+                StatusCode::CONFLICT,
+                "RESOURCE_ALREADY_EXISTS",
+            ),
+            (
+                TopemsError::DatabaseQuery("x".to_string()),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "DATABASE_QUERY_ERROR",
+            ),
+        ];
+
+        for (err, want_status, want_code) in cases {
+            let (status, _msg, code) = err.classify();
+            assert_eq!(status, want_status, "状态码不符: {:?}", err);
+            assert_eq!(code.as_deref(), Some(want_code), "错误码不符: {:?}", err);
+        }
+    }
+
+    /// 关键安全约束：内部类错误的客户端消息**不得**回显内部细节。
+    ///
+    /// 背景：svc 层历史上有 700 处 `ApiResponse::error(500, &format!("... {}", e))`
+    /// 直接把 sqlx/IO 原始错误回给客户端（含表名、列名、SQL 片段）。
+    /// 迁移到 TopemsError 后必须保持"细节只进日志"的行为，此测试为回归防线。
+    /// 每个变体的**源错误本身都携带 SECRET**，因此能真实检验是否被回显。
+    #[test]
+    fn test_classify_does_not_leak_internal_details() {
+        const SECRET: &str = "relation \"iam.users\" does not exist";
+
+        let internal_variants = vec![
+            // 字符串载体变体
+            TopemsError::DatabaseQuery(SECRET.to_string()),
+            TopemsError::DatabaseConnection(SECRET.to_string()),
+            TopemsError::DatabaseTransaction(SECRET.to_string()),
+            TopemsError::Internal(SECRET.to_string()),
+            TopemsError::Unknown(SECRET.to_string()),
+            TopemsError::Database(SECRET.to_string()),
+            TopemsError::CacheOperation(SECRET.to_string()),
+            // 类型化载体变体（Display 中同样含 SECRET）
+            TopemsError::Sql(sqlx::Error::ColumnNotFound(SECRET.to_string())),
+            TopemsError::Io(std::io::Error::other(SECRET)),
+            TopemsError::RedisError(redis::RedisError::from((
+                redis::ErrorKind::TypeError,
+                SECRET,
+            ))),
+            TopemsError::Serialization(
+                serde_json::from_str::<i32>(&format!("\"{}\"", SECRET)).unwrap_err(),
+            ),
+        ];
+
+        for err in internal_variants {
+            let (status, msg, code) = err.classify();
+            assert!(
+                !msg.contains("iam.users"),
+                "内部细节泄露到客户端消息: {:?} → {}",
+                err,
+                msg
+            );
+            assert!(
+                !msg.contains(SECRET),
+                "内部细节泄露到客户端消息: {:?} → {}",
+                err,
+                msg
+            );
+            assert_eq!(
+                status,
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "内部错误应映射为 500: {:?}",
+                err
+            );
+            assert!(code.is_some(), "内部错误应带机器可读错误码: {:?}", err);
+        }
+    }
+
+    // ---------- TopemsError::internal 构造器 ----------
+    /// 迁移主力工具：业务上下文与底层细节**进日志**，客户端只收到通用文案。
+    #[test]
+    fn internal_keeps_context_in_display_but_not_in_client_message() {
+        const SECRET: &str = "relation \"gis.device\" does not exist";
+        let err = TopemsError::internal("查询设备失败", SECRET);
+
+        // Display（tracing 日志用）保留业务上下文 + 底层细节，可诊断性不降级
+        let shown = err.to_string();
+        assert!(
+            shown.contains("查询设备失败"),
+            "日志应保留业务上下文: {}",
+            shown
+        );
+        assert!(shown.contains(SECRET), "日志应保留底层细节: {}", shown);
+
+        // 面向客户端的消息不得包含任何内部细节
+        let (status, msg, code) = err.classify();
+        assert_eq!(status, axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(msg, "内部服务器错误");
+        assert!(!msg.contains(SECRET) && !msg.contains("gis.device"));
+        assert_eq!(code.as_deref(), Some("INTERNAL_ERROR"));
+    }
+
+    #[test]
+    fn internal_accepts_any_display_error() {
+        // 类型化错误（sqlx::Error）同样可用；无需为每种错误源写 From 实现
+        let err = TopemsError::internal(
+            "查询失败",
+            sqlx::Error::ColumnNotFound("device_code".to_string()),
+        );
+        assert!(matches!(err, TopemsError::Internal(_)));
+        assert!(err.to_string().contains("device_code"));
+    }
+
+    // ---------- HandlerResult / ApiResponse 桥接 ----------
+    #[test]
+    fn test_api_response_from_topems_error_maps_status() {
+        use crate::response::ApiResponse;
+
+        let resp: ApiResponse<serde_json::Value> = ApiResponse::from(
+            TopemsError::DatabaseRecordNotFound("单号不存在".to_string()),
+        );
+        assert!(!resp.success);
+        assert_eq!(resp.code, 404);
+        assert_eq!(resp.message, "单号不存在");
+        assert!(resp.data.is_none());
+
+        let resp: ApiResponse<serde_json::Value> = ApiResponse::from(TopemsError::DatabaseQuery(
+            "SELECT * FROM users".to_string(),
+        ));
+        assert!(!resp.success);
+        assert_eq!(resp.code, 500);
+        assert!(
+            !resp.message.contains("SELECT"),
+            "桥接路径同样不得泄露内部细节: {}",
+            resp.message
+        );
+    }
+
+    #[test]
+    fn test_handler_result_is_usable_as_handler_return() {
+        // 编译期契约：HandlerResult<T> 必须能承载 Json<ApiResponse<T>> 与 TopemsError
+        fn handler_ok() -> HandlerResult<serde_json::Value> {
+            Ok(axum::Json(crate::response::ApiResponse::success(
+                serde_json::json!({"ok": true}),
+                "成功",
+            )))
+        }
+        fn handler_err() -> HandlerResult<serde_json::Value> {
+            Err(TopemsError::NotFound("不存在".to_string()))
+        }
+
+        assert!(handler_ok().is_ok());
+        assert!(handler_err().is_err());
     }
 }

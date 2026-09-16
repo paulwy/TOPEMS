@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +38,7 @@ pub async fn list_location_photos(
             }),
             "获取位置照片列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -53,7 +53,7 @@ pub async fn get_location_photo(
     {
         Ok(photo) => Json(ApiResponse::success(photo, "获取位置照片成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "位置照片未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -83,7 +83,7 @@ pub async fn create_location_photo(
     .await
     {
         Ok(photo) => Json(ApiResponse::success(photo, "创建位置照片成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
     }
 }
 
@@ -110,7 +110,7 @@ pub async fn delete_location_photo(
                 Json(ApiResponse::error(404, "位置照片未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
     }
 }
 
@@ -132,7 +132,7 @@ pub async fn list_location_photos_by_map(
             }),
             "获取位置照片列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 

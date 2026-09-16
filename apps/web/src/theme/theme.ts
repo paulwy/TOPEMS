@@ -5,7 +5,6 @@ import { zhCN } from '@mui/material/locale';
 import i18n from '@/i18n';
 import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
-import { injectCyberpunkComponentStyles } from './animations/cyberpunk.css';
 
 declare module '@mui/material/styles' {
   interface Theme {
@@ -133,75 +132,6 @@ const lightShadows = [...Array(24)].map((_, i) => {
  * - 强调色：霓虹金（#ffd700）
  * - 玻璃态：半透明 + backdrop-filter 组合
  */
-const CYBERPUNK_COLORS = {
-  background: {
-    default: '#0a0a1a',
-    paper: 'rgba(26, 26, 46, 0.90)',
-    elevated: 'rgba(26, 26, 46, 0.95)',
-  },
-  text: {
-    primary: '#e6f1ff',
-    secondary: '#8892b0',
-    muted: '#64748b',
-    disabled: 'rgba(230, 241, 255, 0.40)',
-  },
-  border: {
-    default: 'rgba(0, 255, 255, 0.20)',
-  },
-  primary: {
-    main: '#00ffff',
-    light: '#7dd3fc',
-    dark: '#0284c7',
-    contrastText: '#0a0a1a',
-    50: 'rgba(0, 255, 255, 0.05)',
-    100: 'rgba(0, 255, 255, 0.10)',
-    200: 'rgba(0, 255, 255, 0.20)',
-    300: 'rgba(0, 255, 255, 0.35)',
-    400: 'rgba(0, 255, 255, 0.50)',
-    500: '#00ffff',
-    600: '#0ea5e9',
-    700: '#0284c7',
-    800: '#0369a1',
-    900: '#0c4a6e',
-  },
-  secondary: {
-    main: '#ff00ff',
-    light: '#ff5fff',
-    dark: '#c800c8',
-    contrastText: '#ffffff',
-    50: 'rgba(255, 0, 255, 0.05)',
-    100: 'rgba(255, 0, 255, 0.10)',
-    200: 'rgba(255, 0, 255, 0.20)',
-    300: 'rgba(255, 0, 255, 0.35)',
-    400: 'rgba(255, 0, 255, 0.50)',
-    500: '#ff00ff',
-    600: '#d900d9',
-    700: '#b300b3',
-    800: '#8c008c',
-    900: '#660066',
-  },
-  warning: {
-    main: '#ffd700',
-    light: '#fcd34d',
-    dark: '#f59e0b',
-  },
-  error: {
-    main: '#ff4444',
-    light: '#f87171',
-    dark: '#dc2626',
-  },
-  success: {
-    main: '#00ff88',
-    light: '#4ade80',
-    dark: '#22c55e',
-  },
-  info: {
-    main: '#00aaff',
-    light: '#38bdf8',
-    dark: '#0284c7',
-  },
-} as const;
-
 const customShadowsLight = {
   card: designTokens.shadows.sm,
   dropdown: designTokens.shadows.lg,
@@ -219,19 +149,10 @@ const customShadowsDark = {
   focus: `0 0 0 2px ${designTokens.colors.grey[950]}, 0 0 0 4px ${designTokens.colors.primary[400]}`,
 };
 
-const customShadowsCyberpunk = {
-  card: `0 4px 24px rgba(0, 0, 0, 0.30), 0 0 20px rgba(0, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08)`,
-  dropdown: `0 8px 32px rgba(0, 0, 0, 0.50), 0 0 24px rgba(0, 255, 255, 0.12)`,
-  dialog: `0 24px 64px rgba(0, 0, 0, 0.60), 0 0 40px rgba(0, 255, 255, 0.15)`,
-  focus: '0 0 0 3px rgba(0, 255, 255, 0.25)',
-  dangerButton: designTokens.neonShadows.red.md,
-  dangerButtonHover: '0 6px 18px rgba(255, 68, 68, 0.55)',
-};
-
 /**
  * 基础 palette 生成（shared typography/shape/spacing/zIndex/gradients 独立于 mode）
  * palette.mode 只决定 MUI 组件内置的深色样式规则切换（.Mui-selected 背景色等）
- * —— 自定义组件通过 theme.applyStyles('dark', {...}) / [data-theme='cyberpunk'] 实现多态
+ * —— 自定义组件通过 theme.applyStyles('dark', {...}) 实现多态
  */
 export const createCustomTheme = (): Theme => {
   return createTheme(
@@ -306,25 +227,6 @@ export const createCustomTheme = (): Theme => {
             },
             divider: designTokens.colors.grey[700],
             grey: designTokens.colors.grey,
-          },
-        },
-        cyberpunk: {
-          palette: {
-            mode: 'dark',
-            primary: CYBERPUNK_COLORS.primary,
-            secondary: CYBERPUNK_COLORS.secondary,
-            success: CYBERPUNK_COLORS.success,
-            warning: CYBERPUNK_COLORS.warning,
-            error: CYBERPUNK_COLORS.error,
-            info: CYBERPUNK_COLORS.info,
-            background: CYBERPUNK_COLORS.background,
-            text: CYBERPUNK_COLORS.text,
-            divider: CYBERPUNK_COLORS.border.default,
-            accent: {
-              main: '#ffd700',
-              light: '#fcd34d',
-              dark: '#f59e0b',
-            },
           },
         },
         // MUI v5 类型只声明 light/dark，任意字符串键在运行时均支持
@@ -1053,13 +955,6 @@ export const createCustomTheme = (): Theme => {
             },
           },
         },
-        // 赛博朋克主题组件样式（通过全局 CSS 注入，避免重复定义组件）
-        MuiCssBaseline: {
-          styleOverrides: () => {
-            injectCyberpunkComponentStyles();
-            return {};
-          },
-        },
         // Localised table pagination display text (overrides MUI default labels)
         MuiTablePagination: {
           defaultProps: {
@@ -1096,10 +991,8 @@ export default createCustomTheme;
  *
  * - light: 基础 shadows（写入 theme.customShadows）
  * - dark: 暗色调 shadows（应用于 dark 模式）
- * - cyberpunk: 赛博朋克霓虹阴影（应用于 data-theme=cyberpunk）
  */
 export const themeCustomShadows = {
   light: customShadowsLight,
   dark: customShadowsDark,
-  cyberpunk: customShadowsCyberpunk,
 } as const;

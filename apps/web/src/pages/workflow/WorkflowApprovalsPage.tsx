@@ -23,6 +23,7 @@ import {
   Input,
   ListPageTemplate,
   Modal,
+  Pagination,
   Select,
   Tabs,
   Tag,
@@ -82,6 +83,8 @@ const WorkflowApprovalsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ApprovalTask | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -262,6 +265,15 @@ const WorkflowApprovalsPage: React.FC = () => {
     }
     return result;
   }, [tasks, activeTab, priorityFilter, debouncedSearch]);
+
+  // 分页数据计算
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / pageSize));
+  const pagedTasks = filteredTasks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // 筛选变化时重置页码
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, priorityFilter, debouncedSearch]);
 
   const pendingCount = tasks.filter((t) => t.status === 'pending').length;
   const tabsWithBadge = tabsConfig.map((t) =>
@@ -466,7 +478,7 @@ const WorkflowApprovalsPage: React.FC = () => {
           </>
         }
         columns={columns}
-        data={filteredTasks}
+        data={pagedTasks}
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
@@ -487,6 +499,24 @@ const WorkflowApprovalsPage: React.FC = () => {
           onChange={(id) => setActiveTab(id as TabType)}
         />
       </ListPageTemplate>
+
+      {filteredTasks.length > 0 && (
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <Pagination
+            current={currentPage}
+            total={totalPages}
+            pageSize={pageSize}
+            totalItems={filteredTasks.length}
+            onChange={setCurrentPage}
+            showSizeChanger
+            pageSizeOptions={[10, 20, 50]}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
 
       {/* 审批详情抽屉 */}
       <Drawer

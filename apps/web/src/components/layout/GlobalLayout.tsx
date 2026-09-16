@@ -43,8 +43,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
   const toggleSidebarCollapsed = useUIStore((state) => state.toggleSidebarCollapsed);
-  const currentTheme = useThemeStore((state) => state.theme);
-  const isCyberpunk = currentTheme === 'cyberpunk';
 
   const muiTheme = useTheme();
   const { isMobile, isTablet, isTabletNarrow } = useResponsive();
@@ -276,22 +274,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         showCentralNav
         checkPermission={checkPermission}
       />
-
-      {/* 赛博朋克 HUD 装饰元素 — 仅在 cyberpunk 主题下渲染 */}
-      {isCyberpunk && (
-        <>
-          {/* 顶部 HUD 状态扫描线 */}
-          <Box
-            className='cyber-hud-statusbar'
-            aria-hidden='true'
-          />
-          {/* 右下角 HUD 数据流指示 */}
-          <Box
-            className='cyber-hud-datastream'
-            aria-hidden='true'
-          />
-        </>
-      )}
 
       <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
         {/* Sidebar：平板端（sm-md = 600px-1199px）持久化显示，窄平板（sm = 600-899px）自动折叠为图标栏 */}

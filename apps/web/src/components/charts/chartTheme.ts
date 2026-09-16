@@ -140,26 +140,7 @@ interface ChartThemeColors {
 
 export const useChartTheme = (): ChartThemeColors => {
   const theme = useTheme();
-  const storeTheme = useThemeStore((state) => state.theme);
   const isDark = theme.palette.mode === 'dark';
-  const isCyberpunk = storeTheme === 'cyberpunk';
-
-  // 赛博朋克模式优先级最高
-  if (isCyberpunk) {
-    return {
-      gridColor: BIChartColors.cyberpunk.grid,
-      textColor: BIChartColors.cyberpunk.text,
-      tooltipBg: BIChartColors.cyberpunk.background,
-      borderColor: BIChartColors.cyberpunk.border,
-      primary: 'var(--cyber-color-cyan)',
-      secondary: 'var(--cyber-color-magenta)',
-      success: 'var(--cyber-color-green)',
-      warning: 'var(--cyber-color-gold)',
-      error: 'var(--cyber-color-danger)',
-      info: 'var(--cyber-color-blue)',
-      series: BIChartColors.cyberpunk.series,
-    };
-  }
 
   return {
     gridColor: isDark ? BIChartColors.neutral.gridDark : BIChartColors.neutral.grid,

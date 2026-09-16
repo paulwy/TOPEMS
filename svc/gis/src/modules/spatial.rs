@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -109,7 +109,7 @@ pub async fn buffer_analysis(
             }),
             "缓冲区分析完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("保存分析结果失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("保存分析结果失败", e))),
     }
 }
 
@@ -476,7 +476,7 @@ pub async fn nearest_query(
                 "最近邻查询完成",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 

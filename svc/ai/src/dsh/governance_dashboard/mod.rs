@@ -766,14 +766,31 @@ impl GovernanceDashboardGenerator {
 
     /// 生成风险评估
     fn generate_risk_assessment(&self) -> RiskAssessment {
+        // 优先从真实数据计算风险评估；无真实数据时降级模拟
+        let security_events = self.security_events.lock();
+        let security_risk_score = if !security_events.is_empty() {
+            // 基于安全事件数量和严重程度计算风险分数
+            let critical_count = security_events.iter().filter(|e| e.severity == RiskLevel::Critical).count();
+            let high_count = security_events.iter().filter(|e| e.severity == RiskLevel::High).count();
+            let medium_count = security_events.iter().filter(|e| e.severity == RiskLevel::Medium).count();
+            let score = (critical_count * 30 + high_count * 15 + medium_count * 5) as f64;
+            score.min(100.0)
+        } else {
+            15.0 // 模拟数据
+        };
+
         let security_risk = RiskDimension {
-            level: RiskLevel::Low,
-            score: 15.0,
-            description: "安全状况良好，无重大安全事件".to_string(),
+            level: RiskLevel::from_score(security_risk_score),
+            score: round2(security_risk_score),
+            description: if !security_events.is_empty() {
+                format!("检测到 {} 个安全事件", security_events.len())
+            } else {
+                "安全状况良好，无重大安全事件".to_string()
+            },
             factors: vec![
+                format!("安全事件总数：{}", security_events.len()),
                 "输入校验覆盖率 95%".to_string(),
                 "输出脱敏启用".to_string(),
-                "速率限制正常".to_string(),
             ],
         };
 
@@ -787,18 +804,63 @@ impl GovernanceDashboardGenerator {
             ],
         };
 
+        // 成本风险：从 CostMeter 获取真实成本数据
+        let cost_risk_score = if let Some(stats) = self
+            .cost_meter
+            .as_ref()
+            .and_then(|m| m.get_global_statistics_blocking())
+        {
+            if stats.total_calls > 0 {
+                // 基于总成本计算风险分数（示例：成本越高风险越高）
+                let total_cost = stats.total_input_tokens as f64 * 0.000002 + stats.total_output_tokens as f64 * 0.000006;
+                (total_cost / 1000.0).min(100.0)
+            } else {
+                20.0
+            }
+        } else {
+            20.0 // 模拟数据
+        };
+
         let cost_risk = RiskDimension {
-            level: RiskLevel::Low,
-            score: 20.0,
-            description: "成本在预算范围内".to_string(),
+            level: RiskLevel::from_score(cost_risk_score),
+            score: round2(cost_risk_score),
+            description: if cost_risk_score < 30.0 {
+                "成本在预算范围内".to_string()
+            } else {
+                "成本超出预算，请检查".to_string()
+            },
             factors: vec!["预算使用率 65%".to_string(), "成本趋势稳定".to_string()],
         };
 
+        // 性能风险：从 CostMeter 获取真实性能数据
+        let performance_risk_score = if let Some(stats) = self
+            .cost_meter
+            .as_ref()
+            .and_then(|m| m.get_global_statistics_blocking())
+        {
+            if stats.total_calls > 0 {
+                // 基于成功率计算风险分数（成功率越低风险越高）
+                let success_rate = stats.successful_calls as f64 / stats.total_calls as f64 * 100.0;
+                (100.0 - success_rate) * 2.0
+            } else {
+                18.0
+            }
+        } else {
+            18.0 // 模拟数据
+        };
+
         let performance_risk = RiskDimension {
-            level: RiskLevel::Low,
-            score: 18.0,
-            description: "性能表现良好".to_string(),
-            factors: vec!["P95 响应时间 580ms".to_string(), "成功率 98.8%".to_string()],
+            level: RiskLevel::from_score(performance_risk_score),
+            score: round2(performance_risk_score),
+            description: if performance_risk_score < 20.0 {
+                "性能表现良好".to_string()
+            } else {
+                "性能表现待优化".to_string()
+            },
+            factors: vec![
+                format!("平均响应时间 {:.0}ms", stats_average_duration(&self)),
+                format!("成功率 {:.1}%", stats_success_rate(&self)),
+            ],
         };
 
         let data_risk = RiskDimension {
@@ -819,26 +881,44 @@ impl GovernanceDashboardGenerator {
             / 5.0;
         let overall_risk_level = RiskLevel::from_score(overall_score);
 
-        let high_risk_items = vec![
-            RiskItem {
-                risk_id: "risk_001".to_string(),
-                category: "数据治理".to_string(),
-                description: "敏感数据分类不完整，约 15% 的数据未正确分类".to_string(),
-                level: RiskLevel::High,
-                impact: "可能导致数据泄露和合规风险".to_string(),
-                recommendation: "启用自动数据分类工具，定期审计数据分类".to_string(),
-                detected_at: chrono::Utc::now().to_rfc3339(),
-            },
-            RiskItem {
-                risk_id: "risk_002".to_string(),
-                category: "合规".to_string(),
-                description: "数据保留策略未完全符合 GDPR 要求".to_string(),
-                level: RiskLevel::Medium,
-                impact: "可能面临合规处罚".to_string(),
-                recommendation: "更新数据保留策略，设置自动过期机制".to_string(),
-                detected_at: chrono::Utc::now().to_rfc3339(),
-            },
-        ];
+        // 高风险项：从真实安全事件生成
+        let high_risk_items: Vec<RiskItem> = if !security_events.is_empty() {
+            security_events
+                .iter()
+                .filter(|e| e.severity == RiskLevel::Critical || e.severity == RiskLevel::High)
+                .take(5)
+                .map(|e| RiskItem {
+                    risk_id: e.event_id.clone(),
+                    category: "安全事件".to_string(),
+                    description: e.description.clone(),
+                    level: e.severity.clone(),
+                    impact: "可能导致安全事故".to_string(),
+                    recommendation: "立即调查并处理安全事件".to_string(),
+                    detected_at: e.occurred_at.clone(),
+                })
+                .collect()
+        } else {
+            vec![
+                RiskItem {
+                    risk_id: "risk_001".to_string(),
+                    category: "数据治理".to_string(),
+                    description: "敏感数据分类不完整，约 15% 的数据未正确分类".to_string(),
+                    level: RiskLevel::High,
+                    impact: "可能导致数据泄露和合规风险".to_string(),
+                    recommendation: "启用自动数据分类工具，定期审计数据分类".to_string(),
+                    detected_at: chrono::Utc::now().to_rfc3339(),
+                },
+                RiskItem {
+                    risk_id: "risk_002".to_string(),
+                    category: "合规".to_string(),
+                    description: "数据保留策略未完全符合 GDPR 要求".to_string(),
+                    level: RiskLevel::Medium,
+                    impact: "可能面临合规处罚".to_string(),
+                    recommendation: "更新数据保留策略，设置自动过期机制".to_string(),
+                    detected_at: chrono::Utc::now().to_rfc3339(),
+                },
+            ]
+        };
 
         RiskAssessment {
             overall_risk_level,
@@ -854,44 +934,100 @@ impl GovernanceDashboardGenerator {
 
     /// 生成合规状态
     fn generate_compliance_status(&self) -> ComplianceStatus {
+        // 优先从真实数据计算合规状态；无真实数据时降级模拟
+        let security_events = self.security_events.lock();
+        let audit_logs = self.audit_logs.lock();
+
+        let total_checks = audit_logs.len() as u64;
+        let failed_checks = security_events.len() as u64;
+        let passed_checks = if total_checks > failed_checks {
+            total_checks - failed_checks
+        } else {
+            0
+        };
+        let pending_checks = 0;
+
+        let overall_compliance_rate = if total_checks > 0 {
+            (passed_checks as f64 / total_checks as f64) * 100.0
+        } else {
+            87.0 // 模拟数据
+        };
+
         let frameworks = vec![
             ComplianceFramework {
                 name: "GDPR".to_string(),
                 description: "通用数据保护条例".to_string(),
-                compliance_rate: 82.0,
-                status: ComplianceFrameworkStatus::PartiallyCompliant,
+                compliance_rate: overall_compliance_rate,
+                status: if overall_compliance_rate >= 90.0 {
+                    ComplianceFrameworkStatus::Compliant
+                } else if overall_compliance_rate >= 70.0 {
+                    ComplianceFrameworkStatus::PartiallyCompliant
+                } else {
+                    ComplianceFrameworkStatus::NonCompliant
+                },
             },
             ComplianceFramework {
                 name: "SOC2".to_string(),
                 description: "服务组织控制 2 类".to_string(),
-                compliance_rate: 91.0,
-                status: ComplianceFrameworkStatus::Compliant,
+                compliance_rate: overall_compliance_rate,
+                status: if overall_compliance_rate >= 90.0 {
+                    ComplianceFrameworkStatus::Compliant
+                } else if overall_compliance_rate >= 70.0 {
+                    ComplianceFrameworkStatus::PartiallyCompliant
+                } else {
+                    ComplianceFrameworkStatus::NonCompliant
+                },
             },
             ComplianceFramework {
                 name: "ISO27001".to_string(),
                 description: "信息安全管理体系".to_string(),
-                compliance_rate: 88.0,
-                status: ComplianceFrameworkStatus::PartiallyCompliant,
+                compliance_rate: overall_compliance_rate,
+                status: if overall_compliance_rate >= 90.0 {
+                    ComplianceFrameworkStatus::Compliant
+                } else if overall_compliance_rate >= 70.0 {
+                    ComplianceFrameworkStatus::PartiallyCompliant
+                } else {
+                    ComplianceFrameworkStatus::NonCompliant
+                },
             },
         ];
 
-        let non_compliant_items = vec![NonCompliantItem {
-            item_id: "nc_001".to_string(),
-            framework: "GDPR".to_string(),
-            control: "数据保留".to_string(),
-            description: "用户数据保留时间超过规定期限".to_string(),
-            severity: RiskLevel::High,
-            remediation: "实施自动数据清理策略，设置保留期限".to_string(),
-            due_date: Some(chrono::Utc::now().to_rfc3339()),
-            status: "待整改".to_string(),
-        }];
+        // 不合规项：从真实安全事件生成
+        let non_compliant_items: Vec<NonCompliantItem> = if !security_events.is_empty() {
+            security_events
+                .iter()
+                .filter(|e| e.severity == RiskLevel::Critical || e.severity == RiskLevel::High)
+                .take(5)
+                .map(|e| NonCompliantItem {
+                    item_id: e.event_id.clone(),
+                    framework: "安全合规".to_string(),
+                    control: "安全事件".to_string(),
+                    description: e.description.clone(),
+                    severity: e.severity.clone(),
+                    remediation: "立即调查并处理安全事件".to_string(),
+                    due_date: Some(e.occurred_at.clone()),
+                    status: "待整改".to_string(),
+                })
+                .collect()
+        } else {
+            vec![NonCompliantItem {
+                item_id: "nc_001".to_string(),
+                framework: "GDPR".to_string(),
+                control: "数据保留".to_string(),
+                description: "用户数据保留时间超过规定期限".to_string(),
+                severity: RiskLevel::High,
+                remediation: "实施自动数据清理策略，设置保留期限".to_string(),
+                due_date: Some(chrono::Utc::now().to_rfc3339()),
+                status: "待整改".to_string(),
+            }]
+        };
 
         ComplianceStatus {
-            overall_compliance_rate: 87.0,
-            total_checks: 150,
-            passed_checks: 130,
-            failed_checks: 15,
-            pending_checks: 5,
+            overall_compliance_rate: round2(overall_compliance_rate),
+            total_checks: total_checks as u32,
+            passed_checks: passed_checks as u32,
+            failed_checks: failed_checks as u32,
+            pending_checks: pending_checks as u32,
             frameworks,
             non_compliant_items,
         }
@@ -971,6 +1107,40 @@ impl GovernanceDashboardGenerator {
 
     /// 生成审计摘要
     fn generate_audit_summary(&self) -> AuditSummary {
+        // 优先从真实审计日志数据统计；未注入/锁占用时降级模拟
+        let logs = self.audit_logs.lock();
+        if !logs.is_empty() {
+            let total_audit_logs = logs.len() as u64;
+
+            // 按操作类型统计
+            let mut by_operation = HashMap::new();
+            // 按用户统计
+            let mut by_user: HashMap<String, u64> = HashMap::new();
+            // 按资源类型统计
+            let mut by_resource_type = HashMap::new();
+
+            for log in logs.iter() {
+                *by_operation.entry(log.operation.clone()).or_insert(0) += 1;
+                *by_user.entry(log.user_id.clone()).or_insert(0) += 1;
+                *by_resource_type.entry(log.resource_type.clone()).or_insert(0) += 1;
+            }
+
+            // 按用户统计 Top 10
+            let mut by_user_vec: Vec<(String, u64)> = by_user.into_iter().collect();
+            by_user_vec.sort_by(|a, b| b.1.cmp(&a.1));
+            let by_user_top10: Vec<(String, u64)> = by_user_vec.into_iter().take(10).collect();
+
+            return AuditSummary {
+                total_audit_logs,
+                by_operation,
+                by_user_top10,
+                by_resource_type,
+                anomalous_operations: 0, // 真实统计不含异常操作，由调用方补充
+                unauthorized_attempts: 0, // 真实统计不含未授权尝试，由调用方补充
+            };
+        }
+
+        // 模拟数据（实际实现中会从真实数据源收集）
         let mut by_operation = HashMap::new();
         by_operation.insert("create".to_string(), 15000u64);
         by_operation.insert("read".to_string(), 85000u64);
@@ -1000,8 +1170,58 @@ impl GovernanceDashboardGenerator {
     }
 
     /// 生成趋势数据
-    fn generate_trends(&self, _time_range: TimeRange) -> Vec<TrendDataPoint> {
+    fn generate_trends(&self, time_range: TimeRange) -> Vec<TrendDataPoint> {
         let points = self.config.trend_data_points as usize;
+        let duration = time_range.duration();
+        let duration_hours = duration.as_secs() / 3600;
+        let interval_hours = (duration_hours / points as u64).max(1);
+
+        // 优先从审计日志提取趋势数据
+        let audit_logs = self.audit_logs.lock();
+        if !audit_logs.is_empty() {
+            let mut trends = Vec::with_capacity(points);
+
+            // 按时间间隔分桶统计
+            for i in 0..points {
+                let bucket_start = chrono::Utc::now()
+                    .checked_sub_signed(chrono::Duration::hours((points - i) as i64 * interval_hours as i64))
+                    .unwrap_or_else(chrono::Utc::now);
+                let bucket_end = chrono::Utc::now()
+                    .checked_sub_signed(chrono::Duration::hours((points - i - 1) as i64 * interval_hours as i64))
+                    .unwrap_or_else(chrono::Utc::now);
+
+                let bucket_logs: Vec<_> = audit_logs
+                    .iter()
+                    .filter(|log| {
+                        if let Ok(ts) = chrono::DateTime::parse_from_rfc3339(&log.timestamp) {
+                            let ts_utc = ts.with_timezone(&chrono::Utc);
+                            ts_utc >= bucket_start && ts_utc < bucket_end
+                        } else {
+                            false
+                        }
+                    })
+                    .collect();
+
+                let requests = bucket_logs.len() as u64;
+                let errors = 0; // 真实统计不含错误数，由调用方补充
+                let avg_response_ms = stats_average_duration(self);
+                let tokens = 0; // 真实统计不含 token 数，由调用方补充
+                let cost = 0.0; // 真实统计不含成本，由调用方补充
+
+                trends.push(TrendDataPoint {
+                    timestamp: bucket_start.to_rfc3339(),
+                    requests,
+                    errors,
+                    avg_response_ms,
+                    tokens,
+                    cost,
+                });
+            }
+
+            return trends;
+        }
+
+        // 模拟数据（实际实现中会从真实数据源收集）
         let mut trends = Vec::with_capacity(points);
 
         for i in 0..points {
@@ -1169,6 +1389,15 @@ impl GovernanceDashboardGenerator {
         }
     }
 
+    /// 记录审计日志
+    pub fn record_audit_log(&self, log: AuditLogEntry) {
+        let mut logs = self.audit_logs.lock();
+        logs.push_back(log);
+        if logs.len() > 10000 {
+            logs.pop_front();
+        }
+    }
+
     /// 清除缓存
     pub fn clear_cache(&self) {
         self.cache.lock().clear();
@@ -1179,6 +1408,32 @@ impl GovernanceDashboardGenerator {
 /// 四舍五入到两位小数
 fn round2(v: f64) -> f64 {
     (v * 100.0).round() / 100.0
+}
+
+/// 获取平均响应时间（从 CostMeter）
+fn stats_average_duration(generator: &GovernanceDashboardGenerator) -> f64 {
+    generator
+        .cost_meter
+        .as_ref()
+        .and_then(|m| m.get_global_statistics_blocking())
+        .map(|s| s.average_duration_ms)
+        .unwrap_or(245.5)
+}
+
+/// 获取成功率（从 CostMeter）
+fn stats_success_rate(generator: &GovernanceDashboardGenerator) -> f64 {
+    generator
+        .cost_meter
+        .as_ref()
+        .and_then(|m| m.get_global_statistics_blocking())
+        .map(|s| {
+            if s.total_calls > 0 {
+                (s.successful_calls as f64 / s.total_calls as f64) * 100.0
+            } else {
+                98.8
+            }
+        })
+        .unwrap_or(98.8)
 }
 
 // ============================================================================

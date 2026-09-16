@@ -1812,6 +1812,37 @@ jobs:
             apps/desktop/src-tauri/target/release/bundle/**
             apps/desktop/src-tauri/target/release/topems-desktop*
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # Gate T · 统一错误出口（V517）
+  #
+  # 背景：svc 层有 692 处把原始 SQL/IO 错误直接回给客户端的信息泄露形态
+  #       （307 处 format! 拼接 + 385 处 <err>.to_string()），以及 3558 处
+  #       手写错误响应导致错误码语义不可控。
+  #
+  # 本门禁只拦「本次改动新增」的违规，存量按基线逐步清退，不阻塞既有 PR。
+  # 决策依据：docs/architecture/unified-error-handling-decision.md
+  # 基线文件：scripts/ci/error-handling-baseline.json
+  #
+  # 本地自查等价命令：node scripts/ci/check-error-handling.cjs
+  # ──────────────────────────────────────────────────────────────────────────
+  error-handling-gate:
+    name: Gate T · 统一错误出口（错误泄露 / 业务层 anyhow）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # 必须完整历史：--changed-only 依赖 origin/main 定位基线，
+          # 浅克隆会让 diff 取不到而静默放行（假绿）。
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: "Run 统一错误出口检查（--changed-only · 仅拦新增）"
+        run: node scripts/ci/check-error-handling.cjs --changed-only
+
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
@@ -1841,6 +1872,7 @@ jobs:
       - migration-test
       - desktop-build
       - changelog-gate
+      - error-handling-gate
     if: always()
     steps:
       # ────────────────────────────────────────────────────────────────────
@@ -1903,6 +1935,7 @@ jobs:
           echo "| Migration Up-Down-Up Test | ${{ needs.migration-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Desktop Build | ${{ needs.desktop-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CHANGELOG 发布校验 (P2-3 · tag only) | ${{ needs.changelog-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate T · 统一错误出口 (错误泄露 / 业务层 anyhow · V517) | ${{ needs.error-handling-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SQLx Cache Freshness (D-track · advisory · non-blocking) | ${{ steps.sqlx-cache.outputs.status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Schema Defense Gate (26 svc · strict · V274 含 sqlx 语义 advisory) | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

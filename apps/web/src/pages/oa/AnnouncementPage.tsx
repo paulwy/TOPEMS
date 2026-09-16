@@ -20,15 +20,17 @@ import {
   Card,
   Drawer,
   EmptyState,
+  FileUpload,
   Input,
   ListPageTemplate,
   Modal,
+  Pagination,
   Select,
   Tabs,
   Tag,
   ToastContainer,
 } from '@/components/redesign';
-import type { DataTableColumn, Toast } from '@/components/redesign';
+import type { DataTableColumn, Toast, UploadFile } from '@/components/redesign';
 import { announcementApi } from '@/api/erp/core';
 import i18n from '@/i18n';
 
@@ -82,6 +84,8 @@ const AnnouncementPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -94,6 +98,7 @@ const AnnouncementPage: React.FC = () => {
     category: 'notice',
     priority: 'normal' as 'high' | 'normal' | 'low',
   });
+  const [attachments, setAttachments] = useState<UploadFile[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -249,6 +254,18 @@ const AnnouncementPage: React.FC = () => {
     }
     return result;
   }, [announcements, activeTab, categoryFilter, debouncedSearch]);
+
+  // 分页数据计算
+  const totalPages = Math.max(1, Math.ceil(filteredAnnouncements.length / pageSize));
+  const pagedAnnouncements = filteredAnnouncements.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // 筛选变化时重置页码
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, categoryFilter, debouncedSearch]);
 
   const publishedCount = announcements.filter((a) => a.status === 'published').length;
   const draftCount = announcements.filter((a) => a.status === 'draft').length;
@@ -438,7 +455,7 @@ const AnnouncementPage: React.FC = () => {
           </>
         }
         columns={columns}
-        data={filteredAnnouncements}
+        data={pagedAnnouncements}
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
@@ -457,6 +474,24 @@ const AnnouncementPage: React.FC = () => {
           onChange={(id) => setActiveTab(id as any)}
         />
       </ListPageTemplate>
+
+      {filteredAnnouncements.length > 0 && (
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <Pagination
+            current={currentPage}
+            total={totalPages}
+            pageSize={pageSize}
+            totalItems={filteredAnnouncements.length}
+            onChange={setCurrentPage}
+            showSizeChanger
+            pageSizeOptions={[10, 20, 50]}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
 
       {/* 公告详情抽屉 */}
       <Drawer
@@ -576,6 +611,7 @@ const AnnouncementPage: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div>
             <label
+              htmlFor='announcement-title'
               style={{
                 display: 'block',
                 marginBottom: 'var(--space-1)',
@@ -586,6 +622,7 @@ const AnnouncementPage: React.FC = () => {
               公告标题 *
             </label>
             <Input
+              id='announcement-title'
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder='请输入公告标题'
@@ -596,6 +633,7 @@ const AnnouncementPage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
+                htmlFor='announcement-category'
                 style={{
                   display: 'block',
                   marginBottom: 'var(--space-1)',
@@ -606,6 +644,7 @@ const AnnouncementPage: React.FC = () => {
                 分类
               </label>
               <Select
+                id='announcement-category'
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 options={[
@@ -619,6 +658,7 @@ const AnnouncementPage: React.FC = () => {
             </div>
             <div>
               <label
+                htmlFor='announcement-priority'
                 style={{
                   display: 'block',
                   marginBottom: 'var(--space-1)',
@@ -629,6 +669,7 @@ const AnnouncementPage: React.FC = () => {
                 优先级
               </label>
               <Select
+                id='announcement-priority'
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
                 options={[
@@ -642,6 +683,7 @@ const AnnouncementPage: React.FC = () => {
 
           <div>
             <label
+              htmlFor='announcement-content'
               style={{
                 display: 'block',
                 marginBottom: 'var(--space-1)',
@@ -652,6 +694,7 @@ const AnnouncementPage: React.FC = () => {
               公告内容 *
             </label>
             <textarea
+              id='announcement-content'
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder='请输入公告内容...'
@@ -668,6 +711,29 @@ const AnnouncementPage: React.FC = () => {
                 fontFamily: 'inherit',
                 lineHeight: 1.6,
               }}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor='announcement-attachments'
+              style={{
+                display: 'block',
+                marginBottom: 'var(--space-1)',
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              附件
+            </label>
+            <FileUpload
+              id='announcement-attachments'
+              value={attachments}
+              onChange={setAttachments}
+              multiple
+              maxSize={10}
+              accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.jpeg,.png'
+              hint='点击或拖拽文件到此处上传，支持 PDF/Word/Excel/图片等格式'
             />
           </div>
         </div>

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,7 +56,7 @@ pub async fn list_pipelines(
                 "获取管道列表成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -87,7 +87,7 @@ pub async fn create_pipeline(
     .await
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "创建管道成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
     }
 }
 
@@ -104,7 +104,7 @@ pub async fn get_pipeline(
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "获取管道成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "管道未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -138,7 +138,7 @@ pub async fn update_pipeline(
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "更新管道成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "管道未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
 
@@ -165,7 +165,7 @@ pub async fn delete_pipeline(
                 Json(ApiResponse::error(404, "管道未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
     }
 }
 
@@ -187,7 +187,7 @@ pub async fn list_pipelines_by_map(
             }),
             "获取管道列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 

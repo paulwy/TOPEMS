@@ -88,9 +88,6 @@ const CARD_STYLE: SxProps<Theme> = [
     ...theme.applyStyles('dark', {
       '&:focus-visible': { boxShadow: themeCustomShadows.dark.focus },
     }),
-    [`[data-theme="cyberpunk"] &:focus-visible`]: {
-      boxShadow: themeCustomShadows.cyberpunk.focus,
-    },
   }),
 ];
 
@@ -225,9 +222,6 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
           ...theme.applyStyles('dark', {
             '&:focus-visible': { boxShadow: themeCustomShadows.dark.focus },
           }),
-          [`[data-theme="cyberpunk"] &:focus-visible`]: {
-            boxShadow: themeCustomShadows.cyberpunk.focus,
-          },
         }),
       ]}
     >

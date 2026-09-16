@@ -1,6 +1,6 @@
 pub mod enhanced;
 
 pub use enhanced::{
-    ErrorContext, ErrorLogger, ErrorRecovery, ErrorStatistics, Result, SafeErrorHandler,
-    TopemsError,
+    ErrorContext, ErrorLogger, ErrorRecovery, ErrorStatistics, HandlerResult, Result,
+    SafeErrorHandler, TopemsError,
 };

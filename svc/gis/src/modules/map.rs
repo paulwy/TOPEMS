@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -112,7 +112,7 @@ pub async fn create_map(
     .await
     {
         Ok(map) => Json(ApiResponse::success(map, "创建地图成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建地图失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建地图失败", e))),
     }
 }
 
@@ -139,7 +139,7 @@ pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_jso
             }),
             "获取地图列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询地图失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询地图失败", e))),
     }
 }
 
@@ -166,7 +166,7 @@ pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<A
     {
         Ok(map) => Json(ApiResponse::success(map, "获取地图成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询地图失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询地图失败", e))),
     }
 }
 
@@ -219,7 +219,7 @@ pub async fn update_map(
     {
         Ok(map) => Json(ApiResponse::success(map, "更新地图成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新地图失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新地图失败", e))),
     }
 }
 
@@ -262,7 +262,7 @@ pub async fn delete_map(
                 Json(ApiResponse::error(404, "地图未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("删除地图失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除地图失败", e))),
     }
 }
 
@@ -285,7 +285,7 @@ pub async fn list_map_layers(
             }),
             "获取图层列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询图层失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询图层失败", e))),
     }
 }
 
@@ -326,7 +326,7 @@ pub async fn add_map_layer(
     .await
     {
         Ok(layer) => Json(ApiResponse::success(layer, "添加图层成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("添加图层失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("添加图层失败", e))),
     }
 }
 
@@ -355,6 +355,6 @@ pub async fn delete_map_layer(
                 Json(ApiResponse::error(404, "图层未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("删除图层失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除图层失败", e))),
     }
 }

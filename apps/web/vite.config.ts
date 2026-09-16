@@ -1605,6 +1605,13 @@ export default defineConfig({
       // Subpaths like 'lucide-react/dynamic' intentionally bypass this rule
       // so DynamicIcon / dynamicIconImports continue working.
       { find: /^lucide-react$/, replacement: path.resolve(__dirname, './src/components/icons') },
+      // MUI 9.x 兼容修复：react-transition-group/cjs/TransitionGroupContext.js 在 ESM 中不存在
+      // MUI 9.x 的 Transition.mjs 试图从 cjs 路径导入，但 react-transition-group 4.4.5 缺少这个文件
+      // 修复：重定向到本地 shim 文件
+      {
+        find: /react-transition-group[\\/]+cjs[\\/]+TransitionGroupContext\.js$/,
+        replacement: path.resolve(__dirname, './src/shims/TransitionGroupContext.js'),
+      },
       // Existing aliases (converted to array form to coexist with the regex alias above)
       { find: '@', replacement: path.resolve(__dirname, './src') },
       {
@@ -1677,7 +1684,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     reportCompressedSize: false,
     rollupOptions: {
-      treeshake: true,
+      // React 19 + Vite 8 Rolldown tree-shaking 兼容性问题：Jt is not a function
+      // 临时关闭 tree-shaking 以确保生产构建正常运行
+      treeshake: false,
       // https://rolldown.rs/reference/InputOptions.checks
       checks: {
         // Disable noisy plugin timing summary; only useful when tuning builds.

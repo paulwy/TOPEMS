@@ -249,7 +249,7 @@ pub use config::{
 };
 pub use cors::create_cors_layer;
 pub use crud::*;
-pub use error::{Result, TopemsError};
+pub use error::{HandlerResult, Result, TopemsError};
 pub use feature_flag::{
     FeatureCondition, FeatureContext, FeatureFlag, FeatureFlagService, FeatureState,
 };

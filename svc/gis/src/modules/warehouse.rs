@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,7 +75,7 @@ pub async fn list_warehouse_locations(
                 "获取仓库位置列表成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -105,7 +105,7 @@ pub async fn create_warehouse_location(
     .await
     {
         Ok(location) => Json(ApiResponse::success(location, "创建仓库位置成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库插入失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
     }
 }
 
@@ -122,7 +122,7 @@ pub async fn get_warehouse_location(
     {
         Ok(location) => Json(ApiResponse::success(location, "获取仓库位置成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "仓库位置未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 
@@ -155,7 +155,7 @@ pub async fn update_warehouse_location(
     {
         Ok(location) => Json(ApiResponse::success(location, "更新仓库位置成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "仓库位置未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
 
@@ -182,7 +182,7 @@ pub async fn delete_warehouse_location(
                 Json(ApiResponse::error(404, "仓库位置未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
     }
 }
 
@@ -204,7 +204,7 @@ pub async fn list_warehouse_locations_by_map(
             }),
             "获取仓库位置列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
 

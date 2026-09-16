@@ -5,7 +5,7 @@ use axum::extract::{Path, State};
 use axum::{routing::get, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 use crate::models::{AppState, ErpConnection, ErpMapping};
@@ -56,7 +56,7 @@ async fn list_connections(State(state): State<AppState>) -> Json<ApiResponse<Vec
         Ok(rows) => Json(ApiResponse::success(rows, "连接列表获取成功")),
         Err(e) => {
             tracing::error!("external_erp list_connections: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -133,7 +133,7 @@ async fn create_connection(
     .await
     {
         Ok(conn) => Json(ApiResponse::success(conn, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
 
@@ -209,7 +209,7 @@ async fn get_connection(
     {
         Ok(Some(conn)) => Json(ApiResponse::success(conn, "获取成功")),
         Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -257,7 +257,7 @@ async fn update_connection(
     {
         Ok(Some(conn)) => Json(ApiResponse::success(conn, "更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -277,7 +277,7 @@ async fn delete_connection(
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "连接不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
 
@@ -302,7 +302,7 @@ async fn list_entity_mappings(
     .await
     {
         Ok(rows) => Json(ApiResponse::success(rows, "映射列表获取成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -358,7 +358,7 @@ async fn create_entity_mapping(
     .await
     {
         Ok(m) => Json(ApiResponse::success(m, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
 
@@ -454,7 +454,7 @@ async fn preview_entity(
     .await
     {
         Ok(rows) => Json(ApiResponse::success(rows, "预览数据获取成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -666,7 +666,7 @@ async fn sync_entity(
     .await
     {
         tracing::error!("sync_entity insert log: {}", e);
-        return Json(ApiResponse::error(500, &format!("创建同步任务失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("创建同步任务失败", e)));
     }
 
     // 验证连接
@@ -827,7 +827,7 @@ async fn sync_entity(
             }),
             "同步完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("同步失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("同步失败", e))),
     }
 }
 
@@ -846,7 +846,7 @@ async fn sync_logs(State(state): State<AppState>) -> Json<ApiResponse<Vec<Extern
     .await
     {
         Ok(rows) => Json(ApiResponse::success(rows, "同步日志获取成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -939,7 +939,7 @@ async fn export_mappings(State(state): State<AppState>) -> Json<ApiResponse<serd
             }),
             "导出完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("导出失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("导出失败", e))),
     }
 }
 
@@ -963,7 +963,7 @@ async fn export_sync_logs(State(state): State<AppState>) -> Json<ApiResponse<ser
             }),
             "导出完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("导出失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("导出失败", e))),
     }
 }
 

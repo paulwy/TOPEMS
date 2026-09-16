@@ -5,6 +5,7 @@
 | 文档 | 说明 |
 |------|------|
 | [deployment-guide-overview.md](./deployment-guide-overview.md) | 主部署指南 |
+| [MODULAR_MONOLITH_DEPLOYMENT.md](./MODULAR_MONOLITH_DEPLOYMENT.md) | **模块化单体部署手册（最新）** |
 
 ## 快速开始
 

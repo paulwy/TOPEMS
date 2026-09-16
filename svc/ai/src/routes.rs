@@ -665,7 +665,7 @@ pub fn create_routes(
         ))
         .with_state(app_state.clone());
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
+    let rate_limit_config = RateLimitConfig::new(5000, 60)
         .with_by_user_id(false)
         .with_by_ip(true);
     let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));

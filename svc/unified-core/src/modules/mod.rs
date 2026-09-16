@@ -33,3 +33,9 @@ pub mod openapi;
 pub mod system_audit;
 pub mod tenant;
 pub mod subscription;
+// WMS: 仓储管理系统
+pub mod wms;
+// MES: 制造执行系统
+pub mod mes;
+// SCM: 供应链管理
+pub mod scm;

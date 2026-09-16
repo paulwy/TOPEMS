@@ -25,8 +25,8 @@ const getRemoteEntryUrl = (name: string, _port: number): string | undefined => {
     return `/remote/${name}/remoteEntry.js`;
   }
 
-  // 生产 MF / hybrid：同源路径（由网关分发）
-  if (DEPLOYMENT_MODE === 'module-federation' || DEPLOYMENT_MODE === 'hybrid') {
+  // 生产 MF：同源路径（由网关分发）
+  if (DEPLOYMENT_MODE === 'module-federation') {
     return `/remote/${name}/remoteEntry.js`;
   }
 

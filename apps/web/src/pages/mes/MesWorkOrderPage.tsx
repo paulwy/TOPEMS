@@ -23,18 +23,21 @@ import {
   Badge,
   Button,
   Card,
+  DateRangePicker,
   Drawer,
   EmptyState,
+  FileUpload,
   Input,
   ListPageTemplate,
   Modal,
+  Pagination,
   Select,
   StatTile,
   Tabs,
   Tag,
   ToastContainer,
 } from '@/components/redesign';
-import type { DataTableColumn, Toast } from '@/components/redesign';
+import type { DataTableColumn, Toast, UploadFile, DateRange } from '@/components/redesign';
 import { mesApi } from '@/api/mes';
 import type { WorkOrder as ApiWorkOrder } from '@/api/mes/types';
 import i18n from '@/i18n';
@@ -111,10 +114,14 @@ const MesWorkOrderPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [workshopFilter, setWorkshopFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [attachments, setAttachments] = useState<UploadFile[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -274,6 +281,12 @@ const MesWorkOrderPage: React.FC = () => {
     if (workshopFilter !== 'all') {
       result = result.filter((o) => o.workshop === workshopFilter);
     }
+    if (dateRange?.start) {
+      result = result.filter((o) => o.planned_start >= dateRange.start);
+    }
+    if (dateRange?.end) {
+      result = result.filter((o) => o.planned_start <= dateRange.end);
+    }
     if (debouncedSearch) {
       const query = debouncedSearch.toLowerCase();
       result = result.filter(
@@ -285,7 +298,16 @@ const MesWorkOrderPage: React.FC = () => {
       );
     }
     return result;
-  }, [orders, activeTab, workshopFilter, debouncedSearch]);
+  }, [orders, activeTab, workshopFilter, dateRange, debouncedSearch]);
+
+  // 分页数据计算
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+  const pagedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // 筛选变化时重置页码
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, workshopFilter, dateRange, debouncedSearch]);
 
   // 统计
   const stats = useMemo(() => {
@@ -537,6 +559,14 @@ const MesWorkOrderPage: React.FC = () => {
                 ]}
                 style={{ width: 140 }}
               />
+              <div style={{ width: 280 }}>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                  startPlaceholder='计划开始日期'
+                  endPlaceholder='计划结束日期'
+                />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <Button
@@ -557,7 +587,7 @@ const MesWorkOrderPage: React.FC = () => {
           </>
         }
         columns={columns}
-        data={filteredOrders}
+        data={pagedOrders}
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
@@ -610,6 +640,24 @@ const MesWorkOrderPage: React.FC = () => {
           onChange={(id) => setActiveTab(id as any)}
         />
       </ListPageTemplate>
+
+      {filteredOrders.length > 0 && (
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <Pagination
+            current={currentPage}
+            total={totalPages}
+            pageSize={pageSize}
+            totalItems={filteredOrders.length}
+            onChange={setCurrentPage}
+            showSizeChanger
+            pageSizeOptions={[10, 20, 50]}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
 
       {/* 工单详情抽屉 */}
       <Drawer
@@ -839,31 +887,51 @@ const MesWorkOrderPage: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='wo-product-name'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 产品名称 *
               </label>
-              <Input placeholder='请输入产品名称' />
+              <Input
+                id='wo-product-name'
+                placeholder='请输入产品名称'
+              />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='wo-product-code'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 产品编码 *
               </label>
-              <Input placeholder='请输入产品编码' />
+              <Input
+                id='wo-product-code'
+                placeholder='请输入产品编码'
+              />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='wo-quantity'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 计划数量 *
               </label>
               <Input
+                id='wo-quantity'
                 type='number'
                 placeholder='请输入数量'
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='wo-priority'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 优先级
               </label>
               <Select
+                id='wo-priority'
                 defaultValue='medium'
                 options={[
                   { value: 'high', label: '高优先级' },
@@ -873,10 +941,14 @@ const MesWorkOrderPage: React.FC = () => {
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='wo-workshop'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 车间
               </label>
               <Select
+                id='wo-workshop'
                 defaultValue='一车间'
                 options={[
                   { value: '一车间', label: '一车间' },
@@ -886,10 +958,14 @@ const MesWorkOrderPage: React.FC = () => {
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='wo-line'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 产线
               </label>
               <Select
+                id='wo-line'
                 defaultValue='A 线'
                 options={[
                   { value: 'A 线', label: 'A 线' },
@@ -900,10 +976,14 @@ const MesWorkOrderPage: React.FC = () => {
             </div>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+            <label
+              htmlFor='wo-remark'
+              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+            >
               备注
             </label>
             <textarea
+              id='wo-remark'
               rows={3}
               placeholder='请输入备注信息...'
               style={{
@@ -917,6 +997,23 @@ const MesWorkOrderPage: React.FC = () => {
                 resize: 'vertical',
                 fontFamily: 'inherit',
               }}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor='field-1'
+              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+            >
+              附件
+            </label>
+            <FileUpload
+              id='field-1'
+              value={attachments}
+              onChange={setAttachments}
+              multiple
+              maxSize={20}
+              accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg,.zip'
+              hint='上传工艺图纸、技术文档等附件，单个文件不超过 20MB'
             />
           </div>
         </div>

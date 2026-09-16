@@ -1,8 +1,25 @@
 # TOPEMS 模块化单体设计（Modular Monolith Design）
 
-> 状态：v0.2（Phase B 扩展完成 + P3 裁剪落地）
-> 日期：2026-08-30
+> 状态：v1.0（core 组 7 个模块全部接入完成）
+> 日期：2026-09-16
 > 关联：`docs/architecture/TOPEMS_Architecture_Roadmap_v2.md` §1.2
+
+## 最新更新（2026-09-16）
+
+✅ **core 组 7 个模块全部接入完成**：
+1. unified-core — 完整路由接入
+2. monitor — 完整路由接入（7 个子模块）
+3. plugin-registry — 完整路由接入（52 个 handler）
+4. search — 完整路由接入（3 个 handler）
+5. communication — 完整 notification 路由（25 个）+ 核心 im/mail 路由（16 个），总计 44 个 handler
+6. integration — 完整路由接入（通过 `create_routes()`，构建完整 AppState 含 mes_erp_sync_service）
+7. mobile — 核心路由接入（3 个 handler，因 AppState 复杂需 6 个服务客户端）
+
+✅ **已接入模块总数**：27 个
+✅ **Phase 3 清理完成**：删除 39 个未使用组件（cyberpunk 主题补丁 + common 目录重复组件）
+✅ **单元测试全部通过**：428 个测试文件 / 6362 个测试（100%）
+
+---
 
 ## 1. 目标与动机
 

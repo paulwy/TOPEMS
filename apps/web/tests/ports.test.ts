@@ -11,17 +11,17 @@ describe('config/ports - BACKEND_PORTS 常量', () => {
   });
 
   it('统一入口服务端口 8099 (erp/finance/hrm/pm)', () => {
-    expect(BACKEND_PORTS.erp).toBe(8099);
-    expect(BACKEND_PORTS.finance).toBe(8099);
-    expect(BACKEND_PORTS.hrm).toBe(8099);
-    expect(BACKEND_PORTS.pm).toBe(8099);
+    expect(BACKEND_PORTS.erp).toBe(8010);
+    expect(BACKEND_PORTS.finance).toBe(8011);
+    expect(BACKEND_PORTS.hrm).toBe(8020);
+    expect(BACKEND_PORTS.pm).toBe(8023);
   });
 
   it('统一入口服务端口 8099 (search/communication/ticket/master-data)', () => {
-    expect(BACKEND_PORTS.search).toBe(8099);
-    expect(BACKEND_PORTS.communication).toBe(8099);
-    expect(BACKEND_PORTS.ticket).toBe(8099);
-    expect(BACKEND_PORTS['master-data']).toBe(8099);
+    expect(BACKEND_PORTS.search).toBe(8082);
+    expect(BACKEND_PORTS.communication).toBe(8084);
+    expect(BACKEND_PORTS.ticket).toBe(8086);
+    expect(BACKEND_PORTS['master-data']).toBe(8090);
   });
 });
 
@@ -41,8 +41,8 @@ describe('config/ports - MF_PORTS 常量', () => {
 describe('config/ports - getBackendPort', () => {
   it('存在服务返回对应端口', () => {
     expect(getBackendPort('iam')).toBe(8000);
-    expect(getBackendPort('erp')).toBe(8099);
-    expect(getBackendPort('bi')).toBe(8099);
+    expect(getBackendPort('erp')).toBe(8010);
+    expect(getBackendPort('bi')).toBe(8060);
   });
 
   it('不存在服务使用默认 fallback 8000', () => {

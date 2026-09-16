@@ -33,12 +33,12 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
       // V64 CORS 修复：
       //   - 开发环境：一律走 Vite 同源代理 /remote/<name>/remoteEntry.js，
       //     vite.config.ts 已为 /remote/<name> 配置代理到 localhost:<port>
-      //   - 生产环境：MF/hybrid 模式同源路径；static 模式不加载（返回空字符串）
+      //   - 生产环境：MF 模式同源路径；static 模式不加载（返回空字符串）
       if (isDev()) {
         return `/remote/${name}/remoteEntry.js`;
       }
       const mode = VITEDeploymentMode();
-      if (mode === 'module-federation' || mode === 'hybrid') {
+      if (mode === 'module-federation') {
         return `/remote/${name}/remoteEntry.js`;
       }
       // static 模式：返回空，由上层处理降级；不再直连跨端口

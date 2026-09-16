@@ -24,16 +24,18 @@ import {
   Card,
   Drawer,
   EmptyState,
+  FileUpload,
   Input,
   ListPageTemplate,
   Modal,
+  Pagination,
   Select,
   StatTile,
   Tabs,
   Tag,
   ToastContainer,
 } from '@/components/redesign';
-import type { DataTableColumn, Toast } from '@/components/redesign';
+import type { DataTableColumn, Toast, UploadFile } from '@/components/redesign';
 import { erpApi } from '@/api/erp';
 import type { PurchaseOrder as ApiPurchaseOrder } from '@/api/erp/core/types';
 import i18n from '@/i18n';
@@ -86,10 +88,13 @@ const PurchaseOrderPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [attachments, setAttachments] = useState<UploadFile[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -274,6 +279,15 @@ const PurchaseOrderPage: React.FC = () => {
     }
     return result;
   }, [orders, activeTab, departmentFilter, debouncedSearch]);
+
+  // 分页数据计算
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+  const pagedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // 筛选变化时重置页码
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, departmentFilter, debouncedSearch]);
 
   // 统计
   const stats = useMemo(() => {
@@ -489,7 +503,7 @@ const PurchaseOrderPage: React.FC = () => {
           </>
         }
         columns={columns}
-        data={filteredOrders}
+        data={pagedOrders}
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
@@ -542,6 +556,24 @@ const PurchaseOrderPage: React.FC = () => {
           onChange={(id) => setActiveTab(id as any)}
         />
       </ListPageTemplate>
+
+      {filteredOrders.length > 0 && (
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <Pagination
+            current={currentPage}
+            total={totalPages}
+            pageSize={pageSize}
+            totalItems={filteredOrders.length}
+            onChange={setCurrentPage}
+            showSizeChanger
+            pageSizeOptions={[10, 20, 50]}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
 
       {/* 采购订单详情抽屉 */}
       <Drawer
@@ -724,22 +756,38 @@ const PurchaseOrderPage: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='po-supplier'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 供应商 *
               </label>
-              <Input placeholder='请选择供应商' />
+              <Input
+                id='po-supplier'
+                placeholder='请选择供应商'
+              />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='po-buyer'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 采购员
               </label>
-              <Input placeholder='请输入采购员' />
+              <Input
+                id='po-buyer'
+                placeholder='请输入采购员'
+              />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='po-department'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 所属部门
               </label>
               <Select
+                id='po-department'
                 defaultValue='采购部'
                 options={[
                   { value: '采购部', label: '采购部' },
@@ -749,10 +797,14 @@ const PurchaseOrderPage: React.FC = () => {
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='po-priority'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 优先级
               </label>
               <Select
+                id='po-priority'
                 defaultValue='medium'
                 options={[
                   { value: 'high', label: '高优先级' },
@@ -762,16 +814,26 @@ const PurchaseOrderPage: React.FC = () => {
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='po-expected-date'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 期望到货日期
               </label>
-              <Input type='date' />
+              <Input
+                id='po-expected-date'
+                type='date'
+              />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+              <label
+                htmlFor='po-currency'
+                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              >
                 币种
               </label>
               <Select
+                id='po-currency'
                 defaultValue='CNY'
                 options={[
                   { value: 'CNY', label: '人民币 (CNY)' },
@@ -781,10 +843,14 @@ const PurchaseOrderPage: React.FC = () => {
             </div>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}>
+            <label
+              htmlFor='po-remark'
+              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+            >
               备注
             </label>
             <textarea
+              id='po-remark'
               rows={3}
               placeholder='请输入备注信息...'
               style={{
@@ -798,6 +864,23 @@ const PurchaseOrderPage: React.FC = () => {
                 resize: 'vertical',
                 fontFamily: 'inherit',
               }}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor='field-1'
+              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+            >
+              附件
+            </label>
+            <FileUpload
+              id='field-1'
+              value={attachments}
+              onChange={setAttachments}
+              multiple
+              maxSize={20}
+              accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip,.rar'
+              hint='上传采购合同、报价单等附件，单个文件不超过 20MB'
             />
           </div>
         </div>

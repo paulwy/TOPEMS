@@ -404,11 +404,6 @@ export const UserMenu: React.FC<UserMenuProps> = ({
                   boxShadow: themeCustomShadows.dark.dangerButton,
                   '&:hover': { boxShadow: themeCustomShadows.dark.dangerButtonHover },
                 }),
-                // data-theme="cyberpunk"
-                [`[data-theme="cyberpunk"] &`]: {
-                  boxShadow: themeCustomShadows.cyberpunk.dangerButton,
-                  '&:hover': { boxShadow: themeCustomShadows.cyberpunk.dangerButtonHover },
-                },
               }),
             ]}
           >

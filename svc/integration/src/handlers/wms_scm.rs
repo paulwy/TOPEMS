@@ -4,7 +4,7 @@ use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::models::{AppState, CreateWmsScmSyncRequest, WmsScmSync};
 
@@ -35,10 +35,7 @@ pub async fn list_wms_scm_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch WMS↔SCM syncs: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch WMS↔SCM syncs: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to fetch WMS↔SCM syncs", e)))
         }
     }
 }
@@ -63,10 +60,10 @@ pub async fn create_wms_scm_sync(
     let wms_uuid = match Uuid::parse_str(&req.wms_inventory_id) {
         Ok(u) => u,
         Err(e) => {
-            return Json(ApiResponse::error(
-                400,
-                &format!("Invalid WMS inventory ID: {}", e),
-            ))
+            tracing::warn!("Invalid WMS inventory ID: {}", e);
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "Invalid WMS inventory ID".to_string(),
+            )));
         }
     };
 
@@ -97,10 +94,7 @@ pub async fn create_wms_scm_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to create WMS↔SCM sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to create WMS↔SCM sync: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to create WMS↔SCM sync", e)))
         }
     }
 }
@@ -136,10 +130,7 @@ pub async fn get_wms_scm_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch sync: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal("Failed to fetch sync", e)))
         }
     }
 }
@@ -185,10 +176,7 @@ pub async fn sync_wms_scm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::error(
-                500,
-                &format!("Failed to update sync: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal("Failed to update sync", e)));
         }
     };
 

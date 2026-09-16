@@ -333,7 +333,15 @@ const NotificationCenter: React.FC = () => {
               return (
                 <div
                   key={notification.id}
+                  role='button'
+                  tabIndex={0}
                   onClick={() => handleNotificationClick(notification)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleNotificationClick(notification);
+                    }
+                  }}
                   style={{
                     padding: 'var(--space-4)',
                     backgroundColor: notification.is_read ? 'var(--surface-1)' : 'var(--surface-2)',
@@ -575,6 +583,7 @@ const NotificationCenter: React.FC = () => {
               >
                 <div>
                   <label
+                    htmlFor='dnd-start-time'
                     style={{
                       display: 'block',
                       marginBottom: 4,
@@ -585,12 +594,14 @@ const NotificationCenter: React.FC = () => {
                     开始时间
                   </label>
                   <Input
+                    id='dnd-start-time'
                     type='time'
                     defaultValue='22:00'
                   />
                 </div>
                 <div>
                   <label
+                    htmlFor='dnd-end-time'
                     style={{
                       display: 'block',
                       marginBottom: 4,
@@ -601,6 +612,7 @@ const NotificationCenter: React.FC = () => {
                     结束时间
                   </label>
                   <Input
+                    id='dnd-end-time'
                     type='time'
                     defaultValue='08:00'
                   />

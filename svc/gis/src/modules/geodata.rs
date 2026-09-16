@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,7 +59,10 @@ pub async fn upload_geodata(
                     match field.bytes().await {
                         Ok(bytes) => file_data = bytes.to_vec(),
                         Err(e) => {
-                            return Json(ApiResponse::error(400, &format!("读取文件失败: {}", e)))
+                            tracing::warn!("读取文件失败: {}", e);
+                            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                                "读取文件失败".to_string(),
+                            )));
                         }
                     }
                 } else if field_name == "name" {
@@ -77,7 +80,12 @@ pub async fn upload_geodata(
                 }
             }
             Ok(None) => break,
-            Err(e) => return Json(ApiResponse::error(400, &format!("解析上传数据失败: {}", e))),
+            Err(e) => {
+                tracing::warn!("解析上传数据失败: {}", e);
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "解析上传数据失败".to_string(),
+                )));
+            }
         }
     }
 
@@ -89,7 +97,12 @@ pub async fn upload_geodata(
     let geojson_data = if format == "geojson" {
         match serde_json::from_slice::<serde_json::Value>(&file_data) {
             Ok(data) => Some(data),
-            Err(e) => return Json(ApiResponse::error(400, &format!("GeoJSON解析失败: {}", e))),
+            Err(e) => {
+                tracing::warn!("GeoJSON解析失败: {}", e);
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "GeoJSON解析失败".to_string(),
+                )));
+            }
         }
     } else {
         None
@@ -132,7 +145,7 @@ pub async fn upload_geodata(
             }
             Json(ApiResponse::success(geodata, "上传地理数据成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("上传失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("上传失败", e))),
     }
 }
 
@@ -181,7 +194,7 @@ pub async fn list_geodata(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
             }),
             "获取地理数据列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -199,7 +212,7 @@ pub async fn get_geodata(
     {
         Ok(data) => Json(ApiResponse::success(data, "获取地理数据成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理数据未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -232,7 +245,7 @@ pub async fn update_geodata(
     {
         Ok(data) => Json(ApiResponse::success(data, "更新地理数据成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理数据未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -261,7 +274,7 @@ pub async fn delete_geodata(
                 Json(ApiResponse::error(404, "地理数据未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
 
@@ -319,7 +332,7 @@ pub async fn convert_geodata(
             }
         }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理数据未找到")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -374,6 +387,6 @@ pub async fn list_geofeatures(
             }),
             "获取地理要素列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }

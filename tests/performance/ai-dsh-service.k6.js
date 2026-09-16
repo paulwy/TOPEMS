@@ -48,6 +48,9 @@ export const options = {
     http_req_duration: ['p(95)<2000', 'p(99)<5000'],
     http_req_failed: ['rate<0.1'],
   },
+  // 连接配置优化
+  discardResponseBodies: true,
+  noVUConnectionReuse: true,
 };
 
 // 公共请求头
@@ -55,9 +58,10 @@ const publicHeaders = {
   'Content-Type': 'application/json',
 };
 
+const AUTH_TOKEN = __ENV.AUTH_TOKEN || 'test-token-for-performance-testing';
 const authHeaders = {
   'Content-Type': 'application/json',
-  'Authorization': 'Bearer test-token-for-performance-testing',
+  'Authorization': `Bearer ${AUTH_TOKEN}`,
 };
 
 export default function () {
@@ -90,6 +94,9 @@ export default function () {
   check(res, {
     'Agent工具列表状态是 200 或 401': (r) => r.status === 200 || r.status === 401,
   });
+  if (res.status !== 200 && res.status !== 401) {
+    console.error(`Agent工具列表: status=${res.status}, error_code=${res.error_code}, error=${res.error}`);
+  }
   apiLatency.add(res.timings.duration);
   if (res.status === 200 || res.status === 401) apiSuccess.add(1); else apiError.add(1);
   
@@ -158,10 +165,10 @@ export default function () {
   });
   res = http.post(`${BASE_URL}/api/ai/dsh/copilot/sessions`, createSessionPayload, { headers: authHeaders });
   check(res, {
-    '创建会话状态是 200 或 401': (r) => r.status === 200 || r.status === 401,
+    '创建会话状态是 200/201 或 401': (r) => r.status === 200 || r.status === 201 || r.status === 401,
   });
   apiLatency.add(res.timings.duration);
-  if (res.status === 200 || res.status === 401) apiSuccess.add(1); else apiError.add(1);
+  if (res.status === 200 || res.status === 201 || res.status === 401) apiSuccess.add(1); else apiError.add(1);
   
   sleep(0.5);
   

@@ -49,12 +49,16 @@ export function isDev(): boolean {
 }
 
 /**
- * Deployment mode: static | module-federation | hybrid | standalone
+ * Deployment mode: static | module-federation
  *
  * V64 CORS 修复：
  * - Vite 约定仅 VITE_*（带下划线）前缀的 env 会暴露给 import.meta.env
  * - 历史代码错误使用了 VITEDeploymentMode（无下划线），永远读不到用户配置
  * - 现在统一读取 VITE_DEPLOYMENT_MODE（标准），并兼容旧键作为过渡
+ *
+ * V96 简化：
+ * - 移除 standalone 模式（完全未使用）
+ * - 移除 hybrid 模式（合并到 module-federation）
  */
 export const VITEDeploymentMode = (): string => {
   const standard = getEnv('VITE_DEPLOYMENT_MODE');
