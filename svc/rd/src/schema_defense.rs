@@ -16,6 +16,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "projects",
         &[
+            ("tenant_id", "UUID NOT NULL"),
             ("name", "VARCHAR(255) NOT NULL"),
             ("code", "VARCHAR(100) NOT NULL"),
             ("description", "TEXT"),
@@ -44,6 +45,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "project_phases",
         &[
+            ("tenant_id", "UUID NOT NULL"),
             ("project_id", "UUID NOT NULL"),
             ("phase_number", "INT NOT NULL"),
             ("name", "VARCHAR(200) NOT NULL"),
@@ -62,6 +64,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "project_milestones",
         &[
+            ("tenant_id", "UUID NOT NULL"),
             ("project_id", "UUID NOT NULL"),
             ("phase_id", "UUID"),
             ("name", "VARCHAR(200) NOT NULL"),
@@ -81,6 +84,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "project_members",
         &[
+            ("tenant_id", "UUID NOT NULL"),
             ("project_id", "UUID NOT NULL"),
             ("employee_id", "UUID NOT NULL"),
             ("role", "VARCHAR(50) NOT NULL DEFAULT 'OTHER'"),
@@ -118,6 +122,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "change_orders",
         &[
+            ("tenant_id", "UUID NOT NULL"),
             ("change_request_id", "UUID NOT NULL"),
             ("title", "TEXT NOT NULL"),
             ("execution_plan", "TEXT"),
