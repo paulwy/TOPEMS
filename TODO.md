@@ -63,9 +63,11 @@
 
 ### 技术优化
 - [x] crm contracts 后端实现（2026-09-16：CrmContractRedesignPage known_gap 转 matched，GET/POST/PUT /contracts + 迁移 + RLS）
-- [ ] GIS 服务认证问题修复
+- [x] GIS 服务认证问题修复（auth layer 顺序修正 + business-locations CRUD 闭环）
+- [x] server 统一认证专项（2026-09-16：21 个 real_module 移除 inject_dev_claims 无条件伪造 superadmin 后门，接入真实 JWT auth_middleware；health 端点豁免；commit 09273803f）
 - [ ] MUI elevation 警告修复
 - [ ] 更多模块的业务 API 实现
+- [ ] dashboard 等演示模块认证一致性（当前无 token 可访问演示数据，低风险；后续可挂只读认证或隐藏）
 
 ---
 
