@@ -35,36 +35,9 @@ function hashUserId(userId: string): number {
 /**
  * 判断用户是否应该启用 UI V3
  */
-export function shouldUseUIV3(user: User | null): boolean {
+export function shouldUseUIV3(_user: User | null): boolean {
   // 临时修复：强制启用 UI V3
   return true;
-
-  if (!user) return false;
-
-  // 1. 环境变量全量启用
-  if (import.meta.env.VITE_UI_V3_ENABLED === 'true') {
-    return true;
-  }
-
-  // 2. localStorage 手动覆盖（用于测试）
-  const override = localStorage.getItem('ui_v3_override');
-  if (override === 'true') return true;
-  if (override === 'false') return false;
-
-  // 3. 超级管理员强制启用
-  if (user.is_superuser || user.isSuperuser) {
-    return true;
-  }
-
-  // 4. 白名单角色强制启用
-  const userRoles = user.roles || (user.role ? [user.role] : []);
-  if (userRoles.some((r) => WHITELIST_ROLES.includes(r))) {
-    return true;
-  }
-
-  // 5. 基于用户 ID 哈希的灰度发布
-  const hash = hashUserId(user.id);
-  return hash < GRAY_RELEASE_PERCENTAGE;
 }
 
 /**
