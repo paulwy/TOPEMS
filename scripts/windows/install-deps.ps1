@@ -199,7 +199,7 @@ function Install-Redis {
     $svcName = 'topems-redis'
     $existing = Get-Service -Name $svcName -ErrorAction SilentlyContinue
     if ($existing) { Stop-Service $svcName -Force -ErrorAction SilentlyContinue }
-    $unregOut = & $srv --service-uninstall 2>&1 | Out-String
+    $unregOut = & $srv --service-uninstall --service-name $svcName 2>&1 | Out-String
     Start-Sleep -Seconds 1
     $regOut = & $srv --service-install $conf --service-name $svcName 2>&1 | Out-String
     $regCode = $LASTEXITCODE
