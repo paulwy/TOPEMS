@@ -14,6 +14,8 @@
 //! - `SERVICE_ALERT_KNOWN_SERVICES`：已知服务白名单（逗号分隔，覆盖默认）。
 //! - `SERVICE_ALERT_COOLDOWN_SECS`：同类告警冷却秒数（默认 60，防告警风暴）。
 //! - `SERVICE_ALERT_ENABLED`：总开关（默认 true）。
+//! - `FEISHU_ALERT_WEBHOOK`：飞书机器人 Webhook（可选）。配置后告警在 tracing 输出的
+//!   同时推送飞书（fire-and-forget，失败不影响主流程；未配置则维持纯日志行为）。
 //!
 //! ## 告警消费
 //!
@@ -75,6 +77,8 @@ pub struct ServiceCallMonitor {
     high_freq_threshold: u64,
     /// 同类告警冷却期
     alert_cooldown: Duration,
+    /// 飞书告警 Webhook（可选；配置后告警同时推送飞书机器人）
+    feishu_webhook: Option<String>,
 }
 
 /// 告警类型（用于去重 key 与日志语义）
@@ -130,6 +134,10 @@ impl ServiceCallMonitor {
                     .collect()
             };
 
+        let feishu_webhook = std::env::var("FEISHU_ALERT_WEBHOOK")
+            .ok()
+            .filter(|s| !s.trim().is_empty());
+
         Self {
             enabled,
             known_services,
@@ -138,6 +146,7 @@ impl ServiceCallMonitor {
             window_secs,
             high_freq_threshold,
             alert_cooldown: Duration::from_secs(cooldown_secs),
+            feishu_webhook,
         }
     }
 
@@ -211,7 +220,7 @@ impl ServiceCallMonitor {
         }
     }
 
-    /// 告警输出（去重 + tracing::warn）。
+    /// 告警输出（去重 + tracing::warn + 可选飞书 Webhook 推送）。
     fn alert(&self, key: &str, message: String) {
         let now = Instant::now();
         let mut last_alerts = match self.last_alerts.lock() {
@@ -225,9 +234,41 @@ impl ServiceCallMonitor {
             }
         }
         last_alerts.insert(key.to_string(), now);
+        drop(last_alerts);
 
         tracing::warn!(target: "service_call_alert", "⚠️ [服务调用告警] {}", message);
+
+        // 可选：推送飞书机器人（fire-and-forget，失败不影响主流程）
+        if let Some(url) = self.feishu_webhook.clone() {
+            notify_feishu(url, message);
+        }
     }
+}
+
+/// 飞书机器人 Webhook 推送（异步 fire-and-forget）。
+///
+/// - 仅在服务运行于 tokio runtime 内时推送（`Handle::try_current`）；
+///   无 runtime（如纯同步上下文/测试）时静默跳过，保持非阻塞语义。
+/// - 推送失败仅 `trace::debug!`，绝不 panic、绝不阻塞主流程。
+fn notify_feishu(webhook_url: String, message: String) {
+    let handle = match tokio::runtime::Handle::try_current() {
+        Ok(h) => h,
+        Err(_) => return, // 无 runtime：不推送（告警已通过 tracing 输出）
+    };
+    handle.spawn(async move {
+        let payload = serde_json::json!({
+            "msg_type": "text",
+            "content": { "text": format!("⚠️ [服务调用告警] {}", message) },
+        });
+        let result = reqwest::Client::new()
+            .post(&webhook_url)
+            .json(&payload)
+            .send()
+            .await;
+        if let Err(e) = result {
+            tracing::debug!(target: "service_call_alert", "飞书告警推送失败: {}", e);
+        }
+    });
 }
 
 #[cfg(test)]
@@ -263,6 +304,7 @@ mod tests {
             window_secs: 60,
             high_freq_threshold: 3,
             alert_cooldown: Duration::from_secs(60),
+            feishu_webhook: None,
         };
         // 超过阈值 3 → 触发（不 panic，日志可验证）
         for _ in 0..5 {
@@ -285,6 +327,7 @@ mod tests {
             window_secs: 60,
             high_freq_threshold: 1000,
             alert_cooldown: Duration::from_secs(3600),
+            feishu_webhook: None,
         };
         // 未知服务连续触发，冷却期内只记一次
         monitor.record("ghost-service");
@@ -292,5 +335,73 @@ mod tests {
         monitor.record("ghost-service");
         let key = "ghost-service:unknown_service".to_string();
         assert!(monitor.last_alerts.lock().unwrap().contains_key(&key));
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_alert_pushes_feishu_webhook() {
+        use std::io::Read;
+        use std::sync::mpsc;
+
+        // mock 本地 HTTP server 收 webhook 请求
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let url = format!("http://{}/hook", addr);
+        let (tx, rx) = mpsc::channel();
+        std::thread::spawn(move || {
+            if let Ok((mut sock, _)) = listener.accept() {
+                let mut buf = [0u8; 8192];
+                if let Ok(n) = sock.read(&mut buf) {
+                    let _ = tx.send(String::from_utf8_lossy(&buf[..n]).to_string());
+                }
+            }
+        });
+
+        let monitor = ServiceCallMonitor {
+            enabled: true,
+            known_services: HashSet::new(),
+            windows: Mutex::new(HashMap::new()),
+            last_alerts: Mutex::new(HashMap::new()),
+            window_secs: 60,
+            high_freq_threshold: 1000,
+            alert_cooldown: Duration::from_secs(0),
+            feishu_webhook: Some(url),
+        };
+        monitor.record_degrade("downstream-x", "500 from mock");
+
+        // 等待异步推送送达 mock server
+        let body = tokio::time::timeout(Duration::from_secs(3), async {
+            loop {
+                if let Ok(v) = rx.try_recv() {
+                    return v;
+                }
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+        })
+        .await
+        .expect("webhook 推送超时");
+
+        assert!(body.contains("服务调用告警"), "body: {body}");
+        assert!(body.contains("downstream-x"), "body: {body}");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_alert_skips_push_without_runtime_or_webhook() {
+        // 未配置 webhook：告警仅 tracing，不 panic、不推送
+        let monitor = ServiceCallMonitor {
+            enabled: true,
+            known_services: HashSet::new(),
+            windows: Mutex::new(HashMap::new()),
+            last_alerts: Mutex::new(HashMap::new()),
+            window_secs: 60,
+            high_freq_threshold: 1000,
+            alert_cooldown: Duration::from_secs(0),
+            feishu_webhook: None,
+        };
+        monitor.record("ghost-service");
+        assert!(monitor
+            .last_alerts
+            .lock()
+            .unwrap()
+            .contains_key(&"ghost-service:unknown_service".to_string()));
     }
 }

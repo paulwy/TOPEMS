@@ -577,3 +577,8 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 - [ ] **④ 配置单一真相源 CI 校验**（P0-3）——ports/services.yaml/Cargo.toml/vite.config 一致性门禁
 - [ ] **⑤ 拆分前置治理深化**——integration 直写改 API 编排剩余、跨域白名单设计性保留复核
 - [ ] **⑥ 事件通道选型规则**（P1-1）——Redis Pub/Sub vs RabbitMQ 决策矩阵
+- [x] **② 告警消费落地**——ServiceCallMonitor 接飞书通知（**已闭环 2026-09-17**）：
+  - shared-auth `service_monitor.rs` 新增 `FEISHU_ALERT_WEBHOOK` 环境变量（可选）：配置后告警在 tracing 输出的同时推送飞书机器人（fire-and-forget，失败不影响主流程；未配置保持纯日志行为，零行为变更）
+  - 推送实现：`tokio::runtime::Handle::try_current()` 取当前 runtime spawn 异步 reqwest POST（无 runtime 静默跳过，非阻塞语义）；复用现有冷却去重
+  - 测试：新增 2 个（mock 本地 HTTP server 收 webhook 验证告警消息送达 / 无 runtime·无 webhook 时跳过不 panic）；shared-auth 全量 227 tests 全过
+  - 配置文档：`config/env/_template.env.example` 补 SERVICE_ALERT_* + FEISHU_ALERT_WEBHOOK 段（含已知服务白名单覆盖说明）
