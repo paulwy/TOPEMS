@@ -26,7 +26,7 @@ use super::super::tools::ToolExecutionError;
 /// - bi.get_dashboard — 获取仪表盘详情（按ID）
 /// - bi.list_reports — 查询报表列表（支持分页、类型筛选、状态筛选）
 /// - bi.get_metric_data — 获取指标数据（按指标ID、时间范围、维度）
-pub async fn register_bi_tools(server: &McpServer) {
+pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. bi.list_dashboards
@@ -487,7 +487,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_bi_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_bi_tools(&server).await;
+        register_bi_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("bi.list_dashboards").await);
@@ -500,7 +500,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_dashboards() {
         let server = McpServer::new("test", "1.0.0");
-        register_bi_tools(&server).await;
+        register_bi_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -522,7 +522,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_dashboard() {
         let server = McpServer::new("test", "1.0.0");
-        register_bi_tools(&server).await;
+        register_bi_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -545,7 +545,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_reports() {
         let server = McpServer::new("test", "1.0.0");
-        register_bi_tools(&server).await;
+        register_bi_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -568,7 +568,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_metric_data() {
         let server = McpServer::new("test", "1.0.0");
-        register_bi_tools(&server).await;
+        register_bi_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -599,7 +599,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_metric_data_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_bi_tools(&server).await;
+        register_bi_tools(&server, "test-secret").await;
 
         // 缺少 end_date
         let result = server

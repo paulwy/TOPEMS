@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - hr.get_employee — 获取员工详情（按ID）
 /// - hr.create_employee — 创建员工（姓名、工号、部门、职位）
 /// - hr.update_employee — 更新员工信息（按ID，支持部分更新）
-pub async fn register_hr_tools(server: &McpServer) {
+pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. hr.list_employees
@@ -480,7 +480,7 @@ mod tests {
             return;
         }
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
             .call_tool("hr.list_employees", json!({"page": 1, "page_size": 5}))
@@ -499,7 +499,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_hr_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("hr.list_employees").await);
@@ -512,7 +512,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_employees() {
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -534,7 +534,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_employee() {
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -556,7 +556,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_employee_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
 
         // 缺少 name
         let result = server
@@ -582,7 +582,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_employee_success() {
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -614,7 +614,7 @@ mod tests {
     #[tokio::test]
     async fn test_update_employee() {
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -642,7 +642,7 @@ mod tests {
     #[tokio::test]
     async fn test_update_employee_no_fields() {
         let server = McpServer::new("test", "1.0.0");
-        register_hr_tools(&server).await;
+        register_hr_tools(&server, "test-secret").await;
 
         // 只传 employee_id，不传任何更新字段
         let result = server

@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - ehs.get_incident — 获取安全事件详情（按ID）
 /// - ehs.list_hazards — 查询隐患列表（支持分页、等级筛选、状态筛选）
 /// - ehs.create_incident — 创建安全事件（标题、类型、等级、描述）
-pub async fn register_ehs_tools(server: &McpServer) {
+pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. ehs.list_incidents
@@ -506,7 +506,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_ehs_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_ehs_tools(&server).await;
+        register_ehs_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("ehs.list_incidents").await);
@@ -519,7 +519,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_incidents() {
         let server = McpServer::new("test", "1.0.0");
-        register_ehs_tools(&server).await;
+        register_ehs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -541,7 +541,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_incident() {
         let server = McpServer::new("test", "1.0.0");
-        register_ehs_tools(&server).await;
+        register_ehs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -563,7 +563,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_hazards() {
         let server = McpServer::new("test", "1.0.0");
-        register_ehs_tools(&server).await;
+        register_ehs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -586,7 +586,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_incident() {
         let server = McpServer::new("test", "1.0.0");
-        register_ehs_tools(&server).await;
+        register_ehs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -620,7 +620,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_incident_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_ehs_tools(&server).await;
+        register_ehs_tools(&server, "test-secret").await;
 
         // 缺少 title
         let result = server

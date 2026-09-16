@@ -47,9 +47,9 @@ mod business_tools_integration_tests {
         let server = McpServer::new("integration-test", "1.0.0");
 
         // 注册 10 个业务工具
-        register_crm_tools(&server).await;
-        register_erp_tools(&server).await;
-        register_finance_tools(&server).await;
+        register_crm_tools(&server, "test-secret").await;
+        register_erp_tools(&server, "test-secret").await;
+        register_finance_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
 

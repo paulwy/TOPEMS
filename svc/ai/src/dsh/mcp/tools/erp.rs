@@ -18,14 +18,17 @@ use topems_shared_service_client::service_client::TypedServiceClient;
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
 
-/// 构造 ERP TypedServiceClient
-fn erp_client() -> Result<TypedServiceClient<ErpApi>, ToolExecutionError> {
+/// 构造 ERP TypedServiceClient（统一服务间认证：ai-service 身份签发 service token）
+fn erp_client(jwt_secret: &str) -> Result<TypedServiceClient<ErpApi>, ToolExecutionError> {
     TypedServiceClient::<ErpApi>::from_env_default()
+        .and_then(|c| c.with_service_token(jwt_secret, "ai-service", &["erp:read", "erp:write"]))
         .map_err(|e| ToolExecutionError::Execution(format!("ERP 客户端初始化失败: {}", e)))
 }
 
 /// 注册 ERP 业务工具（4 个）
-pub async fn register_erp_tools(server: &McpServer) {
+pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
+    // &'static str：MCP 工具注册仅一次，leak 生命周期与进程一致（Fn 闭包需 'static 捕获）
+    let jwt_secret: &'static str = Box::leak(jwt_secret.to_string().into_boxed_str());
     let registry = server.tool_registry();
 
     // 1. erp.list_sales_orders
@@ -40,13 +43,13 @@ pub async fn register_erp_tools(server: &McpServer) {
                 .property("customer_id", SchemaBuilder::string().description("客户ID筛选"))
                 .required(&["page"])
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let page = params["page"].as_u64().unwrap_or(1) as i32;
                 let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
                 let status = params["status"].as_str().unwrap_or("");
                 let customer_id = params["customer_id"].as_str().unwrap_or("");
 
-                let result = match erp_client()?.list_sales_orders(page, page_size).await {
+                let result = match erp_client(jwt_secret)?.list_sales_orders(page, page_size).await {
                     Ok(orders) => {
                         let filtered: Vec<Value> = orders.into_iter().filter(|o| {
                             (status.is_empty() || o["status"].as_str() == Some(status))
@@ -75,8 +78,8 @@ pub async fn register_erp_tools(server: &McpServer) {
             "erp.get_inventory_summary",
             "获取库存汇总信息，包括总SKU数、总库存数量、库存总价值、低库存预警数等。",
             SchemaBuilder::object().build(),
-            |_params| async move {
-                let result = match erp_client()?.get_inventory_summary().await {
+            move |_params| async move {
+                let result = match erp_client(jwt_secret)?.get_inventory_summary().await {
                     Ok(summary) => json!({ "summary": summary, "source": "real_api" }),
                     Err(e) => {
                         tracing::warn!("ERP get_inventory_summary API 调用失败（降级 mock）: {}", e);
@@ -105,7 +108,7 @@ pub async fn register_erp_tools(server: &McpServer) {
                 .property("remark", SchemaBuilder::string().description("备注"))
                 .required(&["supplier_id", "items"])
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let supplier_id = params["supplier_id"].as_str()
                     .ok_or_else(|| ToolExecutionError::Validation("supplier_id 不能为空".to_string()))?.to_string();
                 let items = params["items"].as_array()
@@ -123,7 +126,7 @@ pub async fn register_erp_tools(server: &McpServer) {
                     "remark": remark,
                 });
 
-                let result = match erp_client()?.create_purchase_order(&payload).await {
+                let result = match erp_client(jwt_secret)?.create_purchase_order(&payload).await {
                     Ok(order) => json!({ "success": true, "purchase_order": order, "source": "real_api" }),
                     Err(e) => {
                         tracing::warn!("ERP create_purchase_order API 调用失败（降级 mock）: {}", e);
@@ -159,11 +162,11 @@ pub async fn register_erp_tools(server: &McpServer) {
                 .property("order_id", SchemaBuilder::string().description("销售订单ID（如 ORD-00000001）"))
                 .required(&["order_id"])
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let order_id = params["order_id"].as_str()
                     .ok_or_else(|| ToolExecutionError::Validation("order_id 不能为空".to_string()))?.to_string();
 
-                let result = match erp_client()?.get_sales_order(&order_id).await {
+                let result = match erp_client(jwt_secret)?.get_sales_order(&order_id).await {
                     Ok(order) => json!({ "order": order, "source": "real_api" }),
                     Err(e) => {
                         tracing::warn!("ERP get_sales_order API 调用失败（降级 mock）: {}", e);
@@ -248,7 +251,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_erp_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_erp_tools(&server).await;
+        register_erp_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
         assert!(registry.has_tool("erp.list_sales_orders").await);
         assert!(registry.has_tool("erp.get_inventory_summary").await);
@@ -260,7 +263,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_sales_orders_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_erp_tools(&server).await;
+        register_erp_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("erp.list_sales_orders", json!({"page": 1, "page_size": 10}))
             .await;
@@ -270,7 +273,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_inventory_summary_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_erp_tools(&server).await;
+        register_erp_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("erp.get_inventory_summary", json!({}))
             .await;
@@ -280,7 +283,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_sales_order_detail_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_erp_tools(&server).await;
+        register_erp_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("erp.get_sales_order_detail", json!({"order_id": "ORD-00000001"}))
             .await;
@@ -290,7 +293,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_purchase_order_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_erp_tools(&server).await;
+        register_erp_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("erp.create_purchase_order", json!({
                 "supplier_id": "SUP-001",

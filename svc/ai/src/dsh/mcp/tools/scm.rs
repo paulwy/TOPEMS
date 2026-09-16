@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - scm.get_supplier — 获取供应商详情（按ID）
 /// - scm.list_purchase_orders — 查询采购订单列表（支持分页、状态筛选、供应商筛选）
 /// - scm.create_purchase_order — 创建采购订单（供应商、物料、数量、价格）
-pub async fn register_scm_tools(server: &McpServer) {
+pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. scm.list_suppliers
@@ -525,7 +525,7 @@ mod tests {
             return;
         }
         let server = McpServer::new("test", "1.0.0");
-        register_scm_tools(&server).await;
+        register_scm_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
             .call_tool("scm.list_suppliers", json!({"page": 1, "page_size": 5}))
@@ -544,7 +544,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_scm_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_scm_tools(&server).await;
+        register_scm_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("scm.list_suppliers").await);
@@ -557,7 +557,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_suppliers() {
         let server = McpServer::new("test", "1.0.0");
-        register_scm_tools(&server).await;
+        register_scm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -579,7 +579,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_supplier() {
         let server = McpServer::new("test", "1.0.0");
-        register_scm_tools(&server).await;
+        register_scm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -604,7 +604,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_purchase_orders() {
         let server = McpServer::new("test", "1.0.0");
-        register_scm_tools(&server).await;
+        register_scm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -627,7 +627,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_purchase_order() {
         let server = McpServer::new("test", "1.0.0");
-        register_scm_tools(&server).await;
+        register_scm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -661,7 +661,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_purchase_order_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_scm_tools(&server).await;
+        register_scm_tools(&server, "test-secret").await;
 
         // 缺少 supplier_id
         let result = server

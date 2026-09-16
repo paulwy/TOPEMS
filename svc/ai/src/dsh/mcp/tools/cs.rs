@@ -26,7 +26,7 @@ use super::super::tools::ToolExecutionError;
 /// - cs.get_ticket — 获取工单详情（按ID）
 /// - cs.list_customers — 查询客户列表（支持分页、等级筛选、状态筛选）
 /// - cs.create_ticket — 创建工单（标题、客户、类型、优先级、描述）
-pub async fn register_cs_tools(server: &McpServer) {
+pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. cs.list_tickets
@@ -487,7 +487,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_cs_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_cs_tools(&server).await;
+        register_cs_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("cs.list_tickets").await);
@@ -500,7 +500,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_tickets() {
         let server = McpServer::new("test", "1.0.0");
-        register_cs_tools(&server).await;
+        register_cs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -522,7 +522,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_ticket() {
         let server = McpServer::new("test", "1.0.0");
-        register_cs_tools(&server).await;
+        register_cs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -545,7 +545,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_customers() {
         let server = McpServer::new("test", "1.0.0");
-        register_cs_tools(&server).await;
+        register_cs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -568,7 +568,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_ticket() {
         let server = McpServer::new("test", "1.0.0");
-        register_cs_tools(&server).await;
+        register_cs_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -604,7 +604,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_ticket_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_cs_tools(&server).await;
+        register_cs_tools(&server, "test-secret").await;
 
         // 缺少 customer_id
         let result = server

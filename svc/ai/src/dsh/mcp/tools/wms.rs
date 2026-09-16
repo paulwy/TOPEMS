@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - wms.get_inventory — 获取库存详情（按物料ID+仓库ID）
 /// - wms.list_warehouses — 查询仓库列表（支持分页、状态筛选）
 /// - wms.create_transfer — 创建库存调拨单（源仓库、目标仓库、物料、数量）
-pub async fn register_wms_tools(server: &McpServer) {
+pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. wms.list_inventory
@@ -478,7 +478,7 @@ mod tests {
             return;
         }
         let server = McpServer::new("test", "1.0.0");
-        register_wms_tools(&server).await;
+        register_wms_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
             .call_tool("wms.list_inventory", json!({"page": 1, "page_size": 5}))
@@ -497,7 +497,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_wms_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_wms_tools(&server).await;
+        register_wms_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("wms.list_inventory").await);
@@ -510,7 +510,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_inventory() {
         let server = McpServer::new("test", "1.0.0");
-        register_wms_tools(&server).await;
+        register_wms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -532,7 +532,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_inventory() {
         let server = McpServer::new("test", "1.0.0");
-        register_wms_tools(&server).await;
+        register_wms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -556,7 +556,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_warehouses() {
         let server = McpServer::new("test", "1.0.0");
-        register_wms_tools(&server).await;
+        register_wms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -579,7 +579,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_transfer() {
         let server = McpServer::new("test", "1.0.0");
-        register_wms_tools(&server).await;
+        register_wms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -613,7 +613,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_transfer_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_wms_tools(&server).await;
+        register_wms_tools(&server, "test-secret").await;
 
         // 源仓库和目标仓库相同
         let result = server

@@ -26,7 +26,7 @@ use super::super::tools::ToolExecutionError;
 /// - iot.get_device — 获取设备详情（按ID）
 /// - iot.list_device_data — 查询设备数据（支持分页、设备筛选、时间范围）
 /// - iot.send_command — 发送设备命令（设备ID、命令、参数）
-pub async fn register_iot_tools(server: &McpServer) {
+pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. iot.list_devices
@@ -438,7 +438,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_iot_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_iot_tools(&server).await;
+        register_iot_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("iot.list_devices").await);
@@ -451,7 +451,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_devices() {
         let server = McpServer::new("test", "1.0.0");
-        register_iot_tools(&server).await;
+        register_iot_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -473,7 +473,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_device() {
         let server = McpServer::new("test", "1.0.0");
-        register_iot_tools(&server).await;
+        register_iot_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -497,7 +497,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_device_data() {
         let server = McpServer::new("test", "1.0.0");
-        register_iot_tools(&server).await;
+        register_iot_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -521,7 +521,7 @@ mod tests {
     #[tokio::test]
     async fn test_send_command() {
         let server = McpServer::new("test", "1.0.0");
-        register_iot_tools(&server).await;
+        register_iot_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -552,7 +552,7 @@ mod tests {
     #[tokio::test]
     async fn test_send_command_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_iot_tools(&server).await;
+        register_iot_tools(&server, "test-secret").await;
 
         // 缺少 command
         let result = server

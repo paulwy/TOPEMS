@@ -47,6 +47,9 @@ pub fn create_routes(
 ) -> Router {
     let cors = create_cors_layer();
 
+    // 服务间认证：MCP 业务工具以 ai-service 身份签发 service token 调用下游
+    let jwt_secret = app_state.auth_state.jwt_secret.clone();
+
     // 创建 MCP Server 和 DSH Agent 编排器
     let mcp_server = Arc::new(McpServer::new("topems-ai-mcp", env!("CARGO_PKG_VERSION")));
 
@@ -99,22 +102,23 @@ pub fn create_routes(
     let server_clone = mcp_server.clone();
     tokio::task::spawn(async move {
         server_clone.register_system_tools().await;
-        register_crm_tools(&server_clone).await;
-        register_erp_tools(&server_clone).await;
-        register_finance_tools(&server_clone).await;
-        register_hr_tools(&server_clone).await;
-        register_mes_tools(&server_clone).await;
-        register_ehs_tools(&server_clone).await;
-        register_wms_tools(&server_clone).await;
-        register_qms_tools(&server_clone).await;
-        register_pm_tools(&server_clone).await;
-        register_lims_tools(&server_clone).await;
-        register_bi_tools(&server_clone).await;
-        register_aps_tools(&server_clone).await;
-        register_cs_tools(&server_clone).await;
-        register_scm_tools(&server_clone).await;
-        register_iot_tools(&server_clone).await;
-        register_oa_tools(&server_clone).await;
+        let jwt_secret = jwt_secret;
+        register_crm_tools(&server_clone, &jwt_secret).await;
+        register_erp_tools(&server_clone, &jwt_secret).await;
+        register_finance_tools(&server_clone, &jwt_secret).await;
+        register_hr_tools(&server_clone, &jwt_secret).await;
+        register_mes_tools(&server_clone, &jwt_secret).await;
+        register_ehs_tools(&server_clone, &jwt_secret).await;
+        register_wms_tools(&server_clone, &jwt_secret).await;
+        register_qms_tools(&server_clone, &jwt_secret).await;
+        register_pm_tools(&server_clone, &jwt_secret).await;
+        register_lims_tools(&server_clone, &jwt_secret).await;
+        register_bi_tools(&server_clone, &jwt_secret).await;
+        register_aps_tools(&server_clone, &jwt_secret).await;
+        register_cs_tools(&server_clone, &jwt_secret).await;
+        register_scm_tools(&server_clone, &jwt_secret).await;
+        register_iot_tools(&server_clone, &jwt_secret).await;
+        register_oa_tools(&server_clone, &jwt_secret).await;
         tracing::info!(
             "MCP Server tools registered: {} tools total",
             server_clone.tool_registry().len().await

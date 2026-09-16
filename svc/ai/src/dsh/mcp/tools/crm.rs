@@ -18,13 +18,17 @@ use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
 
 /// 构造 CRM TypedServiceClient（从 CRM_SERVICE_URL 环境变量，回退 localhost:8029）
-fn crm_client() -> Result<TypedServiceClient<CrmApi>, ToolExecutionError> {
+/// 统一服务间认证：以 ai-service 身份签发 service token 调用，被调方按服务身份审计/豁免 RLS。
+fn crm_client(jwt_secret: &str) -> Result<TypedServiceClient<CrmApi>, ToolExecutionError> {
     TypedServiceClient::<CrmApi>::from_env_default()
+        .and_then(|c| c.with_service_token(jwt_secret, "ai-service", &["crm:read", "crm:write"]))
         .map_err(|e| ToolExecutionError::Execution(format!("CRM 客户端初始化失败: {}", e)))
 }
 
 /// 注册 CRM 业务工具（3 个，均通过 TypedServiceClient 真实调用）
-pub async fn register_crm_tools(server: &McpServer) {
+pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
+    // &'static str：MCP 工具注册仅一次，leak 生命周期与进程一致（Fn 闭包需 'static 捕获）
+    let jwt_secret: &'static str = Box::leak(jwt_secret.to_string().into_boxed_str());
     let registry = server.tool_registry();
 
     // 1. crm.list_customers
@@ -54,12 +58,12 @@ pub async fn register_crm_tools(server: &McpServer) {
                 )
                 .required(&["page"])
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let page = params["page"].as_u64().unwrap_or(1) as i32;
                 let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
                 let keyword = params["keyword"].as_str().unwrap_or("");
 
-                let result = match crm_client()?.list_customers(page, page_size).await {
+                let result = match crm_client(jwt_secret)?.list_customers(page, page_size).await {
                     Ok(customers) => {
                         let filtered: Vec<Value> = if keyword.is_empty() {
                             customers
@@ -117,13 +121,13 @@ pub async fn register_crm_tools(server: &McpServer) {
                 )
                 .required(&["customer_id"])
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()
                     .ok_or_else(|| ToolExecutionError::Validation("customer_id 不能为空".to_string()))?
                     .to_string();
 
-                let result = match crm_client()?.get_customer(&customer_id).await {
+                let result = match crm_client(jwt_secret)?.get_customer(&customer_id).await {
                     Ok(customer) => json!({ "customer": customer, "source": "real_api" }),
                     Err(e) => {
                         tracing::warn!("CRM get_customer API 调用失败（降级 mock）: {}", e);
@@ -173,7 +177,7 @@ pub async fn register_crm_tools(server: &McpServer) {
                 )
                 .required(&["customer_id", "name", "amount"])
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()
                     .ok_or_else(|| ToolExecutionError::Validation("customer_id 不能为空".to_string()))?
@@ -194,7 +198,7 @@ pub async fn register_crm_tools(server: &McpServer) {
                     "stage": stage,
                 });
 
-                let result = match crm_client()?.create_opportunity(&payload).await {
+                let result = match crm_client(jwt_secret)?.create_opportunity(&payload).await {
                     Ok(opportunity) => json!({
                         "success": true,
                         "opportunity": opportunity,
@@ -329,7 +333,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_crm_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_crm_tools(&server).await;
+        register_crm_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("crm.list_customers").await);
@@ -342,7 +346,7 @@ mod tests {
     async fn test_list_customers_mock_fallback() {
         // API 不可达时降级 mock，工具不应报错
         let server = McpServer::new("test", "1.0.0");
-        register_crm_tools(&server).await;
+        register_crm_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
 
         let result = registry
@@ -354,7 +358,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_customer_profile_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_crm_tools(&server).await;
+        register_crm_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
 
         let result = registry
@@ -369,7 +373,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_opportunity_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_crm_tools(&server).await;
+        register_crm_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
 
         // 缺少必填字段应返回 Validation 错误（在 async handler 内校验）

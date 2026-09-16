@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - pm.get_project — 获取项目详情（按ID）
 /// - pm.list_tasks — 查询任务列表（支持分页、项目筛选、状态筛选、负责人筛选）
 /// - pm.create_project — 创建项目（名称、类型、负责人、开始/结束日期）
-pub async fn register_pm_tools(server: &McpServer) {
+pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. pm.list_projects
@@ -589,7 +589,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_pm_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_pm_tools(&server).await;
+        register_pm_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("pm.list_projects").await);
@@ -602,7 +602,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_projects() {
         let server = McpServer::new("test", "1.0.0");
-        register_pm_tools(&server).await;
+        register_pm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -624,7 +624,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_project() {
         let server = McpServer::new("test", "1.0.0");
-        register_pm_tools(&server).await;
+        register_pm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -647,7 +647,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_tasks() {
         let server = McpServer::new("test", "1.0.0");
-        register_pm_tools(&server).await;
+        register_pm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -670,7 +670,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_project() {
         let server = McpServer::new("test", "1.0.0");
-        register_pm_tools(&server).await;
+        register_pm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -705,7 +705,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_project_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_pm_tools(&server).await;
+        register_pm_tools(&server, "test-secret").await;
 
         // 缺少 manager
         let result = server
@@ -743,7 +743,7 @@ mod tests {
         // 模块化单体统一入口为网关 8099（含 dev 模拟认证）
         std::env::set_var("PM_SERVICE_URL", "http://localhost:8099");
         let server = McpServer::new("test", "1.0.0");
-        register_pm_tools(&server).await;
+        register_pm_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()

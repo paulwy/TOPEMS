@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - mes.get_production_order — 获取生产订单详情（按ID）
 /// - mes.list_work_orders — 查询工单列表（支持分页、工序筛选）
 /// - mes.get_oee_dashboard — 获取OEE仪表盘数据（时间范围、车间筛选）
-pub async fn register_mes_tools(server: &McpServer) {
+pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. mes.list_production_orders
@@ -496,7 +496,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_mes_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_mes_tools(&server).await;
+        register_mes_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("mes.list_production_orders").await);
@@ -509,7 +509,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_production_orders() {
         let server = McpServer::new("test", "1.0.0");
-        register_mes_tools(&server).await;
+        register_mes_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -534,7 +534,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_production_order() {
         let server = McpServer::new("test", "1.0.0");
-        register_mes_tools(&server).await;
+        register_mes_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -559,7 +559,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_work_orders() {
         let server = McpServer::new("test", "1.0.0");
-        register_mes_tools(&server).await;
+        register_mes_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -582,7 +582,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_oee_dashboard() {
         let server = McpServer::new("test", "1.0.0");
-        register_mes_tools(&server).await;
+        register_mes_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -607,7 +607,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_oee_dashboard_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_mes_tools(&server).await;
+        register_mes_tools(&server, "test-secret").await;
 
         // 缺少 from
         let result = server

@@ -810,7 +810,7 @@ mod tests {
     // ===== 权限继承验证（2.3 外部 Agent 对接）=====
     async fn setup_finance_permission_server() -> McpServer {
         let server = McpServer::new("test", "1.0.0");
-        crate::dsh::mcp::tools::finance::register_finance_tools(&server).await;
+        crate::dsh::mcp::tools::finance::register_finance_tools(&server, "test-secret").await;
         server
     }
 

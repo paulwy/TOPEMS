@@ -17,14 +17,17 @@ use topems_shared_service_client::service_client::TypedServiceClient;
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
 
-/// 构造 Finance TypedServiceClient
-fn finance_client() -> Result<TypedServiceClient<FinanceApi>, ToolExecutionError> {
+/// 构造 Finance TypedServiceClient（统一服务间认证：ai-service 身份签发 service token）
+fn finance_client(jwt_secret: &str) -> Result<TypedServiceClient<FinanceApi>, ToolExecutionError> {
     TypedServiceClient::<FinanceApi>::from_env_default()
+        .and_then(|c| c.with_service_token(jwt_secret, "ai-service", &["finance:read", "finance:write"]))
         .map_err(|e| ToolExecutionError::Execution(format!("Finance 客户端初始化失败: {}", e)))
 }
 
 /// 注册 Finance 业务工具（3 个）
-pub async fn register_finance_tools(server: &McpServer) {
+pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
+    // &'static str：MCP 工具注册仅一次，leak 生命周期与进程一致（Fn 闭包需 'static 捕获）
+    let jwt_secret: &'static str = Box::leak(jwt_secret.to_string().into_boxed_str());
     let registry = server.tool_registry();
 
     // 1. finance.create_voucher（受限工具，需 finance:write 权限）
@@ -44,7 +47,7 @@ pub async fn register_finance_tools(server: &McpServer) {
                 .required(&["voucher_date", "summary", "entries"])
                 .build(),
             "finance:write",
-            |params| async move {
+            move |params| async move {
                 let voucher_date = params["voucher_date"].as_str()
                     .ok_or_else(|| ToolExecutionError::Validation("voucher_date 不能为空".to_string()))?.to_string();
                 let summary = params["summary"].as_str()
@@ -63,7 +66,7 @@ pub async fn register_finance_tools(server: &McpServer) {
 
                 let payload = json!({ "voucher_date": voucher_date, "summary": summary, "entries": entries });
 
-                let result = match finance_client()?.create_voucher(&payload).await {
+                let result = match finance_client(jwt_secret)?.create_voucher(&payload).await {
                     Ok(voucher) => json!({ "success": true, "voucher": voucher, "source": "real_api" }),
                     Err(e) => {
                         tracing::warn!("Finance create_voucher API 调用失败（降级 mock）: {}", e);
@@ -97,10 +100,10 @@ pub async fn register_finance_tools(server: &McpServer) {
             SchemaBuilder::object()
                 .property("subject_code", SchemaBuilder::string().description("科目编码（可选，如 1001 库存现金）"))
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let subject_code = params["subject_code"].as_str().map(|s| s.to_string());
 
-                let result = match finance_client()?.get_account_balance(subject_code.as_deref()).await {
+                let result = match finance_client(jwt_secret)?.get_account_balance(subject_code.as_deref()).await {
                     Ok(balance) => json!({ "balance": balance, "source": "real_api" }),
                     Err(e) => {
                         tracing::warn!("Finance get_account_balance API 调用失败（降级 mock）: {}", e);
@@ -123,12 +126,12 @@ pub async fn register_finance_tools(server: &McpServer) {
                 .property("status", SchemaBuilder::string().description("状态筛选").enum_values(&["unpaid", "partial", "paid", "overdue"]))
                 .required(&["page"])
                 .build(),
-            |params| async move {
+            move |params| async move {
                 let page = params["page"].as_u64().unwrap_or(1) as i32;
                 let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
                 let status = params["status"].as_str().unwrap_or("");
 
-                let result = match finance_client()?.list_receivables(page, page_size).await {
+                let result = match finance_client(jwt_secret)?.list_receivables(page, page_size).await {
                     Ok(receivables) => {
                         let filtered: Vec<Value> = if status.is_empty() { receivables } else {
                             receivables.into_iter().filter(|r| r["status"].as_str() == Some(status)).collect()
@@ -200,7 +203,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_finance_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_finance_tools(&server).await;
+        register_finance_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
         assert!(registry.has_tool("finance.create_voucher").await);
         assert!(registry.has_tool("finance.get_account_balance").await);
@@ -211,7 +214,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_voucher_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_finance_tools(&server).await;
+        register_finance_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("finance.create_voucher", json!({
                 "voucher_date": "2026-09-13",
@@ -228,7 +231,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_voucher_unbalanced_rejected() {
         let server = McpServer::new("test", "1.0.0");
-        register_finance_tools(&server).await;
+        register_finance_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("finance.create_voucher", json!({
                 "voucher_date": "2026-09-13",
@@ -245,7 +248,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_account_balance_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_finance_tools(&server).await;
+        register_finance_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("finance.get_account_balance", json!({}))
             .await;
@@ -255,7 +258,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_receivables_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
-        register_finance_tools(&server).await;
+        register_finance_tools(&server, "test-secret").await;
         let result = server.tool_registry()
             .call_tool("finance.list_receivables", json!({"page": 1, "page_size": 10}))
             .await;

@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - aps.get_schedule — 获取排程详情（按ID）
 /// - aps.list_resources — 查询资源列表（支持分页、类型筛选、状态筛选）
 /// - aps.create_schedule — 创建排程（类型、订单、资源、开始/结束时间）
-pub async fn register_aps_tools(server: &McpServer) {
+pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. aps.list_schedules
@@ -549,7 +549,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_aps_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_aps_tools(&server).await;
+        register_aps_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("aps.list_schedules").await);
@@ -562,7 +562,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_schedules() {
         let server = McpServer::new("test", "1.0.0");
-        register_aps_tools(&server).await;
+        register_aps_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -584,7 +584,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_schedule() {
         let server = McpServer::new("test", "1.0.0");
-        register_aps_tools(&server).await;
+        register_aps_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -609,7 +609,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_resources() {
         let server = McpServer::new("test", "1.0.0");
-        register_aps_tools(&server).await;
+        register_aps_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -632,7 +632,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_schedule() {
         let server = McpServer::new("test", "1.0.0");
-        register_aps_tools(&server).await;
+        register_aps_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -670,7 +670,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_schedule_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_aps_tools(&server).await;
+        register_aps_tools(&server, "test-secret").await;
 
         // 缺少 resource_id
         let result = server
@@ -707,7 +707,7 @@ mod tests {
         // 模块化单体统一入口为网关 8099（含 dev 模拟认证）
         std::env::set_var("APS_SERVICE_URL", "http://localhost:8099");
         let server = McpServer::new("test", "1.0.0");
-        register_aps_tools(&server).await;
+        register_aps_tools(&server, "test-secret").await;
 
         // list_schedules → 真实 /api/aps/schedules
         let result = server

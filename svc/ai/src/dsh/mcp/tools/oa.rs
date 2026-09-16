@@ -26,7 +26,7 @@ use super::super::tools::ToolExecutionError;
 /// - oa.get_approval_request — 获取审批单详情（按ID）
 /// - oa.list_employees — 查询员工列表（支持分页、部门筛选、状态筛选）
 /// - oa.create_approval_request — 创建审批单（类型、标题、金额、审批人）
-pub async fn register_oa_tools(server: &McpServer) {
+pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. oa.list_approval_requests
@@ -482,7 +482,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_oa_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_oa_tools(&server).await;
+        register_oa_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("oa.list_approval_requests").await);
@@ -495,7 +495,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_approval_requests() {
         let server = McpServer::new("test", "1.0.0");
-        register_oa_tools(&server).await;
+        register_oa_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -520,7 +520,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_approval_request() {
         let server = McpServer::new("test", "1.0.0");
-        register_oa_tools(&server).await;
+        register_oa_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -547,7 +547,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_employees() {
         let server = McpServer::new("test", "1.0.0");
-        register_oa_tools(&server).await;
+        register_oa_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -570,7 +570,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_approval_request() {
         let server = McpServer::new("test", "1.0.0");
-        register_oa_tools(&server).await;
+        register_oa_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -606,7 +606,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_approval_request_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_oa_tools(&server).await;
+        register_oa_tools(&server, "test-secret").await;
 
         // 缺少 approver
         let result = server

@@ -45,23 +45,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // 2. 注册系统工具和所有业务工具（同步等待注册完成）
+    //    服务间认证：从 JWT_SECRET 读取签发密钥，ai-service 身份调用下游业务 API
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_default();
     server.register_system_tools().await;
-    register_crm_tools(&server).await;
-    register_erp_tools(&server).await;
-    register_finance_tools(&server).await;
-    register_hr_tools(&server).await;
-    register_mes_tools(&server).await;
-    register_ehs_tools(&server).await;
-    register_wms_tools(&server).await;
-    register_qms_tools(&server).await;
-    register_pm_tools(&server).await;
-    register_lims_tools(&server).await;
-    register_bi_tools(&server).await;
-    register_aps_tools(&server).await;
-    register_cs_tools(&server).await;
-    register_scm_tools(&server).await;
-    register_iot_tools(&server).await;
-    register_oa_tools(&server).await;
+    register_crm_tools(&server, &jwt_secret).await;
+    register_erp_tools(&server, &jwt_secret).await;
+    register_finance_tools(&server, &jwt_secret).await;
+    register_hr_tools(&server, &jwt_secret).await;
+    register_mes_tools(&server, &jwt_secret).await;
+    register_ehs_tools(&server, &jwt_secret).await;
+    register_wms_tools(&server, &jwt_secret).await;
+    register_qms_tools(&server, &jwt_secret).await;
+    register_pm_tools(&server, &jwt_secret).await;
+    register_lims_tools(&server, &jwt_secret).await;
+    register_bi_tools(&server, &jwt_secret).await;
+    register_aps_tools(&server, &jwt_secret).await;
+    register_cs_tools(&server, &jwt_secret).await;
+    register_scm_tools(&server, &jwt_secret).await;
+    register_iot_tools(&server, &jwt_secret).await;
+    register_oa_tools(&server, &jwt_secret).await;
 
     // 3. 注册业务资源（crm/erp/finance URI）
     server.register_resources().await;

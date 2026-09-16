@@ -27,7 +27,7 @@ use super::super::tools::{http_call, service_base_url, url_encode};
 /// - qms.get_inspection — 获取检验单详情（按ID）
 /// - qms.list_nonconformances — 查询不合格品列表（支持分页、严重程度筛选）
 /// - qms.create_inspection — 创建检验单（类型、物料、数量、检验员）
-pub async fn register_qms_tools(server: &McpServer) {
+pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
     let registry = server.tool_registry();
 
     // 1. qms.list_inspections
@@ -484,7 +484,7 @@ mod tests {
             return;
         }
         let server = McpServer::new("test", "1.0.0");
-        register_qms_tools(&server).await;
+        register_qms_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
             .call_tool("qms.list_inspections", json!({"page": 1, "page_size": 5}))
@@ -504,7 +504,7 @@ mod tests {
     #[tokio::test]
     async fn test_register_qms_tools() {
         let server = McpServer::new("test", "1.0.0");
-        register_qms_tools(&server).await;
+        register_qms_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
         assert!(registry.has_tool("qms.list_inspections").await);
@@ -517,7 +517,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_inspections() {
         let server = McpServer::new("test", "1.0.0");
-        register_qms_tools(&server).await;
+        register_qms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -539,7 +539,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_inspection() {
         let server = McpServer::new("test", "1.0.0");
-        register_qms_tools(&server).await;
+        register_qms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -564,7 +564,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_nonconformances() {
         let server = McpServer::new("test", "1.0.0");
-        register_qms_tools(&server).await;
+        register_qms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -587,7 +587,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_inspection() {
         let server = McpServer::new("test", "1.0.0");
-        register_qms_tools(&server).await;
+        register_qms_tools(&server, "test-secret").await;
 
         let result = server
             .tool_registry()
@@ -621,7 +621,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_inspection_validation() {
         let server = McpServer::new("test", "1.0.0");
-        register_qms_tools(&server).await;
+        register_qms_tools(&server, "test-secret").await;
 
         // 缺少 material_id
         let result = server
