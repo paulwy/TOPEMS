@@ -544,4 +544,64 @@ mod tests {
         let result = highlight_text("hello test", "test");
         assert_eq!(result, "hello <mark>test</mark>");
     }
+
+    /// 5xx 服务错误 → 应上报降级指标/告警。
+    #[test]
+    fn test_degrade_reports_on_5xx_service_error() {
+        let svc = "degrade-5xx-svc";
+        let before = topems_shared_auth::service::service_degrade_count(svc);
+        record_search_degrade(
+            svc,
+            &TopemsError::ServiceError {
+                status_code: 503,
+                message: "service unavailable".to_string(),
+            },
+        );
+        assert_eq!(
+            topems_shared_auth::service::service_degrade_count(svc),
+            before + 1,
+            "5xx 服务错误应上报降级"
+        );
+    }
+
+    /// 401/403（权限不足）是可预期降级，不应上报降级指标。
+    #[test]
+    fn test_degrade_not_reported_on_401_service_error() {
+        let svc = "degrade-401-svc";
+        let before = topems_shared_auth::service::service_degrade_count(svc);
+        record_search_degrade(
+            svc,
+            &TopemsError::ServiceError {
+                status_code: 401,
+                message: "unauthorized".to_string(),
+            },
+        );
+        record_search_degrade(
+            svc,
+            &TopemsError::ServiceError {
+                status_code: 403,
+                message: "forbidden".to_string(),
+            },
+        );
+        assert_eq!(
+            topems_shared_auth::service::service_degrade_count(svc),
+            before,
+            "401/403 不应上报降级（可预期权限问题仅 warn）"
+        );
+    }
+
+    /// 网络/连接错误（reqwest）→ 应上报降级。
+    #[tokio::test]
+    async fn test_degrade_reports_on_http_request_error() {
+        let svc = "degrade-http-svc";
+        let before = topems_shared_auth::service::service_degrade_count(svc);
+        // 构造一个真实 reqwest 错误（连接被拒）
+        let err = reqwest::get("http://127.0.0.1:1/health").await.unwrap_err();
+        record_search_degrade(svc, &TopemsError::HttpRequest(err));
+        assert_eq!(
+            topems_shared_auth::service::service_degrade_count(svc),
+            before + 1,
+            "网络/连接错误应上报降级"
+        );
+    }
 }

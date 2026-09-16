@@ -91,6 +91,13 @@ pub fn service_call_count(service_name: &str) -> u64 {
         .get()
 }
 
+/// 查询某下游服务的累计降级/失败调用次数（供测试/内部诊断）。
+pub fn service_degrade_count(service_name: &str) -> u64 {
+    service_calls_degraded_metric()
+        .with_label_values(&[service_name])
+        .get()
+}
+
 /// 服务身份 token 默认有效期（秒）：5 分钟
 pub const SERVICE_TOKEN_TTL_SECS: usize = 300;
 
@@ -192,5 +199,21 @@ mod tests {
             position_code: None,
         };
         assert!(!is_service_claims(&user_claims));
+    }
+
+    #[test]
+    fn test_record_service_degrade_metric_and_alert() {
+        let svc = "degrade-test-service";
+        // 降级上报应打点 degraded 指标（触发 ServiceCallMonitor 告警，不 panic）
+        record_service_degrade(svc, "search source 503");
+        record_service_degrade(svc, "network error");
+        assert_eq!(service_degrade_count(svc), 2);
+        // 其他服务计数独立
+        assert_eq!(service_degrade_count("other-svc"), 0);
+    }
+
+    #[test]
+    fn test_service_degrade_count_zero_when_never_called() {
+        assert_eq!(service_degrade_count("never-degraded-svc"), 0);
     }
 }
