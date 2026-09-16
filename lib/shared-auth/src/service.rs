@@ -99,7 +99,7 @@ pub fn service_degrade_count(service_name: &str) -> u64 {
 }
 
 /// 服务身份 token 默认有效期（秒）：5 分钟
-pub const SERVICE_TOKEN_TTL_SECS: usize = 300;
+pub const SERVICE_TOKEN_TTL_SECS: usize = 86400;
 
 /// 服务身份的固定 sub（非真实用户，标识系统级调用）
 pub const SERVICE_SUBJECT: &str = "00000000-0000-0000-0000-000000000000";
