@@ -310,10 +310,12 @@ export async function bffGraphQL<T = unknown>(
 
 /** 获取仪表盘复合视图（一次请求获取 stats + todos + services） */
 export async function getDashboard() {
-  return bffGraphQL<{
-    stats: BusinessStatsAggregation;
-    todos: UnifiedTodo[];
-    services: Array<{ service: string; healthy: boolean; url: string }>;
+  const result = await bffGraphQL<{
+    dashboard: {
+      stats: BusinessStatsAggregation;
+      todos: UnifiedTodo[];
+      services: Array<{ service: string; healthy: boolean; url: string }>;
+    };
   }>(`
     query Dashboard {
       dashboard {
@@ -330,6 +332,8 @@ export async function getDashboard() {
       }
     }
   `);
+  // GraphQL data 外层含 dashboard 包裹，解包后返回 { stats, todos, services }
+  return result.dashboard;
 }
 
 /** 完成待办事项（GraphQL Mutation） */
