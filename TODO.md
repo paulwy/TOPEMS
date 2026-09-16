@@ -70,6 +70,8 @@
 - [x] ai 服务接入 server（2026-09-16：AiRealModule 复用独立部署 AppState 组装链，create_routes 加 include_api_info 参数避免 /api、/api-docs 冲突；冒烟 /api/ai/analysis/history、/api/ai/connectors、/api/ai/agent/tools 200；模块 30→31 全量闭环，commit 0b807c9d6 + 01776b3d8）
 - [x] unified-core 接入 server（2026-09-16：build_router 挂根路径冲突风险高，nest /api/core 隔离；/api/core/health、/api/core/api、/api/core/metrics 200，模块 29→30，commit e9da724ed）
 - [x] unified-core 嵌入模式重构 + 端到端登录链路打通（2026-09-16：create_routes 增加 embed_mode 参数，嵌入时 core 业务路由挂根、跳过 public 冲突路由与 wms/mes/scm，修复 /api/core 双重前缀致登录 404；unified_core_real_module 改用 build_router_embedded；前端 VITE_CORE_PORT=8099 支持模块化单体代理；实测 POST /api/core/iam/auth/login 200 登录成功、users/me 200、permissions/metadata 200，前端 :3000 → vite proxy → 8099 全链路打通；commits 5653676fa/ec13cc90c/b2039af74）
+- [x] 浏览器实际登录验证 dashboard 数据流真实化（2026-09-16：CU 驱动本机 Chrome admin 登录成功；修复三处断点——① vite.config VITE_MONOLITH=1 模块化单体全局代理开关（所有后端服务 target 统一 :8099，此前 MES/ERP 等仍按独立端口 8030/8010 代理致 ECONNREFUSED）② ports.ts 支持 VITE_PORTAL_PORT（此前 /api/portal 代理指向 8063 无服务）③ getDashboard 解包 GraphQL data.dashboard 层（此前访问 data.services 永远为空 → 永久默认演示数据）；实测模块运行状态 6 模块真实渲染（ERP/CRM/HRM/Finance/MES/Workflow 全部 healthy:false → 异常），本月产量真实聚合 0 替代演示 124,582）
+- [ ] portal dashboard 聚合在模块化单体下健康探测改口径（当前 portal GraphQL stats/services healthy 按独立端口 8010/8029/8030 探活 → 模块化单体下全部 unhealthy、stats 全 0、todos 空；应改为探测 8099 模块 health 或进程内注册表，使 dashboard 显示真实业务数值）
 - [ ] MUI elevation 警告修复
 - [ ] 更多模块的业务 API 实现
 - [ ] dashboard 等演示模块认证一致性（当前无 token 可访问演示数据，低风险；后续可挂只读认证或隐藏）
