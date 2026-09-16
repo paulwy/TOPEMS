@@ -558,3 +558,9 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 - [ ] 搜索降级指标接入 ServiceCallMonitor 告警（P2）
 - [ ] workflow 拆分评估 P2（API 熔断）/ P3（流程定义只读副本）
 - [ ] erp→mes 生产执行闭环接线（方案已批，待实施）
+
+### V531 补充：前端单测验证结论（2026-09-17）
+
+- **分批全过**（22 域 + __tests__ 前 11 文件）：admin 137 / pm 16 / wms 2 / lims 2 / plugin 21 / monitor 1 / ai 40 / system 8 / automation 8 / shared 22 / iam 6 / gis 12 / erp 18 / oa 5 / finance 7 / bi 8 / mes 21 / ehs 7 / workflow 1 / report 25 / qms 1 / hrm 7 / doc 22 / mobile 55 全绿。
+- **vitest 4.1.10 全量运行在本机 macOS 死锁**（pool 0 CPU，maxWorkers=1 同样）；单独文件/目录运行正常 → 环境工具问题，非测试失败。已抽查 BIDataSourcePage/CrmMobDbg/CrmOpportunity 等此前疑似挂起文件均单跑通过。
+- 遗留：全量并发回归建议在 CI（Linux forks pool）执行；本地分批验证为准。
