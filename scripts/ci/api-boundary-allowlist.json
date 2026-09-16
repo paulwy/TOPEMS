@@ -2504,6 +2504,30 @@
       "file": "wms/sync.ts",
       "type": "prebuilt",
       "reason": "预埋登记"
+    },
+    {
+      "svc": "crm",
+      "verb": "GET",
+      "path": "/contracts",
+      "file": "crm/CrmContractRedesignPage.tsx",
+      "type": "known_gap",
+      "reason": "CrmContractRedesignPage 页面在役，后端 crm 未实现 /contracts（页面已带 mock 降级）——known_gap 需实现，见 TODO"
+    },
+    {
+      "svc": "crm",
+      "verb": "POST",
+      "path": "/contracts",
+      "file": "crm/CrmContractRedesignPage.tsx",
+      "type": "known_gap",
+      "reason": "同上：合同创建接口待后端实现"
+    },
+    {
+      "svc": "crm",
+      "verb": "PUT",
+      "path": "/contracts/",
+      "file": "crm/CrmContractRedesignPage.tsx",
+      "type": "known_gap",
+      "reason": "同上：合同更新接口待后端实现"
     }
   ]
 }

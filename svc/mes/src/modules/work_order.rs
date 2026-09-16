@@ -209,7 +209,7 @@ pub async fn list_work_orders(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM work_orders wo{}",
+        "SELECT COUNT(*) as total FROM mes.work_orders wo{}",
         where_clause
     );
 
@@ -239,7 +239,7 @@ pub async fn list_work_orders(
             wo.team_id, wo.operator,
             wo.status, wo.priority, wo.remark,
             wo.created_at, wo.updated_at
-        FROM work_orders wo
+        FROM mes.work_orders wo
         {}
         ORDER BY wo.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -395,7 +395,7 @@ pub async fn get_work_order(
             team_id, operator,
             status, priority, remark,
             created_at, updated_at
-        FROM work_orders
+        FROM mes.work_orders
         WHERE id = $1
         "#,
         uuid,
@@ -593,7 +593,7 @@ pub async fn update_work_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_orders
+        UPDATE mes.work_orders
         SET 
             work_order_no = COALESCE($1, work_order_no),
             order_id = COALESCE($2, order_id),
@@ -716,7 +716,7 @@ pub async fn delete_work_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_orders SET deleted_at = NOW()
+        UPDATE mes.work_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
         uuid,
@@ -772,7 +772,7 @@ pub async fn start_work_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_orders
+        UPDATE mes.work_orders
         SET status = 'in_progress', actual_start_date = NOW(), updated_at = NOW()
         WHERE id = $1 AND status = 'pending'
         RETURNING 
@@ -862,7 +862,7 @@ pub async fn complete_work_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_orders
+        UPDATE mes.work_orders
         SET status = 'completed', actual_end_date = NOW(), updated_at = NOW()
         WHERE id = $1 AND status = 'in_progress'
         RETURNING 
@@ -952,7 +952,7 @@ pub async fn cancel_work_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_orders
+        UPDATE mes.work_orders
         SET status = 'cancelled', updated_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'in_progress', 'paused')
         RETURNING 
@@ -1042,7 +1042,7 @@ pub async fn pause_work_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_orders
+        UPDATE mes.work_orders
         SET status = 'paused', updated_at = NOW()
         WHERE id = $1 AND status = 'in_progress'
         RETURNING 
@@ -1132,7 +1132,7 @@ pub async fn resume_work_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_orders
+        UPDATE mes.work_orders
         SET status = 'in_progress', updated_at = NOW()
         WHERE id = $1 AND status = 'paused'
         RETURNING 
