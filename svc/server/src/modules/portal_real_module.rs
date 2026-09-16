@@ -42,6 +42,17 @@ impl PortalRealModule {
             init_telemetry: false,
         };
 
+        // 模块化单体模式：portal 内嵌于 topems-server，各服务健康探测/客户端
+        // 统一指向 server 聚合入口（AppState 客户端构造与 GraphQL 探活读取此 env）
+        let server_port = std::env::var("SERVER_PORT")
+            .ok()
+            .and_then(|p| p.parse::<u16>().ok())
+            .unwrap_or(8099);
+        std::env::set_var(
+            "MONOLITH_SERVICE_URL",
+            format!("http://localhost:{}", server_port),
+        );
+
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 

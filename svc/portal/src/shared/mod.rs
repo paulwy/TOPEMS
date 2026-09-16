@@ -10,7 +10,8 @@ use topems_shared_event::service_discovery::{LocalServiceRegistry, PortalService
 use topems_shared_service_client::service_client::{
     api::crm_api::CrmApi, api::erp_api::ErpApi, api::finance_api::FinanceApi, api::hrm_api::HrmApi,
     api::iam_api::IamApi, api::mes_api::MesApi, api::monitor_api::MonitorApi,
-    api::notification_api::NotificationApi, TypedServiceClient, WorkflowApi,
+    api::notification_api::NotificationApi, error::ServiceClientResult, TypedServiceClient,
+    WorkflowApi,
 };
 
 #[derive(Clone)]
@@ -46,6 +47,19 @@ impl FromRef<AppState> for PgPool {
 }
 
 impl AppState {
+    /// 构造服务客户端：
+    /// - 模块化单体模式（`MONOLITH_SERVICE_URL` 已设置）：所有服务客户端指向统一入口（topems-server）
+    /// - 独立部署模式：`from_env_default()`（环境变量 → 默认端口）
+    fn build_client<T: topems_shared_service_client::service_client::trait_api::ServiceApi + Default>(
+        mono_base: &Option<String>,
+    ) -> ServiceClientResult<TypedServiceClient<T>> {
+        if let Some(base) = mono_base {
+            TypedServiceClient::new(T::default(), base.clone())
+        } else {
+            TypedServiceClient::from_env_default()
+        }
+    }
+
     pub async fn new(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         let aggregator = PortalServiceAggregator::new();
         aggregator.init_default_services().await;
@@ -54,6 +68,8 @@ impl AppState {
         let dashboard_cache = CacheManager::new(&cache_config);
 
         let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_default();
+        // 模块化单体模式统一服务入口（由 topems-server 在 portal_real_module 构建时设置）
+        let mono_base = std::env::var("MONOLITH_SERVICE_URL").ok();
         Self {
             auth_state: AuthState::from_env(),
             service_registry: Arc::new(LocalServiceRegistry::new()),
@@ -62,7 +78,7 @@ impl AppState {
             pool,
             event_publisher,
             dashboard_cache,
-            notification_client: TypedServiceClient::<NotificationApi>::from_env_default()
+            notification_client: Self::build_client::<NotificationApi>(&mono_base)
                 .and_then(|c| {
                     c.with_service_token(&jwt_secret, "portal-service", &["notification:read"])
                 })
@@ -70,7 +86,7 @@ impl AppState {
                     TypedServiceClient::new(NotificationApi, "http://localhost:8000".to_string())
                         .unwrap()
                 }),
-            workflow_client: TypedServiceClient::<WorkflowApi>::from_env_default()
+            workflow_client: Self::build_client::<WorkflowApi>(&mono_base)
                 .and_then(|c| {
                     c.with_service_token(&jwt_secret, "portal-service", &["workflow:read"])
                 })
@@ -78,12 +94,12 @@ impl AppState {
                     TypedServiceClient::new(WorkflowApi, "http://localhost:8000".to_string())
                         .unwrap()
                 }),
-            mes_client: TypedServiceClient::<MesApi>::from_env_default()
+            mes_client: Self::build_client::<MesApi>(&mono_base)
                 .and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["mes:admin"]))
                 .unwrap_or_else(|_| {
                     TypedServiceClient::new(MesApi, "http://localhost:8030".to_string()).unwrap()
                 }),
-            monitor_client: TypedServiceClient::<MonitorApi>::from_env_default()
+            monitor_client: Self::build_client::<MonitorApi>(&mono_base)
                 .and_then(|c| {
                     c.with_service_token(&jwt_secret, "portal-service", &["monitor:read"])
                 })
@@ -91,27 +107,27 @@ impl AppState {
                     TypedServiceClient::new(MonitorApi, "http://localhost:8000".to_string())
                         .unwrap()
                 }),
-            iam_client: TypedServiceClient::<IamApi>::from_env_default()
+            iam_client: Self::build_client::<IamApi>(&mono_base)
                 .and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["iam:read"]))
                 .unwrap_or_else(|_| {
                     TypedServiceClient::new(IamApi, "http://localhost:8000".to_string()).unwrap()
                 }),
-            hrm_client: TypedServiceClient::<HrmApi>::from_env_default()
+            hrm_client: Self::build_client::<HrmApi>(&mono_base)
                 .and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["hrm:admin"]))
                 .unwrap_or_else(|_| {
                     TypedServiceClient::new(HrmApi, "http://localhost:8020".to_string()).unwrap()
                 }),
-            erp_client: TypedServiceClient::<ErpApi>::from_env_default()
+            erp_client: Self::build_client::<ErpApi>(&mono_base)
                 .and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["erp:admin"]))
                 .unwrap_or_else(|_| {
                     TypedServiceClient::new(ErpApi, "http://localhost:8010".to_string()).unwrap()
                 }),
-            crm_client: TypedServiceClient::<CrmApi>::from_env_default()
+            crm_client: Self::build_client::<CrmApi>(&mono_base)
                 .and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["crm:admin"]))
                 .unwrap_or_else(|_| {
                     TypedServiceClient::new(CrmApi, "http://localhost:8029".to_string()).unwrap()
                 }),
-            finance_client: TypedServiceClient::<FinanceApi>::from_env_default()
+            finance_client: Self::build_client::<FinanceApi>(&mono_base)
                 .and_then(|c| {
                     c.with_service_token(&jwt_secret, "portal-service", &["finance:read"])
                 })

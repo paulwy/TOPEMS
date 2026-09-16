@@ -7,7 +7,7 @@ use async_graphql::dataloader::Loader;
 use futures_util::future::join_all;
 use std::collections::HashMap;
 
-use crate::modules::graphql_helpers::{check_service_health, service_url};
+use crate::modules::graphql_helpers::{probe_service_health, service_url};
 use crate::modules::graphql_types::{ServiceHealthGql, UnifiedTodoGql};
 
 // ==================== DataLoader 实现 ====================
@@ -25,7 +25,7 @@ impl Loader<String> for ServiceHealthLoader {
         // 并行批量检查所有请求的服务健康状态
         let futures = keys.iter().map(|service_name| async move {
             let url = service_url(service_name);
-            let healthy = check_service_health(url).await;
+            let healthy = probe_service_health(service_name, url).await;
             (
                 service_name.clone(),
                 ServiceHealthGql {

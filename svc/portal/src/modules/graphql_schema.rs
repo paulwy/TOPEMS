@@ -1032,9 +1032,11 @@ impl QueryRoot {
             ("notification", "http://localhost:8084"),
         ];
 
-        // V34.0 Track F: 并行检查所有服务健康状态
+        // 模块化单体模式（MONOLITH_SERVICE_URL）：所有服务进程内嵌于 topems-server，
+        // 统一探测 server 聚合 /health（200 = 服务所在进程存活）；
+        // 独立部署模式：逐服务独立端口探测。
         let futures = services.iter().map(|(name, url)| async move {
-            let healthy = check_service_health(url).await;
+            let healthy = probe_service_health(name, url).await;
             ServiceHealthGql {
                 service: (*name).to_string(),
                 healthy,
@@ -1194,7 +1196,7 @@ impl QueryRoot {
         ];
 
         let futures = registry.iter().map(|(name, url, entities)| async move {
-            let healthy = check_service_health(url).await;
+            let healthy = probe_service_health(name, url).await;
             FederatedServiceGql {
                 service: (*name).to_string(),
                 url: (*url).to_string(),
@@ -1284,7 +1286,7 @@ impl QueryRoot {
 
         let futures = services.iter().map(|(name, url)| async move {
             let sdl = service_sdl_fragment(name);
-            let healthy = check_service_health(url).await;
+            let healthy = probe_service_health(name, url).await;
             FederationServiceSdlGql {
                 service: (*name).to_string(),
                 sdl,
@@ -4125,7 +4127,7 @@ impl SubscriptionRoot {
                 invalidate_cache();
                 let mut all_ok = true;
                 for (name, url) in SUBSCRIPTION_SERVICES {
-                    let healthy = check_service_health(url).await;
+                    let healthy = probe_service_health(name, url).await;
                     if tx
                         .send(ServiceHealthGql {
                             service: (*name).to_string(),
