@@ -42,25 +42,33 @@ impl MobileRealModule {
         let _conn = ctx.db.acquire().await?;
 
         // 核心路由（简化版：health + 基本信息 + workbench 摘要）
-        let routes = Router::new()
-            .route("/health", get(|| async { "Mobile Service OK" }))
-            .route("/", get(|| async {
-                axum::Json(json!({
-                    "service": "topems-mobile",
-                    "version": "1.0.0",
-                    "capabilities": ["workbench", "task", "approval", "scan", "attendance", "patrol", "offline-sync", "push-notification"],
-                    "status": "running"
-                }))
-            }))
-            .route("/workbench/summary", get(|| async {
-                axum::Json(json!({
-                    "pending_tasks": 0,
-                    "pending_approvals": 0,
-                    "notifications": 0,
-                    "today_attendance": "not_checked_in"
-                }))
-            }))
-            .with_state(ctx.db.clone());
+        let routes = axum::Router::new()
+            .nest(
+                config.api_prefix,
+                Router::new()
+                    .route("/health", get(|| async { "Mobile Service OK" }))
+                    .route("/", get(|| async {
+                        axum::Json(json!({
+                            "service": "topems-mobile",
+                            "version": "1.0.0",
+                            "capabilities": ["workbench", "task", "approval", "scan", "attendance", "patrol", "offline-sync", "push-notification"],
+                            "status": "running"
+                        }))
+                    }))
+                    .route("/workbench/summary", get(|| async {
+                        axum::Json(json!({
+                            "pending_tasks": 0,
+                            "pending_approvals": 0,
+                            "notifications": 0,
+                            "today_attendance": "not_checked_in"
+                        }))
+                    }))
+                    .with_state(ctx.db.clone()),
+            )
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         Ok(Self {
             routes,

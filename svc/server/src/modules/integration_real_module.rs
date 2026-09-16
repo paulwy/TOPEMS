@@ -75,7 +75,12 @@ impl IntegrationRealModule {
         };
 
         // 注册完整路由
-        let routes = topems_integration::routes::create_routes(app_state);
+        let routes = axum::Router::new()
+            .nest(config.api_prefix, topems_integration::routes::create_routes(app_state))
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         Ok(Self {
             routes,

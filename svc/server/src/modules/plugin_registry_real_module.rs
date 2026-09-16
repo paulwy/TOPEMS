@@ -47,7 +47,13 @@ impl PluginRegistryRealModule {
         };
 
         // 注册完整路由
-        let routes = topems_plugin_registry::modules::plugin::create_routes().with_state(app_state);
+        // crate 内部路由自带 /api/plugin/* 完整前缀，直接挂载（不重复 nest）
+        let routes = topems_plugin_registry::modules::plugin::create_routes()
+            .with_state(app_state)
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_shared_auth::auth::auth_middleware,
+            ));
 
         Ok(Self {
             routes,

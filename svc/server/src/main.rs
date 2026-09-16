@@ -352,7 +352,82 @@ async fn main() -> Result<()> {
         }
     }
 
-    // 22. 真实 portal 服务接入（Core 组，feature `module-portal` 门控，默认启用）
+    // 22. 真实 search 服务接入（Core 组，feature `module-search` 门控，默认启用）
+    #[cfg(feature = "module-search")]
+    {
+        use topems_server::modules::search_real_module::SearchRealModule;
+        match SearchRealModule::build().await {
+            Ok(real_search) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_search));
+                tracing::info!("✅ 真实 search 服务已注册（search-real，含数据库/全文搜索路由）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 search 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 23. 真实 monitor 服务接入（Core 组，feature `module-monitor` 门控，默认启用）
+    #[cfg(feature = "module-monitor")]
+    {
+        use topems_server::modules::monitor_real_module::MonitorRealModule;
+        match MonitorRealModule::build().await {
+            Ok(real_monitor) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_monitor));
+                tracing::info!("✅ 真实 monitor 服务已注册（monitor-real，含数据库/监控告警路由）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 monitor 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 24. 真实 plugin-registry 服务接入（Core 组，feature `module-plugin-registry` 门控，默认启用）
+    #[cfg(feature = "module-plugin-registry")]
+    {
+        use topems_server::modules::plugin_registry_real_module::PluginRegistryRealModule;
+        match PluginRegistryRealModule::build().await {
+            Ok(real_pr) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_pr));
+                tracing::info!("✅ 真实 plugin-registry 服务已注册（plugin-registry-real，含数据库/插件注册路由）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 plugin-registry 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 25. 真实 integration 服务接入（Core 组，feature `module-integration` 门控，默认启用）
+    #[cfg(feature = "module-integration")]
+    {
+        use topems_server::modules::integration_real_module::IntegrationRealModule;
+        match IntegrationRealModule::build().await {
+            Ok(real_intg) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_intg));
+                tracing::info!("✅ 真实 integration 服务已注册（integration-real，含数据库/系统集成路由）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 integration 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 26. 真实 mobile 服务接入（Core 组，feature `module-mobile` 门控，默认启用）
+    #[cfg(feature = "module-mobile")]
+    {
+        use topems_server::modules::mobile_real_module::MobileRealModule;
+        match MobileRealModule::build().await {
+            Ok(real_mobile) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_mobile));
+                tracing::info!("✅ 真实 mobile 服务已注册（mobile-real，含数据库/移动端路由）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 mobile 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 27. 真实 portal 服务接入（Core 组，feature `module-portal` 门控，默认启用）
     // [2026-09-08] portal 嵌入模块化单体：业务组装链由 lib 侧 embedded::build_router 统一提供，
     // 独立部署 main.rs 与 server 嵌入共用同一实现，消除双轨漂移
     #[cfg(feature = "module-portal")]
