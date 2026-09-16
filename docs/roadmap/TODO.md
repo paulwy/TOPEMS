@@ -534,3 +534,27 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 - #13 external-erp 为最小可用实现（结构化响应，真实 ERP 对接待扩展）
 - #12 前端 IntegrationMappingsPage 仍用 mock，后端已提供真实 API
 - 多代理并发 git 操作导致部分文件被 reset 后重新应用，最终所有改动确认在 origin/main HEAD
+
+---
+
+## V531 dashboard 真实化闭环 + 全服务端到端回归（2026-09-17）
+
+> 用户主线"编译运行前后端 + dashboard 真实业务数值"收尾。dashboard 不再回退演示默认数据（OEE 87.3%/产量 124,582 等）。
+
+| 子任务 | 交付 | Commit |
+|--------|------|--------|
+| portal 聚合探活改口径（GraphQL stats/services/todos 走 8099 统一入口） | WorkflowApi/NotificationApi 前缀对齐 + core_workflow_tasks 补 3 列 + ApiResponse serde default | 7a693c1bb / c964fb261 / e3e2d6b8f / d9d0e1e37 |
+| DashboardPage 真实化 + i18n 化（76 处硬编码 → 88 dashboard.* keys） | 演示数据回退全删（0/--）、顶层常量 lazy 化（getDefaultModules + labelKey 渲染期求值） | 42705a2b1 |
+| 根因修复：zh/performance.json 顶层 dashboard key 覆盖 root dashboard 对象 | 改名 performance_dashboard（zh/en） | 42705a2b1 |
+| schema_defense 补列（core_workflow_tasks priority/due_time/claimed_at） | 与 5432 活库对齐，防新环境 flow my-pending 500 | c9d579462 |
+| 全服务端到端回归（8099 mono admin token） | 16 服务真实 API 全 200：flow/notification/portal-graphql/erp/crm/mes/hrm/finance/wms/scm/gis/rd/doc/qms/bi | 本批 |
+
+**浏览器最终验证**（admin 登录 :3000/dashboard）：KPI OEE 0%/本月产量 0 件/准时交付率 0%/质量合格率 0%，模块 6 个真实渲染，告警 0 条/待办 0 项/系统健康 --（业务库空故 0/--，无演示回退）。
+
+**遗留**：
+- [ ] 前端批 2 页面单测评审（剩余最高优先）
+- [ ] 统一认证专项收尾（#17 ④ health 豁免 + shared-auth 一致性）
+- [ ] 服务间认证批量扩展（crm→erp、portal→各服务 with_service_token 应用）
+- [ ] 搜索降级指标接入 ServiceCallMonitor 告警（P2）
+- [ ] workflow 拆分评估 P2（API 熔断）/ P3（流程定义只读副本）
+- [ ] erp→mes 生产执行闭环接线（方案已批，待实施）
