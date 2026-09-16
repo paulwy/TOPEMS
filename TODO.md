@@ -67,8 +67,8 @@
 - [x] server 统一认证专项（2026-09-16：21 个 real_module 移除 inject_dev_claims 无条件伪造 superadmin 后门，接入真实 JWT auth_middleware；health 端点豁免；commit 09273803f）
 - [x] 全模块 500 冒烟修复（2026-09-16：认证统一后逐模块真实 API 冒烟——rd tenant_id/experiments/formulas 缺列、gis 45 处 SQL 缺 SELECT、qms jsonb bind 类型、crm/contacts approval_status+deleted_at 缺列、finance accounts/tree、mes/equipment、wms/outbound-orders 补列；18 个真实服务全部 200，commit 192681e6f）
 - [x] communication/ai 服务接入 server（2026-09-16：communication 已接，routes 补 nest(api_prefix) 修复 404，commit 8ce227f15；core 组 search/monitor/plugin-registry/integration/mobile 批量接入，commit e9126d983，已注册模块 24→29）
-- [ ] ai 服务接入 server 未接线（无 ai_real_module；AppState 依赖 DSH/MCP/向量/RAG 等重组件，需独立专项封装）
-- [ ] unified-core 接入 server 未接线（认证/登录核心，build_router 挂根路径；涉及双轨认证统一 P1 专项，不宜简单接线）
+- [x] ai 服务接入 server（2026-09-16：AiRealModule 复用独立部署 AppState 组装链，create_routes 加 include_api_info 参数避免 /api、/api-docs 冲突；冒烟 /api/ai/analysis/history、/api/ai/connectors、/api/ai/agent/tools 200；模块 30→31 全量闭环，commit 0b807c9d6 + 01776b3d8）
+- [x] unified-core 接入 server（2026-09-16：build_router 挂根路径冲突风险高，nest /api/core 隔离；/api/core/health、/api/core/api、/api/core/metrics 200，模块 29→30，commit e9da724ed）
 - [ ] MUI elevation 警告修复
 - [ ] 更多模块的业务 API 实现
 - [ ] dashboard 等演示模块认证一致性（当前无 token 可访问演示数据，低风险；后续可挂只读认证或隐藏）
