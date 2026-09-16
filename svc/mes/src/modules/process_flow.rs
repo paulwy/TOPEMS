@@ -357,8 +357,8 @@ pub async fn get_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code.unwrap_or_default(),
-                name: r.name.unwrap_or_default(),
+                code: r.code,
+                name: r.name,
                 description: r.description,
                 version: r.version.map(|v| v.to_string()),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
@@ -367,7 +367,7 @@ pub async fn get_process_flow(
                 production_line: r.production_line,
                 capacity: opt_big_decimal_to_f64(r.capacity),
                 unit: r.unit,
-                created_at: datetime_to_string(Some(r.created_at.naive_utc())),
+                created_at: datetime_to_string(r.created_at),
                 updated_at: datetime_to_string(r.updated_at),
             },
             "获取工艺流程成功",
@@ -413,9 +413,7 @@ pub async fn create_process_flow(
         body.code,
         body.name,
         body.description,
-        body.version
-            .and_then(|v| v.parse::<i32>().ok())
-            .unwrap_or(0),
+        body.version,
         route_id,
         body.production_line,
         capacity,
@@ -428,8 +426,8 @@ pub async fn create_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code.unwrap_or_default(),
-                name: r.name.unwrap_or_default(),
+                code: r.code,
+                name: r.name,
                 description: r.description,
                 version: r.version.map(|v| v.to_string()),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
@@ -438,7 +436,7 @@ pub async fn create_process_flow(
                 production_line: r.production_line,
                 capacity: opt_big_decimal_to_f64(r.capacity),
                 unit: r.unit,
-                created_at: datetime_to_string(Some(r.created_at.naive_utc())),
+                created_at: datetime_to_string(r.created_at),
                 updated_at: datetime_to_string(r.updated_at),
             },
             "创建工艺流程成功",
@@ -497,9 +495,7 @@ pub async fn update_process_flow(
         "#,
         body.name,
         body.description,
-        body.version
-            .and_then(|v| v.parse::<i32>().ok())
-            .unwrap_or(0),
+        body.version,
         route_id,
         body.production_line,
         capacity,
@@ -514,8 +510,8 @@ pub async fn update_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code.unwrap_or_default(),
-                name: r.name.unwrap_or_default(),
+                code: r.code,
+                name: r.name,
                 description: r.description,
                 version: r.version.map(|v| v.to_string()),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
@@ -524,7 +520,7 @@ pub async fn update_process_flow(
                 production_line: r.production_line,
                 capacity: opt_big_decimal_to_f64(r.capacity),
                 unit: r.unit,
-                created_at: datetime_to_string(Some(r.created_at.naive_utc())),
+                created_at: datetime_to_string(r.created_at),
                 updated_at: datetime_to_string(r.updated_at),
             },
             "更新工艺流程成功",
@@ -616,22 +612,20 @@ pub async fn get_flow_steps(
                 .into_iter()
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
-                    flow_id: s.flow_id.map(|u| u.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    flow_id: s.flow_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| serde_json::to_string(&ids).unwrap_or_default()),
+                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(Some(s.created_at.naive_utc())),
+                    created_at: datetime_to_string(s.created_at),
                 })
                 .collect();
 
@@ -751,22 +745,20 @@ pub async fn add_flow_step(
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
-                    flow_id: s.flow_id.map(|u| u.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    flow_id: s.flow_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| serde_json::to_string(&ids).unwrap_or_default()),
+                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(Some(s.created_at.naive_utc())),
+                    created_at: datetime_to_string(s.created_at),
                 },
                 "添加工艺步骤成功",
             ))
@@ -879,22 +871,20 @@ pub async fn update_flow_step(
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
-                    flow_id: s.flow_id.map(|u| u.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    flow_id: s.flow_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| serde_json::to_string(&ids).unwrap_or_default()),
+                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(Some(s.created_at.naive_utc())),
+                    created_at: datetime_to_string(s.created_at),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1020,22 +1010,20 @@ pub async fn reorder_flow_steps(
                 .into_iter()
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
-                    flow_id: s.flow_id.map(|u| u.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    flow_id: s.flow_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| serde_json::to_string(&ids).unwrap_or_default()),
+                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(Some(s.created_at.naive_utc())),
+                    created_at: datetime_to_string(s.created_at),
                 })
                 .collect();
 
@@ -1165,7 +1153,7 @@ pub async fn analyze_capacity(
     Json(ApiResponse::success(
         CapacityAnalysisResponse {
             flow_id: flow.id.to_string(),
-            flow_name: flow.name.unwrap_or_default(),
+            flow_name: flow.name,
             theoretical_capacity,
             effective_capacity,
             utilization_rate,

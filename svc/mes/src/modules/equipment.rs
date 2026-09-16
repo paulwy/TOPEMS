@@ -364,7 +364,7 @@ pub async fn create_equipment(
     .bind(maintenance_frequency_days)
     .bind(next_maintenance_date)
     .bind(&req.description)
-    .bind(now.naive_utc())
+    .bind(now)
     .fetch_one(&state.pool)
     .await;
 
@@ -611,7 +611,7 @@ pub async fn maintenance_equipment(
     .bind(id)
     .bind(today)
     .bind(next_maintenance_date)
-    .bind(now.naive_utc())
+    .bind(now)
     .fetch_optional(&state.pool)
     .await;
 
@@ -794,16 +794,16 @@ pub async fn list_maintenances(
             equipment_name: Some(r.equipment_name),
             equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
-            description: r.description,
+            description: Some(r.description),
             maintainer: r.maintainer,
-            start_time: r.start_time.and_utc(),
-            end_time: r.end_time.map(|t| t.and_utc()),
+            start_time: r.start_time,
+            end_time: r.end_time,
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
-            status: r.status.unwrap_or_default(),
+            status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: r.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -876,13 +876,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time.naive_utc(),
-        end_time.map(|t| t.naive_utc()),
+        start_time,
+        end_time,
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -901,11 +901,11 @@ pub async fn create_maintenance(
     let maintenance_type = result.maintenance_type;
     let description = result.description;
     let maintainer = result.maintainer;
-    let start_time = result.start_time.and_utc();
-    let end_time = result.end_time.map(|t| t.and_utc());
+    let start_time = result.start_time;
+    let end_time = result.end_time;
     let status = result.status;
-    let created_at = result.created_at.map(|t| t.and_utc()).unwrap_or(now);
-    let updated_at = result.updated_at.map(|t| t.and_utc()).unwrap_or(now);
+    let created_at = result.created_at;
+    let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
         "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
@@ -932,13 +932,13 @@ pub async fn create_maintenance(
             equipment_name,
             equipment_no,
             maintenance_type,
-            description,
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status.unwrap_or_default(),
+            status: status,
             remarks: result.remarks,
             created_at,
             updated_at,
@@ -988,7 +988,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1008,11 +1008,11 @@ pub async fn update_maintenance_status(
     let maintenance_type = result.maintenance_type;
     let description = result.description;
     let maintainer = result.maintainer;
-    let start_time = result.start_time.and_utc();
-    let end_time = result.end_time.map(|t| t.and_utc());
+    let start_time = result.start_time;
+    let end_time = result.end_time;
     let status = result.status;
-    let created_at = result.created_at.map(|t| t.and_utc()).unwrap_or(now);
-    let updated_at = result.updated_at.map(|t| t.and_utc()).unwrap_or(now);
+    let created_at = result.created_at;
+    let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
         "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
@@ -1039,13 +1039,13 @@ pub async fn update_maintenance_status(
             equipment_name,
             equipment_no,
             maintenance_type,
-            description,
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status.unwrap_or_default(),
+            status: status,
             remarks: result.remarks,
             created_at,
             updated_at,
