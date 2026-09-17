@@ -33,6 +33,8 @@ pub mod transfer_order;
 pub mod warehouse;
 pub mod wave_pick;
 pub mod wms_plugin;
+pub mod picking;
+pub mod labor;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -77,6 +79,8 @@ where
         .merge(stock_take::create_routes())
         .merge(smart_replenishment::create_routes())
         .merge(wave_pick::create_routes())
+        .merge(picking::create_routes())
+        .merge(labor::create_routes())
         // V514-2: 恢复 cycle_count 挂载（模块实现完整，此前仅注册被注释）
         .merge(cycle_count::create_routes())
         // V514-2: slotting 库位优化（P0-2 缺口补实现）
