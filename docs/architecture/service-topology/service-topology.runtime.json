@@ -185,11 +185,11 @@
     {
       "source": "mes-service",
       "target": "erp-service",
-      "value": 2,
+      "value": 1,
       "lineStyle": {
-        "width": 3
+        "width": 2
       },
-      "sourceFlag": "runtime"
+      "sourceFlag": "design"
     },
     {
       "source": "crm-service",
@@ -347,11 +347,11 @@
     {
       "source": "portal-service",
       "target": "mes-service",
-      "value": 1,
+      "value": 2,
       "lineStyle": {
-        "width": 2
+        "width": 3
       },
-      "sourceFlag": "design"
+      "sourceFlag": "runtime"
     },
     {
       "source": "portal-service",
@@ -374,29 +374,29 @@
     {
       "source": "portal-service",
       "target": "hrm-service",
-      "value": 1,
+      "value": 2,
       "lineStyle": {
-        "width": 2
+        "width": 3
       },
-      "sourceFlag": "design"
+      "sourceFlag": "runtime"
     },
     {
       "source": "portal-service",
       "target": "erp-service",
-      "value": 1,
+      "value": 5,
       "lineStyle": {
-        "width": 2
+        "width": 6
       },
-      "sourceFlag": "design"
+      "sourceFlag": "runtime"
     },
     {
       "source": "portal-service",
       "target": "crm-service",
-      "value": 1,
+      "value": 3,
       "lineStyle": {
-        "width": 2
+        "width": 4
       },
-      "sourceFlag": "design"
+      "sourceFlag": "runtime"
     },
     {
       "source": "portal-service",
@@ -405,7 +405,7 @@
       "lineStyle": {
         "width": 2
       },
-      "sourceFlag": "design"
+      "sourceFlag": "runtime"
     },
     {
       "source": "server-erp-module",
@@ -505,15 +505,6 @@
         "width": 2
       },
       "sourceFlag": "design"
-    },
-    {
-      "source": "finance-service",
-      "target": "hrm-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "runtime"
     }
   ],
   "categories": [

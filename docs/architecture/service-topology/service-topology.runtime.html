@@ -33,7 +33,6 @@ erp-service → f, i, n, a, n, c, e, -, s, e, r, v, i, c, e
 erp-service → h, r, m, -, s, e, r, v, i, c, e
 erp-service → m, e, s, -, s, e, r, v, i, c, e
 erp-service → w, m, s, -, s, e, r, v, i, c, e
-finance-service → h, r, m, -, s, e, r, v, i, c, e
 finance-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
 hrm-service → e, r, p, -, s, e, r, v, i, c, e
 mes-service → e, r, p, -, s, e, r, v, i, c, e
@@ -264,11 +263,11 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
         {
           "source": "mes-service",
           "target": "erp-service",
-          "value": 2,
+          "value": 1,
           "lineStyle": {
-            "width": 3
+            "width": 2
           },
-          "sourceFlag": "runtime"
+          "sourceFlag": "design"
         },
         {
           "source": "crm-service",
@@ -426,11 +425,11 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
         {
           "source": "portal-service",
           "target": "mes-service",
-          "value": 1,
+          "value": 2,
           "lineStyle": {
-            "width": 2
+            "width": 3
           },
-          "sourceFlag": "design"
+          "sourceFlag": "runtime"
         },
         {
           "source": "portal-service",
@@ -453,29 +452,29 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
         {
           "source": "portal-service",
           "target": "hrm-service",
-          "value": 1,
+          "value": 2,
           "lineStyle": {
-            "width": 2
+            "width": 3
           },
-          "sourceFlag": "design"
+          "sourceFlag": "runtime"
         },
         {
           "source": "portal-service",
           "target": "erp-service",
-          "value": 1,
+          "value": 5,
           "lineStyle": {
-            "width": 2
+            "width": 6
           },
-          "sourceFlag": "design"
+          "sourceFlag": "runtime"
         },
         {
           "source": "portal-service",
           "target": "crm-service",
-          "value": 1,
+          "value": 3,
           "lineStyle": {
-            "width": 2
+            "width": 4
           },
-          "sourceFlag": "design"
+          "sourceFlag": "runtime"
         },
         {
           "source": "portal-service",
@@ -484,7 +483,7 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
           "lineStyle": {
             "width": 2
           },
-          "sourceFlag": "design"
+          "sourceFlag": "runtime"
         },
         {
           "source": "server-erp-module",
@@ -584,15 +583,6 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
             "width": 2
           },
           "sourceFlag": "design"
-        },
-        {
-          "source": "finance-service",
-          "target": "hrm-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "runtime"
         }
       ],
       "categories": [
@@ -652,7 +642,7 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
 </script>
 <script>
 (function(){
-  var data = {"erp-service": {"wms-service": 1, "finance-service": 1, "hrm-service": 1, "mes-service": 1}, "mes-service": {"erp-service": 2}, "crm-service": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "mobile-service": {"wms-service": 1, "mes-service": 1, "qms-service": 1, "hrm-service": 1, "workflow-service": 1, "notification-service": 1}, "srm-service": {"workflow-service": 1}, "qms-service": {"workflow-service": 1}, "pm-service": {"workflow-service": 1}, "finance-service": {"workflow-service": 1, "hrm-service": 1}, "ehs-service": {"workflow-service": 1}, "hrm-service": {"erp-service": 1}, "portal-service": {"notification-service": 1, "workflow-service": 1, "mes-service": 1, "monitor-service": 1, "iam-service": 1, "hrm-service": 1, "erp-service": 1, "crm-service": 1, "finance-service": 1}, "server-erp-module": {"hrm-service": 1, "finance-service": 1}, "server-crm-module": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "server-pm-module": {"workflow-service": 1}, "server-qms-module": {"workflow-service": 1}, "server-finance-module": {"workflow-service": 1}, "server-srm-module": {"workflow-service": 1}, "server-ehs-module": {"workflow-service": 1}, "unified-core-service": {"portal-service": 1}};
+  var data = {"erp-service": {"wms-service": 1, "finance-service": 1, "hrm-service": 1, "mes-service": 1}, "mes-service": {"erp-service": 1}, "crm-service": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "mobile-service": {"wms-service": 1, "mes-service": 1, "qms-service": 1, "hrm-service": 1, "workflow-service": 1, "notification-service": 1}, "srm-service": {"workflow-service": 1}, "qms-service": {"workflow-service": 1}, "pm-service": {"workflow-service": 1}, "finance-service": {"workflow-service": 1}, "ehs-service": {"workflow-service": 1}, "hrm-service": {"erp-service": 1}, "portal-service": {"notification-service": 1, "workflow-service": 1, "mes-service": 2, "monitor-service": 1, "iam-service": 1, "hrm-service": 2, "erp-service": 5, "crm-service": 3, "finance-service": 1}, "server-erp-module": {"hrm-service": 1, "finance-service": 1}, "server-crm-module": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "server-pm-module": {"workflow-service": 1}, "server-qms-module": {"workflow-service": 1}, "server-finance-module": {"workflow-service": 1}, "server-srm-module": {"workflow-service": 1}, "server-ehs-module": {"workflow-service": 1}, "unified-core-service": {"portal-service": 1}};
   var el = document.getElementById('matrix');
   if (!el) return;
   var callers = Object.keys(data);

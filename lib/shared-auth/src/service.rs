@@ -34,11 +34,28 @@ fn service_calls_metric() -> &'static IntCounterVec {
     SERVICE_TO_SERVICE_CALLS.get_or_init(|| {
         register_int_counter_vec!(
             "topems_service_to_service_calls_total",
-            "Total number of service-to-service calls by calling service",
-            &["service"]
+            "Total number of service-to-service calls by calling service (service=调用方, target=被调方)",
+            &["service", "target"]
         )
         .expect("failed to register topems_service_to_service_calls_total")
     })
+}
+
+/// 从被调请求路径推导目标服务名（与 service token username 同构：`{svc}-service`）。
+///
+/// 规则：`/api/{svc}/...` → `{svc}-service`；`/api/v1/{svc}/...` 与 `/api/core/{module}/...` 取第三段。
+/// 无法识别时返回 `unknown-service`（不 panic，指标仍可打点）。
+pub fn target_service_from_path(path: &str) -> String {
+    let segments: Vec<&str> = path.trim_start_matches('/').split('/').collect();
+    let mut idx = 0;
+    if segments.first() == Some(&"api") {
+        idx = 1;
+        if matches!(segments.get(1), Some(&"v1") | Some(&"core")) {
+            idx = 2;
+        }
+    }
+    let svc = segments.get(idx).filter(|s| !s.is_empty()).unwrap_or(&"unknown");
+    format!("{}-service", svc)
 }
 
 /// 下游服务调用降级计数（下游服务维度）——Prometheus 指标。
@@ -61,10 +78,11 @@ fn service_calls_degraded_metric() -> &'static IntCounterVec {
 /// 服务调用告警监控器（进程内单例，`from_env` 按环境变量配置）。
 static SERVICE_CALL_MONITOR: OnceLock<ServiceCallMonitor> = OnceLock::new();
 
-/// 记录一次服务间调用（按调用方服务名打点），并执行异常告警检测。
-pub fn record_service_call(service_name: &str) {
+/// 记录一次服务间调用（按调用方服务名 + 被调方服务名打点），并执行异常告警检测。
+pub fn record_service_call(service_name: &str, target_path: &str) {
+    let target = target_service_from_path(target_path);
     service_calls_metric()
-        .with_label_values(&[service_name])
+        .with_label_values(&[service_name, &target])
         .inc();
     SERVICE_CALL_MONITOR
         .get_or_init(ServiceCallMonitor::from_env)
@@ -84,10 +102,10 @@ pub fn record_service_degrade(service_name: &str, detail: &str) {
         .record_degrade(service_name, detail);
 }
 
-/// 查询某调用方服务的累计服务间调用次数（供测试/内部诊断）。
-pub fn service_call_count(service_name: &str) -> u64 {
+/// 查询某调用方服务对某目标服务的累计服务间调用次数（供测试/内部诊断）。
+pub fn service_call_count(service_name: &str, target_service: &str) -> u64 {
     service_calls_metric()
-        .with_label_values(&[service_name])
+        .with_label_values(&[service_name, target_service])
         .get()
 }
 

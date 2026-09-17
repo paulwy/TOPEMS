@@ -2,12 +2,12 @@
 crm-service,0,1,0,0,0,0,0,0,0,0,1,1
 ehs-service,0,0,0,0,0,0,0,0,0,0,0,1
 erp-service,0,0,1,1,0,1,0,0,0,0,1,0
-finance-service,0,0,0,1,0,0,0,0,0,0,0,1
+finance-service,0,0,0,0,0,0,0,0,0,0,0,1
 hrm-service,0,1,0,0,0,0,0,0,0,0,0,0
-mes-service,0,2,0,0,0,0,0,0,0,0,0,0
+mes-service,0,1,0,0,0,0,0,0,0,0,0,0
 mobile-service,0,0,0,1,0,1,0,1,0,1,1,1
 pm-service,0,0,0,0,0,0,0,0,0,0,0,1
-portal-service,1,1,1,1,1,1,1,1,0,0,0,1
+portal-service,3,5,1,2,1,2,1,1,0,0,0,1
 qms-service,0,0,0,0,0,0,0,0,0,0,0,1
 server-crm-module,0,1,0,0,0,0,0,0,0,0,1,1
 server-ehs-module,0,0,0,0,0,0,0,0,0,0,0,1

@@ -129,7 +129,9 @@ def collect_runtime(specs):
     进程名经 PROCESS_TO_LOGIC 归一化（如 unified-core→iam），
     逻辑服务名直接加 "-service" 后缀，保证节点名与设计边一致。
     """
-    metric_re = re.compile(r'topems_service_to_service_calls_total\{service="([^"]+)"\}\s+(\d+)')
+    metric_re = re.compile(
+        r'topems_service_to_service_calls_total\{service="([^"]+)"(?:,target="([^"]+)")?\}\s+(\d+)'
+    )
     result = {}
     for spec in specs:
         name, port = spec.rsplit(":", 1)
@@ -147,15 +149,20 @@ def collect_runtime(specs):
         except Exception as e:
             print(f"  [skip] {name}:{port} 不可达（{e}）")
             continue
-        caller = logic + "-service"
         counts = {}
         for m in metric_re.finditer(body):
-            caller_name, cnt = m.group(1), int(m.group(2))
-            caller_name = normalize_caller(caller_name)
-            counts[caller_name] = counts.get(caller_name, 0) + cnt
+            caller_raw, target_raw, cnt = m.group(1), m.group(2), int(m.group(3))
+            caller_name = normalize_caller(caller_raw)
+            # 新格式（service+target 双 label）：被调方 = target；调用方 = service。
+            # 旧格式（单 label）：被调方 = 该 metrics 所在进程，调用方 = service。
+            callee = target_raw if target_raw else logic + "-service"
+            callee = normalize_caller(callee)
+            counts.setdefault(callee, {})
+            counts[callee][caller_name] = counts[callee].get(caller_name, 0) + cnt
         if counts:
-            result[caller] = counts
-            print(f"  [ok] {name}:{port}（→ {caller}）捕获 {len(counts)} 个调用方")
+            result.update(counts)
+            total_caller = sum(len(c) for c in counts.values())
+            print(f"  [ok] {name}:{port} 捕获 {len(counts)} 个被调方 / {total_caller} 个调用方")
     return result
 
 

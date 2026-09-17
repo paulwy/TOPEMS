@@ -739,8 +739,8 @@ pub async fn auth_middleware(
             path = %path,
             "服务间调用（service-to-service）"
         );
-        // 服务间调用可观测性：Prometheus 计数（service 维度），/metrics 暴露
-        record_service_call(&claims.username);
+        // 服务间调用可观测性：Prometheus 计数（service+target 维度），/metrics 暴露
+        record_service_call(&claims.username, &path);
         parts.extensions.insert(ServiceIdentity {
             service_name: claims.username.clone(),
             permissions: claims.permissions.clone(),
