@@ -394,7 +394,7 @@
   "workflow.workflow_version_history_page.k2": "Failed to get workflow",
   "workflow.workflow_version_history_page.k3": "Success",
   "workflow.workflow_version_history_page.k4": "VersionCreate successfully",
-  "workflow.workflow_version_history_page.k5": "Error",
+  "workflow.workflow_version_history_page.k5": "Versions",
   "workflow.workflow_version_history_page.k6": "CreateVersion failed",
   "workflow.workflow_version_history_page.k7": "Success",
   "workflow.workflow_version_history_page.k8": "Version",
@@ -419,7 +419,7 @@
   "workflow.workflow_version_history_page.k27": "Current Version",
   "workflow.workflow_version_history_page.k28": "System",
   "workflow.workflow_version_history_page.k29": "Rollback to this version",
-  "workflow.workflow_version_history_page.k30": "Reset",
+  "workflow.workflow_version_history_page.k30": "Rollback",
   "workflow.workflow_version_history_page.k31": "DeleteVersion",
   "workflow.workflow_version_history_page.k32": "Delete",
   "workflow.workflow_version_history_page.k33": "Activate",
@@ -1047,5 +1047,9 @@
   "workflow.approval_detail.message.please_input_delegate_target": "Please enterdelegateTarget",
   "workflow.workflow_version_history_page.101_9": "e.g. 1.0.1",
   "workflow.workflow_version_history_page.strongv_0": "Roll back to version ",
-  "workflow.workflow_version_history_page.strong_1": "? This will replace the currently active definition."
+  "workflow.workflow_version_history_page.strong_1": "? This will replace the currently active definition.",
+  "workflow.workflow_version_history_page.k40": "Created At",
+  "workflow.workflow_version_history_page.k41": "Confirm Rollback",
+  "workflow.workflow_version_history_page.k42": "Rollback will replace the currently active definition.",
+  "workflow.workflow_version_history_page.k43": "Confirm"
 }

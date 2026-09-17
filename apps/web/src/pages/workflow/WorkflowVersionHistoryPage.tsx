@@ -22,7 +22,7 @@ import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate } from '@/components/templates';
-import type { ColumnDef } from '@/components/templates/list/types';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -361,7 +361,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       },
       {
         id: 'created_at',
-        label: i18n.t('workflow.workflow_version_history_page.k29'),
+        label: i18n.t('workflow.workflow_version_history_page.k40'),
         render: (row) => (
           <Stack
             direction='row'
@@ -377,93 +377,34 @@ const FlowVersionHistoryPage: React.FC = () => {
     []
   );
 
-  const renderRowActions = useCallback(
-    (row: WorkflowVersion) => (
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-        <Tooltip
-          title={
-            row.isactive
-              ? i18n.t('workflow.workflow_version_history_page.k34')
-              : i18n.t('workflow.workflow_version_history_page.k33')
-          }
-        >
-          <span>
-            <IconButton
-              size='small'
-              color='secondary'
-              onClick={() => handleActivateVersion(row)}
-              disabled={row.isactive || activateVersionMutation.isPending}
-              aria-label={
-                row.isactive
-                  ? i18n.t('workflow.workflow_version_history_page.k34')
-                  : i18n.t('workflow.workflow_version_history_page.k33')
-              }
-            >
-              {activateVersionMutation.isPending ? (
-                <Loader2
-                  size={18}
-                  className='animate-spin'
-                />
-              ) : (
-                <Play size={18} />
-              )}
-            </IconButton>
-          </span>
-        </Tooltip>
-        {!row.isactive && (
-          <>
-            <Tooltip title={i18n.t('workflow.workflow_version_history_page.k29')}>
-              <span>
-                <IconButton
-                  size='small'
-                  color='warning'
-                  onClick={() => openRollbackModal(row)}
-                  disabled={rollbackMutation.isPending}
-                  aria-label={i18n.t('workflow.workflow_version_history_page.k30')}
-                >
-                  {rollbackMutation.isPending ? (
-                    <Loader2
-                      size={18}
-                      className='animate-spin'
-                    />
-                  ) : (
-                    <RotateCcw size={18} />
-                  )}
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title={i18n.t('workflow.workflow_version_history_page.k31')}>
-              <span>
-                <IconButton
-                  size='small'
-                  color='error'
-                  onClick={() => handleDeleteVersion(row)}
-                  disabled={deleteVersionMutation.isPending}
-                  aria-label={i18n.t('workflow.workflow_version_history_page.k32')}
-                >
-                  {deleteVersionMutation.isPending ? (
-                    <Loader2
-                      size={18}
-                      className='animate-spin'
-                    />
-                  ) : (
-                    <Trash2 size={18} />
-                  )}
-                </IconButton>
-              </span>
-            </Tooltip>
-          </>
-        )}
-      </Box>
-    ),
-    [
-      handleActivateVersion,
-      openRollbackModal,
-      handleDeleteVersion,
-      activateVersionMutation.isPending,
-      rollbackMutation.isPending,
-      deleteVersionMutation.isPending,
-    ]
+  const rowActions: RowAction<WorkflowVersion>[] = useMemo(
+    () => [
+      {
+        key: 'activate',
+        label: i18n.t('workflow.workflow_version_history_page.k33'),
+        icon: <Play size={18} />,
+        color: 'secondary',
+        onClick: (row) => handleActivateVersion(row),
+        show: (row) => !row.isactive,
+      },
+      {
+        key: 'rollback',
+        label: i18n.t('workflow.workflow_version_history_page.k29'),
+        icon: <RotateCcw size={18} />,
+        color: 'warning',
+        onClick: (row) => openRollbackModal(row),
+        show: (row) => !row.isactive,
+      },
+      {
+        key: 'delete',
+        label: i18n.t('workflow.workflow_version_history_page.k31'),
+        icon: <Trash2 size={18} />,
+        color: 'error',
+        onClick: (row) => handleDeleteVersion(row),
+        show: (row) => !row.isactive,
+      },
+    ],
+    [handleActivateVersion, openRollbackModal, handleDeleteVersion]
   );
 
   const actions = useMemo(
@@ -503,7 +444,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         data={versions}
         loading={loading}
         actions={actions}
-        renderRowActions={renderRowActions}
+        rowActions={rowActions}
         footerContent={footerContent}
         emptyMessage={i18n.t('workflow.workflow_version_history_page.k26')}
       />
@@ -578,7 +519,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         open={showRollbackModal}
         onClose={() => setShowRollbackModal(false)}
       >
-        <DialogTitle>{i18n.t('workflow.workflow_version_history_page.k0')}</DialogTitle>
+        <DialogTitle>{i18n.t('workflow.workflow_version_history_page.k41')}</DialogTitle>
         <DialogContent>
           {selectedVersion && (
             <>
@@ -594,7 +535,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('workflow.workflow_version_history_page.k12')}
+                {i18n.t('workflow.workflow_version_history_page.k42')}
               </Typography>
             </>
           )}
@@ -619,7 +560,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               setRollbackForm({ reason: '' });
             }}
           >
-            {i18n.t('workflow.workflow_version_history_page.k13')}
+            {i18n.t('workflow.workflow_version_history_page.k10')}
           </Button>
           <Button
             variant='contained'
@@ -635,7 +576,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               ) : undefined
             }
           >
-            {i18n.t('workflow.workflow_version_history_page.k14')}
+            {i18n.t('workflow.workflow_version_history_page.k43')}
           </Button>
         </DialogActions>
       </Dialog>
