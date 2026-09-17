@@ -139,6 +139,7 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
         .route("/projects/{id}/dashboard", get(get_project_dashboard))
         .route("/projects/{id}/gantt", get(get_project_gantt))
         .route("/projects/kanban-board", get(get_kanban_board))
+        .route("/projects/milestones/timeline", get(get_milestones_timeline))
         .with_state(state)
 }
 
@@ -1215,4 +1216,58 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
         },
         "获取看板成功",
     ))
+}
+
+/// 项目里程碑时间线：聚合 pm.project_milestones + pm.projects 名称
+async fn get_milestones_timeline(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let result = sqlx::query(
+        only_own_schema_query!(
+            "pm",
+            r#"
+            SELECT m.id::TEXT AS milestone_id, m.project_id::TEXT AS project_id,
+                   p.name AS project_name, p.code AS project_code,
+                   m.name AS milestone_name, m.description,
+                   m.due_date, m.completed_date, m.status, m.phase_id::TEXT AS phase_id
+            FROM pm.project_milestones m
+            LEFT JOIN pm.projects p ON p.id = m.project_id
+            WHERE m.deleted_at IS NULL
+            ORDER BY m.due_date NULLS LAST, m.created_at
+            "#
+        ),
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    let rows = match result {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("获取里程碑时间线失败: {}", e);
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取里程碑时间线失败",
+            ));
+        }
+    };
+
+    let items: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|row| {
+            serde_json::json!({
+                "id": row.get::<String, _>("milestone_id"),
+                "project_id": row.get::<String, _>("project_id"),
+                "project_name": row.try_get::<Option<String>, _>("project_name").unwrap_or(None),
+                "project_code": row.try_get::<Option<String>, _>("project_code").unwrap_or(None),
+                "name": row.get::<String, _>("milestone_name"),
+                "description": row.try_get::<Option<String>, _>("description").unwrap_or(None),
+                "due_date": row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("due_date").unwrap_or(None),
+                "completed_date": row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("completed_date").unwrap_or(None),
+                "status": row.get::<String, _>("status"),
+                "phase_id": row.try_get::<Option<String>, _>("phase_id").unwrap_or(None),
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(items, "里程碑时间线获取成功"))
 }

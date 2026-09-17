@@ -26,6 +26,7 @@ pub mod supplier_admission;
 pub mod supplier_delivery_appointment;
 pub mod supplier_evaluation;
 pub mod supply_chain_dashboard;
+pub mod sync_records;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -74,5 +75,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(analytics::create_routes())
         .merge(audit::create_routes())
         .merge(data_sync::create_routes())
+        .merge(sync_records::create_routes())
         .merge(settings::create_routes())
 }
