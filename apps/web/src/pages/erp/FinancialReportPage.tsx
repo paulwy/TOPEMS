@@ -177,21 +177,21 @@ const FinancialReportPage: React.FC = () => {
       return [
         {
           id: 'total-assets',
-          title: i18n.t('pages.financial_report_page.k0'),
+          title: i18n.t('pages.financial_report_page.k13'),
           value: formatCurrency(balanceSheet.total_assets),
           icon: <DollarSign sx={{ width: 24, height: 24 }} />,
           color: 'primary',
         },
         {
           id: 'total-liabilities',
-          title: i18n.t('pages.financial_report_page.k1'),
+          title: i18n.t('pages.financial_report_page.k14'),
           value: formatCurrency(balanceSheet.total_liabilities),
           icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
           color: 'warning',
         },
         {
           id: 'total-equity',
-          title: i18n.t('pages.financial_report_page.k2'),
+          title: i18n.t('pages.financial_report_page.k15'),
           value: formatCurrency(balanceSheet.total_equity),
           icon: <Wallet sx={{ width: 24, height: 24 }} />,
           color: 'success',
