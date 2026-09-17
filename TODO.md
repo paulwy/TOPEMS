@@ -178,7 +178,10 @@
 - [x] 全库表列类型风险扫描完成（scripts/scan_column_type_risks.py + docs/architecture/column-type-risk-report.md）：
       R1 时间戳列 DATE=0（全库已 TIMESTAMPTZ 对齐）；R2 自定义 enum 16 个（bi/finance，finance 冒烟证实
       当前代码查询路径不触碰，已知基线）；R3 NUMERIC 739 列业务基线
-- [ ] 遗留：5432 旧库未对齐（新库重建时由 20260917000003 修正）；bi 路由名核对（report-templates/report-schedules
-      Unknown module，路径与 server 模块注册名不一致——归入业务 API 冒烟）
+- [x] bi 路由核对：正确路径 /api/bi/templates、/api/bi/schedules（原 report-templates 为错误猜测，非服务缺陷）
+- [x] dashboard 前端真实化（admin DashboardPage）：bff 移除 Dashboard 查询 mock 拦截；4 统计卡真实
+      （服务健康 X/8、采购订单 3、库存 5、ERP 可用）+ 服务健康分布饼图 + 服务状态列表（8 服务）；i18n zh/en 加 key
+- [x] i18n 合规：k33 en 对齐标准译法 Normal；workflow_version_history_page 嵌套 key 对齐扁平权威值（消除混合结构告警）
+- [ ] 遗留：5432 旧库未对齐（新库重建时由 20260917000003 修正）
 - [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
 - [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
