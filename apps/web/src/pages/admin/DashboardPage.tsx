@@ -25,97 +25,79 @@ const getGreeting = (): string => {
   if (hour < 18) return i18n.t('admin.dashboard_page.k5');
   return i18n.t('admin.dashboard_page.k6');
 };
-const getPieData = () => [
-  { name: i18n.t('admin.dashboard_page.k0'), value: 5 },
-  { name: i18n.t('admin.dashboard_page.k1'), value: 10 },
-  { name: i18n.t('admin.dashboard_page.k2'), value: 75 },
-  { name: i18n.t('admin.dashboard_page.k3'), value: 10 },
-];
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const dashboardQuery = useQuery<boolean>({
+  const dashboardQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_DASHBOARD_BASE,
-    queryFn: async () => true,
+    queryFn: async () => {
+      const { getDashboard } = await import('@/api/bff');
+      return getDashboard();
+    },
     staleTime: 5 * 60 * 1000,
   });
   const loading = dashboardQuery.isLoading;
+  const services = dashboardQuery.data?.services ?? [];
+  const erpStats = dashboardQuery.data?.stats?.erp;
+  const healthyCount = services.filter((s) => s.healthy).length;
   const stats: StatCard[] = [
     {
-      id: 'total-users',
-      title: i18n.t('admin.dashboard_page.k7'),
-      value: '1,280',
-      icon: iconMap.Users,
-      change: 45,
-      changeLabel: i18n.t('pages.dashboard_page.vs_0'),
+      id: 'service-health',
+      title: i18n.t('admin.dashboard_page.k27'),
+      value: `${healthyCount}/${services.length || 0}`,
+      icon: iconMap.Activity,
+      change: services.length ? Math.round((healthyCount / services.length) * 100) : 0,
+      changeLabel: '%',
+      color: healthyCount === services.length && services.length > 0 ? 'success' : 'warning',
+    },
+    {
+      id: 'erp-purchase-orders',
+      title: i18n.t('admin.dashboard_page.k28'),
+      value: erpStats?.total ?? '—',
+      icon: iconMap.Shield,
       color: 'primary',
     },
     {
-      id: 'online-users',
-      title: i18n.t('admin.dashboard_page.k8'),
-      value: '128',
-      icon: iconMap.Activity,
-      change: 12,
-      changeLabel: i18n.t('pages.dashboard_page.vs_1'),
-      color: 'success',
-    },
-    {
-      id: 'role-count',
-      title: i18n.t('admin.dashboard_page.k9'),
-      value: '15',
-      icon: iconMap.Shield,
-      change: 2,
-      changeLabel: i18n.t('pages.dashboard_page.vs_2'),
+      id: 'erp-inventory-items',
+      title: i18n.t('admin.dashboard_page.k29'),
+      value: erpStats?.active ?? '—',
+      icon: iconMap.Users,
       color: 'info',
     },
     {
-      id: 'system-alerts',
-      title: i18n.t('admin.dashboard_page.k10'),
-      value: '3',
+      id: 'erp-available',
+      title: i18n.t('admin.dashboard_page.k30'),
+      value: erpStats?.available
+        ? i18n.t('admin.dashboard_page.k33')
+        : i18n.t('admin.dashboard_page.k34'),
       icon: iconMap.AlertTriangle,
-      change: -5,
-      changeLabel: i18n.t('pages.dashboard_page.vs_3'),
-      color: 'warning',
+      color: erpStats?.available ? 'success' : 'warning',
     },
   ];
   const charts: ChartCard[] = [
     {
-      id: 'user-role-distribution',
-      title: i18n.t('admin.dashboard_page.k11'),
+      id: 'service-health-distribution',
+      title: i18n.t('admin.dashboard_page.k37'),
       chart: (
         <LazyChart
           type='pie'
-          data={getPieData()}
+          data={[
+            { name: i18n.t('admin.dashboard_page.k35'), value: healthyCount },
+            {
+              name: i18n.t('admin.dashboard_page.k36'),
+              value: Math.max(services.length - healthyCount, 0),
+            },
+          ]}
         />
       ),
       height: 300,
     },
   ];
-  const recentItems: RecentItem[] = [
-    {
-      id: 'user-1',
-      title: i18n.t('admin.dashboard_page.k12'),
-      description: i18n.t('admin.dashboard_page.10_13'),
-      status: 'success',
-    },
-    {
-      id: 'user-2',
-      title: i18n.t('admin.dashboard_page.k14'),
-      description: i18n.t('admin.dashboard_page.30_15'),
-      status: 'success',
-    },
-    {
-      id: 'user-3',
-      title: i18n.t('admin.dashboard_page.k16'),
-      description: i18n.t('admin.dashboard_page.1_17'),
-      status: 'default',
-    },
-    {
-      id: 'user-4',
-      title: i18n.t('admin.dashboard_page.k18'),
-      description: i18n.t('admin.dashboard_page.2_19'),
-      status: 'success',
-    },
-  ];
+  const recentItems: RecentItem[] = services.map((s) => ({
+    id: s.service,
+    title: s.service,
+    description: s.url,
+    status: s.healthy ? ('success' as const) : ('default' as const),
+  }));
   const quickActions: QuickAction[] = [
     {
       id: 'user-management',

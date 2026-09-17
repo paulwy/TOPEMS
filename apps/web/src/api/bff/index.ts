@@ -127,23 +127,7 @@ function shouldMockBff(): boolean {
 
 function buildMockForQuery<T>(query: string): T | null {
   const q = query.trim();
-  // Dashboard 复合查询：返回空 stats/todos/services 结构
-  if (/query\s+Dashboard\b/i.test(q)) {
-    return {
-      dashboard: {
-        stats: {
-          erp: { service: 'erp', total: 0, active: 0, available: false },
-          crm: { service: 'crm', total: 0, active: 0, available: false },
-          hrm: { service: 'hrm', total: 0, active: 0, available: false },
-          finance: { service: 'finance', total: 0, active: 0, available: false },
-          mes: { service: 'mes', total: 0, active: 0, available: false },
-          workflow: { service: 'workflow', total: 0, active: 0, available: false },
-        },
-        todos: [],
-        services: [],
-      },
-    } as unknown as T;
-  }
+  // Dashboard 复合查询：不再 mock（portal 已启动时走真实请求，失败时下方通用 fallback 返回空结构）
   if (/query\s+BusinessStats\b/i.test(q)) {
     return {
       businessStats: {

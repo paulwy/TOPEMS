@@ -4982,5 +4982,14 @@
   "admin.tenant_user.status.option.suspended": "Disabled",
   "admin.tenant_user.created_at.label": "Addenter Time",
   "admin.tenant_user.last_login.label": "MostnearLogin",
-  "admin.tenant_user.section.0.title": "MemberInfo"
+  "admin.tenant_user.section.0.title": "MemberInfo",
+  "admin.dashboard_page.k27": "服务健康",
+  "admin.dashboard_page.k28": "采购订单",
+  "admin.dashboard_page.k29": "库存条目",
+  "admin.dashboard_page.k30": "ERP 可用",
+  "admin.dashboard_page.k33": "正常",
+  "admin.dashboard_page.k34": "异常",
+  "admin.dashboard_page.k35": "健康",
+  "admin.dashboard_page.k36": "异常",
+  "admin.dashboard_page.k37": "服务状态"
 }

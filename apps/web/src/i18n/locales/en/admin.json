@@ -7629,5 +7629,14 @@
   "admin.audit_log.details": "Details",
   "admin.audit_log.pagination_info": "{count} records, page {current} / {total}",
   "admin.audit_log.badge": "Audit",
-  "performancemonitorpage": {}
+  "performancemonitorpage": {},
+  "admin.dashboard_page.k27": "Services Healthy",
+  "admin.dashboard_page.k28": "Purchase Orders",
+  "admin.dashboard_page.k29": "Inventory Items",
+  "admin.dashboard_page.k30": "ERP Available",
+  "admin.dashboard_page.k33": "OK",
+  "admin.dashboard_page.k34": "Down",
+  "admin.dashboard_page.k35": "Healthy",
+  "admin.dashboard_page.k36": "Down",
+  "admin.dashboard_page.k37": "Service Status"
 }
