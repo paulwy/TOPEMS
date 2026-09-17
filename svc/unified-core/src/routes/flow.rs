@@ -1,4 +1,4 @@
-use axum::routing::{get, post, put};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 
 use crate::middleware::permission::require_permission;
@@ -269,6 +269,14 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/workflows/{workflow_id}/versions",
             post(modules::flow::workflow::create_workflow_version),
+        )
+        .route(
+            "/workflows/{workflow_id}/versions/{version_id}/activate",
+            post(modules::flow::workflow::activate_workflow_version),
+        )
+        .route(
+            "/workflows/{workflow_id}/versions/{version_id}",
+            delete(modules::flow::workflow::delete_workflow_version),
         )
         .route(
             "/monitor/instances/{id}/retry",

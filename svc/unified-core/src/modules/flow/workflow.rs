@@ -670,3 +670,130 @@ pub async fn get_workflow_version(
         }
     }
 }
+
+/// 激活工作流版本（同工作流其他版本置为非激活）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["unified-core:flow:workflow:write"])),
+    path = "/api/core/flow/workflows/{workflow_id}/versions/{version_id}/activate",
+    tag = "Flow-Workflow",
+    params(
+        ("workflow_id" = Uuid, Path, description = "工作流ID"),
+        ("version_id" = Uuid, Path, description = "版本ID"),
+    ),
+    responses(
+        (status = 200, description = "激活成功", body = ApiResponse<WorkflowVersion>),
+        (status = 404, description = "版本不存在"),
+        (status = 500, description = "激活失败"),
+    ),
+)]
+pub async fn activate_workflow_version(
+    State(state): State<AppState>,
+    Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<WorkflowVersion>> {
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("激活版本开启事务失败: {}", e);
+            return Json(api_error(500, "激活工作流版本失败"));
+        }
+    };
+
+    // 1. 校验版本存在且属于该工作流
+    let exists = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM core_workflow_versions
+         WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL)",
+    )
+    .bind(version_id)
+    .bind(workflow_id)
+    .fetch_one(&mut *tx)
+    .await;
+
+    match exists {
+        Ok(true) => {}
+        Ok(false) => {
+            return Json(api_error(404, "工作流版本不存在"));
+        }
+        Err(e) => {
+            tracing::error!("校验版本失败: {}", e);
+            return Json(api_error(500, "激活工作流版本失败"));
+        }
+    }
+
+    // 2. 同工作流其他版本置为非激活
+    if let Err(e) = sqlx::query("UPDATE core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1")
+        .bind(workflow_id)
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("去激活其他版本失败: {}", e);
+        return Json(api_error(500, "激活工作流版本失败"));
+    }
+
+    // 3. 激活目标版本
+    let version = sqlx::query_as::<_, WorkflowVersion>(
+        "UPDATE core_workflow_versions SET isactive = TRUE
+         WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
+         RETURNING id, workflow_id, version, definition, change_description, created_by, isactive, created_at",
+    )
+    .bind(version_id)
+    .bind(workflow_id)
+    .fetch_one(&mut *tx)
+    .await;
+
+    match version {
+        Ok(v) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("提交激活版本事务失败: {}", e);
+                return Json(api_error(500, "激活工作流版本失败"));
+            }
+            Json(ApiResponse::success(v, "版本激活成功"))
+        }
+        Err(e) => {
+            tracing::error!("激活工作流版本失败: {}", e);
+            Json(api_error(500, "激活工作流版本失败"))
+        }
+    }
+}
+
+/// 删除工作流版本（软删除）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["unified-core:flow:workflow:write"])),
+    path = "/api/core/flow/workflows/{workflow_id}/versions/{version_id}",
+    tag = "Flow-Workflow",
+    params(
+        ("workflow_id" = Uuid, Path, description = "工作流ID"),
+        ("version_id" = Uuid, Path, description = "版本ID"),
+    ),
+    responses(
+        (status = 200, description = "删除成功"),
+        (status = 404, description = "版本不存在"),
+        (status = 500, description = "删除失败"),
+    ),
+)]
+pub async fn delete_workflow_version(
+    State(state): State<AppState>,
+    Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query(
+        "UPDATE core_workflow_versions SET deleted_at = NOW()
+         WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(version_id)
+    .bind(workflow_id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() == 0 => Json(api_error(404, "工作流版本不存在")),
+        Ok(_) => Json(ApiResponse::success(
+            serde_json::json!({ "deleted": true, "version_id": version_id }),
+            "版本删除成功",
+        )),
+        Err(e) => {
+            tracing::error!("删除工作流版本失败: {}", e);
+            Json(api_error(500, "删除工作流版本失败"))
+        }
+    }
+}
