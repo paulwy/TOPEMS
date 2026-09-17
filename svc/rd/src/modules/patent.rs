@@ -16,11 +16,39 @@ use topems_shared_db::repository::ListQueryParams;
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    /// 页码，默认 1
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+    /// 每页大小，默认 20，最多 100
+    #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+    /// 关键字搜索
+    #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
+    /// 排序字段
+    #[serde(default, alias = "sort", alias = "sortBy")]
+    pub sort_by: Option<String>,
+    /// 排序方向：asc / desc
+    #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub project_id: Option<Uuid>,
 }
+impl ListParams {
+    pub fn page_or_default(&self) -> i64 {
+        self.page.unwrap_or(1).max(1)
+    }
+
+    pub fn page_size_or_default(&self) -> i64 {
+        self.page_size.unwrap_or(20).clamp(1, 100)
+    }
+
+    pub fn offset(&self) -> i64 {
+        (self.page_or_default() - 1) * self.page_size_or_default()
+    }
+}
+
+
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Patent {
@@ -121,9 +149,9 @@ pub async fn list_patents(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
     let result = sqlx::query(
         r#"
@@ -138,7 +166,7 @@ pub async fn list_patents(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(&params.base.search)
+    .bind(&params.search)
     .bind(&params.status)
     .bind(params.project_id)
     .bind(page_size)
@@ -157,7 +185,7 @@ pub async fn list_patents(
                   AND ($3::uuid IS NULL OR project_id = $3)
                 "#,
             )
-            .bind(&params.base.search)
+            .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
             .fetch_one(&mut **txn)

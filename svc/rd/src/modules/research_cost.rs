@@ -62,14 +62,42 @@ pub struct UpdateResearchCostRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    /// 页码，默认 1
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+    /// 每页大小，默认 20，最多 100
+    #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+    /// 关键字搜索
+    #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
+    /// 排序字段
+    #[serde(default, alias = "sort", alias = "sortBy")]
+    pub sort_by: Option<String>,
+    /// 排序方向：asc / desc
+    #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    pub sort_dir: Option<String>,
     pub project_id: Option<Uuid>,
     pub category: Option<String>,
     pub status: Option<String>,
     pub start_date: Option<String>,
     pub end_date: Option<String>,
 }
+impl ListParams {
+    pub fn page_or_default(&self) -> i64 {
+        self.page.unwrap_or(1).max(1)
+    }
+
+    pub fn page_size_or_default(&self) -> i64 {
+        self.page_size.unwrap_or(20).clamp(1, 100)
+    }
+
+    pub fn offset(&self) -> i64 {
+        (self.page_or_default() - 1) * self.page_size_or_default()
+    }
+}
+
+
 
 pub fn create_routes() -> Router<ApiState> {
     Router::<ApiState>::new()
@@ -94,9 +122,9 @@ pub async fn list_costs(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
     let mut query = String::from(
         r#"
@@ -123,7 +151,7 @@ pub async fn list_costs(
     if let Some(_end_date) = &params.end_date {
         query.push_str(" AND cost_date <= $5");
     }
-    if let Some(_search) = &params.base.search {
+    if let Some(_search) = &params.search {
         query.push_str(" AND (description ILIKE $6 OR receipt_no ILIKE $6)");
     }
 
@@ -135,7 +163,7 @@ pub async fn list_costs(
         .bind(&params.status)
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .bind(search_like(&params.base.search))
+        .bind(search_like(&params.search))
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut **txn)
@@ -180,7 +208,7 @@ pub async fn count_costs(db: &mut sqlx::PgConnection, params: &ListParams) -> i6
     if let Some(_end_date) = &params.end_date {
         query.push_str(" AND cost_date <= $5");
     }
-    if let Some(_search) = &params.base.search {
+    if let Some(_search) = &params.search {
         query.push_str(" AND (description ILIKE $6 OR receipt_no ILIKE $6)");
     }
 
@@ -190,7 +218,7 @@ pub async fn count_costs(db: &mut sqlx::PgConnection, params: &ListParams) -> i6
         .bind(&params.status)
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .bind(search_like(&params.base.search))
+        .bind(search_like(&params.search))
         .fetch_one(&mut *db)
         .await
         .unwrap_or(0)
