@@ -10,6 +10,7 @@ pub struct Workflow {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub name: String,
+    pub code: Option<String>,
     pub description: Option<String>,
     pub definition: serde_json::Value,
     pub status: String,
