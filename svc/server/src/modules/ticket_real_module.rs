@@ -16,6 +16,7 @@ use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_ticket::feedback_compat;
 use topems_ticket::handlers;
+use topems_ticket::ticket_ext;
 
 /// 真实 Ticket 模块：持有数据库连接池 + 完整业务路由（ticket + feedback 兼容）
 pub struct TicketRealModule {
@@ -61,6 +62,7 @@ impl TicketRealModule {
         // 3. 业务路由（权限中间件 + 开发验证模拟认证）
         let protected_routes = handlers::ticket_routes()
             .merge(feedback_compat::feedback_compat_routes())
+            .merge(ticket_ext::ticket_ext_routes())
             .layer(axum::middleware::from_fn(require_permission(
                 "ticket:admin",
             )))

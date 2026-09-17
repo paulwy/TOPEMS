@@ -37,6 +37,12 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
     Router::new()
         // ---- 工作流（静态状态机）----
         .route("/workflows", get(get_workflows))
+        .route("/workflows/match", get(get_workflow_for_ticket_type))
+        .route("/workflows/automation-rules", get(list_workflow_automation_rules))
+        .route(
+            "/workflows/automation-rules/{id}/toggle",
+            axum::routing::put(toggle_workflow_automation_rule),
+        )
         // ---- 状态流转 ----
         .route("/tickets/{id}/transitions", get(get_ticket_transitions))
         .route("/tickets/{id}/transition", post(apply_transition))
@@ -109,6 +115,113 @@ async fn get_workflows(State(_pool): State<PgPool>) -> Json<ApiResponse<serde_js
         "transitions": transitions,
     });
     Json(ApiResponse::success(data, "工作流配置"))
+}
+
+// ==================== 工作流匹配与自动化规则（前端 workflow.ts 调用）====================
+
+#[derive(Deserialize)]
+struct WorkflowMatchQuery {
+    ticket_type: Option<String>,
+}
+
+/// 按工单类型匹配工作流：当前为默认状态机（静态配置），后续可扩展为按类型返回不同流程
+async fn get_workflow_for_ticket_type(
+    axum::extract::Query(query): axum::extract::Query<WorkflowMatchQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut transitions: Vec<serde_json::Value> = Vec::new();
+    for from in ALL_STATUSES {
+        for to in ALL_STATUSES {
+            if from != to && is_valid_ticket_transition(from, to) {
+                transitions.push(json!({"from": from, "to": to}));
+            }
+        }
+    }
+    let data = json!({
+        "id": "ticket_default_workflow",
+        "name": "ticket_default_workflow",
+        "ticket_type": query.ticket_type.unwrap_or_default(),
+        "statuses": ALL_STATUSES,
+        "transitions": transitions,
+    });
+    Json(ApiResponse::success(data, "工作流匹配"))
+}
+
+/// 工作流自动化规则视图（前端字段：id/name/trigger/action/is_active）
+#[derive(serde::Serialize)]
+struct WorkflowRuleView {
+    id: Uuid,
+    name: String,
+    trigger: Option<String>,
+    action: Option<String>,
+    is_active: bool,
+}
+
+async fn list_workflow_automation_rules(
+    State(pool): State<PgPool>,
+    claims: axum::Extension<Claims>,
+) -> Json<ApiResponse<Vec<WorkflowRuleView>>> {
+    let tenant_id = tenant_of(&claims);
+    match sqlx::query(
+        "SELECT id, name, condition_field, action_type, enabled
+         FROM ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
+    )
+    .bind(tenant_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(rows) => {
+            let views = rows
+                .iter()
+                .map(|row| WorkflowRuleView {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    trigger: row.get("condition_field"),
+                    action: row.get("action_type"),
+                    is_active: row.get("enabled"),
+                })
+                .collect();
+            Json(ApiResponse::success(views, "工作流自动化规则列表"))
+        }
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "获取工作流自动化规则失败",
+            e,
+        ))),
+    }
+}
+
+#[derive(Deserialize)]
+struct WorkflowToggleRequest {
+    is_active: bool,
+}
+
+async fn toggle_workflow_automation_rule(
+    State(pool): State<PgPool>,
+    claims: axum::Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<WorkflowToggleRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = tenant_of(&claims);
+    match sqlx::query(
+        "UPDATE ticket_automation_rules SET enabled = $1, updated_at = now()
+         WHERE id = $2 AND tenant_id = $3",
+    )
+    .bind(req.is_active)
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&pool)
+    .await
+    {
+        Ok(res) => {
+            if res.rows_affected() == 0 {
+                Json(ApiResponse::from(TopemsError::DatabaseRecordNotFound(
+                    "自动化规则不存在".into(),
+                )))
+            } else {
+                Json(ApiResponse::success(json!({"id": id, "is_active": req.is_active}), "规则状态已更新"))
+            }
+        }
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新自动化规则失败", e))),
+    }
 }
 
 // ==================== 状态流转 ====================

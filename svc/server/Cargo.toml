@@ -98,6 +98,8 @@ default = [
     "module-plugin-registry",
     "module-integration",
     "module-mobile",
+    # [2026-09-17] tms real_module 接入模块化单体（P3 门控转为默认启用）
+    "module-tms",
 ]
 module-core = ["dep:topems-unified-core"]
 # 真实业务服务接入：monitor 模块（监控告警，core 组）
