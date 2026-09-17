@@ -125,3 +125,9 @@
 - [x] 批1：E2E 矩阵收敛（CI 单 chromium + apps/web 6→2，0 snapshot）
 - [x] 批2：167 文件分类——保留 102（核心页面 68 + hooks 34）/ 降级 smoke 60 实际改造；vitest 分片 8→5（package.json test:shard:N/5 + ci.yml 5 路实证）
 - [x] CI 实测：全量 110s、每片 ~22s，≤20min 预算达成；frontend-test-roi-review.md §6 + 飞书文档已同步
+
+### P2-2 API 网关 8080 落地 ✅（配置层完成，staging 验证待部署环境）
+- [x] traefik.yml：api entryPoint :8080 + Dashboard 迁移 :8089；dynamic.yml 33 router（含 8 extension 路由补齐）
+- [x] 09-01 本地容器验证：dashboard 8089 200、jwt-auth forwardAuth 生效、traefik v3.0 兼容修复 4 处
+- [x] services.yaml api_gateway status=implemented、deployment_modes=[docker,saas]
+- [ ] 唯一开放：staging 生产部署验证（依赖 staging 环境，本地无法执行）

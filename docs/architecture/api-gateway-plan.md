@@ -1,7 +1,14 @@
 # API 网关 8080 落地方案（API Gateway Plan）
 
-> **状态**：方案待部署验证 · **归档日期**：2026-08-31 · **关联**：`TODO.md` P2-2 · `config/services.yaml` special_ports.api_gateway
-> **现状**：Traefik v3 已承担路由网关（`deploy/docker/traefik/dynamic.yml`，23 服务路由 + 统一中间件链）；8080 端口当前被 **Traefik Dashboard** 占用，与 `services.yaml` 预留的 API 网关 8080 冲突。
+> **状态**：配置层就绪，部署验证待 docker 全栈拉起 · **更新**：2026-09-17 · **关联**：`TODO.md` P2-2 · `config/services.yaml` special_ports.api_gateway
+> **现状（2026-09-17 实测）**：Traefik v3 已承担路由网关（`deploy/docker/traefik/dynamic.yml`，33 个 router + 统一中间件链）；**端口冲突已解决**——`traefik.yml` 新增 `api` entryPoint `:8080`、Dashboard/API 迁移 `:8089`（内网绑定）；`config/services.yaml` 注释明确 **8080 仅 docker/saas 部署模式使用，本地开发走各服务自身端口**（本地开发形态 = `svc/server` :8099 模块化单体统一入口 + vite :3000，不启用 8080）。
+> **部署状态**：本地仅运行 `topems-postgres` 容器（5433）；traefik 与 22 个服务容器未拉起，`:8080` 网关待部署环境验证（见 §5 验证步骤）。
+
+## 0. 模块化单体时代的网关定位
+
+- **本地开发**：`svc/server` :8099 已充当统一 API 入口（31+ 模块嵌入），vite :3000 直连——无需 8080 网关。
+- **docker/saas 部署**：8080 为**对外 API 网关入口**（移动端 App / 第三方系统 / BI 直连），与 Web 流量（80/443 经 nginx）分离；Traefik 按 PathPrefix 路由到各服务容器。
+- 灰度切换：同一 `dynamic.yml` 中调整 router 的 target 服务即可切换新旧实现，前端不感知。
 
 ## 1. 路由映射表（前端 API 前缀 → 服务 → 目标）
 

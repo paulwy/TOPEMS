@@ -78,7 +78,7 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 | P1-3 | 前端测试矩阵 ROI 审视 | ✅ **全部闭环（批1+批2）**：`frontend-test-roi-review.md`（L1-L4 分级 + ≤20min 预算 + 三批实施路径）；批1 E2E 收敛落地（CI 单 chromium + apps/web 6→2，0 snapshot）；**批2 页面单测保留集评审落地（2026-09-01）**——167 文件分类（保留 102 = 核心页面 68 + hooks 34 / 降级 smoke 60 个实际改造）、vitest 分片 8→5（package.json + ci.yml 5 shard 实证）、CI 实测预算全量 110s·每片 ~22s ≤20min 达成 |
 | P1-4 | lowcode 立项决策 | ✅ **已解决**：已归档 `svc/_archive/lowcode` |
 | P2-1 | RLS 数据权限覆盖 | ✅ **完成落地**：`migrations/20260831*`（框架函数 + 302 张含 tenant_id 表启用 RLS + 策略）；修复 GUC 名不一致 / PG18 无 IF NOT EXISTS / 空值 UUID 报错 3 缺陷；`lib/shared-db/src/rls.rs` 同步修复 |
-| P2-2 | API 网关 8080 落地 | ✅ **完成方案+nginx 补强**：`api-gateway-plan.md`（Traefik 8080 待 staging 部署验证）+ 生产 `deploy/nginx/topems.conf` 补强落地（限流/连接限制/失败转移熔断） |
+| P2-2 | API 网关 8080 落地 | ✅ **完成（2026-09-01 本地容器验证通过 + status implemented）**：`api-gateway-plan.md`——Traefik `api` entryPoint :8080 就绪、Dashboard 迁移 :8089、33 router 挂载验证通过（dashboard 8089 200、jwt-auth forwardAuth 生效）、8 个 extension 路由补齐、traefik v3.0 兼容修复 4 处；`services.yaml` api_gateway status=implemented、deployment_modes=[docker,saas]；仅剩 **staging 生产部署验证**（依赖 staging 环境） |
 | P2-3 | 发布/CHANGELOG 自动化 | ✅ **完成落地**：`scripts/ci/generate-changelog.py` + `scripts/release.sh`（接入发布流程）+ CI `changelog-gate`（tag 触发校验） |
 
 > 待办状态追踪的权威来源：`docs/roadmap/TODO.md`（唯一权威）；架构演进与待办清单（含 Phase 1-5、批准执行落地记录）已归档至 `docs/roadmap/archive/TODO-archived-workbench-2026-09-09.md`。本轮（P1-2/P1-3/P2-1/P2-2/P2-3）产物均已归档至 `docs/architecture/` 与 `scripts/`。
