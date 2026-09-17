@@ -101,3 +101,16 @@
 | MUI elevation 警告 | ⚠️ 警告 | 不影响功能 |
 | GIS 认证 | ✅ 已修复 (fbcc1c6e9) | auth layer 顺序修正 + business-locations CRUD 闭环 |
 | finance 真实模块降级（must be owner） | ✅ 已修复 | 全库业务 schema/表 owner 统一为 topems_app；MIGRATE_URL 迁移池用户统一（topems→topems_app），portal schema 防御 permission denied 同步消除 |
+
+## 📌 架构演进与待办清单（2026-09-17 更新）
+
+### P0-1 架构文档基线对齐 ✅
+- [x] check-workspace-registry.py 三向一致：Cargo members 29 / services.yaml 32 条目 / ports.env 38 变量
+- [x] code-wiki.md 服务口径对齐：billing/lowcode 归档、feedback→ticket、aps→mes、report→analytics(bi)，28+→29 业务领域
+- [x] overview.md 加注「2026-09-17 基线复核」+ 最后核对日期（运行中服务以 :8099 模块化单体统一入口为最终证据）
+- [x] 本地 evolution doc + 飞书「架构演进与待办清单」P0-1 完成块同步（commit bdbd48f1b）
+
+### P2-3 发布/CHANGELOG 自动化 ✅（工具链验证）
+- [x] scripts/ci/generate-changelog.py 按 Conventional Commits 分组生成草案（V472..HEAD 970 条提交实测成功）
+- [x] scripts/release.sh draft/tag/check 三命令可用；`check` 通过；tag 前强校验 CHANGELOG 含版本章节
+- [x] draft 产物 docs/changelog/draft.md（生成物，人工复核后合并，非版本章节源）
