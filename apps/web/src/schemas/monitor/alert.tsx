@@ -58,7 +58,7 @@ const getAlertFields = (): SchemaField[] => [
     label: i18n.t('shared.alert.k6'),
     type: 'text',
     minWidth: 200,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index?: number) => {
       const severity = row.severity as AlertSeverity;
       return (
         <Stack
@@ -105,7 +105,7 @@ const getAlertFields = (): SchemaField[] => [
     label: i18n.t('shared.alert.k7'),
     type: 'select',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index?: number) => {
       const severity = row.severity as AlertSeverity;
       return (
         <Chip
@@ -122,7 +122,7 @@ const getAlertFields = (): SchemaField[] => [
     label: i18n.t('shared.alert.k8'),
     type: 'text',
     listWidth: 140,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index?: number) => (
       <Stack
         direction='row'
         spacing={0.5}
@@ -147,7 +147,7 @@ const getAlertFields = (): SchemaField[] => [
     type: 'textarea',
     minWidth: 240,
     showInForm: false,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index?: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -163,13 +163,14 @@ const getAlertFields = (): SchemaField[] => [
     ),
   },
   {
-    name: 'created_at',
+    // 后端返回 timestamp 字段（mock Alert.timestamp），前端历史契约为 created_at
+    name: 'timestamp',
     label: i18n.t('shared.alert.k10'),
     type: 'datetime',
     listWidth: 160,
     hideInForm: true,
     sortable: true,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index?: number) => (
       <Stack
         direction='row'
         spacing={0.5}
@@ -183,7 +184,7 @@ const getAlertFields = (): SchemaField[] => [
           variant='body2'
           color='text.secondary'
         >
-          {new Date(row.created_at as string).toLocaleString('zh-CN')}
+          {new Date((row.timestamp ?? row.created_at) as string).toLocaleString('zh-CN')}
         </Typography>
       </Stack>
     ),
@@ -193,7 +194,7 @@ const getAlertFields = (): SchemaField[] => [
     label: i18n.t('shared.alert.k11'),
     type: 'select',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index?: number) => {
       const status = row.status as AlertStatus;
       return (
         <Chip

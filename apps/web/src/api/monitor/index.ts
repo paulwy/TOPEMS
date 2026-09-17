@@ -65,6 +65,8 @@ export interface Alert {
   service_name: string;
   status: 'active' | 'resolved' | 'acknowledged';
   created_at: string;
+  /** 后端实际返回时间字段（mock Alert.timestamp），created_at 为前端历史契约 */
+  timestamp?: string;
   resolved_at?: string;
   acknowledged_at?: string;
 }
@@ -230,7 +232,7 @@ export const monitorApi = {
 
   acknowledgeAlert: async (id: string): Promise<ApiResponse<Alert>> => {
     return withRetry(
-      () => apiClient.monitor.put<Alert>(`/alerts/${id}/acknowledge`),
+      () => apiClient.monitor.post<Alert>(`/alerts/${id}/acknowledge`, {}),
       DEFAULT_RETRY_CONFIG,
       `acknowledgeAlert(${id})`
     );
@@ -238,7 +240,7 @@ export const monitorApi = {
 
   resolveAlert: async (id: string): Promise<ApiResponse<Alert>> => {
     return withRetry(
-      () => apiClient.monitor.put<Alert>(`/alerts/${id}/resolve`),
+      () => apiClient.monitor.post<Alert>(`/alerts/${id}/resolve`, {}),
       DEFAULT_RETRY_CONFIG,
       `resolveAlert(${id})`
     );
