@@ -172,9 +172,10 @@
       3 采购订单（PO-2026-0001~3）/ 5 库存 / 3 供应商 / 5 物料，tenant_id=00000000-0000-0000-0000-000000000001
 - [x] dashboard stats 最终验证：erp total=3（采购订单总数）、active=5（库存条目数）——真实业务数值闭环
 - [x] stats 口径修正：total 改取分页响应 data.total（count_purchase_orders），原 list_purchase_orders(1,1).len() 恒 ≤1
-- [ ] 表-模型类型对齐遗留（编译库一致性主线，种子暴露）：erp.purchase_orders 已对齐容器库
-      （order_date/delivery_date DATE→TIMESTAMPTZ、4 金额列 NUMERIC→DOUBLE PRECISION），
-      迁移文件 20260907000001 未同步（schema 定义仍 DATE/NUMERIC），5432 旧库未对齐；同款 DATE/NUMERIC↔TIMESTAMPTZ/f64
-      偏差可能存在于其他模块表，建议做全库"模型 vs 表类型"扫描入迁移体系
+- [x] 迁移入体系：20260917000003_erp_purchase_orders_type_align.sql（幂等 DO 块，DATE→TIMESTAMPTZ、金额 NUMERIC→FLOAT8）
+- [x] 种子补齐代码模型非空字段：materials safety_stock/unit_price/tax_rate/status、suppliers supplier_type（回填幂等）
+- [x] erp 核心列表冒烟全通：purchase-orders/sales-orders/customers/suppliers/materials/inventory 全部 200 真实数据
+- [ ] 全库"模型 vs 表类型"偏差扫描（编译库一致性主线下一步）：DATE↔TIMESTAMPTZ、NUMERIC↔f64、nullable↔非空
+      三类偏差可能存在于其他模块表；5432 旧库待对齐、20260907000001 基线迁移未同步（新库重建时由 000003 修正）
 - [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
 - [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
