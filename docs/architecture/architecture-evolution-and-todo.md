@@ -70,7 +70,7 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 
 | 原编号 | 工作包 | 2026-08-31 校准状态 |
 |---|---|---|
-| P0-1 | 架构文档基线对齐 | ✅ 本次实施：修复 services.yaml 重复键、补齐 ports.env 4 端口、接入 CI Gate M、overview.md 对齐 |
+| P0-1 | 架构文档基线对齐 | ✅ 本次实施：修复 services.yaml 重复键、补齐 ports.env 4 端口、接入 CI Gate M、overview.md 对齐；**2026-09-17 复核**：check-workspace-registry.py 实测 Cargo members 29 / services.yaml 32 条目 / ports.env 38 变量三向一致；code-wiki.md 服务口径更新（billing/lowcode 归档、feedback→ticket、aps→mes、report→bi 标注，28+→29 业务领域）；overview.md 加注「2026-09-17 基线复核」+ 最后核对日期 |
 | P0-2 | unified-core 继续瘦身决策 | ✅ **边界治理第一轮落地（2026-08-31）**：被模块化单体取代后，本轮落地边界治理——清理幽灵 feature（`module-advanced`/`module-ai` 从 default 移除，保留定义待接入）+ 固化模块接入矩阵与边界规则（`modular-monolith-design.md` §5.2）；advanced（master-data/analytics）/ ai 待真实接入 |
 | P0-3 | 配置单一真相源 CI 校验 | ✅ **本次实施完成**：`scripts/check-workspace-registry.py` + CI Gate M（`config/**` 或 Cargo.toml 变更触发） |
 | P1-1 | 事件通道选型规则落地 | ✅ **已解决**：Redis Stream 迁移完成（2026-08-29），Pub/Sub 仅保留显式降级分支 |

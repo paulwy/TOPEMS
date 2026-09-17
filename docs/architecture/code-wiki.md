@@ -26,7 +26,9 @@
 
 ### 1.1 项目简介
 
-**TOPEMS** 是一个面向中大型企业的全栈数字化平台，采用 **Rust 微服务后端 + React 19 前端** 的技术栈，覆盖身份认证、流程自动化、文档管理、AI 协作、生产制造、供应链、质量管控、研发管理、商业智能等 28+ 业务领域。
+**TOPEMS** 是一个面向中大型企业的全栈数字化平台，采用 **Rust 微服务后端 + React 19 前端** 的技术栈，覆盖身份认证、流程自动化、文档管理、AI 协作、生产制造、供应链、质量管控、研发管理、商业智能等 29+ 业务领域。
+
+> **2026-09-17 服务口径校准**：构建中业务服务 **29 个**（Cargo workspace members），另含 6 个 unified-core 虚拟逻辑模块（iam/flow/file/doc/automation/bi）；`billing`/`lowcode` 已归档（`svc/_archive/`）、`feedback` 已并入 `ticket`、`aps` 已并入 `mes`、`report` 已并入 `analytics(bi)`。服务清单权威源：`config/services.yaml`（由 `scripts/check-workspace-registry.py` 三向校验守护）。
 
 平台通过统一的 `unified-core` 核心服务管理插件生命周期、租户隔离、权限体系与事件总线，各业务服务以独立进程或插件形式按需扩展。
 
@@ -38,17 +40,17 @@
 | 特性类别 | 具体特性 |
 |---------|---------|
 | **核心服务** | IAM、工作流(Flow)、文件(File)、通讯(Communication)、通知(Notification)、邮件(Mail)、即时通讯(IM)、主数据(Master)、插件(Plugin)、工单(Ticket)、监控(Monitor) |
-| **经营管理** | ERP、Finance、AI、Billing |
-| **协同办公** | HRM、PM、CRM、Feedback |
-| **生产制造** | MES、PDM |
+| **经营管理** | ERP、Finance、AI（Billing 已归档） |
+| **协同办公** | HRM、PM、CRM（Feedback 已并入 Ticket） |
+| **生产制造** | MES（含 APS 兼容层）、PDM |
 | **供应链** | SCM、WMS、SRM |
 | **质量/研发** | QMS、LIMS、EHS、RD |
-| **数据/基础设施** | BI(Analytics)、Portal、Mobile、GIS、Integration、Search、Lowcode、Master-Data |
+| **数据/基础设施** | BI(Analytics)、Portal、Mobile、GIS、Integration、Search、Master-Data（Lowcode 已归档） |
 | **技术亮点** | Rust Axum 高性能后端、React 19 + TypeScript 前端、微服务/插件化架构、Module Federation 微前端、PWA、AI RAG、pgvector 向量搜索 |
 | **安全特性** | JWT 认证、RBAC、行级安全(RLS)、多租户隔离、字段加密、CSRF 防护、审计日志 |
 | **插件化** | 安全令牌注册、Consul/环境变量服务发现、心跳超时检测、依赖检查、动态导航配置 |
 | **工单 SLA** | SLA 策略配置、响应/解决时限计算、多级升级机制、SLA 统计 API |
-| **Shared Bootstrap V2** | 28/28 (100%) 服务统一启动 API：ServiceConfig → bootstrap_service → build_application → run |
+| **Shared Bootstrap V2** | 29 服务统一启动 API：ServiceConfig → bootstrap_service → build_application → run（2026-09-17 基线） |
 | **路由统一化** | 核心服务统一 `/api/core/{module}`，业务服务统一 `/api/{svc}`，Vite proxy 新路径无 rewrite 直通 |
 | **导航架构合规** | **V182 达成 1050/1050 = 100% 全绿**：页面存在性(316/316) · 路由注册(350/350) · 权限三段式(384/384) — 自 V68.3 起 7 个版本迭代闭环 |
 | **API 绑定覆盖** | V75~V81 完成 Finance/Monitor/PDM/unified-core/master-data/Finance 风控税务 等 7 大模块 API 绑定 100% 落地 |

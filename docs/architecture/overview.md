@@ -8,6 +8,12 @@
 > - 下文 V71 服务配置表、架构图与事件描述为 2026-08-11 快照，新增/合并服务以上文为准。
 > - 架构演进与待办清单：`docs/architecture/architecture-evolution-and-todo.md` · 待办状态追踪：`TODO.md`「架构演进与待办清单」章节。
 
+> ✅ **2026-09-17 基线复核（P0-1 架构文档基线对齐）**
+> - **版本基线**：构建中业务服务 **29 个**（Cargo workspace members）+ `svc/server` 模块化单体统一入口 + 6 个 unified-core 虚拟逻辑模块（iam/flow/file/doc/automation/bi）；`scripts/check-workspace-registry.py` 实测：Cargo members 29 / services.yaml 32 条目 / ports.env 38 变量 **三向一致**。
+> - 服务归档/合并现状：billing、lowcode 归档（`svc/_archive/`）；feedback→ticket、aps→mes、report→analytics(bi)。
+> - 最终证据：运行中服务实际监听端口以 `svc/server` :8099 模块化单体统一入口为准（本地开发模式），独立部署端口映射见 `config/services.yaml`。
+> - **最后核对日期：2026-09-17**。
+
 ## 概述
 
 TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一的身份认证、流程自动化、文件管理、协同通讯等功能。系统采用 Rust 后端 + React 前端的现代化技术栈，支持企业级部署和扩展。
