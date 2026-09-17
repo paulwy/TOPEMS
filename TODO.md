@@ -201,4 +201,6 @@
       （迁移 20260917000006），portal/communication search_path 统一 public 优先；冒烟全 200
 - [x] C 类收尾：flow 权威化——public 影子 5 张 DROP（000007）+ core_workflows 数据迁移 flow（000008）；
       tasks 补列/时间戳 TIMESTAMPTZ；core/flow 五端点 + 冒烟全 200（5775c709e）
-- [ ] 收尾：public.core_workflows 冻结影子（FK 依赖 versions/_archive），待 DROP FK 后清理
+- [x] 收尾：public.core_workflows 影子已清（FK 重建指向 flow + archive 解除，迁移 000009）
+- [ ] 残留同名组（B2 候选）：announcements(erp:0/public:3)、capacities(mes/public)、contacts(crm/public)、budgets(finance/pm)
+      待确认权威并收敛（announcements 数据在 public、erp 空表——疑似 flow 同款双读分叉）
