@@ -76,7 +76,7 @@ pub async fn list_workflows(
 
     let items: Vec<Workflow> = if !has_filters {
         match sqlx::query_as::<_, Workflow>(
-            "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
@@ -91,7 +91,7 @@ pub async fn list_workflows(
         }
     } else {
         match sqlx::query_as::<_, Workflow>(
-            r#"SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at 
+            r#"SELECT id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at 
                FROM core_workflows 
                WHERE (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
@@ -137,7 +137,7 @@ pub async fn get_workflow(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -172,9 +172,9 @@ pub async fn create_workflow(
     Json(payload): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<Workflow>> {
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "INSERT INTO core_workflows (name, description, definition, status, version, created_by) 
-         VALUES ($1, $2, $3, $4, $5, $6) 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+        "INSERT INTO core_workflows (name, description, definition, status, version, created_by, tenant_id) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7) 
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(payload.name)
     .bind(payload.description)
@@ -182,6 +182,7 @@ pub async fn create_workflow(
     .bind(payload.status.unwrap_or("draft".to_string()))
     .bind(1)
     .bind(payload.created_by)
+    .bind(uuid::Uuid::nil())
     .fetch_one(&state.pool)
     .await
     {
@@ -223,7 +224,7 @@ pub async fn update_workflow(
          status = COALESCE($4, status),
          updated_at = NOW()
          WHERE id = $5 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(payload.name)
     .bind(payload.description)
@@ -305,7 +306,7 @@ pub async fn publish_workflow(
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'published', published_at = NOW(), updated_at = NOW() 
          WHERE id = $1 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -345,7 +346,7 @@ pub async fn unpublish_workflow(
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'draft', published_at = NULL, updated_at = NOW() 
          WHERE id = $1 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -385,7 +386,7 @@ pub async fn activate_workflow(
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'active', updated_at = NOW() 
          WHERE id = $1 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -425,7 +426,7 @@ pub async fn deactivate_workflow(
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'inactive', updated_at = NOW() 
          WHERE id = $1 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -465,7 +466,7 @@ pub async fn deploy_workflow(
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'deployed', updated_at = NOW() 
          WHERE id = $1 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -505,7 +506,7 @@ pub async fn rollback_workflow(
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'draft', updated_at = NOW() 
          WHERE id = $1 
-         RETURNING id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
+         RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(workflow_id)
     .fetch_one(&state.pool)
