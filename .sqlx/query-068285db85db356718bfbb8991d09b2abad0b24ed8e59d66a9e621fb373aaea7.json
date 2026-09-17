@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO production_orders (\n            order_number, product_name, product_code, quantity,\n            status, sales_order_id, customer_order_number,\n            planned_start_date, planned_end_date, work_station_id, notes,\n            created_at, updated_at\n        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11)\n        RETURNING \n            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            sales_order_id AS source_order_id, customer_order_number AS source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            work_station_id AS workshop_id, notes, created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO production_orders (\n            order_no, product_name, product_code, quantity,\n            status, source_order_id, source_order_number,\n            planned_start_date, planned_end_date, workshop_id, notes,\n            created_at, updated_at\n        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11)\n        RETURNING \n            id, order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -136,5 +136,5 @@
       false
     ]
   },
-  "hash": "ed274be94f42eba4ba23315a329375f8f6f86882ec123c3faf58b6bc98243ee7"
+  "hash": "068285db85db356718bfbb8991d09b2abad0b24ed8e59d66a9e621fb373aaea7"
 }

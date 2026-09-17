@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE production_orders SET\n            status = 'completed',\n            completed_quantity = quantity,\n            actual_end_date = $2,\n            updated_at = $3\n        WHERE id = $1 AND status = 'in_progress'\n        RETURNING \n            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            sales_order_id AS source_order_id, customer_order_number AS source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            work_station_id AS workshop_id, notes, created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO production_orders (\n            order_no, product_name, product_code,\n            quantity, completed_quantity, status,\n            planned_start_date, planned_end_date, workshop_id, notes,\n            created_at, updated_at\n        ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9)\n        RETURNING \n            id, order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -101,8 +101,14 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Int4",
         "Date",
+        "Date",
+        "Uuid",
+        "Text",
         "Timestamptz"
       ]
     },
@@ -128,5 +134,5 @@
       false
     ]
   },
-  "hash": "7e8ca6c7c888f4313beb8ea348e6fe56c6a4918cfa9f1cde70c308b1fda2a4a4"
+  "hash": "c85f130251921db3a0b8fb42021c2e6c3aa276abe99f414bccd07ff18c55321c"
 }

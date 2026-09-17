@@ -31,6 +31,9 @@ SERVICES=(CRM ERP FEEDBACK FILE FINANCE HRM IAM AI BI COMMUNICATION EHS GIS
 build_env() {
   echo "DB_MAX_CONNECTIONS=5"
   echo "SEARCH_PATH=mobile, rs, erp, public, iam, shared"
+  # dashboard 聚合探活开关：portal probe_service_health 读该 env 统一探测 :8099/health
+  # （缺失时走硬编码独立端口 → 嵌入模式下全部 healthy=false）
+  echo "MONOLITH_SERVICE_URL=http://localhost:8099"
   for s in "${SERVICES[@]}"; do
     echo "${s}_SERVICE_URL=http://localhost:8099"
   done

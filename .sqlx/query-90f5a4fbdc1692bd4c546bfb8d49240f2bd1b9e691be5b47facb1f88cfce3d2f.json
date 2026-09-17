@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "email",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 2,
@@ -30,9 +30,9 @@
       ]
     },
     "nullable": [
-      false,
       true,
-      false,
+      true,
+      true,
       true
     ]
   },

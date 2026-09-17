@@ -268,7 +268,9 @@ pub async fn check_service_health(url: &str) -> bool {
     match shared_http_client()
         .get(format!("{}/health", url))
         .with_trace()
-        .timeout(std::time::Duration::from_secs(2))
+        // 聚合 /health 在模块化单体下会逐模块健康检查（实测 ~5s），
+        // 2s 超时必然误判不可用；放宽到 8s 与慢路径对齐。
+        .timeout(std::time::Duration::from_secs(8))
         .send()
         .await
     {
@@ -284,12 +286,15 @@ pub async fn check_service_health(url: &str) -> bool {
 ///
 /// 注意：`check_service_health` 内部会拼 `/health`，此处只传 base，避免双拼。
 pub async fn probe_service_health(service_name: &str, standalone_url: &str) -> bool {
-    if let Ok(base) = std::env::var("MONOLITH_SERVICE_URL") {
-        let _ = service_name;
+    let result = if let Ok(base) = std::env::var("MONOLITH_SERVICE_URL") {
+        tracing::debug!(target: "portal_health_probe", service = %service_name, branch = "monolith", base = %base, "probe via MONOLITH_SERVICE_URL");
         check_service_health(&base).await
     } else {
+        tracing::debug!(target: "portal_health_probe", service = %service_name, branch = "standalone", url = %standalone_url, "probe standalone URL");
         check_service_health(standalone_url).await
-    }
+    };
+    tracing::debug!(target: "portal_health_probe", service = %service_name, healthy = result, "probe result");
+    result
 }
 
 /// 根据服务名获取服务 URL

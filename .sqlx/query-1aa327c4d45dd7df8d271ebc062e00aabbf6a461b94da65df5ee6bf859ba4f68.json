@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            sales_order_id AS source_order_id, customer_order_number AS source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            work_station_id AS workshop_id, notes, created_at, updated_at\n        FROM production_orders\n        WHERE id = $1\n        ",
+  "query": "\n        UPDATE production_orders SET\n            status = 'cancelled',\n            updated_at = $2\n        WHERE id = $1 AND status IN ('pending', 'released', 'paused')\n        RETURNING \n            id, order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -101,7 +101,8 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Uuid",
+        "Timestamptz"
       ]
     },
     "nullable": [
@@ -126,5 +127,5 @@
       false
     ]
   },
-  "hash": "1d3995ec27051cf8297429f296efcc06130d12b054bd31369afd65acdd380fc3"
+  "hash": "1aa327c4d45dd7df8d271ebc062e00aabbf6a461b94da65df5ee6bf859ba4f68"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE production_orders SET\n            product_name = COALESCE($2, product_name),\n            product_code = COALESCE($3, product_code),\n            quantity = COALESCE($4, quantity),\n            planned_start_date = COALESCE($5, planned_start_date),\n            planned_end_date = COALESCE($6, planned_end_date),\n            work_station_id = COALESCE($7, work_station_id),\n            notes = COALESCE($8, notes),\n            updated_at = $9\n        WHERE id = $1 AND status = 'pending'\n        RETURNING \n            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            sales_order_id AS source_order_id, customer_order_number AS source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            work_station_id AS workshop_id, notes, created_at, updated_at\n        ",
+  "query": "\n        UPDATE production_orders SET\n            status = 'released',\n            updated_at = $2\n        WHERE id = $1 AND status = 'pending'\n        RETURNING \n            id, order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -102,13 +102,6 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Varchar",
-        "Varchar",
-        "Int4",
-        "Date",
-        "Date",
-        "Uuid",
-        "Text",
         "Timestamptz"
       ]
     },
@@ -134,5 +127,5 @@
       false
     ]
   },
-  "hash": "028d81df139f84404a7bed19a4c8c9f92a77600b20ff9cb02cf6f91afc43c412"
+  "hash": "a69e3af4a0706db0c1e152e50518d106b11f110a4602552ea15849a6288e0d7f"
 }

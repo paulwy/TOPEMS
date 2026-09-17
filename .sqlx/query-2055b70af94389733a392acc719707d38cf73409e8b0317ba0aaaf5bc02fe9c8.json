@@ -36,7 +36,7 @@
       {
         "ordinal": 6,
         "name": "created_by",
-        "type_info": "Varchar"
+        "type_info": "Uuid"
       },
       {
         "ordinal": 7,
@@ -46,17 +46,17 @@
       {
         "ordinal": 8,
         "name": "last_run_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 9,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -69,13 +69,13 @@
       false,
       true,
       false,
-      true,
-      true,
       false,
       true,
       true,
       true,
-      true
+      true,
+      false,
+      false
     ]
   },
   "hash": "2055b70af94389733a392acc719707d38cf73409e8b0317ba0aaaf5bc02fe9c8"
