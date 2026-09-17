@@ -71,7 +71,7 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 | 原编号 | 工作包 | 2026-08-31 校准状态 |
 |---|---|---|
 | P0-1 | 架构文档基线对齐 | ✅ 本次实施：修复 services.yaml 重复键、补齐 ports.env 4 端口、接入 CI Gate M、overview.md 对齐；**2026-09-17 复核**：check-workspace-registry.py 实测 Cargo members 29 / services.yaml 32 条目 / ports.env 38 变量三向一致；code-wiki.md 服务口径更新（billing/lowcode 归档、feedback→ticket、aps→mes、report→bi 标注，28+→29 业务领域）；overview.md 加注「2026-09-17 基线复核」+ 最后核对日期 |
-| P0-2 | unified-core 继续瘦身决策 | ✅ **边界治理第一轮落地（2026-08-31）**：被模块化单体取代后，本轮落地边界治理——清理幽灵 feature（`module-advanced`/`module-ai` 从 default 移除，保留定义待接入）+ 固化模块接入矩阵与边界规则（`modular-monolith-design.md` §5.2）；advanced（master-data/analytics）/ ai 待真实接入 |
+| P0-2 | unified-core 继续瘦身决策 | ✅ **决策已出（2026-09-17）**：`unified-core-slimming-decision.md`——维持模块化单体嵌入不拆进程（与物理拆分预案联动）；doc/file 标记为阶段 2 首选拆分候选（低耦合，仅 core_doc_*4/core_file_*2 表自包含）、flow 为拆分后置项（14 调用方需 API 收敛前置）、iam/tenant/master 永不外迁；无独立排期，随物理拆分阈值触发联动 |
 | P0-3 | 配置单一真相源 CI 校验 | ✅ **本次实施完成**：`scripts/check-workspace-registry.py` + CI Gate M（`config/**` 或 Cargo.toml 变更触发） |
 | P1-1 | 事件通道选型规则落地 | ✅ **已解决**：Redis Stream 迁移完成（2026-08-29），Pub/Sub 仅保留显式降级分支 |
 | P1-2 | 物理库拆分预案 | ✅ **拆分前置治理全部闭环，拆分就绪（2026-09-01）**：前置条件 #1 integration 跨域事务直写改各域 API/事件+补偿 ✅、#2 unified-core 读 portal.user_preferences 改走 portal API ✅（commit 51b31fed3）、#3 跨库事务边界统一事件+Saga ✅；`check_schema_boundary.py` 全 PASS（allow 全空，跨 schema SQL 直读清零）+ `check_split_threshold.py` 5 阈值未触发；**物理拆分待阈值达成后启动**（阶段 0/1 已落地见下方历史） |

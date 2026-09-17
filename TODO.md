@@ -114,3 +114,9 @@
 - [x] scripts/ci/generate-changelog.py 按 Conventional Commits 分组生成草案（V472..HEAD 970 条提交实测成功）
 - [x] scripts/release.sh draft/tag/check 三命令可用；`check` 通过；tag 前强校验 CHANGELOG 含版本章节
 - [x] draft 产物 docs/changelog/draft.md（生成物，人工复核后合并，非版本章节源）
+
+### P0-2 unified-core 继续瘦身决策 ✅
+- [x] 决策文档 docs/architecture/unified-core-slimming-decision.md：维持模块化单体嵌入不拆进程（物理拆分阈值未达成）
+- [x] doc/file = 阶段 2 首选拆分候选（仅 core_doc_*4/core_file_*2 表自包含、零跨域直读）；flow = 拆分后置项（14 调用方需 API 收敛前置）；iam/tenant/master 永不外迁
+- [x] 复核触发条件 = 物理拆分预案任一阈值达成 → 先拆 doc/file；无独立排期，随阶段 2 联动
+- [x] 飞书文档 P0-2 决策块已同步
