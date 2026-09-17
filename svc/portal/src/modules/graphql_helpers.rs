@@ -17,24 +17,31 @@ use topems_shared_observability::telemetry::TracedRequestExt;
 pub async fn fetch_erp_stats(state: &AppState) -> Option<ServiceStatsGql> {
     let available = state.erp_client.get_health().await.unwrap_or(false);
     // total：采购订单在途量；active：库存条目数
-    let total = state
-        .erp_client
-        .list_purchase_orders(1, 1)
-        .await
-        .map(|v| v.len() as u64)
-        .unwrap_or(0);
-    let active = state
-        .erp_client
-        .get_inventory_summary()
-        .await
+    let total_res = state.erp_client.list_purchase_orders(1, 1).await;
+    let total = total_res.as_ref().map(|v| v.len() as u64).unwrap_or(0);
+    let inv_res = state.erp_client.get_inventory_summary().await;
+    let active = inv_res
+        .as_ref()
         .ok()
         .and_then(|v| {
-            v.get("total_items")
-                .or_else(|| v.get("total"))
-                .or_else(|| v.get("count"))
-                .and_then(|x| x.as_u64())
+            // ApiResponse<PaginatedResponse>：条目数在 data.total（兼容历史 data.total_items/count 字段）
+            v.get("data").and_then(|d| {
+                d.get("total_items")
+                    .or_else(|| d.get("total"))
+                    .or_else(|| d.get("count"))
+                    .and_then(|x| x.as_u64())
+            })
         })
         .unwrap_or(0);
+    tracing::debug!(
+        target: "portal_erp_stats",
+        po_ok = total_res.is_ok(),
+        po_len = total,
+        inv_ok = inv_res.is_ok(),
+        inv_err = ?inv_res.as_ref().err(),
+        active,
+        "erp stats probe"
+    );
     Some(ServiceStatsGql {
         service: "erp".into(),
         total,

@@ -64,8 +64,9 @@ impl TypedServiceClient<ErpApi> {
     }
 
     /// 获取库存汇总
+    /// 服务端路由为 GET /inventory（list_inventory 分页列表，data.total 为库存条目数）
     pub async fn get_inventory_summary(&self) -> ServiceClientResult<serde_json::Value> {
-        self.get(&self.build_path("/inventory/summary")).await
+        self.get(&self.build_path("/inventory")).await
     }
 
     /// 列出客户
