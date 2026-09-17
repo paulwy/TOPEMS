@@ -97,9 +97,9 @@ pub async fn list_locations(
 
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
+        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         FROM wms.locations
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+        WHERE ($1::text IS NULL OR location_name ILIKE $1 OR location_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR warehouse_id = $3)
         ORDER BY created_at DESC
@@ -120,7 +120,7 @@ pub async fn list_locations(
                 "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.locations
-                WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                WHERE deleted_at IS NULL AND ($1::text IS NULL OR location_name ILIKE $1 OR location_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
                 "#
@@ -183,9 +183,9 @@ pub async fn create_location(
 
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.locations (id, warehouse_id, code, name, type, capacity, status, created_at, updated_at)
+        INSERT INTO wms.locations (id, warehouse_id, location_code, location_name, location_type, capacity, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8)
-        RETURNING id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
+        RETURNING id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -269,7 +269,7 @@ pub async fn get_location(
 
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
+        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         FROM wms.locations WHERE id = $1
         "#),
     )
@@ -326,7 +326,7 @@ pub async fn update_location(
 
     let existing = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1
+        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1
         "#),
     )
     .bind(location_id)
@@ -350,10 +350,10 @@ pub async fn update_location(
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.locations SET
-            warehouse_id = $2, code = $3, name = $4, type = $5, capacity = $6, 
+            warehouse_id = $2, location_code = $3, location_name = $4, location_type = $5, capacity = $6, 
             status = $7, updated_at = $8
         WHERE id = $1
-        RETURNING id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
+        RETURNING id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
     .bind(location_id)
@@ -597,9 +597,9 @@ pub async fn batch_create_locations(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Location>(
             only_own_schema_query!("wms", r#"
-            INSERT INTO wms.locations (id, warehouse_id, code, name, type, capacity, status, created_at, updated_at)
+            INSERT INTO wms.locations (id, warehouse_id, location_code, location_name, location_type, capacity, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8)
-            RETURNING id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
+            RETURNING id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
             "#),
         )
         .bind(id)
@@ -667,9 +667,9 @@ pub async fn batch_update_locations(
         r#"
         UPDATE wms.locations SET
             warehouse_id = COALESCE($1, warehouse_id),
-            code = COALESCE($2, code),
-            name = COALESCE($3, name),
-            type = COALESCE($4, type),
+            location_code = COALESCE($2, location_code),
+            location_name = COALESCE($3, location_name),
+            location_type = COALESCE($4, location_type),
             capacity = COALESCE($5, capacity),
             status = COALESCE($6, status),
             updated_at = $7
