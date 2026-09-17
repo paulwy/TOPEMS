@@ -1,7 +1,10 @@
 pub mod bid_price;
+pub mod bidding;
 pub mod data_sync;
+pub mod inquiry;
 pub mod openapi;
 pub mod purchase_order;
+pub mod quotation;
 pub mod scoring_dimension;
 pub mod srm_plugin;
 pub mod statistics;
@@ -15,8 +18,11 @@ pub mod supplier_product;
 pub mod tender;
 
 pub use bid_price::create_routes as create_bid_price_routes;
+pub use bidding::create_routes as create_bidding_routes;
 pub use data_sync::create_routes as create_data_sync_routes;
+pub use inquiry::create_routes as create_inquiry_routes;
 pub use purchase_order::create_routes as create_purchase_order_routes;
+pub use quotation::create_routes as create_quotation_routes;
 pub use scoring_dimension::create_routes as create_scoring_dimension_routes;
 pub use statistics::create_routes as create_statistics_routes;
 pub use supplier::create_routes as create_supplier_routes;

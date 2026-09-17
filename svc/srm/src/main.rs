@@ -22,11 +22,11 @@ use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 use modules::{
-    create_bid_price_routes, create_category_routes, create_contract_routes,
-    create_data_sync_routes, create_evaluation_routes, create_performance_routes,
-    create_product_routes, create_purchase_order_routes, create_scoring_dimension_routes,
-    create_statistics_routes, create_supplier_portal_routes, create_supplier_routes,
-    create_tender_routes,
+    create_bid_price_routes, create_bidding_routes, create_category_routes, create_contract_routes,
+    create_data_sync_routes, create_evaluation_routes, create_inquiry_routes,
+    create_performance_routes, create_product_routes, create_purchase_order_routes,
+    create_quotation_routes, create_scoring_dimension_routes, create_statistics_routes,
+    create_supplier_portal_routes, create_supplier_routes, create_tender_routes,
 };
 
 #[tokio::main]
@@ -182,11 +182,14 @@ async fn main() -> Result<()> {
         .merge(create_contract_routes(ctx.db.clone()).await?)
         .merge(create_product_routes(ctx.db.clone()).await?)
         .merge(create_purchase_order_routes(ctx.db.clone()).await?)
+        .merge(create_quotation_routes(ctx.db.clone()).await?)
         .merge(create_bid_price_routes(ctx.db.clone()).await?)
+        .merge(create_bidding_routes(ctx.db.clone()).await?)
         .merge(create_tender_routes(ctx.db.clone()).await?)
         .merge(create_supplier_portal_routes(ctx.db.clone()).await?)
         .merge(create_performance_routes(ctx.db.clone()).await?)
         .merge(create_data_sync_routes(ctx.db.clone(), ctx.event_publisher.clone()).await?)
+        .merge(create_inquiry_routes(ctx.db.clone()).await?)
         .merge(create_scoring_dimension_routes(ctx.db.clone()).await?)
         .merge(create_statistics_routes(ctx.db.clone()))
         // 预应用 tenant_middleware（build_application 会叠加 auth + rls + rate_limit）

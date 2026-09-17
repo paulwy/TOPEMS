@@ -155,12 +155,12 @@ pub async fn create_bidding(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let bid_deadline = req.bid_deadline.and_then(|s| {
+    let bid_deadline = req.bid_deadline.and_then(|s: String| {
         DateTime::parse_from_rfc3339(&s)
             .ok()
             .map(|d| d.with_timezone(&Utc))
     });
-    let open_date = req.open_date.and_then(|s| {
+    let open_date = req.open_date.and_then(|s: String| {
         DateTime::parse_from_rfc3339(&s)
             .ok()
             .map(|d| d.with_timezone(&Utc))
@@ -254,12 +254,12 @@ pub async fn update_bidding(
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
-    let bid_deadline = req.bid_deadline.and_then(|s| {
+    let bid_deadline = req.bid_deadline.and_then(|s: String| {
         DateTime::parse_from_rfc3339(&s)
             .ok()
             .map(|d| d.with_timezone(&Utc))
     });
-    let open_date = req.open_date.and_then(|s| {
+    let open_date = req.open_date.and_then(|s: String| {
         DateTime::parse_from_rfc3339(&s)
             .ok()
             .map(|d| d.with_timezone(&Utc))
