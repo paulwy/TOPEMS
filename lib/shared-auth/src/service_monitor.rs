@@ -22,8 +22,9 @@
 //! 触发时 `tracing::warn!`（可被日志采集 / 接告警平台）；同一服务同一类型在冷却期内
 //! 只告警一次，避免刷屏。检测为纯内存、非阻塞，不依赖外部存储。
 
+use prometheus::{register_int_counter_vec, IntCounterVec};
 use std::collections::{HashMap, HashSet};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 /// 内置默认服务白名单（覆盖当前 TopEMS 各服务签发的 service token username）。
@@ -60,6 +61,21 @@ const DEFAULT_KNOWN_SERVICES: &[&str] = &[
     "ai-service",
     "server-service",
 ];
+
+/// Prometheus 告警计数（kind 维度）——供 /metrics 监控消费（审计告警可观测出口）。
+static SERVICE_ALERTS: OnceLock<IntCounterVec> = OnceLock::new();
+
+fn service_alerts_metric() -> &'static IntCounterVec {
+    SERVICE_ALERTS
+        .get_or_init(|| {
+            register_int_counter_vec!(
+                "topems_service_alerts_total",
+                "Total service call alerts emitted (kind=unknown_service|high_frequency|downstream_degrade)",
+                &["kind"]
+            )
+            .expect("failed to register topems_service_alerts_total")
+        })
+}
 
 /// 服务调用告警监控器（进程内单例，经 `ServiceCallMonitor::from_env` 构造）。
 pub struct ServiceCallMonitor {
@@ -235,6 +251,10 @@ impl ServiceCallMonitor {
         }
         last_alerts.insert(key.to_string(), now);
         drop(last_alerts);
+
+        // Prometheus 告警计数（kind 从 key 尾段解析）——供 /metrics 监控消费
+        let kind = key.rsplit(':').next().unwrap_or("unknown").to_string();
+        service_alerts_metric().with_label_values(&[&kind]).inc();
 
         tracing::warn!(target: "service_call_alert", "⚠️ [服务调用告警] {}", message);
 
