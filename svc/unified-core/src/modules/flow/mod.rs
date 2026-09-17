@@ -26,9 +26,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'draft',
             version INTEGER DEFAULT 1,
             created_by UUID NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-            published_at TIMESTAMP,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            published_at TIMESTAMPTZ,
                 deleted_at TIMESTAMP
         )
         "#,
@@ -83,8 +83,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             assignee_id UUID NOT NULL,
             status VARCHAR(32) DEFAULT 'pending',
             comment TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            completed_at TIMESTAMP
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            completed_at TIMESTAMPTZ,
+            priority INTEGER DEFAULT 0,
+            due_time TIMESTAMPTZ,
+            claimed_at TIMESTAMPTZ,
+            tenant_id UUID,
+            deleted_at TIMESTAMP
         )
         "#,
     )
