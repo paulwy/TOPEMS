@@ -82,6 +82,24 @@ SET material_id = m.id
 FROM erp.materials m
 WHERE i.material_id IS NULL AND i.material_code = m.code;
 
+-- 回填物料安全库存（代码模型 f64 非空，首次版本未填，重复执行无副作用）
+UPDATE erp.materials SET safety_stock = v.qty FROM (VALUES
+  ('MAT-BRG-001', 20.0), ('MAT-CAB-004', 1000.0), ('MAT-SHT-009', 10.0),
+  ('MAT-PLC-002', 5.0), ('MAT-FLT-003', 50.0)
+) AS v(code, qty) WHERE erp.materials.code = v.code AND erp.materials.safety_stock IS NULL;
+
+-- 回填物料单价/税率/状态（代码模型 f64/String 非空，重复执行无副作用）
+UPDATE erp.materials SET unit_price = v.price, tax_rate = v.rate, status = 'active' FROM (VALUES
+  ('MAT-BRG-001', 850.0, 0.13), ('MAT-CAB-004', 3.5, 0.13), ('MAT-SHT-009', 680.0, 0.13),
+  ('MAT-PLC-002', 4200.0, 0.13), ('MAT-FLT-003', 95.0, 0.13)
+) AS v(code, price, rate)
+WHERE erp.materials.code = v.code AND erp.materials.unit_price IS NULL;
+
+-- 回填供应商类型（代码模型 String 非空，重复执行无副作用）
+UPDATE erp.suppliers SET supplier_type = v.t FROM (VALUES
+  ('SUP-2026-01', 'manufacturer'), ('SUP-2026-02', 'manufacturer'), ('SUP-2026-03', 'raw')
+) AS v(code, t) WHERE erp.suppliers.code = v.code AND erp.suppliers.supplier_type IS NULL;
+
 -- 2) 库存条目（5 条：不同物料/仓库/批次，available/reserved 区分在途与占用）
 INSERT INTO erp.inventory
   (tenant_id, material_code, material_name, warehouse_name, location_code,
