@@ -84,9 +84,14 @@ pub struct WorkflowStep {
 #[derive(Debug, Deserialize)]
 pub struct StartWorkflowRequest {
     pub workflow_id: Uuid,
-    pub target_type: String,
-    pub target_id: Uuid,
-    pub created_by: String,
+    /// 后端原生字段；前端使用 business_type 别名（serde alias 兼容）
+    #[serde(default, alias = "business_type")]
+    pub target_type: Option<String>,
+    /// 后端原生字段；前端使用 business_id 别名
+    #[serde(default, alias = "business_id")]
+    pub target_id: Option<Uuid>,
+    #[serde(default)]
+    pub created_by: Option<String>,
 }
 
 #[utoipa::path(
@@ -396,18 +401,18 @@ pub async fn start_workflow(
     .bind(tenant_id)
     .bind(req.workflow_id)
     .bind(workflow.name)
-    .bind(&req.target_type)
-    .bind(req.target_id)
+    .bind(req.target_type.clone().unwrap_or_else(|| "document".to_string()))
+    .bind(req.target_id.unwrap_or_else(Uuid::nil))
     .bind(&current_step)
     .bind("running")
     .bind(assignees)
     .bind(serde_json::json!([{
         "step": current_step,
         "action": "started",
-        "user": req.created_by,
+        "user": req.created_by.clone().unwrap_or_else(|| "system".to_string()),
         "timestamp": now.to_rfc3339()
     }]))
-    .bind(&req.created_by)
+    .bind(&req.created_by.clone().unwrap_or_else(|| "system".to_string()))
     .bind(now)
     .bind(now)
     .fetch_one(&state.pool)

@@ -25,6 +25,7 @@ topems-scm = { path = "../scm", optional = true }
 topems-wms = { path = "../wms", optional = true }
 # [V2026.08 已合并] topems-aps 已合并至 mes（aps_scheduling/aps_compat），aps 能力由 module-mes 承载
 topems-pm = { path = "../pm", optional = true }
+topems-pdm = { path = "../pdm", optional = true }
 topems-mes = { path = "../mes", optional = true }
 topems-ehs = { path = "../ehs", optional = true }
 topems-lims = { path = "../lims", optional = true }
@@ -78,6 +79,7 @@ default = [
     "module-wms",
     # [V2026.08 已合并] module-aps 已移除（aps 合并至 mes，由 module-mes 承载）
     "module-pm",
+    "module-pdm",
     "module-mes",
     "module-ehs",
     "module-lims",
@@ -131,6 +133,8 @@ module-wms = ["dep:topems-wms"]
 # [V2026.08 已合并] module-aps 已移除（aps 合并至 mes，由 module-mes 承载）
 # 真实业务服务接入：pm 模块（Phase B3 扩展）
 module-pm = ["dep:topems-pm"]
+# 真实业务服务接入：pdm 模块（产品数据管理，P2 更多模块业务 API）
+module-pdm = ["dep:topems-pdm"]
 # 真实业务服务接入：mes 模块（Phase B3 扩展）
 module-mes = ["dep:topems-mes"]
 # 真实业务服务接入：ehs 模块（Phase B3 扩展）

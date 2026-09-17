@@ -240,6 +240,21 @@ async fn main() -> Result<()> {
         }
     }
 
+    // 16a. 真实 pdm 服务接入（feature `module-pdm` 门控，默认启用，P2 更多模块业务 API）
+    #[cfg(feature = "module-pdm")]
+    {
+        use topems_server::modules::pdm_real_module::PdmRealModule;
+        match PdmRealModule::build().await {
+            Ok(real_pdm) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_pdm));
+                tracing::info!("✅ 真实 pdm 服务已注册（pdm-real，含数据库/事件总线）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 pdm 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
     // 16b. 真实 gis 服务接入（P3 feature flag `module-gis` 门控，默认不启用）
     #[cfg(feature = "module-gis")]
     {

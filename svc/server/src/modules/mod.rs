@@ -64,6 +64,9 @@ pub mod ticket_real_module;
 #[cfg(feature = "module-tms")]
 pub mod tms_real_module;
 
+#[cfg(feature = "module-pdm")]
+pub mod pdm_real_module;
+
 #[cfg(feature = "module-wms")]
 pub mod wms_real_module;
 
