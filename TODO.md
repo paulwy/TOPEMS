@@ -185,6 +185,9 @@
 - [x] 业务 API 缺口盘点：pdm/srm/pm/rd/scm 后端实现完备——404 均为路径名猜测错误
       （正确：pdm/bom-versions|bom-items、pm/projects/milestones/timeline、rd/experiments|patents、scm/suppliers）
 - [x] 修复 srm/suppliers 400：serde flatten 在 urlencoded 下 i64 解析缺陷 → ListQueryParams 平铺化
-- [ ] 遗留：5432 旧库未对齐（新库重建时由 20260917000003 修正）
+- [x] 5432 旧库评估：宿主实例为历史遗留（62 表 vs 容器库 989），仅生产模板引用，无需对齐
+      （新库重建由迁移体系自动对齐 PO 类型等）
+- [x] RLS 缺口清零：tenant_id 表全量启用 RLS（6 张：crm/hrm/scm master_data_refs、scm.sync_records、
+      mes.work_reports、wms.labor_shifts）——迁移 20260917000004，全库 tenant 表 RLS 覆盖 100%
 - [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
 - [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
