@@ -56,10 +56,10 @@
 
 ### 专业模块（低优先级）
 - [x] 研发管理（RD）（2026-09-17：ListParams serde flatten 反序列化修复——axum Query 对 flatten 嵌套结构带参必 400，5 个模块（experiment/formula/material/patent/research_cost）平铺分页字段并内置 page/page_size/offset 方法，实测带 page/pagesize 全 200、浏览器 /rd/experiment 列表页正常加载；commit 85bb8ec0c 已推送）
-- [ ] 环境健康安全（EHS）
-- [ ] 实验室信息（LIMS）
-- [ ] 高级排程（APS）
-- [ ] 办公自动化（OA）
+- [x] 环境健康安全（EHS）（2026-09-17：后端已闭环——/issues /hazards 带分页 200，双前缀修复此前已推送 2080b9197）
+- [x] 实验室信息（LIMS）（2026-09-17：后端已闭环——/samples 带分页 200，端点补齐此前已推送 95d8d50b1）
+- [x] 高级排程（APS）（2026-09-17：兼容层已闭环——/capacities /forecasts /production-plans /schedules 全 200，此前已推送 029709368）
+- [x] 办公自动化（OA）（2026-09-17：无独立后端——前端走 erp announcements/documents 200，/oa/announcements 页面正常渲染）
 
 ### 技术优化
 - [x] crm contracts 后端实现（2026-09-16：CrmContractRedesignPage known_gap 转 matched，GET/POST/PUT /contracts + 迁移 + RLS）
