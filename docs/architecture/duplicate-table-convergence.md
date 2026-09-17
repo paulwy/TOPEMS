@@ -19,13 +19,13 @@
 ### B. public 影子候选（core_* 平台共享层设计——public 权威，业务 schema 副本冗余）
 | 表 | 业务副本 schema | 行数（业务/public） | 处置 |
 |---|---|---|---|
-| core_faqs | portal | 12/12 | **统一 public**：portal search_path 改 public 优先（本轮已改）；portal 副本待 DROP |
-| core_guides | portal | 12/12 | 同上 |
-| core_guide_lessons / core_guide_progress | portal | 0/0 | 同上 |
-| core_doc_documents/folders/templates | doc_service | 0/0 | 待评估引用后统一 |
-| core_emails / core_notification_templates / core_notifications | communication | 0/0 | 同上 |
-| core_master_data_*（6 表） | master_data | 0/0 | 同上 |
-| core_ticket_*（5 表） | ticket | 0/0 | 同上 |
+| core_faqs | portal | 12/12 | **已清**：search_path public 优先 + 副本 DROP（迁移 000006） |
+| core_guides | portal | 12/12 | 已清（同上） |
+| core_guide_lessons / core_guide_progress | portal | 0/0 | 已清（同上） |
+| core_doc_documents/folders/templates | doc_service | 0/0 | **已清**（空表，迁移 000006） |
+| core_emails / core_notification_templates / core_notifications | communication | 0/0 | 已清 + search_path 统一 public 优先 |
+| core_master_data_*（6 表） | master_data | 0/0 | 已清（空表，迁移 000006） |
+| core_ticket_*（5 表） | ticket | 0/0 | 已清（public 影子，ticket 全显式前缀） |
 | announcements / capacities / contacts | erp/mes/crm | 0/3、0/0、0/6 | public 权威（代码无前缀写入） |
 
 ### C. 业务 schema 权威（public 影子缺列，已治标）
@@ -36,9 +36,8 @@
 
 ## 结论与建议
 
-1. **B 类**：core_* 按用户设计统一 **public 平台层**。portal 组已改 search_path 为 public 优先；
-   其余组（doc_service/communication/master_data/ticket）待逐组确认无显式 schema 引用后，
-   将对应服务 search_path 改为 public 优先，再 DROP 业务 schema 冗余副本。
+1. **B 类（已完成）**：core_* 统一 **public 平台层**——portal/communication search_path 改 public 优先；
+   16 张冗余副本 DROP（迁移 20260917000006_duplicate_schema_cleanup.sql）；冒烟验证 portal/flow/erp/communication 全 200。
 2. **C 类**：flow 组权威为 flow schema（列全），public 副本已补列治标；DROP public 副本的前提
    是 search_path 全局含 flow（本轮 embedded/run_monolith 已满足），可作为后续清理项。
 3. **DROP 前置**：逐表 grep 显式 `schema.table` 引用；无引用 + search_path 覆盖权威 schema 后执行。
