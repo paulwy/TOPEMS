@@ -32,7 +32,22 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/plugins/info", get(plugin::get_plugin_info))
         .route("/api/plugins/health", get(plugin::plugin_health_check))
         .with_state(state.clone());
+    create_routes_inner(state, public_routes, true)
+}
 
+/// 嵌入模式（server 模块化单体）：跳过 /、/health、/api/plugins/* 与 openapi
+/// （分别与宿主根路由、plugin-registry 服务、宿主 openapi 路由冲突），
+/// 仅保留受保护业务路由（自带 /api/integration 前缀）。
+pub fn create_routes_embedded(state: AppState) -> Router {
+    let public_routes = Router::new().with_state(state.clone());
+    create_routes_inner(state, public_routes, false)
+}
+
+fn create_routes_inner(
+    state: AppState,
+    public_routes: Router<()>,
+    with_openapi: bool,
+) -> Router {
     let rate_limit_config = RateLimitConfig::new(100, 60)
         .with_by_user_id(false)
         .with_by_ip(true);
@@ -179,20 +194,24 @@ pub fn create_routes(state: AppState) -> Router {
         "/api/integration",
         &["/api/v1/integration"],
         protected_routes,
-    )
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            })
-        }),
-    )
-    .layer(from_fn(telemetry_middleware))
-    .layer(cors);
+    );
 
-    app
+    // 独立部署模式附带 OpenAPI 文档路由；嵌入模式由宿主 server 统一提供
+    let app = if with_openapi {
+        app.route(
+            "/api-docs/openapi.json",
+            get(|| async {
+                serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                    tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                    "{}".to_string()
+                })
+            }),
+        )
+    } else {
+        app
+    };
+
+    app.layer(from_fn(telemetry_middleware)).layer(cors)
 }
 
 async fn home() -> &'static str {
