@@ -13,7 +13,8 @@
 //!   2. 或者在网关层配置 301 重定向
 
 use axum::{
-    http::{StatusCode, Uri},
+    extract::OriginalUri,
+    http::StatusCode,
     response::{IntoResponse, Redirect, Response},
     routing::any,
     Router,
@@ -46,7 +47,7 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 /// 通用重定向：将 /api/aps/xxx 重定向到 /api/mes/xxx
-async fn redirect_to_mes(uri: Uri) -> Response {
+async fn redirect_to_mes(OriginalUri(uri): OriginalUri) -> Response {
     let path = uri.path();
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let new_path = path.replacen("/api/aps", "/api/mes", 1);
@@ -55,7 +56,7 @@ async fn redirect_to_mes(uri: Uri) -> Response {
 }
 
 /// forecasts 特殊重定向：/api/aps/forecasts → /api/mes/demand-forecasts
-async fn redirect_forecasts(uri: Uri) -> Response {
+async fn redirect_forecasts(OriginalUri(uri): OriginalUri) -> Response {
     let path = uri.path();
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let new_path = path.replacen("/api/aps/forecasts", "/api/mes/demand-forecasts", 1);
@@ -64,7 +65,7 @@ async fn redirect_forecasts(uri: Uri) -> Response {
 }
 
 /// 通用兜底重定向
-async fn redirect_generic(uri: Uri) -> Response {
+async fn redirect_generic(OriginalUri(uri): OriginalUri) -> Response {
     let path = uri.path();
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let new_path = path.replacen("/api/aps", "/api/mes", 1);

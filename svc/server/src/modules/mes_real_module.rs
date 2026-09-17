@@ -99,9 +99,14 @@ impl MesRealModule {
         // 6. 业务路由（权限中间件 + 开发验证模拟认证）
         let protected_routes = modules::create_routes()
             .layer(axum::middleware::from_fn(require_permission("mes:admin")))
-            .with_state(state);
+            .with_state(state.clone());
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
+            // APS API 兼容层：/api/aps/* → 转发 mes（与独立部署 main.rs 对齐）
+            .nest(
+                "/api/aps",
+                modules::aps_compat::create_routes().with_state(state),
+            )
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
