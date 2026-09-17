@@ -628,7 +628,7 @@ pub async fn create_work_report(
                         .execute(&mut *conn)
                         .await;
                     let erp_order_id: Option<Uuid> = sqlx::query_scalar(
-                        "SELECT sales_order_id FROM production_orders WHERE id = $1",
+                        "SELECT source_order_id FROM production_orders WHERE id = $1",
                     )
                     .bind(mes_order_id)
                     .fetch_optional(&mut *conn)

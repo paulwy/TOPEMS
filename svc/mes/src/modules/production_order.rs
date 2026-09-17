@@ -245,11 +245,11 @@ pub async fn list_production_orders(
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
             where_clause.push_str(
-                " WHERE (order_number ILIKE $1 OR product_name ILIKE $1 OR product_code ILIKE $1)",
+                " WHERE (order_no ILIKE $1 OR product_name ILIKE $1 OR product_code ILIKE $1)",
             );
         } else {
             where_clause.push_str(&format!(
-                " AND (order_number ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${})",
+                " AND (order_no ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${})",
                 params.len() + 1,
                 params.len() + 1,
                 params.len() + 1
@@ -280,12 +280,12 @@ pub async fn list_production_orders(
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         FROM production_orders
         {}
         ORDER BY created_at DESC
@@ -450,18 +450,18 @@ pub async fn create_production_order(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_number, product_name, product_code,
+            order_no, product_name, product_code,
             quantity, completed_quantity, status,
-            planned_start_date, planned_end_date, work_station_id, notes,
+            planned_start_date, planned_end_date, workshop_id, notes,
             created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9)
         RETURNING 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         "#,
         order_no,
         req.product_name,
@@ -610,18 +610,18 @@ pub async fn create_from_erp(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_number, product_name, product_code, quantity,
-            status, sales_order_id, customer_order_number,
-            planned_start_date, planned_end_date, work_station_id, notes,
+            order_no, product_name, product_code, quantity,
+            status, source_order_id, source_order_number,
+            planned_start_date, planned_end_date, workshop_id, notes,
             created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11)
         RETURNING 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         "#,
         order_no,
         req.erp_order.product_name,
@@ -711,12 +711,12 @@ pub async fn get_production_order(
     let result = sqlx::query!(
         r#"
         SELECT 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         FROM production_orders
         WHERE id = $1
         "#,
@@ -800,17 +800,17 @@ pub async fn update_production_order(
             quantity = COALESCE($4, quantity),
             planned_start_date = COALESCE($5, planned_start_date),
             planned_end_date = COALESCE($6, planned_end_date),
-            work_station_id = COALESCE($7, work_station_id),
+            workshop_id = COALESCE($7, workshop_id),
             notes = COALESCE($8, notes),
             updated_at = $9
         WHERE id = $1 AND status = 'pending'
         RETURNING 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         "#,
         id,
         req.product_name,
@@ -953,12 +953,12 @@ pub async fn start_production_order(
             updated_at = $3
         WHERE id = $1 AND status = 'released'
         RETURNING 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         "#,
         id,
         now.date_naive(),
@@ -1043,12 +1043,12 @@ pub async fn complete_production_order(
             updated_at = $3
         WHERE id = $1 AND status = 'in_progress'
         RETURNING 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         "#,
         id,
         now.date_naive(),
@@ -1131,12 +1131,12 @@ pub async fn cancel_production_order(
             updated_at = $2
         WHERE id = $1 AND status IN ('pending', 'released', 'paused')
         RETURNING 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         "#,
         id,
         now,
@@ -1218,12 +1218,12 @@ pub async fn release_production_order(
             updated_at = $2
         WHERE id = $1 AND status = 'pending'
         RETURNING 
-            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
+            id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
-            sales_order_id AS source_order_id, customer_order_number AS source_order_number,
+            source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
-            work_station_id AS workshop_id, notes, created_at, updated_at
+            workshop_id, notes, created_at, updated_at
         "#,
         id,
         now,

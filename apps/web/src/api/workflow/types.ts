@@ -97,6 +97,7 @@ export interface CreateWorkflowRequest {
   description?: string;
   definition?: WorkflowDefinition;
   isactive?: boolean;
+  status?: string;
   created_by?: string;
   data?: WorkflowData;
 }
@@ -106,6 +107,7 @@ export interface UpdateWorkflowRequest {
   description?: string;
   definition?: WorkflowDefinition;
   isactive?: boolean;
+  status?: string;
 }
 
 interface WorkflowInstanceData {

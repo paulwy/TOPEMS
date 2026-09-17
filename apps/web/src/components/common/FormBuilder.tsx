@@ -327,7 +327,12 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
       }
 
       try {
-        await onSubmit(values);
+        // 空值清洗：未填写的字段（''/null/undefined）不随请求提交，
+        // 避免后端强类型（DateTime/数值）反序列化空字符串失败返回 422
+        const payload = Object.fromEntries(
+          Object.entries(values).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+        );
+        await onSubmit(payload as T);
         onSubmitSuccess?.();
       } catch {
         // onSubmit 负责自己的错误处理
@@ -365,7 +370,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
         case 'text':
         case 'email':
         case 'password':
-        case 'number':
           return (
             <TextField
               key={field.name}
@@ -377,6 +381,29 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               disabled={isDisabled}
               value={value}
               onChange={(e) => handleChange(field.name, e.target.value)}
+              error={!!error}
+              helperText={error}
+              fullWidth
+              size='small'
+            />
+          );
+        case 'number':
+          return (
+            <TextField
+              key={field.name}
+              name={field.name}
+              label={field.label}
+              type='number'
+              placeholder={field.placeholder}
+              required={isRequired}
+              disabled={isDisabled}
+              value={value}
+              onChange={(e) => {
+                const raw = e.target.value;
+                // number 字段提交给后端时应为数值类型而非字符串
+                // （后端 serde 对 f64/i64 不接受 string，会 422）
+                handleChange(field.name, raw === '' ? '' : Number(raw));
+              }}
               error={!!error}
               helperText={error}
               fullWidth
