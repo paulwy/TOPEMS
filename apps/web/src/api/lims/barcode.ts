@@ -8,6 +8,7 @@ import type {
   BarcodeType,
   PrintBarcodeRequest,
   ScanBarcodeResult,
+  BarcodeScanRecord,
   SampleTraceability,
   RfidTag,
   CreateRfidTagRequest,
@@ -37,8 +38,9 @@ export const barcodeApi = {
     return apiClient.lims.post('/barcodes/print', data);
   },
 
-  scanBarcode: async (barcode: string): Promise<ApiResponse<ScanBarcodeResult>> => {
-    return apiClient.lims.get(`/barcodes/scan/${barcode}`);
+  scanBarcode: async (barcode: string): Promise<ApiResponse<BarcodeScanRecord>> => {
+    // 契约对齐：后端 POST /barcodes/scan（body: barcode + scan_type），登记一次扫描（默认盘点）
+    return apiClient.lims.post('/barcodes/scan', { barcode, scan_type: 'check' });
   },
 
   getBarcodeTypes: async (): Promise<ApiResponse<BarcodeType[]>> => {
@@ -46,7 +48,8 @@ export const barcodeApi = {
   },
 
   traceSampleByBarcode: async (barcode: string): Promise<ApiResponse<SampleTraceability>> => {
-    return apiClient.lims.get(`/barcodes/${barcode}/trace`);
+    // 契约对齐：后端路由为 /barcodes/trace/{barcode}
+    return apiClient.lims.get(`/barcodes/trace/${barcode}`);
   },
 };
 

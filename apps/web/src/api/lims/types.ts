@@ -385,6 +385,20 @@ export interface ScanBarcodeResult {
   traceability?: SampleTraceability;
 }
 
+/** 对齐后端 POST /barcodes/scan 返回的 BarcodeScanRecord */
+export interface BarcodeScanRecord {
+  id: string;
+  tenant_id: string;
+  barcode: string;
+  scan_type: string;
+  sample_id?: string | null;
+  sample_no?: string | null;
+  operator?: string | null;
+  location?: string | null;
+  notes?: string | null;
+  scanned_at: string;
+}
+
 export interface RfidTag {
   id: string;
   tag_id: string;

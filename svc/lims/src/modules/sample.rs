@@ -26,6 +26,7 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/samples/{id}/traceability", get(get_sample_traceability))
         .route("/lifecycle-stages", get(get_lifecycle_stages))
+        .route("/lifecycle-stages/{code}", get(get_lifecycle_stage))
 }
 
 #[derive(Debug, Deserialize)]
@@ -808,6 +809,19 @@ pub async fn get_lifecycle_stages() -> Json<ApiResponse<Vec<serde_json::Value>>>
         .collect();
 
     Json(ApiResponse::success(stages, "获取生命周期阶段列表成功"))
+}
+
+pub async fn get_lifecycle_stage(
+    axum::extract::Path(code): axum::extract::Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let found = LIFECYCLE_STAGES
+        .iter()
+        .find(|(c, _)| *c == code)
+        .map(|(code, name)| serde_json::json!({ "code": code, "name": name }));
+    match found {
+        Some(v) => Json(ApiResponse::success(v, "获取生命周期阶段成功")),
+        None => Json(ApiResponse::error(404, "生命周期阶段不存在")),
+    }
 }
 
 pub async fn get_sample_traceability(

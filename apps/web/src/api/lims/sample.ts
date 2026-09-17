@@ -71,7 +71,11 @@ export const sampleApi = {
     sampleId: string,
     data: TransitionStageRequest
   ): Promise<ApiResponse<Sample>> => {
-    return apiClient.lims.post(`/samples/${sampleId}/transition-stage`, data);
+    // 契约对齐：后端路由为 POST /samples/{id}/stage/{to_stage}
+    return apiClient.lims.post(`/samples/${sampleId}/stage/${data.target_stage}`, {
+      operator: data.operator,
+      notes: data.remarks,
+    });
   },
 
   getSampleTraceability: async (sampleId: string): Promise<ApiResponse<SampleTraceability>> => {

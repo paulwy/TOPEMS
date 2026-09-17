@@ -24,6 +24,7 @@ pub fn create_routes() -> Router<AppState> {
             "/print-config",
             get(get_print_config).put(update_print_config),
         )
+        .route("/print-config/default", get(get_default_print_config))
         .route("/rfid-tags", get(list_rfid_tags).post(create_rfid_tag))
         .route("/rfid-tags/{id}", delete(delete_rfid_tag))
         .route(
@@ -613,6 +614,18 @@ pub async fn get_print_config() -> Json<ApiResponse<serde_json::Value>> {
     });
 
     Json(ApiResponse::success(config, "获取打印配置成功"))
+}
+
+pub async fn get_default_print_config() -> Json<ApiResponse<serde_json::Value>> {
+    let config = serde_json::json!({
+        "printer_name": "Default Printer",
+        "label_size": "50x30mm",
+        "barcode_format": "code128",
+        "dpi": 203,
+        "template": "standard"
+    });
+
+    Json(ApiResponse::success(config, "获取默认打印配置成功"))
 }
 
 pub async fn update_print_config(

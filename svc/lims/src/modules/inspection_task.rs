@@ -21,6 +21,8 @@ pub fn create_routes() -> Router<AppState> {
             get(get_task).put(update_task).delete(delete_task),
         )
         .route("/tasks/{id}/result", post(submit_result))
+        .route("/tasks/sample/{sample_id}", get(list_tasks_by_sample))
+        .route("/tasks/{id}/complete_step", post(complete_step))
 }
 
 /// 任务详情缓存 key（含 tenant_id）
@@ -77,6 +79,143 @@ pub struct SubmitResultRequest {
     pub result: serde_json::Value,
     pub conclusion: String,
     pub recorded_by: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CompleteStepRequest {
+    pub step_id: String,
+    pub step_name: String,
+    pub result: String,
+    pub conclusion: String,
+    pub inspector: String,
+}
+
+fn task_from_row(row: &sqlx::postgres::PgRow) -> InspectionTask {
+    InspectionTask {
+        id: row.get("id"),
+        tenant_id: row.get("tenant_id"),
+        task_no: row.get("task_no"),
+        sample_id: row.get("sample_id"),
+        sample_no: row.get("sample_no"),
+        test_items: row.get("test_items"),
+        status: row.get("status"),
+        assigned_to: row.get("assigned_to"),
+        instrument_id: row.get("instrument_id"),
+        planned_date: row.get("planned_date"),
+        actual_start_date: row.get("actual_start_date"),
+        actual_end_date: row.get("actual_end_date"),
+        result: row.get("result"),
+        conclusion: row.get("conclusion"),
+        recorded_by: row.get("recorded_by"),
+        created_at: row.get("created_at"),
+        updated_at: row.get("updated_at"),
+    }
+}
+
+pub async fn list_tasks_by_sample(
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    axum::extract::Path(sample_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Vec<InspectionTask>>> {
+    let sample_uuid = match Uuid::parse_str(&sample_id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
+    };
+
+    let rows = sqlx::query(&format!(
+        "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND tenant_id = $2 ORDER BY created_at DESC",
+        TASK_SELECT_COLS
+    ))
+    .bind(sample_uuid)
+    .bind(ctx.tenant_id)
+    .fetch_all(&state.pool)
+    .await;
+
+    match rows {
+        Ok(data) => {
+            let tasks = data.iter().map(task_from_row).collect::<Vec<_>>();
+            Json(ApiResponse::success(tasks, "获取样品检测任务成功"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to list tasks by sample: {}", e);
+            Json(ApiResponse::error(500, "获取样品检测任务失败"))
+        }
+    }
+}
+
+pub async fn complete_step(
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CompleteStepRequest>,
+) -> Json<ApiResponse<InspectionTask>> {
+    let task_uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+    };
+
+    // 校验任务存在
+    let task_row = sqlx::query(
+        "SELECT task_no FROM qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(task_uuid)
+    .bind(ctx.tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match task_row {
+        Ok(None) => return Json(ApiResponse::error(404, "任务不存在")),
+        Err(e) => {
+            tracing::error!("Failed to query task: {}", e);
+            return Json(ApiResponse::error(500, "查询任务失败"));
+        }
+        Ok(Some(_)) => {}
+    }
+
+    let record_no = format!("REC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let test_data = serde_json::json!({
+        "step_id": req.step_id,
+        "step_name": req.step_name,
+        "result": req.result,
+    });
+
+    // 1) 写入检验记录
+    let insert_res = sqlx::query(
+        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at) VALUES ($1, $2, $3, $4, $5, NOW())",
+    )
+    .bind(&record_no)
+    .bind(task_uuid)
+    .bind(&test_data)
+    .bind(&req.conclusion)
+    .bind(&req.inspector)
+    .execute(&state.pool)
+    .await;
+
+    if let Err(e) = insert_res {
+        tracing::error!("Failed to insert step record: {}", e);
+        return Json(ApiResponse::error(500, "步骤记录写入失败"));
+    }
+
+    // 2) 更新任务结果
+    let row = sqlx::query(&format!(
+        "UPDATE qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
+        TASK_SELECT_COLS
+    ))
+    .bind(task_uuid)
+    .bind(&test_data)
+    .bind(&req.conclusion)
+    .bind(&req.inspector)
+    .bind(ctx.tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match row {
+        Ok(r) => Json(ApiResponse::success(task_from_row(&r), "步骤完成，检验记录已保存")),
+        Err(e) => {
+            tracing::error!("Failed to update task after step: {}", e);
+            Json(ApiResponse::error(500, "任务更新失败"))
+        }
+    }
 }
 
 #[utoipa::path(

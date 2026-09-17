@@ -52,7 +52,8 @@ export const taskApi = {
     id: string,
     data: { result: string; conclusion: string; inspector: string; remarks?: string }
   ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.post(`/tasks/${id}/submit-result`, data);
+    // 契约对齐：后端路由为 POST /tasks/{id}/result
+    return apiClient.lims.post(`/tasks/${id}/result`, data);
   },
 };
 
