@@ -191,3 +191,7 @@
       mes.work_reports、wms.labor_shifts）——迁移 20260917000004，全库 tenant 表 RLS 覆盖 100%
 - [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
 - [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
+- [x] 前端路径核对：oa/announcements、workflow(core/flow)、mes、dashboard 链路全通；
+      发现并修复 core/flow/instances 500（public 影子表缺列，迁移 20260917000005 补齐）
+- [ ] 遗留：同名多 schema 表收敛（public.approvals/approval_records/core_workflow_tasks 等影子表，
+      已补列治标；DROP 需先保证 search_path 含 flow——embedded 已默认 flow 在前，可后续评估）
