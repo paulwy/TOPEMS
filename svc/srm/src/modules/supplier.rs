@@ -10,7 +10,6 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_db::repository::ListQueryParams as SharedListQueryParams;
 use uuid::Uuid;
 
 use crate::models::{
@@ -32,12 +31,29 @@ use topems_shared_service_client::service_client::{
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
-    #[serde(flatten)]
-    pub base: SharedListQueryParams,
+    // 不使用 #[serde(flatten)]：serde_urlencoded 对 flatten 子结构的值恒按字符串解析，
+    // 导致 Option<i64> 报 "invalid type: string, expected i64"（srm/suppliers 400 根因）。
+    // 平铺字段与 topems_shared_db::repository::ListQueryParams 保持同名字段/别名。
+    pub page: Option<i64>,
+    #[serde(alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
     pub status: Option<String>,
     pub category: Option<String>,
     pub sort_by: Option<String>,
     pub sort_order: Option<String>,
+}
+
+impl ListQueryParams {
+    pub fn page_or_default(&self) -> i64 {
+        self.page.unwrap_or(1).max(1)
+    }
+    pub fn page_size_or_default(&self) -> i64 {
+        self.page_size.unwrap_or(20).min(100)
+    }
+    pub fn offset(&self) -> i64 {
+        (self.page_or_default() - 1) * self.page_size_or_default()
+    }
 }
 
 pub struct AppState {
@@ -130,9 +146,9 @@ pub async fn list_suppliers(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
     let sort_by = params
         .sort_by
@@ -147,7 +163,7 @@ pub async fn list_suppliers(
         tenant_id,
         page,
         page_size,
-        &params.base.search,
+        &params.search,
         &params.status,
         &params.category,
         &sort_by,
@@ -163,7 +179,7 @@ pub async fn list_suppliers(
     // 缓存未命中，记录指标
     record_cache_miss("srm", "supplier", "list");
 
-    let search_pattern = params.base.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let category_filter = params.category.clone();
 
