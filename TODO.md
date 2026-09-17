@@ -140,3 +140,12 @@
 - [x] 运行环境治理：PG max_connections 100→300（24 模块 × 多池连接耗尽）；DB_MAX_CONNECTIONS=5 + SEARCH_PATH 启动，全模块注册 0 失败（此前 10+ 模块 pool timeout 降级）
 - [ ] 遗留：approvals 系走 workflow 服务客户端（独立 workflow 服务未运行则 500，属服务间依赖非桩问题）
 - [x] commit：315dcc780 / dd1037231 / migration；push 28e074b80（rebase 后）
+
+### mobile 全端点打通 + 服务间调用统一（模块化单体运行环境规范固化）✅
+- [x] vite 以 VITE_MONOLITH=1 启动（代理 target 统一 :8099，未设则指向不存在独立端口 → 503）
+- [x] 全模块业务 API 冒烟：24 模块 health + 21 业务端点全部路由命中（200 或参数类 400/405）
+- [x] 上轮"真实 404 缺口"（pdm/srm/pm/rd/scm）逐项核对 = 路径/方法误判，非缺口：
+      pm 真实路径 /projects/milestones/timeline；scm 为 /purchase-orders；pdm 为 /production-formulas；master-data 在 /quality-v51/ 下
+- [x] approvals 遗留清零：WORKFLOW_SERVICE_URL 等 30 个 <SVC>_SERVICE_URL 注入指向 :8099，
+      mobile→flow 服务间调用打通（server 识别 service token），/api/mobile/approvals/pending 200
+- [x] scripts/run_monolith.sh 固化启动命令（DB_MAX_CONNECTIONS/SEARCH_PATH/30 个 SERVICE_URL）
