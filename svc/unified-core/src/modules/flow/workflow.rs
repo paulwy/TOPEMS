@@ -493,22 +493,45 @@ pub async fn deploy_workflow(
     params(
         ("workflow_id" = Uuid, Path, description = "工作流ID"),
     ),
+    request_body = RollbackWorkflowRequest,
     responses(
         (status = 200, description = "回滚成功", body = ApiResponse<Workflow>),
-        (status = 404, description = "工作流不存在"),
+        (status = 404, description = "工作流或目标版本不存在"),
         (status = 500, description = "回滚失败"),
     ),
 )]
 pub async fn rollback_workflow(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
+    Json(payload): Json<RollbackWorkflowRequest>,
 ) -> Json<ApiResponse<Workflow>> {
+    // 1) 取目标版本 definition（to_version 可能命中多行，取最新一条）
+    let target_definition = match sqlx::query_as::<_, (serde_json::Value,)>(
+        "SELECT definition FROM core_workflow_versions
+         WHERE workflow_id = $1 AND version = $2 AND deleted_at IS NULL
+         ORDER BY created_at DESC LIMIT 1",
+    )
+    .bind(workflow_id)
+    .bind(&payload.to_version)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(t)) => t.0,
+        Ok(None) => return Json(api_error(404, "目标版本不存在")),
+        Err(e) => {
+            tracing::error!("回滚查询目标版本失败: {}", e);
+            return Json(api_error(500, "回滚失败"));
+        }
+    };
+
+    // 2) 用目标版本定义覆盖工作流当前定义（主表 version 为整型计数，保持不动）
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "UPDATE core_workflows SET status = 'draft', updated_at = NOW() 
-         WHERE id = $1 
+        "UPDATE core_workflows SET definition = $2, updated_at = NOW()
+         WHERE id = $1
          RETURNING id, tenant_id, name, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(workflow_id)
+    .bind(&target_definition)
     .fetch_one(&state.pool)
     .await
     {
@@ -522,7 +545,31 @@ pub async fn rollback_workflow(
         }
     };
 
+    // 3) 版本表激活状态：仅最新一条目标版本激活，其余全部置 false（唯一激活）
+    if let Err(e) = sqlx::query(
+        "UPDATE core_workflow_versions SET isactive = (id = (
+            SELECT id FROM core_workflow_versions
+            WHERE workflow_id = $1 AND version = $2 AND deleted_at IS NULL
+            ORDER BY created_at DESC LIMIT 1
+         ))
+         WHERE workflow_id = $1 AND deleted_at IS NULL",
+    )
+    .bind(workflow_id)
+    .bind(&payload.to_version)
+    .execute(&state.pool)
+    .await
+    {
+        tracing::error!("回滚切换版本激活状态失败: {}", e);
+        return Json(api_error(500, "回滚失败"));
+    }
+
     Json(ApiResponse::success(workflow, "回滚成功"))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RollbackWorkflowRequest {
+    pub to_version: String,
+    pub reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -607,6 +654,18 @@ pub async fn create_workflow_version(
             }
         },
     };
+
+    // 新版本创建后成为唯一激活版本：先将该工作流旧版本全部置为非激活
+    if let Err(e) = sqlx::query(
+        "UPDATE core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND deleted_at IS NULL",
+    )
+    .bind(workflow_id)
+    .execute(&state.pool)
+    .await
+    {
+        tracing::error!("创建版本前重置激活状态失败: {}", e);
+        return Json(api_error(500, "创建版本失败"));
+    }
 
     let version = sqlx::query_as::<_, WorkflowVersion>(
         "INSERT INTO core_workflow_versions
