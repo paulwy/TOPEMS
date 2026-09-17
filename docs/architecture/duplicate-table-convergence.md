@@ -31,13 +31,15 @@
 ### C. 业务 schema 权威（public 影子缺列，已治标）
 | 表 | 权威 schema | 处理 |
 |---|---|---|
-| approvals / approval_records / core_workflow_tasks | flow | 迁移 20260917000005 补齐 public 副本缺列（防无前缀命中报错）；core_workflow_instances 同组 |
-| core_workflow_instances / core_workflow_versions | flow | search_path 已含 flow（embedded + run_monolith） |
+| approvals / approval_records / core_workflow_tasks / core_workflow_instances / core_workflow_versions | flow | public 影子 5 张已 DROP（000007）；tasks 补 priority/due_time/claimed_at（000008） |
+| core_workflows（定义） | flow | 补 tenant_id/code + 迁移 public 18 行；public 影子因 FK（versions/_archive）暂冻结保留 |
 
 ## 结论与建议
 
 1. **B 类（已完成）**：core_* 统一 **public 平台层**——portal/communication search_path 改 public 优先；
    16 张冗余副本 DROP（迁移 20260917000006_duplicate_schema_cleanup.sql）；冒烟验证 portal/flow/erp/communication 全 200。
-2. **C 类**：flow 组权威为 flow schema（列全），public 副本已补列治标；DROP public 副本的前提
-   是 search_path 全局含 flow（本轮 embedded/run_monolith 已满足），可作为后续清理项。
+2. **C 类（已完成）**：flow 组权威化——embedded 固化 flow 优先（防 build 顺序污染）、
+   列/类型对齐（tenant_id/code/priority/due_time/claimed_at + TIMESTAMPTZ）、public 影子 5 张 DROP（000007）、
+   core_workflows 数据迁移 flow（000008）；core/flow 五端点 + portal/erp/srm/communication 冒烟全 200。
+   public.core_workflows 因 FK 依赖暂冻结（待 DROP FK 后清理）。
 3. **DROP 前置**：逐表 grep 显式 `schema.table` 引用；无引用 + search_path 覆盖权威 schema 后执行。

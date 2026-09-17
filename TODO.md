@@ -199,4 +199,6 @@
       B core_* public 权威 15 组——portal search_path 统一 public 优先 24015ec92；C flow 权威已补列治标）
 - [x] B 类余组收敛：doc_service/communication/master_data/ticket/portal 冗余副本 16 张已 DROP
       （迁移 20260917000006），portal/communication search_path 统一 public 优先；冒烟全 200
-- [ ] C 类收尾：public 影子表（approvals 等）DROP 前置已满足（search_path 含 flow），待批量执行
+- [x] C 类收尾：flow 权威化——public 影子 5 张 DROP（000007）+ core_workflows 数据迁移 flow（000008）；
+      tasks 补列/时间戳 TIMESTAMPTZ；core/flow 五端点 + 冒烟全 200（5775c709e）
+- [ ] 收尾：public.core_workflows 冻结影子（FK 依赖 versions/_archive），待 DROP FK 后清理
