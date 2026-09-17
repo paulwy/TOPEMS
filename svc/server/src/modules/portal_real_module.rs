@@ -27,7 +27,7 @@ pub struct PortalRealModule {
 impl PortalRealModule {
     /// 异步构建真实 Portal 模块
     pub async fn build() -> anyhow::Result<Self> {
-        std::env::set_var("SEARCH_PATH", "portal, public");
+        std::env::set_var("SEARCH_PATH", "public, portal");
 
         let config = ServiceConfig {
             name: "topems-portal",
