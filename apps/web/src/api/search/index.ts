@@ -34,9 +34,10 @@ export const searchApi = {
     signal?: AbortSignal
   ): Promise<ApiResponse<SearchResponse>> {
     const searchParams = new URLSearchParams();
-    searchParams.set('q', query);
-    searchParams.set('limit', limit.toString());
-    return apiClient.search.get(`/?${searchParams.toString()}`, { signal });
+    searchParams.set('keyword', query);
+    searchParams.set('page_size', limit.toString());
+    // 后端 search 根路由为 /api/search（axum nest 下子路由 "/" 映射到无尾斜杠）
+    return apiClient.search.get(`?${searchParams.toString()}`, { signal });
   },
 
   async getSuggestions(
