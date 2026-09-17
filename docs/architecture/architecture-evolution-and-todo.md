@@ -75,7 +75,7 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 | P0-3 | 配置单一真相源 CI 校验 | ✅ **本次实施完成**：`scripts/check-workspace-registry.py` + CI Gate M（`config/**` 或 Cargo.toml 变更触发） |
 | P1-1 | 事件通道选型规则落地 | ✅ **已解决**：Redis Stream 迁移完成（2026-08-29），Pub/Sub 仅保留显式降级分支 |
 | P1-2 | 物理库拆分预案 | ✅ **拆分前置治理全部闭环，拆分就绪（2026-09-01）**：前置条件 #1 integration 跨域事务直写改各域 API/事件+补偿 ✅、#2 unified-core 读 portal.user_preferences 改走 portal API ✅（commit 51b31fed3）、#3 跨库事务边界统一事件+Saga ✅；`check_schema_boundary.py` 全 PASS（allow 全空，跨 schema SQL 直读清零）+ `check_split_threshold.py` 5 阈值未触发；**物理拆分待阈值达成后启动**（阶段 0/1 已落地见下方历史） |
-| P1-3 | 前端测试矩阵 ROI 审视 | ✅ **完成报告+批1**：`frontend-test-roi-review.md`（L1-L4 分级 + ≤20min 预算 + 三批实施路径）；批1 E2E 收敛已落地（CI 单 chromium + apps/web 6→2，0 snapshot），批2 待页面清单确认 |
+| P1-3 | 前端测试矩阵 ROI 审视 | ✅ **全部闭环（批1+批2）**：`frontend-test-roi-review.md`（L1-L4 分级 + ≤20min 预算 + 三批实施路径）；批1 E2E 收敛落地（CI 单 chromium + apps/web 6→2，0 snapshot）；**批2 页面单测保留集评审落地（2026-09-01）**——167 文件分类（保留 102 = 核心页面 68 + hooks 34 / 降级 smoke 60 个实际改造）、vitest 分片 8→5（package.json + ci.yml 5 shard 实证）、CI 实测预算全量 110s·每片 ~22s ≤20min 达成 |
 | P1-4 | lowcode 立项决策 | ✅ **已解决**：已归档 `svc/_archive/lowcode` |
 | P2-1 | RLS 数据权限覆盖 | ✅ **完成落地**：`migrations/20260831*`（框架函数 + 302 张含 tenant_id 表启用 RLS + 策略）；修复 GUC 名不一致 / PG18 无 IF NOT EXISTS / 空值 UUID 报错 3 缺陷；`lib/shared-db/src/rls.rs` 同步修复 |
 | P2-2 | API 网关 8080 落地 | ✅ **完成方案+nginx 补强**：`api-gateway-plan.md`（Traefik 8080 待 staging 部署验证）+ 生产 `deploy/nginx/topems.conf` 补强落地（限流/连接限制/失败转移熔断） |

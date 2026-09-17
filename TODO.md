@@ -120,3 +120,8 @@
 - [x] doc/file = 阶段 2 首选拆分候选（仅 core_doc_*4/core_file_*2 表自包含、零跨域直读）；flow = 拆分后置项（14 调用方需 API 收敛前置）；iam/tenant/master 永不外迁
 - [x] 复核触发条件 = 物理拆分预案任一阈值达成 → 先拆 doc/file；无独立排期，随阶段 2 联动
 - [x] 飞书文档 P0-2 决策块已同步
+
+### P1-3 前端测试矩阵 ROI 审视 ✅（批1+批2 全闭环）
+- [x] 批1：E2E 矩阵收敛（CI 单 chromium + apps/web 6→2，0 snapshot）
+- [x] 批2：167 文件分类——保留 102（核心页面 68 + hooks 34）/ 降级 smoke 60 实际改造；vitest 分片 8→5（package.json test:shard:N/5 + ci.yml 5 路实证）
+- [x] CI 实测：全量 110s、每片 ~22s，≤20min 预算达成；frontend-test-roi-review.md §6 + 飞书文档已同步
