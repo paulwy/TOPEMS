@@ -44,6 +44,9 @@ async fn build_router_inner(
 ) -> anyhow::Result<Router> {
     std::env::set_var("SEARCH_PATH", "public");
 
+    // 预注册服务间调用/降级指标：避免懒注册导致无流量时 /metrics 缺失指标族
+    topems_shared_auth::service::pre_register_service_metrics();
+
     let config = ServiceConfig {
         name: "topems-unified-core",
         port: 8000,

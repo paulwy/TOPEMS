@@ -30,6 +30,16 @@ use topems_shared_core::error::TopemsError;
 /// 服务调用与真实用户调用、定位调用方与服务依赖热点。
 pub static SERVICE_TO_SERVICE_CALLS: OnceLock<IntCounterVec> = OnceLock::new();
 
+/// 启动时预注册服务间调用/降级指标，避免懒注册导致无流量时 `/metrics`
+/// 缺失指标族（拓扑巡检依赖其存在以区分「0 调用」与「无指标」）。
+pub fn pre_register_service_metrics() {
+    let _ = service_calls_metric();
+    let _ = service_calls_degraded_metric();
+    tracing::info!(
+        "pre_register_service_metrics: registered service calls metrics (lazy init forced)"
+    );
+}
+
 fn service_calls_metric() -> &'static IntCounterVec {
     SERVICE_TO_SERVICE_CALLS.get_or_init(|| {
         register_int_counter_vec!(
