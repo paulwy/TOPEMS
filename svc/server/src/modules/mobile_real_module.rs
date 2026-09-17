@@ -13,17 +13,17 @@
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
-use serde_json::json;
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 
-/// 真实 Mobile 模块：持有数据库连接池 + 核心移动端路由
+/// 真实 Mobile 模块：持有数据库连接池 + 移动端完整业务路由
 pub struct MobileRealModule {
     routes: Router,
     pool: sqlx::PgPool,
 }
 
 impl MobileRealModule {
-    /// 异步构建真实 Mobile 模块
+    /// 异步构建真实 Mobile 模块（复用 svc/mobile 的 AppState 与完整 protected 路由）
     pub async fn build() -> anyhow::Result<Self> {
         let config = ServiceConfig {
             name: "topems-mobile",
@@ -41,34 +41,42 @@ impl MobileRealModule {
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 
-        // 核心路由（简化版：health + 基本信息 + workbench 摘要）
+        // 1. 6 个服务客户端统一初始化（与独立部署一致的 service token）
+        let (wms_client, hrm_client, workflow_client, notification_client, mes_api_client, qms_api_client) =
+            topems_mobile::shared::build_service_clients(&ctx.auth_state.jwt_secret).await;
+
+        // 2. 构造 mobile AppState（复用 svc/mobile 类型）
+        let state = topems_mobile::shared::AppState {
+            auth_state: ctx.auth_state.clone(),
+            pool: ctx.db.clone(),
+            event_publisher: ctx.event_publisher.clone(),
+            wms_client,
+            hrm_client,
+            workflow_client,
+            notification_client,
+            mes_api_client,
+            qms_api_client,
+        };
+
+        // 3. 完整 protected 业务路由（approvals/oa/media/scan/patrol/offline 等 99 条）
+        let protected_routes = topems_mobile::shared::build_protected_routes(state.clone())
+            .layer(axum::middleware::from_fn(require_permission("mobile:admin")))
+            .with_state(state);
+
+        // 4. 组装：api_prefix + 统一 JWT 认证（与独立部署一致）
         let routes = axum::Router::new()
-            .nest(
-                config.api_prefix,
-                Router::new()
-                    .route("/health", get(|| async { "Mobile Service OK" }))
-                    .route("/", get(|| async {
-                        axum::Json(json!({
-                            "service": "topems-mobile",
-                            "version": "1.0.0",
-                            "capabilities": ["workbench", "task", "approval", "scan", "attendance", "patrol", "offline-sync", "push-notification"],
-                            "status": "running"
-                        }))
-                    }))
-                    .route("/workbench/summary", get(|| async {
-                        axum::Json(json!({
-                            "pending_tasks": 0,
-                            "pending_approvals": 0,
-                            "notifications": 0,
-                            "today_attendance": "not_checked_in"
-                        }))
-                    }))
-                    .with_state(ctx.db.clone()),
-            )
+            .route("/api/mobile/health", get(|| async { "Mobile Service OK" }))
+            .nest(config.api_prefix, protected_routes)
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
             ));
+
+        tracing::info!(
+            "✅ 真实 mobile 模块已接入统一入口（db={}，prefix={}，业务路由 99 条）",
+            ctx.db.size(),
+            config.api_prefix
+        );
 
         Ok(Self {
             routes,
