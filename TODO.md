@@ -55,7 +55,7 @@
 ## 🚧 待改进（P2 - 长期）
 
 ### 专业模块（低优先级）
-- [ ] 研发管理（RD）
+- [x] 研发管理（RD）（2026-09-17：ListParams serde flatten 反序列化修复——axum Query 对 flatten 嵌套结构带参必 400，5 个模块（experiment/formula/material/patent/research_cost）平铺分页字段并内置 page/page_size/offset 方法，实测带 page/pagesize 全 200、浏览器 /rd/experiment 列表页正常加载；commit 85bb8ec0c 已推送）
 - [ ] 环境健康安全（EHS）
 - [ ] 实验室信息（LIMS）
 - [ ] 高级排程（APS）
