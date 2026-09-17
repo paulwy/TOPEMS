@@ -255,6 +255,8 @@ pub fn create_routes() -> Router<AppState> {
         .route("/alerts/statistics", get(get_alert_statistics))
         .route("/alerts/acknowledge", post(acknowledge_alerts))
         .route("/alerts/resolve", post(resolve_alerts))
+        .route("/alerts/{id}/acknowledge", post(acknowledge_alert))
+        .route("/alerts/{id}/resolve", post(resolve_alert))
         .route("/alerts/{id}/history", get(get_alert_history))
         .route("/alerts/{id}/timeline", get(get_alert_timeline))
         // Alert Rules API
@@ -619,6 +621,62 @@ pub async fn resolve_alerts(
         serde_json::json!({
             "resolved_count": alert_ids.len(),
             "alert_ids": alert_ids
+        }),
+        "告警已解决",
+    ))
+}
+
+// Single alert acknowledge（前端 acknowledgeAlert(id) → POST /alerts/{id}/acknowledge）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["monitor:alert:write"])),
+    path = "/api/monitor/alerts/{id}/acknowledge",
+    request_body = serde_json::Value,
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn acknowledge_alert(
+    Extension(_claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let note = req.get("note").and_then(|v| v.as_str()).unwrap_or("");
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "alert_id": id,
+            "status": "acknowledged",
+            "acknowledged_at": chrono::Utc::now().to_rfc3339(),
+            "note": note
+        }),
+        "告警已确认",
+    ))
+}
+
+// Single alert resolve（前端 resolveAlert(id) → POST /alerts/{id}/resolve）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["monitor:alert:write"])),
+    path = "/api/monitor/alerts/{id}/resolve",
+    request_body = serde_json::Value,
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn resolve_alert(
+    Extension(_claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("");
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "alert_id": id,
+            "status": "resolved",
+            "resolved_at": chrono::Utc::now().to_rfc3339(),
+            "reason": reason
         }),
         "告警已解决",
     ))
