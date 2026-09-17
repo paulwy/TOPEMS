@@ -1555,6 +1555,35 @@ pub async fn generate_balance_sheet(
     }
 }
 
+fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
+    for key in ["assets", "liabilities", "equity"] {
+        if let Some(arr) = data.get_mut(key).and_then(|v| v.as_array_mut()) {
+            let total: f64 = arr
+                .iter()
+                .filter_map(|r| r.get("amount").and_then(|a| a.as_f64()))
+                .sum();
+            for row in arr.iter_mut() {
+                if let Some(obj) = row.as_object_mut() {
+                    if let Some(code) = obj.remove("account_code") {
+                        obj.insert("code".into(), code);
+                    }
+                    if let Some(name) = obj.remove("account_name") {
+                        obj.insert("name".into(), name);
+                    }
+                    let amt = obj.get("amount").and_then(|a| a.as_f64()).unwrap_or(0.0);
+                    let pct = if total > 0.0 {
+                        (amt / total * 100.0 * 100.0).round() / 100.0
+                    } else {
+                        0.0
+                    };
+                    obj.insert("percentage".into(), serde_json::json!(pct));
+                }
+            }
+        }
+    }
+    data
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["finance:read"])),
@@ -1565,6 +1594,7 @@ pub async fn generate_balance_sheet(
         (status = 200, description = "操作成功"),
     ),
 )]
+
 pub async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1581,14 +1611,17 @@ pub async fn get_balance_sheet(
     )
     .await
     {
-        Ok(Some(report)) => Json(ApiResponse::success(report, "查询成功")),
+        Ok(Some(report)) => Json(ApiResponse::success(
+            enrich_balance_percentage(report.get("data").cloned().unwrap_or(report)),
+            "查询成功",
+        )),
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service.get_balance_sheet(tenant_id, &params.period).await {
                 Ok(sheet) => {
                     let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
                     Json(ApiResponse::success(
-                        serde_json::json!({"report_type": "balance_sheet", "period": params.period, "data": data, "status": "realtime"}),
+                        enrich_balance_percentage(data),
                         "查询成功(实时)",
                     ))
                 }
@@ -1704,7 +1737,10 @@ pub async fn get_income_statement(
     )
     .await
     {
-        Ok(Some(report)) => Json(ApiResponse::success(report, "查询成功")),
+        Ok(Some(report)) => Json(ApiResponse::success(
+            report.get("data").cloned().unwrap_or(report),
+            "查询成功",
+        )),
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service
@@ -1714,7 +1750,7 @@ pub async fn get_income_statement(
                 Ok(stmt) => {
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
                     Json(ApiResponse::success(
-                        serde_json::json!({"report_type": "income_statement", "period": params.period, "data": data, "status": "realtime"}),
+                        data,
                         "查询成功(实时)",
                     ))
                 }
@@ -1834,7 +1870,10 @@ pub async fn get_cash_flow(
     )
     .await
     {
-        Ok(Some(report)) => Json(ApiResponse::success(report, "查询成功")),
+        Ok(Some(report)) => Json(ApiResponse::success(
+            report.get("data").cloned().unwrap_or(report),
+            "查询成功",
+        )),
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service
@@ -1844,7 +1883,7 @@ pub async fn get_cash_flow(
                 Ok(stmt) => {
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
                     Json(ApiResponse::success(
-                        serde_json::json!({"report_type": "cash_flow", "period": params.period, "data": data, "status": "realtime"}),
+                        data,
                         "查询成功(实时)",
                     ))
                 }
