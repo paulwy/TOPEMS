@@ -24,10 +24,14 @@ pub struct CreateFactoryMap {
 
 pub async fn list_factory_maps(
     State(pool): State<PgPool>,
-    Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    // 公开查询路由（embedded public_business_routes 无鉴权，无 Claims 扩展注入）
+    let tenant_id = headers
+        .get("x-tenant-id")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::new_v4);
     let service = TenantService::new(pool, tenant_id);
 
     match service.list_factory_maps().await {
@@ -73,11 +77,14 @@ pub async fn create_factory_map(
 
 pub async fn get_factory_map(
     State(pool): State<PgPool>,
-    Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FactoryMap>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = headers
+        .get("x-tenant-id")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::new_v4);
     let service = TenantService::new(pool, tenant_id);
 
     match service.get_factory_map(id).await {

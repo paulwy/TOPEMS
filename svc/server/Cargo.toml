@@ -101,6 +101,8 @@ default = [
     "module-integration",
     "module-mobile",
     # [2026-09-17] tms real_module 接入模块化单体（P3 门控转为默认启用）
+    # [2026-09-17] gis real_module 接入模块化单体（原 P3 门控转默认启用，业务地图/设备点位）
+    "module-gis",
     "module-tms",
 ]
 module-core = ["dep:topems-unified-core"]
