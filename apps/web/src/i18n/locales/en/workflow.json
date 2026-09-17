@@ -397,10 +397,10 @@
   "workflow.workflow_version_history_page.k5": "Error",
   "workflow.workflow_version_history_page.k6": "CreateVersion failed",
   "workflow.workflow_version_history_page.k7": "Success",
-  "workflow.workflow_version_history_page.k8": "Version activated successfully",
+  "workflow.workflow_version_history_page.k8": "Version",
   "workflow.workflow_version_history_page.k9": "Error",
-  "workflow.workflow_version_history_page.k10": "Failed to activate version",
-  "workflow.workflow_version_history_page.k11": "Success",
+  "workflow.workflow_version_history_page.k10": "Cancel",
+  "workflow.workflow_version_history_page.k11": "Create",
   "workflow.workflow_version_history_page.k12": "Rollback successful",
   "workflow.workflow_version_history_page.k13": "Rollback failed",
   "workflow.workflow_version_history_page.k14": "Error",
@@ -1044,5 +1044,8 @@
   "workflow.approval_detail.message.delegated_to": "Title",
   "workflow.approval_detail.message.delegate_failed": "Title",
   "workflow.approval_detail.message.please_input_reject_reason": "Please enterrejectreason",
-  "workflow.approval_detail.message.please_input_delegate_target": "Please enterdelegateTarget"
+  "workflow.approval_detail.message.please_input_delegate_target": "Please enterdelegateTarget",
+  "workflow.workflow_version_history_page.101_9": "e.g. 1.0.1",
+  "workflow.workflow_version_history_page.strongv_0": "Roll back to version ",
+  "workflow.workflow_version_history_page.strong_1": "? This will replace the currently active definition."
 }

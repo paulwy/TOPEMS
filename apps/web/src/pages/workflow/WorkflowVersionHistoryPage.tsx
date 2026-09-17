@@ -79,13 +79,13 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   useEffect(() => {
     if (workflowQuery.isError || versionsQuery.isError) {
-      apiLogger.error(i18n.t('pages.workflow_version_history_page.k0'), {
+      apiLogger.error(i18n.t('workflow.workflow_version_history_page.k0'), {
         workflowError: workflowQuery.error,
         versionsError: versionsQuery.error,
       });
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k0'),
-        message: i18n.t('pages.workflow_version_history_page.k1'),
+        title: i18n.t('workflow.workflow_version_history_page.k0'),
+        message: i18n.t('workflow.workflow_version_history_page.k1'),
         type: 'error',
       });
     }
@@ -114,7 +114,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     mutationFn: async (data: { version: string; change_description: string }) => {
       const wfResponse = await workflowApi.getWorkflow(id!);
       if (!wfResponse.success || !wfResponse.data) {
-        throw new Error(i18n.t('pages.workflow_version_history_page.k2'));
+        throw new Error(i18n.t('workflow.workflow_version_history_page.k2'));
       }
       const workflowData = wfResponse.data as unknown as Workflow;
       return workflowApi.createVersion(id!, {
@@ -132,18 +132,18 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
       invalidateVersionQueries();
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k3'),
-        message: i18n.t('pages.workflow_version_history_page.k4'),
+        title: i18n.t('workflow.workflow_version_history_page.k3'),
+        message: i18n.t('workflow.workflow_version_history_page.k4'),
         type: 'success',
       });
       setShowCreateModal(false);
       setCreateForm({ version: '', change_description: '' });
     },
     onError: (err: unknown) => {
-      apiLogger.error(i18n.t('pages.workflow_version_history_page.k1'), err);
+      apiLogger.error(i18n.t('workflow.workflow_version_history_page.k1'), err);
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k5'),
-        message: i18n.t('pages.workflow_version_history_page.k6'),
+        title: i18n.t('workflow.workflow_version_history_page.k5'),
+        message: i18n.t('workflow.workflow_version_history_page.k6'),
         type: 'error',
       });
     },
@@ -159,16 +159,16 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
       invalidateVersionQueries();
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k7'),
-        message: i18n.t('pages.workflow_version_history_page.k8'),
+        title: i18n.t('workflow.workflow_version_history_page.k7'),
+        message: i18n.t('workflow.workflow_version_history_page.k8'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error(i18n.t('pages.workflow_version_history_page.k2'), err);
+      apiLogger.error(i18n.t('workflow.workflow_version_history_page.k2'), err);
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k9'),
-        message: i18n.t('pages.workflow_version_history_page.k10'),
+        title: i18n.t('workflow.workflow_version_history_page.k9'),
+        message: i18n.t('workflow.workflow_version_history_page.k10'),
         type: 'error',
       });
     },
@@ -189,8 +189,8 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
       invalidateVersionQueries();
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k11'),
-        message: i18n.t('pages.workflow_version_history_page.k12'),
+        title: i18n.t('workflow.workflow_version_history_page.k11'),
+        message: i18n.t('workflow.workflow_version_history_page.k12'),
         type: 'success',
       });
       setShowRollbackModal(false);
@@ -198,10 +198,10 @@ const FlowVersionHistoryPage: React.FC = () => {
       setRollbackForm({ reason: '' });
     },
     onError: (err: unknown) => {
-      apiLogger.error(i18n.t('pages.workflow_version_history_page.k3'), err);
+      apiLogger.error(i18n.t('workflow.workflow_version_history_page.k3'), err);
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k14'),
-        message: i18n.t('pages.workflow_version_history_page.k13'),
+        title: i18n.t('workflow.workflow_version_history_page.k14'),
+        message: i18n.t('workflow.workflow_version_history_page.k13'),
         type: 'error',
       });
     },
@@ -217,16 +217,16 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
       invalidateVersionQueries();
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k15'),
-        message: i18n.t('pages.workflow_version_history_page.k16'),
+        title: i18n.t('workflow.workflow_version_history_page.k15'),
+        message: i18n.t('workflow.workflow_version_history_page.k16'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error(i18n.t('pages.workflow_version_history_page.k4'), err);
+      apiLogger.error(i18n.t('workflow.workflow_version_history_page.k4'), err);
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k17'),
-        message: i18n.t('pages.workflow_version_history_page.k18'),
+        title: i18n.t('workflow.workflow_version_history_page.k17'),
+        message: i18n.t('workflow.workflow_version_history_page.k18'),
         type: 'error',
       });
     },
@@ -241,8 +241,8 @@ const FlowVersionHistoryPage: React.FC = () => {
   const handleCreateVersion = useCallback(() => {
     if (!id || !createForm.version.trim()) {
       addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k20'),
-        message: i18n.t('pages.workflow_version_history_page.k19'),
+        title: i18n.t('workflow.workflow_version_history_page.k20'),
+        message: i18n.t('workflow.workflow_version_history_page.k19'),
         type: 'info',
       });
       return;
@@ -274,14 +274,14 @@ const FlowVersionHistoryPage: React.FC = () => {
     (version: WorkflowVersion) => {
       if (!id || version.isactive) {
         addNotification({
-          title: i18n.t('pages.workflow_version_history_page.k21'),
-          message: i18n.t('pages.workflow_version_history_page.k22'),
+          title: i18n.t('workflow.workflow_version_history_page.k21'),
+          message: i18n.t('workflow.workflow_version_history_page.k22'),
           type: 'info',
         });
         return;
       }
 
-      if (!confirm(i18n.t('pages.workflow_version_history_page.k23'))) return;
+      if (!confirm(i18n.t('workflow.workflow_version_history_page.k23'))) return;
 
       deleteVersionMutation.mutate(version.id);
     },
@@ -297,7 +297,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     () => [
       {
         id: 'version',
-        label: i18n.t('pages.workflow_version_history_page.k8'),
+        label: i18n.t('workflow.workflow_version_history_page.k8'),
         render: (row) => (
           <Stack
             direction='row'
@@ -312,7 +312,7 @@ const FlowVersionHistoryPage: React.FC = () => {
             </Typography>
             {row.isactive && (
               <Chip
-                label={i18n.t('pages.workflow_version_history_page.k27')}
+                label={i18n.t('workflow.workflow_version_history_page.k27')}
                 size='small'
                 sx={{
                   bgcolor: 'secondary.main',
@@ -325,7 +325,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       },
       {
         id: 'change_description',
-        label: i18n.t('pages.workflow_version_history_page.k36'),
+        label: i18n.t('workflow.workflow_version_history_page.k36'),
         render: (row) =>
           row.change_description ? (
             <Typography
@@ -345,7 +345,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       },
       {
         id: 'created_by',
-        label: i18n.t('pages.workflow_version_history_page.k28'),
+        label: i18n.t('workflow.workflow_version_history_page.k28'),
         render: (row) => (
           <Stack
             direction='row'
@@ -354,14 +354,14 @@ const FlowVersionHistoryPage: React.FC = () => {
           >
             <User size={14} />
             <Typography variant='body2'>
-              {row.created_by || i18n.t('pages.workflow_version_history_page.k28')}
+              {row.created_by || i18n.t('workflow.workflow_version_history_page.k28')}
             </Typography>
           </Stack>
         ),
       },
       {
         id: 'created_at',
-        label: i18n.t('pages.workflow_version_history_page.k29'),
+        label: i18n.t('workflow.workflow_version_history_page.k29'),
         render: (row) => (
           <Stack
             direction='row'
@@ -383,8 +383,8 @@ const FlowVersionHistoryPage: React.FC = () => {
         <Tooltip
           title={
             row.isactive
-              ? i18n.t('pages.workflow_version_history_page.k34')
-              : i18n.t('pages.workflow_version_history_page.k33')
+              ? i18n.t('workflow.workflow_version_history_page.k34')
+              : i18n.t('workflow.workflow_version_history_page.k33')
           }
         >
           <span>
@@ -395,8 +395,8 @@ const FlowVersionHistoryPage: React.FC = () => {
               disabled={row.isactive || activateVersionMutation.isPending}
               aria-label={
                 row.isactive
-                  ? i18n.t('pages.workflow_version_history_page.k34')
-                  : i18n.t('pages.workflow_version_history_page.k33')
+                  ? i18n.t('workflow.workflow_version_history_page.k34')
+                  : i18n.t('workflow.workflow_version_history_page.k33')
               }
             >
               {activateVersionMutation.isPending ? (
@@ -412,14 +412,14 @@ const FlowVersionHistoryPage: React.FC = () => {
         </Tooltip>
         {!row.isactive && (
           <>
-            <Tooltip title={i18n.t('pages.workflow_version_history_page.k29')}>
+            <Tooltip title={i18n.t('workflow.workflow_version_history_page.k29')}>
               <span>
                 <IconButton
                   size='small'
                   color='warning'
                   onClick={() => openRollbackModal(row)}
                   disabled={rollbackMutation.isPending}
-                  aria-label={i18n.t('pages.workflow_version_history_page.k30')}
+                  aria-label={i18n.t('workflow.workflow_version_history_page.k30')}
                 >
                   {rollbackMutation.isPending ? (
                     <Loader2
@@ -432,14 +432,14 @@ const FlowVersionHistoryPage: React.FC = () => {
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={i18n.t('pages.workflow_version_history_page.k31')}>
+            <Tooltip title={i18n.t('workflow.workflow_version_history_page.k31')}>
               <span>
                 <IconButton
                   size='small'
                   color='error'
                   onClick={() => handleDeleteVersion(row)}
                   disabled={deleteVersionMutation.isPending}
-                  aria-label={i18n.t('pages.workflow_version_history_page.k32')}
+                  aria-label={i18n.t('workflow.workflow_version_history_page.k32')}
                 >
                   {deleteVersionMutation.isPending ? (
                     <Loader2
@@ -469,7 +469,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   const actions = useMemo(
     () => [
       {
-        label: i18n.t('pages.workflow_version_history_page.k24'),
+        label: i18n.t('workflow.workflow_version_history_page.k24'),
         icon: <Plus size={18} />,
         onClick: () => setShowCreateModal(true),
         variant: 'contained' as const,
@@ -486,7 +486,7 @@ const FlowVersionHistoryPage: React.FC = () => {
           variant='body2'
           color='text.secondary'
         >
-          {i18n.t('pages.workflow_version_history_page.k5')}: {versions.length}
+          {i18n.t('workflow.workflow_version_history_page.k5')}: {versions.length}
         </Typography>
       </Box>
     ),
@@ -496,7 +496,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   return (
     <>
       <ListPageTemplate<WorkflowVersion>
-        title={i18n.t('pages.workflow_version_history_page.k25')}
+        title={i18n.t('workflow.workflow_version_history_page.k25')}
         subtitle={workflow?.name}
         backButton={{ href: '/flow/definitions' }}
         columns={columns}
@@ -505,7 +505,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         actions={actions}
         renderRowActions={renderRowActions}
         footerContent={footerContent}
-        emptyMessage={i18n.t('pages.workflow_version_history_page.k26')}
+        emptyMessage={i18n.t('workflow.workflow_version_history_page.k26')}
       />
 
       {/* Create Version Modal */}
@@ -513,26 +513,26 @@ const FlowVersionHistoryPage: React.FC = () => {
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       >
-        <DialogTitle>{i18n.t('pages.workflow_version_history_page.k35')}</DialogTitle>
+        <DialogTitle>{i18n.t('workflow.workflow_version_history_page.k35')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ mb: 2, color: 'text.secondary' }}
           >
-            {i18n.t('pages.workflow_version_history_page.k7')}
+            {i18n.t('workflow.workflow_version_history_page.k7')}
           </Typography>
           <Stack spacing={2}>
             <TextField
               size='small'
-              label={i18n.t('pages.workflow_version_history_page.k8')}
+              label={i18n.t('workflow.workflow_version_history_page.k8')}
               value={createForm.version}
               onChange={(e) => setCreateForm({ ...createForm, version: e.target.value })}
-              placeholder={i18n.t('pages.workflow_version_history_page.101_9')}
+              placeholder={i18n.t('workflow.workflow_version_history_page.101_9')}
               fullWidth
             />
             <TextField
               size='small'
-              label={i18n.t('pages.workflow_version_history_page.k36')}
+              label={i18n.t('workflow.workflow_version_history_page.k36')}
               value={createForm.change_description}
               onChange={(e) =>
                 setCreateForm({
@@ -540,7 +540,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                   change_description: e.target.value,
                 })
               }
-              placeholder={i18n.t('pages.workflow_version_history_page.k37')}
+              placeholder={i18n.t('workflow.workflow_version_history_page.k37')}
               multiline
               rows={4}
               fullWidth
@@ -552,7 +552,7 @@ const FlowVersionHistoryPage: React.FC = () => {
             variant='outlined'
             onClick={() => setShowCreateModal(false)}
           >
-            {i18n.t('pages.workflow_version_history_page.k10')}
+            {i18n.t('workflow.workflow_version_history_page.k10')}
           </Button>
           <Button
             variant='contained'
@@ -568,7 +568,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               ) : undefined
             }
           >
-            {i18n.t('pages.workflow_version_history_page.k11')}
+            {i18n.t('workflow.workflow_version_history_page.k11')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -578,7 +578,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         open={showRollbackModal}
         onClose={() => setShowRollbackModal(false)}
       >
-        <DialogTitle>{i18n.t('pages.workflow_version_history_page.k0')}</DialogTitle>
+        <DialogTitle>{i18n.t('workflow.workflow_version_history_page.k0')}</DialogTitle>
         <DialogContent>
           {selectedVersion && (
             <>
@@ -586,24 +586,24 @@ const FlowVersionHistoryPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 1 }}
               >
-                {i18n.t('pages.workflow_version_history_page.strongv_0')}
+                {i18n.t('workflow.workflow_version_history_page.strongv_0')}
                 {selectedVersion.version}
-                {i18n.t('pages.workflow_version_history_page.strong_1')}
+                {i18n.t('workflow.workflow_version_history_page.strong_1')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('pages.workflow_version_history_page.k12')}
+                {i18n.t('workflow.workflow_version_history_page.k12')}
               </Typography>
             </>
           )}
           <TextField
             size='small'
-            label={i18n.t('pages.workflow_version_history_page.k38')}
+            label={i18n.t('workflow.workflow_version_history_page.k38')}
             value={rollbackForm.reason}
             onChange={(e) => setRollbackForm({ ...rollbackForm, reason: e.target.value })}
-            placeholder={i18n.t('pages.workflow_version_history_page.k39')}
+            placeholder={i18n.t('workflow.workflow_version_history_page.k39')}
             multiline
             rows={3}
             fullWidth
@@ -619,7 +619,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               setRollbackForm({ reason: '' });
             }}
           >
-            {i18n.t('pages.workflow_version_history_page.k13')}
+            {i18n.t('workflow.workflow_version_history_page.k13')}
           </Button>
           <Button
             variant='contained'
@@ -635,7 +635,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               ) : undefined
             }
           >
-            {i18n.t('pages.workflow_version_history_page.k14')}
+            {i18n.t('workflow.workflow_version_history_page.k14')}
           </Button>
         </DialogActions>
       </Dialog>

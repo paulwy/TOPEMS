@@ -397,10 +397,10 @@
   "workflow.workflow_version_history_page.k5": "错误",
   "workflow.workflow_version_history_page.k6": "创建版本失败",
   "workflow.workflow_version_history_page.k7": "成功",
-  "workflow.workflow_version_history_page.k8": "版本激活成功",
+  "workflow.workflow_version_history_page.k8": "版本号",
   "workflow.workflow_version_history_page.k9": "错误",
-  "workflow.workflow_version_history_page.k10": "激活版本失败",
-  "workflow.workflow_version_history_page.k11": "成功",
+  "workflow.workflow_version_history_page.k10": "取消",
+  "workflow.workflow_version_history_page.k11": "创建",
   "workflow.workflow_version_history_page.k12": "回滚成功",
   "workflow.workflow_version_history_page.k13": "回滚失败",
   "workflow.workflow_version_history_page.k14": "错误",
@@ -497,5 +497,8 @@
   "workflow.approval_detail.message.delegated_to": "标题",
   "workflow.approval_detail.message.delegate_failed": "标题",
   "workflow.approval_detail.message.please_input_reject_reason": "请输入rejectreason",
-  "workflow.approval_detail.message.please_input_delegate_target": "请输入delegate目标"
+  "workflow.approval_detail.message.please_input_delegate_target": "请输入delegate目标",
+  "workflow.workflow_version_history_page.101_9": "例如: 1.0.1",
+  "workflow.workflow_version_history_page.strongv_0": "确认回滚到版本 ",
+  "workflow.workflow_version_history_page.strong_1": "？此操作将替换当前生效的流程定义。"
 }
