@@ -13,10 +13,9 @@ export const productionOrderSchema: EntitySchema = {
 
   fields: [
     {
-      name: 'order_number',
+      name: 'order_no',
       label: i18n.t('mes.production_order.k2'),
       type: 'text',
-      required: true,
       sortable: true,
       listWidth: 150,
     },
@@ -33,6 +32,7 @@ export const productionOrderSchema: EntitySchema = {
       name: 'product_code',
       label: i18n.t('mes.production_order.k4'),
       type: 'text',
+      required: true,
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 64 }],
     },
@@ -45,13 +45,7 @@ export const productionOrderSchema: EntitySchema = {
       listWidth: 90,
     },
     {
-      name: 'unit',
-      label: i18n.t('mes.production_order.k6'),
-      type: 'text',
-      listWidth: 80,
-    },
-    {
-      name: 'scheduled_start_date',
+      name: 'planned_start_date',
       label: i18n.t('mes.production_order.k7'),
       type: 'datetime',
       sortable: true,
@@ -60,7 +54,7 @@ export const productionOrderSchema: EntitySchema = {
         value ? new Date(value as string).toLocaleDateString('zh-CN') : '-',
     },
     {
-      name: 'scheduled_end_date',
+      name: 'planned_end_date',
       label: i18n.t('mes.production_order.k8'),
       type: 'datetime',
       sortable: true,
@@ -69,33 +63,18 @@ export const productionOrderSchema: EntitySchema = {
         value ? new Date(value as string).toLocaleDateString('zh-CN') : '-',
     },
     {
-      name: 'actualStartDate',
+      name: 'actual_start_date',
       label: i18n.t('mes.production_order.k9'),
       type: 'datetime',
       listWidth: 130,
       showInList: false,
     },
     {
-      name: 'actualEndDate',
+      name: 'actual_end_date',
       label: i18n.t('mes.production_order.k10'),
       type: 'datetime',
       listWidth: 130,
       showInList: false,
-    },
-    {
-      name: 'priority',
-      label: i18n.t('mes.production_order.k11'),
-      type: 'select',
-      options: {
-        type: 'static',
-        options: [
-          { value: 'low', label: i18n.t('mes.production_order.k12') },
-          { value: 'normal', label: i18n.t('mes.production_order.k13') },
-          { value: 'high', label: i18n.t('mes.production_order.k14') },
-          { value: 'urgent', label: i18n.t('mes.production_order.k15') },
-        ],
-      },
-      listWidth: 90,
     },
     {
       name: 'status',
@@ -111,6 +90,7 @@ export const productionOrderSchema: EntitySchema = {
           { value: 'completed', label: i18n.t('mes.production_order.k20') },
           { value: 'cancelled', label: i18n.t('mes.production_order.k21') },
           { value: 'paused', label: i18n.t('mes.production_order.k22') },
+          { value: 'closed', label: i18n.t('mes.production_order.k43') },
         ],
       },
       listWidth: 100,
@@ -120,15 +100,15 @@ export const productionOrderSchema: EntitySchema = {
 
   list: {
     columns: [
-      'order_number',
+      'order_no',
       'product_name',
       'product_code',
       'quantity',
-      'scheduled_start_date',
-      'scheduled_end_date',
+      'planned_start_date',
+      'planned_end_date',
       'status',
     ],
-    searchFields: ['order_number', 'product_name', 'product_code'],
+    searchFields: ['order_no', 'product_name', 'product_code'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -139,6 +119,7 @@ export const productionOrderSchema: EntitySchema = {
         completed: 'success',
         cancelled: 'error',
         paused: 'default',
+        closed: 'default',
       },
       labelMap: {
         pending: i18n.t('mes.production_order.k23'),
@@ -147,6 +128,7 @@ export const productionOrderSchema: EntitySchema = {
         completed: i18n.t('mes.production_order.k26'),
         cancelled: i18n.t('mes.production_order.k27'),
         paused: i18n.t('mes.production_order.k28'),
+        closed: i18n.t('mes.production_order.k43'),
       },
     },
     filters: [
@@ -162,6 +144,7 @@ export const productionOrderSchema: EntitySchema = {
           { label: i18n.t('mes.production_order.k34'), value: 'completed' },
           { label: i18n.t('mes.production_order.k35'), value: 'cancelled' },
           { label: i18n.t('mes.production_order.k36'), value: 'paused' },
+          { label: i18n.t('mes.production_order.k43'), value: 'closed' },
         ],
       },
     ],
@@ -172,15 +155,15 @@ export const productionOrderSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('mes.production_order.k37'),
-      fields: ['order_number', 'product_name', 'product_code'],
+      fields: ['product_name', 'product_code'],
     },
     {
       title: i18n.t('mes.production_order.k38'),
-      fields: ['quantity', 'unit', 'priority'],
+      fields: ['quantity'],
     },
     {
       title: i18n.t('mes.production_order.k39'),
-      fields: ['scheduled_start_date', 'scheduled_end_date'],
+      fields: ['planned_start_date', 'planned_end_date'],
     },
   ],
 

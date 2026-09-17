@@ -4,19 +4,7 @@ pre-commit:
     # [Gate A] Frontend lint (eslint + prettier)
     frontend-lint:
       tags: frontend lint
-      run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/src/.*\.(ts|tsx)$' || true)
-        [ -z "$STAGED" ] && exit 0
-        cd apps/web
-        npx eslint $(echo "$STAGED" | sed 's|^apps/web/||') --fix
-        npx prettier --write $(echo "$STAGED" | sed 's|^apps/web/||')
-        cd "$(git rev-parse --show-toplevel)"
-        # git 2.50: tracked files under an ignored dir return exit 1 on `git add <path>`.
-        # STAGED paths all come from the index (tracked/staged), so -f only re-stages
-        # their modifications and never introduces new ignored files.
-        git add -f $STAGED
-
-    # [Gate B] Frontend typecheck (tsc --noEmit)
+      run: bash scripts/ci/frontend-lint.sh
     frontend-typecheck:
       tags: frontend typecheck
       run: |

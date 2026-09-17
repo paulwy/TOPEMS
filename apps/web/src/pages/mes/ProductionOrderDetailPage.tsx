@@ -108,9 +108,7 @@ const ProductionOrderDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.production_order_detail_page.k0')}
           </InputLabel>
-          <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-            {order.order_number || '-'}
-          </Typography>
+          <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{order.order_no || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
@@ -128,15 +126,13 @@ const ProductionOrderDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.production_order_detail_page.k3')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>
-            {order.quantity} {order.unit || i18n.t('mes.production_order_detail_page.text_f7edf5')}
-          </Typography>
+          <Typography sx={{ mt: 0.5 }}>{order.quantity}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.production_order_detail_page.k4')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{order.priority || '-'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>-</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
@@ -168,25 +164,25 @@ const ProductionOrderDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.production_order_detail_page.k6')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatDate(order.scheduled_start_date)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(order.planned_start_date)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.production_order_detail_page.k7')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatDate(order.scheduled_end_date)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(order.planned_end_date)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.production_order_detail_page.k8')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualStartDate)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actual_start_date)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.production_order_detail_page.k9')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualEndDate)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(order.actual_end_date)}</Typography>
         </Box>
       </Box>
     );
@@ -557,12 +553,12 @@ const ProductionOrderDetailPage: React.FC = () => {
         />
       ),
       title: order?.product_name,
-      subtitle: order?.order_number || undefined,
+      subtitle: order?.order_no || undefined,
       tags: [getStatusLabel(order?.status || '')],
       stats: [
         {
           label: i18n.t('mes.production_order_detail_page.field_planned_quantity'),
-          value: `${order?.quantity || 0} ${order?.unit || i18n.t('mes.production_order_detail_page.k26')}`,
+          value: `${order?.quantity || 0}`,
         },
         {
           label: i18n.t('mes.production_order_detail_page.field_status'),
@@ -587,7 +583,7 @@ const ProductionOrderDetailPage: React.FC = () => {
         subtitle=''
         detailItemName={
           order?.product_name ||
-          order?.order_number ||
+          order?.order_no ||
           order?.id ||
           i18n.t('mes.production_order_detail_page.k27')
         }

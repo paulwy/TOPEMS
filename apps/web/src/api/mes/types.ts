@@ -68,51 +68,45 @@ export type { PaginatedResult } from '@/api/client';
 
 export interface ProductionOrder {
   id: string;
-  order_number: string;
+  order_no: string;
   product_id?: string;
   product_name: string;
   product_code?: string;
   quantity: number;
   completed_quantity?: number;
-  unit?: string;
   source?: string;
   source_order_id?: string;
   source_order_number?: string;
-  scheduled_start_date?: string;
-  scheduled_end_date?: string;
-  actualStartDate?: string;
-  actualEndDate?: string;
+  planned_start_date?: string;
+  planned_end_date?: string;
+  actual_start_date?: string;
+  actual_end_date?: string;
   workshop_id?: string;
   notes?: string;
   approval_id?: string;
   status: string;
-  priority?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateProductionOrderRequest {
-  order_number: string;
   product_name: string;
-  product_code?: string;
+  product_code: string;
   quantity: number;
-  unit?: string;
-  scheduled_start_date?: string;
-  scheduled_end_date?: string;
-  priority?: string;
+  planned_start_date?: string;
+  planned_end_date?: string;
+  workshop_id?: string;
+  notes?: string;
 }
 
 export interface UpdateProductionOrderRequest {
   product_name?: string;
   product_code?: string;
   quantity?: number;
-  unit?: string;
-  scheduled_start_date?: string;
-  scheduled_end_date?: string;
-  actualStartDate?: string;
-  actualEndDate?: string;
-  status?: string;
-  priority?: string;
+  planned_start_date?: string;
+  planned_end_date?: string;
+  workshop_id?: string;
+  notes?: string;
 }
 
 export interface CreateFromErpRequest {
