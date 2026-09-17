@@ -17,8 +17,8 @@ use topems_shared_observability::telemetry::TracedRequestExt;
 pub async fn fetch_erp_stats(state: &AppState) -> Option<ServiceStatsGql> {
     let available = state.erp_client.get_health().await.unwrap_or(false);
     // total：采购订单在途量；active：库存条目数
-    let total_res = state.erp_client.list_purchase_orders(1, 1).await;
-    let total = total_res.as_ref().map(|v| v.len() as u64).unwrap_or(0);
+    let total_res = state.erp_client.count_purchase_orders().await;
+    let total = total_res.as_ref().map(|v| *v).unwrap_or(0);
     let inv_res = state.erp_client.get_inventory_summary().await;
     let active = inv_res
         .as_ref()

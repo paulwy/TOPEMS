@@ -126,6 +126,17 @@ impl TypedServiceClient<ErpApi> {
         self.get_items(&self.build_path(&path)).await
     }
 
+    /// 采购订单总数（分页响应 data.total，dashboard stats 口径）
+    pub async fn count_purchase_orders(&self) -> ServiceClientResult<u64> {
+        let v: serde_json::Value = self
+            .get(&self.build_path("/purchase-orders?page=1&pagesize=1"))
+            .await?;
+        Ok(v.get("data")
+            .and_then(|d| d.get("total"))
+            .and_then(|x| x.as_u64())
+            .unwrap_or(0))
+    }
+
     /// 列出销售订单
     pub async fn list_sales_orders(
         &self,
