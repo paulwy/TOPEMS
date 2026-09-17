@@ -175,7 +175,10 @@
 - [x] 迁移入体系：20260917000003_erp_purchase_orders_type_align.sql（幂等 DO 块，DATE→TIMESTAMPTZ、金额 NUMERIC→FLOAT8）
 - [x] 种子补齐代码模型非空字段：materials safety_stock/unit_price/tax_rate/status、suppliers supplier_type（回填幂等）
 - [x] erp 核心列表冒烟全通：purchase-orders/sales-orders/customers/suppliers/materials/inventory 全部 200 真实数据
-- [ ] 全库"模型 vs 表类型"偏差扫描（编译库一致性主线下一步）：DATE↔TIMESTAMPTZ、NUMERIC↔f64、nullable↔非空
-      三类偏差可能存在于其他模块表；5432 旧库待对齐、20260907000001 基线迁移未同步（新库重建时由 000003 修正）
+- [x] 全库表列类型风险扫描完成（scripts/scan_column_type_risks.py + docs/architecture/column-type-risk-report.md）：
+      R1 时间戳列 DATE=0（全库已 TIMESTAMPTZ 对齐）；R2 自定义 enum 16 个（bi/finance，finance 冒烟证实
+      当前代码查询路径不触碰，已知基线）；R3 NUMERIC 739 列业务基线
+- [ ] 遗留：5432 旧库未对齐（新库重建时由 20260917000003 修正）；bi 路由名核对（report-templates/report-schedules
+      Unknown module，路径与 server 模块注册名不一致——归入业务 API 冒烟）
 - [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
 - [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
