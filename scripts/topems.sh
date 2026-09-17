@@ -37,7 +37,7 @@ load_services_config() {
     local config_file="$SCRIPT_DIR/services.conf"
     if [ -f "$config_file" ]; then
         SERVICES_CONFIG=$(grep -v "^#" "$config_file" | grep -v "^$" | grep -v "CORE_SERVICES")
-        CORE_SERVICES=$(grep "CORE_SERVICES" "$config_file" | cut -d'=' -f2 | tr -d ' ')
+        CORE_SERVICES=$(grep "CORE_SERVICES" "$config_file" | cut -d'=' -f2 | tr -s ' ' | xargs)
     else
         # 默认服务配置（与 scripts/services.conf 保持一致）
         SERVICES_CONFIG="
@@ -72,7 +72,7 @@ tms         svc/tms                topems-tms                  8073
 monitor     svc/monitor            topems-monitor              8095
 plugin-registry svc/plugin-registry    topems-plugin-registry  8096
 "
-        CORE_SERVICES="iam"
+        CORE_SERVICES="iam plugin-registry"
     fi
 }
 
@@ -1435,7 +1435,7 @@ start_all_services() {
 
         # 全部服务启动后，统一重试注册失败的服务
         if [ "$no_register" = "0" ] && [ -f "$register_failed_log" ] && [ -s "$register_failed_log" ]; then
-            local failed_count=$(wc -l < "$register_failed_log" | tr -d ' ')
+            local failed_count=$(wc -l < "$register_failed_log" | tr -s ' ' | xargs)
             echo ""
             info "========== [2b/3] 重试注册失败的服务 ($failed_count 个) =========="
             while IFS= read -r svc; do
@@ -2932,8 +2932,8 @@ clean_project() {
         local required_models=()
         if [ -f "$PROJECT_ROOT/.env" ]; then
             local ollama_model embed_model
-            ollama_model=$(grep "^OLLAMA_MODEL=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d ' ')
-            embed_model=$(grep "^EMBEDDING_MODEL=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d ' ')
+            ollama_model=$(grep "^OLLAMA_MODEL=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -s ' ' | xargs)
+            embed_model=$(grep "^EMBEDDING_MODEL=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -s ' ' | xargs)
             [ -n "$ollama_model" ] && required_models+=("$ollama_model")
             [ -n "$embed_model" ] && required_models+=("$embed_model")
         fi
@@ -2981,7 +2981,7 @@ clean_project() {
             local blob_size
             blob_size=$(du -sh "$ollama_blobs" 2>/dev/null | awk '{print $1}')
             local blob_count
-            blob_count=$(ls "$ollama_blobs" 2>/dev/null | wc -l | tr -d ' ')
+            blob_count=$(ls "$ollama_blobs" 2>/dev/null | wc -l | tr -s ' ' | xargs)
             if [ "$blob_count" -gt 0 ]; then
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将清理 Ollama blobs 残留: $ollama_blobs ($blob_size, $blob_count files)"
