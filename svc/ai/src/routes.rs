@@ -140,7 +140,24 @@ pub fn create_routes(
         .route("/search", post(ai_handlers::ai_search))
         .route(
             "/metrics",
-            get(move || async move { metric_handle.render() }),
+            get(move || async move {
+                // 合并导出两套 registry：
+                //   1) gather()（默认 registry）——业务指标（record_service_call 的
+                //      topems_service_to_service_calls_total / degraded、进程指标等）；
+                //   2) metric_handle.render()（pair() layer registry）——axum HTTP 请求指标。
+                let mut out = String::new();
+                if let Err(e) = prometheus::TextEncoder::new().encode_utf8(&prometheus::gather(), &mut out) {
+                    return format!("Error encoding default metrics: {}", e);
+                }
+                let layer_s = metric_handle.render();
+                if !layer_s.is_empty() {
+                    if !out.is_empty() && !out.ends_with('\n') {
+                        out.push('\n');
+                    }
+                    out.push_str(&layer_s);
+                }
+                out
+            }),
         )
         .with_state(app_state.clone());
 

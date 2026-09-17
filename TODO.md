@@ -76,6 +76,7 @@
 - [x] MUI elevation 警告修复（2026-09-17：核实 MUI 9.4.0 Paper 无 elevation 弃用警告（Paper.js propTypes 仅 elevation>0+variant=outlined 组合告警），代码扫描 148 处 elevation 无违规组合，浏览器 console 无 MUI 警告——TODO 项过时，标记完成）
 - [x] dashboard 等演示模块认证一致性（2026-09-17：实测 /api/portal/graphql 无 token 200 且可查 businessStats/employeeEntity 等敏感字段——根因：graphql 及大量管理端点挂在 embedded.rs protected_routes 之外（register_routes_with_legacy_alias 合并后链式 .route）；修复：build_router 最外层挂 auth_middleware（is_public_path 豁免 /health/login，cors 外层保证预检放行）；实测无 token 401、带 token 200、business-stats 六组真实数值回归不变、前端 dashboard 正常渲染）
 - [x] 全服务认证缺口扫描 + 转发用户 token 审计复核（2026-09-17：① 对 ai/analytics/bi/crm/ehs/erp/finance/hrm/lims/master-data/mes/pm/portal/qms/rd/scm/srm/wms 等 19 前缀无 token 探测常见业务端点——全部 401，仅 /health 豁免（is_public_path 设计，无敏感信息），无 portal graphql 类绕过 ② portal reqwest 调用已全部统一为 service token（issue_service_token + bearer_auth），无"转发用户 token"模式（仅 unified-core 测试代码用 bearer_auth 模拟用户，属预期）；历史"portal 46 处手工调用审计"项确认已治理完毕）
+- [x] 服务调用可观测性：业务指标暴露到 /metrics（2026-09-17：发现 server 聚合模式的根 /metrics 由 AI 模块提供（svc/ai/src/routes.rs 挂根路由），handler 仅 render layer registry（axum HTTP 指标 22 行），业务指标（topems_service_to_service_calls_total / degraded / cache 等，注册于 prometheus 默认 registry）全部丢失；修复：/metrics handler 合并导出 gather()（默认 registry）+ metric_handle.render()（layer registry），unified-core 独立部署 metrics_render 同步修复；实测 /metrics 22→151 行，topems_service_to_service_calls_total{service="portal-service"} 13 可查，login/business-stats 回归正常）
 - [ ] 更多模块的业务 API 实现（P2 长期）
 
 ---

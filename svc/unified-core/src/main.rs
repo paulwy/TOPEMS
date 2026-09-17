@@ -719,7 +719,27 @@ async fn main() -> anyhow::Result<()> {
     let cors = create_cors_layer();
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    let app = routes::create_routes(&state, move || metric_handle.render(), false)
+    let app = routes::create_routes(
+        &state,
+        move || {
+            // 合并导出两套 registry：gather()（默认 registry 业务指标）+ layer handle（axum 请求指标）
+            let mut out = String::new();
+            if let Ok(()) = prometheus::TextEncoder::new()
+                .encode_utf8(&prometheus::gather(), &mut out)
+            {
+                // fallthrough
+            }
+            let layer_s = metric_handle.render();
+            if !layer_s.is_empty() {
+                if !out.is_empty() && !out.ends_with('\n') {
+                    out.push('\n');
+                }
+                out.push_str(&layer_s);
+            }
+            out
+        },
+        false,
+    )
         .layer(axum::middleware::from_fn(request_context_middleware))
         .with_telemetry()
         .layer(cors)
