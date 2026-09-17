@@ -47,11 +47,11 @@ where
 {
     Router::new()
         .route(
-            "/api/wms/inventory-movements",
+            "/inventory-movements",
             get(list_inventory_movements).post(create_inventory_movement),
         )
         .route(
-            "/api/wms/inventory-movements/{id}",
+            "/inventory-movements/{id}",
             get(get_inventory_movement),
         )
 }
