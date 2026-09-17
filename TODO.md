@@ -165,6 +165,10 @@
 - [x] 验证：dashboard.services 8 服务（erp/crm/hrm/finance/mes/workflow/iam/notification）healthy 全 true
 - [x] run_monolith.sh 补 MONOLITH_SERVICE_URL（探活开关，此前缺口）
 - [x] commit bb6f02860（graphql_helpers 探活日志+超时 / mes build.rs / .sqlx 缓存 / run_monolith）已 push
-- [ ] 遗留 A：dashboard.stats 仍 total/active=0（erp_client.list_purchase_orders/get_inventory_summary 调用失败，疑 service token/路由）——dashboard 真值化第二块
+- [x] 遗留 A 闭环：dashboard.stats 真值化——erp 库存客户端路径 /inventory/summary→/inventory（服务端实为 list_inventory 分页列表）；
+      stats 解析改取 data.total（ApiResponse 包装）；portal_erp_stats 探针日志实证 po_ok=true/inv_ok=true（链路通，
+      容器库 purchase_orders/inventory 真实 0 行 → total/active=0 为真实值）。commit 7984fdeee 已 push
+- [ ] 数据决策：容器库 5433 业务表基本为空（订单/库存 0，customers=1），dashboard stats 显示 0 为真实值；
+      如需非 0 业务数值需灌种子数据（改业务数据，待用户拍板）
 - [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
 - [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
