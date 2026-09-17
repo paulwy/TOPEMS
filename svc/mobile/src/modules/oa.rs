@@ -169,7 +169,7 @@ pub async fn list_meetings(
     let offset = (page - 1) * page_size;
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM oa_meetings WHERE tenant_id = $1 \
+        "SELECT * FROM mobile.oa_meetings WHERE tenant_id = $1 \
          AND ($2::text IS NULL OR status = $2) \
          ORDER BY start_time DESC LIMIT $3 OFFSET $4"
     ))
@@ -183,7 +183,7 @@ pub async fn list_meetings(
         Ok(rows) => {
             let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "mobile",
-                "SELECT COUNT(*) FROM oa_meetings WHERE tenant_id = $1"
+                "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1"
             ))
             .bind(&tid)
             .fetch_one(&pool)
@@ -204,7 +204,7 @@ pub async fn get_meeting(
 ) -> Json<ApiResponse<OaMeeting>> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM oa_meetings WHERE id = $1"
+        "SELECT * FROM mobile.oa_meetings WHERE id = $1"
     ))
     .bind(id)
     .fetch_optional(&pool)
@@ -234,7 +234,7 @@ pub async fn create_meeting(
         .unwrap_or(serde_json::json!([]));
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "INSERT INTO oa_meetings (id, tenant_id, title, description, type, status, start_time, end_time, location, video_url, attendees, created_at, updated_at) \
+        "INSERT INTO mobile.oa_meetings (id, tenant_id, title, description, type, status, start_time, end_time, location, video_url, attendees, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,'scheduled',$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
@@ -273,7 +273,7 @@ pub async fn update_meeting(
         .and_then(|v| v.as_str().map(String::from));
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "UPDATE oa_meetings SET title = COALESCE($1, title), description = COALESCE($2, description), \
+        "UPDATE mobile.oa_meetings SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), location = COALESCE($4, location), video_url = COALESCE($5, video_url), \
          updated_at = NOW() WHERE id = $6 RETURNING *"
     ))
@@ -298,7 +298,7 @@ pub async fn delete_meeting(
 ) -> Json<ApiResponse<()>> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM oa_meetings WHERE id = $1"
+        "DELETE FROM mobile.oa_meetings WHERE id = $1"
     ))
     .bind(id)
     .execute(&pool)
@@ -316,7 +316,7 @@ pub async fn join_meeting(
 ) -> Json<ApiResponse<OaMeeting>> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "UPDATE oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 RETURNING *"
+        "UPDATE mobile.oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 RETURNING *"
     ))
     .bind(id)
     .fetch_optional(&pool)
@@ -334,7 +334,7 @@ pub async fn leave_meeting(
 ) -> Json<ApiResponse<OaMeeting>> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "UPDATE oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 RETURNING *"
+        "UPDATE mobile.oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 RETURNING *"
     ))
     .bind(id)
     .fetch_optional(&pool)
@@ -355,7 +355,7 @@ pub async fn list_calendar_events(
     let tid = tenant_id();
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM oa_calendar_events WHERE tenant_id = $1 ORDER BY start_time DESC LIMIT 100"
+        "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 ORDER BY start_time DESC LIMIT 100"
     ))
     .bind(&tid)
     .fetch_all(&pool)
@@ -380,7 +380,7 @@ pub async fn create_calendar_event(
         .with_timezone(&Utc);
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
-        "INSERT INTO oa_calendar_events (id, tenant_id, title, description, type, start_time, end_time, all_day, location, is_reminder, reminder_minutes, color, created_at, updated_at) \
+        "INSERT INTO mobile.oa_calendar_events (id, tenant_id, title, description, type, start_time, end_time, all_day, location, is_reminder, reminder_minutes, color, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
@@ -418,7 +418,7 @@ pub async fn update_calendar_event(
     let color = req.get("color").and_then(|v| v.as_str().map(String::from));
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
-        "UPDATE oa_calendar_events SET title = COALESCE($1, title), description = COALESCE($2, description), \
+        "UPDATE mobile.oa_calendar_events SET title = COALESCE($1, title), description = COALESCE($2, description), \
          location = COALESCE($3, location), color = COALESCE($4, color), updated_at = NOW() WHERE id = $5 RETURNING *"
     ))
     .bind(title)
@@ -441,7 +441,7 @@ pub async fn delete_calendar_event(
 ) -> Json<ApiResponse<()>> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM oa_calendar_events WHERE id = $1"
+        "DELETE FROM mobile.oa_calendar_events WHERE id = $1"
     ))
     .bind(id)
     .execute(&pool)
@@ -465,7 +465,7 @@ pub async fn list_oa_tasks(
     let offset = (page - 1) * page_size;
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM oa_tasks WHERE tenant_id = $1 \
+        "SELECT * FROM mobile.oa_tasks WHERE tenant_id = $1 \
          AND ($2::text IS NULL OR status = $2) \
          AND ($3::text IS NULL OR priority = $3) \
          ORDER BY created_at DESC LIMIT $4 OFFSET $5"
@@ -481,7 +481,7 @@ pub async fn list_oa_tasks(
         Ok(rows) => {
             let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "mobile",
-                "SELECT COUNT(*) FROM oa_tasks WHERE tenant_id = $1"
+                "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1"
             ))
             .bind(&tid)
             .fetch_one(&pool)
@@ -502,7 +502,7 @@ pub async fn get_oa_task(
 ) -> Json<ApiResponse<OaTask>> {
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM oa_tasks WHERE id = $1"
+        "SELECT * FROM mobile.oa_tasks WHERE id = $1"
     ))
     .bind(id)
     .fetch_optional(&pool)
@@ -531,7 +531,7 @@ pub async fn create_oa_task(
         .unwrap_or(serde_json::json!([]));
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "INSERT INTO oa_tasks (id, tenant_id, title, description, priority, status, assignee, due_date, tags, project_id, created_at, updated_at) \
+        "INSERT INTO mobile.oa_tasks (id, tenant_id, title, description, priority, status, assignee, due_date, tags, project_id, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,'todo',$6,$7,$8,$9,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
@@ -569,7 +569,7 @@ pub async fn update_oa_task(
         .and_then(|v| v.as_str().map(String::from));
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "UPDATE oa_tasks SET title = COALESCE($1, title), description = COALESCE($2, description), \
+        "UPDATE mobile.oa_tasks SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), priority = COALESCE($4, priority), assignee = COALESCE($5, assignee), \
          updated_at = NOW() WHERE id = $6 RETURNING *"
     ))
@@ -594,7 +594,7 @@ pub async fn delete_oa_task(
 ) -> Json<ApiResponse<()>> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM oa_tasks WHERE id = $1"
+        "DELETE FROM mobile.oa_tasks WHERE id = $1"
     ))
     .bind(id)
     .execute(&pool)
@@ -612,7 +612,7 @@ pub async fn complete_oa_task(
 ) -> Json<ApiResponse<OaTask>> {
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "UPDATE oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *"
+        "UPDATE mobile.oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *"
     ))
     .bind(id)
     .fetch_optional(&pool)
@@ -636,7 +636,7 @@ pub async fn list_announcements(
     let offset = (page - 1) * page_size;
     match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM oa_announcements WHERE tenant_id = $1 \
+        "SELECT * FROM mobile.oa_announcements WHERE tenant_id = $1 \
          AND ($2::text IS NULL OR priority = $2) \
          ORDER BY published_at DESC LIMIT $3 OFFSET $4"
     ))
@@ -650,7 +650,7 @@ pub async fn list_announcements(
         Ok(rows) => {
             let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "mobile",
-                "SELECT COUNT(*) FROM oa_announcements WHERE tenant_id = $1"
+                "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
             ))
             .bind(&tid)
             .fetch_one(&pool)
@@ -671,7 +671,7 @@ pub async fn get_announcement(
 ) -> Json<ApiResponse<OaAnnouncement>> {
     match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM oa_announcements WHERE id = $1"
+        "SELECT * FROM mobile.oa_announcements WHERE id = $1"
     ))
     .bind(id)
     .fetch_optional(&pool)
@@ -690,7 +690,7 @@ pub async fn mark_announcement_read(
     let user_id = "default_user".to_string();
     let _ = sqlx::query(only_own_schema_query!(
         "mobile",
-        "INSERT INTO oa_announcement_reads (announcement_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+        "INSERT INTO mobile.oa_announcement_reads (announcement_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
     ))
     .bind(id)
     .bind(&user_id)
@@ -705,7 +705,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
     let tid = tenant_id();
     let meetings_today = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM oa_meetings WHERE tenant_id = $1 AND start_time::date = CURRENT_DATE"
+        "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1 AND start_time::date = CURRENT_DATE"
     ))
     .bind(&tid)
     .fetch_one(&pool)
@@ -713,7 +713,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
     .unwrap_or(0);
     let pending_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM oa_tasks WHERE tenant_id = $1 AND status != 'completed'"
+        "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1 AND status != 'completed'"
     ))
     .bind(&tid)
     .fetch_one(&pool)
@@ -721,7 +721,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
     .unwrap_or(0);
     let total_announcements = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM oa_announcements WHERE tenant_id = $1"
+        "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
     ))
     .bind(&tid)
     .fetch_one(&pool)
