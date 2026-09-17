@@ -149,3 +149,22 @@
 - [x] approvals 遗留清零：WORKFLOW_SERVICE_URL 等 30 个 <SVC>_SERVICE_URL 注入指向 :8099，
       mobile→flow 服务间调用打通（server 识别 service token），/api/mobile/approvals/pending 200
 - [x] scripts/run_monolith.sh 固化启动命令（DB_MAX_CONNECTIONS/SEARCH_PATH/30 个 SERVICE_URL）
+
+### dashboard 聚合探活真值化 ✅（portal 聚合探活改口径：让 dashboard 显示真实业务数值）
+- [x] 根因链闭环：MONOLITH_SERVICE_URL 已注入但 healthy 全 false → probe 日志（portal_health_probe）定位：
+      1) server 二进制陈旧（SQLX_OFFLINE=true 下 mes 新查询无缓存 → cargo build 一直静默失败，二进制停在 17:58）
+      2) 编译库一致性治理深化：cargo sqlx prepare --workspace 在线补全 .sqlx 缓存
+         （前置：mes build.rs 无条件强制 SQLX_OFFLINE=true → 改为尊重外部 env，SQLX_OFFLINE=false 时放行在线 prepare）
+      3) 容器库 5433 对齐代码补列：bi.reports 补 last_run_at；bi.report_templates 补 output_format/report_type/category；
+         bi.report_schedules 补 template_id/parameters/recipients/run_count/error_message；
+         bi.report_subscriptions 补 template_id/user_id/email/frequency/enabled/created_at；
+         bi.analytics_comparison_analyses created_at/updated_at 去 NOT NULL（代码 .map() 期望 nullable，0 行）；
+         bi.reports report_type/status 自定义 enum → VARCHAR（sqlx 无映射）；mes.production_orders 补
+         order_no(NOT NULL 回填 order_number)/workshop_id/source_order_id/source/source_order_number
+      4) 探活超时根因：聚合 /health 实测 ~5s（逐模块健康检查），probe 2s 超时必然误判 → check_service_health 超时 2s→8s
+- [x] 验证：dashboard.services 8 服务（erp/crm/hrm/finance/mes/workflow/iam/notification）healthy 全 true
+- [x] run_monolith.sh 补 MONOLITH_SERVICE_URL（探活开关，此前缺口）
+- [x] commit bb6f02860（graphql_helpers 探活日志+超时 / mes build.rs / .sqlx 缓存 / run_monolith）已 push
+- [ ] 遗留 A：dashboard.stats 仍 total/active=0（erp_client.list_purchase_orders/get_inventory_summary 调用失败，疑 service token/路由）——dashboard 真值化第二块
+- [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
+- [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
