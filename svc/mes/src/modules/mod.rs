@@ -109,14 +109,14 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS production_processes (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            process_no VARCHAR(64) NOT NULL UNIQUE,
-            name VARCHAR(128) NOT NULL,
+            process_code VARCHAR(100) NOT NULL UNIQUE,
+            process_name VARCHAR(255) NOT NULL,
             description TEXT,
             version VARCHAR(32) DEFAULT '1.0',
             status VARCHAR(32) DEFAULT 'active',
             sequence INT DEFAULT 0,
             equipment_required BOOLEAN DEFAULT false,
-            estimated_duration INT DEFAULT 0,
+            standard_time_minutes NUMERIC(10,2) DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP

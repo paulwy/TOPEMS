@@ -70,8 +70,8 @@ pub struct ProductionProcessRow {
     pub sequence: Option<i32>,
     pub equipment_required: Option<bool>,
     pub estimated_duration: Option<i32>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -101,8 +101,8 @@ impl From<ProductionProcessRow> for ProductionProcessResponse {
             sequence: r.sequence.unwrap_or_default(),
             equipment_required: false,
             estimated_duration: 0,
-            created_at: naive_to_utc(Some(r.created_at)),
-            updated_at: naive_to_utc(Some(r.updated_at)),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         }
     }
 }
@@ -139,23 +139,23 @@ pub async fn list_processes(
     let pagesize = query.pagesize.unwrap_or(10).min(100) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE tenant_id = $1");
 
     if let Some(status) = query.status {
         let idx = params.len() + 2;
         where_clause.push_str(&format!(" AND status = ${}", idx));
-        params.push(serde_json::Value::String(status));
+        params.push(status);
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         let idx = params.len() + 2;
         where_clause.push_str(&format!(
-            " AND (process_no ILIKE ${} OR name ILIKE ${} OR description ILIKE ${})",
+            " AND (process_code ILIKE ${} OR process_name ILIKE ${} OR description ILIKE ${})",
             idx, idx, idx
         ));
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     let count_sql = format!(
@@ -181,8 +181,8 @@ pub async fn list_processes(
     let fetch_sql = format!(
         r#"
         SELECT
-            id, process_no, name, description, version,
-            status, sequence, equipment_required, estimated_duration,
+            id, process_code AS process_no, process_name AS name, description, version,
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
             created_at, updated_at
         FROM production_processes
         {}
@@ -241,16 +241,16 @@ pub async fn list_processes(
                 .ok()
                 .flatten()
                 .unwrap_or(0),
-            created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
-                    .ok()
-                    .flatten(),
-            ),
-            updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
-                    .ok()
-                    .flatten(),
-            ),
+            created_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten()
+                .unwrap_or(Utc::now()),
+            updated_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten()
+                .unwrap_or(Utc::now()),
         })
         .collect();
 
@@ -288,13 +288,13 @@ pub async fn create_process(
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         INSERT INTO production_processes (
-            process_no, name, description, version, status,
-            sequence, equipment_required, estimated_duration,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $8)
+            process_code, process_name, description, version, status,
+            sequence, equipment_required, standard_time_minutes,
+            organization_id, tenant_id, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, CAST($7 AS NUMERIC), $8, $8, $9, $9)
         RETURNING
-            id, process_no, name, description, version,
-            status, sequence, equipment_required, estimated_duration,
+            id, process_code AS process_no, process_name AS name, description, version,
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
             created_at, updated_at
         "#,
     )
@@ -305,7 +305,8 @@ pub async fn create_process(
     .bind(req.sequence.unwrap_or(0))
     .bind(req.equipment_required.unwrap_or(false))
     .bind(req.estimated_duration.unwrap_or(0))
-    .bind(now.naive_utc())
+    .bind(tenant_id)
+    .bind(Utc::now())
     .fetch_one(&state.pool)
     .await;
 
@@ -339,8 +340,8 @@ pub async fn get_process(
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         SELECT
-            id, process_no, name, description, version,
-            status, sequence, equipment_required, estimated_duration,
+            id, process_code AS process_no, process_name AS name, description, version,
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
             created_at, updated_at
         FROM production_processes
         WHERE id = $1 AND deleted_at IS NULL
@@ -384,17 +385,17 @@ pub async fn update_process(
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         UPDATE production_processes SET
-            name = COALESCE($2, name),
+            process_name = COALESCE($2, process_name),
             description = COALESCE($3, description),
             version = COALESCE($4, version),
             sequence = COALESCE($5, sequence),
             equipment_required = COALESCE($6, equipment_required),
-            estimated_duration = COALESCE($7, estimated_duration),
+            standard_time_minutes = COALESCE(CAST($7 AS NUMERIC), standard_time_minutes),
             updated_at = $8
         WHERE id = $1 AND status = 'active'
         RETURNING
-            id, process_no, name, description, version,
-            status, sequence, equipment_required, estimated_duration,
+            id, process_code AS process_no, process_name AS name, description, version,
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
             created_at, updated_at
         "#,
     )
@@ -405,7 +406,7 @@ pub async fn update_process(
     .bind(req.sequence)
     .bind(req.equipment_required)
     .bind(req.estimated_duration)
-    .bind(Utc::now().naive_utc())
+    .bind(Utc::now())
     .fetch_optional(&state.pool)
     .await;
 
