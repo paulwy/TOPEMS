@@ -133,10 +133,12 @@ CREATE TABLE IF NOT EXISTS erp.announcements (
     author VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'draft',
     priority VARCHAR(50) DEFAULT 'normal',
-    publish_at TIMESTAMP,
-    expire_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    publish_at TIMESTAMPTZ,
+    expire_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMPTZ,
+    tenant_id UUID
 );
 
 CREATE INDEX IF NOT EXISTS idx_announcements_status ON erp.announcements(status);
