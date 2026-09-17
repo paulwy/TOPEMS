@@ -4996,5 +4996,6 @@
   "pages.workflow_version_history_page.strong_1": "</strong> 吗？",
   "pages.login_page.k29": "普通员工",
   "pages.login_page.k30": "管理员",
-  "pages.v55_automation_panel.k127": "指标超过临界值，将触发自动回滚"
+  "pages.v55_automation_panel.k127": "指标超过临界值，将触发自动回滚",
+  "pages.workflow_definitions_page.k3": "版本历史"
 }

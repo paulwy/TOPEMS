@@ -6,8 +6,9 @@
  */
 import React, { useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
-import { FileCode, Layers, Play } from 'lucide-react';
+import { FileCode, History, Layers, Play } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -31,125 +32,74 @@ interface WorkflowDefinition {
   updated_at: string;
   created_by: string;
 }
-// ============ Mock 数据（保留原页面数据源） ============
-const mockDefinitions: WorkflowDefinition[] = [
-  {
-    id: '1',
-    name: i18n.t('workflow.workflow_definitions_page.k0'),
-    code: 'purchase-order-approval',
+// ============ API 适配器：真实 unified-core flow API（2026-09-17 接入） ============
+type FlowWorkflowRow = {
+  id: string;
+  name: string;
+  description?: string | null;
+  status?: string;
+  version?: number;
+  code?: string;
+  definition?: { nodes?: Array<unknown> } | null;
+  created_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  published_at?: string | null;
+};
+
+function toDefinition(w: FlowWorkflowRow): WorkflowDefinition {
+  return {
+    id: w.id,
+    name: w.name,
+    code: String(w.code ?? ''),
     category: 'approval',
-    version: 'v2.3',
-    status: 'active',
-    description: i18n.t('workflow.workflow_definitions_page.k1'),
-    node_count: 8,
-    instance_count: 245,
-    created_at: '2024-01-01',
-    updated_at: '2024-01-15',
-    created_by: i18n.t('workflow.workflow_definitions_page.k2'),
-  },
-  {
-    id: '2',
-    name: i18n.t('workflow.workflow_definitions_page.k3'),
-    code: 'leave-approval',
-    category: 'approval',
-    version: 'v1.5',
-    status: 'active',
-    description: i18n.t('workflow.workflow_definitions_page.k4'),
-    node_count: 5,
-    instance_count: 1280,
-    created_at: '2024-01-02',
-    updated_at: '2024-01-10',
-    created_by: i18n.t('workflow.workflow_definitions_page.k5'),
-  },
-  {
-    id: '3',
-    name: i18n.t('workflow.workflow_definitions_page.k6'),
-    code: 'expense-reimbursement',
-    category: 'approval',
-    version: 'v3.0',
-    status: 'active',
-    description: i18n.t('workflow.workflow_definitions_page.k7'),
-    node_count: 6,
-    instance_count: 890,
-    created_at: '2024-01-03',
-    updated_at: '2024-01-12',
-    created_by: i18n.t('workflow.workflow_definitions_page.k8'),
-  },
-  {
-    id: '4',
-    name: i18n.t('workflow.workflow_definitions_page.k9'),
-    code: 'contract-approval',
-    category: 'approval',
-    version: 'v1.2',
-    status: 'draft',
-    description: i18n.t('workflow.workflow_definitions_page.k10'),
-    node_count: 10,
+    version: `v${String(w.version ?? 1)}`,
+    status: String(w.status ?? 'draft'),
+    description: w.description ?? '',
+    node_count: Array.isArray(w.definition?.nodes) ? w.definition.nodes.length : 0,
     instance_count: 0,
-    created_at: '2024-01-14',
-    updated_at: '2024-01-14',
-    created_by: i18n.t('workflow.workflow_definitions_page.k11'),
-  },
-];
-// ============ API 适配器：基于 mock 数据实现标准 CRUD 接口 ============
+    created_at: w.created_at?.slice(0, 10) ?? '',
+    updated_at: w.updated_at?.slice(0, 10) ?? '',
+    created_by: w.created_by ?? '',
+  };
+}
+
 const apiAdapter: CrudApiAdapter<WorkflowDefinition> = {
   list: async (params) => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    let items = [...mockDefinitions];
-    if (params?.search) {
-      const q = params.search.toLowerCase();
-      items = items.filter(
-        (d) => d.name.toLowerCase().includes(q) || d.code.toLowerCase().includes(q)
-      );
-    }
-    if (typeof params?.category === 'string' && params.category !== 'all') {
-      items = items.filter((d) => d.category === params.category);
-    }
-    if (typeof params?.status === 'string' && params.status !== 'all') {
-      items = items.filter((d) => d.status === params.status);
-    }
-    const page = params?.page ?? 1;
-    const pageSize = params?.pageSize ?? 10;
-    const start = (page - 1) * pageSize;
-    const paged = items.slice(start, start + pageSize);
-    return { data: paged, total: items.length };
+    const res = await workflowDefinitionApi.listWorkflows({
+      page: params?.page ?? 1,
+      pagesize: params?.pageSize ?? 20,
+      search: params?.search || undefined,
+      status: params?.status && params.status !== 'all' ? String(params.status) : undefined,
+    });
+    const page = res.data;
+    const items = (page?.items ?? []) as unknown as FlowWorkflowRow[];
+    return { data: items.map(toDefinition), total: page?.total ?? items.length };
   },
   create: async (data) => {
-    const newDef: WorkflowDefinition = {
-      id: String(Date.now()),
-      name: String(data.name || ''),
-      code: String(data.code || ''),
-      category: String(data.category || 'approval'),
-      version: String(data.version || 'v1.0'),
-      status: String(data.status || 'draft'),
-      description: data.description as string | undefined,
-      node_count: Number(data.node_count || 0),
-      instance_count: Number(data.instance_count || 0),
-      created_at: new Date().toISOString().split('T')[0],
-      updated_at: new Date().toISOString().split('T')[0],
-      created_by: i18n.t('workflow.workflow_definitions_page.k12'),
-    };
-    mockDefinitions.push(newDef);
-    return newDef;
+    const res = await workflowDefinitionApi.createWorkflow({
+      name: String(data.name ?? ''),
+      description: data.description ? String(data.description) : undefined,
+      status: String(data.status ?? 'draft'),
+    });
+    return toDefinition((res.data ?? {}) as unknown as FlowWorkflowRow);
   },
   update: async (id, data) => {
-    const idx = mockDefinitions.findIndex((d) => d.id === id);
-    if (idx === -1) throw new Error(i18n.t('workflow.workflow_definitions_page.k13'));
-    mockDefinitions[idx] = {
-      ...mockDefinitions[idx],
-      ...data,
-      id: mockDefinitions[idx].id,
-      updated_at: new Date().toISOString().split('T')[0],
-    } as WorkflowDefinition;
-    return mockDefinitions[idx];
+    const res = await workflowDefinitionApi.updateWorkflow(id, {
+      name: data.name ? String(data.name) : undefined,
+      description: data.description ? String(data.description) : undefined,
+      status: data.status ? String(data.status) : undefined,
+    });
+    return toDefinition((res.data ?? {}) as unknown as FlowWorkflowRow);
   },
   delete: async (id) => {
-    const idx = mockDefinitions.findIndex((d) => d.id === id);
-    if (idx !== -1) mockDefinitions.splice(idx, 1);
+    await workflowDefinitionApi.deleteWorkflow(id);
   },
 };
 // ============ 页面组件 ============
 export const WorkflowDefinitionsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const handleActivate = useCallback(
     async (row: Record<string, unknown>) => {
@@ -184,6 +134,13 @@ export const WorkflowDefinitionsPage: React.FC = () => {
       color: 'success',
       onClick: handleActivate,
       show: (row) => row.status !== 'active',
+    },
+    {
+      key: 'version-history',
+      label: i18n.t('pages.workflow_definitions_page.k3'),
+      icon: <History size={16} />,
+      color: 'info',
+      onClick: (row) => navigate(`/workflow/version-history/${String(row.id)}`),
     },
   ];
   return (

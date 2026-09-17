@@ -10711,5 +10711,6 @@
   },
   "pages.login_page.k29": "Regular employee",
   "pages.login_page.k30": "Administrator",
-  "pages.v55_automation_panel.k127": "Metrics exceed threshold, automatic rollback will be triggered"
+  "pages.v55_automation_panel.k127": "Metrics exceed threshold, automatic rollback will be triggered",
+  "pages.workflow_definitions_page.k3": "Version History"
 }

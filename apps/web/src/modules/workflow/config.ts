@@ -17,7 +17,7 @@ export const WORKFLOW_PATHS = {
   dashboard: '/workflow/dashboard',
   definitions: '/workflow/definitions',
   designer: '/workflow/designer',
-  versionHistory: '/workflow/version-history',
+  versionHistory: '/workflow/version-history/:id?',
   instances: '/workflow/instances',
   instanceDetail: '/workflow/instances/:id',
   approvals: '/workflow/approvals',
