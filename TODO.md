@@ -182,6 +182,9 @@
 - [x] dashboard 前端真实化（admin DashboardPage）：bff 移除 Dashboard 查询 mock 拦截；4 统计卡真实
       （服务健康 X/8、采购订单 3、库存 5、ERP 可用）+ 服务健康分布饼图 + 服务状态列表（8 服务）；i18n zh/en 加 key
 - [x] i18n 合规：k33 en 对齐标准译法 Normal；workflow_version_history_page 嵌套 key 对齐扁平权威值（消除混合结构告警）
+- [x] 业务 API 缺口盘点：pdm/srm/pm/rd/scm 后端实现完备——404 均为路径名猜测错误
+      （正确：pdm/bom-versions|bom-items、pm/projects/milestones/timeline、rd/experiments|patents、scm/suppliers）
+- [x] 修复 srm/suppliers 400：serde flatten 在 urlencoded 下 i64 解析缺陷 → ListQueryParams 平铺化
 - [ ] 遗留：5432 旧库未对齐（新库重建时由 20260917000003 修正）
 - [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
 - [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
