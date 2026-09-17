@@ -35,31 +35,32 @@ fn hazards_list_cache_key(
 }
 
 pub fn create_routes() -> Router<AppState> {
+    // 路由相对路径，由 server nest /api/ehs 包裹（原误写 /api/ehs/issues 导致双前缀 /api/ehs/api/ehs/issues/*）
     Router::new()
-        .route("/api/ehs/issues", get(list_hazards).post(create_hazard))
+        .route("/issues", get(list_hazards).post(create_hazard))
         .route(
-            "/api/ehs/issues/{id}",
+            "/issues/{id}",
             get(get_hazard).put(update_hazard).delete(delete_hazard),
         )
         .route(
-            "/api/ehs/issues/{id}/rectification",
+            "/issues/{id}/rectification",
             post(start_rectification).put(update_rectification),
         )
         .route(
-            "/api/ehs/issues/{id}/rectification/submit",
+            "/issues/{id}/rectification/submit",
             post(submit_rectification),
         )
-        .route("/api/ehs/issues/{id}/verification", post(verify_hazard))
-        .route("/api/ehs/issues/{id}/close", post(close_hazard))
+        .route("/issues/{id}/verification", post(verify_hazard))
+        .route("/issues/{id}/close", post(close_hazard))
         .route(
-            "/api/ehs/issues/{id}/approval/start",
+            "/issues/{id}/approval/start",
             post(start_hazard_approval),
         )
         .route(
-            "/api/ehs/issues/{id}/approval/approve",
+            "/issues/{id}/approval/approve",
             post(approve_hazard),
         )
-        .route("/api/ehs/issues/{id}/approval/reject", post(reject_hazard))
+        .route("/issues/{id}/approval/reject", post(reject_hazard))
 }
 
 #[derive(Debug, Deserialize)]
