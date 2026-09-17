@@ -30,7 +30,7 @@ SERVICES=(CRM ERP FEEDBACK FILE FINANCE HRM IAM AI BI COMMUNICATION EHS GIS
 
 build_env() {
   echo "DB_MAX_CONNECTIONS=5"
-  echo "SEARCH_PATH=mobile, rs, erp, public, iam, shared"
+  echo "SEARCH_PATH=flow, mobile, rs, erp, public, iam, shared"
   # dashboard 聚合探活开关：portal probe_service_health 读该 env 统一探测 :8099/health
   # （缺失时走硬编码独立端口 → 嵌入模式下全部 healthy=false）
   echo "MONOLITH_SERVICE_URL=http://localhost:8099"
@@ -51,7 +51,7 @@ if [ ! -x "$BIN" ]; then
 fi
 
 echo "启动 topems-server（模块化单体 :8099）…"
-echo "  连接池: DB_MAX_CONNECTIONS=5  SEARCH_PATH 含 mobile/rs/erp/public/iam/shared"
+echo "  连接池: DB_MAX_CONNECTIONS=5  SEARCH_PATH 含 flow/mobile/rs/erp/public/iam/shared"
 echo "  服务间调用: ${#SERVICES[@]} 个 SERVICE_URL 统一指向 :8099"
 
 if [ "$MODE" = "--daemon" ]; then

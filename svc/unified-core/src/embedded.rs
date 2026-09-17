@@ -42,7 +42,12 @@ async fn build_router_inner(
     public_routes: Router<AppState>,
     embed_mode: bool,
 ) -> anyhow::Result<Router> {
-    std::env::set_var("SEARCH_PATH", "public");
+    // 嵌入模式 search_path：flow 业务表（approvals/approval_records/core_workflow_*）为权威，
+    // public 仅存历史影子表（approvals 缺 assignee_id 等列，误命中会导致 500）。
+    // 尊重外部 SEARCH_PATH 注入（run_monolith.sh），否则默认 flow 在前。
+    if std::env::var("SEARCH_PATH").is_err() {
+        std::env::set_var("SEARCH_PATH", "flow, public");
+    }
 
     // 预注册服务间调用/降级指标：避免懒注册导致无流量时 /metrics 缺失指标族
     topems_shared_auth::service::pre_register_service_metrics();
