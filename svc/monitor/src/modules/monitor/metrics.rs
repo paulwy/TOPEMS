@@ -190,6 +190,9 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/metrics/system", get(get_system_metrics))
         .route("/metrics/database", get(get_database_metrics))
+        // 前端监控页 /metrics/realtime 与 /metrics/test-retry（withRetry 探活）复用系统指标
+        .route("/metrics/realtime", get(get_system_metrics))
+        .route("/metrics/test-retry", get(get_system_metrics))
         .route("/performance/api", get(get_api_performance))
         .route("/performance/trend", get(get_performance_trend))
         .route("/performance/services", get(get_service_performance))
