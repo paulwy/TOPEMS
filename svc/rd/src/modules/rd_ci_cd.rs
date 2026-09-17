@@ -101,7 +101,7 @@ async fn list_typed(
 
     // 仅内部生成 SQL；表名/列名来自本模块常量，非外部输入
     let search_sql = format!(
-        "({} ILIKE '%' || $2 || '%')",
+        "({})",
         search_cols
             .split(',')
             .map(|c| format!("{} ILIKE '%' || $2 || '%'", c))
