@@ -195,3 +195,7 @@
       发现并修复 core/flow/instances 500（public 影子表缺列，迁移 20260917000005 补齐）
 - [ ] 遗留：同名多 schema 表收敛（public.approvals/approval_records/core_workflow_tasks 等影子表，
       已补列治标；DROP 需先保证 search_path 含 flow——embedded 已默认 flow 在前，可后续评估）
+- [x] 同名多 schema 表收敛评估：docs/architecture/duplicate-table-convergence.md（A 设计内独立 19 组不收敛；
+      B core_* public 权威 15 组——portal search_path 统一 public 优先 24015ec92；C flow 权威已补列治标）
+- [ ] B 类余组收敛：doc_service/communication/master_data/ticket 副本待逐组确认无显式引用后统一 public 并 DROP 冗余
+- [ ] C 类收尾：public 影子表（approvals 等）DROP 前置已满足（search_path 含 flow），待批量执行
