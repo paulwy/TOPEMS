@@ -131,3 +131,12 @@
 - [x] 09-01 本地容器验证：dashboard 8089 200、jwt-auth forwardAuth 生效、traefik v3.0 兼容修复 4 处
 - [x] services.yaml api_gateway status=implemented、deployment_modes=[docker,saas]
 - [ ] 唯一开放：staging 生产部署验证（依赖 staging 环境，本地无法执行）
+
+### mobile 桩修复 ✅（模块化单体剩余服务接入：mobile 最后大桩消除）
+- [x] svc/mobile/src/shared/mod.rs 提炼 build_protected_routes（99 条业务路由）+ build_service_clients（6 客户端统一初始化），main.rs 复用（独立部署行为不变）
+- [x] svc/server/src/modules/mobile_real_module.rs 接入完整路由（原 3 路由简化桩 → 对齐 pm 复用模式），/api/mobile/announcements|oa/stats|workbench|tasks 实测 200 真实查询
+- [x] oa.rs 26 处查询显式 mobile. schema 前缀（嵌入模式 search_path 不含 mobile，无前缀报 relation not exist）
+- [x] database/migrations/20260917000001_mobile_oa_tables.sql：mobile.oa_announcements/readings/meetings/calendar_events/tasks 建表 + RLS（此前建表 DDL 未入迁移体系，容器库重建后缺失）
+- [x] 运行环境治理：PG max_connections 100→300（24 模块 × 多池连接耗尽）；DB_MAX_CONNECTIONS=5 + SEARCH_PATH 启动，全模块注册 0 失败（此前 10+ 模块 pool timeout 降级）
+- [ ] 遗留：approvals 系走 workflow 服务客户端（独立 workflow 服务未运行则 500，属服务间依赖非桩问题）
+- [x] commit：315dcc780 / dd1037231 / migration；push 28e074b80（rebase 后）
