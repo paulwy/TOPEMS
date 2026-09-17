@@ -150,9 +150,16 @@ def detect_running_services() -> list:
             name = None
     if specs:
         print(f"  自动探测到运行中服务: {', '.join(specs)}")
-    else:
-        print("  [warn] --topology auto 未探测到运行中服务（服务需暴露含 topems_ 指标的 /metrics）")
-    return specs
+        return specs
+    # 模块化单体回退：services.yaml 独立端口（8000-18xxx）无独立进程监听时，
+    # 探测 server 聚合端口（8099）——单进程暴露全部模块 /metrics（新双 label 格式
+    # topems_service_to_service_calls_total{service,target} 可还原完整调用边）。
+    for p in (8099, 8100):
+        if probe_metrics(p):
+            print(f"  单体模式探测到聚合服务: topems-server:{p}（services.yaml 独立端口无进程，回退聚合端口）")
+            return [f"topems-server:{p}"]
+    print("  [warn] --topology auto 未探测到运行中服务（服务需暴露含 topems_ 指标的 /metrics）")
+    return []
 
 
 def run_topology_check(specs: str) -> "ThresholdResult":
