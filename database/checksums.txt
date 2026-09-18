@@ -1,5 +1,5 @@
 # TOPEMS database migration checksums (SHA-256 of file contents)
-# regenerated: 2026-09-18 16:00 local
+# regenerated: 2026-09-18
 
 f63fd02a785e07e6b59d1e1dc15171f11deb02ba6e3428b0e0945c34572ce0c4  database/migrations/000_create_schemas.sql
 b74b71d8d1900bb483ce126154f2a045e15c07a9b8b9e3d289399968810ba77b  database/migrations/001_iam.sql
@@ -165,3 +165,4 @@ d84c0436b8a59ef0ded4c52c81cb5477111e02978922f6d73c73b39edafc5f83  database/migra
 7ef8e7f2620427ca18f6d2f347bf3fd48e83ad183514ff799abbb7cfa8b6a873  database/migrations/20260918000017_create_public_approval_tables.sql
 db6af4c2a127806c2b118d1bf42ff566417b0c76d4ea107a201d02a430c0237f  database/migrations/20260918000018_add_approval_records_deleted_at.sql
 b2654ca541f5d36a0287eec5dcef5d9d9047b0e202e8cfc4d7ceea9ae2ec5956  database/migrations/20260918000019_align_5432_module_schemas.sql
+656eec4316303f3224be9a2cb8f49074932646d452222c7ebc36b75c64e1306d  database/migrations/20260918000020_add_gis_maps_columns.sql
