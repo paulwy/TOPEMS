@@ -1,0 +1,3485 @@
+-- 业务表基线迁移：由各服务 schema_defense TABLE_DEFS 自动生成
+-- 目的：让迁移体系在空库上自包含（业务表由运行时 schema_defense 创建，
+--      迁移引用它们但无创建源；此处补齐基线，与运行时行为一致：
+--      建骨架 + 逐列 ADD COLUMN IF NOT EXISTS，天然幂等）
+-- 生成时间：2026-09-18
+
+-- 平台/核心 schema 已由 0/migrate 与 001-013 创建；业务 schema 兜底
+DO $$
+DECLARE
+  s text;
+BEGIN
+  FOREACH s IN ARRAY ARRAY[
+    'ai',
+    'bi',
+    'communication',
+    'core',
+    'crm',
+    'doc',
+    'doc_service',
+    'ehs',
+    'erp',
+    'finance',
+    'flow',
+    'gis',
+    'hrm',
+    'iam',
+    'integration',
+    'lims',
+    'mail',
+    'master_data',
+    'mes',
+    'mobile',
+    'notification',
+    'pdm',
+    'pm',
+    'portal',
+    'public',
+    'qms',
+    'report',
+    'rs',
+    'scm',
+    'srm',
+    'storage',
+    'ticket',
+    'tms',
+    'unified_core',
+    'wms'
+  ]
+  LOOP
+    EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', s);
+  END LOOP;
+END $$;
+
+-- ==================== 自定义枚举类型（来源 finance database.rs 运行时定义） ====================
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_type') THEN
+    CREATE TYPE account_type AS ENUM ('asset', 'liability', 'equity', 'income', 'expense', 'cost');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approval_doc_type') THEN
+    CREATE TYPE approval_doc_type AS ENUM ('voucher', 'consolidation_report', 'financial_statement', 'journal_entry');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approval_status') THEN
+    CREATE TYPE approval_status AS ENUM ('pending', 'approved', 'rejected', 'cancelled');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'aux_type') THEN
+    CREATE TYPE aux_type AS ENUM ('project', 'department', 'customer', 'supplier', 'employee', 'custom1', 'custom2', 'custom3');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'diff_reason') THEN
+    CREATE TYPE diff_reason AS ENUM ('time_diff', 'amount_diff', 'duplicate', 'missing', 'unknown', 'fee', 'exchange_rate');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'item_source') THEN
+    CREATE TYPE item_source AS ENUM ('bank', 'erp');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'match_status') THEN
+    CREATE TYPE match_status AS ENUM ('unmatched', 'matched', 'diff', 'manual');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'period_status') THEN
+    CREATE TYPE period_status AS ENUM ('open', 'closing', 'closed');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reconciliation_status') THEN
+    CREATE TYPE reconciliation_status AS ENUM ('pending', 'processing', 'completed', 'cancelled');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reconciliation_type') THEN
+    CREATE TYPE reconciliation_type AS ENUM ('bank', 'receivable', 'payable');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'voucher_status') THEN
+    CREATE TYPE voucher_status AS ENUM ('draft', 'submitted', 'approved', 'posted', 'rejected', 'cancelled');
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'voucher_type') THEN
+    CREATE TYPE voucher_type AS ENUM ('general', 'payment', 'receipt', 'transfer');
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "bi"."report_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "template_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "template_content" JSONB NOT NULL;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "default_config" JSONB;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN DEFAULT TRUE;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "bi"."report_templates" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+-- ==================== crm ====================
+CREATE TABLE IF NOT EXISTS "crm"."customer_finance" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "customer_id" UUID NOT NULL;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "customer_name" VARCHAR(255) NOT NULL DEFAULT '';
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "credit_limit" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "credit_used" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "credit_available" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "credit_term_days" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "receivable_balance" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "accounts_receivable" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "overdue_amount" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "overdue_receivable" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "avg_collection_days" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "total_sales" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "total_received" NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "last_transaction_date" TIMESTAMPTZ;
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "payment_terms" VARCHAR(100) NOT NULL DEFAULT '';
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "risklevel" VARCHAR(20) NOT NULL DEFAULT 'low';
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "bank_name" VARCHAR(255);
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "bank_account" VARCHAR(255);
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "account_name" VARCHAR(255);
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "tax_number" VARCHAR(100);
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "crm"."customer_finance" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+-- ==================== ehs ====================
+CREATE TABLE IF NOT EXISTS "ehs"."qa_ehs_employees" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "employee_no" VARCHAR(64);
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "name" VARCHAR(128) NOT NULL;
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "email" TEXT;
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "department_id" UUID;
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "department_name" VARCHAR(128);
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "position" VARCHAR(128);
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "ehs"."qa_ehs_employees" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+-- ==================== erp ====================
+CREATE TABLE IF NOT EXISTS "erp"."assets" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL DEFAULT gen_random_uuid();
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "asset_number" VARCHAR(100) NOT NULL;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "category" VARCHAR(100);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "brand" VARCHAR(100);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "model" VARCHAR(100);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "purchase_date" TIMESTAMPTZ;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "purchase_amount" DECIMAL(15,2);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "location" VARCHAR(255);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "responsible_id" UUID;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "status" VARCHAR(50) NOT NULL DEFAULT 'in_use';
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "serial_number" VARCHAR(100);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "manufacturer" VARCHAR(200);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "rated_power" DECIMAL(10,2);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "rated_voltage" DECIMAL(10,2);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "rated_current" DECIMAL(10,2);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "specifications" JSONB;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "image_url" VARCHAR(500);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "department" VARCHAR(100);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "company_id" UUID;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "asset_code" VARCHAR(64);
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "purchase_price" DOUBLE PRECISION DEFAULT 0;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "current_value" DOUBLE PRECISION DEFAULT 0;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "department_id" UUID;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "employee_id" UUID;
+ALTER TABLE "erp"."assets" ADD COLUMN IF NOT EXISTS "description" TEXT;
+
+CREATE TABLE IF NOT EXISTS "erp"."fin_reconciliations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "reconciliation_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "reconciliation_type" VARCHAR(20) NOT NULL;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "period" VARCHAR(20) NOT NULL;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "reference_id" VARCHAR(100);
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "total_amount" DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "reconciled_amount" DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "discrepancy_amount" DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE "erp"."fin_reconciliations" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "erp"."inventory" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "material_id" UUID;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "material_code" VARCHAR(64);
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "material_name" VARCHAR(255) NOT NULL;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "warehouse_name" VARCHAR(255);
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "location_code" VARCHAR(64);
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "quantity" DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "available_quantity" DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "reserved_quantity" DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "unit_price" DOUBLE PRECISION DEFAULT 0;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "total_amount" DOUBLE PRECISION DEFAULT 0;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "batch_no" VARCHAR(64);
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "expire_date" TIMESTAMPTZ;
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) NOT NULL DEFAULT 'active';
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."inventory" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "erp"."leave_requests" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "employee_name" VARCHAR(128) NOT NULL;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "leave_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "start_date" DATE NOT NULL;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "end_date" DATE NOT NULL;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "start_half_day" BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "end_half_day" BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "days" DOUBLE PRECISION NOT NULL;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "reason" TEXT NOT NULL;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "status" VARCHAR(16) NOT NULL DEFAULT 'draft';
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "approved_by" VARCHAR(128);
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "approved_at" TIMESTAMPTZ;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "rejected_reason" TEXT;
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."leave_requests" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "erp"."materials" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50) NOT NULL;
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "name" VARCHAR(200) NOT NULL;
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "specification" VARCHAR(500);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(20) NOT NULL;
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "category" VARCHAR(100);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "brand" VARCHAR(100);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "model" VARCHAR(100);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "barcode" VARCHAR(100);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "safety_stock" DECIMAL(15,2);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "unit_price" DECIMAL(15,4);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "tax_rate" DECIMAL(5,2);
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "erp"."materials" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "erp"."purchase_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "order_no" VARCHAR(100) NOT NULL;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "supplier_name" VARCHAR(255);
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "order_date" DATE NOT NULL;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "delivery_date" DATE;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "status" VARCHAR(50) NOT NULL DEFAULT 'pending';
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "total_amount" DECIMAL(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "tax_amount" DECIMAL(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "discount_amount" DECIMAL(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "payable_amount" DECIMAL(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "erp"."voucher_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL DEFAULT gen_random_uuid();
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "voucher_id" UUID NOT NULL;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "line_number" INTEGER NOT NULL;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "subject_code" VARCHAR(50) NOT NULL;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "subject_name" VARCHAR(200);
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "summary" TEXT;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "debit_amount" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "credit_amount" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "quantity" NUMERIC(15,4);
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(50);
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "price" NUMERIC(15,4);
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "department_id" UUID;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "project_id" UUID;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "contract_id" UUID;
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "erp"."voucher_items" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+-- ==================== finance ====================
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_accounts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "parent_id" UUID;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "account_type" account_type NOT NULL;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "level" INT NOT NULL DEFAULT 1;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "currency" VARCHAR(10) NOT NULL DEFAULT 'CNY';
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "is_enabled" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_approval_workflows" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "doc_type" approval_doc_type NOT NULL;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "doc_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "doc_no" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "status" approval_status NOT NULL DEFAULT 'pending';
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "submitted_by" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "approved_by" VARCHAR(100);
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "approved_at" TIMESTAMP;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "rejected_by" VARCHAR(100);
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "rejected_at" TIMESTAMP;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "rejection_reason" TEXT;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "comment" TEXT;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_approval_workflows" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_aux_accounts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "aux_type" aux_type NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "parent_id" UUID;
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "level" INT NOT NULL DEFAULT 1;
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "is_enabled" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "finance"."core_finance_aux_accounts" ADD COLUMN IF NOT EXISTS "description" TEXT;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_aux_balances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_aux_balances" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_balances" ADD COLUMN IF NOT EXISTS "account_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_balances" ADD COLUMN IF NOT EXISTS "aux_type" aux_type NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_balances" ADD COLUMN IF NOT EXISTS "aux_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_balances" ADD COLUMN IF NOT EXISTS "period" VARCHAR(6) NOT NULL;
+ALTER TABLE "finance"."core_finance_aux_balances" ADD COLUMN IF NOT EXISTS "debit_balance" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_aux_balances" ADD COLUMN IF NOT EXISTS "credit_balance" NUMERIC(18,4) NOT NULL DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_ledger" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "account_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "account_code" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "account_name" VARCHAR(255) NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "voucher_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "voucher_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "voucher_date" TIMESTAMP NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "period" VARCHAR(6) NOT NULL;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "debit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "credit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "balance" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_ledger" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_periods" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "year" INT NOT NULL;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "month" INT NOT NULL;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "period_name" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "status" period_status NOT NULL DEFAULT 'open';
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMP NOT NULL;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMP NOT NULL;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "closed_at" TIMESTAMP;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "closed_by" VARCHAR(100);
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_periods" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_reconciliation_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "session_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "source_type" item_source NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "transaction_date" DATE NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "amount" NUMERIC(18,4) NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "direction" VARCHAR(10) NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "counterparty_name" VARCHAR(255);
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "counterparty_account" VARCHAR(100);
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "reference_no" VARCHAR(100);
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "match_status" match_status NOT NULL DEFAULT 'unmatched';
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "matched_item_id" UUID;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "diff_reason" diff_reason;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "diff_amount" NUMERIC(18,4);
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_reconciliation_items" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_reconciliation_sessions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "session_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "reco_type" reconciliation_type NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "period_start" DATE NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "period_end" DATE NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "bank_account_id" UUID;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "entity_id" UUID;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "status" reconciliation_status NOT NULL DEFAULT 'pending';
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "total_items" INT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "matched_items" INT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "unmatched_items" INT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "diff_items" INT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_reconciliation_sessions" ADD COLUMN IF NOT EXISTS "completed_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_voucher_lines" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "voucher_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "line_no" INT NOT NULL;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "account_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "account_code" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "account_name" VARCHAR(255) NOT NULL;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "debit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "credit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "project_id" UUID;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "department_id" UUID;
+ALTER TABLE "finance"."core_finance_voucher_lines" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_vouchers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "voucher_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "voucher_date" TIMESTAMP NOT NULL;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "period" VARCHAR(6) NOT NULL;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "voucher_type" voucher_type NOT NULL;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "total_debit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "total_credit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "status" voucher_status NOT NULL DEFAULT 'draft';
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "approved_by" VARCHAR(100);
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "posted_by" VARCHAR(100);
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "finance"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."difference_adjustments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "source_type" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "source_id" UUID NOT NULL;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "difference_type" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "difference_amount" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "reason" VARCHAR(255) NOT NULL;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "adjustment_amount" NUMERIC(15, 2);
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "adjustment_type" VARCHAR(20);
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "approved_by" UUID;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "approved_at" TIMESTAMPTZ;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "created_by" UUID NOT NULL;
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "finance"."difference_adjustments" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "finance"."finance_compliance_reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "report_type" VARCHAR(30) NOT NULL;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "period_start" TIMESTAMPTZ NOT NULL;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "period_end" TIMESTAMPTZ NOT NULL;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "generated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "controls_checked" BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "issues_found" BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "risk_assessments" JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "executive_summary" TEXT NOT NULL;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "recommendations" JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE "finance"."finance_compliance_reports" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100) NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "finance"."finance_control_matrices" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "name" VARCHAR(200) NOT NULL;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "period" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "controls" JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "total_controls" BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "effective_controls" BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "compliance_rate" DOUBLE PRECISION NOT NULL DEFAULT 0.0;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."finance_control_matrices" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "finance"."finance_control_points" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50) NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "name" VARCHAR(200) NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "description" TEXT NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "category" VARCHAR(30) NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "risk_level" VARCHAR(30) NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "control_type" VARCHAR(30) NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "frequency" VARCHAR(30) NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "finance"."finance_control_points" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "finance"."finance_risk_assessments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "control_point_id" UUID NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "likelihood" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "impact" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "risk_score" INT NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "risk_level" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "mitigation_strategy" TEXT NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "residual_risk" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "assessed_by" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "finance"."finance_risk_assessments" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "finance"."reconciliation_settlement_links" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "reconciliation_id" UUID NOT NULL;
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "settlement_id" UUID NOT NULL;
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "link_type" VARCHAR(20) NOT NULL;
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "amount" NUMERIC(15, 2);
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'linked';
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "created_by" UUID NOT NULL;
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "finance"."reconciliation_settlement_links" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "finance"."settlement_center_dashboards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "finance"."settlement_center_dashboards" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "finance"."settlement_center_dashboards" ADD COLUMN IF NOT EXISTS "name" VARCHAR(100) NOT NULL;
+ALTER TABLE "finance"."settlement_center_dashboards" ADD COLUMN IF NOT EXISTS "config" JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE "finance"."settlement_center_dashboards" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE "finance"."settlement_center_dashboards" ADD COLUMN IF NOT EXISTS "created_by" UUID NOT NULL;
+ALTER TABLE "finance"."settlement_center_dashboards" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "finance"."settlement_center_dashboards" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+
+-- core_finance_accounts public 副本（供无前缀迁移引用；20260831 归档至 _archive）
+CREATE TABLE IF NOT EXISTS "public"."core_finance_accounts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50) NOT NULL;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "parent_id" UUID;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "account_type" account_type NOT NULL;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "level" INT NOT NULL DEFAULT 1;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "currency" VARCHAR(10) NOT NULL DEFAULT 'CNY';
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "is_enabled" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "public"."core_finance_accounts" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- core_finance_vouchers public 副本（供无前缀迁移引用；20260831 归档至 _archive）
+CREATE TABLE IF NOT EXISTS "public"."core_finance_vouchers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "voucher_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "voucher_date" TIMESTAMP NOT NULL;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "period" VARCHAR(6) NOT NULL;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "voucher_type" voucher_type NOT NULL;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "total_debit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "total_credit" NUMERIC(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "status" voucher_status NOT NULL DEFAULT 'draft';
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100) NOT NULL;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "approved_by" VARCHAR(100);
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "posted_by" VARCHAR(100);
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "public"."core_finance_vouchers" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+-- ==================== hrm ====================
+CREATE TABLE IF NOT EXISTS "hrm"."attendance_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "date" DATE NOT NULL;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "check_in_time" TIME;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "check_out_time" TIME;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "check_in_location" VARCHAR(255);
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "check_out_location" VARCHAR(255);
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'normal';
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "work_hours" NUMERIC(5, 2);
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "overtime_hours" NUMERIC(5, 2);
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."attendance_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "user_id" VARCHAR(255);
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "action" VARCHAR(100) NOT NULL;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "entity_type" VARCHAR(100) NOT NULL;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "entity_id" UUID;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "entity_ids" JSONB;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "user_name" VARCHAR(255);
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "request_details" JSONB;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "response_details" JSONB;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "status" VARCHAR(50) NOT NULL DEFAULT 'success';
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "error_message" TEXT;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "ip_address" INET;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "user_agent" TEXT;
+ALTER TABLE "hrm"."audit_logs" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "hrm"."candidates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "email" VARCHAR(128);
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "phone" VARCHAR(64);
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "position_id" UUID;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "job_opening_id" UUID;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "resume_path" TEXT;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "source" VARCHAR(100);
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'new';
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."candidates" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."companies" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "short_name" VARCHAR(100);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "registration_number" VARCHAR(100);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "tax_number" VARCHAR(100);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "address" TEXT;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "contact_phone" VARCHAR(50);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "contact_email" VARCHAR(100);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "website" VARCHAR(255);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "legal_person" VARCHAR(100);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "industry" VARCHAR(100);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "registered_capital" NUMERIC(18, 2);
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "established_date" DATE;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."companies" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."contract_renewals" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "contract_id" UUID NOT NULL;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "previous_contract_id" UUID;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "renewal_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "renew_reason" TEXT;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "renewal_reason" TEXT;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "new_start_date" DATE NOT NULL;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "new_end_date" DATE;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "new_salary" NUMERIC(15, 2);
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "approver_id" UUID;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "approved_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "rejection_reason" TEXT;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "executed_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."contract_renewals" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."contracts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "contract_no" VARCHAR(100);
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "contract_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "party_a_name" VARCHAR(255);
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "party_a_contact" VARCHAR(255);
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "party_b_name" VARCHAR(255);
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "party_b_contact" VARCHAR(255);
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "start_date" DATE NOT NULL;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "end_date" DATE;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "salary" NUMERIC(15, 2);
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "probation_period_days" INTEGER;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "contract_file_path" TEXT;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "reminder_days" INTEGER DEFAULT 30;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."contracts" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."departments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "company_id" UUID;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50);
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "parent_id" UUID;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "manager_id" UUID;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."departments" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."employees" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "org_id" UUID;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "company_id" UUID;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "department_id" UUID;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "position_id" UUID;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "employee_number" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "gender" VARCHAR(20);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "birth_date" DATE;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "hire_date" DATE;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "regular_date" DATE;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "probation_period" INTEGER;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "leave_date" DATE;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "id_card_number" TEXT;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "job_title" VARCHAR(255);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "position" VARCHAR(255);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "joblevel" VARCHAR(50);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "work_location" VARCHAR(255);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "report_to_name" VARCHAR(255);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "email" TEXT;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "emergency_contact_name" VARCHAR(255);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "emergency_contact_phone" VARCHAR(50);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "emergency_relation" VARCHAR(50);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "hukou_location" VARCHAR(255);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "address" TEXT;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "education" VARCHAR(50);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "marital_status" VARCHAR(20);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "nationality" VARCHAR(50);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "bank_account" VARCHAR(100);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "bank_name" VARCHAR(100);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "employee_type" VARCHAR(50);
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "user_id" UUID;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."employees" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."initialization_status" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."initialization_status" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."initialization_status" ADD COLUMN IF NOT EXISTS "step_name" VARCHAR(100) NOT NULL;
+ALTER TABLE "hrm"."initialization_status" ADD COLUMN IF NOT EXISTS "step_order" INTEGER NOT NULL;
+ALTER TABLE "hrm"."initialization_status" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."initialization_status" ADD COLUMN IF NOT EXISTS "completed_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."initialization_status" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."initialization_status" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "hrm"."interviews" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "candidate_id" UUID NOT NULL;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "interviewer_id" UUID;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "round" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "scheduled_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "actual_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "duration_minutes" INTEGER NOT NULL DEFAULT 30;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'scheduled';
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "result" VARCHAR(50);
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "score" NUMERIC(5, 2);
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."interviews" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."job_openings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "code" VARCHAR(128);
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "department_id" UUID;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "position_id" UUID;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "employment_type" VARCHAR(50);
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "location" VARCHAR(255);
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "requirements" TEXT;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "salary_min" NUMERIC(15, 2);
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "salary_max" NUMERIC(15, 2);
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "publish_date" TIMESTAMPTZ;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "close_date" TIMESTAMPTZ;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."job_openings" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."leave_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "leave_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "start_date" DATE NOT NULL;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "end_date" DATE NOT NULL;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "days" NUMERIC(5, 2) NOT NULL;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "reason" TEXT;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "approver_id" UUID;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "approval_status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "approval_date" DATE;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "rejection_reason" TEXT;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."leave_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."payroll_details" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "payroll_item_id" UUID NOT NULL;
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "item_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "category" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "description" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "amount" NUMERIC(15, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."payroll_details" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."payroll_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "payroll_run_id" UUID NOT NULL;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "gross_amount" NUMERIC(15, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "net_amount" NUMERIC(15, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "deductions" NUMERIC(15, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "taxes" NUMERIC(15, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "bank_account" VARCHAR(50);
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "paid_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."payroll_items" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."payroll_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "period_year" INTEGER NOT NULL;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "period_month" INTEGER NOT NULL;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "base_salary" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "bonus" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "allowance" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "overtime_pay" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "deduction" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "tax" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "insurance" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "net_salary" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "payment_date" DATE;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "payment_method" VARCHAR(50);
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."payroll_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."payroll_runs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "pay_period" VARCHAR(20) NOT NULL;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "total_amount" NUMERIC(15, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "employee_count" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "paid_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."payroll_runs" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."performance_goals" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "target" VARCHAR(255);
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "weight" NUMERIC(5, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "achieved" NUMERIC(5, 2);
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "due_date" TIMESTAMPTZ;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."performance_goals" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."performance_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "period_year" INTEGER NOT NULL;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "period_month" INTEGER;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "period_quarter" INTEGER;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "performance_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "score" NUMERIC(5, 2);
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "level" VARCHAR(50);
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "goals" TEXT;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "achievements" TEXT;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "strengths" TEXT;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "weaknesses" TEXT;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "improvement_plan" TEXT;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "reviewer_id" UUID;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "review_date" DATE;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."performance_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."performance_reviews" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "review_period" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "reviewer_id" UUID;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "overall_rating" NUMERIC(5, 2);
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "self_rating" NUMERIC(5, 2);
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "manager_rating" NUMERIC(5, 2);
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "final_rating" NUMERIC(5, 2);
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "comments" TEXT;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."performance_reviews" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."positions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "company_id" UUID;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "department_id" UUID;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50);
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "level" INTEGER DEFAULT 1;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "responsibilities" TEXT;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "requirements" TEXT;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "salary_range_min" NUMERIC(15, 2);
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "salary_range_max" NUMERIC(15, 2);
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."positions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."recruitment_applications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "recruitment_id" UUID NOT NULL;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "applicant_name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "applicant_email" VARCHAR(100);
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "applicant_phone" VARCHAR(50);
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "resume_file_path" TEXT;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "education" VARCHAR(255);
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "work_experience" TEXT;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "expected_salary" NUMERIC(15, 2);
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "application_date" DATE NOT NULL;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "interview_date" DATE;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "interview_result" VARCHAR(50);
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "offer_status" VARCHAR(50);
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'submitted';
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."recruitment_applications" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."recruitment_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "position_id" UUID;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "requirements" TEXT;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "salary_range_min" NUMERIC(15, 2);
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "salary_range_max" NUMERIC(15, 2);
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "location" VARCHAR(255);
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "recruitment_type" VARCHAR(50);
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "publish_date" DATE;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "deadline" DATE;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "vacancies" INTEGER DEFAULT 1;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."recruitment_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."salary_adjustments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "adjustment_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "previous_salary" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "new_salary" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "adjustment_amount" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "adjustment_percentage" NUMERIC(5, 2);
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "effective_date" DATE NOT NULL;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "reason" TEXT;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "approver_id" UUID;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "approval_status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "approval_date" DATE;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "rejection_reason" TEXT;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."salary_adjustments" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."training_courses" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "plan_id" UUID;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "code" VARCHAR(128);
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "category" VARCHAR(64) NOT NULL DEFAULT 'other';
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "level" VARCHAR(64) NOT NULL DEFAULT 'beginner';
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "duration_hours" NUMERIC(8, 2);
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "instructor_id" UUID;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "instructor_name" VARCHAR(255);
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "location" VARCHAR(255);
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "max_participants" INTEGER;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."training_courses" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."training_participants" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "training_id" UUID NOT NULL;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "employee_id" UUID NOT NULL;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "completion_status" VARCHAR(20);
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "score" NUMERIC(5, 2);
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "certificate_no" VARCHAR(100);
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "certificate_file_path" TEXT;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."training_participants" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "hrm"."training_plans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "name" VARCHAR(255) NOT NULL;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "code" VARCHAR(128);
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMPTZ;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMPTZ;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "budget" NUMERIC(15, 2);
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."training_plans" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "hrm"."training_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "organization_id" UUID;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "training_name" VARCHAR(255);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "training_type" VARCHAR(50);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "training_category" VARCHAR(50);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "instructor" VARCHAR(255);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "start_date" DATE;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "end_date" DATE;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "duration_hours" NUMERIC(5, 2);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "location" VARCHAR(255);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "cost" NUMERIC(15, 2);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "max_participants" INTEGER;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'planned';
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "course_id" UUID;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "employee_id" UUID;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "enrollment_date" TIMESTAMPTZ;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "attendance_status" VARCHAR(30);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "completion_status" VARCHAR(30);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "certificate_no" VARCHAR(100);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "completed_at" TIMESTAMPTZ;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "feedback" TEXT;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "score" NUMERIC(5, 2);
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "hrm"."training_records" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+-- ==================== integration ====================
+CREATE TABLE IF NOT EXISTS "integration"."conversion_executions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "rule_id" UUID NOT NULL;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "rule_code" VARCHAR(64) NOT NULL;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "source_record_id" VARCHAR(128) NOT NULL;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "target_record_id" VARCHAR(128);
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "source_data" JSONB;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "target_data" JSONB;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) NOT NULL DEFAULT 'pending';
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "retry_count" INT NOT NULL DEFAULT 0;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "error_message" TEXT;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "started_at" TIMESTAMP;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "completed_at" TIMESTAMP;
+ALTER TABLE "integration"."conversion_executions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "integration"."conversion_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "code" VARCHAR(64) NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "name" VARCHAR(128) NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "source_system" VARCHAR(32) NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "source_entity" VARCHAR(64) NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "target_system" VARCHAR(32) NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "target_entity" VARCHAR(64) NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "trigger_type" VARCHAR(32) NOT NULL DEFAULT 'event';
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "trigger_condition" JSONB;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "field_mappings" JSONB NOT NULL;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "transform_script" TEXT;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) NOT NULL DEFAULT 'draft';
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "priority" INTEGER NOT NULL DEFAULT 100;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "is_enabled" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "max_retries" INTEGER NOT NULL DEFAULT 3;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "retry_interval_secs" INTEGER NOT NULL DEFAULT 60;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "stop_on_failure" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP NOT NULL DEFAULT NOW();
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP NOT NULL DEFAULT NOW();
+ALTER TABLE "integration"."conversion_rules" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+-- ==================== lims ====================
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_calibration_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "instrument_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "instrument_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "instrument_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "calibrated_by" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "calibration_date" TIMESTAMP NOT NULL;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "next_calibration_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "calibration_result" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "parameters" JSONB;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "certificate_no" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_calibration_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_inspection_reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "report_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "sample_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "sample_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "sample_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "inspection_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "inspector" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "inspection_items" JSONB;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "conclusion" VARCHAR(32);
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_inspection_reports" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_instruments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "instrument_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "model" VARCHAR(128);
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "manufacturer" VARCHAR(128);
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'normal';
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "location" VARCHAR(128);
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "last_calibration_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "next_calibration_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_instruments" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_processes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "process_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "steps" JSONB;
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_processes" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_reagent_alerts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "reagent_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "reagent_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "reagent_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "alert_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "current_value" DECIMAL(12,2);
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "threshold_value" DECIMAL(12,2);
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "message" TEXT NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "is_resolved" BOOLEAN DEFAULT FALSE;
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_reagent_alerts" ADD COLUMN IF NOT EXISTS "resolved_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_reagent_history" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_reagent_history" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_reagent_history" ADD COLUMN IF NOT EXISTS "reagent_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_history" ADD COLUMN IF NOT EXISTS "adjustment_type" VARCHAR(16) NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_history" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(12,2) NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagent_history" ADD COLUMN IF NOT EXISTS "reason" TEXT;
+ALTER TABLE "lims"."qa_lab_reagent_history" ADD COLUMN IF NOT EXISTS "operator" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_reagent_history" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_reagents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "reagent_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "specification" VARCHAR(128);
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "manufacturer" VARCHAR(128);
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "batch_no" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(12,2);
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'normal';
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "expired_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_reagents" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "record_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "task_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "test_data" JSONB NOT NULL;
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "conclusion" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "recorded_by" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "recorded_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_records" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_sample_lifecycle" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "sample_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "sample_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "lifecycle_stage" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "stage_description" TEXT;
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "operator" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "location" VARCHAR(128);
+ALTER TABLE "lims"."qa_lab_sample_lifecycle" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_samples" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "sample_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "sample_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "sample_type" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "source" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(12,2);
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'received';
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "received_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "expired_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_samples" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lab_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "task_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "sample_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "sample_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "test_items" JSONB NOT NULL;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "assigned_to" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "instrument_id" UUID;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "planned_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "actual_start_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "actual_end_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "result" JSONB;
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "conclusion" VARCHAR(500);
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "recorded_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lab_tasks" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "action" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "entity_type" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "entity_id" UUID;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "entity_ids" JSONB;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "user_id" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "user_name" VARCHAR(128);
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "request_details" JSONB;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "response_details" JSONB;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'success';
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "error_message" TEXT;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "ip_address" VARCHAR(128);
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "user_agent" TEXT;
+ALTER TABLE "lims"."qa_lims_audit_logs" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_barcode_scan_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "barcode_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "barcode" VARCHAR(128) NOT NULL;
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "scan_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "sample_id" UUID;
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "sample_no" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "operator" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "location" VARCHAR(128);
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lims_barcode_scan_records" ADD COLUMN IF NOT EXISTS "scanned_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_collection_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "task_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "task_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "instrument_id" UUID;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "protocol" VARCHAR(32) NOT NULL DEFAULT 'JSON';
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "collection_mode" VARCHAR(32) DEFAULT 'manual';
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "cron_expression" VARCHAR(128);
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "interval_minutes" INTEGER;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "parse_rule_id" UUID;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "last_run_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "next_run_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "total_collections" BIGINT DEFAULT 0;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "success_count" BIGINT DEFAULT 0;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "failed_count" BIGINT DEFAULT 0;
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_collection_tasks" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_instrument_data" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "data_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "instrument_id" UUID;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "batch_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "protocol" VARCHAR(32) NOT NULL DEFAULT 'JSON';
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "raw_data" JSONB;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "parsed_data" JSONB;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "quality_score" DECIMAL(5,2);
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "error_msg" TEXT;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "collected_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "parsed_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_instrument_data" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_method_categories" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "category_code" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "category_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "parent_id" UUID;
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "sort_order" INTEGER DEFAULT 0;
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_method_categories" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_method_validations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "method_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "method_code" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "method_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "version" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "validation_type" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "validation_date" TIMESTAMP NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "validated_by" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "conclusion" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "parameters" JSONB;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "report_url" VARCHAR(512);
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'completed';
+ALTER TABLE "lims"."qa_lims_method_validations" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_method_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "method_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "version" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "version_description" TEXT;
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "change_log" TEXT;
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "is_current" BOOLEAN DEFAULT FALSE;
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_method_versions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_parse_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "rule_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "rule_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "protocol" VARCHAR(32) NOT NULL DEFAULT 'JSON';
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "instrument_type" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "parse_config" JSONB;
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "quality_rules" JSONB;
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "version" VARCHAR(32) DEFAULT '1.0';
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_parse_rules" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_pt_corrective_actions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "plan_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "plan_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "evaluation_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "unsatisfactory_item" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "root_cause" TEXT;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "corrective_measures" TEXT;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "responsible_person" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "deadline" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "verification_result" TEXT;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "verified_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "verified_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_pt_corrective_actions" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_pt_evaluations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "plan_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "plan_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "sample_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "sample_code" VARCHAR(128) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "test_item" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "test_result" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "assigned_value" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "standard_deviation" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "z_score" DECIMAL(10,4);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "en_score" DECIMAL(10,4);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "measurement_uncertainty" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "reference_uncertainty" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "evaluation_method" VARCHAR(32);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "evaluation_result" VARCHAR(32);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "evaluated_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "evaluated_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lims_pt_evaluations" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_pt_plans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "plan_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "plan_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "provider" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "test_item" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "test_method" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "plan_year" VARCHAR(16);
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "sample_type" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "expected_result" JSONB;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "registration_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "test_deadline" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "report_deadline" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'planning';
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "contact_person" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "contact_phone" VARCHAR(32);
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_pt_plans" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_pt_results" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "plan_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "plan_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "sample_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "sample_code" VARCHAR(128) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "test_item" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "test_result" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "result_unit" VARCHAR(32);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "test_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "tested_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "instrument" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "test_method" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "replicate_results" JSONB;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "mean_value" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "standard_deviation" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "coefficient_variation" DECIMAL(10,4);
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "submitted_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_pt_results" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_pt_samples" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "plan_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "plan_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "plan_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "sample_code" VARCHAR(128) NOT NULL;
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "sample_name" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "received_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "received_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "storage_condition" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "sample_status" VARCHAR(32) DEFAULT 'received';
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lims_pt_samples" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_rfid_tags" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "tag_id" VARCHAR(128) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "tag_type" VARCHAR(32) DEFAULT 'uhf';
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "sample_id" UUID;
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "sample_no" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'unused';
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "assigned_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "last_read_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_rfid_tags" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_sample_barcodes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "barcode" VARCHAR(128) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "barcode_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "sample_id" UUID;
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "sample_no" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "rfid_tag" VARCHAR(128);
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "print_count" INTEGER DEFAULT 0;
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "generated_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "generated_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "last_printed_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_sample_barcodes" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_sync_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "sync_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "sync_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "source_id" UUID;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "target_service" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "target_id" UUID;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "payload" JSONB;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "response" JSONB;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "error_msg" TEXT;
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_sync_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_test_methods" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "method_code" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "method_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "category_id" UUID;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "standard" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "version" VARCHAR(32) DEFAULT '1.0';
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "principle" TEXT;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "instruments" JSONB;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "reagents" JSONB;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "parameters" JSONB;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "steps" JSONB;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "calculation_formula" TEXT;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "uncertainty_ref" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "validated" BOOLEAN DEFAULT FALSE;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "validated_at" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "validated_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_test_methods" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_uncertainty_components" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "project_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "source_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "component_type" VARCHAR(16) NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "component_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "standard_uncertainty" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "relative_uncertainty" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "sensitivity_coefficient" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "degrees_freedom" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "calculation_method" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "parameters" JSONB;
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_uncertainty_components" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_uncertainty_projects" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "project_no" VARCHAR(64) NOT NULL UNIQUE;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "project_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "method_id" UUID;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "method_name" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "test_item" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "measurand" VARCHAR(256);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "measurement_range" VARCHAR(128);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "evaluator" VARCHAR(64);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "evaluation_date" TIMESTAMP;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "combined_uncertainty" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "expanded_uncertainty" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "coverage_factor" DECIMAL(10,4) DEFAULT 2.0;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "confidence_level" DECIMAL(10,4) DEFAULT 95.0;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_uncertainty_projects" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "lims"."qa_lims_uncertainty_sources" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "project_id" UUID NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "source_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "source_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "distribution_type" VARCHAR(32);
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "sensitivity_coefficient" DECIMAL(18,6);
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "sort_order" INTEGER DEFAULT 0;
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "lims"."qa_lims_uncertainty_sources" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+-- ==================== mes ====================
+CREATE TABLE IF NOT EXISTS "mes"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "action" VARCHAR(128) NOT NULL;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "entity_type" VARCHAR(64) NOT NULL;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "entity_id" UUID;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "entity_ids" JSONB;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "user_id" UUID;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "user_name" VARCHAR(256);
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "request_details" JSONB;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "response_details" JSONB;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) NOT NULL DEFAULT 'success';
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "error_message" TEXT;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "ip_address" VARCHAR(64);
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "user_agent" TEXT;
+ALTER TABLE "mes"."audit_logs" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+-- ==================== mobile ====================
+CREATE TABLE IF NOT EXISTS "mobile"."core_mobile_offline_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "user_id" UUID NOT NULL;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "module" VARCHAR(64) NOT NULL;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "action" VARCHAR(64) NOT NULL;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "data" JSONB NOT NULL;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "retry_count" INTEGER DEFAULT 0;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "max_retries" INTEGER DEFAULT 3;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "error_message" TEXT;
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "mobile"."core_mobile_offline_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "mobile"."mobile_attendance" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "user_id" VARCHAR(100) NOT NULL;
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "date" VARCHAR(20) NOT NULL;
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_in_time" VARCHAR(20);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_out_time" VARCHAR(20);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_in_lat" DECIMAL(10,6);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_in_lng" DECIMAL(10,6);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_in_address" VARCHAR(500);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_out_lat" DECIMAL(10,6);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_out_lng" DECIMAL(10,6);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "check_out_address" VARCHAR(500);
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'not_checked_in';
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "mobile"."mobile_attendance" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "mobile"."mobile_leave_applications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "user_id" VARCHAR(100) NOT NULL;
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "leave_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "start_date" VARCHAR(20) NOT NULL;
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "end_date" VARCHAR(20) NOT NULL;
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "duration_days" DECIMAL(5,2) NOT NULL;
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "reason" TEXT;
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "approved_by" VARCHAR(100);
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "approved_at" TIMESTAMPTZ;
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "mobile"."mobile_leave_applications" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "mobile"."mobile_push_notifications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "notification_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "title" VARCHAR(200) NOT NULL;
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "content" TEXT;
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(20) NOT NULL DEFAULT 'normal';
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "source_type" VARCHAR(50);
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "source_id" UUID;
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "target_user" VARCHAR(100) NOT NULL DEFAULT 'all';
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "push_time" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "mobile"."mobile_push_notifications" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "mobile"."push_notifications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "title" VARCHAR NOT NULL;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "body" TEXT NOT NULL;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "notification_type" VARCHAR NOT NULL DEFAULT 'info';
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "data" JSONB;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "target_type" VARCHAR NOT NULL;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "target_ids" TEXT[] NOT NULL;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "status" VARCHAR NOT NULL DEFAULT 'pending';
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "sent_count" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "delivered_count" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "clicked_count" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "sent_at" TIMESTAMPTZ;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "mobile"."push_notifications" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+-- ==================== pdm ====================
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_bom_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "bom_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "material_id" UUID;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "material_code" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "material_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "specification" VARCHAR(256);
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "loss_rate" DECIMAL(8,4) DEFAULT 0;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "sequence" INTEGER DEFAULT 0;
+ALTER TABLE "pdm"."pdm_bom_items" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_boms" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "bom_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "product_id" UUID;
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "product_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "product_code" VARCHAR(64);
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "version" VARCHAR(32) DEFAULT '1.0';
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_boms" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_change_notices" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "ecn_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "change_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "affected_items" JSONB;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "reason" TEXT;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(32) DEFAULT 'normal';
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "initiator" VARCHAR(128) NOT NULL;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "approver" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "approved_at" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "effective_date" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_change_notices" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_configurations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "config_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "product_id" UUID;
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "config_items" JSONB DEFAULT '[]';
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_configurations" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_document_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "document_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "document_type" VARCHAR(64);
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "version_number" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "file_url" VARCHAR(1000);
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "filesize" BIGINT;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "file_type" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "changes" TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(128) NOT NULL DEFAULT 'system';
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "created_by_name" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "reviewed_by" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "approved_by" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "published_at" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "file_content" BYTEA;
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_document_versions" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "document_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "document_type" VARCHAR(64);
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "file_path" VARCHAR(500);
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "file_size" BIGINT;
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "version" VARCHAR(32) DEFAULT '1.0';
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_documents" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_materials" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "material_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "spec" VARCHAR(256);
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_materials" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_production_batches" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "batch_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "product_id" UUID;
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "product_name" VARCHAR(256);
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(18,4);
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_production_batches" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_production_formulas" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "formula_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "product_id" UUID;
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "formula_items" JSONB DEFAULT '[]';
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_production_formulas" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_production_processes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "process_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "process_type" VARCHAR(64);
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "standard_time" DECIMAL(10,2);
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(32);
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_production_processes" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_production_steps" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "process_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "step_no" INTEGER NOT NULL;
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "standard_time" DECIMAL(10,2);
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "equipment_requirement" VARCHAR(256);
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "quality_check" VARCHAR(256);
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_production_steps" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_products" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "product_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "version" VARCHAR(32);
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_products" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_project_members" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "project_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "user_id" VARCHAR(128) NOT NULL;
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "user_name" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "user_email" VARCHAR(256);
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "role" VARCHAR(32) NOT NULL;
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "joined_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_project_members" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_project_phases" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "project_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "phase" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "deliverables" TEXT[] DEFAULT '{}';
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_project_phases" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_projects" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "project_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'planning';
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "phase" VARCHAR(32) DEFAULT 'initiation';
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMP;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "manager_id" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "manager_name" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "budget" DOUBLE PRECISION;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "progress" INTEGER DEFAULT 0;
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_projects" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "version_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "target_type" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "target_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "target_name" VARCHAR(256);
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "version_label" VARCHAR(32) NOT NULL;
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(128);
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_versions" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_workflow_instances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "workflow_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "workflow_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "target_type" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "target_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "current_step" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'running';
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "assignees" JSONB DEFAULT '[]';
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "history" JSONB DEFAULT '[]';
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(128) NOT NULL;
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_workflow_instances" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_workflows" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "workflow_type" VARCHAR(64) NOT NULL;
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "steps" JSONB NOT NULL;
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "conditions" JSONB DEFAULT '{}';
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(128) NOT NULL;
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "pdm"."pdm_workflows" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+
+-- ==================== pm ====================
+CREATE TABLE IF NOT EXISTS "pm"."pm_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "project_id" UUID NOT NULL;
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "task_number" VARCHAR(50);
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "title" VARCHAR(200) NOT NULL;
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'todo';
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(20) NOT NULL DEFAULT 'medium';
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "assignee" VARCHAR(100);
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "progress" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100);
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."pm_tasks" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "pm"."project_milestones" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "project_id" UUID NOT NULL;
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "phase_id" UUID;
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "name" VARCHAR(100) NOT NULL;
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "due_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "completed_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "pm"."project_milestones" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "pm"."project_phases" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "project_id" UUID NOT NULL;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "name" VARCHAR(100) NOT NULL;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "progress" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "sort_order" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "pm"."project_phases" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "pm"."projects" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "name" VARCHAR(200) NOT NULL;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "code" VARCHAR(50) NOT NULL;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "project_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "leader" VARCHAR(100);
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMPTZ;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "budget" NUMERIC(15,2);
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "progress" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "project_config" JSONB;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "benefit_target" JSONB;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "risk_level" VARCHAR(20);
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "priority" INTEGER;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "tags" JSONB;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "parent_id" UUID;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "workspace_id" UUID;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100);
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "pm"."projects" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+
+-- ==================== qms ====================
+CREATE TABLE IF NOT EXISTS "qms"."qa_audit_findings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "finding_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "task_id" UUID;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "plan_id" UUID;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "severity" VARCHAR(32) DEFAULT 'minor';
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "category" VARCHAR(64);
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'open';
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "recommendation" TEXT;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "responsible" VARCHAR(64);
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "target_date" TIMESTAMP;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "verified_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_audit_findings" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_audit_plans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "plan_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "audit_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "scope" TEXT;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "standard_id" UUID;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "scheduled_start" TIMESTAMP;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "scheduled_end" TIMESTAMP;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "actual_start" TIMESTAMP;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "actual_end" TIMESTAMP;
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_audit_plans" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_audit_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "task_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "plan_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "auditor" VARCHAR(64);
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "completed_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "finding_count" INTEGER DEFAULT 0;
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_audit_tasks" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_corrective_action_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "action_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "item_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "responsible" VARCHAR(64);
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "due_date" TIMESTAMP;
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "completed_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_corrective_action_items" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_corrective_actions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "action_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "issue_id" UUID;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "root_cause" TEXT;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "action_type" VARCHAR(32);
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(32) DEFAULT 'medium';
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "assignee" VARCHAR(64);
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "target_date" TIMESTAMP;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "completed_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_corrective_actions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_eightd_audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_eightd_audit_logs" ADD COLUMN IF NOT EXISTS "report_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_eightd_audit_logs" ADD COLUMN IF NOT EXISTS "action" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_eightd_audit_logs" ADD COLUMN IF NOT EXISTS "step" VARCHAR(8);
+ALTER TABLE "qms"."qa_eightd_audit_logs" ADD COLUMN IF NOT EXISTS "operator" VARCHAR(64);
+ALTER TABLE "qms"."qa_eightd_audit_logs" ADD COLUMN IF NOT EXISTS "comment" TEXT;
+ALTER TABLE "qms"."qa_eightd_audit_logs" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_eightd_audit_logs" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_eightd_reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "report_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'new';
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "severity" VARCHAR(32);
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(32);
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "related_issue_id" UUID;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d1_team" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d1_leader" VARCHAR(64);
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d2_problem_description" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d3_containment_action" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d3_implemented_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d4_root_cause" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d4_cause_analysis" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d5_permanent_action" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d6_verification_result" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d6_verified_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d7_preventive_action" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d8_congratulations" TEXT;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "d8_closed_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "assignee" VARCHAR(64);
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "due_date" TIMESTAMP;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_eightd_reports" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_fmea_analyses" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "fmea_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "fmea_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "product_id" UUID;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "product_name" VARCHAR(256);
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "process_id" UUID;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "process_name" VARCHAR(256);
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "scope" TEXT;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'draft';
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "revision" VARCHAR(16);
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "team" TEXT;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "leader" VARCHAR(64);
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_fmea_analyses" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_fmea_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "fmea_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "component" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "function" VARCHAR(256);
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "failure_mode" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "failure_effect" TEXT;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "failure_cause" TEXT;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "severity" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "occurrence" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "detection" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "rpn" INTEGER;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "current_controls" TEXT;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "recommended_actions" TEXT;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "responsible" VARCHAR(64);
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "target_date" TIMESTAMP;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "action_status" VARCHAR(32) DEFAULT 'open';
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "revised_severity" INTEGER;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "revised_occurrence" INTEGER;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "revised_detection" INTEGER;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "revised_rpn" INTEGER;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "sort_order" INTEGER DEFAULT 0;
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_fmea_items" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_inspection_audits" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "inspection_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "status_from" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "status_to" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "action" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "operator" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "comment" TEXT;
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_inspection_audits" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_inspection_results" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "inspection_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "item_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "standard_value" VARCHAR(256);
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "measured_value" VARCHAR(256);
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "is_qualified" BOOLEAN NOT NULL;
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_inspection_results" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_qms_sync_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "sync_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "sync_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "source_id" UUID;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "target_service" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "target_id" UUID;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "payload" JSONB;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "response" JSONB;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "error_msg" TEXT;
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_qms_sync_records" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_quality_costs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "cost_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "cost_category" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "cost_type" VARCHAR(64);
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "amount" DECIMAL(12,2) NOT NULL;
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "department" VARCHAR(64);
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "related_issue_id" UUID;
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "incurred_date" TIMESTAMP;
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_quality_costs" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_quality_inspections" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "inspection_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "inspection_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "product_id" UUID;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "product_name" VARCHAR(256);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "standard_id" UUID;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(12,2) NOT NULL;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "qualified_quantity" DECIMAL(12,2);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "unqualified_quantity" DECIMAL(12,2);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "qualification_rate" DECIMAL(5,2);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "inspector" VARCHAR(64);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "assignee" VARCHAR(64);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "inspected_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "result" VARCHAR(32);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "memo" TEXT;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_quality_inspections" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_quality_issues" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "issue_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "title" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "severity" VARCHAR(32);
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'open';
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "source" VARCHAR(32);
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "related_inspection_id" UUID;
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "resolved_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_quality_issues" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_spc_charts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "chart_no" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "chart_type" VARCHAR(32) NOT NULL;
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "product_id" UUID;
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "product_name" VARCHAR(256);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "parameter_name" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "ucl" DECIMAL(12,4);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "cl" DECIMAL(12,4);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "lcl" DECIMAL(12,4);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "cp" DECIMAL(8,4);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "cpk" DECIMAL(8,4);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "pp" DECIMAL(8,4);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "ppk" DECIMAL(8,4);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "sample_count" INTEGER DEFAULT 0;
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_spc_charts" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_spc_data_points" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "chart_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "sample_no" INTEGER NOT NULL;
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "value" DECIMAL(12,4) NOT NULL;
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "subgroup_size" INTEGER;
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "is_out_of_control" BOOLEAN DEFAULT false;
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "trend_flag" VARCHAR(32);
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "measured_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_spc_data_points" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_standard_revisions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "standard_id" UUID NOT NULL;
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "version" VARCHAR(16) NOT NULL;
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "category" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "level" VARCHAR(32);
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "specification" TEXT;
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32);
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_standard_revisions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "qms"."qa_standards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "code" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "name" VARCHAR(256) NOT NULL;
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "category" VARCHAR(64) NOT NULL;
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "level" VARCHAR(32);
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "specification" TEXT;
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "version" VARCHAR(16) DEFAULT '1.0';
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) DEFAULT 'active';
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(64);
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP DEFAULT NOW();
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP;
+ALTER TABLE "qms"."qa_standards" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+-- ==================== rs ====================
+CREATE TABLE IF NOT EXISTS "rs"."change_requests" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "project_id" UUID;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "title" TEXT NOT NULL;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "change_type" TEXT NOT NULL;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "priority" TEXT NOT NULL DEFAULT 'medium';
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'submitted';
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "impact_score" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "scope_docs" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "scope_phases" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "proposed_by" TEXT;
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE "rs"."change_requests" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ DEFAULT NOW();
+
+-- ==================== scm ====================
+CREATE TABLE IF NOT EXISTS "scm"."srm_supplier_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "id" UUID PRIMARY KEY;
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "supplier_code" VARCHAR(50) NOT NULL UNIQUE;
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "supplier_name" VARCHAR(200) NOT NULL;
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "legal_name" VARCHAR(200);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "contact_name" VARCHAR(100);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "contact_email" VARCHAR(200);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "contact_phone" VARCHAR(50);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "address" TEXT;
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "tax_id" VARCHAR(50);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "website" VARCHAR(500);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "category" VARCHAR(100);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "level" VARCHAR(20);
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "synced_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."srm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "scm"."suppliers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "supplier_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "name" VARCHAR(200) NOT NULL;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "legal_name" VARCHAR(200);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "category" VARCHAR(50) NOT NULL;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "tax_id" VARCHAR(50);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "address" VARCHAR(500);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "contact_person" VARCHAR(100);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "phone" VARCHAR(20);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "email" VARCHAR(100);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "website" VARCHAR(200);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "credit_rating" VARCHAR(20);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "risk_level" VARCHAR(20) NOT NULL DEFAULT 'medium';
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "bank_name" VARCHAR(100);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "bank_account" VARCHAR(50);
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "remarks" TEXT;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "sync_from_srm" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "srm_supplier_id" UUID;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "sync_error" TEXT;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "sync_retry_count" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."suppliers" ADD COLUMN IF NOT EXISTS "last_sync_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "scm"."wms_inbound_order_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "order_number" VARCHAR(50) NOT NULL;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "order_type" VARCHAR(50) NOT NULL DEFAULT 'purchase';
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "purchase_order_id" UUID;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "purchase_order_number" VARCHAR(50);
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "total_quantity" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "received_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "synced_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."wms_inbound_order_snapshots" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "scm"."wms_inventory_movement_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "movement_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "movement_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "item_id" UUID;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "item_code" VARCHAR(100);
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "item_name" VARCHAR(200);
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(18,4) NOT NULL;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(20);
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "total_value" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "reference_type" VARCHAR(50);
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "reference_id" UUID;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "movement_date" TIMESTAMPTZ NOT NULL;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "synced_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."wms_inventory_movement_snapshots" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "scm"."wms_inventory_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "item_id" UUID;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "item_code" VARCHAR(100);
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "item_name" VARCHAR(200);
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "category" VARCHAR(100);
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "specification" VARCHAR(500);
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "quantity" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "available_quantity" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "min_quantity" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "total_value" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(20);
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "warehouse_name" VARCHAR(100);
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "synced_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "snapshot_date" DATE NOT NULL DEFAULT CURRENT_DATE;
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."wms_inventory_snapshots" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "scm"."wms_outbound_order_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "order_number" VARCHAR(50) NOT NULL;
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID;
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "customer_id" UUID;
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "order_type" VARCHAR(50) NOT NULL DEFAULT 'sales';
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "total_quantity" DECIMAL(18,4) NOT NULL DEFAULT 0;
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "synced_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."wms_outbound_order_snapshots" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "scm"."wms_replenishment_suggestion_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "suggestion_number" VARCHAR(50) NOT NULL;
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID;
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "item_id" UUID;
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "item_code" VARCHAR(100);
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "item_name" VARCHAR(200);
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "suggested_quantity" DECIMAL(18,4) NOT NULL;
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(20);
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "synced_at" TIMESTAMPTZ;
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "scm"."wms_replenishment_suggestion_snapshots" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+-- ==================== srm ====================
+CREATE TABLE IF NOT EXISTS "srm"."inquiries" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "inquiry_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "title" VARCHAR(200);
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "creator" UUID;
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."inquiries" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "srm"."scm_supplier_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "id" UUID PRIMARY KEY;
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "supplier_code" VARCHAR(50);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "name" VARCHAR(200) NOT NULL;
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "short_name" VARCHAR(200);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "contact_name" VARCHAR(100);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "contact_phone" VARCHAR(50);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "email" VARCHAR(200);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "address" VARCHAR(500);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "tax_number" VARCHAR(50);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "bank_account" VARCHAR(50);
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "synced_at" TIMESTAMPTZ;
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."scm_supplier_snapshots" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "srm"."supplier_performance" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "srm"."supplier_performance" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "srm"."supplier_performance" ADD COLUMN IF NOT EXISTS "order_count" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "srm"."supplier_performance" ADD COLUMN IF NOT EXISTS "total_amount" NUMERIC(15,2);
+ALTER TABLE "srm"."supplier_performance" ADD COLUMN IF NOT EXISTS "last_order_date" TIMESTAMPTZ;
+ALTER TABLE "srm"."supplier_performance" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "srm"."supplier_performance" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."supplier_performance" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "srm"."suppliers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "supplier_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "name" VARCHAR(200) NOT NULL;
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "legal_name" VARCHAR(200);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "category" VARCHAR(50) NOT NULL;
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "tax_id" VARCHAR(50);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "address" VARCHAR(500);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "contact_person" VARCHAR(100);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "phone" VARCHAR(20);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "email" VARCHAR(100);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "website" VARCHAR(200);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "credit_rating" VARCHAR(20);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "risk_level" VARCHAR(20) NOT NULL DEFAULT 'medium';
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "bank_name" VARCHAR(100);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "bank_account" VARCHAR(50);
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "sync_from_scm" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "scm_supplier_id" UUID;
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "srm"."suppliers" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "srm"."tender_awards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "award_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "tender_id" UUID NOT NULL;
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "bid_id" UUID NOT NULL;
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "supplier_name" VARCHAR(200);
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "award_price" NUMERIC(15,2);
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "currency" VARCHAR(10) NOT NULL DEFAULT 'CNY';
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'active';
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."tender_awards" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "srm"."tender_bids" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "bid_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "tender_id" UUID NOT NULL;
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "supplier_name" VARCHAR(200);
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "bid_price" NUMERIC(15,2);
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "currency" VARCHAR(10) NOT NULL DEFAULT 'CNY';
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "bid_date" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "technical_score" NUMERIC(5,2);
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "commercial_score" NUMERIC(5,2);
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "total_score" NUMERIC(5,2);
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "remarks" TEXT;
+ALTER TABLE "srm"."tender_bids" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "srm"."tenders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "tender_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "title" VARCHAR(200) NOT NULL;
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "type" VARCHAR(50);
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "budget" NUMERIC(15,2);
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "start_date" TIMESTAMPTZ;
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "end_date" TIMESTAMPTZ;
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "srm"."tenders" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+-- ==================== wms ====================
+CREATE TABLE IF NOT EXISTS "wms"."inbound_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "order_number" VARCHAR(100) NOT NULL;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "order_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "reference_number" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "reference_type" VARCHAR(50);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "warehouse_name" VARCHAR(255);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "supplier_name" VARCHAR(255);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "supplier_code" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "purchase_order_id" UUID;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "purchase_order_number" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "production_order_id" UUID;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "production_order_number" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "customer_id" UUID;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "customer_name" VARCHAR(255);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "customer_order_number" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "expected_arrival_date" DATE;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "actual_arrival_date" DATE;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "arrival_time" TIME;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "received_date" DATE;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "received_time" TIME;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "carrier" VARCHAR(255);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "carrier_code" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "vehicle_number" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "driver_name" VARCHAR(255);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "driver_phone" VARCHAR(50);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "total_items" INTEGER;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "total_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "received_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "rejected_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "total_weight" NUMERIC(15, 2);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "total_volume" NUMERIC(15, 2);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "total_value" NUMERIC(15, 2);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(20) DEFAULT 'normal';
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'created';
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "receiver" VARCHAR(255);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "receiver_id" UUID;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "receiving_team" VARCHAR(100);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "inspection_required" BOOLEAN DEFAULT TRUE;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "inspection_status" VARCHAR(20);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "inspection_result" VARCHAR(20);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "inspector" VARCHAR(255);
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "inspection_date" DATE;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "quality_check_notes" TEXT;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "receiving_notes" TEXT;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "special_instructions" TEXT;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "attachments" JSONB;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "wms"."inbound_orders" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "wms"."inventory" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "location_id" UUID;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "material_code" VARCHAR(100) NOT NULL;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "material_name" VARCHAR(255) NOT NULL;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "material_type" VARCHAR(50);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "material_category" VARCHAR(50);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "specification" TEXT;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "batch_number" VARCHAR(100);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "lot_number" VARCHAR(100);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "serial_number" VARCHAR(100);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "quantity" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(20) NOT NULL;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "available_quantity" NUMERIC(15, 2) NOT NULL;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "reserved_quantity" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "in_transit_quantity" NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "quality_status" VARCHAR(20) NOT NULL DEFAULT 'qualified';
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "production_date" DATE;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "expiry_date" DATE;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "shelf_life_days" INTEGER;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "days_to_expiry" INTEGER;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "supplier_name" VARCHAR(255);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "supplier_code" VARCHAR(100);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "purchase_order_number" VARCHAR(100);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "purchase_price" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "total_value" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "cost_method" VARCHAR(20);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "standard_cost" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "average_cost" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "last_movement_date" TIMESTAMPTZ;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "last_movement_type" VARCHAR(50);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "movement_count" INTEGER DEFAULT 0;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "min_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "max_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "reorder_point" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "reorder_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "safety_stock" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "is_below_min" BOOLEAN DEFAULT FALSE;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "is_above_max" BOOLEAN DEFAULT FALSE;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "needs_reorder" BOOLEAN DEFAULT FALSE;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "weight" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "volume" NUMERIC(15, 2);
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "special_attributes" JSONB;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "wms"."inventory" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "wms"."inventory_movements" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "movement_no" VARCHAR(50) NOT NULL;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "tenant_id" UUID NOT NULL;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "movement_type" VARCHAR(20) NOT NULL;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "reference_id" VARCHAR(100);
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "reference_type" VARCHAR(50);
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "material_id" UUID;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "material_code" VARCHAR(100);
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "material_name" VARCHAR(200);
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "quantity" DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "from_location_id" UUID;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "to_location_id" UUID;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "from_warehouse_id" UUID;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "to_warehouse_id" UUID;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'completed';
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "performed_by" UUID;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "performed_at" TIMESTAMPTZ;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."inventory_movements" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "wms"."outbound_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "organization_id" UUID NOT NULL;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "order_number" VARCHAR(100) NOT NULL;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "order_type" VARCHAR(50) NOT NULL;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "reference_number" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "reference_type" VARCHAR(50);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "warehouse_name" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "customer_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "customer_name" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "customer_code" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "sales_order_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "sales_order_number" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "production_order_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "production_order_number" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "transfer_order_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "transfer_order_number" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "destination_warehouse_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "destination_warehouse_name" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "destination_address" TEXT;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "expected_ship_date" DATE;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "actual_ship_date" DATE;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "ship_time" TIME;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "delivery_date" DATE;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "delivery_time" TIME;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "carrier" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "carrier_code" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "carrier_service" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "vehicle_number" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "driver_name" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "driver_phone" VARCHAR(50);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "tracking_number" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "total_items" INTEGER;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "total_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipped_quantity" NUMERIC(15, 2);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "total_weight" NUMERIC(15, 2);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "total_volume" NUMERIC(15, 2);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "total_value" NUMERIC(15, 2);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipping_cost" NUMERIC(15, 2);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(20) DEFAULT 'normal';
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'created';
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "picker" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "picker_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "picking_team" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "packer" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "packer_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "packing_team" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipper" VARCHAR(255);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipper_id" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipping_team" VARCHAR(100);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "picking_method" VARCHAR(50);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "packing_method" VARCHAR(50);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipping_method" VARCHAR(50);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "picking_status" VARCHAR(20);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "packing_status" VARCHAR(20);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipping_status" VARCHAR(20);
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "picking_start_time" TIMESTAMPTZ;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "picking_end_time" TIMESTAMPTZ;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "packing_start_time" TIMESTAMPTZ;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "packing_end_time" TIMESTAMPTZ;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "special_instructions" TEXT;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "shipping_notes" TEXT;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "delivery_notes" TEXT;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "attachments" JSONB;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "created_by" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "updated_by" UUID;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
+ALTER TABLE "wms"."outbound_orders" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "wms"."serial_numbers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "serial_no" VARCHAR(100) NOT NULL;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "sku" VARCHAR(100) NOT NULL;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "material_name" VARCHAR(200) NOT NULL;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "specification" VARCHAR(200);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(50);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "warehouse_name" VARCHAR(200);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "location_id" UUID;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "location_code" VARCHAR(100);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "supplier_id" UUID;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "supplier_name" VARCHAR(200);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "batch_no" VARCHAR(100);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "production_date" DATE;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "expiry_date" DATE;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "quality_status" VARCHAR(50) NOT NULL DEFAULT 'pending';
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "status" VARCHAR(50) NOT NULL DEFAULT 'in_stock';
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "warranty_start_date" DATE;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "warranty_end_date" DATE;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "inbound_order_no" VARCHAR(100);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "outbound_order_no" VARCHAR(100);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "current_owner" VARCHAR(200);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "unit_price" DECIMAL(18,4);
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+ALTER TABLE "wms"."serial_numbers" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "wms"."slotting_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "rule_type" VARCHAR(50) NOT NULL DEFAULT 'velocity_class';
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "priority" INTEGER NOT NULL DEFAULT 10;
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "conditions" JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "actions" JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE "wms"."slotting_rules" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "wms"."slotting_suggestions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "material_id" UUID;
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "material_code" VARCHAR(100) NOT NULL DEFAULT '';
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "material_name" VARCHAR(255) NOT NULL DEFAULT '';
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "current_location_id" UUID;
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "suggested_location_id" UUID;
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "suggested_location_name" VARCHAR(255);
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "reason" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "score" NUMERIC(8, 4) NOT NULL DEFAULT 0;
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "expected_improvement" NUMERIC(12, 2) NOT NULL DEFAULT 0;
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "status" VARCHAR(20) NOT NULL DEFAULT 'pending';
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "wms"."slotting_suggestions" ADD COLUMN IF NOT EXISTS "applied_at" TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS "wms"."slotting_zones" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."slotting_zones" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+ALTER TABLE "wms"."slotting_zones" ADD COLUMN IF NOT EXISTS "warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."slotting_zones" ADD COLUMN IF NOT EXISTS "name" VARCHAR(100) NOT NULL;
+ALTER TABLE "wms"."slotting_zones" ADD COLUMN IF NOT EXISTS "zone_type" VARCHAR(50) NOT NULL DEFAULT 'bulk';
+ALTER TABLE "wms"."slotting_zones" ADD COLUMN IF NOT EXISTS "location_ids" JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE "wms"."slotting_zones" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE "wms"."slotting_zones" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS "wms"."transfer_order_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "transfer_id" UUID NOT NULL;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "line_number" INTEGER NOT NULL;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "sku" VARCHAR(100) NOT NULL;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "material_name" VARCHAR(200) NOT NULL;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "specification" VARCHAR(200);
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "batch_number" VARCHAR(100);
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "unit" VARCHAR(50) NOT NULL;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "planned_quantity" BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "shipped_quantity" BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "received_quantity" BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "unit_price" DECIMAL(18,4);
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "total_amount" DECIMAL(18,4);
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "from_location_id" UUID;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "to_location_id" UUID;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "status" VARCHAR(50) NOT NULL DEFAULT 'pending';
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "remarks" TEXT;
+ALTER TABLE "wms"."transfer_order_items" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+CREATE TABLE IF NOT EXISTS "wms"."transfer_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "order_number" VARCHAR(50) NOT NULL;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "from_warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "from_warehouse_name" VARCHAR(200);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "from_location_id" UUID;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "from_location_code" VARCHAR(100);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "to_warehouse_id" UUID NOT NULL;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "to_warehouse_name" VARCHAR(200);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "to_location_id" UUID;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "to_location_code" VARCHAR(100);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "status" VARCHAR(50) NOT NULL DEFAULT 'pending';
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "total_quantity" BIGINT DEFAULT 0;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "total_amount" DECIMAL(18,4);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "planned_date" DATE;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "actual_date" DATE;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "transporter" VARCHAR(200);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "tracking_number" VARCHAR(100);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "priority" VARCHAR(20) DEFAULT 'normal';
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "remarks" TEXT;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "created_by" VARCHAR(100);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "approved_by" VARCHAR(100);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "approved_at" TIMESTAMP WITH TIME ZONE;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "shipped_by" VARCHAR(100);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "shipped_at" TIMESTAMP WITH TIME ZONE;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "received_by" VARCHAR(100);
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "received_at" TIMESTAMP WITH TIME ZONE;
+ALTER TABLE "wms"."transfer_orders" ADD COLUMN IF NOT EXISTS "tenant_id" UUID;
+
+-- ==================== 孤儿表补齐（代码/迁移引用但无 TABLE_DEFS 创建源） ====================
+-- finance_voucher_templates：20260801000000 REFERENCES 引用；代码 voucher_template.rs 查询
+-- financial_reports：迁移引用；运行时无独立创建源
+CREATE TABLE IF NOT EXISTS "public"."finance_voucher_templates" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(100),
+    description TEXT,
+    template_type VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
+    status VARCHAR(20) DEFAULT 'active',
+    created_by UUID,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS "finance"."finance_voucher_templates" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(100),
+    description TEXT,
+    template_type VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
+    status VARCHAR(20) DEFAULT 'active',
+    created_by UUID,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS "public"."financial_reports" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    report_type VARCHAR(50),
+    name VARCHAR(255),
+    period VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'draft',
+    data JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS "finance"."financial_reports" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    report_type VARCHAR(50),
+    name VARCHAR(255),
+    period VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'draft',
+    data JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+-- ==================== 运行时中间件建表补齐（unified-core audit middleware） ====================
+CREATE TABLE IF NOT EXISTS "public"."audit_logs" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID,
+    action VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID,
+    entity_ids JSONB,
+    user_id UUID,
+    user_name TEXT,
+    request_details JSONB,
+    response_details JSONB,
+    status VARCHAR(20) NOT NULL DEFAULT 'success',
+    error_message TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON "public"."audit_logs"(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON "public"."audit_logs"(entity_type);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON "public"."audit_logs"(user_id);
+
+-- ==================== 缺失表兜底补建（由后续迁移 ALTER TABLE 引用） ====================
+-- 生成时间：2026-09-18 07:46:29
+-- 说明：以下表在后续迁移中被 ALTER TABLE 引用，但基线迁移未创建，此处补建骨架表。
+
+CREATE TABLE IF NOT EXISTS "ai"."ai_models" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."ai_prompt_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."ai_training_samples" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."analysis_results" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."document_chunks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."model_usage_stats" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."qa_history" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ai"."usage_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "bi"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "bi"."report_schedules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "bi"."reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "communication"."core_emails" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "communication"."core_notification_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "communication"."core_notifications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "communication"."notification_channels" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "core"."core_plugins" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "core"."core_tenant_plugins" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "core"."knowledge_bases" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "core"."knowledge_chunks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "core"."knowledge_documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "core"."knowledge_qa_history" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."billing_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."contacts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."contracts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."core_crm_customers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."customer_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."customer_scores" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."customer_tags" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."customers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."interactions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."opportunities" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."return_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."returns" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."rfm_results" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."sales_forecasts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."sales_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "crm"."tags" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc_service"."archives" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc_service"."core_doc_documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc_service"."core_doc_folders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc_service"."core_doc_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc_service"."files" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc_service"."folders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc_service"."templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc"."document_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc"."documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc"."folders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "doc"."templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."drill_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."emergency_plans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."environmental_alerts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."environmental_data" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."health_checkups" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."health_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."monitoring_points" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."risk_assessments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."risk_controls" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."safety_checks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."safety_hazards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."safety_incidents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."training_programs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."training_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ehs"."vaccination_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."bank_accounts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."company_relations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."consolidation_report_lines" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."consolidation_reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."consolidation_scope_companies" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."consolidation_scopes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."core_erp_materials" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."core_erp_suppliers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."customers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."dict_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."dict_types" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."elimination_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."erp_master_data_refs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."expenses" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."financial_vouchers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."fixed_assets" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."holidays" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."internal_transactions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."meeting_bookings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."meeting_rooms" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."opening_balances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."payables" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."receivables" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."sales_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."suppliers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."vehicle_requests" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."vehicles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "erp"."vouchers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."accounting_subjects" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."budgets" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_approval_nodes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_payment_approval_config" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_payment_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_payment_workflow" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."core_finance_payments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."erp_collection_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."erp_payables" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."erp_payment_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."erp_receivables" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."expenses" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_alert_configs_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_alert_history_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_anomaly_alerts_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_audit_findings_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_audit_rules_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_budget_variances_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_cash_flow_predictions_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_detection_configs_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_prediction_models_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_u" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_v" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_voucher_generation_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."finance_voucher_template_lines" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."payables" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."receivables" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."reconciliation_item_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."reconciliation_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."sales_invoices" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."settlement_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."source_amount_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "finance"."vouchers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."approval_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."approvals" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."core_workflow_instances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."core_workflow_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."core_workflow_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."core_workflows" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."notifications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "flow"."workflows" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."audit_log" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."business_locations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."device_location_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."device_locations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."devices" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."evidence_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."factory_maps" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."geodata" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."geofeatures" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."geofence_alerts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."location_photos" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."locations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."map_layers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."map_markers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."maps" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."pipelines" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."spatial_analysis" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."track_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "gis"."warehouse_locations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "hrm"."initialization_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "hrm"."module_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."password_reset_tokens" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."permissions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."position_permissions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."position_roles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."positions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."refresh_tokens" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."resource_permissions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."roles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."sessions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."user_access_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."user_positions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "iam"."user_roles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."async_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."core_inter_module_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."crm_erp_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."crm_scm_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."erp_connections" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."erp_mappings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."erp_wms_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."external_erp_staging" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."external_erp_sync_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."hrm_finance_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."integration_events" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."lims_qms_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."mes_erp_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "integration"."wms_scm_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."ai_analyses" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."document_relations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."inspection_processes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."inspection_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."inspection_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."instrument_calibrations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."instruments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."lab_ledger" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."maintenance_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."reagent_usages" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."reagents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "lims"."samples" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mail"."emails" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mail"."templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "master_data"."core_dict_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "master_data"."core_dict_types" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "master_data"."core_master_data_change_log" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "master_data"."core_master_data_event_outbox" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "master_data"."core_master_data_refs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "master_data"."core_mdm_approvals" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "master_data"."core_mdm_reconciliation_log" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."capacities" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."demand_forecasts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."equipment" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."equipment_inspection_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."equipment_maintenance_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."material_categories" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."material_plans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."material_requirement_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."module_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."process_flow_steps" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."process_flows" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."process_route_steps" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."process_routes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."production_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."production_plans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."production_processes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."production_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."quality_inspections" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."quality_patrol_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."quality_patrols" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."quality_standard_values" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."quality_standards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."work_reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mes"."work_stations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."audio_recordings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."barcode_scans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."devices" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."media_files" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."mobile_scan_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."mobile_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."mobile_users" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."oa_announcement_reads" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."oa_announcements" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."oa_calendar_events" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."oa_meetings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."oa_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."offline_operations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."offline_sync_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."patrol_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."photo_evidences" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."photo_uploads" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."push_devices" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."push_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."scan_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."sync_policies" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "mobile"."video_recordings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "notification"."notifications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pdm"."module_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pdm"."pdm_master_data_refs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."acceptance_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."acceptance_plans" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."acceptance_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."acceptances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."budget_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."budgets" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."contract_milestones" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."contract_payment_schedule" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."contract_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."contracts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."defects" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."document_folders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."document_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."notification_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."notifications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."pm_master_data_refs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_approvals" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_benefits" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_expenses" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_members" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_resources" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_risks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."project_type_configs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."quality_checks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."report_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."risk_events" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."risks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."service_integrations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."settlement_adjustments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."settlement_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "pm"."settlements" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "portal"."portal_announcements" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "portal"."portal_quick_actions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "portal"."portal_todos" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "portal"."user_preferences" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."_archive_core_workflow_instances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."alert_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."alerts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."analytics_sync_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."announcements" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."approval_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."approvals" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."automation_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."automation_runs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."automation_variables" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."conversion_executions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."conversion_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_dict_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_dict_types" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_doc_documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_doc_folders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_doc_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_emails" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_faqs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_account_opening_balances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_approval_workflows" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_aux_accounts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_aux_balances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_ledger" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_periods" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_reconciliation_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_reconciliation_sessions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_voucher_entries" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_voucher_lines" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_finance_voucher_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_geofences" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_guide_lessons" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_guide_progress" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_guides" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_inter_module_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_login_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_master_data_change_log" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_master_data_event_outbox" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_master_data_refs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_mdm_approvals" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_mdm_reconciliation_log" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_menu_groups" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_notification_templates" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_notifications" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_operation_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_plugin_categories" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_plugin_instances" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_plugin_navigation" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_plugin_permissions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_plugin_reviews" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_plugin_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_plugins" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_tenant_plugins" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_tenant_usage" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_ticket_activities" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_ticket_comments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_ticket_sla_escalations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_ticket_sla_policies" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_tickets" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."core_workflow_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."dynamic_data" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."equipment_inspections" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."equipment_maintenance_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_boms" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_categories" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_issue_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_issues" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_requirement_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_requirements" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_return_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."material_returns" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."meeting_bookings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."meeting_rooms" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."monitor_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."navigation_menu" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."permission_audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."pinned_apps" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."process_flow_steps" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."process_flows" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."qa_ehs_sync_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."qa_lims_sync_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."qa_qms_sync_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."quality_inspections" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."quality_patrol_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."quality_patrols" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."quality_standard_values" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."quality_standards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."schema_registry" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."search_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."subscriptions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."system_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."tenant_permissions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."ticket_automation_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."ticket_knowledge_articles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."todos" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."user_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."vehicle_requests" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "public"."vehicles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."corrective_actions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."dashboard_metrics" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."inspection_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."qa_ehs_hazards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."qa_lab_samples" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."qa_lab_tasks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."quality_inspections" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."quality_issues" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "qms"."quality_standards" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "report"."reports" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "rs"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "rs"."equipment_inspections" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "rs"."equipment_maintenance_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "rs"."experiments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "rs"."formula_versions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "rs"."formulas" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "rs"."module_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."demand_forecast" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."inspection_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."module_settings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."purchase_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."purchase_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."sales_order_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."supplier_delivery_appointments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."supplier_evaluations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "scm"."supplier_products" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."bidding_suppliers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."biddings" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."contract_terms" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."purchase_orders" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."quotations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."scoring_dimensions" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."supplier_categories" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."supplier_contracts" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."supplier_evaluations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "srm"."supplier_products" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "storage"."files" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."core_ticket_activities" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."core_ticket_comments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."core_ticket_sla_escalations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."core_ticket_sla_policies" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."core_tickets" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."ticket_attachments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."ticket_automation_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "ticket"."ticket_knowledge_articles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "tms"."tms_carriers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "tms"."tms_drivers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "tms"."tms_routes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "tms"."tms_shipments" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "tms"."tms_vehicles" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "unified_core"."documents" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "unified_core"."inter_module_sync" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."audit_logs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."batches" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."cycle_count_configs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."discrepancy_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."inbound_order_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."inventory_alert_records" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."inventory_alert_rules" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."locations" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."outbound_order_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."purchase_order_snapshots" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."stock_take_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."stock_takes" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."transfer_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."transfers" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."warehouses" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."wave_pick_items" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."wave_picks" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."wms_approval_events" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS "wms"."wms_master_data_refs" (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+
+-- ==================== 历史遗留表补齐（unified_core.documents：迁移引用、无 TABLE_DEFS/运行时创建源，5432 权威列） ====================
+CREATE TABLE IF NOT EXISTS "unified_core"."documents" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    content TEXT,
+    content_type VARCHAR(50),
+    file_size BIGINT,
+    file_path VARCHAR(500),
+    version INTEGER,
+    status VARCHAR(50),
+    created_by UUID NOT NULL,
+    updated_by UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);

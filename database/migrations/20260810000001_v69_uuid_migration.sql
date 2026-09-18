@@ -4,7 +4,17 @@
 
 -- Phase 1: Data quality pre-check — clean empty strings in audit_logs.user_id
 -- (middleware fallback produces "" when no user extension is present)
-UPDATE audit_logs SET user_id = NULL WHERE user_id = '';
+-- 类型安全：列可能是 UUID（空库基线/新库）或 VARCHAR（旧库），空串比较在 UUID 列上报错
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'audit_logs' AND column_name = 'user_id'
+      AND data_type = 'character varying'
+  ) THEN
+    EXECUTE 'UPDATE audit_logs SET user_id = NULL WHERE user_id = $1' USING '';
+  END IF;
+END $$;
 
 -- Phase 2: mobile tables — PK columns
 ALTER TABLE mobile.mobile_attendance ALTER COLUMN id TYPE UUID USING id::UUID;
