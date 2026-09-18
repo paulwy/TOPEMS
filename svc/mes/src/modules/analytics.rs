@@ -435,7 +435,7 @@ pub async fn get_equipment_mtbf(
         r#"
         SELECT
             e.equipment_name as label,
-            AVG(o.oee) * 100 as oee,
+            AVG(o.oee)::float8 * 100 as oee,
             500 + RANDOM() * 300 as mtbf
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
@@ -485,21 +485,22 @@ pub async fn get_delivery_analytics(
     info!("获取交付分析数据");
     let days = query.days.unwrap_or(30);
 
-    let result = sqlx::query_as::<_, (String, Option<i64>, Option<i64>, Option<f64>)>(
+    let result = sqlx::query_as::<_, (String, Option<i64>, Option<i64>, Option<f64>, Option<i64>)>(
         r#"
         SELECT
-            planned_date::text as date,
+            planned_end_date::text as date,
             COUNT(*) as planned,
             COUNT(*) FILTER (WHERE status IN ('completed', 'delivered')) as delivered,
             CASE
                 WHEN COUNT(*) > 0 THEN
-                    (COUNT(*) FILTER (WHERE status IN ('completed', 'delivered') AND actual_delivery_date <= planned_date)::float / COUNT(*)::float) * 100
+                    (COUNT(*) FILTER (WHERE status IN ('completed', 'delivered') AND actual_end_date <= planned_end_date)::float / COUNT(*)::float) * 100
                 ELSE 0
-            END as on_time_rate
+            END as on_time_rate,
+            COUNT(*) FILTER (WHERE status IN ('completed', 'delivered') AND actual_end_date <= planned_end_date) as on_time_count
         FROM mes.production_orders
-        WHERE planned_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
-        GROUP BY planned_date
-        ORDER BY planned_date
+        WHERE planned_end_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+        GROUP BY planned_end_date
+        ORDER BY planned_end_date
         LIMIT 30
         "#,
     )
@@ -510,9 +511,9 @@ pub async fn get_delivery_analytics(
     match result {
         Ok(rows) => {
             let trend: Vec<DeliveryTrendItem> = rows
-                .into_iter()
-                .map(|(date, planned, delivered, rate)| DeliveryTrendItem {
-                    date,
+                .iter()
+                .map(|(date, planned, delivered, rate, _)| DeliveryTrendItem {
+                    date: date.clone(),
                     planned: planned.unwrap_or(0),
                     delivered: delivered.unwrap_or(0),
                     on_time_rate: rate.unwrap_or(0.0),
@@ -521,8 +522,11 @@ pub async fn get_delivery_analytics(
 
             let total_orders: i64 = trend.iter().map(|t| t.planned).sum();
             let delayed_orders: i64 = trend.iter().map(|t| t.planned - t.delivered).sum();
-            let on_time_rate = if total_orders > 0 {
-                trend.iter().map(|t| t.on_time_rate).sum::<f64>() / trend.len() as f64
+            // 总体口径：准时完成数 / 已完成交付数（避免逐日平均被空档日拉低）
+            let total_on_time: i64 = rows.iter().map(|(_, _, _, _, on)| on.unwrap_or(0)).sum();
+            let total_delivered: i64 = trend.iter().map(|t| t.delivered).sum();
+            let on_time_rate = if total_delivered > 0 {
+                (total_on_time as f64 / total_delivered as f64) * 100.0
             } else {
                 0.0
             };
@@ -560,10 +564,10 @@ pub async fn get_oee_dashboard(
             r#"
         SELECT
             COALESCE(e.equipment_name, '未知') as equipment_name,
-            AVG(o.oee) * 100 as oee,
-            AVG(o.availability) * 100 as availability,
-            AVG(o.performance) * 100 as performance,
-            AVG(o.quality_rate) * 100 as quality_rate
+            AVG(o.oee)::float8 * 100 as oee,
+            AVG(o.availability)::float8 * 100 as availability,
+            AVG(o.performance)::float8 * 100 as performance,
+            AVG(o.quality_rate)::float8 * 100 as quality_rate
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
         WHERE o.record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
@@ -599,10 +603,10 @@ pub async fn get_oee_dashboard(
             r#"
         SELECT
             record_date::text as date,
-            AVG(oee) * 100 as oee,
-            AVG(availability) * 100 as availability,
-            AVG(performance) * 100 as performance,
-            AVG(quality_rate) * 100 as quality_rate
+            AVG(oee)::float8 * 100 as oee,
+            AVG(availability)::float8 * 100 as availability,
+            AVG(performance)::float8 * 100 as performance,
+            AVG(quality_rate)::float8 * 100 as quality_rate
         FROM mes.equipment_oee
         WHERE record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
         GROUP BY record_date
@@ -673,12 +677,12 @@ pub async fn get_quality_pareto(
     let result = sqlx::query_as::<_, (String, Option<i64>)>(
         r#"
         SELECT
-            COALESCE(defect_type, '其他') as defect_type,
+            COALESCE(NULLIF(memo, ''), '其他') as defect_type,
             COUNT(*) as count
         FROM mes.quality_inspections
-        WHERE inspection_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+        WHERE inspection_time::timestamp >= CURRENT_DATE - $1 * INTERVAL '1 day'
           AND result = '不合格'
-        GROUP BY defect_type
+        GROUP BY memo
         ORDER BY count DESC
         LIMIT 20
         "#,
@@ -722,7 +726,7 @@ pub async fn get_quality_pareto(
                     COUNT(*) FILTER (WHERE result = '合格') as passed,
                     COUNT(*) as total
                 FROM mes.quality_inspections
-                WHERE inspection_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+                WHERE inspection_time::timestamp >= CURRENT_DATE - $1 * INTERVAL '1 day'
                 "#,
             )
             .bind(days)

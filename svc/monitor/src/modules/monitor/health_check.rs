@@ -55,7 +55,9 @@ pub fn format_uptime(days: u64, hours: u64, minutes: u64) -> String {
 }
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new().route("/health", get(get_service_health))
+    Router::new()
+        .route("/health", get(get_service_health))
+        .route("/infrastructure", get(get_infrastructure_health))
 }
 
 #[utoipa::path(
@@ -319,4 +321,79 @@ mod tests {
     fn test_format_uptime_only_hours() {
         assert_eq!(format_uptime(0, 8, 0), "0d 8h 0m");
     }
+}
+
+#[derive(Debug, Serialize)]
+pub struct InfrastructureHealth {
+    pub component: String,
+    pub status: String,
+    pub value: String,
+    pub detail: String,
+}
+
+/// 基础架构健康四格：API 网关 / 消息队列 / 数据库 / 缓存。
+/// - api_gateway：模块化单体网关进程（本服务），uptime 实测
+/// - message_queue：项目未部署消息队列组件（Kafka/RabbitMQ 等），如实标记 absent
+/// - database：PostgreSQL SELECT 1 实测（响应耗时）
+/// - cache：进程内缓存（portal 聚合 / GraphQL 查询缓存），未启用 Redis
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["monitor:read"])),
+    path = "/api/monitor/infrastructure",
+    tag = "health",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_infrastructure_health(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<InfrastructureHealth>>> {
+    // 数据库探活（真实执行 SELECT 1）
+    let db_start = std::time::Instant::now();
+    let db_ok = sqlx::query_scalar::<_, i32>("SELECT 1")
+        .fetch_one(&state.pool)
+        .await
+        .is_ok();
+    let db_ms = db_start.elapsed().as_millis() as u64;
+
+    // 网关进程运行时长（实测）
+    let uptime = state.start_time.elapsed();
+    let uptime_str = format_uptime(
+        uptime.as_secs() / 86400,
+        (uptime.as_secs() % 86400) / 3600,
+        (uptime.as_secs() % 3600) / 60,
+    );
+
+    let items = vec![
+        InfrastructureHealth {
+            component: "api_gateway".to_string(),
+            status: "healthy".to_string(),
+            value: format!("运行 {} · 模块化单体网关", uptime_str),
+            detail: "monolith 网关进程存活".to_string(),
+        },
+        InfrastructureHealth {
+            component: "message_queue".to_string(),
+            status: "absent".to_string(),
+            value: "未部署".to_string(),
+            detail: "项目未部署消息队列组件（Kafka/RabbitMQ 等）".to_string(),
+        },
+        InfrastructureHealth {
+            component: "database".to_string(),
+            status: if db_ok { "healthy" } else { "error" }.to_string(),
+            value: format!("PostgreSQL · {}ms", db_ms),
+            detail: if db_ok {
+                "SELECT 1 探活通过".to_string()
+            } else {
+                "SELECT 1 探活失败".to_string()
+            },
+        },
+        InfrastructureHealth {
+            component: "cache".to_string(),
+            status: "healthy".to_string(),
+            value: "内存缓存".to_string(),
+            detail: "portal 聚合 / GraphQL 查询缓存（进程内，未启用 Redis）".to_string(),
+        },
+    ];
+
+    Json(ApiResponse::success(items, "获取基础架构健康状态成功"))
 }

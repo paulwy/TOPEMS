@@ -137,7 +137,7 @@ pub async fn fetch_mes_stats(state: &AppState) -> Option<ServiceStatsGql> {
     // total：生产订单数；active：在制品（WIP）数量
     let total = state
         .mes_client
-        .list_production_orders(1, 1)
+        .list_production_orders(1, 1000)
         .await
         .map(|v| v.len() as u64)
         .unwrap_or(0);

@@ -164,7 +164,8 @@ export const mesAnalyticsApi = {
     const res = await apiClient.mes.get<DeliveryAnalyticsResponse>(
       `/analytics/delivery-analytics${buildQuery(params)}`
     );
-    return res.data;
+    // mes analytics 端点直接返回业务对象（无 ApiResponse 包装）
+    return res as unknown as DeliveryAnalyticsResponse;
   },
 
   /** OEE 仪表盘 */
@@ -172,7 +173,8 @@ export const mesAnalyticsApi = {
     const res = await apiClient.mes.get<OeeDashboardResponse>(
       `/analytics/oee-dashboard${buildQuery(params)}`
     );
-    return res.data;
+    // mes /analytics/oee-dashboard 直接返回业务对象（无 ApiResponse 包装）
+    return res as unknown as OeeDashboardResponse;
   },
 
   /** 质量帕累托 */
@@ -180,6 +182,7 @@ export const mesAnalyticsApi = {
     const res = await apiClient.mes.get<QualityParetoResponse>(
       `/analytics/quality-pareto${buildQuery(params)}`
     );
-    return res.data;
+    // mes analytics 端点直接返回业务对象（无 ApiResponse 包装）
+    return res as unknown as QualityParetoResponse;
   },
 };

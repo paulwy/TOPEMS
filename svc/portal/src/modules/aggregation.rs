@@ -329,7 +329,7 @@ async fn fetch_finance_stats(state: &AppState, user_id: &str, token: Option<&str
 async fn fetch_mes_stats(state: &AppState) -> MesStats {
     let client = state.mes_client.clone();
 
-    let orders = match client.list_production_orders(1, 1).await {
+    let orders = match client.list_production_orders(1, 1000).await {
         Ok(items) => items.len() as u64,
         Err(_) => 0,
     };
