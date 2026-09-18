@@ -4,6 +4,17 @@
 -- 且 INSERT 缺 tenant_id（NOT NULL）导致项目成员接口 500。
 -- 本迁移幂等：新库按正确结构建表；存量库补齐缺失列并放宽旧列 NOT NULL。
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 pm.project_members 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 project_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='pm' AND table_name='project_members')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='pm' AND table_name='project_members' AND column_name='project_id')
+  THEN
+    DROP TABLE pm.project_members;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS pm.project_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL,

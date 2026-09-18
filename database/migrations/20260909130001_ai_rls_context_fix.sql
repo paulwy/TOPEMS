@@ -5,38 +5,31 @@
 --    抛 "invalid input syntax for type uuid"（真实缺陷，QA 首次写路径暴露）。
 -- 修复：统一 app.tenant_id + NULLIF 空安全（对齐 lib/shared-db/src/rls.rs 标准生成器），
 --       未设置上下文时仅放行 tenant_id IS NULL 的行（严格租户隔离）。
+-- 2026-09-18 防御化（空库重建链卡点）：ai 大部分表无 tenant_id 列（业务表设计如此），
+-- 重构为 FOREACH 循环：表不存在或无 tenant_id 列时跳过该表策略。
 
 DO $$
-DECLARE _guc text := 'app.tenant_id';
+DECLARE
+  _guc text := 'app.tenant_id';
+  t text;
 BEGIN
-    -- ========== ai.qa_history ==========
-    DROP POLICY IF EXISTS qa_history_tenant_policy ON ai.qa_history;
-    DROP POLICY IF EXISTS rls_tenant_isolation ON ai.qa_history;
-    EXECUTE format($p$CREATE POLICY qa_history_tenant_policy ON ai.qa_history USING (
+  FOREACH t IN ARRAY ARRAY['ai.qa_history', 'ai.usage_logs', 'ai.documents', 'ai.document_chunks'] LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = split_part(t, '.', 1)
+                 AND table_name = split_part(t, '.', 2))
+       AND EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = split_part(t, '.', 1)
+                 AND table_name = split_part(t, '.', 2)
+                 AND column_name = 'tenant_id') THEN
+      EXECUTE 'DROP POLICY IF EXISTS qa_history_tenant_policy ON ' || t;
+      EXECUTE 'DROP POLICY IF EXISTS rls_tenant_isolation ON ' || t;
+      EXECUTE 'DROP POLICY IF EXISTS documents_tenant_policy ON ' || t;
+      EXECUTE 'DROP POLICY IF EXISTS document_chunks_tenant_policy ON ' || t;
+      EXECUTE format($p$CREATE POLICY rls_tenant_isolation ON $p$ || t || $p$ USING (
         tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    ) WITH CHECK (
+      ) WITH CHECK (
         tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    )$p$, _guc, _guc);
-
-    -- ========== ai.usage_logs（GUC 名对齐 + 空安全）==========
-    DROP POLICY IF EXISTS rls_tenant_isolation ON ai.usage_logs;
-    EXECUTE format($p$CREATE POLICY rls_tenant_isolation ON ai.usage_logs USING (
-        tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    ) WITH CHECK (
-        tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    )$p$, _guc, _guc);
-
-    -- ========== ai.documents / ai.document_chunks（历史 NULLIF 写法已安全，统一校验一遍）==========
-    DROP POLICY IF EXISTS documents_tenant_policy ON ai.documents;
-    DROP POLICY IF EXISTS document_chunks_tenant_policy ON ai.document_chunks;
-    EXECUTE format($p$CREATE POLICY documents_tenant_policy ON ai.documents USING (
-        tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    ) WITH CHECK (
-        tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    )$p$, _guc, _guc);
-    EXECUTE format($p$CREATE POLICY document_chunks_tenant_policy ON ai.document_chunks USING (
-        tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    ) WITH CHECK (
-        tenant_id = NULLIF(current_setting(%L, true), '')::uuid OR tenant_id IS NULL
-    )$p$, _guc, _guc);
+      )$p$, _guc, _guc);
+    END IF;
+  END LOOP;
 END $$;

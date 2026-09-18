@@ -2,6 +2,17 @@
 -- AiDashboardPage / AiModelSettingsPage / AiPromptLibraryPage 在役消费，后端补 /dashboard /models /prompts 路由支撑表
 -- 模型表（含配置列）+ 提示词模板表；RLS 启用 + 租户隔离策略 + FORCE（配合 topems NOSUPERUSER）
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 ai.ai_models 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='ai' AND table_name='ai_models')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='ai' AND table_name='ai_models' AND column_name='tenant_id')
+  THEN
+    DROP TABLE ai.ai_models;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS ai.ai_models (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
@@ -21,6 +32,17 @@ CREATE TABLE IF NOT EXISTS ai.ai_models (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 ai.ai_prompt_templates 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='ai' AND table_name='ai_prompt_templates')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='ai' AND table_name='ai_prompt_templates' AND column_name='tenant_id')
+  THEN
+    DROP TABLE ai.ai_prompt_templates;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS ai.ai_prompt_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

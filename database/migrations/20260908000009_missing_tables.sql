@@ -5,6 +5,17 @@
 -- 全部幂等（CREATE TABLE IF NOT EXISTS），重复执行无害。
 
 -- ========== ai（推荐服务）==========
+-- 2026-09-18 防御化（空库重建链卡点）：若 ai.user_profiles 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 user_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='ai' AND table_name='user_profiles')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='ai' AND table_name='user_profiles' AND column_name='user_id')
+  THEN
+    DROP TABLE ai.user_profiles;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS ai.user_profiles (
     user_id UUID PRIMARY KEY,
     preferences JSONB NOT NULL DEFAULT '{}',
@@ -14,6 +25,17 @@ CREATE TABLE IF NOT EXISTS ai.user_profiles (
 );
 
 -- ========== core（ai_knowledge 模块，20260908 挂载未建表）==========
+-- 2026-09-18 防御化（空库重建链卡点）：若 core.knowledge_bases 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='core' AND table_name='knowledge_bases')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='core' AND table_name='knowledge_bases' AND column_name='tenant_id')
+  THEN
+    DROP TABLE core.knowledge_bases;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS core.knowledge_bases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
@@ -26,6 +48,17 @@ CREATE TABLE IF NOT EXISTS core.knowledge_bases (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 core.knowledge_documents 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='core' AND table_name='knowledge_documents')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='core' AND table_name='knowledge_documents' AND column_name='tenant_id')
+  THEN
+    DROP TABLE core.knowledge_documents;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS core.knowledge_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -44,6 +77,17 @@ CREATE TABLE IF NOT EXISTS core.knowledge_documents (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 core.knowledge_chunks 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='core' AND table_name='knowledge_chunks')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='core' AND table_name='knowledge_chunks' AND column_name='tenant_id')
+  THEN
+    DROP TABLE core.knowledge_chunks;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS core.knowledge_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
@@ -57,6 +101,17 @@ CREATE TABLE IF NOT EXISTS core.knowledge_chunks (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 core.knowledge_qa_history 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='core' AND table_name='knowledge_qa_history')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='core' AND table_name='knowledge_qa_history' AND column_name='tenant_id')
+  THEN
+    DROP TABLE core.knowledge_qa_history;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS core.knowledge_qa_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
@@ -69,6 +124,17 @@ CREATE TABLE IF NOT EXISTS core.knowledge_qa_history (
 );
 
 -- ========== erp（单据/凭证/库存余额）==========
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.documents 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='documents')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='documents' AND column_name='tenant_id')
+  THEN
+    DROP TABLE erp.documents;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
@@ -82,6 +148,17 @@ CREATE TABLE IF NOT EXISTS erp.documents (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.vouchers 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 voucher_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='vouchers')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='vouchers' AND column_name='voucher_no')
+  THEN
+    DROP TABLE erp.vouchers;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.vouchers (
     voucher_no TEXT PRIMARY KEY,
     voucher_type TEXT NOT NULL,
@@ -89,6 +166,17 @@ CREATE TABLE IF NOT EXISTS erp.vouchers (
     status TEXT NOT NULL DEFAULT 'draft',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.account_balances 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 material_code 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='account_balances')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='account_balances' AND column_name='material_code')
+  THEN
+    DROP TABLE erp.account_balances;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS erp.account_balances (
     material_code TEXT PRIMARY KEY,
@@ -99,6 +187,17 @@ CREATE TABLE IF NOT EXISTS erp.account_balances (
 );
 
 -- ========== qms（integration 服务集成写入的目标域）==========
+-- 2026-09-18 防御化（空库重建链卡点）：若 qms.qa_lab_samples 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='qms' AND table_name='qa_lab_samples')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='qms' AND table_name='qa_lab_samples' AND column_name='tenant_id')
+  THEN
+    DROP TABLE qms.qa_lab_samples;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS qms.qa_lab_samples (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
@@ -111,6 +210,17 @@ CREATE TABLE IF NOT EXISTS qms.qa_lab_samples (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 qms.qa_lab_tasks 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='qms' AND table_name='qa_lab_tasks')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='qms' AND table_name='qa_lab_tasks' AND column_name='tenant_id')
+  THEN
+    DROP TABLE qms.qa_lab_tasks;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS qms.qa_lab_tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
@@ -122,6 +232,17 @@ CREATE TABLE IF NOT EXISTS qms.qa_lab_tasks (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 qms.qa_ehs_hazards 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='qms' AND table_name='qa_ehs_hazards')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='qms' AND table_name='qa_ehs_hazards' AND column_name='tenant_id')
+  THEN
+    DROP TABLE qms.qa_ehs_hazards;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS qms.qa_ehs_hazards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -141,6 +262,17 @@ CREATE TABLE IF NOT EXISTS qms.qa_ehs_hazards (
 );
 
 -- ========== rs（rd 服务）==========
+-- 2026-09-18 防御化（空库重建链卡点）：若 rs.ai_analyses 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 entity_type 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='ai_analyses')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='ai_analyses' AND column_name='entity_type')
+  THEN
+    DROP TABLE rs.ai_analyses;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS rs.ai_analyses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     entity_type TEXT NOT NULL,
@@ -152,6 +284,17 @@ CREATE TABLE IF NOT EXISTS rs.ai_analyses (
     created_by UUID,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 rs.document_relations 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 entity_type 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='document_relations')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='document_relations' AND column_name='entity_type')
+  THEN
+    DROP TABLE rs.document_relations;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS rs.document_relations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -168,6 +311,17 @@ CREATE TABLE IF NOT EXISTS rs.document_relations (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 rs.experiment_records 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 experiment_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='experiment_records')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='experiment_records' AND column_name='experiment_id')
+  THEN
+    DROP TABLE rs.experiment_records;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS rs.experiment_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     experiment_id UUID NOT NULL,
@@ -178,6 +332,17 @@ CREATE TABLE IF NOT EXISTS rs.experiment_records (
     recorded_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 rs.formula_versions 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='formula_versions')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='formula_versions' AND column_name='tenant_id')
+  THEN
+    DROP TABLE rs.formula_versions;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS rs.formula_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -194,6 +359,17 @@ CREATE TABLE IF NOT EXISTS rs.formula_versions (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 rs.material_tests 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 project_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='material_tests')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='material_tests' AND column_name='project_id')
+  THEN
+    DROP TABLE rs.material_tests;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS rs.material_tests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID,
@@ -207,6 +383,17 @@ CREATE TABLE IF NOT EXISTS rs.material_tests (
     tested_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 rs.patents 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 name 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='patents')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='patents' AND column_name='name')
+  THEN
+    DROP TABLE rs.patents;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS rs.patents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -225,6 +412,17 @@ CREATE TABLE IF NOT EXISTS rs.patents (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 rs.research_costs 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 project_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='research_costs')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='research_costs' AND column_name='project_id')
+  THEN
+    DROP TABLE rs.research_costs;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS rs.research_costs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -245,6 +443,17 @@ CREATE TABLE IF NOT EXISTS rs.research_costs (
 );
 
 -- ========== scm（MRP/质检/供应商产品）==========
+-- 2026-09-18 防御化（空库重建链卡点）：若 scm.materials 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 material_code 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='scm' AND table_name='materials')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='scm' AND table_name='materials' AND column_name='material_code')
+  THEN
+    DROP TABLE scm.materials;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS scm.materials (
     material_code TEXT PRIMARY KEY,
     material_name TEXT NOT NULL,
@@ -253,6 +462,17 @@ CREATE TABLE IF NOT EXISTS scm.materials (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 scm.demand_forecast 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='scm' AND table_name='demand_forecast')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='scm' AND table_name='demand_forecast' AND column_name='tenant_id')
+  THEN
+    DROP TABLE scm.demand_forecast;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS scm.demand_forecast (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -263,6 +483,17 @@ CREATE TABLE IF NOT EXISTS scm.demand_forecast (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 scm.sales_order_items 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='scm' AND table_name='sales_order_items')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='scm' AND table_name='sales_order_items' AND column_name='tenant_id')
+  THEN
+    DROP TABLE scm.sales_order_items;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS scm.sales_order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
@@ -270,6 +501,17 @@ CREATE TABLE IF NOT EXISTS scm.sales_order_items (
     quantity NUMERIC(15, 3) NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 scm.supplier_products 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='scm' AND table_name='supplier_products')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='scm' AND table_name='supplier_products' AND column_name='tenant_id')
+  THEN
+    DROP TABLE scm.supplier_products;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS scm.supplier_products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -293,6 +535,17 @@ CREATE TABLE IF NOT EXISTS scm.supplier_products (
     UNIQUE (tenant_id, product_no)
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 scm.incoming_notices 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 notice_number 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='scm' AND table_name='incoming_notices')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='scm' AND table_name='incoming_notices' AND column_name='notice_number')
+  THEN
+    DROP TABLE scm.incoming_notices;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS scm.incoming_notices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     notice_number TEXT NOT NULL UNIQUE,
@@ -310,6 +563,17 @@ CREATE TABLE IF NOT EXISTS scm.incoming_notices (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 scm.incoming_inspections 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 inspection_number 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='scm' AND table_name='incoming_inspections')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='scm' AND table_name='incoming_inspections' AND column_name='inspection_number')
+  THEN
+    DROP TABLE scm.incoming_inspections;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS scm.incoming_inspections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -336,6 +600,17 @@ CREATE TABLE IF NOT EXISTS scm.incoming_inspections (
 -- ========== tms（整个 schema 不存在，先建 schema 再建表）==========
 CREATE SCHEMA IF NOT EXISTS tms;
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_carriers 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 carrier_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='tms' AND table_name='tms_carriers')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='tms' AND table_name='tms_carriers' AND column_name='carrier_no')
+  THEN
+    DROP TABLE tms.tms_carriers;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS tms.tms_carriers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     carrier_no TEXT NOT NULL UNIQUE,
@@ -348,6 +623,17 @@ CREATE TABLE IF NOT EXISTS tms.tms_carriers (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_drivers 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 driver_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='tms' AND table_name='tms_drivers')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='tms' AND table_name='tms_drivers' AND column_name='driver_no')
+  THEN
+    DROP TABLE tms.tms_drivers;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS tms.tms_drivers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -363,6 +649,17 @@ CREATE TABLE IF NOT EXISTS tms.tms_drivers (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_routes 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 route_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='tms' AND table_name='tms_routes')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='tms' AND table_name='tms_routes' AND column_name='route_no')
+  THEN
+    DROP TABLE tms.tms_routes;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS tms.tms_routes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     route_no TEXT NOT NULL UNIQUE,
@@ -376,6 +673,17 @@ CREATE TABLE IF NOT EXISTS tms.tms_routes (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_shipments 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 shipment_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='tms' AND table_name='tms_shipments')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='tms' AND table_name='tms_shipments' AND column_name='shipment_no')
+  THEN
+    DROP TABLE tms.tms_shipments;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS tms.tms_shipments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -397,6 +705,17 @@ CREATE TABLE IF NOT EXISTS tms.tms_shipments (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_vehicles 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 vehicle_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='tms' AND table_name='tms_vehicles')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='tms' AND table_name='tms_vehicles' AND column_name='vehicle_no')
+  THEN
+    DROP TABLE tms.tms_vehicles;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS tms.tms_vehicles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     vehicle_no TEXT NOT NULL UNIQUE,
@@ -412,6 +731,17 @@ CREATE TABLE IF NOT EXISTS tms.tms_vehicles (
 );
 
 -- ========== unified_core（IAM 密码重置）==========
+-- 2026-09-18 防御化（空库重建链卡点）：若 unified_core.password_resets 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 user_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='unified_core' AND table_name='password_resets')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='unified_core' AND table_name='password_resets' AND column_name='user_id')
+  THEN
+    DROP TABLE unified_core.password_resets;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS unified_core.password_resets (
     user_id UUID PRIMARY KEY,
     token TEXT NOT NULL,

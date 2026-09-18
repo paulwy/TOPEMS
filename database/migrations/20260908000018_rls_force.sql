@@ -2,335 +2,349 @@
 -- 前置：topems 已 NOSUPERUSER（CREATEDB/CREATEROLE 保留），owner 已统一（public/core schema+表）
 -- 语义：正常请求链路（tenant_middleware 已 SET app.tenant_id）下 owner 连接亦按租户过滤
 -- 回退：ALTER TABLE ... NO FORCE ROW LEVEL SECURITY;
-
-ALTER TABLE ai.ai_training_samples FORCE ROW LEVEL SECURITY;
-ALTER TABLE core.core_tenant_plugins FORCE ROW LEVEL SECURITY;
-ALTER TABLE core.knowledge_bases FORCE ROW LEVEL SECURITY;
-ALTER TABLE core.knowledge_chunks FORCE ROW LEVEL SECURITY;
-ALTER TABLE core.knowledge_documents FORCE ROW LEVEL SECURITY;
-ALTER TABLE core.knowledge_qa_history FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.billing_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.core_crm_customers FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.customer_orders FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.customer_scores FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.return_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.returns FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.rfm_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE crm.sales_forecasts FORCE ROW LEVEL SECURITY;
-ALTER TABLE doc.document_versions FORCE ROW LEVEL SECURITY;
-ALTER TABLE doc.documents FORCE ROW LEVEL SECURITY;
-ALTER TABLE doc.folders FORCE ROW LEVEL SECURITY;
-ALTER TABLE doc.templates FORCE ROW LEVEL SECURITY;
-ALTER TABLE doc_service.core_doc_documents FORCE ROW LEVEL SECURITY;
-ALTER TABLE ehs.qa_ehs_employees FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.core_erp_materials FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.core_erp_suppliers FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.documents FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.erp_master_data_refs FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.fin_reconciliations FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.holidays FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.inventory FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.leave_requests FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.meeting_bookings FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.meeting_rooms FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.purchase_orders FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.vehicle_requests FORCE ROW LEVEL SECURITY;
-ALTER TABLE erp.vehicles FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.accounting_subjects FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.budgets FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_accounts FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_approval_nodes FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_approval_workflows FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_aux_accounts FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_aux_balances FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_ledger FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_payment_approval_config FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_payment_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_payment_workflow FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_payments FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_periods FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_reconciliation_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_reconciliation_sessions FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_voucher_lines FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.core_finance_vouchers FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.difference_adjustments FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.erp_collection_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.erp_payables FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.erp_payment_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.erp_receivables FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_alert_configs_v52 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_alert_history_v52 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_anomaly_alerts_v52 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_audit_findings_v52 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_audit_rules_v52 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_budget_variances_v53 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_cash_flow_predictions_v53 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_compliance_reports FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_control_matrices FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_control_points FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_detection_configs_v52 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_prediction_models_v53 FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_risk_assessments FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_u8_import_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v54_fraud_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v54_fraud_scores FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v54_review_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v54_review_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v54_review_workflows FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v54_risk_alerts FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v54_risk_indicators FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v55_invoice_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v55_invoices FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v55_payment_requests FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v55_payment_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v55_reconciliation_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v55_reconciliation_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v56_tax_brackets FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v56_tax_forms FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v56_tax_lines FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v56_tax_plans FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v56_tax_rates FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v56_tax_suggestions FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v57_analysis_dimensions FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v57_analysis_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v57_forecast_models FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v57_generated_reports FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v57_insights FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v57_report_templates FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v58_cash_pools FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v58_forecast_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v58_forecast_scenarios FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v58_liquidity_targets FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v58_optimization_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v58_pool_allocations FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v58_pool_transfers FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_credit_profiles FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_device_profiles FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_fraud_decisions FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_fraud_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_fraud_signals FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_scoring_models FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_stress_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v59_stress_scenarios FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_alert_channels FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_alert_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_alerts FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_decision_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_decision_scenarios FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_schedule_dependencies FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_schedule_executions FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_v60_schedule_tasks FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_voucher_generation_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_voucher_template_lines FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.finance_voucher_templates FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.financial_reports FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.reconciliation_item_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.reconciliation_settlement_links FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.reconciliation_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.settlement_center_dashboards FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.settlement_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.source_amount_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE finance.vouchers FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.audit_log FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.audit_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.business_locations FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.device_location_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.device_locations FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.devices FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.evidence_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.factory_maps FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.geodata FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.geofeatures FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.geofence_alerts FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.location_photos FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.locations FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.map_layers FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.map_markers FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.maps FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.pipelines FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.spatial_analysis FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.track_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE gis.warehouse_locations FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.attendance_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.audit_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.candidates FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.companies FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.contract_renewals FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.contracts FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.departments FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.employees FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.interviews FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.job_openings FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.leave_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.payroll_details FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.payroll_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.payroll_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.payroll_runs FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.performance_goals FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.performance_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.performance_reviews FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.positions FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.recruitment_applications FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.recruitment_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.salary_adjustments FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.training_courses FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.training_participants FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.training_plans FORCE ROW LEVEL SECURITY;
-ALTER TABLE hrm.training_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE iam.position_permissions FORCE ROW LEVEL SECURITY;
-ALTER TABLE iam.position_roles FORCE ROW LEVEL SECURITY;
-ALTER TABLE iam.positions FORCE ROW LEVEL SECURITY;
-ALTER TABLE iam.resource_permissions FORCE ROW LEVEL SECURITY;
-ALTER TABLE iam.user_positions FORCE ROW LEVEL SECURITY;
-ALTER TABLE integration.conversion_executions FORCE ROW LEVEL SECURITY;
-ALTER TABLE integration.conversion_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE integration.core_inter_module_sync FORCE ROW LEVEL SECURITY;
-ALTER TABLE integration.crm_erp_sync FORCE ROW LEVEL SECURITY;
-ALTER TABLE integration.crm_scm_sync FORCE ROW LEVEL SECURITY;
-ALTER TABLE integration.erp_wms_sync FORCE ROW LEVEL SECURITY;
-ALTER TABLE integration.hrm_finance_sync FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_calibration_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_inspection_reports FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_instruments FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_processes FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_reagent_alerts FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_reagent_history FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_reagents FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_sample_lifecycle FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_samples FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lab_tasks FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_audit_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_barcode_scan_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_collection_tasks FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_instrument_data FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_method_categories FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_method_validations FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_method_versions FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_parse_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_pt_corrective_actions FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_pt_evaluations FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_pt_plans FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_pt_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_pt_samples FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_rfid_tags FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_sample_barcodes FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_sync_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_test_methods FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_uncertainty_components FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_uncertainty_projects FORCE ROW LEVEL SECURITY;
-ALTER TABLE lims.qa_lims_uncertainty_sources FORCE ROW LEVEL SECURITY;
-ALTER TABLE master_data.core_master_data_change_log FORCE ROW LEVEL SECURITY;
-ALTER TABLE master_data.core_master_data_event_outbox FORCE ROW LEVEL SECURITY;
-ALTER TABLE master_data.core_master_data_refs FORCE ROW LEVEL SECURITY;
-ALTER TABLE master_data.core_mdm_approvals FORCE ROW LEVEL SECURITY;
-ALTER TABLE master_data.core_mdm_reconciliation_log FORCE ROW LEVEL SECURITY;
-ALTER TABLE mes.audit_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE mes.capacities FORCE ROW LEVEL SECURITY;
-ALTER TABLE mes.demand_forecasts FORCE ROW LEVEL SECURITY;
-ALTER TABLE mes.material_plans FORCE ROW LEVEL SECURITY;
-ALTER TABLE mes.production_plans FORCE ROW LEVEL SECURITY;
-ALTER TABLE mobile.core_mobile_offline_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE mobile.mobile_push_notifications FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_bom_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_boms FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_change_notices FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_configurations FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_document_versions FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_documents FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_master_data_refs FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_materials FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_production_batches FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_production_formulas FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_production_processes FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_production_steps FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_products FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_project_members FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_project_phases FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_projects FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_versions FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_workflow_instances FORCE ROW LEVEL SECURITY;
-ALTER TABLE pdm.pdm_workflows FORCE ROW LEVEL SECURITY;
-ALTER TABLE pm.pm_master_data_refs FORCE ROW LEVEL SECURITY;
-ALTER TABLE pm.pm_tasks FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.alert_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.alerts FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.announcements FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.audit_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_doc_documents FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_doc_folders FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_doc_templates FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_login_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_master_data_change_log FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_master_data_event_outbox FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_master_data_refs FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_mdm_approvals FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_mdm_reconciliation_log FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_menu_groups FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_operation_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.core_tenant_usage FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.navigation_menu FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.permission_audit_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.pinned_apps FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.subscriptions FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.tenant_permissions FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.todos FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.user_settings FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_audit_findings FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_audit_plans FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_audit_tasks FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_corrective_action_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_corrective_actions FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_ehs_hazards FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_eightd_audit_logs FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_eightd_reports FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_fmea_analyses FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_fmea_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_inspection_audits FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_inspection_results FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_lab_samples FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_lab_tasks FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_qms_sync_records FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_quality_costs FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_quality_inspections FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_quality_issues FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_spc_charts FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_spc_data_points FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_standard_revisions FORCE ROW LEVEL SECURITY;
-ALTER TABLE qms.qa_standards FORCE ROW LEVEL SECURITY;
-ALTER TABLE rs.change_requests FORCE ROW LEVEL SECURITY;
-ALTER TABLE rs.formula_versions FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.demand_forecast FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.sales_order_items FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.srm_supplier_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.supplier_products FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.wms_inbound_order_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.wms_inventory_movement_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.wms_inventory_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.wms_outbound_order_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE scm.wms_replenishment_suggestion_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.bidding_suppliers FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.biddings FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.inquiries FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.quotations FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.scm_supplier_snapshots FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.scoring_dimensions FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.supplier_performance FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.tender_awards FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.tender_bids FORCE ROW LEVEL SECURITY;
-ALTER TABLE srm.tenders FORCE ROW LEVEL SECURITY;
-ALTER TABLE ticket.core_ticket_activities FORCE ROW LEVEL SECURITY;
-ALTER TABLE ticket.core_ticket_comments FORCE ROW LEVEL SECURITY;
-ALTER TABLE ticket.core_ticket_sla_escalations FORCE ROW LEVEL SECURITY;
-ALTER TABLE ticket.core_ticket_sla_policies FORCE ROW LEVEL SECURITY;
-ALTER TABLE ticket.ticket_automation_rules FORCE ROW LEVEL SECURITY;
-ALTER TABLE ticket.ticket_knowledge_articles FORCE ROW LEVEL SECURITY;
-ALTER TABLE tms.tms_carriers FORCE ROW LEVEL SECURITY;
-ALTER TABLE tms.tms_drivers FORCE ROW LEVEL SECURITY;
-ALTER TABLE tms.tms_routes FORCE ROW LEVEL SECURITY;
-ALTER TABLE tms.tms_shipments FORCE ROW LEVEL SECURITY;
-ALTER TABLE tms.tms_vehicles FORCE ROW LEVEL SECURITY;
-ALTER TABLE unified_core.inter_module_sync FORCE ROW LEVEL SECURITY;
-ALTER TABLE wms.inventory_movements FORCE ROW LEVEL SECURITY;
-ALTER TABLE wms.wms_approval_events FORCE ROW LEVEL SECURITY;
-ALTER TABLE wms.wms_master_data_refs FORCE ROW LEVEL SECURITY;
+-- 2026-09-18 防御化（空库重建链卡点）：重构为 FOREACH 循环，表不存在（旧库遗留 v52/v53 等）则跳过。
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'ai.ai_training_samples',
+    'core.core_tenant_plugins',
+    'core.knowledge_bases',
+    'core.knowledge_chunks',
+    'core.knowledge_documents',
+    'core.knowledge_qa_history',
+    'crm.billing_records',
+    'crm.core_crm_customers',
+    'crm.customer_orders',
+    'crm.customer_scores',
+    'crm.return_items',
+    'crm.returns',
+    'crm.rfm_results',
+    'crm.sales_forecasts',
+    'doc.document_versions',
+    'doc.documents',
+    'doc.folders',
+    'doc.templates',
+    'doc_service.core_doc_documents',
+    'ehs.qa_ehs_employees',
+    'erp.core_erp_materials',
+    'erp.core_erp_suppliers',
+    'erp.documents',
+    'erp.erp_master_data_refs',
+    'erp.fin_reconciliations',
+    'erp.holidays',
+    'erp.inventory',
+    'erp.leave_requests',
+    'erp.meeting_bookings',
+    'erp.meeting_rooms',
+    'erp.purchase_orders',
+    'erp.vehicle_requests',
+    'erp.vehicles',
+    'finance.accounting_subjects',
+    'finance.budgets',
+    'finance.core_finance_accounts',
+    'finance.core_finance_approval_nodes',
+    'finance.core_finance_approval_workflows',
+    'finance.core_finance_aux_accounts',
+    'finance.core_finance_aux_balances',
+    'finance.core_finance_ledger',
+    'finance.core_finance_payment_approval_config',
+    'finance.core_finance_payment_items',
+    'finance.core_finance_payment_workflow',
+    'finance.core_finance_payments',
+    'finance.core_finance_periods',
+    'finance.core_finance_reconciliation_items',
+    'finance.core_finance_reconciliation_sessions',
+    'finance.core_finance_voucher_lines',
+    'finance.core_finance_vouchers',
+    'finance.difference_adjustments',
+    'finance.erp_collection_records',
+    'finance.erp_payables',
+    'finance.erp_payment_records',
+    'finance.erp_receivables',
+    'finance.finance_alert_configs_v52',
+    'finance.finance_alert_history_v52',
+    'finance.finance_anomaly_alerts_v52',
+    'finance.finance_audit_findings_v52',
+    'finance.finance_audit_rules_v52',
+    'finance.finance_budget_variances_v53',
+    'finance.finance_cash_flow_predictions_v53',
+    'finance.finance_compliance_reports',
+    'finance.finance_control_matrices',
+    'finance.finance_control_points',
+    'finance.finance_detection_configs_v52',
+    'finance.finance_prediction_models_v53',
+    'finance.finance_risk_assessments',
+    'finance.finance_u8_import_records',
+    'finance.finance_v54_fraud_rules',
+    'finance.finance_v54_fraud_scores',
+    'finance.finance_v54_review_results',
+    'finance.finance_v54_review_rules',
+    'finance.finance_v54_review_workflows',
+    'finance.finance_v54_risk_alerts',
+    'finance.finance_v54_risk_indicators',
+    'finance.finance_v55_invoice_items',
+    'finance.finance_v55_invoices',
+    'finance.finance_v55_payment_requests',
+    'finance.finance_v55_payment_results',
+    'finance.finance_v55_reconciliation_results',
+    'finance.finance_v55_reconciliation_rules',
+    'finance.finance_v56_tax_brackets',
+    'finance.finance_v56_tax_forms',
+    'finance.finance_v56_tax_lines',
+    'finance.finance_v56_tax_plans',
+    'finance.finance_v56_tax_rates',
+    'finance.finance_v56_tax_suggestions',
+    'finance.finance_v57_analysis_dimensions',
+    'finance.finance_v57_analysis_results',
+    'finance.finance_v57_forecast_models',
+    'finance.finance_v57_generated_reports',
+    'finance.finance_v57_insights',
+    'finance.finance_v57_report_templates',
+    'finance.finance_v58_cash_pools',
+    'finance.finance_v58_forecast_results',
+    'finance.finance_v58_forecast_scenarios',
+    'finance.finance_v58_liquidity_targets',
+    'finance.finance_v58_optimization_results',
+    'finance.finance_v58_pool_allocations',
+    'finance.finance_v58_pool_transfers',
+    'finance.finance_v59_credit_profiles',
+    'finance.finance_v59_device_profiles',
+    'finance.finance_v59_fraud_decisions',
+    'finance.finance_v59_fraud_rules',
+    'finance.finance_v59_fraud_signals',
+    'finance.finance_v59_scoring_models',
+    'finance.finance_v59_stress_results',
+    'finance.finance_v59_stress_scenarios',
+    'finance.finance_v60_alert_channels',
+    'finance.finance_v60_alert_rules',
+    'finance.finance_v60_alerts',
+    'finance.finance_v60_decision_results',
+    'finance.finance_v60_decision_scenarios',
+    'finance.finance_v60_schedule_dependencies',
+    'finance.finance_v60_schedule_executions',
+    'finance.finance_v60_schedule_tasks',
+    'finance.finance_voucher_generation_rules',
+    'finance.finance_voucher_template_lines',
+    'finance.finance_voucher_templates',
+    'finance.financial_reports',
+    'finance.reconciliation_item_snapshots',
+    'finance.reconciliation_settlement_links',
+    'finance.reconciliation_snapshots',
+    'finance.settlement_center_dashboards',
+    'finance.settlement_snapshots',
+    'finance.source_amount_snapshots',
+    'finance.vouchers',
+    'gis.audit_log',
+    'gis.audit_logs',
+    'gis.business_locations',
+    'gis.device_location_records',
+    'gis.device_locations',
+    'gis.devices',
+    'gis.evidence_records',
+    'gis.factory_maps',
+    'gis.geodata',
+    'gis.geofeatures',
+    'gis.geofence_alerts',
+    'gis.location_photos',
+    'gis.locations',
+    'gis.map_layers',
+    'gis.map_markers',
+    'gis.maps',
+    'gis.pipelines',
+    'gis.spatial_analysis',
+    'gis.track_records',
+    'gis.warehouse_locations',
+    'hrm.attendance_records',
+    'hrm.audit_logs',
+    'hrm.candidates',
+    'hrm.companies',
+    'hrm.contract_renewals',
+    'hrm.contracts',
+    'hrm.departments',
+    'hrm.employees',
+    'hrm.interviews',
+    'hrm.job_openings',
+    'hrm.leave_records',
+    'hrm.payroll_details',
+    'hrm.payroll_items',
+    'hrm.payroll_records',
+    'hrm.payroll_runs',
+    'hrm.performance_goals',
+    'hrm.performance_records',
+    'hrm.performance_reviews',
+    'hrm.positions',
+    'hrm.recruitment_applications',
+    'hrm.recruitment_records',
+    'hrm.salary_adjustments',
+    'hrm.training_courses',
+    'hrm.training_participants',
+    'hrm.training_plans',
+    'hrm.training_records',
+    'iam.position_permissions',
+    'iam.position_roles',
+    'iam.positions',
+    'iam.resource_permissions',
+    'iam.user_positions',
+    'integration.conversion_executions',
+    'integration.conversion_rules',
+    'integration.core_inter_module_sync',
+    'integration.crm_erp_sync',
+    'integration.crm_scm_sync',
+    'integration.erp_wms_sync',
+    'integration.hrm_finance_sync',
+    'lims.qa_lab_calibration_records',
+    'lims.qa_lab_inspection_reports',
+    'lims.qa_lab_instruments',
+    'lims.qa_lab_processes',
+    'lims.qa_lab_reagent_alerts',
+    'lims.qa_lab_reagent_history',
+    'lims.qa_lab_reagents',
+    'lims.qa_lab_records',
+    'lims.qa_lab_sample_lifecycle',
+    'lims.qa_lab_samples',
+    'lims.qa_lab_tasks',
+    'lims.qa_lims_audit_logs',
+    'lims.qa_lims_barcode_scan_records',
+    'lims.qa_lims_collection_tasks',
+    'lims.qa_lims_instrument_data',
+    'lims.qa_lims_method_categories',
+    'lims.qa_lims_method_validations',
+    'lims.qa_lims_method_versions',
+    'lims.qa_lims_parse_rules',
+    'lims.qa_lims_pt_corrective_actions',
+    'lims.qa_lims_pt_evaluations',
+    'lims.qa_lims_pt_plans',
+    'lims.qa_lims_pt_results',
+    'lims.qa_lims_pt_samples',
+    'lims.qa_lims_rfid_tags',
+    'lims.qa_lims_sample_barcodes',
+    'lims.qa_lims_sync_records',
+    'lims.qa_lims_test_methods',
+    'lims.qa_lims_uncertainty_components',
+    'lims.qa_lims_uncertainty_projects',
+    'lims.qa_lims_uncertainty_sources',
+    'master_data.core_master_data_change_log',
+    'master_data.core_master_data_event_outbox',
+    'master_data.core_master_data_refs',
+    'master_data.core_mdm_approvals',
+    'master_data.core_mdm_reconciliation_log',
+    'mes.audit_logs',
+    'mes.capacities',
+    'mes.demand_forecasts',
+    'mes.material_plans',
+    'mes.production_plans',
+    'mobile.core_mobile_offline_records',
+    'mobile.mobile_push_notifications',
+    'pdm.pdm_bom_items',
+    'pdm.pdm_boms',
+    'pdm.pdm_change_notices',
+    'pdm.pdm_configurations',
+    'pdm.pdm_document_versions',
+    'pdm.pdm_documents',
+    'pdm.pdm_master_data_refs',
+    'pdm.pdm_materials',
+    'pdm.pdm_production_batches',
+    'pdm.pdm_production_formulas',
+    'pdm.pdm_production_processes',
+    'pdm.pdm_production_steps',
+    'pdm.pdm_products',
+    'pdm.pdm_project_members',
+    'pdm.pdm_project_phases',
+    'pdm.pdm_projects',
+    'pdm.pdm_versions',
+    'pdm.pdm_workflow_instances',
+    'pdm.pdm_workflows',
+    'pm.pm_master_data_refs',
+    'pm.pm_tasks',
+    'public.alert_rules',
+    'public.alerts',
+    'public.announcements',
+    'public.audit_logs',
+    'public.core_doc_documents',
+    'public.core_doc_folders',
+    'public.core_doc_templates',
+    'public.core_login_logs',
+    'public.core_master_data_change_log',
+    'public.core_master_data_event_outbox',
+    'public.core_master_data_refs',
+    'public.core_mdm_approvals',
+    'public.core_mdm_reconciliation_log',
+    'public.core_menu_groups',
+    'public.core_operation_logs',
+    'public.core_tenant_usage',
+    'public.navigation_menu',
+    'public.permission_audit_logs',
+    'public.pinned_apps',
+    'public.subscriptions',
+    'public.tenant_permissions',
+    'public.todos',
+    'public.user_settings',
+    'qms.qa_audit_findings',
+    'qms.qa_audit_plans',
+    'qms.qa_audit_tasks',
+    'qms.qa_corrective_action_items',
+    'qms.qa_corrective_actions',
+    'qms.qa_ehs_hazards',
+    'qms.qa_eightd_audit_logs',
+    'qms.qa_eightd_reports',
+    'qms.qa_fmea_analyses',
+    'qms.qa_fmea_items',
+    'qms.qa_inspection_audits',
+    'qms.qa_inspection_results',
+    'qms.qa_lab_samples',
+    'qms.qa_lab_tasks',
+    'qms.qa_qms_sync_records',
+    'qms.qa_quality_costs',
+    'qms.qa_quality_inspections',
+    'qms.qa_quality_issues',
+    'qms.qa_spc_charts',
+    'qms.qa_spc_data_points',
+    'qms.qa_standard_revisions',
+    'qms.qa_standards',
+    'rs.change_requests',
+    'rs.formula_versions',
+    'scm.demand_forecast',
+    'scm.sales_order_items',
+    'scm.srm_supplier_snapshots',
+    'scm.supplier_products',
+    'scm.wms_inbound_order_snapshots',
+    'scm.wms_inventory_movement_snapshots',
+    'scm.wms_inventory_snapshots',
+    'scm.wms_outbound_order_snapshots',
+    'scm.wms_replenishment_suggestion_snapshots',
+    'srm.bidding_suppliers',
+    'srm.biddings',
+    'srm.inquiries',
+    'srm.quotations',
+    'srm.scm_supplier_snapshots',
+    'srm.scoring_dimensions',
+    'srm.supplier_performance',
+    'srm.tender_awards',
+    'srm.tender_bids',
+    'srm.tenders',
+    'ticket.core_ticket_activities',
+    'ticket.core_ticket_comments',
+    'ticket.core_ticket_sla_escalations',
+    'ticket.core_ticket_sla_policies',
+    'ticket.ticket_automation_rules',
+    'ticket.ticket_knowledge_articles',
+    'tms.tms_carriers',
+    'tms.tms_drivers',
+    'tms.tms_routes',
+    'tms.tms_shipments',
+    'tms.tms_vehicles',
+    'unified_core.inter_module_sync',
+    'wms.inventory_movements',
+    'wms.wms_approval_events',
+    'wms.wms_master_data_refs'
+  ]
+  LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = split_part(t, '.', 1)
+                 AND table_name = split_part(t, '.', 2)) THEN
+      EXECUTE 'ALTER TABLE ' || t || ' FORCE ROW LEVEL SECURITY';
+    END IF;
+  END LOOP;
+END $$;

@@ -46,7 +46,22 @@ CREATE TABLE IF NOT EXISTS mes.work_reports (
 );
 
 -- 存量环境类型对齐（幂等；已为 numeric 则无副作用）
-ALTER TABLE mes.work_reports
-    ALTER COLUMN output_quantity TYPE numeric,
-    ALTER COLUMN defect_quantity TYPE numeric,
-    ALTER COLUMN labor_hours TYPE numeric;
+-- 2026-09-18 防御化修补（空库重建链卡点）：空库重建时该表仅为 business_base_tables
+-- 建的 2 列骨架，CREATE TABLE IF NOT EXISTS 被跳过、ALTER 报列不存在；
+-- 改为列级防御：列存在则 ALTER TYPE numeric，缺失则 ADD COLUMN numeric（代码按 BigDecimal）。
+DO $fix$
+DECLARE
+  c_exists boolean;
+  c_name text;
+BEGIN
+  FOREACH c_name IN ARRAY ARRAY['output_quantity','defect_quantity','labor_hours'] LOOP
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema='mes' AND table_name='work_reports' AND column_name=c_name)
+      INTO c_exists;
+    IF c_exists THEN
+      EXECUTE format('ALTER TABLE mes.work_reports ALTER COLUMN %I TYPE numeric', c_name);
+    ELSE
+      EXECUTE format('ALTER TABLE mes.work_reports ADD COLUMN %I numeric DEFAULT 0', c_name);
+    END IF;
+  END LOOP;
+END $fix$;

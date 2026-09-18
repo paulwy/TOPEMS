@@ -9,6 +9,18 @@
 --   3) flow.core_workflow_tasks 补 priority/due_time/claimed_at（代码引用）
 -- ============================================================================
 
+-- 2026-09-18 防御化（空库重建链卡点）：flow.core_workflows 为空库重建的 2 列骨架
+-- （无 name 等业务列），INSERT 目标列解析失败；若为骨架则按 public.core_workflows
+-- 结构重建（骨架无数据，DROP 安全），再补 tenant_id/code 列。
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='flow' AND table_name='core_workflows')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='flow' AND table_name='core_workflows' AND column_name='name') THEN
+    DROP TABLE flow.core_workflows;
+    CREATE TABLE flow.core_workflows (LIKE public.core_workflows INCLUDING ALL);
+  END IF;
+END $$;
+
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='flow' AND table_name='core_workflows' AND column_name='tenant_id') THEN
@@ -20,7 +32,7 @@ BEGIN
 END $$;
 
 INSERT INTO flow.core_workflows (id, name, description, definition, status, version, created_by, created_at, updated_at, published_at, deleted_at, tenant_id, code)
-SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at, deleted_at, tenant_id, code
+SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at, deleted_at, tenant_id, NULL::varchar(64) AS code
 FROM public.core_workflows
 ON CONFLICT (id) DO NOTHING;
 

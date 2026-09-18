@@ -8,9 +8,20 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS unified_core;
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 unified_core.inter_module_sync 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='unified_core' AND table_name='inter_module_sync')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='unified_core' AND table_name='inter_module_sync' AND column_name='tenant_id')
+  THEN
+    DROP TABLE unified_core.inter_module_sync;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS unified_core.inter_module_sync (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL REFERENCES public.core_tenants(id) ON DELETE CASCADE,
     sync_type VARCHAR(50) NOT NULL,
     source_module VARCHAR(50) NOT NULL,
     target_module VARCHAR(50) NOT NULL,

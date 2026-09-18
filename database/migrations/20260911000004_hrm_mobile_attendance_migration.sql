@@ -7,6 +7,11 @@
 -- 3. 数据导入：INSERT ... SELECT ... WHERE NOT EXISTS
 -- 4. 验证：行数比对 + 抽样校验
 
+-- ===== 阶段 0: 防御化补列（2026-09-18 空库重建链卡点）=====
+-- hrm.attendance_records 在空库重建路径缺 organization_id（5432 权威 18 列含该列）；
+-- INSERT 引用该列，先幂等补列。
+ALTER TABLE hrm.attendance_records ADD COLUMN IF NOT EXISTS organization_id uuid;
+
 -- ===== 阶段 1: 数据迁移（幂等，可重复执行）=====
 
 INSERT INTO hrm.attendance_records (
@@ -27,7 +32,7 @@ INSERT INTO hrm.attendance_records (
 )
 SELECT
     m.id,
-    e.organization_id,
+    e.org_id AS organization_id,  -- 2026-09-18 防御化：5433 的 hrm.employees 无 organization_id（用 org_id）
     e.id AS employee_id,
     m.date::date,
     m.check_in_time::time,
@@ -46,7 +51,7 @@ SELECT
     COALESCE(m.updated_at, m.created_at) AS updated_at,
     e.tenant_id
 FROM mobile.mobile_attendance m
-JOIN hrm.employees e ON e.user_id = m.user_id
+JOIN hrm.employees e ON e.user_id = m.user_id::uuid  -- 2026-09-18 防御化：mobile.user_id 为 varchar，加 cast
 WHERE NOT EXISTS (
     SELECT 1 FROM hrm.attendance_records ar
     WHERE ar.employee_id = e.id AND ar.date = m.date::date

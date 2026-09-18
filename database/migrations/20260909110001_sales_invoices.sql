@@ -4,6 +4,17 @@
 -- finance 补 sales-invoices CRUD/状态机 + collections + receivable 报表端点。
 -- finance_v55_invoices 为采购/应付发票（vendor 维度），本表为销售发票（customer 维度），语义独立。
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 finance.sales_invoices 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='finance' AND table_name='sales_invoices')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='finance' AND table_name='sales_invoices' AND column_name='tenant_id')
+  THEN
+    DROP TABLE finance.sales_invoices;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS finance.sales_invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
@@ -73,6 +84,11 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_policies
         WHERE schemaname = 'finance' AND tablename = 'erp_collection_records' AND policyname = 'rls_tenant_isolation'
+    ) AND EXISTS (
+        -- 2026-09-18 防御化（空库重建链卡点）：骨架表无 tenant_id 列时跳过策略
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'finance' AND table_name = 'erp_collection_records'
+          AND column_name = 'tenant_id'
     ) THEN
         EXECUTE $policy$CREATE POLICY rls_tenant_isolation ON finance.erp_collection_records USING (
             current_setting('app.current_tenant_id', true) IS NULL

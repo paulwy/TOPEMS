@@ -6,6 +6,59 @@
 -- 注意：admin 用户在双表存在 id 不一致（iam 8f6cdc35… vs core 2eb884ef…）——迁移按 username
 --      统一 id 并同步 iam 侧引用表，保证 FK 落 core_users 后可匹配。
 -- 幂等：DROP IF EXISTS + ADD 命名一致可重跑。
+--
+-- 2026-09-18 防御化修补（空库重建链卡点）：空库重建时 iam 引用 5 表仅为
+-- business_base_tables 建的 2 列裸骨架，UPDATE 引用 user_id 报列不存在；
+-- 现于文件开头以 ADD COLUMN IF NOT EXISTS 补齐（refresh_tokens/sessions 依 5432
+-- 权威结构，user_roles 参照 unified_core，另 2 表最小列），自包含幂等。
+
+-- ============ 防御化：补齐 iam 引用表列（2026-09-18）============
+-- ============ iam.refresh_tokens（5432 权威结构补齐）============
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "user_id" uuid NOT NULL;
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "token_hash" VARCHAR(255) NOT NULL;
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "device_info" jsonb;
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "ip_address" inet;
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "user_agent" text;
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "expires_at" timestamp with time zone NOT NULL;
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "revoked_at" timestamp with time zone;
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "revoked_reason" VARCHAR(255);
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "created_at" timestamp with time zone NOT NULL DEFAULT now();
+ALTER TABLE "iam"."refresh_tokens" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;
+
+-- ============ iam.sessions（5432 权威结构补齐）============
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "user_id" uuid NOT NULL;
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "token_hash" VARCHAR(255) NOT NULL;
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "ip_address" inet;
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "user_agent" text;
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "device_info" jsonb;
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "expires_at" timestamp with time zone NOT NULL;
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "created_at" timestamp with time zone NOT NULL DEFAULT now();
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "refresh_expires_at" timestamp with time zone;
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "last_active_at" timestamp with time zone DEFAULT now();
+ALTER TABLE "iam"."sessions" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;
+
+-- ============ iam.user_roles（5432 无 iam 版本，参照 unified_core.user_roles 6 列）============
+ALTER TABLE "iam"."user_roles" ADD COLUMN IF NOT EXISTS "user_id" uuid;
+ALTER TABLE "iam"."user_roles" ADD COLUMN IF NOT EXISTS "role_id" uuid;
+ALTER TABLE "iam"."user_roles" ADD COLUMN IF NOT EXISTS "tenant_id" uuid;
+ALTER TABLE "iam"."user_roles" ADD COLUMN IF NOT EXISTS "granted_by" VARCHAR(64);
+ALTER TABLE "iam"."user_roles" ADD COLUMN IF NOT EXISTS "granted_at" timestamp with time zone DEFAULT now();
+ALTER TABLE "iam"."user_roles" ADD COLUMN IF NOT EXISTS "expires_at" timestamp with time zone;
+
+-- ============ iam.password_reset_tokens（5432 无此表，最小列补齐满足 000024 解析）============
+ALTER TABLE "iam"."password_reset_tokens" ADD COLUMN IF NOT EXISTS "user_id" uuid;
+ALTER TABLE "iam"."password_reset_tokens" ADD COLUMN IF NOT EXISTS "email" VARCHAR(255);
+ALTER TABLE "iam"."password_reset_tokens" ADD COLUMN IF NOT EXISTS "token" VARCHAR(255);
+ALTER TABLE "iam"."password_reset_tokens" ADD COLUMN IF NOT EXISTS "expires_at" timestamp with time zone;
+ALTER TABLE "iam"."password_reset_tokens" ADD COLUMN IF NOT EXISTS "used" boolean DEFAULT false;
+ALTER TABLE "iam"."password_reset_tokens" ADD COLUMN IF NOT EXISTS "created_at" timestamp with time zone DEFAULT now();
+
+-- ============ iam.user_access_logs（5432 无此表，最小列补齐满足 000024 解析）============
+ALTER TABLE "iam"."user_access_logs" ADD COLUMN IF NOT EXISTS "user_id" uuid;
+ALTER TABLE "iam"."user_access_logs" ADD COLUMN IF NOT EXISTS "login_at" timestamp with time zone DEFAULT now();
+ALTER TABLE "iam"."user_access_logs" ADD COLUMN IF NOT EXISTS "ip_address" VARCHAR(64);
+ALTER TABLE "iam"."user_access_logs" ADD COLUMN IF NOT EXISTS "user_agent" text;
+
 
 -- 1) 先 DROP 旧外键（指向 iam.users），避免后续 UPDATE 主键/id 受 FK 约束
 ALTER TABLE iam.refresh_tokens DROP CONSTRAINT IF EXISTS refresh_tokens_user_id_fkey;

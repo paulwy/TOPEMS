@@ -18,6 +18,17 @@
 -- =============================================================
 
 -- 办公用品表
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.office_supplies 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 name 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='office_supplies')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='office_supplies' AND column_name='name')
+  THEN
+    DROP TABLE erp.office_supplies;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.office_supplies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
@@ -36,6 +47,17 @@ CREATE INDEX IF NOT EXISTS idx_office_supplies_status ON erp.office_supplies(sta
 CREATE INDEX IF NOT EXISTS idx_office_supplies_category ON erp.office_supplies(category);
 
 -- 会议室表
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.meeting_rooms 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 name 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='meeting_rooms')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='meeting_rooms' AND column_name='name')
+  THEN
+    DROP TABLE erp.meeting_rooms;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.meeting_rooms (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
@@ -51,6 +73,17 @@ CREATE INDEX IF NOT EXISTS idx_meeting_rooms_name ON erp.meeting_rooms(name);
 CREATE INDEX IF NOT EXISTS idx_meeting_rooms_status ON erp.meeting_rooms(status);
 
 -- 会议预约表
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.meeting_bookings 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 room_id 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='meeting_bookings')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='meeting_bookings' AND column_name='room_id')
+  THEN
+    DROP TABLE erp.meeting_bookings;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.meeting_bookings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID NOT NULL REFERENCES erp.meeting_rooms(id) ON DELETE CASCADE,
@@ -69,6 +102,17 @@ CREATE INDEX IF NOT EXISTS idx_meeting_bookings_status ON erp.meeting_bookings(s
 CREATE INDEX IF NOT EXISTS idx_meeting_bookings_start_time ON erp.meeting_bookings(start_time);
 
 -- 车辆表
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.vehicles 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 plate_number 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='vehicles')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='vehicles' AND column_name='plate_number')
+  THEN
+    DROP TABLE erp.vehicles;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.vehicles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     plate_number VARCHAR(50) NOT NULL UNIQUE,
@@ -88,6 +132,17 @@ CREATE INDEX IF NOT EXISTS idx_vehicles_plate_number ON erp.vehicles(plate_numbe
 CREATE INDEX IF NOT EXISTS idx_vehicles_status ON erp.vehicles(status);
 
 -- 车辆申请记录表
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.vehicle_requests 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 vehicle_id 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='vehicle_requests')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='vehicle_requests' AND column_name='vehicle_id')
+  THEN
+    DROP TABLE erp.vehicle_requests;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.vehicle_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     vehicle_id UUID NOT NULL REFERENCES erp.vehicles(id) ON DELETE CASCADE,
@@ -109,6 +164,17 @@ CREATE INDEX IF NOT EXISTS idx_vehicle_requests_vehicle_id ON erp.vehicle_reques
 CREATE INDEX IF NOT EXISTS idx_vehicle_requests_status ON erp.vehicle_requests(status);
 
 -- 文档管理表
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.documents 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 title 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='documents')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='documents' AND column_name='title')
+  THEN
+    DROP TABLE erp.documents;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(500) NOT NULL,
@@ -126,6 +192,17 @@ CREATE INDEX IF NOT EXISTS idx_documents_status ON erp.documents(status);
 CREATE INDEX IF NOT EXISTS idx_documents_doc_type ON erp.documents(doc_type);
 
 -- 公告表
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.announcements 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 title 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='announcements')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='announcements' AND column_name='title')
+  THEN
+    DROP TABLE erp.announcements;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.announcements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,

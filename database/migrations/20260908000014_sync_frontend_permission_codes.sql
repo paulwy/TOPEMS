@@ -2,6 +2,9 @@
 -- 来源：P7 审计提取 apps/web/src/modules/*/config.ts 的 permission/navItems[].permission/routes[].requiredPermissions
 -- 共 374 条；幂等（ON CONFLICT (code) DO NOTHING）；resource/action 按后端拆分惯例（末段为 action）
 -- 绑定策略：superadmin + admin 角色全量绑定（全权限角色应覆盖全部签发码）
+-- 2026-09-18 防御化（空库重建链卡点）：001_iam.sql 建的 core_permissions 无 level 列
+-- （5432 为历史 ALTER 补齐），INSERT 引用 level 报列不存在；补列幂等（已有则跳过）。
+ALTER TABLE public.core_permissions ADD COLUMN IF NOT EXISTS level integer;
 INSERT INTO public.core_permissions (code, name, description, resource, action, level)
 SELECT v.code, v.code, v.description, v.resource, v.action, v.level
 FROM (VALUES
@@ -382,14 +385,14 @@ FROM (VALUES
 ) AS v(code, name, description, resource, action, level)
 ON CONFLICT (code) DO NOTHING;
 
+-- 2026-09-18 防御化（空库重建链卡点）：原硬编码 role_id 为 5432 特定值（已与库内不一致），
+-- 空库重建时 FK 违反；改为按角色 name 查 ID 绑定（角色不存在则 0 行跳过，幂等安全）。
 INSERT INTO public.core_role_permissions (role_id, permission_id)
-SELECT r.role_id, p.id
-FROM (VALUES
-  ('ceb23d3c-ce1a-45e6-858a-ddd947208eb8'::uuid),  -- superadmin
-  ('c65d489e-2a84-470b-902a-cfddcc0725ac'::uuid)   -- admin
-) AS r(role_id)
+SELECT r.id, p.id
+FROM public.core_roles r
 CROSS JOIN public.core_permissions p
-WHERE NOT EXISTS (
+WHERE r.name IN ('superadmin', 'admin')
+AND NOT EXISTS (
   SELECT 1 FROM public.core_role_permissions rp
-  WHERE rp.role_id = r.role_id AND rp.permission_id = p.id
+  WHERE rp.role_id = r.id AND rp.permission_id = p.id
 );

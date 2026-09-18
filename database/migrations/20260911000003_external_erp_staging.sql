@@ -1,6 +1,17 @@
 -- 外部 ERP 数据导入 Staging 表
 -- 用于存储从外部 ERP 系统导入的原始数据，支持后续转换和写入本地业务表
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 integration.external_erp_staging 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='integration' AND table_name='external_erp_staging')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='integration' AND table_name='external_erp_staging' AND column_name='tenant_id')
+  THEN
+    DROP TABLE integration.external_erp_staging;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS integration.external_erp_staging (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,

@@ -6,6 +6,17 @@
 --   last_event_time -> Option<DateTime<Utc>> (timestamptz)
 --   processed_count / error_count -> i64      (bigint)
 --   updated_at      -> DateTime<Utc>         (timestamptz, 默认 NOW())
+-- 2026-09-18 防御化（空库重建链卡点）：若 finance.cqrs_projection_progress 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 view_name 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='finance' AND table_name='cqrs_projection_progress')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='finance' AND table_name='cqrs_projection_progress' AND column_name='view_name')
+  THEN
+    DROP TABLE finance.cqrs_projection_progress;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS finance.cqrs_projection_progress (
     view_name        TEXT PRIMARY KEY,
     last_event_id    UUID,
@@ -24,6 +35,17 @@ CREATE TABLE IF NOT EXISTS finance.cqrs_projection_progress (
 --   version                -> i64                   (bigint)
 --   payload / metadata     -> serde_json::Value     (jsonb)
 --   occurred_at            -> DateTime<Utc>         (timestamptz)
+-- 2026-09-18 防御化（空库重建链卡点）：若 finance.cqrs_events 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 aggregate_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='finance' AND table_name='cqrs_events')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='finance' AND table_name='cqrs_events' AND column_name='aggregate_id')
+  THEN
+    DROP TABLE finance.cqrs_events;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS finance.cqrs_events (
     id              UUID PRIMARY KEY,
     aggregate_id    UUID NOT NULL,

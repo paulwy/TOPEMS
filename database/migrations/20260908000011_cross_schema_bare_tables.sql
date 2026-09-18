@@ -5,6 +5,17 @@
 -- 按代码实际引用列建表（unified-core flow 模块 SQL 全集提取），幂等。
 
 -- unified-core flow 模块四表（public，匹配 search_path='public' 语义）
+-- 2026-09-18 防御化（空库重建链卡点）：若 public.core_workflow_instances 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 workflow_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='core_workflow_instances')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='core_workflow_instances' AND column_name='workflow_id')
+  THEN
+    DROP TABLE public.core_workflow_instances;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS public.core_workflow_instances (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workflow_id      UUID,
@@ -20,6 +31,17 @@ CREATE TABLE IF NOT EXISTS public.core_workflow_instances (
     deleted_at       TIMESTAMPTZ
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 public.core_workflow_tasks 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 instance_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='core_workflow_tasks')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='core_workflow_tasks' AND column_name='instance_id')
+  THEN
+    DROP TABLE public.core_workflow_tasks;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS public.core_workflow_tasks (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     instance_id UUID,
@@ -29,6 +51,17 @@ CREATE TABLE IF NOT EXISTS public.core_workflow_tasks (
     deleted_at  TIMESTAMPTZ
 );
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 public.approvals 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 workflow_instance_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='approvals')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='approvals' AND column_name='workflow_instance_id')
+  THEN
+    DROP TABLE public.approvals;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS public.approvals (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workflow_instance_id UUID,
@@ -36,6 +69,17 @@ CREATE TABLE IF NOT EXISTS public.approvals (
     created_at           TIMESTAMPTZ DEFAULT NOW(),
     deleted_at           TIMESTAMPTZ
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 public.approval_records 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 approval_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='approval_records')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='approval_records' AND column_name='approval_id')
+  THEN
+    DROP TABLE public.approval_records;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS public.approval_records (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -54,6 +98,17 @@ CREATE INDEX IF NOT EXISTS idx_approvals_wfi ON public.approvals(workflow_instan
 CREATE INDEX IF NOT EXISTS idx_approval_records_aid ON public.approval_records(approval_id);
 
 -- finance forecast_v53 预测表（裸名 vouchers/voucher_lines，search_path=finance,public）
+-- 2026-09-18 防御化（空库重建链卡点）：若 finance.vouchers 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='finance' AND table_name='vouchers')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='finance' AND table_name='vouchers' AND column_name='tenant_id')
+  THEN
+    DROP TABLE finance.vouchers;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS finance.vouchers (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id   UUID,
@@ -62,6 +117,17 @@ CREATE TABLE IF NOT EXISTS finance.vouchers (
     status      TEXT DEFAULT 'posted',
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 finance.voucher_lines 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 voucher_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='finance' AND table_name='voucher_lines')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='finance' AND table_name='voucher_lines' AND column_name='voucher_id')
+  THEN
+    DROP TABLE finance.voucher_lines;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS finance.voucher_lines (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

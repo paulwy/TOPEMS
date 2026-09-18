@@ -5,6 +5,24 @@
 DROP TABLE IF EXISTS public.core_tickets CASCADE;
 DROP TABLE IF EXISTS public.ticket_automation_rules CASCADE;
 DROP TABLE IF EXISTS public.ticket_knowledge_articles CASCADE;
-ALTER TABLE public.vehicle_requests SET SCHEMA erp;
-ALTER TABLE public.vehicles SET SCHEMA erp;
+DO $rehome$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='public' AND c.relname='vehicle_requests' AND c.relkind='r')
+     AND NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='erp' AND c.relname='vehicle_requests' AND c.relkind='r')
+  THEN
+    EXECUTE 'ALTER TABLE public."vehicle_requests" SET SCHEMA erp';
+  END IF;
+END $rehome$;
+DO $rehome$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='public' AND c.relname='vehicles' AND c.relkind='r')
+     AND NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='erp' AND c.relname='vehicles' AND c.relkind='r')
+  THEN
+    EXECUTE 'ALTER TABLE public."vehicles" SET SCHEMA erp';
+  END IF;
+END $rehome$;
 DROP TABLE IF EXISTS public.batch_records CASCADE;

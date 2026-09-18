@@ -7,6 +7,7 @@ DO $$
 DECLARE
   t text;
   pol_exists boolean;
+  col_exists boolean;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'ai.ai_training_samples',
@@ -338,14 +339,26 @@ BEGIN
     'wms.wms_master_data_refs'
   ]
   LOOP
-    EXECUTE 'ALTER TABLE ' || t || ' ENABLE ROW LEVEL SECURITY';
+    -- 2026-09-18 防御化（空库重建链卡点）：表可能不存在（旧库遗留 v52/v53 等），存在才启用
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = split_part(t, '.', 1)
+                 AND table_name = split_part(t, '.', 2)) THEN
+      EXECUTE 'ALTER TABLE ' || t || ' ENABLE ROW LEVEL SECURITY';
+    END IF;
     SELECT EXISTS (
       SELECT 1 FROM pg_policies
       WHERE schemaname = split_part(t, '.', 1)
         AND tablename = split_part(t, '.', 2)
         AND policyname = 'rls_tenant_isolation'
     ) INTO pol_exists;
-    IF NOT pol_exists THEN
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = split_part(t, '.', 1)
+        AND table_name = split_part(t, '.', 2)
+        AND column_name = 'tenant_id'
+    ) INTO col_exists;
+    -- 2026-09-18 防御化（空库重建链卡点）：无 tenant_id 列的表跳过策略（如骨架表/纯系统表）
+    IF NOT pol_exists AND col_exists THEN
     IF t = 'ai.ai_training_samples' THEN
       EXECUTE $policy$CREATE POLICY rls_tenant_isolation ON $policy$ || t || $policy$ USING (
         current_setting('app.current_tenant_id', true) IS NULL

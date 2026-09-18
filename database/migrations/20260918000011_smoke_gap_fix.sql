@@ -32,4 +32,11 @@ SET process_no = process_code,
 WHERE process_no IS NULL OR name IS NULL;
 
 -- wms.locations 种子数据 tenant_id 回填（解码 NULL 修复）
-UPDATE wms.locations SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+-- 2026-09-18 防御化（空库重建链卡点）：wms.locations 可能仅为 2 列骨架（无 tenant_id），跳过。
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='wms' AND table_name='locations' AND column_name='tenant_id') THEN
+    EXECUTE $x$UPDATE wms.locations SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL$x$;
+  END IF;
+END $$;

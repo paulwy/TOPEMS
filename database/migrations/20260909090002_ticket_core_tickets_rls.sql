@@ -11,6 +11,11 @@ BEGIN
     IF EXISTS (
         SELECT 1 FROM information_schema.tables
         WHERE table_schema = 'ticket' AND table_name = 'core_tickets'
+    ) AND EXISTS (
+        -- 2026-09-18 防御化（空库重建链卡点）：骨架表无 tenant_id 列时跳过策略
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'ticket' AND table_name = 'core_tickets'
+          AND column_name = 'tenant_id'
     ) THEN
         EXECUTE 'ALTER TABLE ticket.core_tickets ENABLE ROW LEVEL SECURITY';
         EXECUTE 'ALTER TABLE ticket.core_tickets FORCE ROW LEVEL SECURITY';

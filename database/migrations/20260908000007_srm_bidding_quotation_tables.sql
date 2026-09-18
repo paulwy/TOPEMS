@@ -7,6 +7,17 @@
 BEGIN;
 
 -- 竞价单
+-- 2026-09-18 防御化（空库重建链卡点）：若 srm.biddings 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 bidding_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='srm' AND table_name='biddings')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='srm' AND table_name='biddings' AND column_name='bidding_no')
+  THEN
+    DROP TABLE srm.biddings;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS srm.biddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     bidding_no VARCHAR(50) NOT NULL UNIQUE,
@@ -34,6 +45,17 @@ CREATE TABLE IF NOT EXISTS srm.biddings (
 );
 
 -- 报价单
+-- 2026-09-18 防御化（空库重建链卡点）：若 srm.quotations 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 quotation_no 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='srm' AND table_name='quotations')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='srm' AND table_name='quotations' AND column_name='quotation_no')
+  THEN
+    DROP TABLE srm.quotations;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS srm.quotations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     quotation_no VARCHAR(50) NOT NULL UNIQUE,
@@ -57,6 +79,17 @@ CREATE TABLE IF NOT EXISTS srm.quotations (
 );
 
 -- 评分维度
+-- 2026-09-18 防御化（空库重建链卡点）：若 srm.scoring_dimensions 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='srm' AND table_name='scoring_dimensions')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='srm' AND table_name='scoring_dimensions' AND column_name='tenant_id')
+  THEN
+    DROP TABLE srm.scoring_dimensions;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS srm.scoring_dimensions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
@@ -74,6 +107,17 @@ CREATE TABLE IF NOT EXISTS srm.scoring_dimensions (
 );
 
 -- 竞价-供应商关联
+-- 2026-09-18 防御化（空库重建链卡点）：若 srm.bidding_suppliers 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 bidding_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='srm' AND table_name='bidding_suppliers')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='srm' AND table_name='bidding_suppliers' AND column_name='bidding_id')
+  THEN
+    DROP TABLE srm.bidding_suppliers;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS srm.bidding_suppliers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     bidding_id UUID NOT NULL REFERENCES srm.biddings(id),

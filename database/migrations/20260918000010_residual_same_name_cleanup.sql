@@ -22,10 +22,18 @@ BEGIN
 END $$;
 
 -- 2) 迁移 public 数据 → erp（仅映射 erp 结构列；tenant_id/deleted_at 取公共值）
-INSERT INTO erp.announcements (id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at, tenant_id, deleted_at)
-SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at, tenant_id, deleted_at
-FROM public.announcements
-ON CONFLICT (id) DO NOTHING;
+-- 2026-09-18 防御化（空库重建链卡点）：public.announcements 可能仅为 2 列骨架
+-- （无 title 等源列），数据迁移解析失败；源表含业务列才执行（骨架无数据，跳过等价）。
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='announcements' AND column_name='title') THEN
+    EXECUTE $x$INSERT INTO erp.announcements (id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at, tenant_id, deleted_at)
+    SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at, tenant_id, deleted_at
+    FROM public.announcements
+    ON CONFLICT (id) DO NOTHING$x$;
+  END IF;
+END $$;
 
 -- 3) DROP 影子（announcements 数据已迁移；contacts/capacities 空表）
 DROP TABLE IF EXISTS public.announcements;

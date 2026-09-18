@@ -14,12 +14,30 @@ DROP INDEX IF EXISTS public.idx_core_tenants_code;
 -- ============================================
 
 -- 1. erp.inventory.material_id（inventory.rs:359 与 materials 表 JOIN）
-CREATE INDEX IF NOT EXISTS idx_inventory_material_id 
-ON erp.inventory (material_id);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = 'erp' AND table_name = 'inventory')
+       AND (SELECT count(DISTINCT column_name) FROM information_schema.columns
+            WHERE table_schema = 'erp' AND table_name = 'inventory'
+              AND column_name IN ('material_id')) = 1 THEN
+        CREATE INDEX IF NOT EXISTS idx_inventory_material_id
+        ON erp.inventory (material_id);
+    END IF;
+END $$;
 
 -- 2. finance.finance_voucher_template_lines.template_id（voucher_template_entries.rs 与 templates 表 JOIN）
-CREATE INDEX IF NOT EXISTS idx_voucher_template_lines_template_id 
-ON finance.finance_voucher_template_lines (template_id);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = 'finance' AND table_name = 'finance_voucher_template_lines')
+       AND (SELECT count(DISTINCT column_name) FROM information_schema.columns
+            WHERE table_schema = 'finance' AND table_name = 'finance_voucher_template_lines'
+              AND column_name IN ('template_id')) = 1 THEN
+        CREATE INDEX IF NOT EXISTS idx_voucher_template_lines_template_id
+        ON finance.finance_voucher_template_lines (template_id);
+    END IF;
+END $$;
 
 -- 3. hrm.employees.dept_id（monitor/metrics.rs:722 与 departments 表 JOIN）
 -- 检查 hrm.employees 表是否有 dept_id 列
@@ -51,16 +69,43 @@ END $$;
 -- ============================================
 
 -- 4. crm.opportunities.created_at（analytics.rs:137 按月度分组统计）
-CREATE INDEX IF NOT EXISTS idx_opportunities_created_at 
-ON crm.opportunities (created_at);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = 'crm' AND table_name = 'opportunities')
+       AND (SELECT count(DISTINCT column_name) FROM information_schema.columns
+            WHERE table_schema = 'crm' AND table_name = 'opportunities'
+              AND column_name IN ('created_at')) = 1 THEN
+        CREATE INDEX IF NOT EXISTS idx_opportunities_created_at
+        ON crm.opportunities (created_at);
+    END IF;
+END $$;
 
 -- 5. ehs.qa_ehs_hazards.category（dashboard.rs:91 按类别分组统计）
-CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_category 
-ON ehs.qa_ehs_hazards (category);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = 'ehs' AND table_name = 'qa_ehs_hazards')
+       AND (SELECT count(DISTINCT column_name) FROM information_schema.columns
+            WHERE table_schema = 'ehs' AND table_name = 'qa_ehs_hazards'
+              AND column_name IN ('category')) = 1 THEN
+        CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_category
+        ON ehs.qa_ehs_hazards (category);
+    END IF;
+END $$;
 
 -- 6. erp.erp_master_data_refs.domain（master_data_assets.rs:200 按域分组统计）
-CREATE INDEX IF NOT EXISTS idx_master_data_refs_domain 
-ON erp.erp_master_data_refs (domain);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = 'erp' AND table_name = 'erp_master_data_refs')
+       AND (SELECT count(DISTINCT column_name) FROM information_schema.columns
+            WHERE table_schema = 'erp' AND table_name = 'erp_master_data_refs'
+              AND column_name IN ('domain')) = 1 THEN
+        CREATE INDEX IF NOT EXISTS idx_master_data_refs_domain
+        ON erp.erp_master_data_refs (domain);
+    END IF;
+END $$;
 
 -- ============================================
 -- 四、复合索引（多条件查询优化）
@@ -68,12 +113,30 @@ ON erp.erp_master_data_refs (domain);
 
 -- 7. crm.opportunities (tenant_id, stage, created_at) - Dashboard 和 Analytics 常用查询
 -- 注意：tenant_id 是 RLS 必需列，stage 和 created_at 是常用过滤和分组列
-CREATE INDEX IF NOT EXISTS idx_opportunities_tenant_stage_created 
-ON crm.opportunities (tenant_id, stage, created_at);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = 'crm' AND table_name = 'opportunities')
+       AND (SELECT count(DISTINCT column_name) FROM information_schema.columns
+            WHERE table_schema = 'crm' AND table_name = 'opportunities'
+              AND column_name IN ('tenant_id', 'stage', 'created_at')) = 3 THEN
+        CREATE INDEX IF NOT EXISTS idx_opportunities_tenant_stage_created
+        ON crm.opportunities (tenant_id, stage, created_at);
+    END IF;
+END $$;
 
 -- 8. crm.customers (tenant_id, industry) - Dashboard 按行业统计
-CREATE INDEX IF NOT EXISTS idx_customers_tenant_industry 
-ON crm.customers (tenant_id, industry);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_schema = 'crm' AND table_name = 'customers')
+       AND (SELECT count(DISTINCT column_name) FROM information_schema.columns
+            WHERE table_schema = 'crm' AND table_name = 'customers'
+              AND column_name IN ('tenant_id', 'industry')) = 2 THEN
+        CREATE INDEX IF NOT EXISTS idx_customers_tenant_industry
+        ON crm.customers (tenant_id, industry);
+    END IF;
+END $$;
 
 -- ============================================
 -- 五、验证索引创建结果

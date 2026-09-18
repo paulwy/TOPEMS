@@ -8,6 +8,17 @@
 -- ============================================================
 
 -- ---------- oa_announcements ----------
+-- 2026-09-18 防御化（空库重建链卡点）：若 mobile.oa_announcements 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='mobile' AND table_name='oa_announcements')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='mobile' AND table_name='oa_announcements' AND column_name='tenant_id')
+  THEN
+    DROP TABLE mobile.oa_announcements;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS mobile.oa_announcements (
     id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id    text NOT NULL,
@@ -29,6 +40,17 @@ CREATE POLICY rls_tenant_isolation ON mobile.oa_announcements
     WITH CHECK (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), ''));
 
 -- ---------- oa_announcement_reads ----------
+-- 2026-09-18 防御化（空库重建链卡点）：若 mobile.oa_announcement_reads 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 announcement_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='mobile' AND table_name='oa_announcement_reads')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='mobile' AND table_name='oa_announcement_reads' AND column_name='announcement_id')
+  THEN
+    DROP TABLE mobile.oa_announcement_reads;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS mobile.oa_announcement_reads (
     announcement_id uuid NOT NULL REFERENCES mobile.oa_announcements(id) ON DELETE CASCADE,
     user_id         text NOT NULL,
@@ -38,13 +60,31 @@ CREATE TABLE IF NOT EXISTS mobile.oa_announcement_reads (
 
 ALTER TABLE mobile.oa_announcement_reads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mobile.oa_announcement_reads FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS rls_tenant_isolation ON mobile.oa_announcement_reads;
-CREATE POLICY rls_tenant_isolation ON mobile.oa_announcement_reads
+-- 2026-09-18 防御化（空库重建链卡点）：reads 表设计无 tenant_id 列，策略跳过（恒真策略无意义）
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='mobile' AND table_name='oa_announcement_reads' AND column_name='tenant_id') THEN
+    EXECUTE $policy$DROP POLICY IF EXISTS rls_tenant_isolation ON mobile.oa_announcement_reads$policy$;
+    EXECUTE $policy$CREATE POLICY rls_tenant_isolation ON mobile.oa_announcement_reads
     FOR ALL
     USING (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR tenant_id IS NULL OR true)
-    WITH CHECK (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR tenant_id IS NULL OR true);
+    WITH CHECK (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR tenant_id IS NULL OR true)$policy$;
+  END IF;
+END $$;
 
 -- ---------- oa_meetings ----------
+-- 2026-09-18 防御化（空库重建链卡点）：若 mobile.oa_meetings 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='mobile' AND table_name='oa_meetings')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='mobile' AND table_name='oa_meetings' AND column_name='tenant_id')
+  THEN
+    DROP TABLE mobile.oa_meetings;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS mobile.oa_meetings (
     id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id      text NOT NULL,
@@ -72,6 +112,17 @@ CREATE POLICY rls_tenant_isolation ON mobile.oa_meetings
     WITH CHECK (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), ''));
 
 -- ---------- oa_calendar_events ----------
+-- 2026-09-18 防御化（空库重建链卡点）：若 mobile.oa_calendar_events 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='mobile' AND table_name='oa_calendar_events')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='mobile' AND table_name='oa_calendar_events' AND column_name='tenant_id')
+  THEN
+    DROP TABLE mobile.oa_calendar_events;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS mobile.oa_calendar_events (
     id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id        text NOT NULL,
@@ -98,6 +149,17 @@ CREATE POLICY rls_tenant_isolation ON mobile.oa_calendar_events
     WITH CHECK (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), ''));
 
 -- ---------- oa_tasks ----------
+-- 2026-09-18 防御化（空库重建链卡点）：若 mobile.oa_tasks 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='mobile' AND table_name='oa_tasks')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='mobile' AND table_name='oa_tasks' AND column_name='tenant_id')
+  THEN
+    DROP TABLE mobile.oa_tasks;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS mobile.oa_tasks (
     id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id     text NOT NULL,

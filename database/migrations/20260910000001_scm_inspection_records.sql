@@ -3,6 +3,17 @@
 --       后端 incoming_inspection.rs 无此子资源端点，且无对应表。
 -- 幂等创建，GRANT topems_app。
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 scm.inspection_records 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='scm' AND table_name='inspection_records')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='scm' AND table_name='inspection_records' AND column_name='tenant_id')
+  THEN
+    DROP TABLE scm.inspection_records;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS scm.inspection_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,

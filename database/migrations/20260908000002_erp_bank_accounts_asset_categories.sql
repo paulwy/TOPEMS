@@ -12,6 +12,17 @@
 
 CREATE SCHEMA IF NOT EXISTS erp;
 
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.bank_accounts 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 status 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='bank_accounts')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='bank_accounts' AND column_name='status')
+  THEN
+    DROP TABLE erp.bank_accounts;
+  END IF;
+END $skel$;
+
 CREATE TABLE IF NOT EXISTS erp.bank_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     bank_name TEXT NOT NULL,
@@ -31,6 +42,17 @@ CREATE INDEX IF NOT EXISTS idx_bank_accounts_status ON erp.bank_accounts (status
 -- 存量库兼容：旧版 bank_accounts 无 is_default 列（补列后再建索引）
 ALTER TABLE erp.bank_accounts ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE INDEX IF NOT EXISTS idx_bank_accounts_is_default ON erp.bank_accounts (is_default);
+
+-- 2026-09-18 防御化（空库重建链卡点）：若 erp.asset_categories 仅为 business_base_tables 建的 2 列裸骨架
+-- （无 name 列）则 DROP 重建（骨架无数据）；结构完整则跳过。
+DO $skel$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='erp' AND table_name='asset_categories')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='asset_categories' AND column_name='name')
+  THEN
+    DROP TABLE erp.asset_categories;
+  END IF;
+END $skel$;
 
 CREATE TABLE IF NOT EXISTS erp.asset_categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
