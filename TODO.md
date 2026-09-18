@@ -275,3 +275,9 @@
 - [x] 服务 8099 全端点 200（正确路径：ticket=/api/ticket、flow=/api/core/flow；404 均为路径猜测错误非服务缺陷）
 - [x] 核心主数据行数双库一致（users 48/roles 19/permissions 973/menus 184/tenants 642）；sessions/refresh_tokens 为运行时动态数据（5433 历史会话残留，差异正常）
 - [ ] staging 生产部署验证（依赖 staging 环境，本地无法执行）
+
+## 2026-09-19 运行时缺陷修复（1b6fa65d3）
+- [x] mes 编译错误 57 处清零：process_flow/inspection/patrol/standard/work_report 非 Option 字段误调 unwrap_or_default/unwrap_or/Display（→ 直接取值/format）；datetime_to_string/opt_datetime_to_string 收到 DateTime<Utc>（→ naive_utc()/map 转换）
+- [x] crm opportunity 列表 SELECT 补全 17 列（缺 opp_no 致 FromRow 失败）；customer 查询 rating NULL 解码失败（→ COALESCE(rating,'')）
+- [x] 服务 8099 重启生效：/api/crm/opportunities、/api/crm/customers 200；核心端点全 200；access logs 错误未复现
+- [ ] AI embedding 外部 API 400（外部服务限制，非本地缺陷）
