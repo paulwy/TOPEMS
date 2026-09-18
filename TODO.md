@@ -193,8 +193,12 @@
 - [x] 遗留 C 闭环：bi 三视图重建（2026-09-18 用户拍板 D1 轻量重建：新建 20260918000015_create_bi_stats_views.sql，按 git 历史 svc/bi/migrations/001_init.sql（8eedba1eb）389-421 行原始 DDL 重建 active_datasource_stats/report_stats/visualization_stats 三视图，每个视图前置依赖检查（表+列存在才建）——5432 依赖表齐全（data_sources 13 列/reports 17/visualizations 16）三视图建成，5433 仅骨架表自动跳过、全链 159/159 保持通过）
 - [x] 前端路径核对：oa/announcements、workflow(core/flow)、mes、dashboard 链路全通；
       发现并修复 core/flow/instances 500（public 影子表缺列，迁移 20260917000005 补齐）
-- [ ] 遗留：同名多 schema 表收敛（public.approvals/approval_records/core_workflow_tasks 等影子表，
-      已补列治标；DROP 需先保证 search_path 含 flow——embedded 已默认 flow 在前，可后续评估）
+- [x] 同名多 schema 表收敛闭环（2026-09-18：迁移 20260918000016——embedded SEARCH_PATH=flow,public
+      （svc/unified-core/src/embedded.rs:49）下，5433 空库重建的 flow 侧 2 列裸骨架抢占解析位但结构不全
+      （core_workflow_tasks 仅 5 列）→ DROP flow 骨架 4 表（approvals/approval_records/core_workflow_instances/
+      core_workflow_tasks，仅 0 行且列数<8 才 DROP）+ public.core_workflow_tasks 补列至 12 列（core 权威）——
+      查询统一解析落 public 单份，与 5432 运行基准一致；5432 同步应用（补 priority/due_time/claimed_at）；
+      发现：5432 无 approvals/approval_records 表（instance.rs EXISTS 子查询引用），属旧库结构缺口，另记）
 - [x] 同名多 schema 表收敛评估：docs/architecture/duplicate-table-convergence.md（A 设计内独立 19 组不收敛；
       B core_* public 权威 15 组——portal search_path 统一 public 优先 24015ec92；C flow 权威已补列治标）
 - [x] B 类余组收敛：doc_service/communication/master_data/ticket/portal 冗余副本 16 张已 DROP
