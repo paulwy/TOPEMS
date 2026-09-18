@@ -139,7 +139,7 @@ pub async fn list_inbound_orders(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                supplier_id, supplier_name, order_date, 
                expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                total_value as total_amount, total_quantity, received_quantity,
@@ -230,12 +230,12 @@ pub async fn create_inbound_order(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        INSERT INTO wms.inbound_orders (id, org_id, order_number, order_type, warehouse_id, 
-                                       supplier_id, order_date, expected_arrival_date, total_value, 
-                                       status, notes, created_at, updated_at)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'purchase', $3, $4, $5, $6, $7, 
-               'created', $8, $9, $10)
-        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        INSERT INTO wms.inbound_orders (id, organization_id, order_number, order_type, warehouse_id,
+                                       supplier_id, order_date, expected_arrival_date, total_value,
+                                       status, notes, created_at, updated_at, tenant_id)
+        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'purchase', $3, $4, $5, $6, $7,
+               'created', $8, $9, $10, $11)
+        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, order_date, 
                   expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                   total_value as total_amount, total_quantity, received_quantity,
@@ -254,6 +254,7 @@ pub async fn create_inbound_order(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -371,7 +372,7 @@ pub async fn get_inbound_order(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                supplier_id, supplier_name, order_date, 
                expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                total_value as total_amount, total_quantity, received_quantity,
@@ -429,7 +430,7 @@ pub async fn update_inbound_order(
     let existing = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                supplier_id, supplier_name, order_date, 
                expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                total_value as total_amount, total_quantity, received_quantity,
@@ -464,7 +465,7 @@ pub async fn update_inbound_order(
             warehouse_id = $2, supplier_id = $3, expected_arrival_date = $4, actual_arrival_date = $5, 
             total_value = $6, status = $7, notes = $8, updated_at = $9
         WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, order_date, 
                   expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                   total_value as total_amount, total_quantity, received_quantity,
@@ -708,15 +709,15 @@ pub async fn create_inbound_order_item(
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        INSERT INTO wms.inbound_order_items (id, org_id, order_id, line_number, 
-                                             material_code, material_name, material_type, 
+        INSERT INTO wms.inbound_order_items (id, organization_id, order_id, line_number,
+                                             material_code, material_name, material_type,
                                              specification, batch_number, lot_number, serial_number,
-                                             expected_quantity, unit, location_id, unit_price, 
-                                             total_value, notes, created_at, updated_at)
+                                             expected_quantity, unit, location_id, unit_price,
+                                             total_value, notes, created_at, updated_at, tenant_id)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                $11, $12, $13, $14, $15, $16, $17, $18)
+                $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
-                  expected_quantity, received_quantity, rejected_quantity, unit, 
+                  expected_quantity, received_quantity, rejected_quantity, unit,
                   location_id, quality_status, unit_price, total_value, notes as remarks,
                   created_at, updated_at
         "#
@@ -739,6 +740,7 @@ pub async fn create_inbound_order_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -993,7 +995,7 @@ pub async fn confirm_inbound_order(
         UPDATE wms.inbound_orders SET
             status = 'confirmed', updated_at = $2
         WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
-        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, order_date, 
                   expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                   total_value as total_amount, total_quantity, received_quantity,
@@ -1079,6 +1081,7 @@ pub async fn receive_inbound_order(
     }
     let request_data = serde_json::to_value(&items).ok();
     let now = Utc::now();
+    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
@@ -1112,17 +1115,17 @@ pub async fn receive_inbound_order(
             let _ = sqlx::query(only_own_schema_query!(
                 "wms",
                 r#"
-                INSERT INTO wms.inventory (org_id, warehouse_id, location_id, 
-                                          material_code, material_name, specification, 
+                INSERT INTO wms.inventory (organization_id, warehouse_id, location_id,
+                                          material_code, material_name, specification,
                                           batch_number, quantity, unit, available_quantity,
-                                          quality_status, created_at, updated_at)
+                                          quality_status, created_at, updated_at, tenant_id)
                 SELECT '00000000-0000-0000-0000-000000000001', i.warehouse_id, io.location_id,
                        io.material_code, io.material_name, io.specification,
-                       io.batch_number, $1, io.unit, $1, 'qualified', NOW(), NOW()
+                       io.batch_number, $1, io.unit, $1, 'qualified', NOW(), NOW(), $3
                 FROM wms.inbound_order_items io
                 JOIN wms.inbound_orders i ON io.order_id = i.id
                 WHERE io.id = $2
-                ON CONFLICT (org_id, material_code, batch_number) DO UPDATE SET
+                ON CONFLICT (organization_id, material_code, batch_number) DO UPDATE SET
                     quantity = wms.inventory.quantity + $1,
                     available_quantity = wms.inventory.available_quantity + $1,
                     updated_at = NOW()
@@ -1130,6 +1133,7 @@ pub async fn receive_inbound_order(
             ))
             .bind(item.received_quantity)
             .bind(item.item_id)
+            .bind(tenant_id)
             .execute(&mut *tx)
             .await;
 
@@ -1200,7 +1204,7 @@ pub async fn receive_inbound_order(
     let order_result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                supplier_id, supplier_name, order_date, 
                expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                total_value as total_amount, total_quantity, received_quantity,
@@ -1341,7 +1345,7 @@ pub async fn complete_inbound_order(
         UPDATE wms.inbound_orders SET
             status = 'completed', updated_at = $2
         WHERE id = $1 AND status = 'received' AND deleted_at IS NULL
-        RETURNING id, org_id as tenant_id, order_number, warehouse_id, warehouse_name,
+        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, order_date, 
                   expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
                   total_value as total_amount, total_quantity, received_quantity,

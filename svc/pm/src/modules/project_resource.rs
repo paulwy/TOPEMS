@@ -104,9 +104,9 @@ async fn add_resource(
         INSERT INTO pm.project_resources (
             id, project_id, resource_type, resource_id, resource_service,
             role, start_date, end_date, allocation_percent, actual_hours,
-            actual_cost, status, created_by, created_at, updated_at
+            actual_cost, status, created_by, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *
         "#
     ))
@@ -125,6 +125,7 @@ async fn add_resource(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

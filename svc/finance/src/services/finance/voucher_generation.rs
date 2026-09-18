@@ -460,8 +460,8 @@ impl FinanceService {
                     "finance",
                     r#"INSERT INTO finance.core_finance_voucher_lines
                         (voucher_id, line_no, account_id, account_code, account_name,
-                         description, debit, credit)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#
+                         description, debit, credit, tenant_id)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#
                 ))
                 .bind(voucher_id)
                 .bind(line_no)
@@ -471,6 +471,7 @@ impl FinanceService {
                 .bind(&description)
                 .bind(debit)
                 .bind(credit)
+                .bind(tenant_id)
                 .execute(&self.db_pool)
                 .await;
 

@@ -61,8 +61,8 @@ async fn create_notification(
     let now = Utc::now();
 
     let notification = sqlx::query_as::<_, Notification>(
-        only_own_schema_query!("pm", "INSERT INTO pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11, $12) RETURNING *")
     )
     .bind(id)
     .bind(req.project_id)
@@ -75,6 +75,7 @@ async fn create_notification(
     .bind(parse_date_opt(&req.due_date))
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

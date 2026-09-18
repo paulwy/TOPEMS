@@ -85,10 +85,11 @@ pub async fn buffer_analysis(
     let execution_time = (Utc::now() - start_time).num_milliseconds() as i32;
 
     // Save analysis result
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     let analysis = sqlx::query_as::<_, SpatialAnalysis>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.spatial_analysis (analysis_type, input_data, parameters, result_geometry, execution_time_ms, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO gis.spatial_analysis (analysis_type, input_data, parameters, result_geometry, execution_time_ms, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#),
     )
@@ -98,6 +99,7 @@ pub async fn buffer_analysis(
     .bind(&result)
     .bind(execution_time)
     .bind(claims.sub.parse::<Uuid>().ok())
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await;
 
@@ -171,10 +173,11 @@ pub async fn intersect_analysis(
 
     let execution_time = (Utc::now() - start_time).num_milliseconds() as i32;
 
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     let _ = sqlx::query_as::<_, SpatialAnalysis>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.spatial_analysis (analysis_type, input_data, result_data, execution_time_ms, created_by)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO gis.spatial_analysis (analysis_type, input_data, result_data, execution_time_ms, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         "#),
     )
@@ -183,6 +186,7 @@ pub async fn intersect_analysis(
     .bind(serde_json::json!({"intersects": intersects}))
     .bind(execution_time)
     .bind(claims.sub.parse::<Uuid>().ok())
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await;
 
@@ -254,10 +258,11 @@ pub async fn union_analysis(
 
     let execution_time = (Utc::now() - start_time).num_milliseconds() as i32;
 
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     let _ = sqlx::query_as::<_, SpatialAnalysis>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.spatial_analysis (analysis_type, input_data, result_geometry, execution_time_ms, created_by)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO gis.spatial_analysis (analysis_type, input_data, result_geometry, execution_time_ms, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         "#),
     )
@@ -266,6 +271,7 @@ pub async fn union_analysis(
     .bind(&result)
     .bind(execution_time)
     .bind(claims.sub.parse::<Uuid>().ok())
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await;
 

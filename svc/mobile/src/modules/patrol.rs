@@ -223,8 +223,8 @@ pub async fn create_patrol_record(
     let status = payload.status.unwrap_or_else(|| "pending".to_string());
 
     if let Err(e) = sqlx::query(
-        only_own_schema_query!("mobile", "INSERT INTO mobile.patrol_records (id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
+        only_own_schema_query!("mobile", "INSERT INTO mobile.patrol_records (id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)")
     )
     .bind(patrol_id)
     .bind(&payload.title)
@@ -236,6 +236,7 @@ pub async fn create_patrol_record(
     .bind(&status)
     .bind(&user_id)
     .bind(Utc::now())
+    .bind(Uuid::nil())
     .execute(&pool)
     .await
     {

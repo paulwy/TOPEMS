@@ -275,12 +275,12 @@ pub async fn create_inventory(
 
     let result = sqlx::query_as::<_, InventoryItem>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.inventory (id, org_id, warehouse_id, location_id, 
-                                   material_code, material_name, specification, 
-                                   quantity, unit, available_quantity, 
-                                   min_quantity, max_quantity, quality_status, created_at, updated_at)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $7, $9, $10, 'qualified', $11, $12)
-        RETURNING id, material_code as sku, material_name as name, specification, unit, quantity, 
+        INSERT INTO wms.inventory (id, organization_id, warehouse_id, location_id,
+                                   material_code, material_name, specification,
+                                   quantity, unit, available_quantity,
+                                   min_quantity, max_quantity, quality_status, created_at, updated_at, tenant_id)
+        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $7, $9, $10, 'qualified', $11, $12, $13)
+        RETURNING id, material_code as sku, material_name as name, specification, unit, quantity,
                   location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
                   created_at, updated_at
         "#),
@@ -297,6 +297,7 @@ pub async fn create_inventory(
     .bind(req.max_quantity)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 

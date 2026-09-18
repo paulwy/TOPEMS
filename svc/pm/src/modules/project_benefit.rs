@@ -249,9 +249,9 @@ async fn calculate_benefits(
             planned_cost, actual_cost, planned_progress, actual_progress,
             planned_value, earned_value, actual_cost_eva,
             cpi, spi, cv, sv, eac, etc, roi, notes,
-            created_by, created_at, updated_at
+            created_by, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
         ON CONFLICT (project_id, period_type, period_date) DO UPDATE SET
             planned_cost = EXCLUDED.planned_cost,
             actual_cost = EXCLUDED.actual_cost,
@@ -294,6 +294,7 @@ async fn calculate_benefits(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

@@ -255,8 +255,8 @@ impl PmEventHandlers {
             .unwrap_or_else(|| format!("RD-{}", payload.project_id));
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("pm", "INSERT INTO pm.projects (id, name, code, description, project_type, status, leader, start_date, progress, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, 'rd_project', 'active', $5, $6, 0, $7, $7)
+            only_own_schema_query!("pm", "INSERT INTO pm.projects (id, name, code, description, project_type, status, leader, start_date, progress, tenant_id, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, 'rd_project', 'active', $5, $6, 0, $7, $8, $8)
              ON CONFLICT (id) DO NOTHING
              RETURNING id"),
         )
@@ -266,6 +266,7 @@ impl PmEventHandlers {
         .bind(format!("RD 项目同步 - {}", payload.project_name))
         .bind(payload.owner_name)
         .bind(payload.created_at.unwrap_or(now))
+        .bind(Uuid::nil())
         .bind(now)
         .fetch_optional(&self.db)
         .await;

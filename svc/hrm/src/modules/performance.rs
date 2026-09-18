@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
+use topems_shared::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -212,6 +213,7 @@ pub async fn list_reviews(
 
 pub async fn create_review(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -230,15 +232,21 @@ pub async fn create_review(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, PerformanceReview>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.performance_reviews (id, employee_id, review_period, reviewer_id, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'draft', $5, $6)
+        INSERT INTO hrm.performance_reviews (id, tenant_id, employee_id, review_period, reviewer_id, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7)
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
     .bind(id)
+    .bind(claims_tenant)
     .bind(req.employee_id)
     .bind(&req.review_period)
     .bind(req.reviewer_id)
@@ -593,6 +601,7 @@ pub async fn list_goals(
 
 pub async fn create_goal(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -611,15 +620,21 @@ pub async fn create_goal(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.performance_goals (id, employee_id, title, description, target, weight, status, due_date, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
+        INSERT INTO hrm.performance_goals (id, tenant_id, employee_id, title, description, target, weight, status, due_date, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
         RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
         "#)
     )
     .bind(id)
+    .bind(claims_tenant)
     .bind(req.employee_id)
     .bind(&req.title)
     .bind(&req.description)

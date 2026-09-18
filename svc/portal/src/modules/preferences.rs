@@ -120,19 +120,25 @@ pub async fn update_user_preferences(
     let Ok(user_uuid) = Uuid::parse_str(user_id) else {
         return Json(api_error(400, &format!("无效的 user_id: {}", user_id)));
     };
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     const KEYS: [&str; 4] = ["shortcuts", "notification_settings", "language", "timezone"];
     for key in KEYS {
         let Some(value) = payload.get(key) else { continue };
         let result = sqlx::query(
-            "INSERT INTO portal.user_preferences (user_id, preference_key, preference_value, updated_at) \
-             VALUES ($1, $2, $3, NOW()) \
+            "INSERT INTO portal.user_preferences (user_id, preference_key, preference_value, updated_at, tenant_id) \
+             VALUES ($1, $2, $3, NOW(), $4) \
              ON CONFLICT (user_id, preference_key) \
              DO UPDATE SET preference_value = $3, updated_at = NOW()",
         )
         .bind(&user_uuid)
         .bind(key)
         .bind(value)
+        .bind(claims_tenant)
         .execute(&state.pool)
         .await;
 

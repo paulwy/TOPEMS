@@ -157,8 +157,8 @@ pub async fn create_transfer(
 
     let result = sqlx::query_as::<_, Transfer>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO transfers (id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
+        INSERT INTO transfers (id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10)
         RETURNING id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
         "#),
     )
@@ -171,6 +171,7 @@ pub async fn create_transfer(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -497,8 +498,8 @@ pub async fn create_transfer_item(
 
     let result = sqlx::query_as::<_, TransferItem>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO transfer_items (id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7)
+        INSERT INTO transfer_items (id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
         RETURNING id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
         "#),
     )
@@ -509,6 +510,7 @@ pub async fn create_transfer_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 

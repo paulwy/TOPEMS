@@ -264,7 +264,7 @@ pub async fn sync_hazard_to_qms(
     });
 
     let row = sqlx::query(
-        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'hazard_to_qms', $2, 'qms', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
+        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'hazard_to_qms', $2, 'qms', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(&sync_no)
     .bind(req.hazard_id)
@@ -272,6 +272,7 @@ pub async fn sync_hazard_to_qms(
     .bind(status)
     .bind(&payload)
     .bind(&response)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -371,7 +372,7 @@ pub async fn sync_accident_to_lims(
     });
 
     let row = sqlx::query(
-        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'accident_to_lims', $2, 'lims', $3, $4, $5, $6) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
+        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'accident_to_lims', $2, 'lims', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(&sync_no)
     .bind(req.accident_id)
@@ -379,6 +380,7 @@ pub async fn sync_accident_to_lims(
     .bind(status)
     .bind(&payload)
     .bind(&response)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 

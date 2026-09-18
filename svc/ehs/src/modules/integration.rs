@@ -54,8 +54,8 @@ pub async fn create_integration_hazard(
     let source = req.source.unwrap_or_else(|| "系统集成".to_string());
 
     let result = sqlx::query(
-        "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, location, description, status, reported_by, inspection_id, source)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, location, description, status, reported_by, inspection_id, source, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          ON CONFLICT (hazard_no) DO UPDATE SET updated_at = NOW()
          RETURNING id, hazard_no, title, status",
     )
@@ -69,6 +69,7 @@ pub async fn create_integration_hazard(
     .bind(&reported_by)
     .bind(req.inspection_id)
     .bind(&source)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 

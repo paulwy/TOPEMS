@@ -112,9 +112,9 @@ async fn create_milestone(
         r#"
         INSERT INTO pm.project_milestones (
             id, project_id, name, description, date, status,
-            phase_id, acceptance_criteria, created_at, updated_at
+            phase_id, acceptance_criteria, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
         "#
     ))
@@ -128,6 +128,7 @@ async fn create_milestone(
     .bind(&req.acceptance_criteria)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

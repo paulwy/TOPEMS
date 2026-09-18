@@ -114,8 +114,8 @@ async fn create_settlement(
     let now = Utc::now();
 
     let settlement = sqlx::query_as::<_, Settlement>(
-        only_own_schema_query!("pm", "INSERT INTO pm.settlements (id, project_id, settlement_code, settlement_name, settlement_type, status, settlement_period_start, settlement_period_end, description, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.settlements (id, project_id, settlement_code, settlement_name, settlement_type, status, settlement_period_start, settlement_period_end, description, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $12) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -128,6 +128,7 @@ async fn create_settlement(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 

@@ -625,6 +625,7 @@ pub async fn delete_contract(
 
 pub async fn create_renewal(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -635,20 +636,26 @@ pub async fn create_renewal(
     let txn = guard.as_mut().expect("rls txn missing");
     let renewal_id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
         r#"
         INSERT INTO hrm.contract_renewals (
-            id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+            id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
             new_start_date, new_end_date, new_salary, status, created_at, updated_at
-        ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
+        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
         RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
         "#
     ))
     .bind(renewal_id)
+    .bind(claims_tenant)
     .bind(id)
     .bind(&req.renewal_type)
     .bind(&req.renewal_reason)

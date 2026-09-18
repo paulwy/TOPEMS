@@ -528,10 +528,11 @@ pub async fn create_change_order(
 
     let co_id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = Uuid::nil();
     let result: Result<ChangeOrder, sqlx::Error> = sqlx::query_as(&format!(
         r#"INSERT INTO rs.change_orders
-        (id, change_request_id, title, execution_plan, status, executed_by, notes, created_at, updated_at)
-        VALUES ($1,$2,$3,$4,'planned',$5,$6,$7,$7)
+        (id, change_request_id, title, execution_plan, status, executed_by, notes, created_at, updated_at, tenant_id)
+        VALUES ($1,$2,$3,$4,'planned',$5,$6,$7,$7,$8)
         RETURNING {CHANGE_ORDER_RETURN}"#
     ))
     .bind(co_id)
@@ -541,6 +542,7 @@ pub async fn create_change_order(
     .bind(&req.executed_by)
     .bind(&req.notes)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

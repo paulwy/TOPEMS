@@ -142,8 +142,8 @@ async fn create_budget(
     );
 
     let budget = sqlx::query_as::<_, Budget>(
-        only_own_schema_query!("pm", "INSERT INTO pm.budgets (id, project_id, budget_code, budget_name, budget_type, total_amount, status, version, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'draft', 1, $7, $8, $9) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.budgets (id, project_id, budget_code, budget_name, budget_type, total_amount, status, version, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'draft', 1, $7, $8, $9, $10) RETURNING *")
     )
     .bind(id)
     .bind(req.project_id)
@@ -154,6 +154,7 @@ async fn create_budget(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

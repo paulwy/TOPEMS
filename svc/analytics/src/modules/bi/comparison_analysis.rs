@@ -314,8 +314,8 @@ pub async fn create_comparison(
         r#"
         INSERT INTO analytics_comparison_analyses
         (id, name, description, comparison_type, dimension_a, dimension_b,
-         indicators, filters, status, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
+         indicators, filters, status, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12)
         RETURNING id, name, description, comparison_type, dimension_a, dimension_b,
                   indicators, filters, status, last_run_at, created_by, created_at, updated_at
         "#,
@@ -330,6 +330,7 @@ pub async fn create_comparison(
         req.created_by,
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -608,14 +609,15 @@ pub async fn run_comparison(
     let insert_result = sqlx::query!(
         r#"
         INSERT INTO analytics_comparison_results
-        (id, comparison_id, status, data, summary, generated_at)
-        VALUES ($1, $2, 'success', $3, $4, $5)
+        (id, comparison_id, status, data, summary, generated_at, tenant_id)
+        VALUES ($1, $2, 'success', $3, $4, $5, $6)
         "#,
         result_id,
         id,
         data_json,
         summary,
         generated_at,
+        Uuid::nil(),
     )
     .execute(&state.pool)
     .await;

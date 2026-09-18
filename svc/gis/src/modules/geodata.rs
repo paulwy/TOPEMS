@@ -115,11 +115,12 @@ pub async fn upload_geodata(
             .map(|arr| arr.len() as i32)
     });
 
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, GeoData>(only_own_schema_query!(
         "gis",
         r#"
-        INSERT INTO gis.geodata (name, data_type, format, geojson_data, feature_count, uploaded_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO gis.geodata (name, data_type, format, geojson_data, feature_count, uploaded_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#
     ))
@@ -129,6 +130,7 @@ pub async fn upload_geodata(
     .bind(&geojson_data)
     .bind(feature_count)
     .bind(claims.sub.parse::<Uuid>().ok())
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {
@@ -137,7 +139,7 @@ pub async fn upload_geodata(
             if let Some(geojson) = geojson_data {
                 if let Some(features) = geojson.get("features").and_then(|f| f.as_array()) {
                     for feature in features {
-                        if let Err(e) = insert_feature(&pool, &geodata.id, feature).await {
+                        if let Err(e) = insert_feature(&pool, &geodata.id, feature, tenant_id).await {
                             tracing::error!("插入要素失败: {}", e);
                         }
                     }
@@ -153,6 +155,7 @@ async fn insert_feature(
     pool: &PgPool,
     geodata_id: &Uuid,
     feature: &serde_json::Value,
+    tenant_id: Uuid,
 ) -> Result<(), sqlx::Error> {
     let empty_geometry = serde_json::json!({});
     let geometry = feature.get("geometry").unwrap_or(&empty_geometry);
@@ -167,14 +170,15 @@ async fn insert_feature(
     sqlx::query(only_own_schema_query!(
         "gis",
         r#"
-        INSERT INTO gis.geofeatures (geodata_id, feature_type, geometry, properties)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO gis.geofeatures (geodata_id, feature_type, geometry, properties, tenant_id)
+        VALUES ($1, $2, $3, $4, $5)
         "#
     ))
     .bind(geodata_id)
     .bind(&feature_type)
     .bind(geometry)
     .bind(properties)
+    .bind(tenant_id)
     .execute(pool)
     .await?;
 

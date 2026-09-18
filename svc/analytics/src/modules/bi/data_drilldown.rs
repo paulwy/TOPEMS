@@ -155,8 +155,8 @@ pub async fn create_drilldown_path(
     let result = sqlx::query!(
         r#"
         INSERT INTO analytics_drilldown_paths 
-        (id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
         "#,
         id,
@@ -168,6 +168,7 @@ pub async fn create_drilldown_path(
         req.owner_id,
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -411,9 +412,9 @@ pub async fn drill_down(
 
     let _ = sqlx::query!(
         r#"
-        INSERT INTO analytics_drilldown_history 
-        (id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO analytics_drilldown_history
+        (id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
         history_id,
         "system",
@@ -425,6 +426,7 @@ pub async fn drill_down(
         req.drill_value.clone(),
         req.filters.clone(),
         now,
+        Uuid::nil(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -502,9 +504,9 @@ pub async fn roll_up(
 
     let _ = sqlx::query!(
         r#"
-        INSERT INTO analytics_drilldown_history 
-        (id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO analytics_drilldown_history
+        (id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
         history_id,
         "system",
@@ -516,6 +518,7 @@ pub async fn roll_up(
         req.drill_value.clone(),
         req.filters.clone(),
         now,
+        Uuid::nil(),
     )
     .fetch_optional(&state.pool)
     .await;

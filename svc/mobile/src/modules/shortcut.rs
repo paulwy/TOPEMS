@@ -147,8 +147,8 @@ pub async fn create_shortcut(
 
     let shortcut_id = Uuid::new_v4();
     if let Err(e) = sqlx::query(
-        only_own_schema_query!("mobile", "INSERT INTO mobile.shortcuts (id, user_id, name, icon, action_type, action_params, sort_order, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
+        only_own_schema_query!("mobile", "INSERT INTO mobile.shortcuts (id, user_id, name, icon, action_type, action_params, sort_order, is_active, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
     )
         .bind(shortcut_id)
         .bind(user_id_uuid)
@@ -158,6 +158,7 @@ pub async fn create_shortcut(
         .bind(&payload.action_params)
         .bind(sort_order)
         .bind(true)
+        .bind(Uuid::nil())
         .execute(&pool)
         .await
     {

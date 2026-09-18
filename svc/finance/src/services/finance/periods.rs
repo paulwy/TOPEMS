@@ -396,8 +396,8 @@ impl FinanceService {
                 let account_name: String = row.get("name");
 
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0)"),
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, tenant_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8)"),
                 )
                 .bind(voucher.id)
                 .bind(line_no)
@@ -406,6 +406,7 @@ impl FinanceService {
                 .bind(&account_name)
                 .bind("结转年度收入")
                 .bind(balance)
+                .bind(tenant_id)
                 .execute(&self.db_pool)
                 .await?;
             }
@@ -420,8 +421,8 @@ impl FinanceService {
                 let account_name: String = row.get("name");
 
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0)"),
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, tenant_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8)"),
                 )
                 .bind(voucher.id)
                 .bind(line_no)
@@ -430,13 +431,14 @@ impl FinanceService {
                 .bind(&profit_account.name)
                 .bind("结转年度费用")
                 .bind(balance)
+                .bind(tenant_id)
                 .execute(&self.db_pool)
                 .await?;
 
                 line_no += 1;
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit)
-                     VALUES ($1, $2, $3, $4, $5, $6, 0, $7)"),
+                    only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, tenant_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8)"),
                 )
                 .bind(voucher.id)
                 .bind(line_no)
@@ -445,6 +447,7 @@ impl FinanceService {
                 .bind(&account_name)
                 .bind("结转年度费用")
                 .bind(balance)
+                .bind(tenant_id)
                 .execute(&self.db_pool)
                 .await?;
             }

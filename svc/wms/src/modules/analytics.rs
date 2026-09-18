@@ -272,7 +272,7 @@ async fn get_order_fulfillment(
                 END
             ), 0) AS avg_fulfillment_days
         FROM wms.outbound_orders
-        WHERE org_id = $1
+        WHERE organization_id = $1
           AND created_at >= $2
           AND created_at <= $3
           {}

@@ -99,7 +99,7 @@ pub async fn create_apqp_project(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_projects (project_no, project_name, product_id, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, progress, risk_level, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'planning', 'phase1', $7, $8, $9, $10, 0, 'low', $11) RETURNING id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_projects (project_no, project_name, product_id, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, progress, risk_level, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'planning', 'phase1', $7, $8, $9, $10, 0, 'low', $11, $12) RETURNING id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_no)
     .bind(req.project_name)
@@ -112,6 +112,7 @@ pub async fn create_apqp_project(
     .bind(start_dt)
     .bind(target_dt)
     .bind(req.created_by)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -144,12 +145,13 @@ async fn init_default_phases(pool: &sqlx::PgPool, project_id: &str) -> Result<()
 
     for (code, name, order) in phases {
         sqlx::query(
-            only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, status, sort_order) VALUES ($1, $2, $3, 'pending', $4)"#),
+            only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, status, sort_order, tenant_id) VALUES ($1, $2, $3, 'pending', $4, $5)"#),
         )
         .bind(pid)
         .bind(code)
         .bind(name)
         .bind(order)
+        .bind(Uuid::nil())
         .execute(pool)
         .await?;
     }
@@ -348,7 +350,7 @@ pub async fn create_apqp_phase(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, description, status, start_date, end_date, sort_order) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7) RETURNING id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, description, status, start_date, end_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8) RETURNING id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_id)
     .bind(req.phase_code)
@@ -357,6 +359,7 @@ pub async fn create_apqp_phase(
     .bind(start_dt)
     .bind(end_dt)
     .bind(req.sort_order.unwrap_or(0))
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -543,7 +546,7 @@ pub async fn create_apqp_task(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let task = sqlx::query_as::<_, ApqpTask>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_tasks (project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date, sort_order) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9) RETURNING id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_tasks (project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_id)
     .bind(phase_id)
@@ -554,6 +557,7 @@ pub async fn create_apqp_task(
     .bind(req.assignee)
     .bind(due_dt)
     .bind(req.sort_order.unwrap_or(0))
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -727,7 +731,7 @@ pub async fn create_apqp_risk(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_risks (project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11) RETURNING id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_risks (project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12) RETURNING id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_id)
     .bind(req.risk_name)
@@ -740,6 +744,7 @@ pub async fn create_apqp_risk(
     .bind(req.mitigation_plan)
     .bind(req.responsible)
     .bind(target_dt)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -805,6 +810,7 @@ pub async fn update_apqp_risk(
     .bind(req.mitigation_plan)
     .bind(req.responsible)
     .bind(target_dt)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -1000,12 +1006,13 @@ pub async fn create_apqp_approval(
     };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment) VALUES ($1, $2, 'pending', $3, $4) RETURNING id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment, tenant_id) VALUES ($1, $2, 'pending', $3, $4, $5) RETURNING id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT"#),
     )
     .bind(project_id)
     .bind(req.approval_type)
     .bind(req.applicant)
     .bind(req.comment)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -1037,6 +1044,7 @@ pub async fn process_apqp_approval(
     .bind(status)
     .bind(req.approver)
     .bind(req.comment)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 

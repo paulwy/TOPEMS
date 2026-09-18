@@ -277,8 +277,8 @@ pub async fn create_widget(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_widgets (id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO analytics_widgets (id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at
         "#,
         id,
@@ -292,6 +292,7 @@ pub async fn create_widget(
         req.cache_ttl_seconds,
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;

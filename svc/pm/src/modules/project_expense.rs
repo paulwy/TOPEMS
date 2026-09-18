@@ -100,9 +100,9 @@ async fn add_expense(
             subcategory, description, amount, currency, incurred_date,
             reported_date, paid_date, budget_item_id, resource_id,
             expense_ref_id, status, approval_workflow_id, attachment_ids,
-            created_by, created_at, updated_at
+            created_by, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
         RETURNING *
         "#),
     )
@@ -127,6 +127,7 @@ async fn add_expense(
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

@@ -363,9 +363,9 @@ pub async fn create_datasource(
         INSERT INTO analytics_datasources (
             id, name, source_type, status, host, database, port, username, password,
             connection_string, sync_frequency, description, is_enabled,
-            connection_config, query_template, created_at, updated_at
+            connection_config, query_template, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, name, source_type, status, host, database, port, username,
                   connection_string, last_sync, data_volume, sync_frequency,
                   description, is_enabled, created_at, updated_at
@@ -387,6 +387,7 @@ pub async fn create_datasource(
         req.query_template,
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;

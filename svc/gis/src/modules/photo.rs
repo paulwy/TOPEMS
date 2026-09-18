@@ -66,10 +66,11 @@ pub async fn create_location_photo(
         return e;
     }
     let taken_at = payload.taken_at.unwrap_or_else(Utc::now);
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, LocationPhoto>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.location_photos (location_id, photo_url, photo_type, caption, taken_at, tags)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO gis.location_photos (location_id, photo_url, photo_type, caption, taken_at, tags, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#),
     )
@@ -79,6 +80,7 @@ pub async fn create_location_photo(
     .bind(&payload.caption)
     .bind(taken_at)
     .bind(&payload.tags)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {

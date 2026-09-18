@@ -73,10 +73,11 @@ pub async fn register_device(
         return e;
     }
 
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, Device>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.devices (device_code, device_name, device_type, description, properties, registered_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO gis.devices (device_code, device_name, device_type, description, properties, registered_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#),
     )
@@ -86,6 +87,7 @@ pub async fn register_device(
     .bind(&payload.description)
     .bind(&payload.properties)
     .bind(claims.sub.parse::<Uuid>().ok())
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {
