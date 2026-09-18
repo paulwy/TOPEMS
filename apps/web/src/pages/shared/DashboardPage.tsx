@@ -143,6 +143,19 @@ const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // 交付准时率 / 质量合格率：mes analytics 真实业务口径
+  const deliveryQuery = useQuery({
+    queryKey: [...QUERY_KEY, 'delivery'],
+    queryFn: () => mesAnalyticsApi.getDeliveryAnalytics({ days: 30 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const qualityQuery = useQuery({
+    queryKey: [...QUERY_KEY, 'quality'],
+    queryFn: () => mesAnalyticsApi.getQualityPareto({ days: 30 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
   // 生产订单：mes 真实订单量（portal stats 分页口径暂未生效，前端直查）
   const ordersQuery = useQuery({
     queryKey: [...QUERY_KEY, 'orders'],
@@ -272,10 +285,10 @@ const DashboardPage: React.FC = () => {
       // OEE：mes OEE 仪表盘真实均值；产量：mes 生产订单总量（真实业务计数，优先直查）
       oee: Math.round(avgOee * 10) / 10,
       production: ordersQuery.data?.total ?? mesTotal,
-      deliveryRate: 0,
-      qualityRate: 0,
+      deliveryRate: Math.round((deliveryQuery.data?.on_time_rate ?? 0) * 10) / 10,
+      qualityRate: Math.round((qualityQuery.data?.pass_rate ?? 0) * 10) / 10,
     };
-  }, [data, oeeQuery.data, ordersQuery.data]);
+  }, [data, oeeQuery.data, ordersQuery.data, deliveryQuery.data, qualityQuery.data]);
 
   const filteredModules = modules.filter((m: any) =>
     m.name.toLowerCase().includes(searchQuery.toLowerCase())
