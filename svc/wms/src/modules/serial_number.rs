@@ -180,8 +180,8 @@ pub async fn create_serial_number(
             warehouse_id, location_id, supplier_id, batch_no,
             production_date, expiry_date, quality_status, status,
             warranty_start_date, warranty_end_date, inbound_order_no,
-            unit_price, remark, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+            unit_price, remark, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
         RETURNING *
         "#),
     )
@@ -206,6 +206,7 @@ pub async fn create_serial_number(
     .bind(&req.remark)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -247,6 +248,7 @@ pub async fn bulk_create_serial_numbers(
 
     let mut created_serials = Vec::new();
     let now = Utc::now();
+    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
 
     for item in req {
         let id = Uuid::new_v4();
@@ -257,8 +259,8 @@ pub async fn bulk_create_serial_numbers(
                 warehouse_id, location_id, supplier_id, batch_no,
                 production_date, expiry_date, quality_status, status,
                 warranty_start_date, warranty_end_date, inbound_order_no,
-                unit_price, remark, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                unit_price, remark, created_at, updated_at, tenant_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
             RETURNING *
             "#),
         )
@@ -283,6 +285,7 @@ pub async fn bulk_create_serial_numbers(
         .bind(&item.remark)
         .bind(now)
         .bind(now)
+        .bind(tenant_id)
         .fetch_one(&mut **txn)
         .await;
 

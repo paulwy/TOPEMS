@@ -90,8 +90,8 @@ pub async fn create_dashboard_template(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboard_templates (id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO analytics_dashboard_templates (id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
         "#,
         id,
@@ -104,6 +104,7 @@ pub async fn create_dashboard_template(
         true,
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -351,8 +352,8 @@ pub async fn create_dashboard_from_template(
 
             let result = sqlx::query!(
                 r#"
-                INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING id, name, description, layout, owner_id, is_public, created_at, updated_at
                 "#,
                 id,
@@ -363,6 +364,7 @@ pub async fn create_dashboard_from_template(
                 req.is_public.unwrap_or(false),
                 now,
                 now,
+                Uuid::nil(),
             )
             .fetch_one(&state.pool)
             .await;

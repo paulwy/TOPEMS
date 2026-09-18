@@ -149,6 +149,7 @@ pub async fn create_transfer(
     let id = Uuid::new_v4();
     let order_number = format!("TF{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
     let now = Utc::now();
+    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -156,8 +157,8 @@ pub async fn create_transfer(
         INSERT INTO wms.transfer_orders (
             id, order_number, transfer_type, from_warehouse_id, from_location_id,
             to_warehouse_id, to_location_id, status, planned_date, transporter,
-            priority, remarks, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            priority, remarks, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
         "#
     ))
@@ -175,6 +176,7 @@ pub async fn create_transfer(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -191,8 +193,8 @@ pub async fn create_transfer(
                         id, transfer_id, line_number, sku, material_name, specification,
                         batch_number, unit, planned_quantity, shipped_quantity, received_quantity,
                         unit_price, total_amount, from_location_id, to_location_id, remarks,
-                        status, created_at, updated_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                        status, created_at, updated_at, tenant_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
                     "#),
                 )
                 .bind(item_id)
@@ -214,6 +216,7 @@ pub async fn create_transfer(
                 .bind("pending")
                 .bind(now)
                 .bind(now)
+                .bind(tenant_id)
                 .execute(&mut **txn)
                 .await;
 

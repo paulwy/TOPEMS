@@ -113,8 +113,8 @@ async fn insert_device_location(
 
     sqlx::query(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.device_locations (device_name, device_code, device_type, position, status, description)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO gis.device_locations (device_name, device_code, device_type, position, status, description, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#),
     )
     .bind(&record.device_name)
@@ -123,6 +123,7 @@ async fn insert_device_location(
     .bind(&position)
     .bind(status)
     .bind(&record.description)
+    .bind(sqlx::types::Uuid::nil())
     .execute(pool)
     .await
     .map_err(|e| format!("插入失败: {}", e))?;
@@ -148,8 +149,8 @@ async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), S
     sqlx::query(only_own_schema_query!(
         "gis",
         r#"
-        INSERT INTO gis.pipelines (name, code, pipeline_type, path, status, description)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO gis.pipelines (name, code, pipeline_type, path, status, description, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#
     ))
     .bind(&record.name)
@@ -158,6 +159,7 @@ async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), S
     .bind(&path)
     .bind(status)
     .bind(&record.description)
+    .bind(sqlx::types::Uuid::nil())
     .execute(pool)
     .await
     .map_err(|e| format!("插入失败: {}", e))?;
@@ -182,8 +184,8 @@ async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> R
     sqlx::query(only_own_schema_query!(
         "gis",
         r#"
-        INSERT INTO gis.warehouse_locations (warehouse_name, zone, position, status, description)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO gis.warehouse_locations (warehouse_name, zone, position, status, description, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
         "#
     ))
     .bind(&record.warehouse_name)
@@ -191,6 +193,7 @@ async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> R
     .bind(&position)
     .bind(status)
     .bind(&record.description)
+    .bind(sqlx::types::Uuid::nil())
     .execute(pool)
     .await
     .map_err(|e| format!("插入失败: {}", e))?;

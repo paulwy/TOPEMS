@@ -14,6 +14,7 @@ use crate::models::{
     TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
     UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
+use topems_shared::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
@@ -689,6 +690,7 @@ pub async fn list_records(
 
 pub async fn create_record(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -698,20 +700,26 @@ pub async fn create_record(
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
         r#"
         INSERT INTO hrm.training_records (
-            id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
+            id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'registered', 'in_progress', $5, $6)
+        ) VALUES ($1, $2, $3, $4, $5, 'registered', 'in_progress', $6, $7)
         RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
         "#
     ))
     .bind(id)
+    .bind(claims_tenant)
     .bind(req.course_id)
     .bind(req.employee_id)
     .bind(req.enrollment_date)
@@ -742,6 +750,7 @@ pub async fn create_record(
 
 pub async fn enroll_course(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -752,20 +761,26 @@ pub async fn enroll_course(
     let txn = guard.as_mut().expect("rls txn missing");
     let record_id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
         r#"
         INSERT INTO hrm.training_records (
-            id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
+            id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'registered', 'in_progress', $5, $6)
+        ) VALUES ($1, $2, $3, $4, $5, 'registered', 'in_progress', $6, $7)
         RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
         "#
     ))
     .bind(record_id)
+    .bind(claims_tenant)
     .bind(id)
     .bind(req.employee_id)
     .bind(now)

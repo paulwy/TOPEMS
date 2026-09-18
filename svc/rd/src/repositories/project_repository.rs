@@ -28,9 +28,9 @@ impl ProjectRepository {
                 id, name, code, description, project_type, status, leader,
                 team_members, start_date, end_date, budget, progress, created_by,
                 created_at, updated_at, project_config, benefit_target, risk_level,
-                priority, tags, parent_id, workspace_id
+                priority, tags, parent_id, workspace_id, tenant_id
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                      $16, $17, $18, $19, $20, $21, $22)
+                      $16, $17, $18, $19, $20, $21, $22, $23)
             RETURNING id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
                       created_by, created_at, updated_at, project_config,
@@ -59,6 +59,7 @@ impl ProjectRepository {
         .bind(&req.tags)
         .bind(req.parent_id)
         .bind(req.workspace_id)
+        .bind(Uuid::nil())
         .fetch_one(&self.db)
         .await?;
 
@@ -216,8 +217,8 @@ impl ProjectRepository {
                 INSERT INTO projects (
                     id, name, code, description, project_type, status, leader,
                     team_members, start_date, end_date, budget, progress, created_by,
-                    created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    created_at, updated_at, tenant_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 RETURNING id, name, code, description, project_type, status, leader,
                           team_members, start_date, end_date, budget, progress,
                           created_by, created_at, updated_at
@@ -238,6 +239,7 @@ impl ProjectRepository {
             .bind(&req.leader)
             .bind(now)
             .bind(now)
+            .bind(Uuid::nil())
             .fetch_one(&self.db)
             .await?;
 

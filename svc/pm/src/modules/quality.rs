@@ -110,8 +110,8 @@ async fn create_quality_check(
     let now = Utc::now();
 
     let check = sqlx::query_as::<_, QualityCheck>(
-        only_own_schema_query!("pm", "INSERT INTO pm.quality_checks (id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.quality_checks (id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -125,6 +125,7 @@ async fn create_quality_check(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 
@@ -266,6 +267,7 @@ async fn create_defect(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

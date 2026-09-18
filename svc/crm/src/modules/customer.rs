@@ -226,7 +226,7 @@ async fn create_customer(
     let result = sqlx::query_as::<_, Customer>(
 
         only_own_schema_query!("crm", r#"
-        INSERT INTO crm.customers (tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, org_id)
+        INSERT INTO crm.customers (tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, created_at, updated_at, organization_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at
         "#

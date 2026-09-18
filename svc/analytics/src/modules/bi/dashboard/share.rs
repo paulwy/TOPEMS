@@ -34,8 +34,8 @@ pub async fn create_share_link(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboard_shares (id, dashboard_id, shared_with, permission, expires_at, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO analytics_dashboard_shares (id, dashboard_id, shared_with, permission, expires_at, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, dashboard_id, permission, expires_at, created_at
         "#,
         share_id,
@@ -44,6 +44,7 @@ pub async fn create_share_link(
         req.permission,
         expires_at,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;

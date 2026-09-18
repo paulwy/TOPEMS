@@ -361,9 +361,9 @@ pub async fn create_inbound_from_scm(
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        INSERT INTO wms.inbound_orders (id, order_number, supplier_id, 
-                                              order_type, status, created_at, updated_at)
-        VALUES ($1, $2, $3, 'purchase', 'pending', $4, $5)
+        INSERT INTO wms.inbound_orders (id, order_number, supplier_id,
+                                              order_type, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, 'purchase', 'pending', $4, $5, $6)
         "#,
         "wms"
     ))
@@ -372,6 +372,7 @@ pub async fn create_inbound_from_scm(
     .bind(po_supplier_id)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .execute(&mut **txn)
     .await;
 

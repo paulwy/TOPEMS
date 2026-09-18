@@ -236,11 +236,11 @@ pub async fn create_stock_take(
 
     let result = sqlx::query_as::<_, StockTake>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.stock_takes (id, org_id, stock_take_number, stock_take_type, 
-                                     warehouse_id, location_id, status, planned_date, 
-                                     remarks, created_at, updated_at)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'full', $3, $4, 'planned', $5, $6, $7, $8)
-        RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
+        INSERT INTO wms.stock_takes (id, organization_id, stock_take_number, stock_take_type,
+                                     warehouse_id, location_id, status, planned_date,
+                                     remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'full', $3, $4, 'planned', $5, $6, $7, $8, $9)
+        RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status,
                   planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
         "#),
     )
@@ -252,6 +252,7 @@ pub async fn create_stock_take(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -610,20 +611,21 @@ pub async fn start_stock_take(
     if let Ok(warehouse_id) = warehouse_id_result {
         let _ = sqlx::query(
             only_own_schema_query!("wms", r#"
-            INSERT INTO wms.stock_take_items (id, org_id, stock_take_id, line_number,
+            INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, line_number,
                                               material_code, material_name, specification,
                                               batch_number, location_id, system_quantity, unit,
-                                              quality_status, created_at, updated_at)
+                                              quality_status, created_at, updated_at, tenant_id)
             SELECT uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', $1, ROW_NUMBER() OVER (ORDER BY i.material_code),
                    i.material_code, i.material_name, i.specification,
                    i.batch_number, i.location_id, i.quantity, i.unit,
-                   i.quality_status, NOW(), NOW()
+                   i.quality_status, NOW(), NOW(), $3
             FROM wms.inventory i
             WHERE i.warehouse_id = $2 AND i.deleted_at IS NULL
             "#),
         )
         .bind(id)
         .bind(warehouse_id)
+        .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
         .execute(&mut *tx)
         .await;
     }
@@ -815,12 +817,12 @@ pub async fn create_stock_take_item(
 
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.stock_take_items (id, org_id, stock_take_id, material_code, 
+        INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, material_code,
                                           material_name, specification, batch_number, location_id,
                                           system_quantity, counted_quantity, discrepancy_quantity,
                                           discrepancy_type, unit, unit_price, discrepancy_value,
-                                          notes, created_at, updated_at)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                                          notes, created_at, updated_at, tenant_id)
+        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
@@ -843,6 +845,7 @@ pub async fn create_stock_take_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -1492,7 +1495,7 @@ pub async fn adjust_stock_take(
                         quantity = quantity + $1,
                         available_quantity = available_quantity + $1,
                         updated_at = $2
-                    WHERE org_id = '00000000-0000-0000-0000-000000000001'
+                    WHERE organization_id = '00000000-0000-0000-0000-000000000001'
                       AND material_code = $3
                       AND ($4::text IS NULL OR batch_number = $4)
                       AND deleted_at IS NULL

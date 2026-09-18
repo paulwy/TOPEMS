@@ -378,7 +378,7 @@ pub async fn create_alert_rule(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateAlertRuleRequest>,
 ) -> Json<ApiResponse<AlertRule>> {
-    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_rules (rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $11) RETURNING id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.notification_type).bind(req.recipients).bind(req.description).bind(req.created_by)
+    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_rules (rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $11, $12) RETURNING id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.notification_type).bind(req.recipients).bind(req.description).bind(req.created_by).bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -500,7 +500,7 @@ pub async fn create_alert_message(
 ) -> Json<ApiResponse<AlertMessage>> {
     let rule_id = req.rule_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
-    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_messages (rule_id, rule_name, alert_type, severity, title, message, metric_value, threshold, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active') RETURNING id, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at::TEXT, created_at::TEXT"#)).bind(rule_id).bind(req.rule_name).bind(req.alert_type).bind(req.severity).bind(req.title).bind(req.message).bind(req.metric_value).bind(req.threshold)
+    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_messages (rule_id, rule_name, alert_type, severity, title, message, metric_value, threshold, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at::TEXT, created_at::TEXT"#)).bind(rule_id).bind(req.rule_name).bind(req.alert_type).bind(req.severity).bind(req.title).bind(req.message).bind(req.metric_value).bind(req.threshold).bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 

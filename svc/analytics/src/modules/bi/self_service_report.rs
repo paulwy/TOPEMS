@@ -173,8 +173,8 @@ pub async fn create_report(
     let result = sqlx::query!(
         r#"
         INSERT INTO analytics_self_service_reports 
-        (id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        (id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
         "#,
         id,
@@ -188,6 +188,7 @@ pub async fn create_report(
         req.is_public.unwrap_or(false),
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;

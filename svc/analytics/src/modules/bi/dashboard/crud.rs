@@ -103,8 +103,8 @@ pub async fn create_dashboard(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         "#,
         id,
         req.name,
@@ -114,6 +114,7 @@ pub async fn create_dashboard(
         req.is_public.unwrap_or(false),
         now,
         now,
+        Uuid::nil(),
     )
     .execute(&state.pool)
     .await;
@@ -485,8 +486,8 @@ pub async fn clone_dashboard(
 
             let result = sqlx::query!(
                 r#"
-                INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING id, name, description, layout, owner_id, is_public, created_at, updated_at
                 "#,
                 new_id,
@@ -497,6 +498,7 @@ pub async fn clone_dashboard(
                 false,
                 now,
                 now,
+                Uuid::nil(),
             )
             .fetch_one(&state.pool)
             .await;
@@ -548,8 +550,8 @@ pub async fn import_dashboard(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, name, description, layout, owner_id, is_public, created_at, updated_at
         "#,
         id,
@@ -560,6 +562,7 @@ pub async fn import_dashboard(
         req.is_public.unwrap_or(false),
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;

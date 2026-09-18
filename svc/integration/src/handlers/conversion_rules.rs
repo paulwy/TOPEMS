@@ -316,8 +316,8 @@ pub async fn execute_conversion_rule_api(
     let now = Utc::now();
 
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO integration.conversion_executions (id, rule_id, rule_code, source_record_id, source_data, status, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)"),
+        only_own_schema_query!("integration", "INSERT INTO integration.conversion_executions (id, rule_id, rule_code, source_record_id, source_data, status, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"),
     )
     .bind(execution_id)
     .bind(rule.id)
@@ -326,6 +326,7 @@ pub async fn execute_conversion_rule_api(
     .bind(&req.source_data)
     .bind("running")
     .bind(now)
+    .bind(rule.tenant_id)
     .execute(&state.pool)
     .await;
 

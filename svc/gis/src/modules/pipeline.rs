@@ -69,11 +69,12 @@ pub async fn create_pipeline(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, Pipeline>(only_own_schema_query!(
         "gis",
         r#"
-        INSERT INTO gis.pipelines (name, code, pipeline_type, path, status, description)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO gis.pipelines (name, code, pipeline_type, path, status, description, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#
     ))
@@ -83,6 +84,7 @@ pub async fn create_pipeline(
     .bind(&payload.path)
     .bind(&status)
     .bind(&payload.description)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {

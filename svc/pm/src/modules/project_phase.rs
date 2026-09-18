@@ -132,6 +132,7 @@ async fn create_phase(
     .bind(&req.predecessor_ids)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

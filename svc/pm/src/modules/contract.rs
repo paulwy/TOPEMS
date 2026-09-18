@@ -123,8 +123,8 @@ async fn create_contract(
         r#"INSERT INTO pm.contracts (
             id, project_id, contract_no, contract_name, contract_type, 
             party_a, party_b, amount, currency, sign_date, start_date, end_date,
-            created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            created_by, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *"#
     ))
     .bind(id)
@@ -142,6 +142,7 @@ async fn create_contract(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 
@@ -903,6 +904,7 @@ async fn create_template(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 
@@ -1022,8 +1024,8 @@ async fn create_project_contract(
         r#"INSERT INTO pm.contracts (
             id, project_id, contract_no, contract_name, contract_type, 
             party_a, party_b, amount, currency, sign_date, start_date, end_date,
-            created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            created_by, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *"#
     ))
     .bind(id)
@@ -1041,6 +1043,7 @@ async fn create_project_contract(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&pool)
     .await;
 

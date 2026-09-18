@@ -229,9 +229,9 @@ pub async fn create_permission_rule(
     let result = sqlx::query!(
         r#"
         INSERT INTO analytics_row_level_permissions 
-        (id, name, description, datasource_id, table_name, rule_type, condition, 
-         role_ids, user_ids, is_active, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        (id, name, description, datasource_id, table_name, rule_type, condition,
+         role_ids, user_ids, is_active, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id, name, description, datasource_id, table_name, rule_type, condition,
                   role_ids, user_ids, is_active, created_by, created_at, updated_at
         "#,
@@ -248,6 +248,7 @@ pub async fn create_permission_rule(
         req.created_by,
         now,
         now,
+        Uuid::nil(),
     )
     .fetch_one(&state.pool)
     .await;

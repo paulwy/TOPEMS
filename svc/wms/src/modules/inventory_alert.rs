@@ -985,10 +985,10 @@ pub async fn create_alert_rule(
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        INSERT INTO wms.inventory_alert_rules (id, rule_name, alert_type, warehouse_id, 
-                                               material_code, threshold_value, severity, 
-                                               enabled, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO wms.inventory_alert_rules (id, rule_name, alert_type, warehouse_id,
+                                               material_code, threshold_value, severity,
+                                               enabled, remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *
         "#
     ))
@@ -1003,6 +1003,7 @@ pub async fn create_alert_rule(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 

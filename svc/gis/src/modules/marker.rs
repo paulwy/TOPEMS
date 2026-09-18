@@ -53,10 +53,11 @@ pub async fn create_map_marker(
     }
     let visible = payload.visible.unwrap_or(true);
     let z_index = payload.z_index.unwrap_or(100);
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, MapMarker>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.map_markers (marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        INSERT INTO gis.map_markers (marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
         "#),
     )
@@ -72,6 +73,7 @@ pub async fn create_map_marker(
     .bind(&payload.action_data)
     .bind(visible)
     .bind(z_index)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {

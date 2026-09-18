@@ -92,10 +92,11 @@ pub async fn create_map(
         return e;
     }
 
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, Map>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.maps (name, code, description, map_type, projection, bounds, center, zoom_level, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO gis.maps (name, code, description, map_type, projection, bounds, center, zoom_level, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
         "#),
     )
@@ -108,6 +109,7 @@ pub async fn create_map(
     .bind(&payload.center)
     .bind(&payload.zoom_level)
     .bind(claims.sub.parse::<Uuid>().ok())
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {
@@ -300,12 +302,13 @@ pub async fn add_map_layer(
         return e;
     }
 
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, MapLayer>(only_own_schema_query!(
         "gis",
         r#"
-        INSERT INTO gis.map_layers (map_id, name, layer_type, source_type, source_url, source_data, 
-            style_config, opacity, visible, z_index, min_zoom, max_zoom, properties)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        INSERT INTO gis.map_layers (map_id, name, layer_type, source_type, source_url, source_data,
+            style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *
         "#
     ))
@@ -322,6 +325,7 @@ pub async fn add_map_layer(
     .bind(&payload.min_zoom)
     .bind(&payload.max_zoom)
     .bind(&payload.properties)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {

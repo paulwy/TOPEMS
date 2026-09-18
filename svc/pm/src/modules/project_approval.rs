@@ -160,9 +160,9 @@ async fn submit_approval(
         r#"
         INSERT INTO pm.project_approvals (
             id, project_id, status, current_step, total_steps,
-            approvals, comments, created_by, created_at, updated_at
+            approvals, comments, created_by, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
         "#
     ))
@@ -176,6 +176,7 @@ async fn submit_approval(
     .bind(&req.approver_id)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 

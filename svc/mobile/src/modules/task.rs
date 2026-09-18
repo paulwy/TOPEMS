@@ -263,8 +263,8 @@ pub async fn create_task(
     let assignee = payload.assignee.clone().unwrap_or(user_id.clone());
 
     if let Err(e) = sqlx::query(
-        only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_tasks (id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)")
+        only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_tasks (id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)")
     )
     .bind(task_id)
     .bind(&payload.title)
@@ -278,6 +278,7 @@ pub async fn create_task(
     .bind(&payload.due_date)
     .bind(Utc::now())
     .bind(Utc::now())
+    .bind(Uuid::nil())
     .execute(&pool)
     .await
     {
