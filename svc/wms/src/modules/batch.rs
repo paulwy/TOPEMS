@@ -61,7 +61,7 @@ pub async fn list_batches(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches
+        SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR batch_no ILIKE $3)
@@ -231,7 +231,7 @@ pub async fn get_batch(
     };
 
     let result = sqlx::query_as::<_, Batch>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(batch_id)
     .fetch_optional(&mut **txn)
@@ -493,7 +493,7 @@ pub async fn get_expiring_soon(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches
+        SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= $1 AND remaining_days > 0
           AND (warehouse_id = $2 OR $2 IS NULL)
         ORDER BY remaining_days ASC
@@ -542,7 +542,7 @@ pub async fn get_expired(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches
+        SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= 0
           AND (warehouse_id = $1 OR $1 IS NULL)
         ORDER BY remaining_days ASC
