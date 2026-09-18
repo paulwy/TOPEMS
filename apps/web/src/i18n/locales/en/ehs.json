@@ -3107,5 +3107,21 @@
   "ehs.ehshazarddetailpage.text_016c9c": "text_016c9c",
   "ehs.ehshazarddetailpage.text_25b189": "text_25b189",
   "ehs.ehs_hazard_detail_page.text_49c4d5": "text_49c4d5",
-  "ehs.ehs_hazard_detail_page.${SEVERITY_KEY_MAP[formData.severity]}": "Severity]}"
+  "ehs.ehs_hazard_detail_page.${SEVERITY_KEY_MAP[formData.severity]}": "Severity]}",
+  "ehs.nav.module_name": "EHS",
+  "ehs.nav.ehs-dashboard": "EHS Overview",
+  "ehs.nav.ehs-check": "Safety Checks",
+  "ehs.nav.ehs-hazard": "Hazards",
+  "ehs.nav.ehs-accident": "Accidents",
+  "ehs.nav.ehs-plan": "Plans",
+  "ehs.nav.ehs-compliance": "Compliance",
+  "ehs.nav.ehs-environment": "Environment",
+  "ehs.nav.ehs-training": "Training",
+  "ehs.nav.ehs-occupational-disease": "Occupational Disease",
+  "ehs.nav.ehs-health-management": "Health Management",
+  "ehs.nav.ehs-hazardous-material": "Hazardous Materials",
+  "ehs.nav.ehs-emergency": "Emergency",
+  "ehs.nav.ehs-drill": "Drills",
+  "ehs.nav.ehs-incident-report": "Incident Reports",
+  "ehs.nav.ehs-hazard-detail": "Hazards Detail"
 }

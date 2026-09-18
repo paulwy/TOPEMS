@@ -2664,5 +2664,13 @@
     "sms_access_key": "Access Key",
     "sms_access_secret": "Access Secret",
     "webhook_url": "Webhook URL"
-  }
+  },
+  "monitor.nav.module_name": "Monitor",
+  "monitor.nav.monitor-dashboard": "Monitor Overview",
+  "monitor.nav.monitor-alerts": "Alerts",
+  "monitor.nav.monitor-alert-history": "Alert History",
+  "monitor.nav.monitor-rules": "Rules",
+  "monitor.nav.monitor-metrics": "Metrics",
+  "monitor.nav.monitor-logs": "Logs",
+  "monitor.nav.monitor-settings": "Settings"
 }

@@ -217,5 +217,17 @@
   "automation.automation_designer_page_use_automation_designer.e2": "加载画布失败",
   "automation.automation_designer_page_use_automation_designer.e3": "保存画布失败",
   "automation.automation_designer_page_use_automation_designer.e4": "校验画布失败",
-  "automation.automation_designer_page_use_automation_designer.e5": "同步到规则失败"
+  "automation.automation_designer_page_use_automation_designer.e5": "同步到规则失败",
+  "automation.nav.module_name": "自动化",
+  "automation.nav.module_name_desc": "自动化",
+  "automation.nav.automation-dashboard": "自动化概览",
+  "automation.nav.automation-dashboard_desc": "自动化概览",
+  "automation.nav.automation-rules": "自动化规则",
+  "automation.nav.automation-rules_desc": "自动化规则",
+  "automation.nav.automation-runs": "运行记录",
+  "automation.nav.automation-runs_desc": "运行记录",
+  "automation.nav.automation-designer": "流程设计器",
+  "automation.nav.automation-designer_desc": "流程设计器",
+  "automation.nav.automation-variables": "变量管理",
+  "automation.nav.automation-variables_desc": "变量管理"
 }

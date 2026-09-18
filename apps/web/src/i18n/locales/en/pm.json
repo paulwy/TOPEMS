@@ -3338,5 +3338,20 @@
   "pm.project_master_detail_page.text_2f2721": "Text 2f2721",
   "pm.project_master_detail_page.text_cc6f71": "Text Cc6f71",
   "pm.pm_report_page.text_31f4ca": "No.{{index_1}}Period",
-  "pm.pm_report_page.text_bfaab7": "), '']} />"
+  "pm.pm_report_page.text_bfaab7": "), '']} />",
+  "pm.nav.module_name": "PM",
+  "pm.nav.pm-dashboard": "PM Overview",
+  "pm.nav.pm-projects": "Projects",
+  "pm.nav.pm-project-list": "Project List",
+  "pm.nav.pm-task-kanban": "Task Kanban",
+  "pm.nav.pm-project-wizard": "Project Wizard",
+  "pm.nav.pm-contracts": "Contracts",
+  "pm.nav.pm-resources": "Resources",
+  "pm.nav.pm-templates": "Templates",
+  "pm.nav.pm-reports": "Reports",
+  "pm.nav.pm-timeline": "Timeline",
+  "pm.nav.pm-project-detail": "Projects Detail",
+  "pm.nav.pm-contract-detail": "Contracts Detail",
+  "pm.nav.pm-project-create": "Projects Create",
+  "pm.nav.pm-contract-create": "Contracts Create"
 }

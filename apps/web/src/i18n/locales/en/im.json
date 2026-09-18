@@ -721,5 +721,8 @@
     "message_bubble": {
       "k0": "Chat Image"
     }
-  }
+  },
+  "im.nav.module_name": "IM",
+  "im.nav.im-dashboard": "IM Overview",
+  "im.nav.im-mail": "Mail"
 }

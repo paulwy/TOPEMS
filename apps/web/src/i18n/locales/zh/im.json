@@ -353,5 +353,11 @@
   "im.message_bubble.k0": "聊天图片",
   "im.notification_list.k0": "所有通知已标记为已读",
   "im.notification_list.k1": "刚刚",
-  "im.notification_list.k2": "暂无通知"
+  "im.notification_list.k2": "暂无通知",
+  "im.nav.module_name": "即时通讯",
+  "im.nav.module_name_desc": "即时通讯",
+  "im.nav.im-dashboard": "消息概览",
+  "im.nav.im-dashboard_desc": "消息概览",
+  "im.nav.im-mail": "邮件管理",
+  "im.nav.im-mail_desc": "邮件管理"
 }

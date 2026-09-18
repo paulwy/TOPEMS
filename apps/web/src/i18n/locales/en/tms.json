@@ -944,5 +944,24 @@
       "80_7": "Target 80%",
       "k8": "Utilization Rate"
     }
-  }
+  },
+  "tms.nav.module_name": "TMS",
+  "tms.nav.tms-dashboard": "TMS Overview",
+  "tms.nav.tms-vehicles": "Vehicles",
+  "tms.nav.tms-drivers": "Drivers",
+  "tms.nav.tms-carriers": "Carriers",
+  "tms.nav.tms-routes": "Routes",
+  "tms.nav.tms-shipments": "Shipments",
+  "tms.nav.tms-shipment-trend": "Shipment Trends",
+  "tms.nav.tms-vehicle-utilization": "Vehicle Utilization",
+  "tms.nav.tms-driver-performance": "Driver Performance",
+  "tms.nav.tms-carrier-performance": "Carrier Performance",
+  "tms.nav.tms-route-efficiency": "Route Efficiency",
+  "tms.nav.tms-freight-cost": "Freight Costs",
+  "tms.nav.tms-shipment-detail": "Shipments Detail",
+  "tms.nav.tms-vehicle-detail": "Vehicles Detail",
+  "tms.nav.tms-driver-detail": "Drivers Detail",
+  "tms.nav.tms-carrier-detail": "Carriers Detail",
+  "tms.nav.tms-route-detail": "Routes Detail",
+  "tms.nav.tms-transport-plan-detail": "Detail"
 }

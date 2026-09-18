@@ -128,7 +128,7 @@ pub async fn verify_multiple_permissions(
 async fn verify_user_permission(pool: &PgPool, user_id: &Uuid, permission_code: &str) -> bool {
     // 超级管理员拥有所有权限
     let is_superuser: Option<bool> = sqlx::query_scalar(
-        "SELECT is_superuser FROM core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT is_superuser FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_id)
     .fetch_optional(pool)
@@ -146,9 +146,9 @@ async fn verify_user_permission(pool: &PgPool, user_id: &Uuid, permission_code: 
     let count: i64 = sqlx::query_scalar(
         r#"
         SELECT COUNT(*)
-        FROM core_role_permissions rp
-        JOIN core_permissions p ON rp.permission_id = p.id
-        JOIN core_user_roles ur ON rp.role_id = ur.role_id
+        FROM public.core_role_permissions rp
+        JOIN public.core_permissions p ON rp.permission_id = p.id
+        JOIN public.core_user_roles ur ON rp.role_id = ur.role_id
         WHERE ur.user_id = $1 AND p.code = $2
         "#,
     )
@@ -250,7 +250,7 @@ pub async fn get_my_permissions(
 
     let permissions: Vec<String> = if claims.is_superuser {
         // 超级管理员返回所有权限
-        sqlx::query_scalar("SELECT code FROM core_permissions ORDER BY code")
+        sqlx::query_scalar("SELECT code FROM public.core_permissions ORDER BY code")
             .fetch_all(&state.pool)
             .await
             .unwrap_or_default()
@@ -259,9 +259,9 @@ pub async fn get_my_permissions(
         sqlx::query_scalar(
             r#"
             SELECT DISTINCT p.code
-            FROM core_permissions p
-            JOIN core_role_permissions rp ON p.id = rp.permission_id
-            JOIN core_user_roles ur ON rp.role_id = ur.role_id
+            FROM public.core_permissions p
+            JOIN public.core_role_permissions rp ON p.id = rp.permission_id
+            JOIN public.core_user_roles ur ON rp.role_id = ur.role_id
             WHERE ur.user_id = $1
             ORDER BY p.code
             "#,

@@ -988,5 +988,10 @@
   "gis.index.tab_storage_locations": "Label",
   "gis.index.tab_evidence_records": "Record",
   "gis.index.tab_factory_maps": "Label",
-  "gis.index.tab_business_locations": "Label"
+  "gis.index.tab_business_locations": "Label",
+  "gis.nav.module_name": "GIS",
+  "gis.nav.gis-dashboard": "GIS Overview",
+  "gis.nav.gis-map": "Map",
+  "gis.nav.gis-tracking": "Tracking",
+  "gis.nav.gis-fence": "Geofence"
 }

@@ -571,7 +571,7 @@ const MobileQualityPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.mobile_quality_page.k4')]: {task.due_date}
+                          {i18n.t('pages.mobile_quality_page.k4')}: {task.due_date}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           {task.status === 'pending' && (
@@ -694,13 +694,13 @@ const MobileQualityPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.mobile_quality_page.k9')]: {defect.batch_no}
+                          {i18n.t('pages.mobile_quality_page.k9')}: {defect.batch_no}
                         </Typography>
                         <Typography
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.mobile_quality_page.k10')]: {defect.quantity}
+                          {i18n.t('pages.mobile_quality_page.k10')}: {defect.quantity}
                         </Typography>
                       </Box>
                       <Typography

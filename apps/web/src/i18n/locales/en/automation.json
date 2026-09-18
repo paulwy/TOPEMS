@@ -472,5 +472,11 @@
       "e4": "Failed to validate canvas",
       "e5": "Failed to sync to rule"
     }
-  }
+  },
+  "automation.nav.module_name": "Automation",
+  "automation.nav.automation-dashboard": "Automation Overview",
+  "automation.nav.automation-rules": "Rules",
+  "automation.nav.automation-runs": "Runs",
+  "automation.nav.automation-designer": "Designer",
+  "automation.nav.automation-variables": "Variables"
 }

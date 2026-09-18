@@ -34,7 +34,7 @@ pub async fn disable_user(
     };
 
     let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE id = $1::UUID")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_users WHERE id = $1::UUID")
             .bind(&id)
             .fetch_one(&state.pool)
             .await
@@ -60,7 +60,7 @@ pub async fn disable_user(
     }
 
     let result =
-        sqlx::query("UPDATE core_users SET status = 'inactive', updated_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE public.core_users SET status = 'inactive', updated_at = NOW() WHERE id = $1")
             .bind(user_id)
             .execute(&state.pool)
             .await;
@@ -136,7 +136,7 @@ pub async fn enable_user(
     };
 
     let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE id = $1::UUID")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_users WHERE id = $1::UUID")
             .bind(&id)
             .fetch_one(&state.pool)
             .await
@@ -162,7 +162,7 @@ pub async fn enable_user(
     }
 
     let result =
-        sqlx::query("UPDATE core_users SET status = 'active', updated_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE public.core_users SET status = 'active', updated_at = NOW() WHERE id = $1")
             .bind(user_id)
             .execute(&state.pool)
             .await;
@@ -252,7 +252,7 @@ pub async fn change_password(
     };
 
     let existing_user_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE id = $1::UUID")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_users WHERE id = $1::UUID")
             .bind(&id)
             .fetch_one(&state.pool)
             .await
@@ -307,7 +307,7 @@ pub async fn change_password(
     }
 
     let result =
-        sqlx::query("UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+        sqlx::query("UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
             .bind(hashed_password)
             .bind(user_id)
             .execute(&state.pool)

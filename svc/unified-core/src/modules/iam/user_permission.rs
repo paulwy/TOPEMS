@@ -50,7 +50,7 @@ pub async fn get_user_permissions(
 
     // 检查用户是否是超级管理员
     let is_superuser: bool = match sqlx::query_scalar(
-        "SELECT is_superuser FROM core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT is_superuser FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_optional(&state.pool)
@@ -72,7 +72,7 @@ pub async fn get_user_permissions(
     // 超级管理员拥有所有权限
     if is_superuser {
         let all_permissions = match sqlx::query_as::<_, UserPermissionRow>(
-            "SELECT p.id as permission_id, p.code, p.name, p.description, p.resource, p.action FROM core_permissions p ORDER BY p.code"
+            "SELECT p.id as permission_id, p.code, p.name, p.description, p.resource, p.action FROM public.core_permissions p ORDER BY p.code"
         )
         .fetch_all(&state.pool)
         .await
@@ -109,9 +109,9 @@ pub async fn get_user_permissions(
     let result = sqlx::query_as::<_, UserPermissionRow>(
         r#"
         SELECT DISTINCT p.id as permission_id, p.code, p.name, p.description, p.resource, p.action
-        FROM core_permissions p
-        INNER JOIN core_role_permissions rp ON p.id = rp.permission_id
-        INNER JOIN core_user_roles ur ON rp.role_id = ur.role_id
+        FROM public.core_permissions p
+        INNER JOIN public.core_role_permissions rp ON p.id = rp.permission_id
+        INNER JOIN public.core_user_roles ur ON rp.role_id = ur.role_id
         WHERE ur.user_id = $1
         ORDER BY p.code
         "#,
@@ -195,7 +195,7 @@ pub async fn update_user_permissions(
 
     // 检查用户是否存在
     let user_exists: bool = match sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM core_users WHERE deleted_at IS NULL AND id = $1)",
+        "SELECT EXISTS(SELECT 1 FROM public.core_users WHERE deleted_at IS NULL AND id = $1)",
     )
     .bind(user_uuid)
     .fetch_one(&state.pool)
@@ -228,7 +228,7 @@ pub async fn update_user_permissions(
     };
 
     // 删除现有用户角色关联
-    if let Err(e) = sqlx::query("DELETE FROM core_user_roles WHERE user_id = $1")
+    if let Err(e) = sqlx::query("DELETE FROM public.core_user_roles WHERE user_id = $1")
         .bind(user_uuid)
         .execute(&mut *tx)
         .await
@@ -245,7 +245,7 @@ pub async fn update_user_permissions(
     for role_id in &role_ids {
         let role_uuid = Uuid::parse_str(role_id).unwrap_or_default();
         if let Err(e) = sqlx::query(
-            "INSERT INTO core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            "INSERT INTO public.core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
         )
         .bind(user_uuid)
         .bind(role_uuid)

@@ -39,7 +39,7 @@ pub async fn get_my_permissions(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
+        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE id = $1",
     )
     .bind(user_id)
     .fetch_optional(&state.pool)
@@ -222,7 +222,7 @@ pub async fn update_current_user(
         }
 
         let existing_email_count: i64 = match sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_users WHERE email = $1 AND id != $2",
+            "SELECT COUNT(*) FROM public.core_users WHERE email = $1 AND id != $2",
         )
         .bind(email)
         .bind(user_id)
@@ -252,7 +252,7 @@ pub async fn update_current_user(
 
     let update_result = sqlx::query(
         r#"
-        UPDATE core_users
+        UPDATE public.core_users
         SET
             email = COALESCE($1, email),
             full_name = COALESCE($2, full_name),
@@ -271,7 +271,7 @@ pub async fn update_current_user(
             tracing::info!("Current user updated successfully: {}", claims.sub);
 
             let user: Option<UserRow> = sqlx::query_as(
-                "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
+                "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE id = $1",
             )
             .bind(user_id)
             .fetch_optional(&state.pool)
@@ -423,7 +423,7 @@ pub async fn change_my_password(
     }
 
     let password_hash: Option<String> =
-        sqlx::query_scalar("SELECT password_hash FROM core_users WHERE id = $1")
+        sqlx::query_scalar("SELECT password_hash FROM public.core_users WHERE id = $1")
             .bind(user_id)
             .fetch_optional(&state.pool)
             .await
@@ -477,7 +477,7 @@ pub async fn change_my_password(
     };
 
     let result =
-        sqlx::query("UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+        sqlx::query("UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
             .bind(hashed_password)
             .bind(user_id)
             .execute(&state.pool)
@@ -569,7 +569,7 @@ pub async fn update_my_avatar(
     };
 
     let result =
-        sqlx::query("UPDATE core_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2")
+        sqlx::query("UPDATE public.core_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2")
             .bind(&avatar_url)
             .bind(user_id)
             .execute(&state.pool)
@@ -580,7 +580,7 @@ pub async fn update_my_avatar(
             tracing::info!("Avatar updated successfully for user: {}", claims.sub);
 
             let user: Option<UserRow> = sqlx::query_as(
-                "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
+                "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE id = $1",
             )
             .bind(user_id)
             .fetch_optional(&state.pool)

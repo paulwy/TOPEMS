@@ -159,5 +159,12 @@
       "upload_file_failed_log": "File",
       "upload_count_success": "Upload Success Count"
     }
-  }
+  },
+  "doc.nav.module_name": "Docs",
+  "doc.nav.doc-dashboard": "Doc Overview",
+  "doc.nav.doc-list": "Documents",
+  "doc.nav.doc-documents": "My Documents",
+  "doc.nav.doc-document-center": "Document Center",
+  "doc.nav.doc-knowledge-base": "Knowledge Base",
+  "doc.nav.doc-file-detail": "File Detail"
 }

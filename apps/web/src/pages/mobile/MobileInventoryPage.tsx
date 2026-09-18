@@ -524,7 +524,7 @@ const MobileInventoryPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            [i18n.t('pages.mobile_inventory_page.k0')]: {item.location}
+                            {i18n.t('pages.mobile_inventory_page.k0')}: {item.location}
                           </Typography>
                         </Box>
                       }
@@ -677,7 +677,7 @@ const MobileInventoryPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.mobile_inventory_page.k4')]: {task.due_date}
+                          {i18n.t('pages.mobile_inventory_page.k4')}: {task.due_date}
                         </Typography>
                         {task.status !== 'completed' && (
                           <MobileButton

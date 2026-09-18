@@ -163,7 +163,7 @@ async fn list_workflow_automation_rules(
     let tenant_id = tenant_of(&claims);
     match sqlx::query(
         "SELECT id, name, condition_field, action_type, enabled
-         FROM ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
+         FROM ticket.ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
     )
     .bind(tenant_id)
     .fetch_all(&pool)
@@ -202,7 +202,7 @@ async fn toggle_workflow_automation_rule(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = tenant_of(&claims);
     match sqlx::query(
-        "UPDATE ticket_automation_rules SET enabled = $1, updated_at = now()
+        "UPDATE ticket.ticket_automation_rules SET enabled = $1, updated_at = now()
          WHERE id = $2 AND tenant_id = $3",
     )
     .bind(req.is_active)

@@ -377,7 +377,7 @@ const MonitorNotificationPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    [i18n.t('pages.monitor_notification_page.k0')]:{' '}
+                    {i18n.t('pages.monitor_notification_page.k0')}:{' '}
                     {new Date(channel.last_test_at).toLocaleString('zh-CN')}
                   </Typography>
                 </Box>

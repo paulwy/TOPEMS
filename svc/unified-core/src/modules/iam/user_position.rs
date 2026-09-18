@@ -157,7 +157,7 @@ pub async fn get_position_users(
     let rows = sqlx::query(
         r#"
         SELECT u.id, u.username, u.email, u.full_name, u.tenant_id
-        FROM core_users u
+        FROM public.core_users u
         JOIN iam.user_positions up ON u.id = up.user_id
         WHERE up.position_id = $1
         ORDER BY u.username

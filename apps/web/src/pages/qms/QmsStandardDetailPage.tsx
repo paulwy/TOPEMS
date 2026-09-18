@@ -733,7 +733,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 component='span'
                 sx={{ color: 'text.secondary' }}
               >
-                [i18n.t('pages.qms_standard_detail_page.k26')]:
+                {i18n.t('pages.qms_standard_detail_page.k26')}:
               </Box>
               <Box
                 component='span'

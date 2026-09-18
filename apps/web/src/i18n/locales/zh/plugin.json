@@ -443,5 +443,15 @@
   "plugin.marketplace_page.log.load_plugins_failed": "加载插件列表失败",
   "plugin.marketplace_page.log.load_health_failed": "加载健康检查失败",
   "plugin.plugin_type.enterprise": "企业版",
-  "plugin.plugin_type.standard": "标准版"
+  "plugin.plugin_type.standard": "标准版",
+  "plugin.nav.module_name": "插件市场",
+  "plugin.nav.module_name_desc": "插件市场",
+  "plugin.nav.plugin-dashboard": "插件概览",
+  "plugin.nav.plugin-dashboard_desc": "插件概览",
+  "plugin.nav.plugin-marketplace": "插件市场",
+  "plugin.nav.plugin-marketplace_desc": "插件市场",
+  "plugin.nav.plugin-upload": "插件上传",
+  "plugin.nav.plugin-upload_desc": "插件上传",
+  "plugin.nav.plugin-detail": "插件市场详情",
+  "plugin.nav.plugin-detail_desc": "插件市场详情"
 }

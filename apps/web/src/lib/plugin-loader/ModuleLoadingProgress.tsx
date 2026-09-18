@@ -132,7 +132,7 @@ export const ModuleLoadingProgress: React.FC<ModuleLoadingProgressProps> = ({
             color='text.disabled'
             sx={{ mt: 0.5, display: 'block' }}
           >
-            [i18n.t('lib.module_loading_progress.k0')]: {estimatedTime}
+            {i18n.t('lib.module_loading_progress.k0')}: {estimatedTime}
           </Typography>
         )}
       </Box>

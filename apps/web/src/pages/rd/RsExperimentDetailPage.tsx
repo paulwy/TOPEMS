@@ -276,7 +276,7 @@ const RsExperimentDetailPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 1 }}
             >
-              [i18n.t('pages.rs_experiment_detail_page.k3')]: {experiment.code} |{' '}
+              {i18n.t('pages.rs_experiment_detail_page.k3')}: {experiment.code} |{' '}
               {i18n.t('pages.rs_experiment_detail_page.k4')}
               {experiment.project_name || experiment.project_id} |
               [i18n.t('pages.rs_experiment_detail_page.k5')]: {experiment.experimenter}
@@ -355,7 +355,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
-                    [i18n.t('pages.rs_experiment_detail_page.k9')]:{' '}
+                    {i18n.t('pages.rs_experiment_detail_page.k9')}:{' '}
                     {experiment.completed_at || i18n.t('pages.rs_experiment_detail_page.k22')}
                   </Typography>
                 </Grid>
@@ -366,7 +366,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
-                    [i18n.t('pages.rs_experiment_detail_page.k11')]: {experiment.scale}{' '}
+                    {i18n.t('pages.rs_experiment_detail_page.k11')}: {experiment.scale}{' '}
                     {experiment.scale_unit}
                   </Typography>
                 </Grid>
@@ -477,7 +477,7 @@ const RsExperimentDetailPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              [i18n.t('pages.rs_experiment_detail_page.k15')]: {record.recorded_by}{' '}
+                              {i18n.t('pages.rs_experiment_detail_page.k15')}: {record.recorded_by}{' '}
                               | {i18n.t('pages.rs_experiment_detail_page.k16')}
                               {record.recorded_at}
                             </Typography>

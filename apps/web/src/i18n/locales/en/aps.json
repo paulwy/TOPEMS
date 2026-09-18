@@ -842,5 +842,24 @@
     "oee_0": "OEE Detail Table",
     "oee_1": "OEE Composition (Radial Chart)"
   },
-  "aps.analytics.materialShortage.k2": "types"
+  "aps.analytics.materialShortage.k2": "types",
+  "aps.nav.module_name": "APS",
+  "aps.nav.aps-dashboard": "APS Overview",
+  "aps.nav.aps-production-plans": "Production Plans",
+  "aps.nav.aps-schedules": "Schedules",
+  "aps.nav.aps-capacities": "Capacities",
+  "aps.nav.aps-material-plans": "Material Plans",
+  "aps.nav.aps-forecasts": "Forecasts",
+  "aps.nav.aps-analytics-plan-adherence": "Plan Adherence",
+  "aps.nav.aps-analytics-schedule-gantt": "Schedule Gantt",
+  "aps.nav.aps-analytics-capacity-utilization": "Capacity Utilization",
+  "aps.nav.aps-analytics-material-shortage": "Material Shortage",
+  "aps.nav.aps-analytics-forecast-accuracy": "Forecast Accuracy",
+  "aps.nav.aps-analytics-oee-dashboard": "OEE Dashboard",
+  "aps.nav.aps-production-plan-detail": "Production Plans Detail",
+  "aps.nav.aps-schedule-detail": "Schedules Detail",
+  "aps.nav.aps-capacity-detail": "Detail",
+  "aps.nav.aps-material-plan-detail": "Material Plans Detail",
+  "aps.nav.aps-forecast-detail": "Forecasts Detail",
+  "aps.nav.aps-plan-comparison": "Plan Comparison"
 }

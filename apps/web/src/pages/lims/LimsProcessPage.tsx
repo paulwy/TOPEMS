@@ -280,7 +280,7 @@ const LimsProcessPage: React.FC = () => {
                 color='primary'
                 variant='body2'
               >
-                [i18n.t('pages.lims_process_page.k5')]: {selectedProcess.name}
+                {i18n.t('pages.lims_process_page.k5')}: {selectedProcess.name}
               </Typography>
             )}
           </Stack>

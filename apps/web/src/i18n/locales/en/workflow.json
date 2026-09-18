@@ -1051,5 +1051,19 @@
   "workflow.workflow_version_history_page.k40": "Created At",
   "workflow.workflow_version_history_page.k41": "Confirm Rollback",
   "workflow.workflow_version_history_page.k42": "Rollback will replace the currently active definition.",
-  "workflow.workflow_version_history_page.k43": "Confirm"
+  "workflow.workflow_version_history_page.k43": "Confirm",
+  "workflow.nav.module_name": "Workflow",
+  "workflow.nav.workflow-dashboard": "Workflow Overview",
+  "workflow.nav.workflow-definitions": "Definitions",
+  "workflow.nav.workflow-designer": "Designer",
+  "workflow.nav.workflow-version-history": "Version History",
+  "workflow.nav.workflow-instances": "Instances",
+  "workflow.nav.workflow-approvals": "Approvals",
+  "workflow.nav.workflow-notification-center": "Notification Center",
+  "workflow.nav.workflow-monitor": "Monitor",
+  "workflow.nav.workflow-statistics": "Statistics",
+  "workflow.nav.workflow-templates": "Templates",
+  "workflow.nav.workflow-settings": "Settings",
+  "workflow.nav.workflow-instance-detail": "Instances Detail",
+  "workflow.nav.workflow-approval-detail": "Approvals Detail"
 }

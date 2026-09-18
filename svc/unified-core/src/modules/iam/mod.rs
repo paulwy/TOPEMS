@@ -17,7 +17,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create users table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_users (
+        CREATE TABLE IF NOT EXISTS public.core_users (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             username VARCHAR(64) NOT NULL UNIQUE,
             email TEXT NOT NULL UNIQUE,
@@ -41,7 +41,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create roles table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_roles (
+        CREATE TABLE IF NOT EXISTS public.core_roles (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(64) NOT NULL UNIQUE,
             description TEXT,
@@ -58,7 +58,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create permissions table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_permissions (
+        CREATE TABLE IF NOT EXISTS public.core_permissions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             code VARCHAR(128) NOT NULL UNIQUE,
             name VARCHAR(128) NOT NULL,
@@ -75,7 +75,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create user_roles table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_user_roles (
+        CREATE TABLE IF NOT EXISTS public.core_user_roles (
             user_id UUID NOT NULL REFERENCES core_users(id),
             role_id UUID NOT NULL REFERENCES core_roles(id),
             created_at TIMESTAMP DEFAULT NOW(),
@@ -89,7 +89,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create role_permissions table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_role_permissions (
+        CREATE TABLE IF NOT EXISTS public.core_role_permissions (
             role_id UUID NOT NULL REFERENCES core_roles(id),
             permission_id UUID NOT NULL REFERENCES core_permissions(id),
             created_at TIMESTAMP DEFAULT NOW(),
@@ -346,7 +346,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     for (code, name, desc, resource, action) in permissions {
         sqlx::query(
             r#"
-            INSERT INTO core_permissions (code, name, description, resource, action)
+            INSERT INTO public.core_permissions (code, name, description, resource, action)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (code) DO NOTHING
             "#,
@@ -363,7 +363,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Insert default roles
     sqlx::query(
         r#"
-        INSERT INTO core_roles (name, description)
+        INSERT INTO public.core_roles (name, description)
         VALUES ('superadmin', '超级管理员')
         ON CONFLICT (name) DO NOTHING
         "#,
@@ -373,7 +373,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        INSERT INTO core_roles (name, description)
+        INSERT INTO public.core_roles (name, description)
         VALUES ('admin', '管理员')
         ON CONFLICT (name) DO NOTHING
         "#,
@@ -384,8 +384,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Assign all permissions to superadmin role
     sqlx::query(
         r#"
-        INSERT INTO core_role_permissions (role_id, permission_id)
-        SELECT r.id, p.id FROM core_roles r, core_permissions p WHERE r.name = 'superadmin'
+        INSERT INTO public.core_role_permissions (role_id, permission_id)
+        SELECT r.id, p.id FROM public.core_roles r, core_permissions p WHERE r.name = 'superadmin'
         ON CONFLICT DO NOTHING
         "#,
     )
@@ -420,8 +420,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     for perm_code in admin_permissions {
         sqlx::query(
             r#"
-            INSERT INTO core_role_permissions (role_id, permission_id)
-            SELECT r.id, p.id FROM core_roles r, core_permissions p
+            INSERT INTO public.core_role_permissions (role_id, permission_id)
+            SELECT r.id, p.id FROM public.core_roles r, core_permissions p
             WHERE r.name = 'admin' AND p.code = $1
             ON CONFLICT DO NOTHING
             "#,
@@ -447,7 +447,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     };
     sqlx::query(
         r#"
-        INSERT INTO core_users (username, email, password_hash, full_name, is_superuser)
+        INSERT INTO public.core_users (username, email, password_hash, full_name, is_superuser)
         VALUES ('admin', 'admin@topems.com', $1, '系统管理员', true)
         ON CONFLICT (username) DO NOTHING
         "#,
@@ -459,8 +459,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Assign superadmin role to admin user
     sqlx::query(
         r#"
-        INSERT INTO core_user_roles (user_id, role_id)
-        SELECT u.id, r.id FROM core_users u, core_roles r
+        INSERT INTO public.core_user_roles (user_id, role_id)
+        SELECT u.id, r.id FROM public.core_users u, core_roles r
         WHERE u.username = 'admin' AND r.name = 'superadmin'
         ON CONFLICT DO NOTHING
         "#,
@@ -476,7 +476,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .await?;
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_sessions (
+        CREATE TABLE IF NOT EXISTS public.core_sessions (
             id BIGSERIAL PRIMARY KEY,
             user_id UUID NOT NULL,
             token_hash VARCHAR(255),
@@ -491,7 +491,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_refresh_tokens (
+        CREATE TABLE IF NOT EXISTS public.core_refresh_tokens (
             id BIGSERIAL PRIMARY KEY,
             user_id UUID NOT NULL,
             token_hash VARCHAR(255),

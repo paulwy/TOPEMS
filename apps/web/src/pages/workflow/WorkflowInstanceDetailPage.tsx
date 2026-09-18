@@ -304,7 +304,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              [i18n.t('pages.workflow_instance_detail_page.k8')]: {approval.node_id}
+                              {i18n.t('pages.workflow_instance_detail_page.k8')}: {approval.node_id}
                             </Typography>
                           )}
                         </Box>
@@ -331,7 +331,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.workflow_instance_detail_page.k9')]:{' '}
+                          {i18n.t('pages.workflow_instance_detail_page.k9')}:{' '}
                           {approval.assignee_id || 'N/A'}
                         </Typography>
                       </Stack>
@@ -345,7 +345,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.workflow_instance_detail_page.k10')]:{' '}
+                          {i18n.t('pages.workflow_instance_detail_page.k10')}:{' '}
                           {new Date(approval.created_at).toLocaleString()}
                         </Typography>
                       </Stack>
@@ -360,7 +360,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            [i18n.t('pages.workflow_instance_detail_page.k11')]:{' '}
+                            {i18n.t('pages.workflow_instance_detail_page.k11')}:{' '}
                             {new Date(approval.approved_at).toLocaleString()}
                           </Typography>
                         </Stack>

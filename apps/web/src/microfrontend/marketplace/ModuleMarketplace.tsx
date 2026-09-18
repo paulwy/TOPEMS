@@ -461,7 +461,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                [i18n.t('microfrontend.module_marketplace.k8')]: {mod.author}
+                {i18n.t('microfrontend.module_marketplace.k8')}: {mod.author}
               </Typography>
             </Box>
           </Box>
@@ -505,7 +505,7 @@ const ModuleDetailDialog: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        [i18n.t('microfrontend.module_marketplace.k10')]: {dep.required_version}
+                        {i18n.t('microfrontend.module_marketplace.k10')}: {dep.required_version}
                       </Typography>
                     </Box>
                   </ListItem>

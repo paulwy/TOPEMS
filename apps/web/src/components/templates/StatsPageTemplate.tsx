@@ -487,7 +487,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 }}
               >
                 <Typography color='text.secondary'>
-                  [i18n.t('components.stats_page_template.k0')]: {chart.type} - {chart.data.length}{' '}
+                  {i18n.t('components.stats_page_template.k0')}: {chart.type} - {chart.data.length}{' '}
                   {i18n.t('components.stats_page_template.k1')}
                 </Typography>
               </Box>

@@ -883,7 +883,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        [i18n.t('dev_platform.v53-platform-console.k12')]: {project.health.score}
+                        {i18n.t('dev_platform.v53-platform-console.k12')}: {project.health.score}
                       </Typography>
                     </Box>
 
@@ -2070,7 +2070,7 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
               variant='caption'
               sx={{ ml: 1 }}
             >
-              [i18n.t('dev_platform.v53-platform-console.k40')]:{' '}
+              {i18n.t('dev_platform.v53-platform-console.k40')}:{' '}
               {(run.totalDurationMs / 1000).toFixed(1)}s
             </Typography>
           )}

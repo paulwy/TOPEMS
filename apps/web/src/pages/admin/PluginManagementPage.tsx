@@ -650,14 +650,14 @@ const PluginManagementPage: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <GitBranch size={14} />
                         <Typography variant='caption'>
-                          [i18n.t('pages.plugin_management_page.k25')]:{' '}
+                          {i18n.t('pages.plugin_management_page.k25')}:{' '}
                           {installingPlugin.latest_version}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <Download size={14} />
                         <Typography variant='caption'>
-                          [i18n.t('pages.plugin_management_page.k26')]: {installingPlugin.downloads}
+                          {i18n.t('pages.plugin_management_page.k26')}: {installingPlugin.downloads}
                         </Typography>
                       </Box>
                     </Stack>

@@ -1494,5 +1494,22 @@
   "srm.quotation_page.reject_success": "rejectSuccess",
   "srm.quotation_page.reject_fail": "rejectFailure",
   "srm.quotation_page.award": "Label",
-  "srm.quotation_page.reject": "Reject"
+  "srm.quotation_page.reject": "Reject",
+  "srm.nav.module_name": "SRM",
+  "srm.nav.srm-dashboard": "SRM Overview",
+  "srm.nav.srm-supplier": "Suppliers",
+  "srm.nav.srm-category": "Categories",
+  "srm.nav.srm-product": "Products",
+  "srm.nav.srm-contract": "Contracts",
+  "srm.nav.srm-order": "Orders",
+  "srm.nav.srm-evaluation": "Evaluations",
+  "srm.nav.srm-performance": "Performance",
+  "srm.nav.srm-scoring-dimension": "Scoring Dimensions",
+  "srm.nav.srm-inquiry": "Inquiries",
+  "srm.nav.srm-bidding": "Bidding",
+  "srm.nav.srm-quotation": "Quotations",
+  "srm.nav.srm-finance": "Finance",
+  "srm.nav.srm-portal": "Portal",
+  "srm.nav.srm-supplier-detail": "Suppliers Detail",
+  "srm.nav.srm-contract-detail": "Contracts Detail"
 }

@@ -548,5 +548,15 @@
   "gis.index.tab_storage_locations": "标签",
   "gis.index.tab_evidence_records": "记录",
   "gis.index.tab_factory_maps": "标签",
-  "gis.index.tab_business_locations": "标签"
+  "gis.index.tab_business_locations": "标签",
+  "gis.nav.module_name": "地理信息",
+  "gis.nav.module_name_desc": "地理信息",
+  "gis.nav.gis-dashboard": "地图概览",
+  "gis.nav.gis-dashboard_desc": "地图概览",
+  "gis.nav.gis-map": "地图管理",
+  "gis.nav.gis-map_desc": "地图管理",
+  "gis.nav.gis-tracking": "轨迹追踪",
+  "gis.nav.gis-tracking_desc": "轨迹追踪",
+  "gis.nav.gis-fence": "电子围栏",
+  "gis.nav.gis-fence_desc": "电子围栏"
 }

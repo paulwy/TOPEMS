@@ -101,5 +101,19 @@
   "doc.documents.batch_delete_failed_log": "batch删除failed日志",
   "doc.documents.batch_delete_failed": "batch删除failed",
   "doc.documents.upload_file_failed_log": "文件",
-  "doc.documents.upload_count_success": "上传次数成功"
+  "doc.documents.upload_count_success": "上传次数成功",
+  "doc.nav.module_name": "文档协同",
+  "doc.nav.module_name_desc": "文档协同",
+  "doc.nav.doc-dashboard": "文档概览",
+  "doc.nav.doc-dashboard_desc": "文档概览",
+  "doc.nav.doc-list": "文档列表",
+  "doc.nav.doc-list_desc": "文档列表",
+  "doc.nav.doc-documents": "我的文档",
+  "doc.nav.doc-documents_desc": "我的文档",
+  "doc.nav.doc-document-center": "文档中心",
+  "doc.nav.doc-document-center_desc": "文档中心",
+  "doc.nav.doc-knowledge-base": "知识库",
+  "doc.nav.doc-knowledge-base_desc": "知识库",
+  "doc.nav.doc-file-detail": "文件详情",
+  "doc.nav.doc-file-detail_desc": "文件详情"
 }

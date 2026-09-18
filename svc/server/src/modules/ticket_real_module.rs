@@ -28,8 +28,8 @@ pub struct TicketRealModule {
 impl TicketRealModule {
     /// 异步构建真实 Ticket 模块
     pub async fn build() -> anyhow::Result<Self> {
-        // 与独立部署 main.rs 一致：search_path public（ticket 表在 public）
-        std::env::set_var("SEARCH_PATH", "public");
+        // 与独立部署 main.rs 一致：search_path ticket, public（ticket 表在 ticket schema）
+        std::env::set_var("SEARCH_PATH", "ticket, public");
 
         let config = ServiceConfig {
             name: "topems-ticket",

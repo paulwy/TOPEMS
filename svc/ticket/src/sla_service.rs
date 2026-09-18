@@ -255,7 +255,7 @@ impl TicketSlaService {
     async fn match_policy(&self, ticket: &Ticket) -> Result<Option<TicketSlaPolicy>, sqlx::Error> {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM core_ticket_sla_policies
+            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
             WHERE deleted_at IS NULL AND tenant_id = $1
               AND is_active = true
               AND (ticket_type IS NULL OR ticket_type = $2)
@@ -284,7 +284,7 @@ impl TicketSlaService {
     ) -> Result<Vec<SlaEscalationEvent>, sqlx::Error> {
         let events = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
-            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM core_ticket_sla_escalations
+            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM ticket.core_ticket_sla_escalations
             WHERE ticket_id = $1 AND tenant_id = $2
             ORDER BY level ASC, created_at ASC
             "#,
@@ -371,7 +371,7 @@ impl TicketSlaService {
 
         sqlx::query(
             r#"
-            INSERT INTO core_ticket_sla_escalations
+            INSERT INTO ticket.core_ticket_sla_escalations
               (id, ticket_id, tenant_id, level, escalation_time, reason, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
@@ -388,7 +388,7 @@ impl TicketSlaService {
 
         sqlx::query(
             r#"
-            INSERT INTO core_ticket_activities
+            INSERT INTO ticket.core_ticket_activities
               (id, ticket_id, tenant_id, action, to_value, created_at)
             VALUES ($1, $2, $3, $4, $5, $6)
             "#,
@@ -404,7 +404,7 @@ impl TicketSlaService {
 
         let event = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
-            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM core_ticket_sla_escalations WHERE id = $1
+            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM ticket.core_ticket_sla_escalations WHERE id = $1
             "#,
         )
         .bind(event_id)
@@ -425,7 +425,7 @@ impl TicketSlaService {
         if req.is_default.unwrap_or(false) {
             sqlx::query(
                 r#"
-                UPDATE core_ticket_sla_policies
+                UPDATE ticket.core_ticket_sla_policies
                 SET is_default = false, updated_at = $1
                 WHERE tenant_id = $2 AND is_default = true
                 "#,
@@ -438,7 +438,7 @@ impl TicketSlaService {
 
         sqlx::query(
             r#"
-            INSERT INTO core_ticket_sla_policies
+            INSERT INTO ticket.core_ticket_sla_policies
               (id, tenant_id, name, description, ticket_type, severity,
                response_hours, resolution_hours, escalation_levels,
                escalation_hours_1, escalation_hours_2, escalation_hours_3,
@@ -480,7 +480,7 @@ impl TicketSlaService {
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM core_ticket_sla_policies
+            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
             WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
             "#,
         )
@@ -498,7 +498,7 @@ impl TicketSlaService {
     ) -> Result<Vec<TicketSlaPolicy>, sqlx::Error> {
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM core_ticket_sla_policies
+            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
             WHERE deleted_at IS NULL AND tenant_id = $1
             ORDER BY is_default DESC, created_at DESC
             "#,
@@ -521,7 +521,7 @@ impl TicketSlaService {
         if req.is_default.unwrap_or(false) {
             sqlx::query(
                 r#"
-                UPDATE core_ticket_sla_policies
+                UPDATE ticket.core_ticket_sla_policies
                 SET is_default = false, updated_at = $1
                 WHERE tenant_id = $2 AND is_default = true AND id != $3
                 "#,
@@ -535,7 +535,7 @@ impl TicketSlaService {
 
         sqlx::query(
             r#"
-            UPDATE core_ticket_sla_policies SET
+            UPDATE ticket.core_ticket_sla_policies SET
               name = COALESCE($1, name),
               description = COALESCE($2, description),
               response_hours = COALESCE($3, response_hours),
@@ -580,7 +580,7 @@ impl TicketSlaService {
     ) -> Result<bool, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            UPDATE core_ticket_sla_policies SET deleted_at = NOW()
+            UPDATE ticket.core_ticket_sla_policies SET deleted_at = NOW()
             WHERE id = $1 AND tenant_id = $2 AND is_default = false
             "#,
         )
@@ -595,7 +595,7 @@ impl TicketSlaService {
     pub async fn get_sla_stats(&self, tenant_id: Uuid) -> Result<TicketSlaStats, sqlx::Error> {
         let total: i64 = sqlx::query_scalar(
             r#"
-            SELECT COUNT(*) FROM core_tickets
+            SELECT COUNT(*) FROM ticket.core_tickets
             WHERE tenant_id = $1 AND sla_due_at IS NOT NULL
               AND status IN ('resolved', 'closed')
             "#,
@@ -606,7 +606,7 @@ impl TicketSlaService {
 
         let breached: i64 = sqlx::query_scalar(
             r#"
-            SELECT COUNT(*) FROM core_tickets
+            SELECT COUNT(*) FROM ticket.core_tickets
             WHERE tenant_id = $1 AND sla_due_at IS NOT NULL
               AND status IN ('resolved', 'closed')
               AND resolved_at > sla_due_at
@@ -626,7 +626,7 @@ impl TicketSlaService {
         let avg_resolution: Option<f64> = sqlx::query_scalar(
             r#"
             SELECT AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 60)
-            FROM core_tickets
+            FROM ticket.core_tickets
             WHERE tenant_id = $1 AND resolved_at IS NOT NULL
             "#,
         )
@@ -639,8 +639,8 @@ impl TicketSlaService {
             SELECT AVG(EXTRACT(EPOCH FROM (first_response_at - created_at)) / 60)
             FROM (
               SELECT t.created_at, MIN(c.created_at) as first_response_at
-              FROM core_tickets t
-              JOIN core_ticket_comments c ON t.id = c.ticket_id
+              FROM ticket.core_tickets t
+              JOIN ticket.core_ticket_comments c ON t.id = c.ticket_id
               WHERE t.tenant_id = $1 AND c.user_id != t.reporter_id
               GROUP BY t.id, t.created_at
             ) sub
@@ -657,7 +657,7 @@ impl TicketSlaService {
               t.severity,
               COUNT(*) as total,
               SUM(CASE WHEN t.resolved_at > t.sla_due_at THEN 1 ELSE 0 END) as breached
-            FROM core_tickets t
+            FROM ticket.core_tickets t
             WHERE t.tenant_id = $1 AND t.sla_due_at IS NOT NULL
               AND t.status IN ('resolved', 'closed')
             GROUP BY t.severity
@@ -691,7 +691,7 @@ impl TicketSlaService {
               t.ticket_type,
               COUNT(*) as total,
               SUM(CASE WHEN t.resolved_at > t.sla_due_at THEN 1 ELSE 0 END) as breached
-            FROM core_tickets t
+            FROM ticket.core_tickets t
             WHERE t.tenant_id = $1 AND t.sla_due_at IS NOT NULL
               AND t.status IN ('resolved', 'closed')
             GROUP BY t.ticket_type
@@ -725,7 +725,7 @@ impl TicketSlaService {
               DATE(created_at) as date,
               COUNT(*) as total,
               SUM(CASE WHEN sla_due_at IS NOT NULL AND resolved_at > sla_due_at THEN 1 ELSE 0 END) as breached
-            FROM core_tickets
+            FROM ticket.core_tickets
             WHERE tenant_id = $1
               AND created_at >= NOW() - INTERVAL '30 days'
             GROUP BY DATE(created_at)

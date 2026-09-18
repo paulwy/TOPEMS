@@ -7,7 +7,7 @@ import { navigationRegistryV2 } from '@/lib/navigation';
 import type { ModuleCardConfig } from '@/lib/navigation/types';
 import { lucideIcons } from '@/lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import i18n from '@/i18n';
+import i18n, { ensureNamespacesLoaded } from '@/i18n';
 import { AuthPageTemplate } from '@/components/templates';
 
 const NotFoundPage: React.FC = () => {
@@ -20,6 +20,18 @@ const NotFoundPage: React.FC = () => {
     } catch {
       return [];
     }
+  }, []);
+
+  // 加载建议模块的语言包，确保模块名/描述可翻译
+  const [nsReady, setNsReady] = React.useState(false);
+  React.useEffect(() => {
+    const codes = suggestedModules.map((m) => m.code).filter(Boolean);
+    if (codes.length > 0) {
+      ensureNamespacesLoaded(codes).finally(() => setNsReady(true));
+    } else {
+      setNsReady(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -139,83 +151,84 @@ const NotFoundPage: React.FC = () => {
                 gap: 1.5,
               }}
             >
-              {suggestedModules.map((mod) => {
-                const targetPath = mod.path || '/modules';
-                const IconComp = mod.icon
-                  ? (lucideIcons as Record<string, React.ComponentType<{ size?: number }>>)[
-                      mod.icon
-                    ]
-                  : undefined;
-                return (
-                  <Paper
-                    key={mod.code}
-                    component={RouterLink}
-                    to={targetPath}
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      border: 1,
-                      borderColor: 'divider',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.25,
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'action.hover',
-                        transform: 'translateY(-1px)',
-                        boxShadow: 2,
-                      },
-                    }}
-                  >
-                    <Box
+              {nsReady &&
+                suggestedModules.map((mod) => {
+                  const targetPath = mod.path || '/modules';
+                  const IconComp = mod.icon
+                    ? (lucideIcons as Record<string, React.ComponentType<{ size?: number }>>)[
+                        mod.icon
+                      ]
+                    : undefined;
+                  return (
+                    <Paper
+                      key={mod.code}
+                      component={RouterLink}
+                      to={targetPath}
+                      elevation={0}
                       sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 1.5,
-                        bgcolor: 'primary.50',
-                        color: 'primary.main',
+                        p: 2,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: 'divider',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
+                        gap: 1.25,
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: 'action.hover',
+                          transform: 'translateY(-1px)',
+                          boxShadow: 2,
+                        },
                       }}
                     >
-                      {IconComp ? <IconComp size={18} /> : <Search size={18} />}
-                    </Box>
-                    <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Typography
+                      <Box
                         sx={{
-                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                          fontWeight: 600,
-                          color: 'text.primary',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          width: 36,
+                          height: 36,
+                          borderRadius: 1.5,
+                          bgcolor: 'primary.50',
+                          color: 'primary.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
                         }}
                       >
-                        {mod.name}
-                      </Typography>
-                      {mod.description && (
+                        {IconComp ? <IconComp size={18} /> : <Search size={18} />}
+                      </Box>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography
                           sx={{
-                            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                            color: 'text.secondary',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                            fontWeight: 600,
+                            color: 'text.primary',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                           }}
                         >
-                          {mod.description}
+                          {i18n.t(mod.nameKey || mod.name)}
                         </Typography>
-                      )}
-                    </Box>
-                  </Paper>
-                );
-              })}
+                        {mod.description && (
+                          <Typography
+                            sx={{
+                              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                              color: 'text.secondary',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {i18n.t(mod.description, { defaultValue: mod.description })}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Paper>
+                  );
+                })}
             </Box>
           </Box>
         )}

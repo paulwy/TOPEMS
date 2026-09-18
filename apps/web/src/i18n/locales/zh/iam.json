@@ -313,5 +313,17 @@
   "iam.user_management_page.k4": "首页",
   "iam.user_management_page.k5": "身份管理",
   "iam.user_management_page.k6": "用户管理",
-  "iam.companystructure.v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const TreeNodeComponent: React.FC"
+  "iam.companystructure.v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const TreeNodeComponent: React.FC",
+  "iam.nav.module_name": "身份管理",
+  "iam.nav.module_name_desc": "身份管理",
+  "iam.nav.iam-dashboard": "身份概览",
+  "iam.nav.iam-dashboard_desc": "身份概览",
+  "iam.nav.iam-user": "用户管理",
+  "iam.nav.iam-user_desc": "用户管理",
+  "iam.nav.iam-role": "角色管理",
+  "iam.nav.iam-role_desc": "角色管理",
+  "iam.nav.iam-permission": "权限管理",
+  "iam.nav.iam-permission_desc": "权限管理",
+  "iam.nav.iam-company-structure": "组织架构",
+  "iam.nav.iam-company-structure_desc": "组织架构"
 }

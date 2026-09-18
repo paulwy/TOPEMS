@@ -2963,5 +2963,18 @@
   "mobile.notification.filter_all": "Filter All",
   "mobile.notification.title": "Title",
   "mobile.notification.description": "Description",
-  "mobile.notification.detail_title": "Detail Title"
+  "mobile.notification.detail_title": "Detail Title",
+  "mobile.nav.module_name": "Mobile",
+  "mobile.nav.mobile-home": "Home",
+  "mobile.nav.mobile-workbench": "Workbench",
+  "mobile.nav.mobile-attendance": "Attendance",
+  "mobile.nav.mobile-tasks": "Tasks",
+  "mobile.nav.mobile-approvals": "Approvals",
+  "mobile.nav.mobile-inventory": "Inventory",
+  "mobile.nav.mobile-quality": "Quality",
+  "mobile.nav.mobile-production": "Production",
+  "mobile.nav.mobile-scan": "Scan",
+  "mobile.nav.mobile-notifications": "Notifications",
+  "mobile.nav.mobile-profile": "Profile",
+  "mobile.nav.mobile-settings": "Settings"
 }

@@ -151,14 +151,14 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
                 variant='body2'
                 sx={{ color: 'grey.600', mb: 1 }}
               >
-                [i18n.t('pages.approval_actions.k0')]: {approval.task_name}
+                {i18n.t('pages.approval_actions.k0')}: {approval.task_name}
               </Typography>
               {approval.node_id && (
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.600', mb: 1 }}
                 >
-                  [i18n.t('pages.approval_actions.k1')]: {approval.node_id}
+                  {i18n.t('pages.approval_actions.k1')}: {approval.node_id}
                 </Typography>
               )}
             </>
@@ -231,7 +231,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
               variant='body2'
               sx={{ color: 'grey.600', mb: 1 }}
             >
-              [i18n.t('pages.approval_actions.k5')]: {approval.task_name}
+              {i18n.t('pages.approval_actions.k5')}: {approval.task_name}
             </Typography>
           )}
           <Stack

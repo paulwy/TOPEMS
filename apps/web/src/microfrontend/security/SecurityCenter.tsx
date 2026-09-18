@@ -322,7 +322,7 @@ const IssueItem: React.FC<{
               color='text.secondary'
               sx={{ mb: 2 }}
             >
-              [i18n.t('microfrontend.security_center.k1')]: {issue.fixed_version}
+              {i18n.t('microfrontend.security_center.k1')}: {issue.fixed_version}
             </Typography>
           )}
           {!issue.fixed && onFix && (

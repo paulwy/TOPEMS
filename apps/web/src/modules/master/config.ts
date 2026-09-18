@@ -73,7 +73,7 @@ export const masterNavConfig: ModuleNavConfig = {
       code: 'master-data-asset-catalog',
       label: '数据资产目录',
       labelKey: 'master.dataAssetCatalog',
-      icon: 'Cluster',
+      icon: 'Database',
       path: MASTER_PATHS.dataAssetCatalog,
       permission: 'master:data-asset:read',
       order: 0,

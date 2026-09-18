@@ -194,7 +194,7 @@ const channelFields: SchemaField[] = [
               variant='caption'
               color='text.secondary'
             >
-              [i18n.t('schemas.notification_channel.k0')]:{' '}
+              {i18n.t('schemas.notification_channel.k0')}:{' '}
               {new Date(row.last_test_at as string).toLocaleString('zh-CN')}
             </Typography>
           </Box>

@@ -193,7 +193,7 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
             variant='body2'
             sx={{ fontWeight: 500 }}
           >
-            [i18n.t('components.organization_filter.k0')]:
+            {i18n.t('components.organization_filter.k0')}:
           </Typography>
           {selectedCompany && (
             <Typography

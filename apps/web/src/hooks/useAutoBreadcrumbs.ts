@@ -616,6 +616,8 @@ function formatSegmentLabel(segment: string): string {
     mappings: i18n.t('shared.use_auto_breadcrumbs.k139'),
     plugin: i18n.t('shared.use_auto_breadcrumbs.k140'),
     marketplace: i18n.t('shared.use_auto_breadcrumbs.k141'),
+    modules: i18n.t('shared.use_auto_breadcrumbs.k142'),
+    profile: i18n.t('shared.use_auto_breadcrumbs.k143'),
   };
 
   return (

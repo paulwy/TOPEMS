@@ -64,7 +64,7 @@ impl TicketService {
 
         sqlx::query(
             r#"
-            INSERT INTO core_tickets
+            INSERT INTO ticket.core_tickets
               (id, ticket_no, tenant_id, title, description, ticket_type, severity, status,
                source_service, source_business_id, assignee_id, reporter_id, sla_due_at,
                created_at, updated_at, tags, metadata)
@@ -94,7 +94,7 @@ impl TicketService {
         // 自动化规则应用：按租户启用规则评估并应用变更（assignee/severity/tags）
         let rules = sqlx::query_as::<_, AutomationRule>(
             "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-             FROM ticket_automation_rules WHERE tenant_id = $1 AND enabled = true",
+             FROM ticket.ticket_automation_rules WHERE tenant_id = $1 AND enabled = true",
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -123,7 +123,7 @@ impl TicketService {
             );
             if !effects.is_empty() {
                 sqlx::query(
-                    r#"UPDATE core_tickets SET
+                    r#"UPDATE ticket.core_tickets SET
                        assignee_id = COALESCE($2, assignee_id),
                        severity = COALESCE($3, severity),
                        tags = CASE WHEN $4::text[] IS NOT NULL
@@ -144,7 +144,7 @@ impl TicketService {
 
         sqlx::query(
             r#"
-            INSERT INTO core_ticket_activities
+            INSERT INTO ticket.core_ticket_activities
               (id, ticket_id, tenant_id, user_id, action, to_value, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
@@ -172,7 +172,7 @@ impl TicketService {
             SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status,
                    source_service, source_business_id, assignee_id, reporter_id, sla_due_at,
                    resolved_at, closed_at, created_at, updated_at, tags, metadata
-            FROM core_tickets
+            FROM ticket.core_tickets
             WHERE id = $1 AND tenant_id = $2
             "#,
         )
@@ -198,7 +198,7 @@ impl TicketService {
             SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status,
                    source_service, source_business_id, assignee_id, reporter_id, sla_due_at,
                    resolved_at, closed_at, created_at, updated_at, tags, metadata
-            FROM core_tickets
+            FROM ticket.core_tickets
             WHERE tenant_id = $1
               AND ($2::text IS NULL OR status = $2)
               AND ($3::text IS NULL OR severity = $3)
@@ -229,7 +229,7 @@ impl TicketService {
         let total: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*)
-            FROM core_tickets
+            FROM ticket.core_tickets
             WHERE tenant_id = $1
               AND ($2::text IS NULL OR status = $2)
               AND ($3::text IS NULL OR severity = $3)
@@ -283,7 +283,7 @@ impl TicketService {
 
         sqlx::query(
             r#"
-            UPDATE core_tickets SET
+            UPDATE ticket.core_tickets SET
               title = COALESCE($1, title),
               description = COALESCE($2, description),
               severity = COALESCE($3, severity),
@@ -316,7 +316,7 @@ impl TicketService {
             if new_status != &existing.status {
                 sqlx::query(
                     r#"
-                    INSERT INTO core_ticket_activities
+                    INSERT INTO ticket.core_ticket_activities
                       (id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     "#,
@@ -337,7 +337,7 @@ impl TicketService {
             if Some(new_assignee) != existing.assignee_id {
                 sqlx::query(
                     r#"
-                    INSERT INTO core_ticket_activities
+                    INSERT INTO ticket.core_ticket_activities
                       (id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     "#,
@@ -372,7 +372,7 @@ impl TicketService {
 
         sqlx::query(
             r#"
-            INSERT INTO core_ticket_comments
+            INSERT INTO ticket.core_ticket_comments
               (id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             "#,
@@ -388,7 +388,7 @@ impl TicketService {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query("UPDATE core_tickets SET updated_at = $1 WHERE id = $2 AND tenant_id = $3")
+        sqlx::query("UPDATE ticket.core_tickets SET updated_at = $1 WHERE id = $2 AND tenant_id = $3")
             .bind(now)
             .bind(ticket_id)
             .bind(tenant_id)
@@ -398,7 +398,7 @@ impl TicketService {
         sqlx::query_as::<_, TicketComment>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at
-            FROM core_ticket_comments
+            FROM ticket.core_ticket_comments
             WHERE id = $1
             "#,
         )
@@ -415,7 +415,7 @@ impl TicketService {
         sqlx::query_as::<_, TicketComment>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at
-            FROM core_ticket_comments
+            FROM ticket.core_ticket_comments
             WHERE ticket_id = $1 AND tenant_id = $2
             ORDER BY created_at ASC
             "#,
@@ -434,7 +434,7 @@ impl TicketService {
         sqlx::query_as::<_, TicketActivity>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at
-            FROM core_ticket_activities
+            FROM ticket.core_ticket_activities
             WHERE ticket_id = $1 AND tenant_id = $2
             ORDER BY created_at ASC
             "#,
@@ -453,7 +453,7 @@ impl TicketService {
     ) -> Result<bool, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            UPDATE core_tickets SET status = 'cancelled', closed_at = $1, updated_at = $1
+            UPDATE ticket.core_tickets SET status = 'cancelled', closed_at = $1, updated_at = $1
             WHERE id = $2 AND tenant_id = $3 AND status NOT IN ('closed', 'cancelled')
             "#,
         )
@@ -466,7 +466,7 @@ impl TicketService {
         if result.rows_affected() > 0 {
             sqlx::query(
                 r#"
-                INSERT INTO core_ticket_activities
+                INSERT INTO ticket.core_ticket_activities
                   (id, ticket_id, tenant_id, user_id, action, to_value, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 "#,
@@ -488,41 +488,41 @@ impl TicketService {
 
     pub async fn get_stats(&self, tenant_id: Uuid) -> Result<TicketStats, sqlx::Error> {
         let total: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM core_tickets WHERE tenant_id = $1")
+            sqlx::query_scalar("SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1")
                 .bind(tenant_id)
                 .fetch_one(&self.pool)
                 .await?;
 
         let open: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_tickets WHERE tenant_id = $1 AND status = 'open'",
+            "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'open'",
         )
         .bind(tenant_id)
         .fetch_one(&self.pool)
         .await?;
 
         let in_progress: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_tickets WHERE tenant_id = $1 AND status = 'in_progress'",
+            "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'in_progress'",
         )
         .bind(tenant_id)
         .fetch_one(&self.pool)
         .await?;
 
         let pending: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_tickets WHERE tenant_id = $1 AND status = 'pending'",
+            "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'pending'",
         )
         .bind(tenant_id)
         .fetch_one(&self.pool)
         .await?;
 
         let resolved: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_tickets WHERE tenant_id = $1 AND status = 'resolved'",
+            "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'resolved'",
         )
         .bind(tenant_id)
         .fetch_one(&self.pool)
         .await?;
 
         let closed: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_tickets WHERE tenant_id = $1 AND status IN ('closed', 'cancelled')",
+            "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status IN ('closed', 'cancelled')",
         )
         .bind(tenant_id)
         .fetch_one(&self.pool)
@@ -530,7 +530,7 @@ impl TicketService {
 
         let sla_breached: i64 = sqlx::query_scalar(
             r#"
-            SELECT COUNT(*) FROM core_tickets
+            SELECT COUNT(*) FROM ticket.core_tickets
             WHERE tenant_id = $1
               AND sla_due_at IS NOT NULL
               AND sla_due_at < NOW()
@@ -542,7 +542,7 @@ impl TicketService {
         .await?;
 
         let severity_rows = sqlx::query(
-            "SELECT severity, COUNT(*) AS cnt FROM core_tickets WHERE tenant_id = $1 GROUP BY severity",
+            "SELECT severity, COUNT(*) AS cnt FROM ticket.core_tickets WHERE tenant_id = $1 GROUP BY severity",
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -556,7 +556,7 @@ impl TicketService {
             .collect();
 
         let type_rows = sqlx::query(
-            "SELECT ticket_type, COUNT(*) AS cnt FROM core_tickets WHERE tenant_id = $1 GROUP BY ticket_type",
+            "SELECT ticket_type, COUNT(*) AS cnt FROM ticket.core_tickets WHERE tenant_id = $1 GROUP BY ticket_type",
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -570,7 +570,7 @@ impl TicketService {
             .collect();
 
         let source_rows = sqlx::query(
-            "SELECT source_service, COUNT(*) AS cnt FROM core_tickets WHERE tenant_id = $1 GROUP BY source_service",
+            "SELECT source_service, COUNT(*) AS cnt FROM ticket.core_tickets WHERE tenant_id = $1 GROUP BY source_service",
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -1033,7 +1033,7 @@ pub async fn delete_sla_policy_handler(
 pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tickets (
+        CREATE TABLE IF NOT EXISTS ticket.core_tickets (
             id UUID PRIMARY KEY,
             ticket_no TEXT UNIQUE NOT NULL,
             tenant_id UUID NOT NULL,
@@ -1062,7 +1062,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE INDEX IF NOT EXISTS idx_core_tickets_tenant_status
-          ON core_tickets (tenant_id, status)
+          ON ticket.core_tickets (tenant_id, status)
         "#,
     )
     .execute(pool)
@@ -1071,7 +1071,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE INDEX IF NOT EXISTS idx_core_tickets_source
-          ON core_tickets (source_service, source_business_id)
+          ON ticket.core_tickets (source_service, source_business_id)
         "#,
     )
     .execute(pool)
@@ -1080,7 +1080,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE INDEX IF NOT EXISTS idx_core_tickets_sla
-          ON core_tickets (sla_due_at) WHERE sla_due_at IS NOT NULL
+          ON ticket.core_tickets (sla_due_at) WHERE sla_due_at IS NOT NULL
         "#,
     )
     .execute(pool)
@@ -1088,7 +1088,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_ticket_comments (
+        CREATE TABLE IF NOT EXISTS ticket.core_ticket_comments (
             id UUID PRIMARY KEY,
             ticket_id UUID NOT NULL,
             tenant_id UUID NOT NULL,
@@ -1106,7 +1106,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE INDEX IF NOT EXISTS idx_core_ticket_comments_ticket
-          ON core_ticket_comments (ticket_id, created_at)
+          ON ticket.core_ticket_comments (ticket_id, created_at)
         "#,
     )
     .execute(pool)
@@ -1114,7 +1114,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_ticket_activities (
+        CREATE TABLE IF NOT EXISTS ticket.core_ticket_activities (
             id UUID PRIMARY KEY,
             ticket_id UUID NOT NULL,
             tenant_id UUID NOT NULL,
@@ -1132,7 +1132,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE INDEX IF NOT EXISTS idx_core_ticket_activities_ticket
-          ON core_ticket_activities (ticket_id, created_at)
+          ON ticket.core_ticket_activities (ticket_id, created_at)
         "#,
     )
     .execute(pool)
@@ -1144,7 +1144,7 @@ pub async fn init_ticket_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_ticket_sla_policies (
+        CREATE TABLE IF NOT EXISTS ticket.core_ticket_sla_policies (
             id UUID PRIMARY KEY,
             tenant_id UUID NOT NULL,
             name TEXT NOT NULL,
@@ -1175,7 +1175,7 @@ pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE INDEX IF NOT EXISTS idx_core_ticket_sla_policies_tenant
-          ON core_ticket_sla_policies (tenant_id, is_active)
+          ON ticket.core_ticket_sla_policies (tenant_id, is_active)
         "#,
     )
     .execute(pool)
@@ -1183,7 +1183,7 @@ pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_ticket_sla_escalations (
+        CREATE TABLE IF NOT EXISTS ticket.core_ticket_sla_escalations (
             id UUID PRIMARY KEY,
             ticket_id UUID NOT NULL,
             tenant_id UUID NOT NULL,
@@ -1201,7 +1201,7 @@ pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE INDEX IF NOT EXISTS idx_core_ticket_sla_escalations_ticket
-          ON core_ticket_sla_escalations (ticket_id, level)
+          ON ticket.core_ticket_sla_escalations (ticket_id, level)
         "#,
     )
     .execute(pool)
@@ -1229,7 +1229,7 @@ pub async fn create_automation_rule_handler(
     let priority = req.priority.unwrap_or(100);
     let enabled = req.enabled.unwrap_or(true);
     let result = sqlx::query_as::<_, AutomationRule>(
-        r#"INSERT INTO ticket_automation_rules
+        r#"INSERT INTO ticket.ticket_automation_rules
         (id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11)
         RETURNING id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at"#,
@@ -1261,7 +1261,7 @@ pub async fn list_automation_rules_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query_as::<_, AutomationRule>(
         "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-         FROM ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
+         FROM ticket.ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
     )
     .bind(tenant_id)
     .fetch_all(&pool)
@@ -1281,7 +1281,7 @@ pub async fn get_automation_rule_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query_as::<_, AutomationRule>(
         "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-         FROM ticket_automation_rules WHERE id = $1 AND tenant_id = $2",
+         FROM ticket.ticket_automation_rules WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -1304,7 +1304,7 @@ pub async fn update_automation_rule_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
     let result = sqlx::query_as::<_, AutomationRule>(
-        r#"UPDATE ticket_automation_rules SET
+        r#"UPDATE ticket.ticket_automation_rules SET
         name = COALESCE($3, name),
         description = COALESCE($4, description),
         condition_field = COALESCE($5, condition_field),
@@ -1344,7 +1344,7 @@ pub async fn delete_automation_rule_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
-    match sqlx::query("DELETE FROM ticket_automation_rules WHERE id = $1 AND tenant_id = $2")
+    match sqlx::query("DELETE FROM ticket.ticket_automation_rules WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
         .execute(&pool)
@@ -1372,7 +1372,7 @@ pub async fn create_knowledge_article_handler(
     let now = Utc::now();
     let keywords = req.keywords.unwrap_or_default();
     let result = sqlx::query_as::<_, KnowledgeArticle>(
-        r#"INSERT INTO ticket_knowledge_articles
+        r#"INSERT INTO ticket.ticket_knowledge_articles
         (id, tenant_id, title, content, category, keywords, created_at, updated_at)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$7)
         RETURNING id, tenant_id, title, content, category, keywords, created_at, updated_at"#,
@@ -1402,7 +1402,7 @@ pub async fn list_knowledge_articles_handler(
     let q = params.get("q").cloned().unwrap_or_default();
     let articles = match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
-         FROM ticket_knowledge_articles WHERE tenant_id = $1 ORDER BY updated_at DESC",
+         FROM ticket.ticket_knowledge_articles WHERE tenant_id = $1 ORDER BY updated_at DESC",
     )
     .bind(tenant_id)
     .fetch_all(&pool)
@@ -1441,7 +1441,7 @@ pub async fn get_knowledge_article_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
-         FROM ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2",
+         FROM ticket.ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -1464,7 +1464,7 @@ pub async fn update_knowledge_article_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
     let result = sqlx::query_as::<_, KnowledgeArticle>(
-        r#"UPDATE ticket_knowledge_articles SET
+        r#"UPDATE ticket.ticket_knowledge_articles SET
         title = COALESCE($3, title),
         content = COALESCE($4, content),
         category = COALESCE($5, category),
@@ -1496,7 +1496,7 @@ pub async fn delete_knowledge_article_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
-    match sqlx::query("DELETE FROM ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2")
+    match sqlx::query("DELETE FROM ticket.ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
         .execute(&pool)

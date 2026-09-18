@@ -6105,5 +6105,17 @@
   "ai.dsh_agent_page.status": "Status:",
   "ai.dsh_agent_page.usage_hint": "💡 Usage Tips",
   "ai.dsh_agent_page.try_questions": "Try asking:",
-  "ai.dsh_agent_page.footer": "DSH AI Middleware v1.0 | Agent Orchestrator | MCP Tool Registry | LLM Provider Abstraction"
+  "ai.dsh_agent_page.footer": "DSH AI Middleware v1.0 | Agent Orchestrator | MCP Tool Registry | LLM Provider Abstraction",
+  "ai.nav.module_name": "AI",
+  "ai.nav.ai-dashboard": "AI Overview",
+  "ai.nav.ai-chat": "AI Chat",
+  "ai.nav.ai-code": "AI Code",
+  "ai.nav.ai-document": "AI Document",
+  "ai.nav.ai-knowledge": "Knowledge Base",
+  "ai.nav.ai-prompts": "Prompts",
+  "ai.nav.ai-settings": "AI Settings",
+  "ai.nav.ai-assistant": "Assistant",
+  "ai.nav.ai-dify-chat": "Dify Chat",
+  "ai.nav.ai-businessCopilot": "Business Copilot",
+  "ai.nav.ai-governanceDashboard": "Governance Dashboard"
 }

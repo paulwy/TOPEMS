@@ -129,7 +129,7 @@ pub async fn create_feedback(
     });
 
     let result = sqlx::query_as::<_, Ticket>(
-        r#"INSERT INTO core_tickets (ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, reporter_id, tags, metadata)
+        r#"INSERT INTO ticket.core_tickets (ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, reporter_id, tags, metadata)
            VALUES ($1, $2, $3, $4, 'customer_feedback', 'medium', 'open', 'feedback', $5, $6, $7)
            RETURNING id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata"#,
     )
@@ -159,7 +159,7 @@ pub async fn get_feedback(
 ) -> Json<ApiResponse<FeedbackCompat>> {
     let result = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
-           FROM core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
+           FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
     )
     .bind(id)
     .fetch_optional(&pool)
@@ -211,13 +211,13 @@ pub async fn list_feedbacks(
 
     let query = format!(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
-           FROM core_tickets WHERE {} ORDER BY created_at DESC LIMIT ${} OFFSET ${}"#,
+           FROM ticket.core_tickets WHERE {} ORDER BY created_at DESC LIMIT ${} OFFSET ${}"#,
         where_clause,
         args.len() + 1,
         args.len() + 2
     );
 
-    let count_query = format!("SELECT COUNT(*) FROM core_tickets WHERE {}", where_clause);
+    let count_query = format!("SELECT COUNT(*) FROM ticket.core_tickets WHERE {}", where_clause);
 
     let mut sqlx_query = sqlx::query_as::<_, Ticket>(&query);
     for arg in &args {
@@ -267,7 +267,7 @@ pub async fn response_feedback(
     }
 
     let result = sqlx::query(
-        r#"UPDATE core_tickets
+        r#"UPDATE ticket.core_tickets
            SET status = 'resolved',
                resolved_at = NOW(),
                metadata = jsonb_set(
@@ -300,7 +300,7 @@ pub async fn delete_feedback(
 ) -> Json<ApiResponse<bool>> {
     let ticket = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
-           FROM core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
+           FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
     )
     .bind(id)
     .fetch_optional(&pool)
@@ -314,7 +314,7 @@ pub async fn delete_feedback(
             }
 
             let result = sqlx::query(
-                r#"UPDATE core_tickets SET status = 'cancelled', closed_at = NOW(), updated_at = NOW()
+                r#"UPDATE ticket.core_tickets SET status = 'cancelled', closed_at = NOW(), updated_at = NOW()
                    WHERE id = $1"#,
             )
             .bind(id)

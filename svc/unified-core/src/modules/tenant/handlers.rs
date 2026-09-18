@@ -251,7 +251,7 @@ async fn seed_tenant_defaults(
 
     // 2. Guard against duplicate admin credentials (username/email are unique).
     let dup: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE username = $1 OR email = $2")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_users WHERE username = $1 OR email = $2")
             .bind(admin_username)
             .bind(admin_email)
             .fetch_one(&mut **tx)
@@ -264,7 +264,7 @@ async fn seed_tenant_defaults(
     // 3. Create the admin user tied to the new tenant.
     let admin_user_id: Uuid = sqlx::query_scalar(
         r#"
-        INSERT INTO core_users (username, email, password_hash, full_name, status, is_superuser, tenant_id)
+        INSERT INTO public.core_users (username, email, password_hash, full_name, status, is_superuser, tenant_id)
         VALUES ($1, $2, $3, $4, 'active', TRUE, $5)
         RETURNING id
         "#,
@@ -295,8 +295,8 @@ async fn seed_tenant_defaults(
     // 5. Assign the admin to the global superadmin role (carries all perms).
     sqlx::query(
         r#"
-        INSERT INTO core_user_roles (user_id, role_id)
-        SELECT $1, r.id FROM core_roles r WHERE r.name = 'superadmin'
+        INSERT INTO public.core_user_roles (user_id, role_id)
+        SELECT $1, r.id FROM public.core_roles r WHERE r.name = 'superadmin'
         ON CONFLICT DO NOTHING
         "#,
     )

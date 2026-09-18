@@ -130,7 +130,7 @@ const BatchManagementPage: React.FC = () => {
                 color: 'text.secondary',
               }}
             >
-              [i18n.t('pages.batch_management_page.k0')]:{' '}
+              {i18n.t('pages.batch_management_page.k0')}:{' '}
               {batch.available_quantity.toLocaleString()}
             </Box>
           </Box>

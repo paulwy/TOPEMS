@@ -51,13 +51,13 @@ pub async fn list_roles(
 
     let result = if claims.is_superuser {
         sqlx::query_as::<_, RoleRow>(
-            "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles WHERE deleted_at IS NULL ORDER BY created_at DESC",
+            "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL ORDER BY created_at DESC",
         )
         .fetch_all(&state.pool)
         .await
     } else {
         sqlx::query_as::<_, RoleRow>(
-            "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
+            "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .fetch_all(&state.pool)
@@ -70,7 +70,7 @@ pub async fn list_roles(
             for r in roles {
                 // 获取每个角色的权限数量
                 let perm_count: i64 = sqlx::query_scalar(
-                    "SELECT COUNT(*) FROM core_role_permissions WHERE role_id = $1",
+                    "SELECT COUNT(*) FROM public.core_role_permissions WHERE role_id = $1",
                 )
                 .bind(r.id)
                 .fetch_one(&state.pool)
@@ -133,7 +133,7 @@ pub async fn create_role(
 
     // 检查角色名是否已存在
     let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM core_roles WHERE deleted_at IS NULL AND name = $1)",
+        "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND name = $1)",
     )
     .bind(&name)
     .fetch_one(&state.pool)
@@ -168,7 +168,7 @@ pub async fn create_role(
 
     // 创建角色
     if let Err(e) = sqlx::query(
-        "INSERT INTO core_roles (id, name, description, tenant_id, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())"
+        "INSERT INTO public.core_roles (id, name, description, tenant_id, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())"
     )
     .bind(role_id)
     .bind(&name)
@@ -186,7 +186,7 @@ pub async fn create_role(
     for perm_id in &permission_ids {
         if let Ok(perm_uuid) = Uuid::parse_str(perm_id) {
             let _ = sqlx::query(
-                "INSERT INTO core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+                "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
             )
             .bind(role_id)
             .bind(perm_uuid)
@@ -245,7 +245,7 @@ pub async fn get_role(
     };
 
     let role = sqlx::query_as::<_, RoleRow>(
-        "SELECT id, name, description, tenant_id, created_at, updated_at FROM core_roles WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(role_uuid)
     .fetch_optional(&state.pool)
@@ -256,8 +256,8 @@ pub async fn get_role(
             // 获取角色的权限列表
             let permissions: Vec<String> = sqlx::query_scalar(
                 r#"
-                SELECT p.code FROM core_permissions p
-                INNER JOIN core_role_permissions rp ON p.id = rp.permission_id
+                SELECT p.code FROM public.core_permissions p
+                INNER JOIN public.core_role_permissions rp ON p.id = rp.permission_id
                 WHERE rp.role_id = $1
                 ORDER BY p.code
                 "#,
@@ -313,7 +313,7 @@ pub async fn update_role(
 
     // 检查角色是否存在
     let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM core_roles WHERE deleted_at IS NULL AND id = $1)",
+        "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND id = $1)",
     )
     .bind(role_uuid)
     .fetch_one(&state.pool)
@@ -355,7 +355,7 @@ pub async fn update_role(
     // 更新角色信息
     if let Some(name) = &name {
         if let Err(e) =
-            sqlx::query("UPDATE core_roles SET name = $1, updated_at = NOW() WHERE id = $2")
+            sqlx::query("UPDATE public.core_roles SET name = $1, updated_at = NOW() WHERE id = $2")
                 .bind(name)
                 .bind(role_uuid)
                 .execute(&mut *tx)
@@ -372,7 +372,7 @@ pub async fn update_role(
 
     if let Some(desc) = &description {
         if let Err(e) =
-            sqlx::query("UPDATE core_roles SET description = $1, updated_at = NOW() WHERE id = $2")
+            sqlx::query("UPDATE public.core_roles SET description = $1, updated_at = NOW() WHERE id = $2")
                 .bind(desc)
                 .bind(role_uuid)
                 .execute(&mut *tx)
@@ -390,7 +390,7 @@ pub async fn update_role(
     // 更新权限关联
     if let Some(perm_ids) = permission_ids {
         // 删除现有权限关联
-        if let Err(e) = sqlx::query("DELETE FROM core_role_permissions WHERE role_id = $1")
+        if let Err(e) = sqlx::query("DELETE FROM public.core_role_permissions WHERE role_id = $1")
             .bind(role_uuid)
             .execute(&mut *tx)
             .await
@@ -407,7 +407,7 @@ pub async fn update_role(
         for perm_id in &perm_ids {
             if let Ok(perm_uuid) = Uuid::parse_str(perm_id) {
                 let _ = sqlx::query(
-                    "INSERT INTO core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+                    "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
                 )
                 .bind(role_uuid)
                 .bind(perm_uuid)
@@ -452,7 +452,7 @@ pub async fn delete_role(
 
     // 检查是否是系统内置角色（不能删除）
     let role_name: Option<String> =
-        sqlx::query_scalar("SELECT name FROM core_roles WHERE deleted_at IS NULL AND id = $1")
+        sqlx::query_scalar("SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1")
             .bind(role_uuid)
             .fetch_optional(&state.pool)
             .await
@@ -469,7 +469,7 @@ pub async fn delete_role(
 
     // 检查是否有用户使用该角色
     let user_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_user_roles WHERE role_id = $1")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_user_roles WHERE role_id = $1")
             .bind(role_uuid)
             .fetch_one(&state.pool)
             .await
@@ -495,7 +495,7 @@ pub async fn delete_role(
     };
 
     // 删除角色权限关联
-    if let Err(e) = sqlx::query("DELETE FROM core_role_permissions WHERE role_id = $1")
+    if let Err(e) = sqlx::query("DELETE FROM public.core_role_permissions WHERE role_id = $1")
         .bind(role_uuid)
         .execute(&mut *tx)
         .await
@@ -509,7 +509,7 @@ pub async fn delete_role(
     }
 
     // 删除角色（软删除）
-    if let Err(e) = sqlx::query("UPDATE core_roles SET deleted_at = NOW() WHERE id = $1")
+    if let Err(e) = sqlx::query("UPDATE public.core_roles SET deleted_at = NOW() WHERE id = $1")
         .bind(role_uuid)
         .execute(&mut *tx)
         .await

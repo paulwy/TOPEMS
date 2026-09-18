@@ -758,7 +758,7 @@ const MapView: React.FC<MapViewProps> = ({
                         {i18n.t('gis.mapView.k0')} {point.device_type}
                       </div>
                       <div>
-                        [i18n.t('components.map_view.k8')]:{' '}
+                        {i18n.t('components.map_view.k8')}:{' '}
                         <span style={{ color: getStatusColor(point.status) }}>{point.status}</span>
                       </div>
                       <div

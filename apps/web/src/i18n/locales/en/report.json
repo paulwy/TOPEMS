@@ -214,5 +214,15 @@
       "edit_title": "Edit Title",
       "detail_title": "Detail Title"
     }
-  }
+  },
+  "report.nav.module_name": "Reports",
+  "report.nav.report-dashboard": "Report Overview",
+  "report.nav.report-list": "Reports",
+  "report.nav.report-design": "Design",
+  "report.nav.report-builder": "Builder",
+  "report.nav.report-schedule": "Schedules",
+  "report.nav.report-subscription": "Subscriptions",
+  "report.nav.report-template": "Templates",
+  "report.nav.report-report": "My Reports",
+  "report.nav.report-viewer": "Viewer"
 }

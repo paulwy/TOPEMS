@@ -1839,5 +1839,25 @@
     "scm_supplier_page": {
       "k0": "Supplier Management"
     }
-  }
+  },
+  "scm.nav.module_name": "SCM",
+  "scm.nav.scm-dashboard": "SCM Overview",
+  "scm.nav.scm-purchase-orders": "Purchase Orders",
+  "scm.nav.scm-purchase-requisition": "Purchase Requisitions",
+  "scm.nav.scm-purchase-items": "Purchase Items",
+  "scm.nav.scm-suppliers": "Suppliers",
+  "scm.nav.scm-supplier-admission": "Supplier Admission",
+  "scm.nav.scm-supplier-evaluation": "Supplier Evaluation",
+  "scm.nav.scm-contracts": "Contracts",
+  "scm.nav.scm-delivery-appointment": "Delivery Appointments",
+  "scm.nav.scm-mrp-plan": "MRP Plans",
+  "scm.nav.scm-mrp-suggestion": "MRP Suggestions",
+  "scm.nav.scm-overview": "Overview",
+  "scm.nav.scm-inventory-turnover": "Inventory Turnover",
+  "scm.nav.scm-price-comparison": "Price Comparison",
+  "scm.nav.scm-purchase-contract": "Purchase Contracts",
+  "scm.nav.scm-sourcing-strategy": "Sourcing Strategy",
+  "scm.nav.scm-quota-template": "Quota Templates",
+  "scm.nav.scm-purchase-threshold": "Purchase Thresholds",
+  "scm.nav.scm-supplier-tier": "Supplier Tiers"
 }

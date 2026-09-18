@@ -41,7 +41,7 @@ pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json:
     tracing::info!("IAM permission list_permissions called");
 
     let result = sqlx::query_as::<_, PermissionRow>(
-        "SELECT id, code, name, description, resource, action, created_at FROM core_permissions ORDER BY code"
+        "SELECT id, code, name, description, resource, action, created_at FROM public.core_permissions ORDER BY code"
     )
     .fetch_all(&state.pool)
     .await;

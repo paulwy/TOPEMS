@@ -174,13 +174,13 @@ pub async fn login(
         r#"
         SELECT u.id, u.username, u.email, u.password_hash, u.full_name,
           (u.status = 'active') AS is_active, u.is_superuser,
-          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM core_user_roles ur
-                    JOIN core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
-          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM core_user_roles ur
-                    JOIN core_role_permissions rp ON rp.role_id = ur.role_id
-                    JOIN core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
+                    JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
+                    JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                    JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
           (u.created_at AT TIME ZONE 'UTC') AS created_at
-        FROM core_users u
+        FROM public.core_users u
         WHERE (u.username = $1 OR u.email = $1) AND u.deleted_at IS NULL
         "#,
     )
@@ -268,7 +268,7 @@ pub async fn login(
         user.permissions.clone().unwrap_or_default()
     };
 
-    // 查询用户所属租户
+    // 查询用户所属租户，未关联时 fallback 到默认租户
     let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
         "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
     )
@@ -277,10 +277,10 @@ pub async fn login(
     .await
     {
         Ok(Some(tid)) => Some(tid.to_string()),
-        Ok(None) => None,
+        Ok(None) => Some("00000000-0000-0000-0000-000000000001".to_string()),
         Err(e) => {
             tracing::warn!("查询用户租户信息失败: {}", e);
-            None
+            Some("00000000-0000-0000-0000-000000000001".to_string())
         }
     };
 
@@ -330,7 +330,7 @@ pub async fn login(
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
     let insert_session_result = sqlx::query(
-        "INSERT INTO core_sessions (user_id, token_hash, ip_address, user_agent, expires_at)
+        "INSERT INTO public.core_sessions (user_id, token_hash, ip_address, user_agent, expires_at)
          VALUES ($1, $2, $3::inet, $4, $5)",
     )
     .bind(user.id)
@@ -347,7 +347,7 @@ pub async fn login(
     }
 
     let insert_refresh_result = sqlx::query(
-        "INSERT INTO core_refresh_tokens (user_id, token_hash, ip_address, user_agent, expires_at)
+        "INSERT INTO public.core_refresh_tokens (user_id, token_hash, ip_address, user_agent, expires_at)
          VALUES ($1, $2, $3::inet, $4, $5)",
     )
     .bind(user.id)
@@ -490,7 +490,7 @@ pub async fn register(
     }
 
     // 检查用户名是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE username = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM public.core_users WHERE username = $1")
         .bind(username)
         .fetch_one(&state.pool)
         .await
@@ -512,7 +512,7 @@ pub async fn register(
     }
 
     // 检查邮箱是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE email = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM public.core_users WHERE email = $1")
         .bind(email)
         .fetch_one(&state.pool)
         .await
@@ -549,7 +549,7 @@ pub async fn register(
     let user_id = Uuid::new_v4();
     let write_core = sqlx::query(
         r#"
-        INSERT INTO core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
+        INSERT INTO public.core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
         VALUES ($1, $2, $3, $4, $5, 'active', false, NOW())
         ON CONFLICT (username) DO NOTHING
         "#,
@@ -605,14 +605,14 @@ pub async fn refresh_token(
     let row = match sqlx::query(
         "SELECT rt.user_id, u.username, u.is_superuser, u.email,
            (u.status = 'active') AS is_active,
-           COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM core_user_roles ur
-                     JOIN core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
-           COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM core_user_roles ur
-                     JOIN core_role_permissions rp ON rp.role_id = ur.role_id
-                     JOIN core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+           COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
+                     JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+           COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
+                     JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                     JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
            rt.id as refresh_token_id
-         FROM core_refresh_tokens rt
-         JOIN core_users u ON rt.user_id = u.id
+         FROM public.core_refresh_tokens rt
+         JOIN public.core_users u ON rt.user_id = u.id
          WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
     )
     .bind(&refresh_token_hash)
@@ -660,7 +660,7 @@ pub async fn refresh_token(
             .unwrap_or_default()
     };
 
-    // 查询用户所属租户
+    // 查询用户所属租户，未关联时 fallback 到默认租户
     let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
         "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
     )
@@ -669,10 +669,10 @@ pub async fn refresh_token(
     .await
     {
         Ok(Some(tid)) => Some(tid.to_string()),
-        Ok(None) => None,
+        Ok(None) => Some("00000000-0000-0000-0000-000000000001".to_string()),
         Err(e) => {
             tracing::warn!("查询用户租户信息失败: {}", e);
-            None
+            Some("00000000-0000-0000-0000-000000000001".to_string())
         }
     };
 
@@ -732,7 +732,7 @@ pub async fn refresh_token(
     };
 
     let revoke_result = sqlx::query(
-        "UPDATE core_refresh_tokens
+        "UPDATE public.core_refresh_tokens
          SET revoked_at = NOW(), revoked_reason = 'rotated'
          WHERE id = $1 AND revoked_at IS NULL",
     )
@@ -750,7 +750,7 @@ pub async fn refresh_token(
     }
 
     let insert_result = sqlx::query(
-        "INSERT INTO core_refresh_tokens (user_id, token_hash, expires_at)
+        "INSERT INTO public.core_refresh_tokens (user_id, token_hash, expires_at)
          VALUES ($1, $2, $3)",
     )
     .bind(user_id)
@@ -769,7 +769,7 @@ pub async fn refresh_token(
     }
 
     let session_result = sqlx::query(
-        "INSERT INTO core_sessions (user_id, token_hash, expires_at)
+        "INSERT INTO public.core_sessions (user_id, token_hash, expires_at)
          VALUES ($1, $2, $3)",
     )
     .bind(user_id)
@@ -844,7 +844,7 @@ pub async fn logout(
     let token_hash = format!("{:x}", hasher.finalize());
 
     let user_id: Option<Uuid> = match sqlx::query_scalar(
-        "SELECT user_id FROM core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
+        "SELECT user_id FROM public.core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
     )
     .bind(&token_hash)
     .fetch_optional(&state.pool)
@@ -881,7 +881,7 @@ pub async fn logout(
         }
     };
 
-    let delete_sessions = sqlx::query("DELETE FROM core_sessions WHERE user_id = $1")
+    let delete_sessions = sqlx::query("DELETE FROM public.core_sessions WHERE user_id = $1")
         .bind(user_id)
         .execute(&mut *tx)
         .await;
@@ -893,7 +893,7 @@ pub async fn logout(
     }
 
     let revoke_refresh = sqlx::query(
-        "UPDATE core_refresh_tokens SET revoked_at = NOW(), revoked_reason = 'logout'
+        "UPDATE public.core_refresh_tokens SET revoked_at = NOW(), revoked_reason = 'logout'
          WHERE user_id = $1 AND revoked_at IS NULL",
     )
     .bind(user_id)
@@ -944,13 +944,13 @@ pub async fn forgot_password(
         r#"
         SELECT u.id, u.username, u.email, u.password_hash, u.full_name,
           (u.status = 'active') AS is_active, u.is_superuser,
-          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM core_user_roles ur
-                    JOIN core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
-          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM core_user_roles ur
-                    JOIN core_role_permissions rp ON rp.role_id = ur.role_id
-                    JOIN core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
+                    JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
+                    JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                    JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
           (u.created_at AT TIME ZONE 'UTC') AS created_at
-        FROM core_users u
+        FROM public.core_users u
         WHERE u.email = $1 AND u.status = 'active' AND u.deleted_at IS NULL
         "#,
     )
@@ -1137,7 +1137,7 @@ pub async fn reset_password(
     };
 
     // 更新密码
-    match sqlx::query("UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+    match sqlx::query("UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
         .bind(&password_hash)
         .bind(user_id)
         .execute(&mut *tx)
@@ -1172,7 +1172,7 @@ pub async fn reset_password(
     }
 
     // 使所有现有会话失效
-    match sqlx::query("DELETE FROM core_sessions WHERE user_id = $1")
+    match sqlx::query("DELETE FROM public.core_sessions WHERE user_id = $1")
         .bind(user_id)
         .execute(&mut *tx)
         .await

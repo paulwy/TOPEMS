@@ -69,5 +69,8 @@
     "ticket_center_page": {
       "k0": "TicketCenterPage under development"
     }
-  }
+  },
+  "ticket.nav.module_name": "Tickets",
+  "ticket.nav.ticket-dashboard": "Ticket Overview",
+  "ticket.nav.ticket-center": "Ticket Center"
 }

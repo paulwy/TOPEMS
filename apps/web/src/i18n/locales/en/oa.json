@@ -122,5 +122,11 @@
       "completed": "Completed",
       "cancelled": "Cancelled"
     }
-  }
+  },
+  "oa.nav.module_name": "OA",
+  "oa.nav.oa-dashboard": "OA Overview",
+  "oa.nav.oa-documents": "Documents",
+  "oa.nav.oa-announcements": "Announcements",
+  "oa.nav.oa-meetings": "Meetings",
+  "oa.nav.oa-vehicles": "Vehicles"
 }

@@ -929,5 +929,15 @@
   "integration.event.filter_status": "Filter Status",
   "integration.event.filter_all_status": "Filter All Status",
   "integration.event.title": "Title",
-  "integration.event.detail_title": "Detail Title"
+  "integration.event.detail_title": "Detail Title",
+  "integration.nav.module_name": "Integration",
+  "integration.nav.integration-dashboard": "Integration Overview",
+  "integration.nav.integration-connections": "Connections",
+  "integration.nav.integration-mappings": "Mappings",
+  "integration.nav.integration-events": "Events",
+  "integration.nav.integration-erp": "ERP",
+  "integration.nav.integration-lims-qms": "LIMS-QMS",
+  "integration.nav.integration-mes-erp": "MES-ERP",
+  "integration.nav.integration-wms-scm": "WMS-SCM",
+  "integration.nav.integration-settings": "Settings"
 }

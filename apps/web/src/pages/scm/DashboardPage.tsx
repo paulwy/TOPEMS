@@ -97,7 +97,7 @@ export const DashboardPage: React.FC = () => {
     queryFn: async () => {
       const response = await scmApi.mrpPlans.list({ page: 1, pageSize: 5 });
       if (response.success && response.data) {
-        return response.data.items as MrpPlan[];
+        return (response.data as unknown as { suggestions?: MrpPlan[] }).suggestions ?? [];
       }
       return [];
     },
@@ -133,7 +133,7 @@ export const DashboardPage: React.FC = () => {
     queryFn: async () => {
       const response = await scmApi.priceComparisons.list({ page: 1, pageSize: 5 });
       if (response.success && response.data) {
-        return response.data.items as PriceComparison[];
+        return (response.data as unknown as { comparisons?: PriceComparison[] }).comparisons ?? [];
       }
       return [];
     },

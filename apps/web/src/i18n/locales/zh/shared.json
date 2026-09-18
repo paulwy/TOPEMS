@@ -4419,6 +4419,8 @@
   "shared.config.srm_1": "SRM数据概览",
   "shared.config.fifo_0": "FIFO策略",
   "shared.config.abc_1": "ABC 分类分析",
+  "shared.config.wms_name": "仓储物流",
+  "shared.config.wms_dashboard": "首页",
   "shared.config.wms_2": "WMS数据概览",
   "shared.config.sku8020_3": "SKU 金额 80/20 帕累托",
   "shared.config.abc_4": "ABC 分类分析",
@@ -4540,5 +4542,14 @@
   "shared.config.ai_business_copilot_desc": "集成业务模块选择、智能表单、文档智能的一站式 AI 助手",
   "shared.config.ai_governance_dashboard_desc": "全面监控 AI 系统的安全、合规、成本和性能",
   "shared.business_domain_tabs.k0": "业务域导航",
-  "shared.language_selector.k0": "切换语言"
+  "shared.language_selector.k0": "切换语言",
+  "shared.use_auto_breadcrumbs.k142": "模块总览",
+  "shared.app_shell_breadcrumb.modules": "模块总览",
+  "shared.app_shell_breadcrumb.profile": "个人中心",
+  "shared.app_shell_breadcrumb.favorites": "收藏",
+  "shared.app_shell_breadcrumb.comments": "评论",
+  "shared.app_shell_breadcrumb.attachments": "附件",
+  "shared.app_shell_breadcrumb.help": "帮助中心",
+  "shared.app_shell_breadcrumb.home": "首页",
+  "shared.use_auto_breadcrumbs.k143": "个人中心"
 }

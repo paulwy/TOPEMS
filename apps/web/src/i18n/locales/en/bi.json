@@ -3028,5 +3028,19 @@
   "bi.bi_visualization_page.text_6ccbe6": ": {{comp_config_value_0}}",
   "bi.dataset_page.text_8f1c59": "{{formData_fields_length_0_1}}",
   "bi.stats_section.text_dc0dcb": ": {{statistics_active_devices_0}}",
-  "bi.stats_section.text_4cf0b3": ": {{statistics_active_pipelines_0}}"
+  "bi.stats_section.text_4cf0b3": ": {{statistics_active_pipelines_0}}",
+  "bi.nav.module_name": "BI",
+  "bi.nav.bi-dashboard": "BI Overview",
+  "bi.nav.bi-analytics": "Analytics",
+  "bi.nav.bi-comparison": "Comparison",
+  "bi.nav.bi-data-source": "Data Sources",
+  "bi.nav.bi-dataset": "Datasets",
+  "bi.nav.bi-report": "Reports",
+  "bi.nav.bi-visualization": "Visualizations",
+  "bi.nav.bi-report-builder": "Report Builder",
+  "bi.nav.bi-permission": "Permissions",
+  "bi.nav.bi-index": "Indicators",
+  "bi.nav.bi-gis": "GIS Analytics",
+  "bi.nav.bi-data-analysis": "Data Analysis",
+  "bi.nav.bi-module-detail": "Detail"
 }

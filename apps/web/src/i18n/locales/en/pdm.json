@@ -1782,5 +1782,26 @@
     "pdm_product_category_page": {
       "k0": "Product Category"
     }
-  }
+  },
+  "pdm.nav.module_name": "PDM",
+  "pdm.nav.pdm-dashboard": "PDM Overview",
+  "pdm.nav.pdm-product": "Products",
+  "pdm.nav.pdm-material": "Materials",
+  "pdm.nav.pdm-bom": "BOM",
+  "pdm.nav.pdm-pdm-bom": "BOM Details",
+  "pdm.nav.pdm-document": "Documents",
+  "pdm.nav.pdm-version": "Versions",
+  "pdm.nav.pdm-change": "Changes",
+  "pdm.nav.pdm-project": "Projects",
+  "pdm.nav.pdm-product-config": "Product Config",
+  "pdm.nav.pdm-formula": "Formulas",
+  "pdm.nav.pdm-process": "Processes",
+  "pdm.nav.pdm-batch": "Batches",
+  "pdm.nav.pdm-step": "Steps",
+  "pdm.nav.pdm-stats": "Statistics",
+  "pdm.nav.pdm-product-category": "Product Categories",
+  "pdm.nav.pdm-bom-template": "BOM Templates",
+  "pdm.nav.pdm-category-rule": "Category Rules",
+  "pdm.nav.pdm-doc-approval-flow": "Doc Approval Flow",
+  "pdm.nav.pdm-change-template": "Change Templates"
 }

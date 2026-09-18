@@ -458,7 +458,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                               variant='caption'
                               sx={{ color: 'error.main', mt: 0.5 }}
                             >
-                              [i18n.t('components.document_manager.k18')]: {doc.error_message}
+                              {i18n.t('components.document_manager.k18')}: {doc.error_message}
                             </Typography>
                           )}
                           <Typography
@@ -466,7 +466,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                             color='text.secondary'
                             sx={{ mt: 1, display: 'block' }}
                           >
-                            [i18n.t('components.document_manager.k19')]:{' '}
+                            {i18n.t('components.document_manager.k19')}:{' '}
                             {formatDate(doc.created_at)}
                           </Typography>
                         </Box>

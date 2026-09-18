@@ -7,7 +7,7 @@ import { gradients } from '@/theme';
 import { DashboardTemplate } from '@/components/templates';
 import { lucideIcons } from '@/lib/iconMapping';
 import { designTokens } from '@/theme/tokens';
-import i18n from '@/i18n';
+import i18n, { ensureNamespacesLoaded } from '@/i18n';
 
 const ct = designTokens.colors;
 
@@ -260,10 +260,20 @@ const ModulesOverviewPage: React.FC = () => {
   /* Fetch module cards and listen for registry updates */
   useEffect(() => {
     const loadCards = () => {
-      setAllCards(navigationRegistryV2.getModuleCards());
+      try {
+        setAllCards(navigationRegistryV2.getModuleCards());
+      } catch {
+        setAllCards([]);
+      }
     };
 
-    loadCards();
+    // 先加载全部模块语言包，再取卡片（保证模块名/描述已翻译）
+    try {
+      const codes = (navigationRegistryV2.getModuleCards?.() ?? []).map((c) => c.code);
+      ensureNamespacesLoaded(codes).finally(loadCards);
+    } catch {
+      loadCards();
+    }
 
     navigationRegistryV2.emitter.on('navigationUpdated', loadCards);
     return () => {

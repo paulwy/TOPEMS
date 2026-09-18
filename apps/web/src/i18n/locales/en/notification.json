@@ -898,5 +898,14 @@
   "notification.archive.archived_at": "Archived At",
   "notification.archive.title": "Title",
   "notification.archive.description": "Description",
-  "notification.archive.detail_title": "Detail Title"
+  "notification.archive.detail_title": "Detail Title",
+  "notification.nav.module_name": "Notifications",
+  "notification.nav.notification-dashboard": "Notification Overview",
+  "notification.nav.notification-list": "Messages",
+  "notification.nav.notification-archive": "Archive",
+  "notification.nav.notification-center": "Center",
+  "notification.nav.notification-templates": "Templates",
+  "notification.nav.notification-statistics": "Statistics",
+  "notification.nav.notification-settings": "Settings",
+  "notification.nav.notification-detail": "Statistics Detail"
 }

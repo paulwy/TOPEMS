@@ -30,7 +30,7 @@ pub async fn record_login(
 
     let log: LoginLog = match sqlx::query_as(
         r#"
-        INSERT INTO core_login_logs
+        INSERT INTO public.core_login_logs
             (tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time, created_at
@@ -84,7 +84,7 @@ pub async fn list_login_logs(
         .map(|dt| dt.with_timezone(&Utc));
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_login_logs
+        r#"SELECT COUNT(*) FROM public.core_login_logs
            WHERE deleted_at IS NULL AND tenant_id = $1
              AND ($2::text IS NULL OR username ILIKE $2)
              AND ($3::text IS NULL OR status = $3)
@@ -128,7 +128,7 @@ pub async fn list_login_logs(
 
     let items: Vec<LoginLog> = match sqlx::query_as(
         r#"SELECT id, tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time, created_at
-           FROM core_login_logs
+           FROM public.core_login_logs
            WHERE tenant_id = $1
              AND ($2::text IS NULL OR username ILIKE $2)
              AND ($3::text IS NULL OR status = $3)
@@ -174,7 +174,7 @@ pub async fn get_login_log(
 
     let log: Option<LoginLog> = match sqlx::query_as(
         r#"SELECT id, tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time, created_at
-           FROM core_login_logs WHERE id = $1 AND tenant_id = $2"#,
+           FROM public.core_login_logs WHERE id = $1 AND tenant_id = $2"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -201,7 +201,7 @@ pub async fn delete_login_log(
     let tenant_id = Uuid::nil();
 
     let result = sqlx::query(
-        r#"UPDATE core_login_logs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+        r#"UPDATE public.core_login_logs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -246,7 +246,7 @@ pub async fn batch_delete_login_logs(
         .join(", ");
 
     let sql = format!(
-        r#"UPDATE core_login_logs SET deleted_at = NOW() WHERE tenant_id = $1 AND id IN ({})"#,
+        r#"UPDATE public.core_login_logs SET deleted_at = NOW() WHERE tenant_id = $1 AND id IN ({})"#,
         placeholders
     );
 
@@ -280,7 +280,7 @@ pub async fn record_login_event(
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        INSERT INTO core_login_logs
+        INSERT INTO public.core_login_logs
             (tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time)
         VALUES ($1, $2, $3, $4::inet, $5, $6, $7, NOW())
         "#,

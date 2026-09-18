@@ -63,7 +63,7 @@ pub async fn get_login_history(
     let limit = query.limit.unwrap_or(10).clamp(1, 100);
 
     let total: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_login_logs WHERE user_id = $1")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_login_logs WHERE user_id = $1")
             .bind(user_uuid)
             .fetch_one(&state.pool)
             .await
@@ -84,7 +84,7 @@ pub async fn get_login_history(
     let logs: Vec<LoginLogRow> = sqlx::query_as::<_, LoginLogRow>(
         r#"
         SELECT id, ip_address, user_agent, status, login_time
-        FROM core_login_logs
+        FROM public.core_login_logs
         WHERE user_id = $1
         ORDER BY login_time DESC
         LIMIT $2
@@ -142,7 +142,7 @@ pub async fn list_access_logs(
         SELECT a.id, a.user_id, u.username, a.action, a.resource_type, a.resource_id,
                a.ip_address::text, a.user_agent, a.status, a.created_at
         FROM public.audit_logs a
-        LEFT JOIN core_users u ON a.user_id = u.id
+        LEFT JOIN public.core_users u ON a.user_id = u.id
         ORDER BY a.created_at DESC
         LIMIT $1 OFFSET $2
         "#,
@@ -222,7 +222,7 @@ pub async fn get_user_access_logs(
         SELECT a.id, a.user_id, u.username, a.action, a.resource_type, a.resource_id,
                a.ip_address::text, a.user_agent, a.status, a.created_at
         FROM public.audit_logs a
-        LEFT JOIN core_users u ON a.user_id = u.id
+        LEFT JOIN public.core_users u ON a.user_id = u.id
         WHERE a.user_id = $1
         ORDER BY a.created_at DESC
         LIMIT $2 OFFSET $3

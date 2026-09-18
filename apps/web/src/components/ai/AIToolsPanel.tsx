@@ -633,7 +633,7 @@ const DataMasker: React.FC = () => {
           color='text.secondary'
           sx={{ mb: 1.5, display: 'block' }}
         >
-          [i18n.t('components.ai_tools_panel.k21')]: {currentMask.example}
+          {i18n.t('components.ai_tools_panel.k21')}: {currentMask.example}
         </Typography>
       )}
 

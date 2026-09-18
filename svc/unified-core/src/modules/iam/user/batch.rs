@@ -49,7 +49,7 @@ pub async fn get_effective_permissions(
     };
 
     let is_superuser: bool = match sqlx::query_scalar(
-        "SELECT is_superuser FROM core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT is_superuser FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_optional(&state.pool)
@@ -76,7 +76,7 @@ pub async fn get_effective_permissions(
 
     let role_permissions: Vec<EffectivePermissionRow> = if is_superuser {
         sqlx::query_as::<_, EffectivePermissionRow>(
-            "SELECT id as permission_id, code, name, description, resource, action FROM core_permissions ORDER BY code",
+            "SELECT id as permission_id, code, name, description, resource, action FROM public.core_permissions ORDER BY code",
         )
         .fetch_all(&state.pool)
         .await
@@ -85,9 +85,9 @@ pub async fn get_effective_permissions(
         sqlx::query_as::<_, EffectivePermissionRow>(
             r#"
             SELECT DISTINCT p.id as permission_id, p.code, p.name, p.description, p.resource, p.action
-            FROM core_permissions p
-            INNER JOIN core_role_permissions rp ON p.id = rp.permission_id
-            INNER JOIN core_user_roles ur ON rp.role_id = ur.role_id
+            FROM public.core_permissions p
+            INNER JOIN public.core_role_permissions rp ON p.id = rp.permission_id
+            INNER JOIN public.core_user_roles ur ON rp.role_id = ur.role_id
             WHERE ur.user_id = $1
             ORDER BY p.code
             "#,
@@ -192,7 +192,7 @@ pub async fn batch_delete_users(
             }
         };
 
-        let result = sqlx::query("UPDATE core_users SET deleted_at = NOW() WHERE id = $1")
+        let result = sqlx::query("UPDATE public.core_users SET deleted_at = NOW() WHERE id = $1")
             .bind(user_uuid)
             .execute(&state.pool)
             .await;
@@ -295,7 +295,7 @@ pub async fn batch_update_users(
         };
 
         let result = if let Some(status) = &new_status {
-            sqlx::query("UPDATE core_users SET status = $1, updated_at = NOW() WHERE id = $2")
+            sqlx::query("UPDATE public.core_users SET status = $1, updated_at = NOW() WHERE id = $2")
                 .bind(status)
                 .bind(user_uuid)
                 .execute(&state.pool)
@@ -304,7 +304,7 @@ pub async fn batch_update_users(
             // 没有提供 isactive，尝试更新 full_name / email（兼容任务描述中的 updates 形态）
             sqlx::query(
                 r#"
-                UPDATE core_users
+                UPDATE public.core_users
                 SET
                     full_name = COALESCE($1, full_name),
                     email = COALESCE($2, email),

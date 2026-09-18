@@ -122,7 +122,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.k1')]:
+                  {i18n.t('pages.audit_log_page.k1')}:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -138,7 +138,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.k2')]:
+                  {i18n.t('pages.audit_log_page.k2')}:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -154,7 +154,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.id_3')]:
+                  {i18n.t('pages.audit_log_page.id_3')}:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -170,7 +170,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.k4')]:
+                  {i18n.t('pages.audit_log_page.k4')}:
                 </Typography>
                 {getStatusChip(row.status as string)}
               </Box>
@@ -197,7 +197,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.id_6')]:
+                  {i18n.t('pages.audit_log_page.id_6')}:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -213,7 +213,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.k7')]:
+                  {i18n.t('pages.audit_log_page.k7')}:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -245,7 +245,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.k9')]:
+                  {i18n.t('pages.audit_log_page.k9')}:
                 </Typography>
                 <Typography
                   variant='body2'
@@ -688,7 +688,7 @@ const AuditLogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.audit_log_page.k14')]:
+                  {i18n.t('pages.audit_log_page.k14')}:
                 </Typography>
               </Box>
               <TextField

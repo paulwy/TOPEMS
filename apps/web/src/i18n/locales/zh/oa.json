@@ -52,5 +52,17 @@
   "oa.vehicle_management_page.k5": "状态",
   "oa.vehicle_management_page.k6": "驾驶员",
   "oa.vehicle_management_page.k7": "暂无车辆",
-  "oa.vehicle_management_page.k8": "车辆列表为空，后端接口就绪后可展示数据"
+  "oa.vehicle_management_page.k8": "车辆列表为空，后端接口就绪后可展示数据",
+  "oa.nav.module_name": "OA 办公",
+  "oa.nav.module_name_desc": "OA 办公",
+  "oa.nav.oa-dashboard": "办公概览",
+  "oa.nav.oa-dashboard_desc": "办公概览",
+  "oa.nav.oa-documents": "公文管理",
+  "oa.nav.oa-documents_desc": "公文管理",
+  "oa.nav.oa-announcements": "公告管理",
+  "oa.nav.oa-announcements_desc": "公告管理",
+  "oa.nav.oa-meetings": "会议管理",
+  "oa.nav.oa-meetings_desc": "会议管理",
+  "oa.nav.oa-vehicles": "车辆管理",
+  "oa.nav.oa-vehicles_desc": "车辆管理"
 }

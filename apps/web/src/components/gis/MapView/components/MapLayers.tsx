@@ -161,7 +161,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
                 >
                   <Typography variant='body2'>{i18n.t('components.map_layers.k0')}</Typography>
                   <Typography variant='body2'>
-                    [i18n.t('components.map_layers.k0')]:{' '}
+                    {i18n.t('components.map_layers.k0')}:{' '}
                     <span style={{ color: getStatusColor(point.status) }}>{point.status}</span>
                   </Typography>
                   <MuiBox

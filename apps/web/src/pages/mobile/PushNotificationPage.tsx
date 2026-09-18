@@ -262,14 +262,14 @@ const PushNotificationPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.push_notification_page.k2')]: {template.title}
+                  {i18n.t('pages.push_notification_page.k2')}: {template.title}
                 </Typography>
                 <br />
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  [i18n.t('pages.push_notification_page.k3')]: {template.body}
+                  {i18n.t('pages.push_notification_page.k3')}: {template.body}
                 </Typography>
               </Box>
             </Box>

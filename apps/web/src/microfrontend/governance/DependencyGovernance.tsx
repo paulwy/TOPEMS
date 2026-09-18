@@ -462,7 +462,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
               variant='caption'
               sx={{ fontWeight: 600, color: 'teal.500' }}
             >
-              [i18n.t('microfrontend.dependency_governance.k8')]:
+              {i18n.t('microfrontend.dependency_governance.k8')}:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
               {suggestion.benefits.map((b, i) => (
@@ -484,7 +484,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
               variant='caption'
               sx={{ fontWeight: 600, color: 'warning.500' }}
             >
-              [i18n.t('microfrontend.dependency_governance.k9')]:
+              {i18n.t('microfrontend.dependency_governance.k9')}:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
               {suggestion.breaking_changes.map((b, i) => (

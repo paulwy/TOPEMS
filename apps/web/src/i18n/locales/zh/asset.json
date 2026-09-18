@@ -153,5 +153,17 @@
   "asset.transfer_page.text_b1a8be": "标签",
   "asset.transfer_page.list": "列表",
   "asset.transfer_page.submit_3": "提交3",
-  "asset.transfer_page.cancel": "取消"
+  "asset.transfer_page.cancel": "取消",
+  "asset.nav.module_name": "资产管理",
+  "asset.nav.module_name_desc": "资产管理",
+  "asset.nav.asset-dashboard": "资产概览",
+  "asset.nav.asset-dashboard_desc": "资产概览",
+  "asset.nav.asset-list": "资产台账",
+  "asset.nav.asset-list_desc": "资产台账",
+  "asset.nav.asset-categories": "资产分类",
+  "asset.nav.asset-categories_desc": "资产分类",
+  "asset.nav.asset-depreciation": "资产折旧",
+  "asset.nav.asset-depreciation_desc": "资产折旧",
+  "asset.nav.asset-transfers": "资产调拨",
+  "asset.nav.asset-transfers_desc": "资产调拨"
 }

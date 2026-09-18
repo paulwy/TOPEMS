@@ -119,7 +119,7 @@ pub async fn get_current_user(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
+        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE id = $1",
     )
     .bind(user_id)
     .fetch_optional(&state.pool)

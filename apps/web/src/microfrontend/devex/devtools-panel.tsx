@@ -306,14 +306,14 @@ const ModuleInspectorTab: React.FC = () => {
                     variant='subtitle2'
                     sx={{ mb: 1 }}
                   >
-                    [i18n.t('microfrontend.devtools-panel.k5')]: {selectedModule}
+                    {i18n.t('microfrontend.devtools-panel.k5')}: {selectedModule}
                   </Typography>
                   <Typography
                     variant='caption'
                     color='text.secondary'
                     sx={{ mb: 1, display: 'block' }}
                   >
-                    [i18n.t('microfrontend.devtools-panel.k6')]:
+                    {i18n.t('microfrontend.devtools-panel.k6')}:
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     {smartDebugger.getModuleDependencies(selectedModule).map((dep) => (
@@ -1449,7 +1449,7 @@ const DebugSessionsTab: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 1, display: 'block' }}
                   >
-                    [i18n.t('microfrontend.devtools-panel.k34')]:{' '}
+                    {i18n.t('microfrontend.devtools-panel.k34')}:{' '}
                     {new Date(selected.createdAt).toLocaleString()}
                   </Typography>
                   <Typography
@@ -1464,7 +1464,7 @@ const DebugSessionsTab: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 1, display: 'block' }}
                   >
-                    [i18n.t('microfrontend.devtools-panel.k35')]: {selected.steps.length}
+                    {i18n.t('microfrontend.devtools-panel.k35')}: {selected.steps.length}
                   </Typography>
                   <Paper sx={{ p: 1, maxHeight: 350, overflow: 'auto', bgcolor: 'grey.50' }}>
                     {selected.steps.map((step, idx) => (

@@ -633,7 +633,7 @@ key_points'
                 variant='caption'
                 color='text.secondary'
               >
-                [i18n.t('components.prompt_template_manager.k5')]:{' '}
+                {i18n.t('components.prompt_template_manager.k5')}:{' '}
                 {formData.variables
                   .split('\n')
                   .map((v) => `{${v.trim()}}`)

@@ -15,6 +15,7 @@ import { Button } from '../primitives';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { AUTH_PATHS } from '@/routes/auth';
+import i18n from '@/i18n';
 
 export interface TopBarProps {
   onMenuToggle?: () => void;
@@ -135,7 +136,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onClick={onCommandOpen}
           aria-label='Open command palette'
         >
-          <span className='desktop-only'>Search</span>
+          <span className='desktop-only'>{i18n.t('shared.common.search')}</span>
           <kbd
             className='desktop-only'
             style={{

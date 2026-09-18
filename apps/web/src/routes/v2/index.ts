@@ -97,8 +97,9 @@ export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleC
   const baseNamespaces = [moduleCode, 'components', 'templates', 'schemas', 'services', 'pages'];
 
   const promise = (async () => {
-    // Phase 1: 并行加载基础命名空间（不阻塞模块 import）
-    const nsPromise = ensureNamespacesLoaded(baseNamespaces).catch((e) => {
+    // Phase 1: 先加载基础命名空间（必须 await 完成，避免模块 config 顶层
+    // 求值 i18n.t(...) 时业务命名空间尚未注入 → 页面标题显示原始 i18n 键）
+    await ensureNamespacesLoaded(baseNamespaces).catch((e) => {
       apiLogger.warn(`[i18n] preload ns for module ${moduleCode} skipped`, e);
     });
 
@@ -116,9 +117,6 @@ export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleC
         );
       });
     }
-
-    // 确保基础命名空间也加载完成
-    await nsPromise;
 
     loadedModules.set(moduleCode, moduleConfig);
     return moduleConfig;

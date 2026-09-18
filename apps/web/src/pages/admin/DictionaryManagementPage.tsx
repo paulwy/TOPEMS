@@ -601,7 +601,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({}) =
                       variant='body2'
                       color='text.secondary'
                     >
-                      [i18n.t('pages.dictionary_management_page.k13')]: {selectedType.code} |{' '}
+                      {i18n.t('pages.dictionary_management_page.k13')}: {selectedType.code} |{' '}
                       {i18n.t('pages.dictionary_management_page.k14')}{' '}
                       {categoryLabels[selectedType.category] || selectedType.category}
                     </Typography>

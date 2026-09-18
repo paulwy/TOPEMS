@@ -107,7 +107,7 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
               variant='caption'
               sx={{ color: 'grey.400', display: 'block', mt: 1 }}
             >
-              [i18n.t('pages.approval_timeline.k1')]: {record.previous_status} → {record.new_status}
+              {i18n.t('pages.approval_timeline.k1')}: {record.previous_status} → {record.new_status}
             </Typography>
           )}
         </Box>
@@ -186,7 +186,7 @@ export const TimelineTabContent: React.FC<{
                   variant='caption'
                   sx={{ color: 'grey.500' }}
                 >
-                  [i18n.t('pages.approval_timeline.k4')]:{' '}
+                  {i18n.t('pages.approval_timeline.k4')}:{' '}
                   {approval?.assignee_id || i18n.t('workflow.approval_timeline.k3')}
                 </Typography>
                 <Typography
@@ -329,14 +329,14 @@ export const TimelineTabContent: React.FC<{
                     variant='caption'
                     sx={{ color: 'grey.500' }}
                   >
-                    [i18n.t('pages.approval_timeline.k6')]: {approval.assignee_id || 'N/A'}
+                    {i18n.t('pages.approval_timeline.k6')}: {approval.assignee_id || 'N/A'}
                   </Typography>
                   {approval.timeout_at && (
                     <Typography
                       variant='caption'
                       sx={{ display: 'block', color: 'warning.main', mt: 0.5 }}
                     >
-                      [i18n.t('pages.approval_timeline.k7')]:{' '}
+                      {i18n.t('pages.approval_timeline.k7')}:{' '}
                       {new Date(approval.timeout_at).toLocaleString()}
                     </Typography>
                   )}

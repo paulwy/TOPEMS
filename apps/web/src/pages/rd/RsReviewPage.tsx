@@ -146,13 +146,13 @@ const RsReviewPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            [i18n.t('pages.rs_review_page.k0')]: {String(row.project_name ?? '')}
+            {i18n.t('pages.rs_review_page.k0')}: {String(row.project_name ?? '')}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            [i18n.t('pages.rs_review_page.k1')]: {i18n.t('pages.rs_review_page.k2')}
+            {i18n.t('pages.rs_review_page.k1')}: {i18n.t('pages.rs_review_page.k2')}
           </Typography>
         </Stack>
         <Paper sx={{ p: 2, mt: 3, bgcolor: 'grey.100' }}>

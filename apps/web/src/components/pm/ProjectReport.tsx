@@ -136,7 +136,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
             variant='body2'
             sx={{ color: 'grey.500', mt: 1 }}
           >
-            [i18n.t('components.project_report.k3')]: {new Date().toLocaleString('zh-CN')}
+            {i18n.t('components.project_report.k3')}: {new Date().toLocaleString('zh-CN')}
           </Typography>
         </Box>
         <Button

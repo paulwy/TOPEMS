@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TopBar, type TopBarProps } from './TopBar';
+import i18n from '@/i18n';
 import { SideRail, type SideRailProps } from './SideRail';
 
 export interface AppShellProps extends TopBarProps, Omit<SideRailProps, 'title'> {
@@ -22,6 +23,15 @@ export const AppShell: React.FC<AppShellProps> = ({
 }) => {
   const [sidebarExpanded, setSidebarExpanded] = useState(defaultSidebarExpanded);
   const location = useLocation();
+  const FALLBACK_SEGMENT_LABELS: Record<string, string> = {
+    modules: i18n.t('shared.app_shell_breadcrumb.modules'),
+    profile: i18n.t('shared.app_shell_breadcrumb.profile'),
+    favorites: i18n.t('shared.app_shell_breadcrumb.favorites'),
+    comments: i18n.t('shared.app_shell_breadcrumb.comments'),
+    attachments: i18n.t('shared.app_shell_breadcrumb.attachments'),
+    help: i18n.t('shared.app_shell_breadcrumb.help'),
+  };
+
   const navigate = useNavigate();
 
   const handleToggleSidebar = () => {
@@ -34,7 +44,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const breadcrumbs = useMemo(() => {
     const path = location.pathname;
     const crumbs: Array<{ label: string; onClick?: () => void }> = [
-      { label: '首页', onClick: () => navigate('/dashboard') },
+      { label: i18n.t('shared.app_shell_breadcrumb.home'), onClick: () => navigate('/dashboard') },
     ];
 
     // 查找当前路径对应的菜单
@@ -64,10 +74,17 @@ export const AppShell: React.FC<AppShellProps> = ({
         crumbs.push({ label: result.childLabel });
       }
     } else {
-      // 如果找不到，使用路径片段
+      // 如果找不到，使用路径片段（已知平台页映射为中文标题）
       const segments = path.split('/').filter(Boolean);
       if (segments.length > 0) {
-        crumbs.push({ label: segments[segments.length - 1] });
+        const last = segments[segments.length - 1];
+        crumbs.push({
+          label:
+            FALLBACK_SEGMENT_LABELS[last] ||
+            i18n.t(`shared.app_shell_breadcrumb.${last}`, {
+              defaultValue: last,
+            }),
+        });
       }
     }
 

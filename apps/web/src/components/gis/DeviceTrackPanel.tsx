@@ -310,7 +310,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                [i18n.t('components.device_track_panel.k3')]:{' '}
+                {i18n.t('components.device_track_panel.k3')}:{' '}
                 <Box
                   component='span'
                   sx={{ fontWeight: 500 }}
@@ -516,7 +516,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    [i18n.t('components.device_track_panel.k6')]:
+                    {i18n.t('components.device_track_panel.k6')}:
                   </Typography>
                   <Typography
                     variant='body2'
@@ -530,7 +530,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    [i18n.t('components.device_track_panel.k7')]:
+                    {i18n.t('components.device_track_panel.k7')}:
                   </Typography>
                   <Typography
                     variant='body2'
@@ -550,7 +550,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('components.device_track_panel.k8')]:
+                      {i18n.t('components.device_track_panel.k8')}:
                     </Typography>
                     <Typography
                       variant='body2'
@@ -566,7 +566,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('components.device_track_panel.k9')]:
+                      {i18n.t('components.device_track_panel.k9')}:
                     </Typography>
                     <Typography
                       variant='body2'
@@ -582,7 +582,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('components.device_track_panel.k10')]:
+                      {i18n.t('components.device_track_panel.k10')}:
                     </Typography>
                     <Typography
                       variant='body2'
@@ -598,7 +598,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       variant='body2'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('components.device_track_panel.k11')]:
+                      {i18n.t('components.device_track_panel.k11')}:
                     </Typography>
                     <Typography
                       variant='body2'

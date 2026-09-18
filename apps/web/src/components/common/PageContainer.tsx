@@ -5,6 +5,7 @@ import type { PageHeaderProps, PageAction } from '../templates/PageHeader';
 import { useNavHierarchy, useCurrentNavItem } from '@/lib/navigation/hooks';
 import { findRouteByPathSync } from '@/routes/v2';
 import { useLocation } from 'react-router-dom';
+import i18n from '@/i18n';
 
 interface PageContainerProps {
   children: React.ReactNode;
@@ -55,8 +56,20 @@ export const PageContainer: React.FC<PageContainerProps> = ({
 
   const computedTitle = useMemo(() => {
     if (!autoTitle) return;
-    if (currentNavItem) return currentNavItem.label;
+    if (currentNavItem) {
+      // currentNavItem.label 已由 NavigationRegistryV2 运行时翻译，直接使用
+      return currentNavItem.label;
+    }
     const route = findRouteByPathSync(location.pathname);
+    // route.title 可能来自模块 config 顶层求值固化值（i18n ns 注入竞态），
+    // 若存在 titleKey 则渲染期运行时翻译，避免显示原始 i18n 键。
+    if (route?.titleKey) {
+      try {
+        return i18n.t(route.titleKey);
+      } catch {
+        /* noop */
+      }
+    }
     return route?.title;
   }, [autoTitle, currentNavItem, location.pathname]);
 

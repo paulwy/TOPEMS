@@ -261,11 +261,11 @@ const ReportViewerContent: React.FC<ReportViewerProps> = ({ report, onClose }) =
             >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Hash sx={{ width: 16, height: 16, mr: 0.5 }} />
-                [i18n.t('pages.report_viewer.id_0')]: {report.id}
+                {i18n.t('pages.report_viewer.id_0')}: {report.id}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Calendar sx={{ width: 16, height: 16, mr: 0.5 }} />
-                [i18n.t('pages.report_viewer.k1')]:{' '}
+                {i18n.t('pages.report_viewer.k1')}:{' '}
                 {new Date(report.created_at).toLocaleDateString('zh-CN')}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -274,7 +274,7 @@ const ReportViewerContent: React.FC<ReportViewerProps> = ({ report, onClose }) =
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <User sx={{ width: 16, height: 16, mr: 0.5 }} />
-                [i18n.t('pages.report_viewer.k2')]: {report.config.report_type}
+                {i18n.t('pages.report_viewer.k2')}: {report.config.report_type}
               </Box>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

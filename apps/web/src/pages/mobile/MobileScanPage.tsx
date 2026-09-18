@@ -624,7 +624,7 @@ const MobileScanPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    [i18n.t('pages.mobile_scan_page.k8')]: {scanResult}
+                    {i18n.t('pages.mobile_scan_page.k8')}: {scanResult}
                   </Typography>
                 </Box>
                 <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>

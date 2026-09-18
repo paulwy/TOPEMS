@@ -264,5 +264,11 @@
   "asset.transfer_page.text_b1a8be": "Label",
   "asset.transfer_page.list": "List",
   "asset.transfer_page.submit_3": "Submit3",
-  "asset.transfer_page.cancel": "Cancel"
+  "asset.transfer_page.cancel": "Cancel",
+  "asset.nav.module_name": "Asset",
+  "asset.nav.asset-dashboard": "Asset Overview",
+  "asset.nav.asset-list": "Asset List",
+  "asset.nav.asset-categories": "Categories",
+  "asset.nav.asset-depreciation": "Depreciation",
+  "asset.nav.asset-transfers": "Transfers"
 }

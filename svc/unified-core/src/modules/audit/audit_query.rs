@@ -234,7 +234,7 @@ pub async fn query_audit_logs(
         "login_logs" => {
             let total: i64 = sqlx::query_scalar(
                 r#"
-                SELECT COUNT(*) FROM core_login_logs
+                SELECT COUNT(*) FROM public.core_login_logs
                 WHERE ($1::uuid IS NULL OR user_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR username ILIKE '%' || $3 || '%')
@@ -279,7 +279,7 @@ pub async fn query_audit_logs(
                         'login_time', login_time
                     ) AS details,
                     COALESCE(login_time, created_at) AS created_at
-                FROM core_login_logs
+                FROM public.core_login_logs
                 WHERE ($1::uuid IS NULL OR user_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR username ILIKE '%' || $3 || '%')
@@ -450,7 +450,7 @@ pub async fn get_audit_log_stats(
         }
         "login_logs" => {
             stats.total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM core_login_logs WHERE ($1::timestamptz IS NULL OR login_time >= $1) AND ($2::timestamptz IS NULL OR login_time <= $2)",
+                "SELECT COUNT(*) FROM public.core_login_logs WHERE ($1::timestamptz IS NULL OR login_time >= $1) AND ($2::timestamptz IS NULL OR login_time <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
@@ -459,14 +459,14 @@ pub async fn get_audit_log_stats(
             .unwrap_or(0);
 
             stats.today_total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM core_login_logs WHERE login_time >= CURRENT_DATE",
+                "SELECT COUNT(*) FROM public.core_login_logs WHERE login_time >= CURRENT_DATE",
             )
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
             stats.success_total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM core_login_logs WHERE status = 'success'",
+                "SELECT COUNT(*) FROM public.core_login_logs WHERE status = 'success'",
             )
             .fetch_one(&state.pool)
             .await
@@ -588,7 +588,7 @@ async fn load_login_top_users(state: &AppState) -> Vec<AuditLogCount> {
     let rows = sqlx::query(
         r#"
         SELECT username AS key, COUNT(*) AS count
-        FROM core_login_logs
+        FROM public.core_login_logs
         WHERE login_time >= NOW() - INTERVAL '30 days'
         GROUP BY username
         ORDER BY count DESC
@@ -770,7 +770,7 @@ async fn fetch_export_rows(
                 r#"
                 SELECT id, tenant_id, user_id, username, status, ip_address, user_agent,
                        error_message, login_time, created_at
-                FROM core_login_logs
+                FROM public.core_login_logs
                 WHERE ($1::timestamptz IS NULL OR login_time >= $1)
                   AND ($2::timestamptz IS NULL OR login_time <= $2)
                   AND ($3::text IS NULL OR status = $3)

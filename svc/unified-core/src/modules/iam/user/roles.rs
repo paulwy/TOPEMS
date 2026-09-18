@@ -70,7 +70,7 @@ pub async fn get_user_permissions(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_optional(&state.pool)
@@ -93,7 +93,7 @@ pub async fn get_user_permissions(
 
     let roles: Vec<UserRoleRow> = if u.is_superuser {
         sqlx::query_as::<_, UserRoleRow>(
-            "SELECT id, name, description, created_at FROM core_roles WHERE deleted_at IS NULL ORDER BY name",
+            "SELECT id, name, description, created_at FROM public.core_roles WHERE deleted_at IS NULL ORDER BY name",
         )
         .fetch_all(&state.pool)
         .await
@@ -102,8 +102,8 @@ pub async fn get_user_permissions(
         sqlx::query_as::<_, UserRoleRow>(
             r#"
             SELECT r.id, r.name, r.description, r.created_at
-            FROM core_roles r
-            INNER JOIN core_user_roles ur ON r.id = ur.role_id
+            FROM public.core_roles r
+            INNER JOIN public.core_user_roles ur ON r.id = ur.role_id
             WHERE r.deleted_at IS NULL AND ur.user_id = $1
             ORDER BY r.name
             "#,
@@ -116,7 +116,7 @@ pub async fn get_user_permissions(
 
     let permissions: Vec<UserPermissionRow> = if u.is_superuser {
         sqlx::query_as::<_, UserPermissionRow>(
-            "SELECT id as permission_id, code, name, description, resource, action FROM core_permissions ORDER BY code",
+            "SELECT id as permission_id, code, name, description, resource, action FROM public.core_permissions ORDER BY code",
         )
         .fetch_all(&state.pool)
         .await
@@ -125,9 +125,9 @@ pub async fn get_user_permissions(
         sqlx::query_as::<_, UserPermissionRow>(
             r#"
             SELECT DISTINCT p.id as permission_id, p.code, p.name, p.description, p.resource, p.action
-            FROM core_permissions p
-            INNER JOIN core_role_permissions rp ON p.id = rp.permission_id
-            INNER JOIN core_user_roles ur ON rp.role_id = ur.role_id
+            FROM public.core_permissions p
+            INNER JOIN public.core_role_permissions rp ON p.id = rp.permission_id
+            INNER JOIN public.core_user_roles ur ON rp.role_id = ur.role_id
             WHERE r.deleted_at IS NULL AND ur.user_id = $1
             ORDER BY p.code
             "#,
@@ -224,7 +224,7 @@ pub async fn get_user_roles(
     };
 
     let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_one(&state.pool)
@@ -253,8 +253,8 @@ pub async fn get_user_roles(
     let roles: Vec<UserRoleRow> = sqlx::query_as::<_, UserRoleRow>(
         r#"
         SELECT r.id, r.name, r.description, r.created_at
-        FROM core_roles r
-        INNER JOIN core_user_roles ur ON r.id = ur.role_id
+        FROM public.core_roles r
+        INNER JOIN public.core_user_roles ur ON r.id = ur.role_id
         WHERE ur.user_id = $1
         ORDER BY r.name
         "#,
@@ -333,7 +333,7 @@ pub async fn assign_user_role(
     };
 
     let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_one(&state.pool)
@@ -360,7 +360,7 @@ pub async fn assign_user_role(
     }
 
     let existing_role_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_roles WHERE deleted_at IS NULL AND id = $1",
+        "SELECT COUNT(*) FROM public.core_roles WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(role_uuid)
     .fetch_one(&state.pool)
@@ -387,7 +387,7 @@ pub async fn assign_user_role(
     }
 
     let result = sqlx::query(
-        "INSERT INTO core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        "INSERT INTO public.core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
     )
     .bind(user_uuid)
     .bind(role_uuid)
@@ -483,7 +483,7 @@ pub async fn remove_user_role(
         }
     };
 
-    let result = sqlx::query("DELETE FROM core_user_roles WHERE user_id = $1 AND role_id = $2")
+    let result = sqlx::query("DELETE FROM public.core_user_roles WHERE user_id = $1 AND role_id = $2")
         .bind(user_uuid)
         .bind(role_uuid)
         .execute(&state.pool)

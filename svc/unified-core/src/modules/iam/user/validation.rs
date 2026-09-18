@@ -60,7 +60,7 @@ pub async fn check_email_availability(
     }
 
     let existing_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE email = $1")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_users WHERE email = $1")
             .bind(email)
             .fetch_one(&state.pool)
             .await
@@ -117,7 +117,7 @@ pub async fn check_username_availability(
     }
 
     let existing_count: i64 =
-        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE username = $1")
+        match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_users WHERE username = $1")
             .bind(username)
             .fetch_one(&state.pool)
             .await

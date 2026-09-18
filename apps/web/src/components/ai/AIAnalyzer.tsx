@@ -353,7 +353,7 @@ export function AIAnalyzer({
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          [i18n.t('components.ai_analyzer.k11')]:{' '}
+                          {i18n.t('components.ai_analyzer.k11')}:{' '}
                           {Math.round(sentimentResult.confidence * 100)}%
                         </Typography>
                       </Box>
@@ -522,7 +522,7 @@ export function AIAnalyzer({
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          [i18n.t('components.ai_analyzer.k16')]:{' '}
+                          {i18n.t('components.ai_analyzer.k16')}:{' '}
                           {Math.round(classificationResult.confidence * 100)}%
                         </Typography>
                       </Box>
@@ -814,7 +814,7 @@ export function AIAnalyzer({
                             variant='caption'
                             sx={{ color: 'text.secondary' }}
                           >
-                            [i18n.t('components.ai_analyzer.k20')]: {keyword.frequency}
+                            {i18n.t('components.ai_analyzer.k20')}: {keyword.frequency}
                           </Typography>
                         </Box>
                       ))}

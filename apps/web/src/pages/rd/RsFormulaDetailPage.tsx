@@ -243,7 +243,7 @@ const RsFormulaDetailPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ mt: 1 }}
               >
-                [i18n.t('pages.rs_formula_detail_page.k2')]: {v.approved_by}
+                {i18n.t('pages.rs_formula_detail_page.k2')}: {v.approved_by}
               </Typography>
             )}
           </Paper>

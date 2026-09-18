@@ -4220,6 +4220,8 @@
   "shared.config.srm_1": "SRM Data Overview",
   "shared.config.fifo_0": "FIFOStrategy",
   "shared.config.abc_1": "ABC ClassificationAnalysis",
+  "shared.config.wms_name": "Warehouse Management",
+  "shared.config.wms_dashboard": "Dashboard",
   "shared.config.wms_2": "WMS Data Overview",
   "shared.config.sku8020_3": "SKU Amount 80/20 Pareto",
   "shared.config.abc_4": "ABC ClassificationAnalysis",
@@ -6700,7 +6702,8 @@
       "bi_r4_1": "Data Analysis Workbench",
       "bi_r4_2": "Ad-hoc data analysis workbench with drag-and-drop dimensions and metrics",
       "rpt_r4_1": "Report Viewer Center",
-      "rpt_r4_2": "Centralized report viewer for browsing, filtering and exporting published reports"
+      "rpt_r4_2": "Centralized report viewer for browsing, filtering and exporting published reports",
+      "wms_dashboard": "Home"
     },
     "import_export": {
       "k3": "Import failed",
@@ -9513,5 +9516,14 @@
   "shared.config.ai_business_copilot_desc": "One-stop AI assistant integrating business module selection, smart forms and document intelligence",
   "shared.config.ai_governance_dashboard_desc": "Comprehensive monitoring of AI system security, compliance, cost and performance",
   "shared.business_domain_tabs.k0": "Business domains",
-  "shared.language_selector.k0": "Change language"
+  "shared.language_selector.k0": "Change language",
+  "shared.use_auto_breadcrumbs.k142": "Modules",
+  "shared.app_shell_breadcrumb.modules": "Modules",
+  "shared.app_shell_breadcrumb.profile": "Profile",
+  "shared.app_shell_breadcrumb.favorites": "Favorites",
+  "shared.app_shell_breadcrumb.comments": "Comments",
+  "shared.app_shell_breadcrumb.attachments": "Attachments",
+  "shared.app_shell_breadcrumb.help": "Help Center",
+  "shared.app_shell_breadcrumb.home": "Home",
+  "shared.use_auto_breadcrumbs.k143": "Profile"
 }

@@ -234,7 +234,7 @@ const RsProjectDetailPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    [i18n.t('pages.rs_project_detail_page.k0')]: {milestone.date}
+                    {i18n.t('pages.rs_project_detail_page.k0')}: {milestone.date}
                   </Typography>
                   <Chip
                     label={getStatusLabel(milestone.status)}

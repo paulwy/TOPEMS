@@ -208,7 +208,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            [i18n.t('components.track_player.k1')]:
+            {i18n.t('components.track_player.k1')}:
           </Typography>
           {speedOptions.map((speed) => (
             <Button

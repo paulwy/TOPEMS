@@ -396,7 +396,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               {i18n.t('shared.service_status_monitor.k27')}
             </Typography>
             <Typography sx={{ fontSize: 11, color: 'grey.400', mt: 0.5 }}>
-              [i18n.t('components.service_status_monitor.k8')]:{' '}
+              {i18n.t('components.service_status_monitor.k8')}:{' '}
               {lastUpdate.toLocaleTimeString('zh-CN')}
             </Typography>
           </Box>

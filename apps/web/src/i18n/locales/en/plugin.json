@@ -693,5 +693,10 @@
       "crm": "Customer Relations",
       "project": "Project Management"
     }
-  }
+  },
+  "plugin.nav.module_name": "Plugins",
+  "plugin.nav.plugin-dashboard": "Plugin Overview",
+  "plugin.nav.plugin-marketplace": "Marketplace",
+  "plugin.nav.plugin-upload": "Upload",
+  "plugin.nav.plugin-detail": "Marketplace Detail"
 }

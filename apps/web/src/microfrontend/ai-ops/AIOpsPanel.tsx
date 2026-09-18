@@ -1765,7 +1765,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           sx={{ mt: 0.5, display: 'block' }}
                         >
                           <Typography variant='caption'>
-                            [i18n.t('microfrontend.ai_ops_panel.k34')]:{' '}
+                            {i18n.t('microfrontend.ai_ops_panel.k34')}:{' '}
                             {formatRelativeTime(a.expectedTime)}
                           </Typography>
                         </Box>
@@ -1920,7 +1920,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('microfrontend.ai_ops_panel.k36')]:{' '}
+                          {i18n.t('microfrontend.ai_ops_panel.k36')}:{' '}
                           {formatRelativeTime(inst.startedAt || inst.createdAt)}
                         </Typography>
                       </Box>

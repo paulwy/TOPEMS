@@ -28,7 +28,7 @@ pub async fn get_permission_metadata(
     tracing::info!("IAM permission metadata requested");
 
     let result = sqlx::query!(
-        "SELECT code, name, description, resource, action FROM core_permissions ORDER BY code"
+        "SELECT code, name, description, resource, action FROM public.core_permissions ORDER BY code"
     )
     .fetch_all(&state.pool)
     .await;

@@ -340,11 +340,11 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     }))
                   }
                 >
-                  <MenuItem value='Critical'>Critical</MenuItem>
-                  <MenuItem value='High'>High</MenuItem>
-                  <MenuItem value='Medium'>Medium</MenuItem>
-                  <MenuItem value='Low'>Low</MenuItem>
-                  <MenuItem value='Info'>Info</MenuItem>
+                  <MenuItem value='Critical'>严重</MenuItem>
+                  <MenuItem value='High'>高</MenuItem>
+                  <MenuItem value='Medium'>中</MenuItem>
+                  <MenuItem value='Low'>低</MenuItem>
+                  <MenuItem value='Info'>信息</MenuItem>
                 </Select>
               </FormControl>
               <TextField
@@ -634,13 +634,13 @@ const ScalingTab: React.FC<{
                       variant='caption'
                       color='text.secondary'
                     >
-                      [i18n.t('intelligent_ops.v56-ops-panel.k18')]: {currentValue.toFixed(1)}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k18')}: {currentValue.toFixed(1)}
                     </Typography>
                     <Typography
                       variant='caption'
                       color='text.secondary'
                     >
-                      [i18n.t('intelligent_ops.v56-ops-panel.k19')]: {policy.target}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k19')}: {policy.target}
                     </Typography>
                   </Box>
                   <LinearProgress
@@ -671,7 +671,7 @@ const ScalingTab: React.FC<{
                   color='text.secondary'
                   sx={{ display: 'block', mb: 1 }}
                 >
-                  [i18n.t('intelligent_ops.v56-ops-panel.k20')]: {policy.min_instances} -{' '}
+                  {i18n.t('intelligent_ops.v56-ops-panel.k20')}: {policy.min_instances} -{' '}
                   {policy.max_instances} | {i18n.t('intelligent_ops.v56-ops-panel.k0')}:{' '}
                   {policy.cooldown_ms / 60000}
                   {i18n.t('intelligent-ops.v56-ops-panel.k1')}
@@ -1093,7 +1093,7 @@ const RCATab: React.FC<{
                     color='text.secondary'
                     sx={{ display: 'block', mb: 0.5 }}
                   >
-                    [i18n.t('intelligent_ops.v56-ops-panel.k33')]: {cause.depth} 跳
+                    {i18n.t('intelligent_ops.v56-ops-panel.k33')}: {cause.depth} 跳
                   </Typography>
                   {cause.evidence.length > 0 && (
                     <Box sx={{ mt: 1 }}>
@@ -1101,7 +1101,7 @@ const RCATab: React.FC<{
                         variant='caption'
                         sx={{ fontWeight: 600, fontSize: 11, display: 'block', mb: 0.5 }}
                       >
-                        [i18n.t('intelligent_ops.v56-ops-panel.k34')]:
+                        {i18n.t('intelligent_ops.v56-ops-panel.k34')}:
                       </Typography>
                       {cause.evidence.slice(0, 3).map((e, idx) => (
                         <Typography
@@ -1263,7 +1263,7 @@ const RepairTab: React.FC<{
                 color='text.secondary'
                 sx={{ display: 'block', mb: 1 }}
               >
-                [i18n.t('intelligent_ops.v56-ops-panel.k41')]: {playbook.trigger_condition}
+                {i18n.t('intelligent_ops.v56-ops-panel.k41')}: {playbook.trigger_condition}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1.5 }}>
                 {playbook.actions.map((a) => (
