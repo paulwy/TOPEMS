@@ -453,8 +453,8 @@ pub async fn create_production_order(
             order_no, product_name, product_code,
             quantity, completed_quantity, status,
             planned_start_date, planned_end_date, workshop_id, notes,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9)
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9, $10)
         RETURNING 
             id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -472,6 +472,7 @@ pub async fn create_production_order(
         req.workshop_id,
         req.notes,
         now.naive_utc(),
+        tenant_id,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -495,10 +496,10 @@ pub async fn create_production_order(
         order_no: result.order_no,
         product_id: result.product_id,
         product_name: result.product_name,
-        product_code: result.product_code,
+        product_code: result.product_code.unwrap_or_default(),
         quantity: result.quantity.unwrap_or_default(),
         completed_quantity: result.completed_quantity.unwrap_or_default(),
-        status: result.status.unwrap_or_default(),
+        status: result.status,
         source: result.source.unwrap_or_else(|| "manual".to_string()),
         source_order_id: result.source_order_id,
         source_order_number: result.source_order_number,
@@ -508,8 +509,8 @@ pub async fn create_production_order(
         actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_else(Utc::now),
-        updated_at: result.updated_at.unwrap_or_else(Utc::now),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     if let Some(ref publisher) = state.event_publisher {
@@ -613,8 +614,8 @@ pub async fn create_from_erp(
             order_no, product_name, product_code, quantity,
             status, source_order_id, source_order_number,
             planned_start_date, planned_end_date, workshop_id, notes,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11)
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)
         RETURNING 
             id, order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -634,6 +635,7 @@ pub async fn create_from_erp(
         req.workshop_id,
         req.notes,
         now.naive_utc(),
+        Uuid::nil(),
     )
     .fetch_one(&mut *tx)
     .await;
@@ -656,10 +658,10 @@ pub async fn create_from_erp(
         order_no: result.order_no,
         product_id: result.product_id,
         product_name: result.product_name,
-        product_code: result.product_code,
+        product_code: result.product_code.unwrap_or_default(),
         quantity: result.quantity.unwrap_or_default(),
         completed_quantity: result.completed_quantity.unwrap_or_default(),
-        status: result.status.unwrap_or_default(),
+        status: result.status,
         source: result
             .source
             .unwrap_or_else(|| "erp_sales_order".to_string()),
@@ -671,8 +673,8 @@ pub async fn create_from_erp(
         actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_else(Utc::now),
-        updated_at: result.updated_at.unwrap_or_else(Utc::now),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     tracing::info!(
