@@ -179,7 +179,11 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
     try {
       const response = await fetch('/api/portal/graphql', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
+        },
         body: JSON.stringify(body),
       });
       if (response.ok) {
@@ -199,6 +203,8 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+      'x-tenant-id': '00000000-0000-0000-0000-000000000001',
     },
     body: JSON.stringify(body),
   });

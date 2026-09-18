@@ -172,7 +172,8 @@ export const mesAnalyticsApi = {
     const res = await apiClient.mes.get<OeeDashboardResponse>(
       `/analytics/oee-dashboard${buildQuery(params)}`
     );
-    return res.data;
+    // mes /analytics/oee-dashboard 直接返回业务对象（无 ApiResponse 包装）
+    return res as unknown as OeeDashboardResponse;
   },
 
   /** 质量帕累托 */

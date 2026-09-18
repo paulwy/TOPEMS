@@ -35,6 +35,8 @@ import {
 } from '@/components/redesign';
 import type { DateRange } from '@/components/redesign';
 import { getDashboard } from '@/api/bff';
+import { mesAnalyticsApi } from '@/api/mes/analytics';
+import { productionOrderApi } from '@/api/mes/productionOrder';
 import i18n from '@/i18n';
 
 import '@/theme/redesign-tokens.css';
@@ -132,6 +134,31 @@ const DashboardPage: React.FC = () => {
         return null;
       }
     },
+  });
+
+  // 设备综合效率：mes 真实 OEE 仪表盘（avg_oee）
+  const oeeQuery = useQuery({
+    queryKey: [...QUERY_KEY, 'oee'],
+    queryFn: () => mesAnalyticsApi.getOeeDashboard({ days: 7 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 生产订单：mes 真实订单量（portal stats 分页口径暂未生效，前端直查）
+  const ordersQuery = useQuery({
+    queryKey: [...QUERY_KEY, 'orders'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch('/api/mes/orders?page=1&pagesize=1000', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
+        },
+      });
+      const j = await res.json();
+      const data = j?.data ?? j;
+      return { total: Number(data?.total ?? 0), orders: data?.orders ?? [] };
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   // 从 BFF 真实返回（stats/todos/services）派生页面数据，无数据时回退默认
@@ -239,18 +266,16 @@ const DashboardPage: React.FC = () => {
   }, [data]);
 
   const kpis = useMemo(() => {
-    if (!data?.stats?.mes) {
-      return { oee: 0, production: 0, deliveryRate: 0, qualityRate: 0 };
-    }
-    const mes = data.stats.mes;
-    const availability = mes.total > 0 ? Math.round((mes.active / mes.total) * 1000) / 10 : 0;
+    const avgOee = oeeQuery.data?.avg_oee ?? 0;
+    const mesTotal = data?.stats?.mes ? ((data.stats.mes as { total?: number }).total ?? 0) : 0;
     return {
-      oee: availability,
-      production: mes.active * 1200,
+      // OEE：mes OEE 仪表盘真实均值；产量：mes 生产订单总量（真实业务计数，优先直查）
+      oee: Math.round(avgOee * 10) / 10,
+      production: ordersQuery.data?.total ?? mesTotal,
       deliveryRate: 0,
       qualityRate: 0,
     };
-  }, [data]);
+  }, [data, oeeQuery.data, ordersQuery.data]);
 
   const filteredModules = modules.filter((m: any) =>
     m.name.toLowerCase().includes(searchQuery.toLowerCase())
