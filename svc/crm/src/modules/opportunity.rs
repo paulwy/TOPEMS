@@ -268,7 +268,7 @@ async fn list_opportunities(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         FROM crm.opportunities
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR name ILIKE $2)
@@ -490,7 +490,7 @@ async fn get_opportunity(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         FROM crm.opportunities WHERE id = $1 AND tenant_id = $2
         "#,
     )
