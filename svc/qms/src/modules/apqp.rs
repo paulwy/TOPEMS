@@ -29,7 +29,7 @@ pub async fn list_apqp_projects(
     let projects = match (query.status.as_ref(), query.product_name.as_ref()) {
         (Some(st), Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 AND product_name ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#),
             )
             .bind(st)
             .bind(format!("%{}%", pn))
@@ -40,7 +40,7 @@ pub async fn list_apqp_projects(
         }
         (Some(st), None) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
             )
             .bind(st)
             .bind(page_size)
@@ -50,7 +50,7 @@ pub async fn list_apqp_projects(
         }
         (None, Some(pn)) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND product_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND product_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#),
             )
             .bind(format!("%{}%", pn))
             .bind(page_size)
@@ -60,7 +60,7 @@ pub async fn list_apqp_projects(
         }
         (None, None) => {
             sqlx::query_as::<_, ApqpProject>(
-                only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects ORDER BY created_at DESC LIMIT $1 OFFSET $2"#),
+                only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects ORDER BY created_at DESC LIMIT $1 OFFSET $2"#),
             )
             .bind(page_size)
             .bind(offset)
@@ -99,7 +99,7 @@ pub async fn create_apqp_project(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_projects (project_no, project_name, product_id, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, progress, risk_level, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'planning', 'phase1', $7, $8, $9, $10, 0, 'low', $11, $12) RETURNING id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_projects (project_no, project_name, product_id, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, progress, risk_level, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'planning', 'phase1', $7, $8, $9, $10, 0, 'low', $11, $12) RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_no)
     .bind(req.project_name)
@@ -169,7 +169,7 @@ pub async fn get_apqp_project(
     };
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"SELECT id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -209,7 +209,7 @@ pub async fn update_apqp_project(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 RETURNING id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(id)
     .bind(req.project_name)
@@ -281,7 +281,7 @@ pub async fn transition_project_status(
     }
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date::TEXT, target_date::TEXT, actual_end_date::TEXT, progress, risk_level, created_by, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(id)
     .bind(&req.target_status)
@@ -311,14 +311,14 @@ pub async fn list_apqp_phases(
 
     let phases = if let Some(pid) = project_id {
         sqlx::query_as::<_, ApqpPhase>(
-            only_own_schema_query!("qms", r#"SELECT id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
+            only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE project_id = $1 ORDER BY sort_order ASC"#),
         )
         .bind(pid)
         .fetch_all(&state.pool)
         .await
     } else {
         sqlx::query_as::<_, ApqpPhase>(
-            only_own_schema_query!("qms", r#"SELECT id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases ORDER BY created_at DESC LIMIT 100"#),
+            only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases ORDER BY created_at DESC LIMIT 100"#),
         )
         .fetch_all(&state.pool)
         .await
@@ -350,7 +350,7 @@ pub async fn create_apqp_phase(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, description, status, start_date, end_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8) RETURNING id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_phases (project_id, phase_code, phase_name, description, status, start_date, end_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_id)
     .bind(req.phase_code)
@@ -382,7 +382,7 @@ pub async fn get_apqp_phase(
     };
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
-        only_own_schema_query!("qms", r#"SELECT id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_phases WHERE id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -421,7 +421,7 @@ pub async fn update_apqp_phase(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_phases SET phase_name = COALESCE($2, phase_name), description = COALESCE($3, description), status = COALESCE($4, status), start_date = COALESCE($5, start_date), end_date = COALESCE($6, end_date), actual_start_date = COALESCE($7, actual_start_date), actual_end_date = COALESCE($8, actual_end_date), progress = COALESCE($9, progress), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 RETURNING id, project_id, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_phases SET phase_name = COALESCE($2, phase_name), description = COALESCE($3, description), status = COALESCE($4, status), start_date = COALESCE($5, start_date), end_date = COALESCE($6, end_date), actual_start_date = COALESCE($7, actual_start_date), actual_end_date = COALESCE($8, actual_end_date), progress = COALESCE($9, progress), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date::TEXT, end_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, progress, sort_order, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(id)
     .bind(req.phase_name)
@@ -485,7 +485,7 @@ pub async fn list_apqp_tasks(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut sql = String::from(
-        "SELECT id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE 1=1",
+        "SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE 1=1",
     );
     let mut params: Vec<String> = Vec::new();
 
@@ -546,7 +546,7 @@ pub async fn create_apqp_task(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let task = sqlx::query_as::<_, ApqpTask>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_tasks (project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_tasks (project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date, sort_order, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_id)
     .bind(phase_id)
@@ -580,7 +580,7 @@ pub async fn get_apqp_task(
     };
 
     let task = sqlx::query_as::<_, ApqpTask>(
-        only_own_schema_query!("qms", r#"SELECT id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_tasks WHERE id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -613,7 +613,7 @@ pub async fn update_apqp_task(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let task = sqlx::query_as::<_, ApqpTask>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_tasks SET task_name = COALESCE($2, task_name), description = COALESCE($3, description), task_type = COALESCE($4, task_type), deliverable = COALESCE($5, deliverable), status = COALESCE($6, status), assignee = COALESCE($7, assignee), due_date = COALESCE($8, due_date), completed_at = COALESCE($9, completed_at), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 RETURNING id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_tasks SET task_name = COALESCE($2, task_name), description = COALESCE($3, description), task_type = COALESCE($4, task_type), deliverable = COALESCE($5, deliverable), status = COALESCE($6, status), assignee = COALESCE($7, assignee), due_date = COALESCE($8, due_date), completed_at = COALESCE($9, completed_at), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(id)
     .bind(req.task_name)
@@ -673,7 +673,7 @@ pub async fn list_apqp_risks(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut sql = String::from(
-        "SELECT id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE 1=1",
+        "SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE 1=1",
     );
     let mut params: Vec<serde_json::Value> = Vec::new();
 
@@ -731,7 +731,7 @@ pub async fn create_apqp_risk(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_risks (project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12) RETURNING id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_risks (project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(project_id)
     .bind(req.risk_name)
@@ -767,7 +767,7 @@ pub async fn get_apqp_risk(
     };
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
-        only_own_schema_query!("qms", r#"SELECT id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE id = $1"#),
+        only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qms.qa_apqp_risks WHERE id = $1"#),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -797,7 +797,7 @@ pub async fn update_apqp_risk(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_risks SET risk_name = COALESCE($2, risk_name), description = COALESCE($3, description), risk_category = COALESCE($4, risk_category), severity = COALESCE($5, severity), occurrence = COALESCE($6, occurrence), detection = COALESCE($7, detection), rpn = COALESCE($5, severity) * COALESCE($6, occurrence) * COALESCE($7, detection), status = COALESCE($8, status), mitigation_plan = COALESCE($9, mitigation_plan), responsible = COALESCE($10, responsible), target_date = COALESCE($11, target_date), updated_at = NOW() WHERE id = $1 RETURNING id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_risks SET risk_name = COALESCE($2, risk_name), description = COALESCE($3, description), risk_category = COALESCE($4, risk_category), severity = COALESCE($5, severity), occurrence = COALESCE($6, occurrence), detection = COALESCE($7, detection), rpn = COALESCE($5, severity) * COALESCE($6, occurrence) * COALESCE($7, detection), status = COALESCE($8, status), mitigation_plan = COALESCE($9, mitigation_plan), responsible = COALESCE($10, responsible), target_date = COALESCE($11, target_date), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT"#),
     )
     .bind(id)
     .bind(req.risk_name)
@@ -974,14 +974,14 @@ pub async fn list_apqp_approvals(
 
     let approvals = if let Some(pid) = project_id {
         sqlx::query_as::<_, ApqpApproval>(
-            only_own_schema_query!("qms", r#"SELECT id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals WHERE project_id = $1 ORDER BY created_at DESC"#),
+            only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals WHERE project_id = $1 ORDER BY created_at DESC"#),
         )
         .bind(pid)
         .fetch_all(&state.pool)
         .await
     } else {
         sqlx::query_as::<_, ApqpApproval>(
-            only_own_schema_query!("qms", r#"SELECT id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals ORDER BY created_at DESC LIMIT 100"#),
+            only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT FROM qms.qa_apqp_approvals ORDER BY created_at DESC LIMIT 100"#),
         )
         .fetch_all(&state.pool)
         .await
@@ -1006,7 +1006,7 @@ pub async fn create_apqp_approval(
     };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment, tenant_id) VALUES ($1, $2, 'pending', $3, $4, $5) RETURNING id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment, tenant_id) VALUES ($1, $2, 'pending', $3, $4, $5) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT"#),
     )
     .bind(project_id)
     .bind(req.approval_type)
@@ -1038,7 +1038,7 @@ pub async fn process_apqp_approval(
     let status = if req.approved { "approved" } else { "rejected" };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = NOW() WHERE id = $1 RETURNING id, project_id, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at::TEXT, approved_at::TEXT, created_at::TEXT"#),
     )
     .bind(id)
     .bind(status)

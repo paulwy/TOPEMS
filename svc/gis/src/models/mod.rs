@@ -41,7 +41,7 @@ pub struct DeviceLocation {
 pub struct Pipeline {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub map_id: Uuid,
+    pub map_id: Option<Uuid>,
     pub name: String,
     pub code: String,
     pub pipeline_type: Option<String>,
