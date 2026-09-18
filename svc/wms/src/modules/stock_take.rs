@@ -241,7 +241,7 @@ pub async fn create_stock_take(
                                      remarks, created_at, updated_at, tenant_id)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'full', $3, $4, 'planned', $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status,
-                  planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
+                  start_time, end_time, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -257,11 +257,19 @@ pub async fn create_stock_take(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(stock_take) => (
+        Ok(stock_take) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("盘点事务提交失败: {}", e);
+                    return Json(api_error(500, "盘点创建失败"));
+                }
+            }
+            (
             Json(ApiResponse::success(stock_take.clone(), "盘点创建成功")),
             "success",
             None,
-        ),
+            )
+        },
         Err(e) => {
             tracing::error!("创建盘点失败: {}", e);
             (
