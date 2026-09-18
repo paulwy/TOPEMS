@@ -139,12 +139,22 @@ pub async fn list_inbound_orders(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-               supplier_id, supplier_name, order_date, 
-               expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-               total_value as total_amount, total_quantity, received_quantity,
-               status, notes as remarks,
-               created_by, approved_by, approved_at,
+        SELECT id, organization_id AS tenant_id, order_number, order_type,
+               reference_number, reference_type, warehouse_id, warehouse_name,
+               supplier_id, supplier_name, supplier_code,
+               purchase_order_id, purchase_order_number,
+               production_order_id, production_order_number,
+               customer_id, customer_name, customer_order_number,
+               order_date,
+               expected_arrival_date, actual_arrival_date, received_date,
+               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+               total_items, total_quantity, received_quantity, rejected_quantity,
+               total_weight, total_volume, total_value, total_value AS total_amount,
+               priority, status, receiver, receiver_id, receiving_team,
+               inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+               notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+               created_by, updated_by, approved_by, approved_at, organization_id,
                created_at, updated_at
         FROM wms.inbound_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
@@ -235,12 +245,22 @@ pub async fn create_inbound_order(
                                        status, notes, created_at, updated_at, tenant_id)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'purchase', $3, $4, $5, $6, $7,
                'created', $8, $9, $10, $11)
-        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-                  supplier_id, supplier_name, order_date, 
-                  expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-                  total_value as total_amount, total_quantity, received_quantity,
-                  status, notes as remarks,
-                  created_by, approved_by, approved_at,
+        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  supplier_id, supplier_name, supplier_code,
+                  purchase_order_id, purchase_order_number,
+                  production_order_id, production_order_number,
+                  customer_id, customer_name, customer_order_number,
+                  order_date,
+                  expected_arrival_date, actual_arrival_date, received_date,
+                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+                  total_items, total_quantity, received_quantity, rejected_quantity,
+                  total_weight, total_volume, total_value, total_value AS total_amount,
+                  priority, status, receiver, receiver_id, receiving_team,
+                  inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+                  notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+                  created_by, updated_by, approved_by, approved_at, organization_id,
                   created_at, updated_at
         "#
     ))
@@ -260,6 +280,19 @@ pub async fn create_inbound_order(
 
     let (response, status, error_msg) = match &result {
         Ok(order) => {
+            let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+            )
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("入库订单事务提交失败: {}", e);
+                    return Json(api_error(500, "入库订单创建失败"));
+                }
+            }
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 let oid = order.id;
@@ -267,13 +300,6 @@ pub async fn create_inbound_order(
                 let wh_id = order.warehouse_id;
                 let total = order.total_amount.unwrap_or(0.0);
                 let now_val = Utc::now();
-                let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
-                )
-                .fetch_optional(&mut **txn)
-                .await
-                .ok()
-                .flatten();
                 tokio::spawn(async move {
                     let payload = StockInboundPayload {
                         inbound_id: oid,
@@ -372,12 +398,22 @@ pub async fn get_inbound_order(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-               supplier_id, supplier_name, order_date, 
-               expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-               total_value as total_amount, total_quantity, received_quantity,
-               status, notes as remarks,
-               created_by, approved_by, approved_at,
+        SELECT id, organization_id AS tenant_id, order_number, order_type,
+               reference_number, reference_type, warehouse_id, warehouse_name,
+               supplier_id, supplier_name, supplier_code,
+               purchase_order_id, purchase_order_number,
+               production_order_id, production_order_number,
+               customer_id, customer_name, customer_order_number,
+               order_date,
+               expected_arrival_date, actual_arrival_date, received_date,
+               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+               total_items, total_quantity, received_quantity, rejected_quantity,
+               total_weight, total_volume, total_value, total_value AS total_amount,
+               priority, status, receiver, receiver_id, receiving_team,
+               inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+               notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+               created_by, updated_by, approved_by, approved_at, organization_id,
                created_at, updated_at
         FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
@@ -430,12 +466,22 @@ pub async fn update_inbound_order(
     let existing = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-               supplier_id, supplier_name, order_date, 
-               expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-               total_value as total_amount, total_quantity, received_quantity,
-               status, notes as remarks,
-               created_by, approved_by, approved_at,
+        SELECT id, organization_id AS tenant_id, order_number, order_type,
+               reference_number, reference_type, warehouse_id, warehouse_name,
+               supplier_id, supplier_name, supplier_code,
+               purchase_order_id, purchase_order_number,
+               production_order_id, production_order_number,
+               customer_id, customer_name, customer_order_number,
+               order_date,
+               expected_arrival_date, actual_arrival_date, received_date,
+               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+               total_items, total_quantity, received_quantity, rejected_quantity,
+               total_weight, total_volume, total_value, total_value AS total_amount,
+               priority, status, receiver, receiver_id, receiving_team,
+               inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+               notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+               created_by, updated_by, approved_by, approved_at, organization_id,
                created_at, updated_at 
         FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
@@ -465,12 +511,22 @@ pub async fn update_inbound_order(
             warehouse_id = $2, supplier_id = $3, expected_arrival_date = $4, actual_arrival_date = $5, 
             total_value = $6, status = $7, notes = $8, updated_at = $9
         WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-                  supplier_id, supplier_name, order_date, 
-                  expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-                  total_value as total_amount, total_quantity, received_quantity,
-                  status, notes as remarks,
-                  created_by, approved_by, approved_at,
+        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  supplier_id, supplier_name, supplier_code,
+                  purchase_order_id, purchase_order_number,
+                  production_order_id, production_order_number,
+                  customer_id, customer_name, customer_order_number,
+                  order_date,
+                  expected_arrival_date, actual_arrival_date, received_date,
+                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+                  total_items, total_quantity, received_quantity, rejected_quantity,
+                  total_weight, total_volume, total_value, total_value AS total_amount,
+                  priority, status, receiver, receiver_id, receiving_team,
+                  inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+                  notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+                  created_by, updated_by, approved_by, approved_at, organization_id,
                   created_at, updated_at
         "#),
     )
@@ -487,11 +543,19 @@ pub async fn update_inbound_order(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(order) => (
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("入库订单事务提交失败: {}", e);
+                    return Json(api_error(500, "入库订单更新失败"));
+                }
+            }
+            (
             Json(ApiResponse::success(order.clone(), "入库订单更新成功")),
             "success",
             None,
-        ),
+            )
+        },
         Err(e) => {
             tracing::error!("更新入库订单失败: {}", e);
             (
@@ -995,12 +1059,22 @@ pub async fn confirm_inbound_order(
         UPDATE wms.inbound_orders SET
             status = 'confirmed', updated_at = $2
         WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
-        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-                  supplier_id, supplier_name, order_date, 
-                  expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-                  total_value as total_amount, total_quantity, received_quantity,
-                  status, notes as remarks,
-                  created_by, approved_by, approved_at,
+        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  supplier_id, supplier_name, supplier_code,
+                  purchase_order_id, purchase_order_number,
+                  production_order_id, production_order_number,
+                  customer_id, customer_name, customer_order_number,
+                  order_date,
+                  expected_arrival_date, actual_arrival_date, received_date,
+                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+                  total_items, total_quantity, received_quantity, rejected_quantity,
+                  total_weight, total_volume, total_value, total_value AS total_amount,
+                  priority, status, receiver, receiver_id, receiving_team,
+                  inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+                  notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+                  created_by, updated_by, approved_by, approved_at, organization_id,
                   created_at, updated_at
         "#
     ))
@@ -1010,11 +1084,19 @@ pub async fn confirm_inbound_order(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(order) => (
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("入库订单事务提交失败: {}", e);
+                    return Json(api_error(500, "入库订单确认失败"));
+                }
+            }
+            (
             Json(ApiResponse::success(order.clone(), "入库订单确认成功")),
             "success",
             None,
-        ),
+            )
+        },
         Err(e) => {
             tracing::error!("确认入库订单失败: {}", e);
             (
@@ -1204,12 +1286,22 @@ pub async fn receive_inbound_order(
     let order_result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-               supplier_id, supplier_name, order_date, 
-               expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-               total_value as total_amount, total_quantity, received_quantity,
-               status, notes as remarks,
-               created_by, approved_by, approved_at,
+        SELECT id, organization_id AS tenant_id, order_number, order_type,
+               reference_number, reference_type, warehouse_id, warehouse_name,
+               supplier_id, supplier_name, supplier_code,
+               purchase_order_id, purchase_order_number,
+               production_order_id, production_order_number,
+               customer_id, customer_name, customer_order_number,
+               order_date,
+               expected_arrival_date, actual_arrival_date, received_date,
+               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+               total_items, total_quantity, received_quantity, rejected_quantity,
+               total_weight, total_volume, total_value, total_value AS total_amount,
+               priority, status, receiver, receiver_id, receiving_team,
+               inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+               notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+               created_by, updated_by, approved_by, approved_at, organization_id,
                created_at, updated_at
         FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
@@ -1345,12 +1437,22 @@ pub async fn complete_inbound_order(
         UPDATE wms.inbound_orders SET
             status = 'completed', updated_at = $2
         WHERE id = $1 AND status = 'received' AND deleted_at IS NULL
-        RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
-                  supplier_id, supplier_name, order_date, 
-                  expected_arrival_date as expected_arrival, actual_arrival_date as actual_arrival, 
-                  total_value as total_amount, total_quantity, received_quantity,
-                  status, notes as remarks,
-                  created_by, approved_by, approved_at,
+        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  supplier_id, supplier_name, supplier_code,
+                  purchase_order_id, purchase_order_number,
+                  production_order_id, production_order_number,
+                  customer_id, customer_name, customer_order_number,
+                  order_date,
+                  expected_arrival_date, actual_arrival_date, received_date,
+                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  carrier, carrier_code, vehicle_number, driver_name, driver_phone,
+                  total_items, total_quantity, received_quantity, rejected_quantity,
+                  total_weight, total_volume, total_value, total_value AS total_amount,
+                  priority, status, receiver, receiver_id, receiving_team,
+                  inspection_required, inspection_status, inspection_result, inspector, inspection_date,
+                  notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
+                  created_by, updated_by, approved_by, approved_at, organization_id,
                   created_at, updated_at
         "#
     ))
@@ -1360,11 +1462,19 @@ pub async fn complete_inbound_order(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(order) => (
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("入库订单事务提交失败: {}", e);
+                    return Json(api_error(500, "入库订单完成失败"));
+                }
+            }
+            (
             Json(ApiResponse::success(order.clone(), "入库订单完成")),
             "success",
             None,
-        ),
+            )
+        },
         Err(e) => {
             tracing::error!("完成入库订单失败: {}", e);
             (
