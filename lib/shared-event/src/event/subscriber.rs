@@ -2,6 +2,8 @@ use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
 use super::master_data::{MasterDataDomain, MasterDataEvent};
+use super::schema_registry::SchemaRegistry;
+use super::versioning::EventVersionRegistry;
 use futures_util::StreamExt;
 use redis::Client;
 use std::env;
@@ -24,6 +26,8 @@ pub struct EventSubscriber {
     _service_name: String,
     handlers: Vec<(Vec<EventType>, EventHandler)>,
     mdm_handlers: Vec<(Vec<MasterDataDomain>, MasterDataEventHandler)>,
+    schema_registry: Option<Arc<SchemaRegistry>>,
+    event_versions: Option<Arc<EventVersionRegistry>>,
 }
 
 impl EventSubscriber {
@@ -39,7 +43,25 @@ impl EventSubscriber {
             _service_name: service_name.to_string(),
             handlers: Vec::new(),
             mdm_handlers: Vec::new(),
+            schema_registry: None,
+            event_versions: None,
         })
+    }
+
+    /// 启用事件 Schema 校验（消费回调前校验 payload，校验失败进入重试/DLQ 流程）
+    ///
+    /// 透传到内部 StreamEventSubscriber（仅 Stream 模式生效）。
+    pub fn with_schema_registry(mut self, registry: Arc<SchemaRegistry>) -> Self {
+        self.schema_registry = Some(registry);
+        self
+    }
+
+    /// 启用事件版本兼容性检查（消费前检查事件类型是否已废弃）
+    ///
+    /// 透传到内部 StreamEventSubscriber（仅 Stream 模式生效）。
+    pub fn with_event_versions(mut self, registry: Arc<EventVersionRegistry>) -> Self {
+        self.event_versions = Some(registry);
+        self
     }
 
     /// 订阅特定事件类型
@@ -101,6 +123,13 @@ impl EventSubscriber {
 
             match stream_sub_result {
                 Ok(mut stream_sub) => {
+                    // 透传 Schema / 版本注册表（Stream 模式消费校验）
+                    if let Some(registry) = &self.schema_registry {
+                        stream_sub = stream_sub.with_schema_registry(registry.clone());
+                    }
+                    if let Some(versions) = &self.event_versions {
+                        stream_sub = stream_sub.with_event_versions(versions.clone());
+                    }
                     // 将标准事件 handlers 转发到 StreamEventSubscriber
                     for (event_types, handler) in &self.handlers {
                         for event_type in event_types {

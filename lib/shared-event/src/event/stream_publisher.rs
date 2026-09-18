@@ -56,6 +56,7 @@ pub fn validate_event_for_publish(
 }
 
 /// Redis Stream 事件发布者
+#[derive(Clone)]
 pub struct StreamEventPublisher {
     redis_client: Client,
     service_name: String,
