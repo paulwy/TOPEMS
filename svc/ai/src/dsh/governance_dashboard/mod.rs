@@ -606,7 +606,7 @@ pub struct GovernanceDashboardGenerator {
 
 /// 审计日志条目（简化版）
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct AuditLogEntry {
+pub struct AuditLogEntry {
     /// 日志 ID
     log_id: String,
     /// 用户 ID
