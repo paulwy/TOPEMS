@@ -103,18 +103,18 @@ describe('LIMS Module API Tests', () => {
       expect(apiClient.lims.get).toHaveBeenCalledWith('/samples/sample-001/lifecycle');
     });
 
-    it('transitionSampleStage should call POST /samples/:id/transition-stage with data', async () => {
+    it('transitionSampleStage should call POST /samples/:id/stage/:to_stage with data', async () => {
       const { sampleApi } = await import('../sample');
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
-      const data = { stage: 'testing', operator: 'John' };
+      const data = { target_stage: 'testing', operator: 'John' };
       await sampleApi.transitionSampleStage(
         'sample-001',
         data as unknown as TransitionStageRequest
       );
       expect(apiClient.lims.post).toHaveBeenCalledWith(
-        '/samples/sample-001/transition-stage',
-        data
+        '/samples/sample-001/stage/testing',
+        { operator: 'John', notes: undefined }
       );
     });
 
@@ -191,13 +191,13 @@ describe('LIMS Module API Tests', () => {
       });
     });
 
-    it('submitResult should call POST /tasks/:id/submit-result with data', async () => {
+    it('submitResult should call POST /tasks/:id/result with data', async () => {
       const { taskApi } = await import('../inspection');
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { result: 'pass', conclusion: 'qualified', inspector: 'John' };
       await taskApi.submitResult('task-001', data);
-      expect(apiClient.lims.post).toHaveBeenCalledWith('/tasks/task-001/submit-result', data);
+      expect(apiClient.lims.post).toHaveBeenCalledWith('/tasks/task-001/result', data);
     });
   });
 

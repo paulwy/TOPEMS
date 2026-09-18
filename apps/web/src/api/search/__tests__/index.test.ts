@@ -72,7 +72,7 @@ describe('searchApi', () => {
       expect(result.data.results).toHaveLength(1);
       expect(result.data.results[0].title).toBe('API Result');
       expect(apiClient.search.get).toHaveBeenCalledWith(
-        '/?q=test&limit=20',
+        '?keyword=test&page_size=20',
         expect.objectContaining({})
       );
     });
@@ -83,7 +83,7 @@ describe('searchApi', () => {
       await searchApi.globalSearch('test', 10, abortController.signal);
 
       expect(apiClient.search.get).toHaveBeenCalledWith(
-        '/?q=test&limit=10',
+        '?keyword=test&page_size=10',
         expect.objectContaining({
           signal: abortController.signal,
         })
@@ -101,7 +101,7 @@ describe('searchApi', () => {
 
       await searchApi.globalSearch('myquery', 50);
 
-      expect(apiClient.search.get).toHaveBeenCalledWith('/?q=myquery&limit=50', expect.any(Object));
+      expect(apiClient.search.get).toHaveBeenCalledWith('?keyword=myquery&page_size=50', expect.any(Object));
     });
 
     it('should reject promise on API error (bubbles up)', async () => {
@@ -123,13 +123,13 @@ describe('searchApi', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.results).toEqual([]);
-      expect(apiClient.search.get).toHaveBeenCalledWith('/?q=&limit=20', expect.any(Object));
+      expect(apiClient.search.get).toHaveBeenCalledWith('?keyword=&page_size=20', expect.any(Object));
     });
 
     it('should accept custom limit', async () => {
       await searchApi.globalSearch('keyword', 50);
 
-      expect(apiClient.search.get).toHaveBeenCalledWith('/?q=keyword&limit=50', expect.any(Object));
+      expect(apiClient.search.get).toHaveBeenCalledWith('?keyword=keyword&page_size=50', expect.any(Object));
     });
   });
 });

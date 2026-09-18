@@ -76,18 +76,18 @@ describe('Monitor Module API Tests', () => {
       expect(apiClient.monitor.get).toHaveBeenCalledWith('/alerts/alert-001');
     });
 
-    it('acknowledgeAlert should call PUT /alerts/:id/acknowledge', async () => {
+    it('acknowledgeAlert should call POST /alerts/:id/acknowledge with note', async () => {
       const { monitorApi } = await import('../index');
       await monitorApi.acknowledgeAlert('alert-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.monitor.put).toHaveBeenCalledWith('/alerts/alert-001/acknowledge');
+      expect(apiClient.monitor.post).toHaveBeenCalledWith('/alerts/alert-001/acknowledge', { note: undefined });
     });
 
-    it('resolveAlert should call PUT /alerts/:id/resolve', async () => {
+    it('resolveAlert should call POST /alerts/:id/resolve with reason', async () => {
       const { monitorApi } = await import('../index');
       await monitorApi.resolveAlert('alert-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.monitor.put).toHaveBeenCalledWith('/alerts/alert-001/resolve');
+      expect(apiClient.monitor.post).toHaveBeenCalledWith('/alerts/alert-001/resolve', { reason: undefined });
     });
 
     it('getPerformanceReport should call GET /reports/performance with params', async () => {
