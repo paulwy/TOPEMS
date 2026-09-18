@@ -126,8 +126,8 @@ pub async fn list_approval_tasks(
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
 
-    let status = query.status.clone();
-    let assignee_id = query.assignee_id.clone();
+    let status = query.status.clone().filter(|s| !s.is_empty());
+    let assignee_id = query.assignee_id.clone().filter(|s| !s.is_empty());
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_workflow_tasks t
@@ -136,8 +136,8 @@ pub async fn list_approval_tasks(
            WHERE ($1::text IS NULL OR t.status = $1)
              AND ($2::text IS NULL OR t.assignee_id = $2::UUID)"#,
     )
-    .bind(status.clone().unwrap_or_default())
-    .bind(assignee_id.clone().unwrap_or_default())
+    .bind(status.clone())
+    .bind(assignee_id.clone())
     .fetch_one(&state.pool)
     .await
     {
@@ -160,8 +160,8 @@ pub async fn list_approval_tasks(
            ORDER BY t.created_at DESC
            LIMIT $3 OFFSET $4"#,
     )
-    .bind(status.clone().unwrap_or_default())
-    .bind(assignee_id.clone().unwrap_or_default())
+    .bind(status.clone())
+    .bind(assignee_id.clone())
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
