@@ -249,3 +249,29 @@
 - [x] 决策记录：5 个前置恢复迁移与防御化修改仅属空库重建路径，5432 不同步重放（表结构已完整）
 - [x] 5432 后续新迁移一律走 `DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems sqlx migrate run --source database/migrations` 应用，双库版本保持一致（已执行：5432/5433 均 162 installed、0 pending，同源管理）
 - [x] 旧库结构缺口闭环（2026-09-18：000017 补建 public.approvals/approval_records（5433 已有→无操作、5432 缺失→建表，14/10 列对齐 5433）；000018 补 approval_records.deleted_at（instance.rs 以 ar.deleted_at IS NULL 过滤，双库同缺）——5432/5433 embedded 路径（search_path=flow,public）instance.rs 带用户过滤 EXISTS 查询实测通过）
+
+
+---
+
+## 🧪 2026-09-19 双库版本统一与残留清除 ✅
+
+### 迁移版本统一（5432 补齐 35 条）
+- [x] 诊断：5432 权威库停在 20260918000028（173 条），落后 5433/文件 35 条（20260918000029-63）
+- [x] 5432 补跑 35 条全量迁移（顺带修复 shared/plugin schema 权限——owner 统一解决、bi.audit_logs.action 枚举默认 'read'）
+- [x] 最终双库 _sqlx_migrations 均 208 条，逐条（version+checksum+success）完全一致
+
+### 其他版本彻底清除
+- [x] postgresql@15/@16 残留清除：数据目录（83M+90M）删除、@16 launchd 服务卸载 + plist 删除、brew 缓存无残留——本机仅剩 postgresql@18（5432）
+- [x] 5433 容器内无孤儿记录（14 条数字编号 0-13 对应真实旧迁移文件 000-013，双库一致保留）
+
+### 相关修改（结构/权限对齐）
+- [x] owner 统一：5432（19 schema + 全部表/序列）与 5433（58 schema + 891 表）全部 → topems_app
+- [x] 结构对齐（5433 → 5432）：补 2013 列（按 5432 pg_attribute 定义）、pg_dump 同步 136 张缺失表（runtime bootstrap 建的 analytics/portal 等）、PostGIS 对象补齐（spatial_ref_sys 表 + 8500 行 SRID 数据 + geometry/geography 视图）
+- [x] 删除 5433 空表多余 6 列（bi.report_subscriptions）
+- [x] 保留说明：5433 独有 2 列（mes.production_orders.order_no/source，76 行数据在用，未删以免丢数据）
+
+### 最终验收
+- [x] 迁移记录 208/208 逐条一致；表 1135/1135（0 差异）；列 5432 独有 0；owner 全 topems_app
+- [x] 服务 8099 全端点 200（正确路径：ticket=/api/ticket、flow=/api/core/flow；404 均为路径猜测错误非服务缺陷）
+- [x] 核心主数据行数双库一致（users 48/roles 19/permissions 973/menus 184/tenants 642）；sessions/refresh_tokens 为运行时动态数据（5433 历史会话残留，差异正常）
+- [ ] staging 生产部署验证（依赖 staging 环境，本地无法执行）
