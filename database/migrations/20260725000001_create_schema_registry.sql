@@ -5,6 +5,13 @@
 --   1. schema_registry 存储 EntitySchema 配置（JSON）
 --   2. dynamic_data 存储根据 Schema 创建的业务数据（JSONB）
 --   3. 后端根据 Schema JSON 动态创建专用数据表（dynamic_<name>）
+--
+-- 2026-09-18 防御化修补（空库重建链卡点修复）：
+--   空库重建时 master-data schema_defense 阶段 0 会先创建仅含 id 的裸骨架表，
+--   原脚本 CREATE TABLE IF NOT EXISTS 静默跳过后再 CREATE INDEX 即报
+--   "column does not exist"，导致迁移链永久卡死在此文件、后续迁移全部无法应用。
+--   现改为：CREATE TABLE IF NOT EXISTS 之后逐列 ADD COLUMN IF NOT EXISTS 补齐
+--   结构，再建索引；对已存在且结构完整的表零副作用，对裸骨架表自动补齐。
 
 -- ============ schema_registry 表 ============
 CREATE TABLE IF NOT EXISTS schema_registry (
@@ -19,6 +26,19 @@ CREATE TABLE IF NOT EXISTS schema_registry (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 防御化：表已存在（裸骨架/旧结构）时逐列补齐
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS name VARCHAR(100) NOT NULL;
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS title VARCHAR(200) NOT NULL;
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS schema_json JSONB NOT NULL;
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS table_name VARCHAR(100) NOT NULL;
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE schema_registry ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+-- 与 CREATE TABLE 内联 UNIQUE 约束同名，两路径均幂等
+CREATE UNIQUE INDEX IF NOT EXISTS schema_registry_name_key ON schema_registry(name);
 
 CREATE INDEX IF NOT EXISTS idx_schema_registry_name ON schema_registry(name);
 CREATE INDEX IF NOT EXISTS idx_schema_registry_active ON schema_registry(is_active);
@@ -37,6 +57,12 @@ CREATE TABLE IF NOT EXISTS dynamic_data (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 防御化：表已存在（裸骨架/旧结构）时逐列补齐（FK 仅在新建路径内联创建）
+ALTER TABLE dynamic_data ADD COLUMN IF NOT EXISTS schema_id UUID NOT NULL;
+ALTER TABLE dynamic_data ADD COLUMN IF NOT EXISTS data_json JSONB NOT NULL;
+ALTER TABLE dynamic_data ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE dynamic_data ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_dynamic_data_schema_id ON dynamic_data(schema_id);
 CREATE INDEX IF NOT EXISTS idx_dynamic_data_created_at ON dynamic_data(created_at DESC);

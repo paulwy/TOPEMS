@@ -189,8 +189,8 @@
       （新库重建由迁移体系自动对齐 PO 类型等）
 - [x] RLS 缺口清零：tenant_id 表全量启用 RLS（6 张：crm/hrm/scm master_data_refs、scm.sync_records、
       mes.work_reports、wms.labor_shifts）——迁移 20260917000004，全库 tenant 表 RLS 覆盖 100%
-- [ ] 遗留 B：DB 补列仅改容器库 5433，未入迁移体系/未同步 5432（双库对齐主线补齐迁移文件）
-- [ ] 遗留 C：bi.report_stats 视图因改列类型被 DROP，需按代码 schema_defense 引用重建
+- [x] 遗留 B：DB 补列纳入迁移体系并双库对齐（2026-09-18：迁移 20260918000014_align_business_tables.sql——mes 10 张业务表完整列（schema_defense 权威，343 条幂等 ADD COLUMN）+ finance.budgets 建表（operational.rs 契约 13 列）+ pm.budgets 对齐；5432/5433 双库应用并核验一致（production_orders 45 列/equipment 59 列/finance.budgets 13/pm.budgets 12）；根因修正——finance 服务 SEARCH_PATH=finance,public 而 5432 无 finance schema → budgets 解析失败 500，迁移补 CREATE SCHEMA finance）
+- [ ] 遗留 C：bi.report_stats 视图无法重建（2026-09-18 调查完结：定义在仓库（svc/analytics/src、database/init、database/postgres、scripts、.sqlx、checksums、git 历史 git log -S）与全部 12 个库里均不存在，当前代码也不查询它们——无原始 DDL 可依，需用户提供定义或确认放弃）
 - [x] 前端路径核对：oa/announcements、workflow(core/flow)、mes、dashboard 链路全通；
       发现并修复 core/flow/instances 500（public 影子表缺列，迁移 20260917000005 补齐）
 - [ ] 遗留：同名多 schema 表收敛（public.approvals/approval_records/core_workflow_tasks 等影子表，
@@ -202,8 +202,7 @@
 - [x] C 类收尾：flow 权威化——public 影子 5 张 DROP（000007）+ core_workflows 数据迁移 flow（000008）；
       tasks 补列/时间戳 TIMESTAMPTZ；core/flow 五端点 + 冒烟全 200（5775c709e）
 - [x] 收尾：public.core_workflows 影子已清（FK 重建指向 flow + archive 解除，迁移 000009）
-- [ ] 残留同名组（B2 候选）：announcements(erp:0/public:3)、capacities(mes/public)、contacts(crm/public)、budgets(finance/pm)
-      待确认权威并收敛（announcements 数据在 public、erp 空表——疑似 flow 同款双读分叉）
+- [x] 残留同名组 B2 收敛：budgets(finance/pm)（2026-09-18：非影子分叉——pm.budgets（项目预算，schema_defense 权威 12 列）与 finance.budgets（部门预算，operational.rs 契约 13 列）是两张合法表；finance 裸查询靠 SEARCH_PATH=finance,public 解析，5432 缺 finance schema 致 500，迁移 000014 建 finance schema+表后双库闭环；pm.budget_items 无权威定义不建；budget.rs 新模块未挂载（dead code）不做列）待确认权威并收敛：announcements(erp:0/public:3)、capacities(mes/public)、contacts(crm/public)（2026-09-18：与 budgets 同法处理）
 
 ---
 
@@ -212,6 +211,13 @@
 ### GitHub 拉取
 - [x] 拉取最新代码至 HEAD 32b18d72c（含 DB schema 权威化/冗余收敛、unified-core mes/scm/wms 路由、wms labor/picking 模块）
 - [x] project.design 冲突按远程版本解决（measuredAt 时间戳差异，无实质内容冲突）
+
+### DB 治理收尾（2026-09-18）
+- [x] 迁移链卡死根因修复：20260725000001_create_schema_registry.sql 防御化（CREATE TABLE IF NOT EXISTS + 逐列 ADD COLUMN IF NOT EXISTS + 幂等唯一索引）——空库重建时 master-data 先建裸骨架致原脚本 CREATE INDEX 报列不存在、后续 100+ 迁移全部无法应用；修补后 checksums.txt 重新生成（152 条，新哈希 ca8be1cb8a14717d8203aea4b0697989ea9657117fb1cbae846bf91e10edf4f6）
+- [x] 5433 全链验证推进：schema_registry 卡点后一口气再应用 16 个迁移（20260725000002→20260821000001）
+- [ ] 新发现系统性问题（空库重建遗留缺口）：20260821200000_v253_unify_schema_nullability.sql（8000+ 行遗留对齐迁移）在行 7942 因 equipment_inspections 缺 equipment_id 列失败——v253 依赖的遗留业务表 DDL 在 2026-09-07 收敛时从 init/postgres 移除且未完整落入迁移链（init/01_rebuild_database.sql 实际不存在，init 目录仅剩 03/04/05/07），遗留表完整结构只存在于 5432 活跃库（equipment_inspections 17 列）；修复=从 5432 抽取遗留表 DDL 前置恢复（单独项目，非本次范围）
+- [x] 遗留 B 闭环：迁移 20260918000014_align_business_tables.sql 创建并应用双库（见遗留 B 条目）
+- [x] 遗留 C 调查完结：无法重建（见遗留 C 条目）
 
 ### 全量测试修复（cargo test --workspace --lib 13216 passed / 0 failed）
 - [x] sccache 环境故障绕行：`CARGO_BUILD_RUSTC_WRAPPER=""`（sccache spawn rustc 失败，属环境问题非代码问题）
