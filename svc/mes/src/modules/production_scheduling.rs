@@ -415,7 +415,7 @@ pub async fn create_production_schedule(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_no AS order_no FROM production_orders WHERE id = $1"#,
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
             order_id
         )
         .fetch_optional(&state.pool)
