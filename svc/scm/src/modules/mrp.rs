@@ -446,11 +446,12 @@ pub async fn compute_mrp(
             GROUP BY item_code
         ) i ON m.material_code = i.item_code
         LEFT JOIN (
-            SELECT DISTINCT ON (material_code) id, name, lead_time_days, material_code
+            SELECT DISTINCT ON (sp.material_code) sp.id as id, s.name as name,
+                   s.lead_time_days as lead_time_days, sp.material_code as material_code
             FROM scm.supplier_products sp
             JOIN scm.suppliers s ON sp.supplier_id = s.id
             WHERE s.status = 'active'
-            ORDER BY material_code, sp.priority
+            ORDER BY sp.material_code, sp.priority
         ) s ON m.material_code = s.material_code
         WHERE (COALESCE(sales_orders.total, 0) + COALESCE(forecast.total, 0)) > 0
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
