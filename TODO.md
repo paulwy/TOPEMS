@@ -238,7 +238,7 @@
 - [x] StreamEventPublisher 补 Clone 派生（支持门面链式重建）
 - [x] 新增门面透传行为测试（test_facade_with_schema_registry/versions_forwards_to_stream_publisher）
 - [x] shared-event 361 passed / 0 failed（含真实 Redis Stream 端到端 发布→订阅→ACK、MDM 主数据流、Schema+版本校验、DLQ 重试）
-- [ ] 全服务切换验证：各服务启动时挂载默认 SchemaRegistry 并验证 EVENT_BUS_MODE=stream 下发布/订阅闭环（依赖完整后端环境）
+- [x] 全服务切换验证：模块化单体（:8099 连 5432）31 模块启动即挂载默认 SchemaRegistry；EVENT_BUS_MODE=stream（默认）下 Redis Stream 发布/订阅闭环实测通过（topems:stream:events:* 7+ 流、portal-bff-group 消费者组创建，2026-09-18 本地运行时验证）
 
 ---
 
