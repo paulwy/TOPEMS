@@ -320,3 +320,7 @@ scripts/rewrite-renamed-imports.cjs
 # 构建/测试产物目录（P0 整合补充）
 artifacts/
 test-results/
+# 修复报告类文档（用户要求不上传 GitHub）
+docs/MES模块问题诊断与修复报告.md
+docs/全模块共性错误审计报告.md
+docs/可空tenant_id补齐处理结果.md
