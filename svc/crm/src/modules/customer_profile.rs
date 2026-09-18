@@ -370,14 +370,15 @@ async fn add_profile_tags(
     for tag in &req.tags {
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.customer_tags (customer_id, tag, created_at)
-            VALUES ($1, $2, $3)
+            INSERT INTO crm.customer_tags (customer_id, tag, created_at, tenant_id)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (customer_id, tag) DO NOTHING
             "#,
         )
         .bind(id)
         .bind(tag)
         .bind(Utc::now())
+        .bind(topems_shared_auth::middleware::tenant::get_tenant_id_from_claims(&claims))
         .execute(&mut **txn)
         .await;
 

@@ -219,8 +219,8 @@ impl CrmEventHandlers {
 
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
-               (id, org_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, 'follow_up', $5, $6, 'scheduled', $7, TRUE, $8, $9, $9)
+               (id, org_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at, tenant_id)
+               VALUES ($1, $2, $3, $4, 'follow_up', $5, $6, 'scheduled', $7, TRUE, $8, $9, $9, $10)
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
@@ -232,6 +232,7 @@ impl CrmEventHandlers {
         .bind(now)
         .bind(follow_up_date)
         .bind(now)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await;
 

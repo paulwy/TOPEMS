@@ -231,8 +231,8 @@ pub async fn upload_media(
     let file_url = format!("/api/media/{}/{}", file_type, media_id);
 
     if let Err(e) = sqlx::query(
-        only_own_schema_query!("mobile", "INSERT INTO mobile.media_files (id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, description, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+        only_own_schema_query!("mobile", "INSERT INTO mobile.media_files (id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, description, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
     )
     .bind(media_id)
     .bind(&file_name)
@@ -243,6 +243,7 @@ pub async fn upload_media(
     .bind(&user_id)
     .bind(&description)
     .bind(Utc::now())
+    .bind(Uuid::nil())
     .execute(&pool)
     .await
     {

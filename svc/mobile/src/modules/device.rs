@@ -183,7 +183,7 @@ pub async fn register_device(
     }
 
     let device_id = Uuid::new_v4();
-    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.devices (id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())"))
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.devices (id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11)"))
         .bind(device_id)
         .bind(user_id)
         .bind(&payload.device_id)
@@ -194,6 +194,7 @@ pub async fn register_device(
         .bind(&payload.app_version)
         .bind(&payload.push_token)
         .bind(true)
+        .bind(Uuid::nil())
         .execute(&pool)
         .await
     {

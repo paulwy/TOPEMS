@@ -211,8 +211,8 @@ pub async fn create_guide(
     let now = chrono::Utc::now();
 
     let guide: Guide = match sqlx::query_as(
-        r#"INSERT INTO core_guides (id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, $9)
+        r#"INSERT INTO core_guides (id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, $9, $10)
            RETURNING id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at"#,
     )
     .bind(id)
@@ -224,6 +224,7 @@ pub async fn create_guide(
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await
     {
@@ -250,8 +251,8 @@ pub async fn add_lesson(
     let now = chrono::Utc::now();
 
     let lesson: GuideLesson = match sqlx::query_as(
-        r#"INSERT INTO core_guide_lessons (id, guide_id, title, content, duration, sort_order, is_active, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, true, $7)
+        r#"INSERT INTO core_guide_lessons (id, guide_id, title, content, duration, sort_order, is_active, created_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8)
            RETURNING id, guide_id, title, content, duration, sort_order, is_active, created_at"#,
     )
     .bind(id)
@@ -261,6 +262,7 @@ pub async fn add_lesson(
     .bind(req.duration)
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await
     {

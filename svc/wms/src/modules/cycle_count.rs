@@ -155,8 +155,8 @@ pub async fn create_cycle_count_config(
 
     let result = sqlx::query_as::<_, CycleCountConfig>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.cycle_count_configs (id, warehouse_id, location_id, material_category, count_frequency, priority_level, next_count_date, is_active, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10)
+        INSERT INTO wms.cycle_count_configs (id, warehouse_id, location_id, material_category, count_frequency, priority_level, next_count_date, is_active, created_at, updated_at, tenant_id, organization_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, '00000000-0000-0000-0000-000000000001')
         RETURNING id, warehouse_id, location_id, material_category, count_frequency, priority_level, last_count_date, next_count_date, is_active, created_at, updated_at
         "#),
     )
@@ -470,9 +470,9 @@ pub async fn generate_cycle_count(
         r#"
         INSERT INTO wms.stock_takes (id, stock_take_number, stock_take_type, warehouse_id, warehouse_name,
                                      location_id, location_code, material_code, material_name,
-                                     status, planned_date, planned_by, planned_by_id, created_at, updated_at, tenant_id)
+                                     status, planned_date, planned_by, planned_by_id, created_at, updated_at, tenant_id, organization_id)
         VALUES ($1, $2, 'cycle', $3, NULL, $4, NULL, $5, $6,
-                'planned', CURRENT_DATE, $7, $8, $9, $10, $11)
+                'planned', CURRENT_DATE, $7, $8, $9, $10, $11, '00000000-0000-0000-0000-000000000001')
         RETURNING id
         "#,
         stock_take_id,
@@ -599,8 +599,8 @@ pub async fn generate_all_cycle_counts(
             r#"
             INSERT INTO wms.stock_takes (id, stock_take_number, stock_take_type, warehouse_id,
                                          location_id, material_category, status, planned_date,
-                                         planned_by, created_at, updated_at, tenant_id)
-            VALUES ($1, $2, 'cycle', $3, $4, $5, 'planned', CURRENT_DATE, $6, $7, $8, $9)
+                                         planned_by, created_at, updated_at, tenant_id, organization_id)
+            VALUES ($1, $2, 'cycle', $3, $4, $5, 'planned', CURRENT_DATE, $6, $7, $8, $9, '00000000-0000-0000-0000-000000000001')
             RETURNING id
             "#,
             stock_take_id,

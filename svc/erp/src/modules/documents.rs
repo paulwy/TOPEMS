@@ -131,8 +131,8 @@ pub async fn create_document(
     let status = payload.status.unwrap_or_else(|| "active".to_string());
 
     let result = sqlx::query_as::<_, Document>(
-        "INSERT INTO erp.documents (title, doc_type, status, file_url, file_size, uploader, tenant_id) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7) \
+        "INSERT INTO erp.documents (title, doc_type, status, file_url, file_size, uploader) \
+         VALUES ($1, $2, $3, $4, $5, $6) \
          RETURNING *",
     )
     .bind(&payload.title)
@@ -141,7 +141,6 @@ pub async fn create_document(
     .bind(&payload.file_url)
     .bind(payload.file_size)
     .bind(&payload.uploader)
-    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 

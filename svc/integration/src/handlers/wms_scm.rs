@@ -71,8 +71,8 @@ pub async fn create_wms_scm_sync(
         "integration",
         "INSERT INTO integration.wms_scm_sync (
             id, wms_inventory_id, item_name, quantity, unit,
-            synced, sync_status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            synced, sync_status, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))
@@ -85,6 +85,7 @@ pub async fn create_wms_scm_sync(
     .bind("pending")
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await
     {
