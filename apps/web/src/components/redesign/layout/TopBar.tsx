@@ -136,7 +136,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onClick={onCommandOpen}
           aria-label='Open command palette'
         >
-          <span className='desktop-only'>{i18n.t('shared.common.search')}</span>
+          <span className='desktop-only'>{i18n.t('common.search')}</span>
           <kbd
             className='desktop-only'
             style={{
