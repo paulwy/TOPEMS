@@ -467,11 +467,11 @@ pub async fn create_production_order(
         req.product_name,
         req.product_code,
         req.quantity as i32,
-        req.planned_start_date.map(|d| d.naive_utc()),
-        req.planned_end_date.map(|d| d.naive_utc()),
+        req.planned_start_date.map(|d| d.date_naive()),
+        req.planned_end_date.map(|d| d.date_naive()),
         req.workshop_id,
         req.notes,
-        now.naive_utc(),
+        now,
         tenant_id,
     )
     .fetch_one(&mut *tx)
@@ -493,7 +493,7 @@ pub async fn create_production_order(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_no,
+        order_no: result.order_number,
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code.unwrap_or_default(),
@@ -630,11 +630,11 @@ pub async fn create_from_erp(
         req.erp_order.quantity as i32,
         req.erp_order.order_id,
         req.erp_order.order_number,
-        planned_start.naive_utc(),
-        planned_end.naive_utc(),
+        planned_start.date_naive(),
+        planned_end.date_naive(),
         req.workshop_id,
         req.notes,
-        now.naive_utc(),
+        now,
         Uuid::nil(),
     )
     .fetch_one(&mut *tx)
@@ -655,7 +655,7 @@ pub async fn create_from_erp(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_no,
+        order_no: result.order_number,
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code.unwrap_or_default(),
@@ -739,13 +739,13 @@ pub async fn get_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_number,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -755,8 +755,8 @@ pub async fn get_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "获取生产工单成功"))
         }
@@ -817,12 +817,12 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-        req.quantity.map(|v| BigDecimal::try_from(v).unwrap_or_default()),
-        req.planned_start_date.map(|d| d.naive_utc()),
-        req.planned_end_date.map(|d| d.naive_utc()),
+        req.quantity.map(|v| v as i32),
+        req.planned_start_date.map(|d| d.date_naive()),
+        req.planned_end_date.map(|d| d.date_naive()),
         req.workshop_id,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -839,13 +839,13 @@ pub async fn update_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_number,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -855,8 +855,8 @@ pub async fn update_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单更新成功"))
         }
@@ -963,8 +963,8 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
-        now.naive_utc(),
+        now.date_naive(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -981,13 +981,13 @@ pub async fn start_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_number,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -997,8 +997,8 @@ pub async fn start_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单启动成功"))
         }
@@ -1053,8 +1053,8 @@ pub async fn complete_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
-        now.naive_utc(),
+        now.date_naive(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1071,13 +1071,13 @@ pub async fn complete_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_number,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -1087,8 +1087,8 @@ pub async fn complete_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单完成成功"))
         }
@@ -1141,7 +1141,7 @@ pub async fn cancel_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1158,13 +1158,13 @@ pub async fn cancel_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_number,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -1174,8 +1174,8 @@ pub async fn cancel_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单取消成功"))
         }
@@ -1228,7 +1228,7 @@ pub async fn release_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1245,13 +1245,13 @@ pub async fn release_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_number,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -1261,8 +1261,8 @@ pub async fn release_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单发布成功"))
         }

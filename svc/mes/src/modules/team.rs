@@ -113,12 +113,12 @@ pub struct ListTeamMembersResponse {
     pub members: Vec<TeamMemberResponse>,
 }
 
-fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d))
+fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
+    dt.into().map(|d| Utc.from_utc_datetime(&d))
         .unwrap_or_else(Utc::now)
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+fn datetime_to_string<T: Into<Option<NaiveDateTime>>>(dt: T) -> String {
     naive_to_utc(dt).to_rfc3339()
 }
 

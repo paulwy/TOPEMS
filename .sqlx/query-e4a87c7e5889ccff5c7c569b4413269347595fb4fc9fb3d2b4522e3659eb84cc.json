@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Varchar"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 9,
@@ -75,13 +75,13 @@
       false,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
       false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true
+      false
     ]
   },
   "hash": "e4a87c7e5889ccff5c7c569b4413269347595fb4fc9fb3d2b4522e3659eb84cc"

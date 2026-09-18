@@ -102,11 +102,6 @@
         "ordinal": 19,
         "name": "updated_at",
         "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 20,
-        "name": "deleted_at",
-        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -142,7 +137,6 @@
       true,
       true,
       false,
-      true,
       true,
       true,
       true,

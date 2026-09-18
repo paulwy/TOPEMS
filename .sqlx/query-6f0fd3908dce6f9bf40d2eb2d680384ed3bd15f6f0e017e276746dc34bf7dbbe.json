@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE production_orders SET\n            status = 'completed',\n            completed_quantity = quantity,\n            actual_end_date = $2,\n            updated_at = $3\n        WHERE id = $1 AND status = 'in_progress'\n        RETURNING \n            id, order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at\n        ",
+  "query": "\n        UPDATE production_orders SET\n            product_name = COALESCE($2, product_name),\n            product_code = COALESCE($3, product_code),\n            quantity = COALESCE($4, quantity),\n            planned_start_date = COALESCE($5, planned_start_date),\n            planned_end_date = COALESCE($6, planned_end_date),\n            workshop_id = COALESCE($7, workshop_id),\n            notes = COALESCE($8, notes),\n            updated_at = $9\n        WHERE id = $1 AND status = 'pending'\n        RETURNING \n            id, order_number, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -10,7 +10,7 @@
       },
       {
         "ordinal": 1,
-        "name": "order_no",
+        "name": "order_number",
         "type_info": "Varchar"
       },
       {
@@ -102,8 +102,14 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Timestamp",
-        "Timestamp"
+        "Varchar",
+        "Varchar",
+        "Int4",
+        "Date",
+        "Date",
+        "Uuid",
+        "Text",
+        "Timestamptz"
       ]
     },
     "nullable": [
@@ -111,11 +117,11 @@
       false,
       null,
       false,
+      true,
+      null,
+      null,
       false,
       null,
-      null,
-      true,
-      null,
       true,
       true,
       null,
@@ -124,9 +130,9 @@
       null,
       true,
       true,
-      null,
-      null
+      false,
+      false
     ]
   },
-  "hash": "4877dfcbda8bf8cd9865e69d1f497e8bd62032804c81aa8aa8f6fc21a06f4a48"
+  "hash": "6f0fd3908dce6f9bf40d2eb2d680384ed3bd15f6f0e017e276746dc34bf7dbbe"
 }

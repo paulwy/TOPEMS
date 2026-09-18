@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO analytics_datasources (\n            id, name, source_type, status, host, database, port, username, password,\n            connection_string, sync_frequency, description, is_enabled,\n            connection_config, query_template, created_at, updated_at\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)\n        RETURNING id, name, source_type, status, host, database, port, username,\n                  connection_string, last_sync, data_volume, sync_frequency,\n                  description, is_enabled, created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO analytics_datasources (\n            id, name, source_type, status, host, database, port, username, password,\n            connection_string, sync_frequency, description, is_enabled,\n            connection_config, query_template, created_at, updated_at, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)\n        RETURNING id, name, source_type, status, host, database, port, username,\n                  connection_string, last_sync, data_volume, sync_frequency,\n                  description, is_enabled, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -102,7 +102,8 @@
         "Jsonb",
         "Text",
         "Timestamp",
-        "Timestamp"
+        "Timestamp",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -124,5 +125,5 @@
       true
     ]
   },
-  "hash": "e013b9a16731c7fde76565f057b49c7dd0acd2e4d77ff27a363a242776a560a6"
+  "hash": "dc47e1772b327aa4d591b9c893c78d26613317ee67cc4b0c7a354b1e6b3ac48d"
 }

@@ -165,14 +165,14 @@ pub struct StepCapacity {
     pub utilization_rate: f64,
 }
 
-fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    match dt {
+fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
+    match dt.into() {
         Some(d) => Utc.from_utc_datetime(&d),
         None => Utc::now(),
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+fn datetime_to_string<T: Into<Option<NaiveDateTime>>>(dt: T) -> String {
     naive_to_utc(dt).to_rfc3339()
 }
 
@@ -613,10 +613,10 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
@@ -746,10 +746,10 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
@@ -872,10 +872,10 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
@@ -1011,10 +1011,10 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),

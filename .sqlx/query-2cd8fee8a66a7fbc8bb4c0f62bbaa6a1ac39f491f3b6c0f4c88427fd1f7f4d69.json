@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO production_orders (\n            order_no, product_name, product_code, quantity,\n            status, source_order_id, source_order_number,\n            planned_start_date, planned_end_date, workshop_id, notes,\n            created_at, updated_at, tenant_id\n        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)\n        RETURNING \n            id, order_no, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at\n        ",
+  "query": "\n        SELECT \n            id, order_number, NULL::uuid AS product_id, product_name, product_code,\n            quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,\n            source_order_id, source_order_number,\n            planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,\n            actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,\n            workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at\n        FROM production_orders\n        WHERE id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -10,7 +10,7 @@
       },
       {
         "ordinal": 1,
-        "name": "order_no",
+        "name": "order_number",
         "type_info": "Varchar"
       },
       {
@@ -101,17 +101,6 @@
     ],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Varchar",
-        "Varchar",
-        "Int4",
-        "Uuid",
-        "Varchar",
-        "Timestamp",
-        "Timestamp",
-        "Uuid",
-        "Text",
-        "Timestamp",
         "Uuid"
       ]
     },
@@ -137,5 +126,5 @@
       false
     ]
   },
-  "hash": "4872b9e823fb186f50758330813bbf6397c458b2dce9bc44703486b53d682116"
+  "hash": "2cd8fee8a66a7fbc8bb4c0f62bbaa6a1ac39f491f3b6c0f4c88427fd1f7f4d69"
 }
