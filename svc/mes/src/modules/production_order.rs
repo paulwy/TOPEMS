@@ -280,7 +280,7 @@ pub async fn list_production_orders(
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -318,16 +318,16 @@ pub async fn list_production_orders(
             product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
             product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
             product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
-            quantity: big_decimal_to_f64(
-                r.try_get::<Option<BigDecimal>, _>("quantity")
-                    .ok()
-                    .flatten(),
-            ),
-            completed_quantity: big_decimal_to_f64(
-                r.try_get::<Option<BigDecimal>, _>("completed_quantity")
-                    .ok()
-                    .flatten(),
-            ),
+            quantity: r
+                .try_get::<Option<f64>, _>("quantity")
+                .ok()
+                .flatten()
+                .unwrap_or(0.0),
+            completed_quantity: r
+                .try_get::<Option<f64>, _>("completed_quantity")
+                .ok()
+                .flatten()
+                .unwrap_or(0.0),
             status: r
                 .try_get::<Option<String>, _>("status")
                 .ok()
@@ -456,7 +456,7 @@ pub async fn create_production_order(
             created_at, updated_at, tenant_id
         ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9, $10)
         RETURNING 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -493,7 +493,7 @@ pub async fn create_production_order(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_number,
+        order_no: result.order_no,
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code.unwrap_or_default(),
@@ -617,7 +617,7 @@ pub async fn create_from_erp(
             created_at, updated_at, tenant_id
         ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)
         RETURNING 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -655,7 +655,7 @@ pub async fn create_from_erp(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_number,
+        order_no: result.order_no,
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code.unwrap_or_default(),
@@ -713,7 +713,7 @@ pub async fn get_production_order(
     let result = sqlx::query!(
         r#"
         SELECT 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -739,7 +739,7 @@ pub async fn get_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_number,
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -807,7 +807,7 @@ pub async fn update_production_order(
             updated_at = $9
         WHERE id = $1 AND status = 'pending'
         RETURNING 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -839,7 +839,7 @@ pub async fn update_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_number,
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -955,7 +955,7 @@ pub async fn start_production_order(
             updated_at = $3
         WHERE id = $1 AND status = 'released'
         RETURNING 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -981,7 +981,7 @@ pub async fn start_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_number,
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -1045,7 +1045,7 @@ pub async fn complete_production_order(
             updated_at = $3
         WHERE id = $1 AND status = 'in_progress'
         RETURNING 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -1071,7 +1071,7 @@ pub async fn complete_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_number,
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -1133,7 +1133,7 @@ pub async fn cancel_production_order(
             updated_at = $2
         WHERE id = $1 AND status IN ('pending', 'released', 'paused')
         RETURNING 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -1158,7 +1158,7 @@ pub async fn cancel_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_number,
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -1220,7 +1220,7 @@ pub async fn release_production_order(
             updated_at = $2
         WHERE id = $1 AND status = 'pending'
         RETURNING 
-            id, order_number, NULL::uuid AS product_id, product_name, product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -1245,7 +1245,7 @@ pub async fn release_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_number,
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
