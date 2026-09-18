@@ -147,8 +147,8 @@ pub async fn create_plan(
 
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.training_plans (id, name, code, description, start_date, end_date, budget, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9)
+        INSERT INTO hrm.training_plans (id, name, code, description, start_date, end_date, budget, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10)
         RETURNING id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         "#),
     )
@@ -161,6 +161,7 @@ pub async fn create_plan(
     .bind(req.budget)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 
@@ -433,8 +434,8 @@ pub async fn create_course(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.training_courses (
             id, plan_id, name, code, category, level, description, duration_hours,
-            instructor_id, instructor_name, location, max_participants, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14)
+            instructor_id, instructor_name, location, max_participants, status, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15)
         RETURNING id, plan_id, name, code, category, level, description, duration_hours,
                   instructor_id, instructor_name, location, max_participants, status,
                   created_at, updated_at
@@ -454,6 +455,7 @@ pub async fn create_course(
     .bind(req.max_participants)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 

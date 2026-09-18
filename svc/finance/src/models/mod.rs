@@ -109,65 +109,94 @@ pub struct Voucher {
     pub posted_by: Option<String>,
     // === 新增字段（29 个） ===
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub voucher_number: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub year: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub month: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub total_amount: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub currency_code: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(skip)]
     pub entries: Option<Vec<VoucherLine>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub submitter_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub submitter_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub maker_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub maker_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub submitted_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub approver_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub approver_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub checker_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub checker_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub approved_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub poster_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub poster_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub bookkeeper_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub bookkeeper_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub posted_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub is_reversed: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub reverse_voucher_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub reversed_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub attachment_count: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub summary: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub source_module: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub source_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub template_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
     pub updated_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

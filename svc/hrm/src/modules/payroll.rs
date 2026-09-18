@@ -236,8 +236,8 @@ pub async fn create_payroll_run(
 
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at)
-        VALUES ($1, $2, 'draft', 0, 0, $3, $4)
+        INSERT INTO hrm.payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, 'draft', 0, 0, $3, $4, $5)
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )
@@ -245,6 +245,7 @@ pub async fn create_payroll_run(
     .bind(&req.pay_period)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 
@@ -470,8 +471,8 @@ pub async fn create_payroll_items(
 
         let _ = sqlx::query(
             only_own_schema_query!("hrm", r#"
-            INSERT INTO hrm.payroll_items (id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW(), NOW())
+            INSERT INTO hrm.payroll_items (id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW(), NOW(), $8)
             "#)
         )
         .bind(item_id)
@@ -481,6 +482,7 @@ pub async fn create_payroll_items(
         .bind(net_amount)
         .bind(deductions)
         .bind(taxes)
+        .bind(Uuid::nil())
         .execute(db)
         .await;
     }
@@ -736,8 +738,8 @@ pub async fn create_payroll_detail(
 
     let result = sqlx::query_as::<_, PayrollDetail>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.payroll_details (id, payroll_item_id, item_type, category, description, amount, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        INSERT INTO hrm.payroll_details (id, payroll_item_id, item_type, category, description, amount, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
         RETURNING id, payroll_item_id, item_type, category, description, amount, created_at
         "#)
     )
@@ -747,6 +749,7 @@ pub async fn create_payroll_detail(
     .bind(&req.category)
     .bind(&req.description)
     .bind(&req.amount)
+    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 

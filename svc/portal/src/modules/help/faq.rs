@@ -164,8 +164,8 @@ pub async fn create_faq(
     let now = chrono::Utc::now();
 
     let faq: Faq = match sqlx::query_as(
-        r#"INSERT INTO core_faqs (id, question, answer, category, views, is_active, sort_order, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, 0, true, $5, $6, $7)
+        r#"INSERT INTO core_faqs (id, question, answer, category, views, is_active, sort_order, created_at, updated_at, tenant_id)
+           VALUES ($1, $2, $3, $4, 0, true, $5, $6, $7, $8)
            RETURNING id, question, answer, category, views, is_active, sort_order, created_at, updated_at"#,
     )
     .bind(id)
@@ -175,6 +175,7 @@ pub async fn create_faq(
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await
     {

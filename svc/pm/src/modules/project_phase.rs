@@ -114,9 +114,9 @@ async fn create_phase(
         INSERT INTO pm.project_phases (
             id, project_id, name, description, sequence_number,
             start_date, end_date, progress, status, predecessor_ids,
-            created_at, updated_at
+            created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
         "#
     ))

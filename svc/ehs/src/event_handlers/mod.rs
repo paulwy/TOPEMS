@@ -223,8 +223,8 @@ impl EhsEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("public", "INSERT INTO qa_ehs_employees (id, name, email, department_id, status, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, 'active', $5, $5)
+            only_own_schema_query!("public", "INSERT INTO qa_ehs_employees (id, name, email, department_id, status, created_at, updated_at, tenant_id)
+             VALUES ($1, $2, $3, $4, 'active', $5, $5, $6)
              ON CONFLICT (id) DO UPDATE SET
                 name = COALESCE(EXCLUDED.name, qa_ehs_employees.name),
                 email = COALESCE(EXCLUDED.email, qa_ehs_employees.email),
@@ -237,6 +237,7 @@ impl EhsEventHandlers {
         .bind(email)
         .bind(department_id)
         .bind(now)
+        .bind(uuid::Uuid::nil())
         .fetch_optional(&self.db)
         .await;
 

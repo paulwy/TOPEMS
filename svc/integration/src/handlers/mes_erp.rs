@@ -85,8 +85,8 @@ pub async fn create_mes_erp_sync(
         "integration",
         "INSERT INTO integration.mes_erp_sync (
             id, mes_order_id, order_number, product_name, quantity,
-            synced, sync_status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            synced, sync_status, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, mes_order_id, erp_order_id, order_number, product_name, quantity,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))
@@ -99,6 +99,7 @@ pub async fn create_mes_erp_sync(
     .bind("pending")
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await
     {

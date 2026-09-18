@@ -266,9 +266,9 @@ pub async fn create_discrepancy(
             id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
             system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
             adjustment_quantity, adjustment_status, reason, notes, created_at, updated_at,
-            tenant_id
+            tenant_id, organization_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16, '00000000-0000-0000-0000-000000000001')
         RETURNING id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -611,9 +611,9 @@ pub async fn process_stock_take_discrepancies(
             INSERT INTO wms.discrepancy_records (
                 id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                 system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
-                adjustment_quantity, adjustment_status, created_at, updated_at, tenant_id
+                adjustment_quantity, adjustment_status, created_at, updated_at, tenant_id, organization_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, 'pending', $11, $11, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, 'pending', $11, $11, $12, '00000000-0000-0000-0000-000000000001')
             RETURNING id
             "#,
             discrepancy_id,

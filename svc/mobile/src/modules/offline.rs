@@ -97,7 +97,7 @@ pub async fn sync_offline_data(
 
     let sync_id = Uuid::new_v4();
 
-    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.offline_sync_records (id, user_id, sync_type, sync_data, status, synced_count, failed_count) VALUES ($1, $2, $3, $4, $5, $6, $7)"))
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.offline_sync_records (id, user_id, sync_type, sync_data, status, synced_count, failed_count, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"))
         .bind(sync_id)
         .bind(user_id)
         .bind(&payload.sync_type)
@@ -105,6 +105,7 @@ pub async fn sync_offline_data(
         .bind("pending")
         .bind(0)
         .bind(0)
+        .bind(Uuid::nil())
         .execute(&pool)
         .await
     {

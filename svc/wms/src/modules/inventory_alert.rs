@@ -987,8 +987,8 @@ pub async fn create_alert_rule(
         r#"
         INSERT INTO wms.inventory_alert_rules (id, rule_name, alert_type, warehouse_id,
                                                material_code, threshold_value, severity,
-                                               enabled, remarks, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                                               enabled, remarks, created_at, updated_at, tenant_id, organization_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, '00000000-0000-0000-0000-000000000001')
         RETURNING *
         "#
     ))

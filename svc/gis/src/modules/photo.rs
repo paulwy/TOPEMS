@@ -67,19 +67,42 @@ pub async fn create_location_photo(
     }
     let taken_at = payload.taken_at.unwrap_or_else(Utc::now);
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
+    // description：优先 caption；否则把 photo_type 与 tags 拼成一段文本
+    let description: Option<String> = match &payload.caption {
+        Some(c) if !c.is_empty() => Some(c.clone()),
+        _ => {
+            let mut parts: Vec<String> = Vec::new();
+            if !payload.photo_type.is_empty() {
+                parts.push(payload.photo_type.clone());
+            }
+            if let Some(tags) = &payload.tags {
+                let tags_str = tags.join(", ");
+                if !tags_str.is_empty() {
+                    parts.push(tags_str);
+                }
+            }
+            if parts.is_empty() {
+                None
+            } else {
+                Some(parts.join(" - "))
+            }
+        }
+    };
+    // 真实表 position 为 jsonb NOT NULL，前端 DTO 无位置字段，先写空对象占位
+    let position = serde_json::json!({});
     match sqlx::query_as::<_, LocationPhoto>(
         only_own_schema_query!("gis", r#"
-        INSERT INTO gis.location_photos (location_id, photo_url, photo_type, caption, taken_at, tags, tenant_id)
+        INSERT INTO gis.location_photos (map_id, photo_url, description, taken_by, taken_at, position, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#),
     )
     .bind(payload.location_id)
     .bind(&payload.photo_url)
-    .bind(&payload.photo_type)
-    .bind(&payload.caption)
+    .bind(&description)
+    .bind(&claims.username)
     .bind(taken_at)
-    .bind(&payload.tags)
+    .bind(&position)
     .bind(tenant_id)
     .fetch_one(&pool)
     .await

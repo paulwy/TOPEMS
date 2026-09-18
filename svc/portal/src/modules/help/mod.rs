@@ -212,10 +212,11 @@ async fn seed_help_data(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for (question, answer, category) in &faqs {
-        sqlx::query(r#"INSERT INTO core_faqs (question, answer, category) VALUES ($1, $2, $3)"#)
+        sqlx::query(r#"INSERT INTO core_faqs (question, answer, category, tenant_id) VALUES ($1, $2, $3, $4)"#)
             .bind(*question)
             .bind(*answer)
             .bind(*category)
+            .bind(uuid::Uuid::nil())
             .execute(pool)
             .await?;
     }
@@ -309,13 +310,14 @@ async fn seed_help_data(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     for (title, description, category, duration, lessons_count) in &guides {
         sqlx::query(
-            r#"INSERT INTO core_guides (title, description, category, duration, lessons_count) VALUES ($1, $2, $3, $4, $5)"#,
+            r#"INSERT INTO core_guides (title, description, category, duration, lessons_count, tenant_id) VALUES ($1, $2, $3, $4, $5, $6)"#,
         )
         .bind(*title)
         .bind(*description)
         .bind(*category)
         .bind(*duration)
         .bind(*lessons_count)
+        .bind(uuid::Uuid::nil())
         .execute(pool)
         .await?;
     }

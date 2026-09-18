@@ -299,8 +299,8 @@ pub async fn create_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13)
+        INSERT INTO hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13, $14)
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#)
     )
@@ -317,6 +317,7 @@ pub async fn create_job_opening(
     .bind(&req.salary_max)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 
@@ -676,8 +677,8 @@ pub async fn create_candidate(
 
     let result = sqlx::query_as::<_, Candidate>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'new', $9, $10)
+        INSERT INTO hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'new', $9, $10, $11)
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         "#)
     )
@@ -691,6 +692,7 @@ pub async fn create_candidate(
     .bind(&req.source)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 
@@ -965,8 +967,8 @@ pub async fn create_interview(
 
     let result = sqlx::query_as::<_, Interview>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8)
+        INSERT INTO hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#)
     )
@@ -978,6 +980,7 @@ pub async fn create_interview(
     .bind(duration)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 

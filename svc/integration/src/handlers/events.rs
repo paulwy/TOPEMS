@@ -163,8 +163,8 @@ pub async fn create_event(
     match sqlx::query_as::<_, IntegrationEvent>(only_own_schema_query!(
         "integration",
         "INSERT INTO integration.integration_events (
-            id, source_system, target_system, event_type, source_record_id, payload
-        ) VALUES ($1, $2, $3, $4, $5, $6)
+            id, source_system, target_system, event_type, source_record_id, payload, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, source_system, target_system, event_type, source_record_id,
                   target_record_id, payload, status, error_message, synced_at, created_at"
     ))
@@ -174,6 +174,7 @@ pub async fn create_event(
     .bind(req.event_type)
     .bind(source_uuid)
     .bind(req.payload)
+    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await
     {

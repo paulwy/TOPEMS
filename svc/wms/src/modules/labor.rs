@@ -439,7 +439,7 @@ pub async fn labor_performance_dashboard(
 #[derive(Debug, Clone, Serialize, FromRow)]
 pub struct LaborShift {
     pub id: Uuid,
-    pub org_id: Uuid,
+    pub organization_id: Uuid,
     pub tenant_id: Uuid,
     pub user_id: Uuid,
     pub user_name: Option<String>,
@@ -486,7 +486,7 @@ pub async fn list_labor_shifts(
     let rows = sqlx::query_as::<_, LaborShift>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, org_id, tenant_id, user_id, user_name, shift_date,
+        SELECT id, organization_id, tenant_id, user_id, user_name, shift_date,
                start_time, end_time, warehouse_id, zone, status,
                tasks_assigned, tasks_completed, created_at
         FROM wms.labor_shifts
@@ -544,21 +544,21 @@ pub async fn create_labor_shift(
     }
     let tenant_id = Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or(""))
         .unwrap_or_else(|_| Uuid::nil());
-    let org_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
+    let organization_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
 
     let row = sqlx::query_as::<_, LaborShift>(only_own_schema_query!(
         "wms",
         r#"
         INSERT INTO wms.labor_shifts
-            (org_id, tenant_id, user_id, user_name, shift_date, start_time, end_time,
+            (organization_id, tenant_id, user_id, user_name, shift_date, start_time, end_time,
              warehouse_id, zone, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, org_id, tenant_id, user_id, user_name, shift_date,
+        RETURNING id, organization_id, tenant_id, user_id, user_name, shift_date,
                   start_time, end_time, warehouse_id, zone, status,
                   tasks_assigned, tasks_completed, created_at
         "#
     ))
-    .bind(org_id)
+    .bind(organization_id)
     .bind(tenant_id)
     .bind(req.user_id)
     .bind(&req.user_name)
