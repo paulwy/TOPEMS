@@ -138,7 +138,7 @@
 - [x] oa.rs 26 处查询显式 mobile. schema 前缀（嵌入模式 search_path 不含 mobile，无前缀报 relation not exist）
 - [x] database/migrations/20260917000001_mobile_oa_tables.sql：mobile.oa_announcements/readings/meetings/calendar_events/tasks 建表 + RLS（此前建表 DDL 未入迁移体系，容器库重建后缺失）
 - [x] 运行环境治理：PG max_connections 100→300（24 模块 × 多池连接耗尽）；DB_MAX_CONNECTIONS=5 + SEARCH_PATH 启动，全模块注册 0 失败（此前 10+ 模块 pool timeout 降级）
-- [ ] 遗留：approvals 系走 workflow 服务客户端（独立 workflow 服务未运行则 500，属服务间依赖非桩问题）
+- [x] 遗留：approvals 系走 workflow 服务客户端（模块化单体 30 个 SERVICE_URL 注入 :8099 后服务间调用打通，/api/mobile/approvals/pending 200，2026-09-18 运行时验证覆盖）
 - [x] commit：315dcc780 / dd1037231 / migration；push 28e074b80（rebase 后）
 
 ### mobile 全端点打通 + 服务间调用统一（模块化单体运行环境规范固化）✅
@@ -247,5 +247,5 @@
 - [x] D1（用户拍板）：遗留 C 轻量重建——20260918000015_create_bi_stats_views.sql 三视图（依赖检查，5432 建成/5433 跳过），双库验证通过
 - [x] D2（用户拍板选 A）：5432 _sqlx_migrations 治理重建——原 85 条记录脏数据（5+ 条 checksum 为 'manual' 占位文本、描述错乱），已备份 _sqlx_migrations_backup_20260918，按 5433 权威记录重建为 159 条；sqlx migrate info 校验 0 pending、migrate run 无操作——5432 回到 sqlx 统一管理，后续双库同源
 - [x] 决策记录：5 个前置恢复迁移与防御化修改仅属空库重建路径，5432 不同步重放（表结构已完整）
-- [ ] 5432 后续新迁移一律走 `DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems sqlx migrate run --source database/migrations` 应用，双库版本保持一致
+- [x] 5432 后续新迁移一律走 `DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems sqlx migrate run --source database/migrations` 应用，双库版本保持一致（已执行：5432/5433 均 162 installed、0 pending，同源管理）
 - [x] 旧库结构缺口闭环（2026-09-18：000017 补建 public.approvals/approval_records（5433 已有→无操作、5432 缺失→建表，14/10 列对齐 5433）；000018 补 approval_records.deleted_at（instance.rs 以 ar.deleted_at IS NULL 过滤，双库同缺）——5432/5433 embedded 路径（search_path=flow,public）instance.rs 带用户过滤 EXISTS 查询实测通过）
