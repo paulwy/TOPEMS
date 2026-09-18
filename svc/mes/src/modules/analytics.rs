@@ -435,7 +435,7 @@ pub async fn get_equipment_mtbf(
         r#"
         SELECT
             e.equipment_name as label,
-            AVG(o.oee) * 100 as oee,
+            AVG(o.oee)::float8 * 100 as oee,
             500 + RANDOM() * 300 as mtbf
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
@@ -560,10 +560,10 @@ pub async fn get_oee_dashboard(
             r#"
         SELECT
             COALESCE(e.equipment_name, '未知') as equipment_name,
-            AVG(o.oee) * 100 as oee,
-            AVG(o.availability) * 100 as availability,
-            AVG(o.performance) * 100 as performance,
-            AVG(o.quality_rate) * 100 as quality_rate
+            AVG(o.oee)::float8 * 100 as oee,
+            AVG(o.availability)::float8 * 100 as availability,
+            AVG(o.performance)::float8 * 100 as performance,
+            AVG(o.quality_rate)::float8 * 100 as quality_rate
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
         WHERE o.record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
@@ -599,10 +599,10 @@ pub async fn get_oee_dashboard(
             r#"
         SELECT
             record_date::text as date,
-            AVG(oee) * 100 as oee,
-            AVG(availability) * 100 as availability,
-            AVG(performance) * 100 as performance,
-            AVG(quality_rate) * 100 as quality_rate
+            AVG(oee)::float8 * 100 as oee,
+            AVG(availability)::float8 * 100 as availability,
+            AVG(performance)::float8 * 100 as performance,
+            AVG(quality_rate)::float8 * 100 as quality_rate
         FROM mes.equipment_oee
         WHERE record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
         GROUP BY record_date

@@ -206,7 +206,7 @@ async fn fetch_mes_stats(state: &AppState) -> (u64, u64) {
 
     let (orders_result, wip_result) = tokio::join!(
         async {
-            match client.list_production_orders(1, 1).await {
+            match client.list_production_orders(1, 1000).await {
                 Ok(items) => items.len() as u64,
                 Err(e) => {
                     tracing::warn!("Failed to fetch MES production orders: {}", e);
