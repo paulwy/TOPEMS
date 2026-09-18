@@ -204,3 +204,28 @@
 - [x] 收尾：public.core_workflows 影子已清（FK 重建指向 flow + archive 解除，迁移 000009）
 - [ ] 残留同名组（B2 候选）：announcements(erp:0/public:3)、capacities(mes/public)、contacts(crm/public)、budgets(finance/pm)
       待确认权威并收敛（announcements 数据在 public、erp 空表——疑似 flow 同款双读分叉）
+
+---
+
+## 🧪 2026-09-18 拉取后验证与修复 ✅
+
+### GitHub 拉取
+- [x] 拉取最新代码至 HEAD 32b18d72c（含 DB schema 权威化/冗余收敛、unified-core mes/scm/wms 路由、wms labor/picking 模块）
+- [x] project.design 冲突按远程版本解决（measuredAt 时间戳差异，无实质内容冲突）
+
+### 全量测试修复（cargo test --workspace --lib 13216 passed / 0 failed）
+- [x] sccache 环境故障绕行：`CARGO_BUILD_RUSTC_WRAPPER=""`（sccache spawn rustc 失败，属环境问题非代码问题）
+- [x] lib/shared-service-client hrm_api.rs：HrmEmployee.email/company_id 测试改用 Some(...)（字段已改 Option）
+- [x] svc/pdm workflow.rs：StartWorkflowRequest 测试断言改用 as_deref()/Some()（字段已改 Option）
+- [x] svc/unified-core flow/models.rs：Workflow 测试构造补 code 字段（结构体新增 code）
+- [x] svc/srm bidding.rs / quotation.rs：请求结构体补 Serialize derive；bidding 测试 status 断言改为 bid_deadline
+- [x] svc/unified-core subscription：到期提醒断言放宽 2/3 天（num_days 向下取整边界）
+- [x] svc/ai dsh/cache：LRU 驱逐改用单调递增 seq 替代 Instant（消除平局不确定导致的 flaky）
+
+### 事件总线升级收尾（Schema 注册中心接入完成 ✅）
+- [x] EventPublisher 门面新增 with_schema_registry / with_event_versions 透传（Stream 模式发布前校验 payload/版本）
+- [x] EventSubscriber 门面新增 with_schema_registry / with_event_versions 透传（Stream 模式消费前校验）
+- [x] StreamEventPublisher 补 Clone 派生（支持门面链式重建）
+- [x] 新增门面透传行为测试（test_facade_with_schema_registry/versions_forwards_to_stream_publisher）
+- [x] shared-event 361 passed / 0 failed（含真实 Redis Stream 端到端 发布→订阅→ACK、MDM 主数据流、Schema+版本校验、DLQ 重试）
+- [ ] 全服务切换验证：各服务启动时挂载默认 SchemaRegistry 并验证 EVENT_BUS_MODE=stream 下发布/订阅闭环（依赖完整后端环境）
