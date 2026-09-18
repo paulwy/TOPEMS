@@ -190,7 +190,7 @@
 - [x] RLS 缺口清零：tenant_id 表全量启用 RLS（6 张：crm/hrm/scm master_data_refs、scm.sync_records、
       mes.work_reports、wms.labor_shifts）——迁移 20260917000004，全库 tenant 表 RLS 覆盖 100%
 - [x] 遗留 B：DB 补列纳入迁移体系并双库对齐（2026-09-18：迁移 20260918000014_align_business_tables.sql——mes 10 张业务表完整列（schema_defense 权威，343 条幂等 ADD COLUMN）+ finance.budgets 建表（operational.rs 契约 13 列）+ pm.budgets 对齐；5432/5433 双库应用并核验一致（production_orders 45 列/equipment 59 列/finance.budgets 13/pm.budgets 12）；根因修正——finance 服务 SEARCH_PATH=finance,public 而 5432 无 finance schema → budgets 解析失败 500，迁移补 CREATE SCHEMA finance）
-- [ ] 遗留 C：bi.report_stats 视图无法重建（2026-09-18 调查完结：定义在仓库（svc/analytics/src、database/init、database/postgres、scripts、.sqlx、checksums、git 历史 git log -S）与全部 12 个库里均不存在，当前代码也不查询它们——无原始 DDL 可依，需用户提供定义或确认放弃）
+- [x] 遗留 C 闭环：bi 三视图重建（2026-09-18 用户拍板 D1 轻量重建：新建 20260918000015_create_bi_stats_views.sql，按 git 历史 svc/bi/migrations/001_init.sql（8eedba1eb）389-421 行原始 DDL 重建 active_datasource_stats/report_stats/visualization_stats 三视图，每个视图前置依赖检查（表+列存在才建）——5432 依赖表齐全（data_sources 13 列/reports 17/visualizations 16）三视图建成，5433 仅骨架表自动跳过、全链 159/159 保持通过）
 - [x] 前端路径核对：oa/announcements、workflow(core/flow)、mes、dashboard 链路全通；
       发现并修复 core/flow/instances 500（public 影子表缺列，迁移 20260917000005 补齐）
 - [ ] 遗留：同名多 schema 表收敛（public.approvals/approval_records/core_workflow_tasks 等影子表，
@@ -215,7 +215,7 @@
 ### DB 治理收尾（2026-09-18）
 - [x] 迁移链卡死根因修复：20260725000001_create_schema_registry.sql 防御化（CREATE TABLE IF NOT EXISTS + 逐列 ADD COLUMN IF NOT EXISTS + 幂等唯一索引）——空库重建时 master-data 先建裸骨架致原脚本 CREATE INDEX 报列不存在、后续 100+ 迁移全部无法应用；修补后 checksums.txt 重新生成（152 条，新哈希 ca8be1cb8a14717d8203aea4b0697989ea9657117fb1cbae846bf91e10edf4f6）
 - [x] 5433 全链验证推进：schema_registry 卡点后一口气再应用 16 个迁移（20260725000002→20260821000001）
-- [ ] 新发现系统性问题（空库重建遗留缺口）：20260821200000_v253_unify_schema_nullability.sql（8000+ 行遗留对齐迁移）在行 7942 因 equipment_inspections 缺 equipment_id 列失败——v253 依赖的遗留业务表 DDL 在 2026-09-07 收敛时从 init/postgres 移除且未完整落入迁移链（init/01_rebuild_database.sql 实际不存在，init 目录仅剩 03/04/05/07），遗留表完整结构只存在于 5432 活跃库（equipment_inspections 17 列）；修复=从 5432 抽取遗留表 DDL 前置恢复（单独项目，非本次范围）
+- [x] 新发现系统性问题闭环（空库重建遗留缺口）：20260821200000_v253_unify_schema_nullability.sql（8000+ 行遗留对齐迁移）在行 7942 因 equipment_inspections 缺 equipment_id 列失败——v253 依赖的遗留业务表 DDL 在 2026-09-07 收敛时从 init/postgres 移除且未完整落入迁移链（init/01_rebuild_database.sql 实际不存在，init 目录仅剩 03/04/05/07），遗留表完整结构只存在于 5432 活跃库（equipment_inspections 17 列）；修复=从 5432 抽取遗留表 DDL 前置恢复（2026-09-18 完成：新增 20260821100000_restore_legacy_equipment_tables.sql 等 5 个前置恢复迁移，5433 空库重建全链 158/158 全部应用；scripts/generate_restore_legacy_tables.py 为 5432 information_schema 权威列抽取生成器）
 - [x] 遗留 B 闭环：迁移 20260918000014_align_business_tables.sql 创建并应用双库（见遗留 B 条目）
 - [x] 遗留 C 调查完结：无法重建（见遗留 C 条目）
 
@@ -235,3 +235,12 @@
 - [x] 新增门面透传行为测试（test_facade_with_schema_registry/versions_forwards_to_stream_publisher）
 - [x] shared-event 361 passed / 0 failed（含真实 Redis Stream 端到端 发布→订阅→ACK、MDM 主数据流、Schema+版本校验、DLQ 重试）
 - [ ] 全服务切换验证：各服务启动时挂载默认 SchemaRegistry 并验证 EVENT_BUS_MODE=stream 下发布/订阅闭环（依赖完整后端环境）
+
+---
+
+### DB 全链验证与双库治理收尾（2026-09-18 第二轮）
+- [x] 5433 空库重建全链验证：158/158 迁移全部应用（新增 5 个前置恢复迁移 + ~20 个防御化修改），0 pending，846 张表，关键表与 5432 权威一致（production_orders 45/equipment 59/finance.budgets 13/pm.budgets 12）——提交 d3d2a7bbd + 合并 099a9faf9 已推送
+- [x] D1（用户拍板）：遗留 C 轻量重建——20260918000015_create_bi_stats_views.sql 三视图（依赖检查，5432 建成/5433 跳过），双库验证通过
+- [x] D2（用户拍板选 A）：5432 _sqlx_migrations 治理重建——原 85 条记录脏数据（5+ 条 checksum 为 'manual' 占位文本、描述错乱），已备份 _sqlx_migrations_backup_20260918，按 5433 权威记录重建为 159 条；sqlx migrate info 校验 0 pending、migrate run 无操作——5432 回到 sqlx 统一管理，后续双库同源
+- [x] 决策记录：5 个前置恢复迁移与防御化修改仅属空库重建路径，5432 不同步重放（表结构已完整）
+- [ ] 5432 后续新迁移一律走 `DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems sqlx migrate run --source database/migrations` 应用，双库版本保持一致
