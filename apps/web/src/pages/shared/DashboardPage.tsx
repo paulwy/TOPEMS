@@ -156,6 +156,34 @@ const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // 基础架构健康四格（API 网关 / 消息队列 / 数据库 / 缓存）
+  const healthQuery = useQuery({
+    queryKey: [...QUERY_KEY, 'infra-health'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch('/api/monitor/infrastructure', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
+        },
+      });
+      const j = await res.json();
+      return (j?.data ?? []) as Array<{
+        component: string;
+        status: string;
+        value: string;
+        detail: string;
+      }>;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const infra = healthQuery.data ?? [];
+  const healthOf = (c: string) =>
+    infra.find((i) => i.component === c) ?? { status: 'absent', value: '--', detail: '' };
+  const healthStatus = (st: string): 'healthy' | 'warning' | 'error' =>
+    st === 'healthy' ? 'healthy' : st === 'error' ? 'error' : 'warning';
+
   // 生产订单：mes 真实订单量（portal stats 分页口径暂未生效，前端直查）
   const ordersQuery = useQuery({
     queryKey: [...QUERY_KEY, 'orders'],
@@ -559,26 +587,26 @@ const DashboardPage: React.FC = () => {
               <HealthItem
                 icon={Cpu}
                 label={i18n.t('dashboard.dash_health_api_gateway')}
-                status='healthy'
-                value='--'
+                status={healthStatus(healthOf('api_gateway').status)}
+                value={healthOf('api_gateway').value}
               />
               <HealthItem
                 icon={Zap}
                 label={i18n.t('dashboard.dash_health_message_queue')}
-                status='healthy'
-                value='--'
+                status={healthStatus(healthOf('message_queue').status)}
+                value={healthOf('message_queue').value}
               />
               <HealthItem
                 icon={Inbox}
                 label={i18n.t('dashboard.dash_health_database')}
-                status='warning'
-                value='--'
+                status={healthStatus(healthOf('database').status)}
+                value={healthOf('database').value}
               />
               <HealthItem
                 icon={FileQuestion}
                 label={i18n.t('dashboard.dash_health_cache')}
-                status='healthy'
-                value='--'
+                status={healthStatus(healthOf('cache').status)}
+                value={healthOf('cache').value}
               />
             </div>
           </Card>
