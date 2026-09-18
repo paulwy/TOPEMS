@@ -183,7 +183,7 @@ pub async fn create_company(
         "#),
     )
     .bind(id)
-    .bind(req.tenant_id)
+    .bind(req.tenant_id.or(Some(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())))
     .bind(&req.name)
     .bind(&req.short_name)
     .bind(&req.registration_number)
