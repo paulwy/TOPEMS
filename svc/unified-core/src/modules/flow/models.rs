@@ -403,6 +403,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
             published_at: None,
+            code: Some("LEAVE-APPROVAL".to_string()),
         };
         let cloned = wf.clone();
         assert_eq!(wf.id, cloned.id);
@@ -424,6 +425,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
             published_at: Some(sample_time()),
+            code: Some("EXPENSE-REIMBURSEMENT".to_string()),
         };
         let json = serde_json::to_string(&wf).unwrap();
         let de: Workflow = serde_json::from_str(&json).unwrap();

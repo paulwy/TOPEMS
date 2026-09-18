@@ -25,7 +25,7 @@ pub struct Quotation {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateQuotationRequest {
     pub inquiry_id: String,
     pub supplier_id: String,
@@ -39,7 +39,7 @@ pub struct CreateQuotationRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateQuotationRequest {
     pub title: Option<String>,
     pub total_amount: Option<f64>,

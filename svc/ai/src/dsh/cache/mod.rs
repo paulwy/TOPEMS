@@ -10,6 +10,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use parking_lot::Mutex;
@@ -57,16 +58,19 @@ struct CacheEntry<V: Clone> {
     expires_at: Option<Instant>,
     last_accessed: Instant,
     access_count: u64,
+    /// 单调递增访问序号：唯一决定 LRU 顺序，避免 Instant 平局导致驱逐不确定
+    seq: u64,
 }
 
 impl<V: Clone> CacheEntry<V> {
-    fn new(value: V, ttl: Option<Duration>) -> Self {
+    fn new(value: V, ttl: Option<Duration>, seq: u64) -> Self {
         let now = Instant::now();
         Self {
             value,
             expires_at: ttl.map(|d| now + d),
             last_accessed: now,
             access_count: 0,
+            seq,
         }
     }
 
@@ -77,9 +81,10 @@ impl<V: Clone> CacheEntry<V> {
         }
     }
 
-    fn access(&mut self) -> &V {
+    fn access(&mut self, seq: u64) -> &V {
         self.last_accessed = Instant::now();
         self.access_count += 1;
+        self.seq = seq;
         &self.value
     }
 }
@@ -115,6 +120,7 @@ pub struct LruCache<K: Eq + Hash + Clone, V: Clone> {
     config: CacheConfig,
     entries: Mutex<HashMap<K, CacheEntry<V>>>,
     stats: Mutex<CacheStatsInternal>,
+    clock: AtomicU64,
 }
 
 impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
@@ -124,6 +130,7 @@ impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
             config,
             entries: Mutex::new(HashMap::new()),
             stats: Mutex::new(CacheStatsInternal::default()),
+            clock: AtomicU64::new(0),
         }
     }
 
@@ -143,7 +150,7 @@ impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
                 return None;
             }
 
-            let value = entry.access().clone();
+            let value = entry.access(self.clock.fetch_add(1, Ordering::Relaxed)).clone();
             drop(entries);
             self.stats.lock().hits += 1;
             Some(value)
@@ -165,7 +172,7 @@ impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
             self.evict_lru(&mut entries);
         }
 
-        let entry = CacheEntry::new(value, ttl);
+        let entry = CacheEntry::new(value, ttl, self.clock.fetch_add(1, Ordering::Relaxed));
         entries.insert(key, entry);
     }
 
@@ -230,7 +237,7 @@ impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
 
         let lru_key = entries
             .iter()
-            .min_by_key(|(_, entry)| entry.last_accessed)
+            .min_by_key(|(_, entry)| entry.seq)
             .map(|(key, _)| key.clone());
 
         if let Some(key) = lru_key {

@@ -247,17 +247,17 @@ mod tests {
         let e = HrmEmployee {
             id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             name: "Alice Smith".into(),
-            email: "alice@company.com".into(),
+            email: Some("alice@company.com".into()),
             phone: Some("+86-138-0000-1111".into()),
             department_id: Some(Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap()),
-            company_id: Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap(),
+            company_id: Some(Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap()),
             status: "active".into(),
             created_at: ts(),
             updated_at: ts(),
         };
         let back = rt(&e);
         assert_eq!(back.name, "Alice Smith");
-        assert_eq!(back.email, "alice@company.com");
+        assert_eq!(back.email.as_deref(), Some("alice@company.com"));
         assert_eq!(back.phone.as_deref(), Some("+86-138-0000-1111"));
         assert_eq!(back.status, "active");
     }
@@ -267,10 +267,10 @@ mod tests {
         let e = HrmEmployee {
             id: Uuid::new_v4(),
             name: "Bob".into(),
-            email: "bob@c.com".into(),
+            email: Some("bob@c.com".into()),
             phone: None,
             department_id: None,
-            company_id: Uuid::new_v4(),
+            company_id: Some(Uuid::new_v4()),
             status: "active".into(),
             created_at: ts(),
             updated_at: ts(),
@@ -286,7 +286,7 @@ mod tests {
             id: Uuid::parse_str("44444444-4444-4444-4444-444444444444").unwrap(),
             name: "Engineering".into(),
             description: Some("Dev team".into()),
-            company_id: Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap(),
+            company_id: Some(Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap()),
             parent_id: None,
             created_at: ts(),
             updated_at: ts(),

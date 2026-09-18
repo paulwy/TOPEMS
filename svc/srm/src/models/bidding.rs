@@ -29,7 +29,7 @@ pub struct Bidding {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateBiddingRequest {
     pub bidding_no: String,
     pub title: String,
@@ -44,7 +44,7 @@ pub struct CreateBiddingRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateBiddingRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -58,7 +58,7 @@ pub struct UpdateBiddingRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwardBiddingRequest {
     pub supplier_id: String,
 }
@@ -286,7 +286,7 @@ mod tests {
         let json = r#"{}"#;
         let req: UpdateBiddingRequest = serde_json::from_str(json).unwrap();
         assert!(req.title.is_none());
-        assert!(req.status.is_none());
+        assert!(req.bid_deadline.is_none());
     }
 
     #[test]

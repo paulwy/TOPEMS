@@ -872,9 +872,9 @@ mod tests {
         });
         let req: StartWorkflowRequest = serde_json::from_value(j).unwrap();
         assert_eq!(req.workflow_id, wid);
-        assert_eq!(req.target_type, "document");
-        assert_eq!(req.target_id, tid);
-        assert_eq!(req.created_by, "requester");
+        assert_eq!(req.target_type.as_deref(), Some("document"));
+        assert_eq!(req.target_id, Some(tid));
+        assert_eq!(req.created_by.as_deref(), Some("requester"));
     }
 
     #[test]

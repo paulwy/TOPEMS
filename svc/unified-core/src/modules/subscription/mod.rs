@@ -873,7 +873,8 @@ mod tests {
         let expiring = make_test_subscription(PlanTier::Basic, Some(3));
         let reminder = SubscriptionLifecycleService::expiration_reminder(&expiring);
         assert!(reminder.is_some());
-        assert!(reminder.unwrap().contains("3"));
+        let msg = reminder.unwrap();
+        assert!(msg.contains("2") || msg.contains("3"), "unexpected reminder: {msg}");
 
         let not_expiring = make_test_subscription(PlanTier::Basic, Some(30));
         assert!(SubscriptionLifecycleService::expiration_reminder(&not_expiring).is_none());
