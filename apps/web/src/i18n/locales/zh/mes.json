@@ -1594,5 +1594,6 @@
   "mes.nav.mes-quality-template_desc": "质检方案模板",
   "mes.nav.mes-bom-version-policy_desc": "BOM 版本策略",
   "mes.nav.mes-aps-config_desc": "APS 排程配置",
-  "mes.nav.mes-equipment-threshold_desc": "设备预警阈值配置"
+  "mes.nav.mes-equipment-threshold_desc": "设备预警阈值配置",
+  "mes.production_order.k43": "已关闭"
 }
