@@ -1597,5 +1597,9 @@
   "mes.nav.mes-equipment-threshold_desc": "设备预警阈值配置",
   "mes.production_order.k43": "已关闭",
   "mes.production_order_management_page.production_2": "生产订单",
-  "mes.production_order_management_page.order_number_1": "管理生产订单的创建与执行"
+  "mes.production_order_management_page.order_number_1": "管理生产订单的创建与执行",
+  "mes.quality_inspection_page.breadcrumb_home": "首页",
+  "mes.quality_inspection_page.breadcrumb_current": "质检记录",
+  "mes.equipment_management_page.breadcrumb_current": "设备管理",
+  "mes.equipment_management_page.name": "设备台账"
 }
