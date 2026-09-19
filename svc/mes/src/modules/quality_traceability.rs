@@ -155,7 +155,7 @@ pub async fn forward_traceability(
     let mut nodes = Vec::new();
     let mut links = Vec::new();
 
-    let order_node_id = format!("order_{}", order.id);
+    let order_node_id = format!("order_{}", order.id.map(|v| v.to_string()).unwrap_or_default());
     nodes.push(TraceNode {
         id: order_node_id.clone(),
         node_type: "order".to_string(),
@@ -191,7 +191,7 @@ pub async fn forward_traceability(
 
     let mut prev_node_id = order_node_id.clone();
     for record in &records {
-        let record_node_id = format!("record_{}", record.id);
+        let record_node_id = format!("record_{}", record.id.map(|v| v.to_string()).unwrap_or_default());
         let process_name = record.process_name.clone();
         let process_no = record.process_code.clone().unwrap_or_default();
         nodes.push(TraceNode {
@@ -203,7 +203,7 @@ pub async fn forward_traceability(
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone()),
-            timestamp: Some(record.start_time),
+            timestamp: record.start_time,
             operator: None,
             description: Some("生产工序记录".to_string()),
         });
@@ -218,7 +218,7 @@ pub async fn forward_traceability(
         prev_node_id = record_node_id.clone();
     }
 
-    let finished_node_id = format!("finished_{}", order.id);
+    let finished_node_id = format!("finished_{}", order.id.map(|v| v.to_string()).unwrap_or_default());
     nodes.push(TraceNode {
         id: finished_node_id.clone(),
         node_type: "finished_product".to_string(),
@@ -226,7 +226,7 @@ pub async fn forward_traceability(
         code: order.order_no.clone(),
         quantity: order.completed_quantity.map(|v| v as f64),
         unit: Some("件".to_string()),
-        batch_no: Some(format!("BATCH{}", order.order_no)),
+        batch_no: Some(format!("BATCH{}", order.order_no.map(|v| v.to_string()).unwrap_or_default())),
         status: Some(order.status.clone()),
         timestamp: order
             .actual_end_date
@@ -315,13 +315,13 @@ pub async fn backward_traceability(
     let mut nodes = Vec::new();
     let mut links = Vec::new();
 
-    let product_node_id = format!("product_{}", batch.id);
+    let product_node_id = format!("product_{}", batch.id.map(|v| v.to_string()).unwrap_or_default());
     nodes.push(TraceNode {
         id: product_node_id.clone(),
         node_type: "finished_product".to_string(),
         name: batch.product_name.clone().unwrap_or_default(),
         code: batch.product_code.clone().unwrap_or_default(),
-        quantity: Some(big_decimal_to_f64(Some(batch.quantity))),
+        quantity: Some(big_decimal_to_f64(batch.quantity)),
         unit: batch.unit.clone(),
         batch_no: Some(batch.batch_no.clone()),
         status: Some(batch.status.clone().unwrap_or_default()),

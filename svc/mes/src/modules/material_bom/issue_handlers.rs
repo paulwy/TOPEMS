@@ -120,7 +120,7 @@ pub async fn create_material_issue(
 
     let response = MaterialIssueResponse {
         id: issue.id.to_string(),
-        issue_no: issue.issue_no,
+        issue_no: issue.issue_no.unwrap_or_default(),
         order_id: issue.order_id.map(|u| u.to_string()),
         order_no: issue.order_no,
         bom_id: issue.bom_id.map(|u| u.to_string()),

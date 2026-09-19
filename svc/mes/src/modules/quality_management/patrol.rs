@@ -242,7 +242,7 @@ pub async fn get_patrol(
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
@@ -331,7 +331,7 @@ pub async fn create_patrol(
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
@@ -428,7 +428,7 @@ pub async fn update_patrol(
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
@@ -545,7 +545,7 @@ pub async fn list_patrol_items(
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
                     patrol_id: r.patrol_id.to_string(),
-                    item_name: r.item_name,
+                    item_name: r.item_name.unwrap_or_default(),
                     standard: r.standard,
                     actual_value: r.actual_value.map(|b| b.to_string()),
                     status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -607,7 +607,7 @@ pub async fn add_patrol_item(
             PatrolItemResponse {
                 id: r.id.to_string(),
                 patrol_id: r.patrol_id.to_string(),
-                item_name: r.item_name,
+                item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -677,7 +677,7 @@ pub async fn update_patrol_item(
             PatrolItemResponse {
                 id: r.id.to_string(),
                 patrol_id: r.patrol_id.to_string(),
-                item_name: r.item_name,
+                item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),

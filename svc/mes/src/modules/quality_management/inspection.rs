@@ -307,7 +307,7 @@ pub async fn get_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                inspection_no: r.inspection_no,
+                inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code.to_string(),
@@ -425,7 +425,7 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                inspection_no: r.inspection_no,
+                inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code.to_string(),
@@ -533,7 +533,7 @@ pub async fn update_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                inspection_no: r.inspection_no,
+                inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code.to_string(),

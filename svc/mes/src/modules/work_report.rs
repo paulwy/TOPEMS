@@ -461,7 +461,7 @@ pub async fn get_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
@@ -659,7 +659,7 @@ pub async fn create_work_report(
             Json(ApiResponse::success(
                 WorkReportResponse {
                     id: r.id.to_string(),
-                    report_no: r.report_no,
+                    report_no: r.report_no.unwrap_or_default(),
                     work_order_id: r.work_order_id.map(|u| u.to_string()),
                     work_order_no: r.work_order_no,
                     order_id: r.order_id.map(|u| u.to_string()),
@@ -805,7 +805,7 @@ pub async fn update_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
@@ -945,7 +945,7 @@ pub async fn approve_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),

@@ -305,20 +305,20 @@ pub async fn create_record(
     };
 
     let record = ProductionRecordResponse {
-        id: result.id,
-        order_id: result.order_id,
+        id: result.id.unwrap_or_default(),
+        order_id: result.order_id.unwrap_or_default(),
         process_id: result.process_id,
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
-        start_time: result.start_time,
+        start_time: result.start_time.unwrap_or_default(),
         end_time: result.end_time,
-        quantity_produced: result.quantity_produced as f64,
+        quantity_produced: result.quantity_produced.unwrap_or_default() as f64,
         quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         notes: result.notes,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(record, "生产记录创建成功"))
@@ -359,20 +359,20 @@ pub async fn get_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id,
-                order_id: r.order_id,
+                id: r.id.unwrap_or_default(),
+                order_id: r.order_id.unwrap_or_default(),
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time,
+                start_time: r.start_time.unwrap_or_default(),
                 end_time: r.end_time,
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "获取生产记录成功"))
         }
@@ -439,20 +439,20 @@ pub async fn update_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id,
-                order_id: r.order_id,
+                id: r.id.unwrap_or_default(),
+                order_id: r.order_id.unwrap_or_default(),
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time,
+                start_time: r.start_time.unwrap_or_default(),
                 end_time: r.end_time,
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "生产记录更新成功"))
         }
@@ -535,20 +535,20 @@ pub async fn complete_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id,
-                order_id: r.order_id,
+                id: r.id.unwrap_or_default(),
+                order_id: r.order_id.unwrap_or_default(),
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time,
+                start_time: r.start_time.unwrap_or_default(),
                 end_time: r.end_time,
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "生产记录完成成功"))
         }
