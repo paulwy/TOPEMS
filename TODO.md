@@ -306,3 +306,11 @@
 - [x] lims.samples 4 行 tenant_id NULL 修复（双库 5432/5433 → 默认租户 000…0001，备份表 lims.samples_tenant_null_backup_20260919）
 - [ ] 发现（存量架构，非 RLS）：lims 列表 handler 查 **qa_lab_samples**（0 行），4 行样本数据在 **lims.samples**（不同结构 17 列 vs 14 列）——API 列表空是表不匹配所致，数据从未经 API 可见；如需接通需数据迁移或 handler 改表（列映射），列为后续
 - [ ] 其余 lims 业务层过滤（详情/更新等 8 处 handler 仍按 ctx.tenant_id 过滤，superuser 操作时需同样豁免——低优先，数据空）
+
+## 2026-09-19 晚：lims.samples 数据接通（完成）
+- [x] **根因确认**：handler 无 schema 前缀的 `FROM qa_lab_samples` 在 SEARCH_PATH('flow, mobile, rs, erp, public, iam, shared') 下解析到 lims.qa_lab_samples（空表）而非 public——非 RLS、非连接池问题；psql 模拟全组合均 4 行（无 RLS），sqlx trace 确认 SELECT rows=0，最终以显式 `public.qa_lab_samples` 修复（sample.rs 17 处全部 schema 限定）
+- [x] 数据迁移：双库 INSERT INTO public.qa_lab_samples SELECT…FROM lims.samples ON CONFLICT DO NOTHING（列映射 code→sample_no、name→sample_name、received_date→received_at，quantity/unit/expired_at NULL），各 4 行；备份表 public.qa_lab_samples_merge_backup_20260919
+- [x] get/update/delete 三 handler superuser 豁免（同列表模式：Claims + Option tenant_id + `($2::uuid IS NULL OR tenant_id=$2)`）；sample_detail_key Option 化（superuser "all" 防缓存串租户）；事件发布 tenant 改 ctx.tenant_id
+- [x] 编译注意：链接报 `symbol(s) not found (drop_in_place closure)` 为 lims 增量缓存损坏，`cargo clean -p topems-lims` 后通过（2m02s），非代码问题
+- [x] 验证：列表 4、详情 200（SAMPLE-63f9c838）、crm 189 回归正常
+- [ ] 遗留：mes 5 文件再次恢复 1b6fa65d3 版（工作树 M，随本批提交）；其他 lims 文件（inspection_task/report/statistics/dashboard/sample_barcode）仍无 public 前缀（数据空，低优先）；sample.rs 665/767 行 status 更新未豁免

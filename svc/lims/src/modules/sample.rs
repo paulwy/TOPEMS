@@ -40,8 +40,12 @@ pub struct SampleQuery {
 }
 
 /// 样品详情缓存 key（含 tenant_id）
-fn sample_detail_key(tenant_id: &Uuid, id: &str) -> String {
-    format!("lims:sample:{}:{}", tenant_id, id)
+fn sample_detail_key(tenant_id: &Option<Uuid>, id: &str) -> String {
+    let tk = tenant_id
+        .as_ref()
+        .map(|t| t.to_string())
+        .unwrap_or_else(|| "all".to_string());
+    format!("lims:sample:{}:{}", tk, id)
 }
 
 /// 样品列表缓存 key（按查询参数归一化，含 tenant_id）
@@ -136,14 +140,14 @@ pub async fn list_samples(
     }
 
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
-        (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
-        (Some(_), Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (None, Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let mut query_builder = sqlx::query(sql).bind(tenant_id);
@@ -259,7 +263,7 @@ pub async fn register_sample(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
     .bind(tenant_id)
     .bind(sample_no)
@@ -291,7 +295,7 @@ pub async fn register_sample(
             // 新样品入库，列表缓存失效（pattern 广播）
             if let Some(publisher) = &state.event_publisher {
                 let publisher = publisher.clone();
-                let tenant = tenant_id.to_string();
+                let tenant = ctx.tenant_id.to_string();
                 tokio::spawn(async move {
                     let _ = publisher
                         .publish_cache_invalidated(
@@ -328,13 +332,14 @@ pub async fn register_sample(
 pub async fn get_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Sample>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
     let cache_key = sample_detail_key(&tenant_id, &id.to_string());
 
     // 缓存读取
@@ -346,7 +351,7 @@ pub async fn get_sample(
     }
 
     let row = sqlx::query(
-        "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
+        "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
@@ -386,6 +391,7 @@ pub async fn get_sample(
 pub async fn update_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
@@ -393,10 +399,10 @@ pub async fn update_sample(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
 
     let row = sqlx::query(
-        "UPDATE qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9, expired_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE public.qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9, expired_at), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
     .bind(id)
     .bind(tenant_id)
@@ -433,7 +439,7 @@ pub async fn update_sample(
             if let Some(publisher) = &state.event_publisher {
                 let publisher = publisher.clone();
                 let key = detail_key.clone();
-                let tenant = tenant_id.to_string();
+                let tenant = ctx.tenant_id.to_string();
                 tokio::spawn(async move {
                     let _ = publisher
                         .publish_cache_invalidated(&key, "specific", Some("sample_updated"))
@@ -459,16 +465,17 @@ pub async fn update_sample(
 pub async fn delete_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
 
     let result = sqlx::query(
-        "UPDATE qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE public.qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_id)
@@ -483,7 +490,7 @@ pub async fn delete_sample(
             if let Some(publisher) = &state.event_publisher {
                 let publisher = publisher.clone();
                 let key = detail_key.clone();
-                let tenant = tenant_id.to_string();
+                let tenant = ctx.tenant_id.to_string();
                 tokio::spawn(async move {
                     let _ = publisher
                         .publish_cache_invalidated(&key, "specific", Some("sample_deleted"))
@@ -615,7 +622,7 @@ pub async fn record_lifecycle_event(
     let tenant_id = ctx.tenant_id;
 
     let sample_row =
-        sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+        sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
             .bind(sample_id)
             .bind(tenant_id)
             .fetch_optional(&state.pool)
@@ -662,7 +669,7 @@ pub async fn record_lifecycle_event(
     match row {
         Ok(r) => {
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
+                "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
             )
             .bind(sample_id)
             .bind(&req.lifecycle_stage)
@@ -712,7 +719,7 @@ pub async fn transition_sample_stage(
     }
 
     let current_row = sqlx::query(
-        "SELECT sample_no, status FROM qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT sample_no, status FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(sample_uuid)
     .bind(tenant_id)
@@ -764,7 +771,7 @@ pub async fn transition_sample_stage(
     match row {
         Ok(r) => {
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
+                "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
             )
             .bind(sample_uuid)
             .bind(&to_stage)
@@ -845,7 +852,7 @@ pub async fn get_sample_traceability(
         r#"
         SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit,
                status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
-        FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2
+        FROM public.qa_lab_samples WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
