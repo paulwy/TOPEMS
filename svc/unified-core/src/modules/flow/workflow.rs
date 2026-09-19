@@ -189,8 +189,15 @@ pub async fn get_workflow(
 )]
 pub async fn create_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let create_tenant: Uuid = claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let workflow = match sqlx::query_as::<_, Workflow>(
         "INSERT INTO core_workflows (name, code, description, definition, status, version, created_by, tenant_id) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
@@ -202,8 +209,8 @@ pub async fn create_workflow(
     .bind(payload.definition.unwrap_or(serde_json::json!({})))
     .bind(payload.status.unwrap_or("draft".to_string()))
     .bind(1)
-    .bind(payload.created_by)
-    .bind(uuid::Uuid::nil())
+    .bind(payload.created_by.or_else(|| Uuid::parse_str(&claims.sub).ok()))
+    .bind(create_tenant)
     .fetch_one(&state.pool)
     .await
     {
@@ -234,9 +241,15 @@ pub async fn create_workflow(
 )]
 pub async fn update_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateWorkflowRequest>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET 
          name = COALESCE($1, name), 
@@ -244,7 +257,7 @@ pub async fn update_workflow(
          definition = COALESCE($3, definition), 
          status = COALESCE($4, status),
          updated_at = NOW()
-         WHERE id = $5 
+         WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id=$6) 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(payload.name)
@@ -252,6 +265,7 @@ pub async fn update_workflow(
     .bind(payload.definition)
     .bind(payload.status)
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -284,10 +298,17 @@ pub async fn update_workflow(
 )]
 pub async fn delete_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("UPDATE core_workflows SET deleted_at = NOW() WHERE id = $1")
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let result = sqlx::query("UPDATE core_workflows SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2)")
         .bind(id)
+        .bind(tenant_opt)
         .execute(&state.pool)
         .await;
 
@@ -322,14 +343,21 @@ pub async fn delete_workflow(
 )]
 pub async fn publish_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'published', published_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -362,14 +390,21 @@ pub async fn publish_workflow(
 )]
 pub async fn unpublish_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'draft', published_at = NULL, updated_at = NOW() 
-         WHERE id = $1 
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -402,14 +437,21 @@ pub async fn unpublish_workflow(
 )]
 pub async fn activate_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'active', updated_at = NOW() 
-         WHERE id = $1 
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -442,14 +484,21 @@ pub async fn activate_workflow(
 )]
 pub async fn deactivate_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'inactive', updated_at = NOW() 
-         WHERE id = $1 
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -482,14 +531,21 @@ pub async fn deactivate_workflow(
 )]
 pub async fn deploy_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'deployed', updated_at = NOW() 
-         WHERE id = $1 
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {

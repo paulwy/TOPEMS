@@ -153,7 +153,8 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route("/workflows", post(modules::flow::workflow::create_workflow))
         .route(
             "/workflows/{id}",
-            put(modules::flow::workflow::update_workflow),
+            put(modules::flow::workflow::update_workflow)
+                .delete(modules::flow::workflow::delete_workflow),
         )
         .route(
             "/workflows/{id}/publish",
