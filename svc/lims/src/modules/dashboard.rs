@@ -1,7 +1,7 @@
 //! LIMS Dashboard 聚合端点
 //!
 //! 补齐前端 LimsDashboardPage 真实消费的 /dashboard 缺口。
-//! 从 qa_lab_samples / qa_lab_tasks / qa_lab_records / qa_lab_instruments
+//! 从 public.qa_lab_samples / public.qa_lab_tasks / public.qa_lab_records / public.qa_lab_instruments
 //! 聚合统计数据返回。
 
 use axum::{extract::State, routing::get, Json, Router};
@@ -39,7 +39,7 @@ pub async fn get_dashboard(
 
     // --- 样品状态分布 ---
     let received_samples: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'received'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'received'")
             .fetch_one(pool)
             .await
             .ok()
@@ -47,7 +47,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let testing_samples: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'testing'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'testing'")
             .fetch_one(pool)
             .await
             .ok()
@@ -55,7 +55,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let completed_samples: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'completed'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'completed'")
             .fetch_one(pool)
             .await
             .ok()
@@ -63,7 +63,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let cancelled_samples: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_samples WHERE status = 'cancelled'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples WHERE status = 'cancelled'")
             .fetch_one(pool)
             .await
             .ok()
@@ -72,7 +72,7 @@ pub async fn get_dashboard(
 
     // --- 任务状态分布 ---
     let pending_tasks: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'pending'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'pending'")
             .fetch_one(pool)
             .await
             .ok()
@@ -80,7 +80,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let in_progress_tasks: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'in_progress'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'in_progress'")
             .fetch_one(pool)
             .await
             .ok()
@@ -88,7 +88,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let completed_tasks: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_tasks WHERE status = 'completed'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'completed'")
             .fetch_one(pool)
             .await
             .ok()
@@ -96,7 +96,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     // --- 仪器状态分布 ---
-    let total_instruments: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments")
+    let total_instruments: i64 = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments")
         .fetch_one(pool)
         .await
         .ok()
@@ -104,7 +104,7 @@ pub async fn get_dashboard(
         .unwrap_or(0);
 
     let normal_instruments: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'normal'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'normal'")
             .fetch_one(pool)
             .await
             .ok()
@@ -112,7 +112,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let calibration_instruments: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'calibration'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'calibration'")
             .fetch_one(pool)
             .await
             .ok()
@@ -120,7 +120,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let maintenance_instruments: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'maintenance'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'maintenance'")
             .fetch_one(pool)
             .await
             .ok()
@@ -128,7 +128,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let disabled_instruments: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_lab_instruments WHERE status = 'disabled'")
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_instruments WHERE status = 'disabled'")
             .fetch_one(pool)
             .await
             .ok()
@@ -136,14 +136,14 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     // --- 检验记录合格率 ---
-    let total_records: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_records")
+    let total_records: i64 = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_records")
         .fetch_one(pool)
         .await
         .ok()
         .and_then(|r| r.try_get::<i64, _>(0).ok())
         .unwrap_or(0);
 
-    let passed_records: i64 = sqlx::query("SELECT COUNT(*) FROM qa_lab_records WHERE (conclusion = 'pass' OR conclusion = 'qualified' OR conclusion = '合格')")
+    let passed_records: i64 = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_records WHERE (conclusion = 'pass' OR conclusion = 'qualified' OR conclusion = '合格')")
         .fetch_one(pool)
         .await
         .ok()

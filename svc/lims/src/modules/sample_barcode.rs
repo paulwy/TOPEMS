@@ -262,7 +262,7 @@ pub async fn generate_barcode(
                 Ok(u) => u,
                 Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
             };
-            let sample_row = sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1")
+            let sample_row = sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
                 .bind(id)
                 .fetch_optional(&state.pool)
                 .await;
@@ -548,7 +548,7 @@ pub async fn scan_barcode(
 
     if let (Some(sid), "receive") = (sample_id, req.scan_type.as_str()) {
         let _ = sqlx::query(
-            "UPDATE qa_lab_samples SET status = 'received', updated_at = NOW() WHERE id = $1",
+            "UPDATE public.qa_lab_samples SET status = 'received', updated_at = NOW() WHERE id = $1",
         )
         .bind(sid)
         .execute(&state.pool)
@@ -557,7 +557,7 @@ pub async fn scan_barcode(
 
     if let (Some(sid), "destroy") = (sample_id, req.scan_type.as_str()) {
         let _ = sqlx::query(
-            "UPDATE qa_lab_samples SET status = 'destroyed', updated_at = NOW() WHERE id = $1",
+            "UPDATE public.qa_lab_samples SET status = 'destroyed', updated_at = NOW() WHERE id = $1",
         )
         .bind(sid)
         .execute(&state.pool)
@@ -764,7 +764,7 @@ pub async fn assign_rfid_tag(
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
 
-    let sample_row = sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1")
+    let sample_row = sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
         .bind(sample_uuid)
         .fetch_optional(&state.pool)
         .await;
@@ -908,7 +908,7 @@ pub async fn trace_sample_by_barcode(
             r#"
             SELECT id, sample_no, sample_name, sample_type, source, quantity, unit,
                    status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
-            FROM qa_lab_samples WHERE id = $1
+            FROM public.qa_lab_samples WHERE id = $1
             "#,
         )
         .bind(sid)

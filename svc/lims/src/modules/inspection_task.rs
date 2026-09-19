@@ -123,7 +123,7 @@ pub async fn list_tasks_by_sample(
     };
 
     let rows = sqlx::query(&format!(
-        "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND tenant_id = $2 ORDER BY created_at DESC",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND tenant_id = $2 ORDER BY created_at DESC",
         TASK_SELECT_COLS
     ))
     .bind(sample_uuid)
@@ -156,7 +156,7 @@ pub async fn complete_step(
 
     // 校验任务存在
     let task_row = sqlx::query(
-        "SELECT task_no FROM qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT task_no FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(task_uuid)
     .bind(ctx.tenant_id)
@@ -181,7 +181,7 @@ pub async fn complete_step(
 
     // 1) 写入检验记录
     let insert_res = sqlx::query(
-        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at) VALUES ($1, $2, $3, $4, $5, NOW())",
+        "INSERT INTO public.qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at) VALUES ($1, $2, $3, $4, $5, NOW())",
     )
     .bind(&record_no)
     .bind(task_uuid)
@@ -198,7 +198,7 @@ pub async fn complete_step(
 
     // 2) 更新任务结果
     let row = sqlx::query(&format!(
-        "UPDATE qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
+        "UPDATE public.qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
         TASK_SELECT_COLS
     ))
     .bind(task_uuid)
@@ -244,7 +244,7 @@ pub async fn list_tasks(
     }
 
     let rows = sqlx::query(&format!(
-        "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
         TASK_SELECT_COLS
     ))
     .bind(ctx.tenant_id)
@@ -309,7 +309,7 @@ pub async fn create_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
 
-    let row = sqlx::query("SELECT id, sample_no FROM qa_lab_samples WHERE id = $1")
+    let row = sqlx::query("SELECT id, sample_no FROM public.qa_lab_samples WHERE id = $1")
         .bind(sample_id)
         .fetch_one(&state.pool)
         .await;
@@ -334,7 +334,7 @@ pub async fn create_task(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let row = sqlx::query(&format!(
-        "INSERT INTO qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING {}",
+        "INSERT INTO public.qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING {}",
         TASK_SELECT_COLS
     ))
     .bind(ctx.tenant_id)
@@ -426,7 +426,7 @@ pub async fn get_task(
     }
 
     let row = sqlx::query(&format!(
-        "SELECT {} FROM qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
         TASK_SELECT_COLS
     ))
     .bind(id)
@@ -485,7 +485,7 @@ pub async fn update_task(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let row = sqlx::query(&format!(
-        "UPDATE qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5, actual_start_date), actual_end_date = COALESCE($6, actual_end_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING {}",
+        "UPDATE public.qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5, actual_start_date), actual_end_date = COALESCE($6, actual_end_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING {}",
         TASK_SELECT_COLS
     ))
     .bind(id)
@@ -560,7 +560,7 @@ pub async fn submit_result(
     };
 
     let row = sqlx::query(&format!(
-        "UPDATE qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, status = 'completed', actual_end_date = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
+        "UPDATE public.qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, status = 'completed', actual_end_date = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
         TASK_SELECT_COLS
     ))
     .bind(id)
@@ -663,7 +663,7 @@ pub async fn delete_task(
     };
 
     let result =
-        sqlx::query("UPDATE qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE public.qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(ctx.tenant_id)
             .execute(&state.pool)

@@ -314,3 +314,8 @@
 - [x] 编译注意：链接报 `symbol(s) not found (drop_in_place closure)` 为 lims 增量缓存损坏，`cargo clean -p topems-lims` 后通过（2m02s），非代码问题
 - [x] 验证：列表 4、详情 200（SAMPLE-63f9c838）、crm 189 回归正常
 - [ ] 遗留：mes 5 文件再次恢复 1b6fa65d3 版（工作树 M，随本批提交）；其他 lims 文件（inspection_task/report/statistics/dashboard/sample_barcode）仍无 public 前缀（数据空，低优先）；sample.rs 665/767 行 status 更新未豁免
+## 2026-09-19 深夜：lims 遗留清理（完成）
+- [x] inspection_task/report/statistics/dashboard/sample_barcode 五个文件 qa_lab_* 全量显式 public. 前缀（56 处，表在 lims/public 双份，无前缀解析到 lims 空表）
+- [x] sample.rs 其余无前缀引用补齐（qa_lab_sample_lifecycle 等 4 处）
+- [x] record_lifecycle_event / transition_sample_stage 两 handler superuser 豁免（claims + Option tenant + `($3::uuid IS NULL OR tenant_id=$3)`；INSERT 绑定保持 ctx.tenant_id 避免 NULL 写入）
+- [x] 验证：列表 4、详情 200、crm 189、pm 9 全回归

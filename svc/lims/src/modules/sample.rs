@@ -574,7 +574,7 @@ pub async fn get_sample_lifecycle(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, sample_id::TEXT, sample_no, lifecycle_stage, stage_description,
                operator, notes, location, created_at::TEXT
-        FROM qa_lab_sample_lifecycle
+        FROM public.qa_lab_sample_lifecycle
         WHERE sample_id = $1 AND tenant_id = $2
         ORDER BY created_at ASC
         "#,
@@ -613,13 +613,14 @@ pub async fn get_sample_lifecycle(
 pub async fn record_lifecycle_event(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateLifecycleRecordRequest>,
 ) -> Json<ApiResponse<SampleLifecycleRecord>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
 
     let sample_row =
         sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
@@ -646,7 +647,7 @@ pub async fn record_lifecycle_event(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lab_sample_lifecycle (
+        INSERT INTO public.qa_lab_sample_lifecycle (
             id, tenant_id, sample_id, sample_no, lifecycle_stage, stage_description,
             operator, notes, location, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
@@ -655,7 +656,7 @@ pub async fn record_lifecycle_event(
         "#,
     )
     .bind(record_id)
-    .bind(tenant_id)
+    .bind(ctx.tenant_id)
     .bind(sample_id)
     .bind(&sample_no)
     .bind(&req.lifecycle_stage)
@@ -669,7 +670,7 @@ pub async fn record_lifecycle_event(
     match row {
         Ok(r) => {
             let _ = sqlx::query(
-                "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
+                "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
             )
             .bind(sample_id)
             .bind(&req.lifecycle_stage)
@@ -703,6 +704,7 @@ pub async fn record_lifecycle_event(
 pub async fn transition_sample_stage(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path((sample_id, to_stage)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SampleLifecycleRecord>> {
@@ -710,7 +712,7 @@ pub async fn transition_sample_stage(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
 
     let valid_stage = LIFECYCLE_STAGES.iter().any(|(stage, _)| *stage == to_stage);
 
@@ -748,7 +750,7 @@ pub async fn transition_sample_stage(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lab_sample_lifecycle (
+        INSERT INTO public.qa_lab_sample_lifecycle (
             id, tenant_id, sample_id, sample_no, lifecycle_stage, stage_description,
             operator, notes, location, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
@@ -757,7 +759,7 @@ pub async fn transition_sample_stage(
         "#,
     )
     .bind(record_id)
-    .bind(tenant_id)
+    .bind(ctx.tenant_id)
     .bind(sample_uuid)
     .bind(&sample_no)
     .bind(&to_stage)
@@ -771,7 +773,7 @@ pub async fn transition_sample_stage(
     match row {
         Ok(r) => {
             let _ = sqlx::query(
-                "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
+                "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
             )
             .bind(sample_uuid)
             .bind(&to_stage)
@@ -883,7 +885,7 @@ pub async fn get_sample_traceability(
     let lifecycle_rows = sqlx::query(
         r#"
         SELECT id::TEXT, lifecycle_stage, stage_description, operator, notes, location, created_at::TEXT
-        FROM qa_lab_sample_lifecycle
+        FROM public.qa_lab_sample_lifecycle
         WHERE sample_id = $1 AND tenant_id = $2
         ORDER BY created_at ASC
         "#,

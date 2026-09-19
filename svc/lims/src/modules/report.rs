@@ -65,7 +65,7 @@ pub async fn list_reports(
     let base_sql = r#"
         SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
                inspector, inspection_items, conclusion, remark, status, created_at
-        FROM qa_lab_inspection_reports
+        FROM public.qa_lab_inspection_reports
         WHERE ($1::text IS NULL OR sample_name LIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -125,7 +125,7 @@ pub async fn get_report(
         r#"
         SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
                inspector, inspection_items, conclusion, remark, status, created_at
-        FROM qa_lab_inspection_reports
+        FROM public.qa_lab_inspection_reports
         WHERE id = $1
         "#,
     )
@@ -172,7 +172,7 @@ pub async fn generate_report(
     let sample_row = sqlx::query(
         r#"
         SELECT sample_no, sample_name, sample_type, source, quantity, unit
-        FROM qa_lab_samples WHERE id = $1
+        FROM public.qa_lab_samples WHERE id = $1
         "#,
     )
     .bind(sample_id)
@@ -224,7 +224,7 @@ pub async fn generate_report(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lab_inspection_reports (
+        INSERT INTO public.qa_lab_inspection_reports (
             id, report_no, sample_id, sample_no, sample_name, inspection_date,
             inspector, inspection_items, conclusion, remark, status, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', NOW())
@@ -249,7 +249,7 @@ pub async fn generate_report(
         Ok(r) => {
             // Update sample status
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = 'completed', updated_at = NOW() WHERE id = $1",
+                "UPDATE public.qa_lab_samples SET status = 'completed', updated_at = NOW() WHERE id = $1",
             )
             .bind(sample_id)
             .execute(&state.pool)
@@ -338,7 +338,7 @@ pub async fn approve_report(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lab_inspection_reports
+        UPDATE public.qa_lab_inspection_reports
         SET status = 'approved', updated_at = NOW()
         WHERE id = $1 AND status = 'draft'
         RETURNING id, report_no, sample_id, sample_no, sample_name, inspection_date,
@@ -388,7 +388,7 @@ pub async fn export_report_pdf(
         r#"
         SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
                inspector, inspection_items, conclusion, remark, status
-        FROM qa_lab_inspection_reports
+        FROM public.qa_lab_inspection_reports
         WHERE id = $1
         "#,
     )
