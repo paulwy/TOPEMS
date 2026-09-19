@@ -332,3 +332,7 @@
 - [x] 验证：create→update→publish→activate→deploy→delete 全链路 200；superuser 跨租户删除生效（nil 放行）；误删默认租户数据已 psql 恢复
 - [x] 回归：flow 18 / crm 189 / lims 4 全绿
 - [ ] 遗留：rollback_workflow 与 versions 系列 handler（create_version/activate/delete_version/list/get versions）未做租户过滤（版本表 0 行、rollback 多步复杂，低优先）；lims 旧表 samples 去留/双写策略待拍板
+## 2026-09-20 凌晨：纠正 483dfdfba（mes 误恢复）（完成）
+- [x] 远端 483dfdfba（TRAE）声称"8b3ca5719 实测 0 error"并恢复之——实测当前 main 编译 58 errors（E0599 Uuid/i32 unwrap，同批历史缺陷）
+- [x] 已恢复 729c02543 的适配版（5 文件），编译零 error，回归 flow 18/crm 189/lims 4 全绿
+- [x] 教训：mes 唯一可行路径是"按当前 types 适配"；任何"恢复 1b6fa65d3/8b3ca5719"的提交都需实测编译，勿信 commit message
