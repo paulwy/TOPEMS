@@ -710,7 +710,6 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
             onPageChange: (page) => setCurrentPage(page),
           }}
           {...commonSearchProps}
-          emptyMessage={i18n.t('pages.permission_audit_page.k0')}
         />
       ) : (
         <ListPageTemplate<AccessControlLog>
@@ -730,7 +729,6 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
             onPageChange: (page) => setCurrentPage(page),
           }}
           {...commonSearchProps}
-          emptyMessage={i18n.t('pages.permission_audit_page.k0')}
         />
       )}
     </>
