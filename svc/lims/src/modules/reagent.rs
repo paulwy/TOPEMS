@@ -1,4 +1,5 @@
 use axum::{extract::State, routing::get, Extension, Json, Router};
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::response::ApiResponse;
@@ -182,7 +183,7 @@ pub async fn create_reagent(
     .bind(&req.batch_no)
     .bind(req.quantity)
     .bind(&req.unit)
-    .bind(&req.expired_at)
+    .bind(req.expired_at.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
     .fetch_one(&state.pool)
     .await;
 
@@ -320,7 +321,7 @@ pub async fn update_reagent(
     .bind(req.quantity)
     .bind(&req.unit)
     .bind(&req.status)
-    .bind(&req.expired_at)
+    .bind(req.expired_at.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
     .fetch_one(&state.pool)
     .await;
 

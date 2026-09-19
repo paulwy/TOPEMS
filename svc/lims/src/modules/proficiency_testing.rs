@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::response::ApiResponse;
@@ -431,7 +432,7 @@ pub async fn create_plan(
             sample_type, expected_result, registration_date, test_deadline,
             report_deadline, status, contact_person, contact_phone, notes
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'planning', $12, $13, $14)
-        RETURNING id, plan_no, plan_name, provider, test_item, test_method, plan_year,
+        RETURNING id::TEXT, tenant_id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year,
                   sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT,
                   report_deadline::TEXT, status, contact_person, contact_phone, notes,
                   created_at::TEXT, updated_at::TEXT
@@ -445,9 +446,9 @@ pub async fn create_plan(
     .bind(&req.plan_year)
     .bind(&req.sample_type)
     .bind(&req.expected_result)
-    .bind(&req.registration_date)
-    .bind(&req.test_deadline)
-    .bind(&req.report_deadline)
+    .bind(req.registration_date.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(req.test_deadline.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(req.report_deadline.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
     .bind(&req.contact_person)
     .bind(&req.contact_phone)
     .bind(&req.notes)
@@ -563,7 +564,7 @@ pub async fn update_plan(
             notes = COALESCE($15, notes),
             updated_at = NOW()
         WHERE id = $1
-        RETURNING id, plan_no, plan_name, provider, test_item, test_method, plan_year,
+        RETURNING id::TEXT, tenant_id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year,
                   sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT,
                   report_deadline::TEXT, status, contact_person, contact_phone, notes,
                   created_at::TEXT, updated_at::TEXT
@@ -577,9 +578,9 @@ pub async fn update_plan(
     .bind(&req.plan_year)
     .bind(&req.sample_type)
     .bind(&req.expected_result)
-    .bind(&req.registration_date)
-    .bind(&req.test_deadline)
-    .bind(&req.report_deadline)
+    .bind(req.registration_date.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(req.test_deadline.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(req.report_deadline.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
     .bind(&req.status)
     .bind(&req.contact_person)
     .bind(&req.contact_phone)

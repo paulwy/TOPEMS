@@ -149,7 +149,7 @@ async fn create_budget(
     .bind(req.project_id)
     .bind(&req.budget_code)
     .bind(&req.budget_name)
-    .bind(req.budget_type)
+    .bind(req.budget_type.clone().unwrap_or_else(|| "operating".to_string()))
     .bind(req.total_amount)
     .bind(req.created_by)
     .bind(now)

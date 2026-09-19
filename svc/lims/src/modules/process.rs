@@ -130,7 +130,7 @@ pub async fn create_process(
     Json(req): Json<CreateProcessRequest>,
 ) -> Json<ApiResponse<InspectionProcess>> {
     let row = sqlx::query(
-        "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
+        "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
     )
     .bind(req.name)
     .bind(req.description)
@@ -179,7 +179,7 @@ pub async fn update_process(
     let is_active: Option<bool> = req.status.as_ref().map(|s| s == "active");
 
     let row = sqlx::query(
-        "UPDATE qa_lab_processes SET process_name = COALESCE($2, process_name), description = COALESCE($3, description), steps = COALESCE($4, steps), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
+        "UPDATE qa_lab_processes SET process_name = COALESCE($2, process_name), description = COALESCE($3, description), steps = COALESCE($4, steps), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
     )
     .bind(uuid)
     .bind(req.name)
