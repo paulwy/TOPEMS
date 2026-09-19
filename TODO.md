@@ -336,3 +336,9 @@
 - [x] 远端 483dfdfba（TRAE）声称"8b3ca5719 实测 0 error"并恢复之——实测当前 main 编译 58 errors（E0599 Uuid/i32 unwrap，同批历史缺陷）
 - [x] 已恢复 729c02543 的适配版（5 文件），编译零 error，回归 flow 18/crm 189/lims 4 全绿
 - [x] 教训：mes 唯一可行路径是"按当前 types 适配"；任何"恢复 1b6fa65d3/8b3ca5719"的提交都需实测编译，勿信 commit message
+## 2026-09-20 凌晨：flow rollback + versions 系列租户过滤（完成，代码级验证）
+- [x] rollback_workflow 三段 SQL 加租户：查版本 EXISTS(core_workflows 属租户)、UPDATE core_workflows 加 ($N::uuid IS NULL OR tenant_id=$N)、版本激活 UPDATE 加 EXISTS
+- [x] list/get/create/activate/delete workflow_version 同模式：版本表查询/UPDATE 全部加 EXISTS(core_workflows 租户校验)；create 加前置 wf_ok 校验（workflow 存在且属租户）
+- [x] 统一注入 Claims + tenant_opt（superuser→None 全量）
+- [x] 验证：cargo build -p topems-unified-core 编译零 error（1m29s）；版本表 0 行，API 冒烟待服务可构建后补
+- [!] 阻塞：远端 main（de57c7b68→902851c93）mes/srm/mobile 全库 447 errors（equipment/bidding/inquiry/quotation 等 Option 类型未适配）——TRAE 的"恢复红线"提交全是缓存假象；2f0a2b260 离线 .sqlx 缓存+5 文件适配已合入但仍 447 errors；topems-server 无法全量构建

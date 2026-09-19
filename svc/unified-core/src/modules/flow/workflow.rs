@@ -579,17 +579,25 @@ pub async fn deploy_workflow(
 )]
 pub async fn rollback_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<RollbackWorkflowRequest>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     // 1) 取目标版本 definition（to_version 可能命中多行，取最新一条）
     let target_definition = match sqlx::query_as::<_, (serde_json::Value,)>(
         "SELECT definition FROM core_workflow_versions
          WHERE workflow_id = $1 AND version = $2 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) 
          ORDER BY created_at DESC LIMIT 1",
     )
     .bind(workflow_id)
     .bind(&payload.to_version)
+    .bind(tenant_opt)
     .fetch_optional(&state.pool)
     .await
     {
@@ -604,11 +612,12 @@ pub async fn rollback_workflow(
     // 2) 用目标版本定义覆盖工作流当前定义（主表 version 为整型计数，保持不动）
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET definition = $2, updated_at = NOW()
-         WHERE id = $1
+         WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id=$3)
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(workflow_id)
     .bind(&target_definition)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -629,10 +638,12 @@ pub async fn rollback_workflow(
             WHERE workflow_id = $1 AND version = $2 AND deleted_at IS NULL
             ORDER BY created_at DESC LIMIT 1
          ))
-         WHERE workflow_id = $1 AND deleted_at IS NULL",
+         WHERE workflow_id = $1 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) ",
     )
     .bind(workflow_id)
     .bind(&payload.to_version)
+    .bind(tenant_opt)
     .execute(&state.pool)
     .await
     {
@@ -672,15 +683,23 @@ pub struct CreateWorkflowVersionRequest {
 )]
 pub async fn list_workflow_versions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<WorkflowVersion>>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let versions = sqlx::query_as::<_, WorkflowVersion>(
         "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
          FROM core_workflow_versions
          WHERE workflow_id = $1 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($2::uuid IS NULL OR cw.tenant_id=$2)) 
          ORDER BY created_at DESC",
     )
     .bind(workflow_id)
+    .bind(tenant_opt)
     .fetch_all(&state.pool)
     .await;
 
@@ -710,16 +729,40 @@ pub async fn list_workflow_versions(
 )]
 pub async fn create_workflow_version(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<CreateWorkflowVersionRequest>,
 ) -> Json<ApiResponse<WorkflowVersion>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let wf_ok: bool = match sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM core_workflows WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id=$2))",
+    )
+    .bind(workflow_id)
+    .bind(tenant_opt)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(b) => b,
+        Err(e) => {
+            tracing::error!("校验工作流失败: {}", e);
+            return Json(api_error(500, "创建工作流版本失败"));
+        }
+    };
+    if !wf_ok {
+        return Json(api_error(404, "工作流不存在"));
+    }
     // definition 未传时从当前工作流快照
     let definition = match payload.definition {
         Some(d) => d,
         None => match sqlx::query_scalar::<_, serde_json::Value>(
-            "SELECT definition FROM core_workflows WHERE id = $1 AND deleted_at IS NULL",
+            "SELECT definition FROM core_workflows WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id=$2)",
         )
         .bind(workflow_id)
+        .bind(tenant_opt)
         .fetch_optional(&state.pool)
         .await
         {
@@ -734,9 +777,10 @@ pub async fn create_workflow_version(
 
     // 新版本创建后成为唯一激活版本：先将该工作流旧版本全部置为非激活
     if let Err(e) = sqlx::query(
-        "UPDATE core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND deleted_at IS NULL",
+        "UPDATE core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($2::uuid IS NULL OR cw.tenant_id=$2)) ",
     )
     .bind(workflow_id)
+    .bind(tenant_opt)
     .execute(&state.pool)
     .await
     {
@@ -784,12 +828,19 @@ pub async fn create_workflow_version(
 )]
 pub async fn get_workflow_version(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<WorkflowVersion>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let version = sqlx::query_as::<_, WorkflowVersion>(
         "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
          FROM core_workflow_versions
-         WHERE workflow_id = $1 AND id = $2 AND deleted_at IS NULL",
+         WHERE workflow_id = $1 AND id = $2 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) ",
     )
     .bind(workflow_id)
     .bind(version_id)
@@ -826,8 +877,14 @@ pub async fn get_workflow_version(
 )]
 pub async fn activate_workflow_version(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<WorkflowVersion>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -839,10 +896,12 @@ pub async fn activate_workflow_version(
     // 1. 校验版本存在且属于该工作流
     let exists = sqlx::query_scalar::<_, bool>(
         "SELECT EXISTS(SELECT 1 FROM core_workflow_versions
-         WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL)",
+         WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) )",
     )
     .bind(version_id)
     .bind(workflow_id)
+    .bind(tenant_opt)
     .fetch_one(&mut *tx)
     .await;
 
@@ -858,7 +917,7 @@ pub async fn activate_workflow_version(
     }
 
     // 2. 同工作流其他版本置为非激活
-    if let Err(e) = sqlx::query("UPDATE core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1")
+    if let Err(e) = sqlx::query("UPDATE core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($2::uuid IS NULL OR cw.tenant_id=$2)) ")
         .bind(workflow_id)
         .execute(&mut *tx)
         .await
@@ -871,10 +930,12 @@ pub async fn activate_workflow_version(
     let version = sqlx::query_as::<_, WorkflowVersion>(
         "UPDATE core_workflow_versions SET isactive = TRUE
          WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) 
          RETURNING id, workflow_id, version, definition, change_description, created_by, isactive, created_at",
     )
     .bind(version_id)
     .bind(workflow_id)
+    .bind(tenant_opt)
     .fetch_one(&mut *tx)
     .await;
 
@@ -911,14 +972,22 @@ pub async fn activate_workflow_version(
 )]
 pub async fn delete_workflow_version(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query(
         "UPDATE core_workflow_versions SET deleted_at = NOW()
-         WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL",
+         WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) ",
     )
     .bind(version_id)
     .bind(workflow_id)
+    .bind(tenant_opt)
     .execute(&state.pool)
     .await;
 
