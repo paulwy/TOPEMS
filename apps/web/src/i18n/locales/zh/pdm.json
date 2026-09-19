@@ -903,9 +903,5 @@
   "pdm.nav.pdm-doc-approval-flow": "文档审批流",
   "pdm.nav.pdm-doc-approval-flow_desc": "文档审批流",
   "pdm.nav.pdm-change-template": "变更模板",
-  "pdm.nav.pdm-change-template_desc": "变更模板",
-  "pdm.product": "产品",
-  "pdm.process": "工艺",
-  "pdm.batch": "批次",
-  "pdm.version": "版本"
+  "pdm.nav.pdm-change-template_desc": "变更模板"
 }

@@ -2365,6 +2365,5 @@
   "pm.nav.pm-project-create": "项目管理新建",
   "pm.nav.pm-project-create_desc": "项目管理新建",
   "pm.nav.pm-contract-create": "合同管理新建",
-  "pm.nav.pm-contract-create_desc": "合同管理新建",
-  "pm.project_detail": "项目详情"
+  "pm.nav.pm-contract-create_desc": "合同管理新建"
 }

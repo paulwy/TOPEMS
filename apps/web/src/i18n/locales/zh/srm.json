@@ -815,11 +815,5 @@
   "srm.nav.srm-supplier-detail_desc": "供应商管理详情",
   "srm.nav.srm-contract-detail": "合同管理详情",
   "srm.nav.srm-contract-detail_desc": "合同管理详情",
-  "srm.subtitle": "供应商关系管理",
-  "srm.supplier": "供应商",
-  "srm.order": "订单",
-  "srm.evaluation": "评估",
-  "srm.contract": "合同",
-  "srm.performance": "绩效",
-  "srm.category": "分类"
+  "srm.subtitle": "供应商关系管理"
 }

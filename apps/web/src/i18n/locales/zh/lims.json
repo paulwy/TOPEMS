@@ -1888,10 +1888,5 @@
   "lims.nav.lims-task-detail": "任务管理详情",
   "lims.nav.lims-task-detail_desc": "任务管理详情",
   "lims.nav.lims-instrument-detail": "仪器管理详情",
-  "lims.nav.lims-instrument-detail_desc": "仪器管理详情",
-  "lims.sample": "样品",
-  "lims.process": "流程",
-  "lims.task": "任务",
-  "lims.instrument": "仪器",
-  "lims.test_method": "检测方法"
+  "lims.nav.lims-instrument-detail_desc": "仪器管理详情"
 }
