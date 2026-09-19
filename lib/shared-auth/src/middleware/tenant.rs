@@ -166,12 +166,23 @@ pub fn tenant_middleware() -> impl Fn(
                     return next.run(req).await;
                 }
             };
+            // superuser 会话：RLS 使用 nil 租户（配合策略零值豁免条件全量可见），
+            // TenantContext 保留实际租户供业务过滤使用
+            let rls_tenant = if claims.is_superuser {
+                Uuid::nil()
+            } else {
+                tenant_id
+            };
             match sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                .bind(tenant_id.to_string())
+                .bind(rls_tenant.to_string())
                 .execute(&mut *txn)
                 .await
             {
-                Ok(_) => tracing::debug!("Applied RLS context for tenant: {}", tenant_id),
+                Ok(_) => tracing::debug!(
+                    "Applied RLS context for tenant: {} (rls: {})",
+                    tenant_id,
+                    rls_tenant
+                ),
                 Err(e) => tracing::error!("Failed to set RLS context: {}", e),
             }
 

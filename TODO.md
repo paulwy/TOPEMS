@@ -294,3 +294,8 @@
 - [x] 排查：crm.customers 数据修复后 admin 列表 0 可见。根因：① crm 模块请求不经 unified-core 的 tenant_rls_middleware（路由装配缺失，RLS 上下文从未设置，历史上依赖策略 tenant_id IS NULL 分支兜底）；② sqlx 连接池下 set_config 与查询连接不绑定（即使 DB_MAX_CONNECTIONS=1 亦未生效，疑似连接配置未读入）；③ 数据修复（NULL→默认租户）后无 NULL 行可兜底，非 NULL 数据在空租户上下文被 RLS 全过滤（crm 189 行、pm.projects 9 行等不可见；flow.workflows 18 行全 NULL 仍可见）
 - [x] 已做（无害准备）：tenant_rls_middleware 增加 Bearer token 解码（verify_jwt_token + auth_state.jwt_secret，Claims 注入 extensions）、superuser 会话 RLS 使用零值租户（00000000-0000-0000-0000-000000000000）、set_config 改会话级 is_local=false、None 分支清理租户上下文。编译通过、服务零 ERROR
 - [ ] 待决策：A. 为各业务模块路由装配 tenant_rls 且实现请求级连接绑定（正确隔离，改动大）；B. RLS 策略空租户上下文放行（恢复修复前"全可见"，隔离失效）；C. 接受现状（有租户数据经 API 不可见，仅 NULL 数据可见）
+
+## 2026-09-19 方案 A 落地（superuser RLS 豁免，tenant.rs 已推）
+- [x] 用户选 A（业务模块装配 tenant_rls + 请求级连接绑定）。侦察修正：crm 等 build_application 模块**已有** tenant_middleware（txn 事务绑定连接）+ handler 从 extensions 取 txn 查询——**连接绑定已存在**；0 可见根因是 admin 租户上下文（05a97…）过滤（数据已归默认租户 000…0001，无 NULL 兜底）
+- [x] shared-auth tenant_middleware 普通用户分支：**superuser 会话 RLS set_config 改 nil 租户**（配合策略零值豁免条件全量可见），TenantContext 保留实际租户供业务过滤——编译通过，重启验证 **admin 列表 crm.customers 189 全量可见**（修复前 0）
+- [ ] 遗留（业务层租户过滤）：pm/lims 等 handler 用 ctx.tenant_id 直接过滤 SQL（tenant_id = $1），superuser（05a97…）看不到默认租户数据（pm.projects 9 全默认租户、列表 0）——需业务层豁免（跨 handler 改造，列为后续项）；unified-core 侧 handler 用 state.pool 无 txn 绑定（flow 18 全 NULL 可见，暂不受影响）
