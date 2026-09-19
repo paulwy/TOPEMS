@@ -99,7 +99,7 @@ const navItems: NavItem[] = [
         icon: BarChart3,
         path: '/erp/financial-report',
       },
-      { id: 'erp-hr', label: '人力资源', icon: Users, path: '/erp/hr' },
+      { id: 'erp-hr', label: '人力资源', icon: Users, path: '/hrm/dashboard' },
     ],
   },
   {
