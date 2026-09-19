@@ -319,3 +319,10 @@
 - [x] sample.rs 其余无前缀引用补齐（qa_lab_sample_lifecycle 等 4 处）
 - [x] record_lifecycle_event / transition_sample_stage 两 handler superuser 豁免（claims + Option tenant + `($3::uuid IS NULL OR tenant_id=$3)`；INSERT 绑定保持 ctx.tenant_id 避免 NULL 写入）
 - [x] 验证：列表 4、详情 200、crm 189、pm 9 全回归
+## 2026-09-20 凌晨：flow 租户过滤 + mes 编译治愈 + crm superuser 豁免（完成）
+- [x] flow/workflow.rs：list_workflows（4 分支）与 get_workflow 注入 Claims 做 superuser 豁免，SQL 加 `($N::uuid IS NULL OR tenant_id=$N)`，superuser 全量（验证 18）
+- [x] mes 编译回归彻底治愈：42 处 E0599（unwrap_or_default on Uuid/i32）+ E0277/E0308（datetime_to_string 收 NaiveDateTime 但字段为 DateTime<Utc>）全部按当前 types 适配；process_flow/inspection/patrol/standard/work_report 5 文件；不要再 checkout 历史 mes 版本（1b6fa65d3/8b3ca5719 均为缺陷版，本 session 实测 8b3ca5719 仍报同批错误）
+- [x] crm customer.rs：list_customers 11 处 get_tenant_id 加 superuser 豁免（Uuid::nil() 零值，SQL `$1='000...000' OR tenant_id=$1` 放行全量）；验证 crm 189
+- [x] 教训：8099 旧进程 kill TERM 未退出，导致连续多次"编译重启后行为不变"（实际一直在测旧二进制）；必须 kill -9 + 确认端口清空 + 检查启动日志无 Address already in use
+- [x] 验证：crm 189 / flow 18 / lims 4 全绿；编译零 error
+- [ ] 遗留：flow 写操作 handler（create/update/delete/publish 等 14+）未做租户过滤（数据全默认租户，风险面小）；lims 旧表 samples 去留/双写策略待拍板

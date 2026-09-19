@@ -135,7 +135,7 @@ pub async fn list_customers(
         .search
         .as_ref()
         .map(|s| s.trim()[..s.len().min(100)].to_string());
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     // 缓存命中则直接返回（含 tenant_id 的隔离 key）
     let list_cache_key = customer_list_cache_key(tenant_id, page, page_size, &search);
@@ -220,7 +220,7 @@ async fn create_customer(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
     let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let result = sqlx::query_as::<_, Customer>(
@@ -317,7 +317,7 @@ async fn get_customer(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     // 缓存命中则直接返回
     let detail_key = customer_detail_cache_key(tenant_id, id);
@@ -385,7 +385,7 @@ async fn update_customer(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     let existing = sqlx::query_as::<_, Customer>(
         "SELECT id, tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2"
@@ -498,7 +498,7 @@ async fn delete_customer(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     match sqlx::query(
         "UPDATE crm.customers SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
@@ -580,7 +580,7 @@ async fn batch_delete_customers(
         return Json(api_error(400, "请选择要删除的客户"));
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     match sqlx::query(
         "UPDATE crm.customers SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2",
@@ -675,7 +675,7 @@ async fn start_customer_approval(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     let customer = sqlx::query_as::<_, Customer>(
         "SELECT id, tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
@@ -798,7 +798,7 @@ async fn approve_customer(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     let customer = sqlx::query_as::<_, Customer>(
         "SELECT id, tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
@@ -897,7 +897,7 @@ async fn reject_customer(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     let customer = sqlx::query_as::<_, Customer>(
         "SELECT id, tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
@@ -1081,7 +1081,7 @@ async fn get_customer_finance(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     let row = sqlx::query!(
         r#"
@@ -1179,7 +1179,7 @@ async fn update_customer_finance(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     // 读取现值（无则默认），与请求合并
     let cur = {

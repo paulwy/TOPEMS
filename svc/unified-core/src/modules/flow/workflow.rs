@@ -1,6 +1,6 @@
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::Deserialize;
@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::models::{CreateWorkflowRequest, UpdateWorkflowRequest, Workflow, WorkflowVersion};
@@ -39,8 +40,14 @@ pub struct WorkflowQueryParams {
 )]
 pub async fn list_workflows(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<WorkflowQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Workflow>>> {
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -51,7 +58,8 @@ pub async fn list_workflows(
     let has_filters = !search.is_empty() || status.is_some();
 
     let total: i64 = if !has_filters {
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflows")
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflows WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_id)
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0)
@@ -59,10 +67,12 @@ pub async fn list_workflows(
         match sqlx::query_scalar(
             r#"SELECT COUNT(*) FROM core_workflows 
                WHERE deleted_at IS NULL AND (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
-                 AND (status = $2 OR $2 = '')"#,
+                 AND (status = $2 OR $2 = '')
+                 AND ($3::uuid IS NULL OR tenant_id = $3)"#,
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
+        .bind(tenant_id)
         .fetch_one(&state.pool)
         .await
         {
@@ -76,10 +86,11 @@ pub async fn list_workflows(
 
     let items: Vec<Workflow> = if !has_filters {
         match sqlx::query_as::<_, Workflow>(
-            "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_id)
         .fetch_all(&state.pool)
         .await
         {
@@ -95,12 +106,14 @@ pub async fn list_workflows(
                FROM core_workflows 
                WHERE (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
+                 AND ($5::uuid IS NULL OR tenant_id = $5)
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_id)
         .fetch_all(&state.pool)
         .await
         {
@@ -134,12 +147,19 @@ pub async fn list_workflows(
 )]
 pub async fn get_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Workflow>> {
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     {
