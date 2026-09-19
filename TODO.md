@@ -342,3 +342,10 @@
 - [x] 统一注入 Claims + tenant_opt（superuser→None 全量）
 - [x] 验证：cargo build -p topems-unified-core 编译零 error（1m29s）；版本表 0 行，API 冒烟待服务可构建后补
 - [!] 阻塞：远端 main（de57c7b68→902851c93）mes/srm/mobile 全库 447 errors（equipment/bidding/inquiry/quotation 等 Option 类型未适配）——TRAE 的"恢复红线"提交全是缓存假象；2f0a2b260 离线 .sqlx 缓存+5 文件适配已合入但仍 447 errors；topems-server 无法全量构建
+
+## 2026-09-20 mes 编译错误全收敛（447→0）
+- 完成：SQLX_OFFLINE 全量构建暴露 TRAE 离线缓存假象 447 errors → 逐轮批量修复到 0（10 轮 check/build）
+- 模式：Some(Option) 删嵌套 63 处；简单路径赋值 unwrap_or_default 184 处；Option<Uuid/String> to_string/format 改 map+unwrap_or_default；naive_utc/to_rfc3339 改 map；query! 参数 flatten().as_deref()+let 绑定；match arms 对齐；按 expected/found 精确修正
+- 验证：全量 build 通过（EXIT 0）；服务重启（8099）回归 flow 18 / crm 189 / lims 4 全绿
+- 已提交推送：39a19b31e（18 文件，+191/-183）
+- 遗留：worktree 有 finance.json 未提交改动（lefthook i18n-quality hook 自动生成的翻译修正，127 处占位符→具体语义），未提交待用户确认；wms/labor 报错为级联已随修复消失无需改
