@@ -299,3 +299,10 @@
 - [x] 用户选 A（业务模块装配 tenant_rls + 请求级连接绑定）。侦察修正：crm 等 build_application 模块**已有** tenant_middleware（txn 事务绑定连接）+ handler 从 extensions 取 txn 查询——**连接绑定已存在**；0 可见根因是 admin 租户上下文（05a97…）过滤（数据已归默认租户 000…0001，无 NULL 兜底）
 - [x] shared-auth tenant_middleware 普通用户分支：**superuser 会话 RLS set_config 改 nil 租户**（配合策略零值豁免条件全量可见），TenantContext 保留实际租户供业务过滤——编译通过，重启验证 **admin 列表 crm.customers 189 全量可见**（修复前 0）
 - [ ] 遗留（业务层租户过滤）：pm/lims 等 handler 用 ctx.tenant_id 直接过滤 SQL（tenant_id = $1），superuser（05a97…）看不到默认租户数据（pm.projects 9 全默认租户、列表 0）——需业务层豁免（跨 handler 改造，列为后续项）；unified-core 侧 handler 用 state.pool 无 txn 绑定（flow 18 全 NULL 可见，暂不受影响）
+
+## 2026-09-19 方案 A 延伸：lims 业务层豁免（sample.rs）
+- [x] 澄清：pm.projects 9 行**本来就可见**（响应字段是 data.projects 非 data.items，此前 items 0 为字段解析误判）；pm.projects 无业务层租户过滤（全表查询），RLS 策略含空上下文放行分支
+- [x] lims sample.rs 列表 handler **superuser 业务层豁免**：签名注入 Claims，tenant_id 绑定改 Option（superuser None → SQL `($1::uuid IS NULL OR tenant_id = $1)` 全量，普通用户维持租户过滤）；sample_list_key 改 Option 入参（superuser key 用 "all" 区分，避免缓存串租户）——编译通过（4m29s）
+- [x] lims.samples 4 行 tenant_id NULL 修复（双库 5432/5433 → 默认租户 000…0001，备份表 lims.samples_tenant_null_backup_20260919）
+- [ ] 发现（存量架构，非 RLS）：lims 列表 handler 查 **qa_lab_samples**（0 行），4 行样本数据在 **lims.samples**（不同结构 17 列 vs 14 列）——API 列表空是表不匹配所致，数据从未经 API 可见；如需接通需数据迁移或 handler 改表（列映射），列为后续
+- [ ] 其余 lims 业务层过滤（详情/更新等 8 处 handler 仍按 ctx.tenant_id 过滤，superuser 操作时需同样豁免——低优先，数据空）
