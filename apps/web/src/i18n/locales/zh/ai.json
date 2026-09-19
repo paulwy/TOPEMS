@@ -3489,7 +3489,7 @@
   "ai.document_intelligence.key_sentences": "关键句子 ({{count}})",
   "ai.document_intelligence.keywords": "关键词 ({{count}})",
   "ai.document_intelligence.alert_no_summary": "尚未生成摘要，请点击“生成摘要”按钮。",
-  "ai.document_intelligence.meta_title": "标题",
+  "ai.document_intelligence.meta_title": "元数据标题",
   "ai.document_intelligence.meta_author": "作者",
   "ai.document_intelligence.unknown": "未知",
   "ai.document_intelligence.meta_language": "语言",
