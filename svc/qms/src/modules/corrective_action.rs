@@ -126,7 +126,7 @@ pub async fn create_action(
     let issue_id = req.issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
 
-    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, issue_id, title, description, root_cause, action_type, status, priority, assignee, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11) RETURNING id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(action_no).bind(issue_id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(priority).bind(req.assignee).bind(req.target_date).bind(req.created_by)
+    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, issue_id, title, description, root_cause, action_type, status, priority, assignee, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11) RETURNING id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(action_no).bind(issue_id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(priority).bind(req.assignee).bind(req.target_date).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -213,7 +213,7 @@ pub async fn update_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET title = COALESCE($2, title), description = COALESCE($3, description), root_cause = COALESCE($4, root_cause), action_type = COALESCE($5, action_type), status = COALESCE($6, status), priority = COALESCE($7, priority), assignee = COALESCE($8, assignee), target_date = COALESCE($9, target_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $10 RETURNING id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(req.status).bind(req.priority).bind(req.assignee).bind(req.target_date).bind(tenant_id)
+    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET title = COALESCE($2, title), description = COALESCE($3, description), root_cause = COALESCE($4, root_cause), action_type = COALESCE($5, action_type), status = COALESCE($6, status), priority = COALESCE($7, priority), assignee = COALESCE($8, assignee), target_date = COALESCE($9, target_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $10 RETURNING id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(req.status).bind(req.priority).bind(req.assignee).bind(req.target_date).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -238,7 +238,7 @@ pub async fn complete_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
+    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

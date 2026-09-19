@@ -63,7 +63,7 @@ pub async fn create_audit_plan(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_plans (tenant_id, plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9) RETURNING id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_plans (tenant_id, plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9) RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -113,7 +113,7 @@ pub async fn start_audit_plan(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'in_progress', actual_start = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'in_progress', actual_start = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -138,7 +138,7 @@ pub async fn complete_audit_plan(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'completed', actual_end = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'completed', actual_end = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

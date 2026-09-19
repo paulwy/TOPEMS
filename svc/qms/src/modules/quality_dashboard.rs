@@ -378,7 +378,7 @@ pub async fn create_alert_rule(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateAlertRuleRequest>,
 ) -> Json<ApiResponse<AlertRule>> {
-    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_rules (rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $11, $12) RETURNING id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.notification_type).bind(req.recipients).bind(req.description).bind(req.created_by).bind(Uuid::nil())
+    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_rules (rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $11, $12) RETURNING id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.notification_type).bind(req.recipients).bind(req.description).bind(req.created_by).bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -423,7 +423,7 @@ pub async fn update_alert_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的预警规则ID")),
     };
 
-    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_rules SET rule_name = COALESCE($2, rule_name), alert_type = COALESCE($3, alert_type), metric = COALESCE($4, metric), condition = COALESCE($5, condition), threshold = COALESCE($6, threshold), duration = COALESCE($7, duration), severity = COALESCE($8, severity), status = COALESCE($9, status), notification_type = COALESCE($10, notification_type), recipients = COALESCE($11, recipients), description = COALESCE($12, description), updated_at = NOW() WHERE id = $1 RETURNING id, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.status).bind(req.notification_type).bind(req.recipients).bind(req.description)
+    let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_rules SET rule_name = COALESCE($2, rule_name), alert_type = COALESCE($3, alert_type), metric = COALESCE($4, metric), condition = COALESCE($5, condition), threshold = COALESCE($6, threshold), duration = COALESCE($7, duration), severity = COALESCE($8, severity), status = COALESCE($9, status), notification_type = COALESCE($10, notification_type), recipients = COALESCE($11, recipients), description = COALESCE($12, description), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.status).bind(req.notification_type).bind(req.recipients).bind(req.description)
     .fetch_one(&state.pool)
     .await;
 
@@ -500,7 +500,7 @@ pub async fn create_alert_message(
 ) -> Json<ApiResponse<AlertMessage>> {
     let rule_id = req.rule_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
-    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_messages (rule_id, rule_name, alert_type, severity, title, message, metric_value, threshold, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at::TEXT, created_at::TEXT"#)).bind(rule_id).bind(req.rule_name).bind(req.alert_type).bind(req.severity).bind(req.title).bind(req.message).bind(req.metric_value).bind(req.threshold).bind(Uuid::nil())
+    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_alert_messages (rule_id, rule_name, alert_type, severity, title, message, metric_value, threshold, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at::TEXT, created_at::TEXT"#)).bind(rule_id).bind(req.rule_name).bind(req.alert_type).bind(req.severity).bind(req.title).bind(req.message).bind(req.metric_value).bind(req.threshold).bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -523,7 +523,7 @@ pub async fn acknowledge_alert(
         Err(_) => return Json(ApiResponse::error(400, "无效的预警消息ID")),
     };
 
-    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_messages SET status = 'acknowledged', acknowledged_at = NOW() WHERE id = $1 RETURNING id, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at::TEXT, created_at::TEXT"#)).bind(id)
+    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_messages SET status = 'acknowledged', acknowledged_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at::TEXT, created_at::TEXT"#)).bind(id)
     .fetch_one(&state.pool)
     .await;
 
