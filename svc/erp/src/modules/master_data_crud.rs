@@ -6,6 +6,7 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared::ApiResponse;
+use topems_shared::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 
 use super::ApiState;
@@ -172,12 +173,18 @@ impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for MasterDataRow {
 pub async fn list_master_data_refs(
     State(_state): State<ApiState>,
     Query(params): Query<MasterDataRefQuery>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -190,10 +197,12 @@ pub async fn list_master_data_refs(
                       last_synced_at, created_at, updated_at
                FROM erp.erp_master_data_refs
                WHERE domain = $1
+                 AND ($2::uuid IS NULL OR tenant_id = $2)
                ORDER BY updated_at DESC
-               LIMIT $2 OFFSET $3"#
+               LIMIT $3 OFFSET $4"#
         ))
         .bind(domain)
+        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut **txn)
@@ -205,9 +214,11 @@ pub async fn list_master_data_refs(
                       source_service, local_entity_type, local_entity_id,
                       last_synced_at, created_at, updated_at
                FROM erp.erp_master_data_refs
+               WHERE ($1::uuid IS NULL OR tenant_id = $1)
                ORDER BY updated_at DESC
-               LIMIT $1 OFFSET $2"#
+               LIMIT $2 OFFSET $3"#
         ))
+        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut **txn)
@@ -245,21 +256,29 @@ pub async fn list_master_data_refs(
 pub async fn get_master_data_ref(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
         r#"SELECT master_data_id, tenant_id, domain, code, name, status,
                   source_service, local_entity_type, local_entity_id,
                   last_synced_at, created_at, updated_at
            FROM erp.erp_master_data_refs
-           WHERE master_data_id = $1"#
+           WHERE master_data_id = $1
+             AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(&master_data_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
@@ -284,22 +303,30 @@ pub async fn get_master_data_ref(
 pub async fn get_master_data_ref_by_code(
     State(_state): State<ApiState>,
     Path((domain, code)): Path<(String, String)>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
         r#"SELECT master_data_id, tenant_id, domain, code, name, status,
                   source_service, local_entity_type, local_entity_id,
                   last_synced_at, created_at, updated_at
            FROM erp.erp_master_data_refs
-           WHERE domain = $1 AND code = $2"#
+           WHERE domain = $1 AND code = $2
+             AND ($3::uuid IS NULL OR tenant_id = $3)"#
     ))
     .bind(&domain)
     .bind(&code)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
