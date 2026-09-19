@@ -311,7 +311,7 @@ pub async fn get_team(
                 team_name: r.team_name.unwrap_or_default(),
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: if r.work_station_name.is_empty() {
+                work_station_name: if r.work_station_name.as_deref().unwrap_or("").is_empty() {
                     None
                 } else {
                     r.work_station_name
@@ -392,7 +392,7 @@ pub async fn create_team(
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                emp_uuid_arg.as_deref(),
+                emp_uuid_arg.as_ref().and_then(|s| uuid::Uuid::parse_str(s).ok()),
                 member.employee_name,
                 member.employee_code,
                 member.position,
@@ -586,7 +586,7 @@ pub async fn get_team_members(
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
             team_id: r.team_id.to_string(),
-            employee_id: r.employee_id.to_string(),
+            employee_id: r.employee_id.map(|v| v.to_string()).unwrap_or_default(),
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
@@ -628,7 +628,7 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        employee_uuid_arg.as_deref(),
+        employee_uuid_arg.as_ref().and_then(|s| uuid::Uuid::parse_str(s).ok()),
         req.employee_name,
         req.employee_code,
         req.position,
@@ -660,7 +660,7 @@ pub async fn add_team_member(
     let member = TeamMemberResponse {
         id: result.id.to_string(),
         team_id: result.team_id.to_string(),
-        employee_id: result.employee_id.to_string(),
+        employee_id: result.employee_id.map(|v| v.to_string()).unwrap_or_default(),
         employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,

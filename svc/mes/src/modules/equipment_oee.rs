@@ -501,8 +501,8 @@ pub async fn create_oee_record(
     let record = OeeRecordResponse {
         id: result.id.unwrap_or_default(),
         equipment_id: result.equipment_id.unwrap_or_default(),
-        equipment_name: equipment.as_ref().map(|e| e.name.clone()),
-        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        equipment_name: equipment.as_ref().map(|e| e.name.clone()).flatten(),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).flatten(),
         record_date: opt_naive_date_to_utc(result.record_date).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(result.planned_production_time),
         run_time: big_decimal_to_f64(result.actual_run_time),
@@ -1075,9 +1075,9 @@ pub async fn get_equipment_efficiency_analysis(
             };
 
             EquipmentEfficiencyAnalysis {
-                equipment_id: r.equipment_id,
-                equipment_name: r.equipment_name,
-                equipment_no: r.equipment_no,
+                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_name: r.equipment_name.unwrap_or_default(),
+                equipment_no: r.equipment_no.unwrap_or_default(),
                 oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),

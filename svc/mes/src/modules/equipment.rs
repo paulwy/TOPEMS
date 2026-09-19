@@ -927,21 +927,21 @@ pub async fn create_maintenance(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id,
-            equipment_id,
-            equipment_name,
-            equipment_no,
-            maintenance_type,
+            id: id.unwrap_or_default(),
+            equipment_id: equipment_id.unwrap_or_default(),
+            equipment_name: equipment_name.unwrap_or_default(),
+            equipment_no: equipment_no.unwrap_or_default(),
+            maintenance_type: maintenance_type.unwrap_or_default(),
             description: description,
-            maintainer,
-            start_time,
+            maintainer: maintainer.unwrap_or_default(),
+            start_time: start_time.unwrap_or_default(),
             end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at,
-            updated_at,
+            created_at: created_at.unwrap_or_default(),
+            updated_at: updated_at.unwrap_or_default(),
         },
         "维护记录创建成功",
     ))
@@ -1034,21 +1034,21 @@ pub async fn update_maintenance_status(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id,
-            equipment_id,
-            equipment_name,
-            equipment_no,
-            maintenance_type,
-            description: Some(description),
-            maintainer,
-            start_time,
+            id: id.unwrap_or_default(),
+            equipment_id: equipment_id.unwrap_or_default(),
+            equipment_name: equipment_name.unwrap_or_default(),
+            equipment_no: equipment_no.unwrap_or_default(),
+            maintenance_type: maintenance_type.unwrap_or_default(),
+            description,
+            maintainer: maintainer.unwrap_or_default(),
+            start_time: start_time.unwrap_or_default(),
             end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at,
-            updated_at,
+            created_at: created_at.unwrap_or_default(),
+            updated_at: updated_at.unwrap_or_default(),
         },
         "维护状态更新成功",
     ))
@@ -1173,12 +1173,12 @@ pub async fn list_inspections(
             let inspections: Vec<InspectionResponse> = rows
                 .into_iter()
                 .map(|r| InspectionResponse {
-                    id: r.id.to_string(),
-                    equipment_id: r.equipment_id.to_string(),
+                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                    inspector: r.inspector,
-                    inspection_date: r.inspection_date,
+                    inspector: r.inspector.unwrap_or_default(),
+                    inspection_date: r.inspection_date.unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1303,12 +1303,12 @@ pub async fn create_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
-                equipment_id: r.equipment_id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                inspector: r.inspector,
-                inspection_date: r.inspection_date,
+                inspector: r.inspector.unwrap_or_default(),
+                inspection_date: r.inspection_date.unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature

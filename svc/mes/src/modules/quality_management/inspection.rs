@@ -306,15 +306,15 @@ pub async fn get_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.to_string(),
-                product_name: r.product_name.to_string(),
+                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
+                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type.to_string(),
+                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -424,15 +424,15 @@ pub async fn create_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.to_string(),
-                product_name: r.product_name.to_string(),
+                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
+                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type.to_string(),
+                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -532,15 +532,15 @@ pub async fn update_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.to_string(),
-                product_name: r.product_name.to_string(),
+                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
+                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type.to_string(),
+                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),

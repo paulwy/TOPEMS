@@ -389,6 +389,8 @@ pub async fn create_wip(
         None
     };
 
+    let order_no_flat = order_no.flatten();
+    let order_no_arg = order_no_flat.as_deref();
     let result = sqlx::query!(
         r#"
         INSERT INTO wips (
@@ -405,7 +407,7 @@ pub async fn create_wip(
         "#,
         wip_no,
         req.order_id,
-        order_no,
+        order_no_arg,
         req.product_id,
         req.product_name,
         req.product_code,
@@ -854,13 +856,13 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no.unwrap_or_default(),
         wip_id: transfer.wip_id.unwrap_or_default(),
         from_process_id: transfer.from_process_id,
-        from_process_name,
+        from_process_name: from_process_name.unwrap_or_default(),
         from_work_station_id: transfer.from_work_station_id,
-        from_work_station_name: from_workstation_name,
+        from_work_station_name: from_workstation_name.unwrap_or_default(),
         to_process_id: transfer.to_process_id,
-        to_process_name,
+        to_process_name: to_process_name.unwrap_or_default(),
         to_work_station_id: transfer.to_work_station_id,
-        to_work_station_name: to_workstation_name,
+        to_work_station_name: to_workstation_name.unwrap_or_default(),
         quantity: big_decimal_to_f64(transfer.quantity),
         transfer_time: naive_to_utc(transfer.transfer_time),
         operator: transfer.operator,

@@ -427,6 +427,8 @@ pub async fn create_production_schedule(
         None
     };
 
+    let order_no_flat = order_no.flatten();
+    let order_no_arg = order_no_flat.as_deref();
     let result = sqlx::query!(
         r#"
         INSERT INTO production_schedules (
@@ -446,7 +448,7 @@ pub async fn create_production_schedule(
         "#,
         schedule_no,
         req.order_id,
-        order_no,
+        order_no_arg,
         req.product_id,
         req.product_name,
         req.product_code,
@@ -881,7 +883,7 @@ pub async fn get_gantt_data(
             .map(|d| Utc.from_utc_datetime(&d))
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
-        let total = big_decimal_to_f64(Some(s.quantity.clone()));
+        let total = big_decimal_to_f64(s.quantity.clone());
         let completed = big_decimal_to_f64(s.completed_quantity.clone());
         let progress = if total > 0.0 {
             (completed / total) * 100.0
@@ -892,15 +894,15 @@ pub async fn get_gantt_data(
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
-                id: resource_name.clone(),
-                name: resource_name.clone(),
+                id: resource_name.clone().unwrap_or_default(),
+                name: resource_name.clone().unwrap_or_default(),
                 category: "workstation".to_string(),
             });
         }
 
         tasks.push(GanttTask {
-            id: s.id.to_string(),
-            name: format!("{} - {}", s.schedule_no, s.product_name),
+            id: s.id.map(|v| v.to_string()).unwrap_or_default(),
+            name: format!("{} - {}", s.schedule_no.clone().map(|v| v.to_string()).unwrap_or_default(), s.product_name.clone().map(|v| v.to_string()).unwrap_or_default()),
             start,
             end,
             progress,

@@ -316,7 +316,7 @@ pub async fn get_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -415,7 +415,7 @@ pub async fn create_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -518,7 +518,7 @@ pub async fn update_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -651,7 +651,7 @@ pub async fn calculate_requirements(
     match bom_items_result {
         Ok(items) => {
             for item in items {
-                let required_quantity_bd = item.quantity * order.quantity;
+                let required_quantity_bd = item.quantity.unwrap_or_default() * order.quantity.unwrap_or_default();
                 let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
                 let now_str = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
@@ -685,7 +685,7 @@ pub async fn calculate_requirements(
 
                 if let Ok(r) = insert_result {
                     requirements.push(MaterialRequirementResponse {
-                        id: r.id.to_string(),
+                        id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                         mrp_no: r.mrp_no.unwrap_or_default(),
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
@@ -750,7 +750,7 @@ pub async fn confirm_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -818,7 +818,7 @@ pub async fn release_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,

@@ -239,8 +239,8 @@ pub async fn create_material_bom(
         match item_result {
             Ok(i) => {
                 item_responses.push(BomItemResponse {
-                    id: i.id.to_string(),
-                    bom_id: i.bom_id.to_string(),
+                    id: i.id.map(|v| v.to_string()).unwrap_or_default(),
+                    bom_id: i.bom_id.map(|v| v.to_string()).unwrap_or_default(),
                     material_id: i.material_id.map(|u| u.to_string()),
                     material_code: i.material_code.unwrap_or_default(),
                     material_name: i.material_name.unwrap_or_default(),
@@ -266,7 +266,7 @@ pub async fn create_material_bom(
     }
 
     let bom_response = MaterialBomResponse {
-        id: bom.id.to_string(),
+        id: bom.id.map(|v| v.to_string()).unwrap_or_default(),
         bom_no: bom.bom_no.unwrap_or_default(),
         product_id: bom.product_id.map(|u| u.to_string()),
         product_name: bom.product_name.unwrap_or_default(),
@@ -342,7 +342,7 @@ pub async fn get_material_bom(
     };
 
     let bom_response = MaterialBomResponse {
-        id: bom.id.to_string(),
+        id: bom.id.map(|v| v.to_string()).unwrap_or_default(),
         bom_no: bom.bom_no.unwrap_or_default(),
         product_id: bom.product_id.map(|u| u.to_string()),
         product_name: bom.product_name.unwrap_or_default(),
@@ -357,8 +357,8 @@ pub async fn get_material_bom(
     let item_responses: Vec<BomItemResponse> = items
         .into_iter()
         .map(|i| BomItemResponse {
-            id: i.id.to_string(),
-            bom_id: i.bom_id.to_string(),
+            id: i.id.map(|v| v.to_string()).unwrap_or_default(),
+            bom_id: i.bom_id.map(|v| v.to_string()).unwrap_or_default(),
             material_id: i.material_id.map(|u| u.to_string()),
             material_code: i.material_code.unwrap_or_default(),
             material_name: i.material_name.unwrap_or_default(),
