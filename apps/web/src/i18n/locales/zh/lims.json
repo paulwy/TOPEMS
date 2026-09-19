@@ -1888,5 +1888,12 @@
   "lims.nav.lims-task-detail": "任务管理详情",
   "lims.nav.lims-task-detail_desc": "任务管理详情",
   "lims.nav.lims-instrument-detail": "仪器管理详情",
-  "lims.nav.lims-instrument-detail_desc": "仪器管理详情"
+  "lims.nav.lims-instrument-detail_desc": "仪器管理详情",
+  "lims.dashboard.pending-samples": "待检样品",
+  "lims.dashboard.in-progress-tasks": "进行中任务",
+  "lims.dashboard.instrument-usage": "仪器使用率",
+  "lims.dashboard.pass-rate": "合格率",
+  "lims.dashboard.test-item-distribution": "检验项目分布",
+  "lims.dashboard.task-completion-rate": "任务完成率",
+  "lims.dashboard.instrument-status": "仪器状态"
 }

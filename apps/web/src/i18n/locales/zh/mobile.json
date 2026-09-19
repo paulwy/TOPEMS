@@ -1354,8 +1354,6 @@
   "mobile.notification.type_alert": "Type Alert",
   "mobile.notification.type_message": "Type Message",
   "mobile.notification.title_label": "Title Label",
-  "mobile.notification.content": "Content",
-  "mobile.notification.type": "Type",
   "mobile.notification.priority": "Priority",
   "mobile.notification.priority_high": "Priority High",
   "mobile.notification.priority_medium": "Priority Medium",
@@ -1368,7 +1366,6 @@
   "mobile.notification.filter_all_types": "Filter All Types",
   "mobile.notification.filter_status": "Filter Status",
   "mobile.notification.filter_all": "Filter All",
-  "mobile.notification.title": "标题",
   "mobile.notification.description": "Description",
   "mobile.notification.detail_title": "Detail Title",
   "mobile.nav.module_name": "移动端",
@@ -1396,9 +1393,5 @@
   "mobile.nav.mobile-profile": "个人中心",
   "mobile.nav.mobile-profile_desc": "个人中心",
   "mobile.nav.mobile-settings": "移动设置",
-  "mobile.nav.mobile-settings_desc": "移动设置",
-  "mobile.scan": "扫码入库",
-  "mobile.attendance": "移动考勤",
-  "mobile.approval": "移动审批",
-  "mobile.task_list": "任务列表"
+  "mobile.nav.mobile-settings_desc": "移动设置"
 }
