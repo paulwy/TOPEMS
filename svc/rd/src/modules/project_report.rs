@@ -98,7 +98,7 @@ pub async fn get_project_summary(
             SUM(CASE WHEN status = 'delayed' OR (end_date < NOW() AND status != 'completed') THEN 1 ELSE 0 END) as delayed_projects,
             COALESCE(SUM(budget), 0) as total_budget,
             COALESCE(SUM(actual_cost), 0) as total_actual_cost,
-            COALESCE(AVG(progress), 0) as avg_progress
+            COALESCE(AVG(progress)::FLOAT8, 0) as avg_progress
         FROM rs.projects
         WHERE created_at >= $1 AND created_at <= $2
         "#
@@ -127,8 +127,8 @@ pub async fn get_project_summary(
                 active_projects: row.get("active_projects"),
                 completed_projects: row.get("completed_projects"),
                 delayed_projects: row.get("delayed_projects"),
-                total_budget: row.get::<Option<i64>, _>("total_budget").unwrap_or(0) as f64,
-                total_actual_cost: row.get::<Option<i64>, _>("total_actual_cost").unwrap_or(0)
+                total_budget: row.get::<Option<f64>, _>("total_budget").unwrap_or(0.0),
+                total_actual_cost: row.get::<Option<f64>, _>("total_actual_cost").unwrap_or(0.0)
                     as f64,
                 avg_progress: row.get::<Option<f64>, _>("avg_progress").unwrap_or(0.0),
                 total_members: member_count,
@@ -164,7 +164,7 @@ pub async fn get_project_trends(
             DATE_TRUNC('week', created_at) as period,
             COUNT(*) as project_count,
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count,
-            COALESCE(AVG(progress), 0) as avg_progress,
+            COALESCE(AVG(progress)::FLOAT8, 0) as avg_progress,
             COALESCE(SUM(budget), 0) as total_budget,
             COALESCE(SUM(actual_cost), 0) as total_cost
         FROM rs.projects
@@ -189,8 +189,8 @@ pub async fn get_project_trends(
                     project_count: row.get("project_count"),
                     completed_count: row.get("completed_count"),
                     avg_progress: row.get::<Option<f64>, _>("avg_progress").unwrap_or(0.0),
-                    total_budget: row.get::<Option<i64>, _>("total_budget").unwrap_or(0) as f64,
-                    total_cost: row.get::<Option<i64>, _>("total_cost").unwrap_or(0) as f64,
+                    total_budget: row.get::<Option<f64>, _>("total_budget").unwrap_or(0.0),
+                    total_cost: row.get::<Option<f64>, _>("total_cost").unwrap_or(0.0),
                 })
                 .collect();
 
@@ -217,7 +217,7 @@ pub async fn get_project_type_stats(
             project_type,
             COUNT(*) as count,
             COALESCE(SUM(budget), 0) as total_budget,
-            COALESCE(AVG(progress), 0) as avg_progress
+            COALESCE(AVG(progress)::FLOAT8, 0) as avg_progress
         FROM rs.projects
         GROUP BY project_type
         ORDER BY count DESC
@@ -233,7 +233,7 @@ pub async fn get_project_type_stats(
                 .map(|row| ProjectTypeStats {
                     project_type: row.get("project_type"),
                     count: row.get("count"),
-                    total_budget: row.get::<Option<i64>, _>("total_budget").unwrap_or(0) as f64,
+                    total_budget: row.get::<Option<f64>, _>("total_budget").unwrap_or(0.0),
                     avg_progress: row.get::<Option<f64>, _>("avg_progress").unwrap_or(0.0),
                 })
                 .collect();
@@ -281,7 +281,7 @@ pub async fn get_performance_metrics(
 
     let duration_result = sqlx::query(
         r#"
-        SELECT COALESCE(AVG(EXTRACT(DAY FROM (actual_end_date - start_date))), 0) as avg_days
+        SELECT COALESCE(AVG(EXTRACT(DAY FROM (actual_end_date - start_date)))::FLOAT8, 0) as avg_days
         FROM rs.projects
         WHERE status = 'completed' AND start_date IS NOT NULL
         "#,
@@ -292,7 +292,7 @@ pub async fn get_performance_metrics(
     let utilization_result = sqlx::query(
         r#"
         SELECT 
-            COALESCE(AVG(allocation), 0) as avg_allocation,
+            COALESCE(AVG(allocation)::FLOAT8, 0) as avg_allocation,
             COUNT(*) as total_members
         FROM rs.project_members
         WHERE status = 'active'
