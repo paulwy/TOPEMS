@@ -5035,5 +5035,8 @@
   "admin.nav.admin-tenant-detail": "租户管理详情",
   "admin.nav.admin-tenant-detail_desc": "租户管理详情",
   "admin.nav.admin-tenant-settings": "租户设置",
-  "admin.nav.admin-tenant-settings_desc": "租户设置"
+  "admin.nav.admin-tenant-settings_desc": "租户设置",
+  "admin.rate_limit_config_page.actions_title": "限流操作",
+  "admin.rate_limit_config_page.default_rules_desc": "配置接口默认限流规则",
+  "admin.rate_limit_config_page.default_rules_title": "默认规则"
 }

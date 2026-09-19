@@ -3352,5 +3352,12 @@
   "erp.nav.erp-vehicle-request": "用车申请",
   "erp.nav.erp-vehicle-request_desc": "用车申请",
   "erp.nav.erp-financial-analysis": "财务分析",
-  "erp.nav.erp-financial-analysis_desc": "财务分析"
+  "erp.nav.erp-financial-analysis_desc": "财务分析",
+  "erp.financial_analysis_page.030_8": "0-30 天",
+  "erp.financial_analysis_page.3160_6": "31-60 天",
+  "erp.financial_report.label.closing_balance": "期末余额",
+  "erp.financial_report.label.opening_balance": "期初余额",
+  "erp.financial_report.label.total_expense": "支出合计",
+  "erp.financial_report.label.total_inflow": "总流入",
+  "erp.financial_report.label.total_outflow": "总流出"
 }

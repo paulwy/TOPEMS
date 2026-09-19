@@ -1884,5 +1884,6 @@
   "finance.nav.finance-voucher-create": "凭证管理新建",
   "finance.nav.finance-voucher-create_desc": "凭证管理新建",
   "finance.nav.finance-voucher-detail": "凭证管理详情",
-  "finance.nav.finance-voucher-detail_desc": "凭证管理详情"
+  "finance.nav.finance-voucher-detail_desc": "凭证管理详情",
+  "finance.consolidation_scope_page.action_delete": "删除"
 }

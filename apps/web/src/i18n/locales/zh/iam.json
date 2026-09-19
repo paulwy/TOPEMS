@@ -336,5 +336,20 @@
   "iam.nav.iam-permission": "权限管理",
   "iam.nav.iam-permission_desc": "权限管理",
   "iam.nav.iam-company-structure": "组织架构",
-  "iam.nav.iam-company-structure_desc": "组织架构"
+  "iam.nav.iam-company-structure_desc": "组织架构",
+  "iam.user_management_page.k18": "删除用户",
+  "iam.user_management_page.k19": "确定要删除用户",
+  "iam.user_management_page.k20": "取消",
+  "iam.user_management_page.k21": "删除",
+  "iam.user_management_page.k22": "编辑用户",
+  "iam.user_management_page.k23": "新建用户",
+  "iam.user_management_page.k24": "编辑用户信息",
+  "iam.user_management_page.k25": "创建新用户并配置角色权限",
+  "iam.user_management_page.k26": "保存",
+  "iam.user_management_page.k27": "创建",
+  "iam.user_management_page.k28": "用户名",
+  "iam.user_management_page.k29": "邮箱",
+  "iam.user_management_page.k30": "姓名",
+  "iam.user_management_page.k31": "密码",
+  "iam.user_management_page.k32": "状态"
 }

@@ -453,5 +453,8 @@
   "plugin.nav.plugin-upload": "插件上传",
   "plugin.nav.plugin-upload_desc": "插件上传",
   "plugin.nav.plugin-detail": "插件市场详情",
-  "plugin.nav.plugin-detail_desc": "插件市场详情"
+  "plugin.nav.plugin-detail_desc": "插件市场详情",
+  "plugin.common.author": "作者",
+  "plugin.common.downloads": "下载量",
+  "plugin.common.rating": "评分"
 }

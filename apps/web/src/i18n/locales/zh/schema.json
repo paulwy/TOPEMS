@@ -2347,5 +2347,6 @@
   "erp.voucher.batchAction.batchSubmit.error": "错误",
   "erp.voucher.batchAction.batchApprove.success": "成功",
   "erp.voucher.batchAction.batchApprove.fail": "失败",
-  "erp.voucher.batchAction.batchApprove.error": "错误"
+  "erp.voucher.batchAction.batchApprove.error": "错误",
+  "schema.crud_page_adapter.k4": "记录不存在"
 }

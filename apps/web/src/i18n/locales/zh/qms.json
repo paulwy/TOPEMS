@@ -1713,5 +1713,6 @@
   "qms.nav.qms-issue-detail": "详情",
   "qms.nav.qms-issue-detail_desc": "详情",
   "qms.nav.qms-audit-plan-detail": "详情",
-  "qms.nav.qms-audit-plan-detail_desc": "详情"
+  "qms.nav.qms-audit-plan-detail_desc": "详情",
+  "qms.qms_inspection_detail_page.k31": "暂无检验记录"
 }

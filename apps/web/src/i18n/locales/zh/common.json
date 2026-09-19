@@ -677,5 +677,10 @@
   "common.priority_medium": "中",
   "common.priority_normal": "普通",
   "common.priority_low": "低",
-  "common.priority_unknown": "未知"
+  "common.priority_unknown": "未知",
+  "common.crud.action.create": "创建成功",
+  "common.crud.action.delete": "删除成功",
+  "common.crud.action.update": "更新成功",
+  "common.crud.error": "{{action}}失败：{{error}}",
+  "common.crud.success": "{{action}}成功"
 }

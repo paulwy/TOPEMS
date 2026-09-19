@@ -8,5 +8,7 @@
   "utils": {
     "lazy_load_failed": "组件加载失败",
     "lazy_refresh_retry": "请刷新页面重试"
-  }
+  },
+  "routes.utils.lazy_load_failed": "页面加载失败",
+  "routes.utils.lazy_refresh_retry": "点击刷新重试"
 }
