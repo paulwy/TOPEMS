@@ -1785,8 +1785,6 @@
   "ehs.title": "EHS",
   "ehs.ehs_check_page.plan_1": "检查计划",
   "ehs.ehs_check_page.text_9b9efd": "检查记录",
-  "ehs.dashboard.${sc.id}": "标题",
-  "ehs.dashboard.${ch.id}": "标题",
   "ehs.dashboard.title": "安全环保仪表盘",
   "ehs.ehs_hazard_detail_page.text_4296d7": "危险详情",
   "ehs.ehs_hazard_detail_page.text_5a558d": "危险详情",
@@ -1948,5 +1946,8 @@
   "ehs.dashboard.accident-total": "事故总数",
   "ehs.dashboard.pending-hazards": "待处理隐患",
   "ehs.dashboard.training-rate": "安全培训完成率",
-  "ehs.dashboard.drill-count": "应急演练次数"
+  "ehs.dashboard.drill-count": "应急演练次数",
+  "ehs.ehs_hazard_detail_page.high_risk": "高风险",
+  "ehs.ehs_hazard_detail_page.medium_risk": "中风险",
+  "ehs.ehs_hazard_detail_page.low_risk": "低风险"
 }

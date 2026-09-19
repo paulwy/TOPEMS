@@ -1794,8 +1794,6 @@
   "lims.sample_receive_page.k24": "样本接收",
   "lims.sample_receive_page.k25": "首页",
   "lims.sample_receive_page.k26": "样本接收",
-  "lims.dashboard.${sc.id}": "标题",
-  "lims.dashboard.${ch.id}": "标题",
   "lims.dashboard.title": "实验室信息管理",
   "report": {},
   "lims.barcode.v0_if_response_success_v1_else_v2_catch_": "{{v0}}); if (response.success) {{v1}}); } else {{v2}}); } } catch (err) {{v3}})?.message || i18n.t('lims.barcodepage.'), type: 'error', }); } }; const handleScan = async (row: Record",
