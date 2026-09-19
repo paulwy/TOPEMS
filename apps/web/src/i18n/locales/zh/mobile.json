@@ -1396,5 +1396,9 @@
   "mobile.nav.mobile-profile": "个人中心",
   "mobile.nav.mobile-profile_desc": "个人中心",
   "mobile.nav.mobile-settings": "移动设置",
-  "mobile.nav.mobile-settings_desc": "移动设置"
+  "mobile.nav.mobile-settings_desc": "移动设置",
+  "mobile.scan": "扫码入库",
+  "mobile.attendance": "移动考勤",
+  "mobile.approval": "移动审批",
+  "mobile.task_list": "任务列表"
 }

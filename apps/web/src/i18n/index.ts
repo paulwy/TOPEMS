@@ -133,6 +133,7 @@ export const BOOTSTRAP_NAMESPACES: readonly string[] = Object.freeze([
   'components', // 全局通用组件（搜索框、表格、卡片等首页必需）
   'templates', // CRUD/Dashboard/List 模板组件
   'schemas', // schema 层翻译（表单字段标签等）
+  'ehs', // EHS（schema 顶层 t() 需启动即注入，避免 key 固化）
   'services', // 服务层公共文案
 ]);
 

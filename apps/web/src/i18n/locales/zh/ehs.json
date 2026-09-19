@@ -1936,5 +1936,8 @@
   "ehs.nav.ehs-incident-report": "事件上报",
   "ehs.nav.ehs-incident-report_desc": "事件上报",
   "ehs.nav.ehs-hazard-detail": "隐患管理详情",
-  "ehs.nav.ehs-hazard-detail_desc": "隐患管理详情"
+  "ehs.nav.ehs-hazard-detail_desc": "隐患管理详情",
+  "ehs.training": "安全培训",
+  "ehs.hazard": "危险源",
+  "ehs.accident": "事故"
 }

@@ -3352,5 +3352,11 @@
   "erp.nav.erp-vehicle-request": "用车申请",
   "erp.nav.erp-vehicle-request_desc": "用车申请",
   "erp.nav.erp-financial-analysis": "财务分析",
-  "erp.nav.erp-financial-analysis_desc": "财务分析"
+  "erp.nav.erp-financial-analysis_desc": "财务分析",
+  "erp.financial_report": "财务报表",
+  "erp.budget": "预算",
+  "erp.asset": "资产",
+  "erp.expense": "费用",
+  "erp.asset_category": "资产类别",
+  "erp.bank_account": "银行账户"
 }
