@@ -273,7 +273,7 @@
   "mes.anomaly_detection_page.k45": "暂无趋势数据",
   "mes.anomaly_detection_page.k46": "预警规则配置",
   "mes.anomaly_detection_page.k47": "规则名称",
-  "mes.anomaly_detection_page.k48": "指标",
+  "mes.anomaly_detection_page.k48": "指标名称",
   "mes.anomaly_detection_page.k49": "警告阈值",
   "mes.anomaly_detection_page.k50": "严重阈值",
   "mes.anomaly_detection_page.k51": "窗口",

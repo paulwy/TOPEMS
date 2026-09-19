@@ -4300,7 +4300,7 @@
   "admin.monitoring_alert.error": "错误",
   "admin.monitoring_alert.escalated": "已升级",
   "admin.monitoring_alert.dismissed": "已忽略",
-  "admin.monitoring_alert.title": "标题",
+  "admin.monitoring_alert.title": "告警标题",
   "admin.monitoring_alert.content": "告警内容",
   "admin.monitoring_alert.source": "来源",
   "admin.monitoring_alert.time": "时间",
