@@ -99,7 +99,7 @@ async fn get_funnel_data(
             SELECT COUNT(*) as count, 
                    COALESCE(SUM(value), 0) as total_value,
                    COALESCE(AVG(value), 0) as avg_value,
-                   COALESCE(AVG(probability), 0) as avg_probability
+                   COALESCE(AVG(probability), 0)::int as avg_probability
             FROM crm.opportunities
             WHERE stage = $1
             "#,
