@@ -289,3 +289,8 @@
 - [x] mes 编译恢复：远端 1753631b5 版本实测仍 57 编译错误（E0277 时间类型），恢复 1b6fa65d3 已验证版 5 文件，编译通过推送
 - [x] crm.customers 177 行 tenant_id IS NULL 数据修复（→ org_id=默认租户 000…0001；备份表 crm.customers_tenant_null_backup_20260919 保留）
 - [x] 修复说明：此前 NULL 行经 RLS 策略 tenant_isolation_customers 的 tenant_id IS NULL 分支对所有租户会话可见（隔离缺陷）；修复后正确归属默认租户（默认租户会话可见 189 行，零值 superadmin 会话全量可见）；admin（租户 05a97…）列表 0 为正确租户隔离，中间件未对 superuser 豁免 RLS（如需超管全量可见，需产品决策后改中间件/策略）
+
+### 2026-09-19 RLS 探查结论（待产品决策）
+- [x] 排查：crm.customers 数据修复后 admin 列表 0 可见。根因：① crm 模块请求不经 unified-core 的 tenant_rls_middleware（路由装配缺失，RLS 上下文从未设置，历史上依赖策略 tenant_id IS NULL 分支兜底）；② sqlx 连接池下 set_config 与查询连接不绑定（即使 DB_MAX_CONNECTIONS=1 亦未生效，疑似连接配置未读入）；③ 数据修复（NULL→默认租户）后无 NULL 行可兜底，非 NULL 数据在空租户上下文被 RLS 全过滤（crm 189 行、pm.projects 9 行等不可见；flow.workflows 18 行全 NULL 仍可见）
+- [x] 已做（无害准备）：tenant_rls_middleware 增加 Bearer token 解码（verify_jwt_token + auth_state.jwt_secret，Claims 注入 extensions）、superuser 会话 RLS 使用零值租户（00000000-0000-0000-0000-000000000000）、set_config 改会话级 is_local=false、None 分支清理租户上下文。编译通过、服务零 ERROR
+- [ ] 待决策：A. 为各业务模块路由装配 tenant_rls 且实现请求级连接绑定（正确隔离，改动大）；B. RLS 策略空租户上下文放行（恢复修复前"全可见"，隔离失效）；C. 接受现状（有租户数据经 API 不可见，仅 NULL 数据可见）

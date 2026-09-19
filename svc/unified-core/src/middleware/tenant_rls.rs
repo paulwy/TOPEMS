@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use sqlx::PgPool;
-use topems_shared_auth::auth::Claims;
+use topems_shared_auth::auth::{verify_jwt_token, Claims};
 
 use crate::AppState;
 
@@ -153,8 +153,26 @@ pub fn extract_tenant_id(req: &Request) -> Option<String> {
         .map(|s| s.to_string())
 }
 
+/// 从请求扩展或 Authorization Bearer token 解析 Claims（解码成功时写入扩展）
+fn resolve_claims(req: &mut Request<Body>, jwt_secret: &str) -> Option<Claims> {
+    if let Some(claims) = req.extensions().get::<Claims>() {
+        return Some(claims.clone());
+    }
+
+    let auth = req
+        .headers()
+        .get(header::AUTHORIZATION)?
+        .to_str()
+        .ok()?;
+    let token = auth.strip_prefix("Bearer ")?;
+    let claims = verify_jwt_token(token, jwt_secret).ok()?;
+    req.extensions_mut().insert(claims.clone());
+    Some(claims)
+}
+
 async fn set_rls_policy(pool: &PgPool, tenant_id: &str) -> Result<(), sqlx::Error> {
-    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+    // is_local=false：会话级（autocommit 查询事务结束后仍生效）
+    sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
         .bind(tenant_id)
         .execute(pool)
         .await?;
@@ -167,7 +185,7 @@ pub async fn tenant_rls_middleware(
     mut req: Request<Body>,
     next: Next,
 ) -> Response {
-    let path = req.uri().path();
+    let path = req.uri().path().to_string();
 
     let skip_paths = [
         "/",
@@ -179,11 +197,13 @@ pub async fn tenant_rls_middleware(
         "/metrics",
     ];
 
-    if skip_paths.contains(&path) {
+    if skip_paths.contains(&path.as_str()) {
         return next.run(req).await;
     }
 
     let tenant_id = if let Some(claims) = req.extensions().get::<Claims>() {
+        claims.tenant_id.clone()
+    } else if let Some(claims) = resolve_claims(&mut req, &state.auth_state.jwt_secret) {
         claims.tenant_id.clone()
     } else {
         req.headers()
@@ -194,7 +214,18 @@ pub async fn tenant_rls_middleware(
 
     match tenant_id {
         Some(tenant_id) => {
-            if let Err(e) = set_rls_policy(&state.pool, &tenant_id).await {
+            // superuser 会话使用零值租户（RLS 策略放行全量），业务侧 TenantId 仍保留实际租户
+            let is_superuser = req
+                .extensions()
+                .get::<Claims>()
+                .map(|c| c.is_superuser)
+                .unwrap_or(false);
+            let rls_tenant = if is_superuser {
+                "00000000-0000-0000-0000-000000000000".to_string()
+            } else {
+                tenant_id.clone()
+            };
+            if let Err(e) = set_rls_policy(&state.pool, &rls_tenant).await {
                 tracing::error!("Failed to set RLS policy: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -206,7 +237,7 @@ pub async fn tenant_rls_middleware(
 
             req.extensions_mut().insert(TenantId(tenant_id.clone()));
 
-            tracing::debug!("RLS policy set for tenant: {}", tenant_id);
+            tracing::debug!("RLS policy set for tenant: {} (rls: {})", tenant_id, rls_tenant);
 
             next.run(req).await
         }
@@ -214,6 +245,11 @@ pub async fn tenant_rls_middleware(
             tracing::warn!("No tenant_id found in request: {}", path);
 
             req.extensions_mut().insert(TenantId("default".to_string()));
+
+            // 清理会话级租户上下文，避免连接池复用残留上一位租户
+            if let Err(e) = set_rls_policy(&state.pool, "").await {
+                tracing::error!("Failed to clear RLS policy: {}", e);
+            }
 
             next.run(req).await
         }
