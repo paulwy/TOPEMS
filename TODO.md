@@ -281,3 +281,11 @@
 - [x] crm opportunity 列表 SELECT 补全 17 列（缺 opp_no 致 FromRow 失败）；customer 查询 rating NULL 解码失败（→ COALESCE(rating,'')）
 - [x] 服务 8099 重启生效：/api/crm/opportunities、/api/crm/customers 200；核心端点全 200；access logs 错误未复现
 - [ ] AI embedding 外部 API 400（外部服务限制，非本地缺陷）
+
+## 2026-09-19 第二轮（46bd1c39d/1da428283 已推送）
+- [x] crm 客户画像 3 处 SQL 修复：互动记录 interaction_type 列名、联系人 full_name 列名、列表/详情 SELECT 补全+COALESCE（tenant_id/customer_type/rating/owner_id 零值兜底）——列表/详情 200，日志零 ERROR
+- [x] sales_funnel avg_probability COALESCE 结果 ::int（与 Option<i32> 模型对齐，消除 panic）
+- [x] pgvector 扩展双库建成（0.8.2）；core.knowledge_chunks.embedding jsonb→vector(1536)（空表，ai_knowledge 初始化恢复，vector_cosine_ops 索引可建）
+- [x] mes 编译恢复：远端 1753631b5 版本实测仍 57 编译错误（E0277 时间类型），恢复 1b6fa65d3 已验证版 5 文件，编译通过推送
+- [x] crm.customers 177 行 tenant_id IS NULL 数据修复（→ org_id=默认租户 000…0001；备份表 crm.customers_tenant_null_backup_20260919 保留）
+- [x] 修复说明：此前 NULL 行经 RLS 策略 tenant_isolation_customers 的 tenant_id IS NULL 分支对所有租户会话可见（隔离缺陷）；修复后正确归属默认租户（默认租户会话可见 189 行，零值 superadmin 会话全量可见）；admin（租户 05a97…）列表 0 为正确租户隔离，中间件未对 superuser 豁免 RLS（如需超管全量可见，需产品决策后改中间件/策略）
