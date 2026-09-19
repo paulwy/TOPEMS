@@ -88,7 +88,7 @@ async fn get_project_budgets(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Budget>>> {
     let budgets = sqlx::query_as::<_, Budget>(
-        only_own_schema_query!("pm", "id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE project_id = $1 ORDER BY version DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE project_id = $1 ORDER BY version DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -107,7 +107,7 @@ async fn get_project_budgets(
 }
 
 async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Budget>> {
-    let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!("pm", "id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE id = $1"))
+    let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await;

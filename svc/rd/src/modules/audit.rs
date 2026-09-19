@@ -70,13 +70,13 @@ async fn list_audit_logs(
 
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
+        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
         FROM rs.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
-          AND ($3::text IS NULL OR user_id = $3)
+          AND ($3::uuid IS NULL OR user_id = $3::uuid)
           AND ($4::text IS NULL OR status = $4)
           AND ($5::text IS NULL OR created_at >= $5::timestamptz)
           AND ($6::text IS NULL OR created_at <= $6::timestamptz)
@@ -102,7 +102,7 @@ async fn list_audit_logs(
                 SELECT COUNT(*) FROM rs.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
-                  AND ($3::text IS NULL OR user_id = $3)
+                  AND ($3::uuid IS NULL OR user_id = $3::uuid)
                   AND ($4::text IS NULL OR status = $4)
                   AND ($5::text IS NULL OR created_at >= $5::timestamptz)
                   AND ($6::text IS NULL OR created_at <= $6::timestamptz)
@@ -162,7 +162,7 @@ async fn get_audit_log(
 
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
+        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
         FROM rs.audit_logs WHERE id = $1
@@ -271,13 +271,13 @@ async fn export_audit_logs(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
+        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
         FROM rs.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
-          AND ($3::text IS NULL OR user_id = $3)
+          AND ($3::uuid IS NULL OR user_id = $3::uuid)
           AND ($4::text IS NULL OR status = $4)
           AND ($5::text IS NULL OR created_at >= $5::timestamptz)
           AND ($6::text IS NULL OR created_at <= $6::timestamptz)

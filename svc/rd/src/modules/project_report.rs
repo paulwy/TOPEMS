@@ -100,7 +100,7 @@ pub async fn get_project_summary(
             COALESCE(SUM(actual_cost), 0) as total_actual_cost,
             COALESCE(AVG(progress)::FLOAT8, 0) as avg_progress
         FROM rs.projects
-        WHERE created_at >= $1 AND created_at <= $2
+        WHERE created_at >= $1::timestamptz::timestamptz AND created_at <= $2::timestamptz
         "#
     )
     .bind(format!("{} 00:00:00", start_date))
@@ -168,7 +168,7 @@ pub async fn get_project_trends(
             COALESCE(SUM(budget), 0) as total_budget,
             COALESCE(SUM(actual_cost), 0) as total_cost
         FROM rs.projects
-        WHERE created_at >= $1
+        WHERE created_at >= $1::timestamptz
         GROUP BY DATE_TRUNC('week', created_at)
         ORDER BY period ASC
         "#,

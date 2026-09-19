@@ -635,7 +635,7 @@ pub async fn get_performance_trend(
         FROM srm.supplier_evaluations
         WHERE tenant_id = $1
           AND ($2::uuid IS NULL OR supplier_id = $2)
-          AND evaluation_date >= NOW() - INTERVAL $3
+          AND evaluation_date >= NOW() - $3::interval
         GROUP BY TO_CHAR(evaluation_date, 'YYYY-MM')
         ORDER BY month
         "#,

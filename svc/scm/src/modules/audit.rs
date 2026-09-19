@@ -47,7 +47,7 @@ pub async fn list_audit_logs(
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "scm",
         r#"
-        SELECT id, action, table_name as entity_type, record_id as entity_id, 
+        SELECT id, tenant_id, action, COALESCE(table_name, '') as entity_type, record_id as entity_id, 
                NULL as entity_ids, changed_by::text as user_id, NULL as user_name, 
                old_values as request_details, new_values as response_details,
                'success' as status, NULL as error_message, ip_address, user_agent, 
@@ -124,7 +124,7 @@ pub async fn get_audit_log(
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "scm",
         r#"
-        SELECT id, action, table_name as entity_type, record_id as entity_id, 
+        SELECT id, tenant_id, action, COALESCE(table_name, '') as entity_type, record_id as entity_id, 
                NULL as entity_ids, changed_by::text as user_id, NULL as user_name, 
                old_values as request_details, new_values as response_details,
                'success' as status, NULL as error_message, ip_address, user_agent, 

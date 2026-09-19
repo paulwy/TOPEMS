@@ -62,7 +62,7 @@ async fn get_project_risks(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectRisk>>> {
     let risks = sqlx::query_as::<_, ProjectRisk>(
-        only_own_schema_query!("pm", "id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -84,7 +84,7 @@ async fn get_risk(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectRisk>> {
-    let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!("pm", "id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE id = $1"))
+    let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await;

@@ -43,7 +43,7 @@ async fn get_project_reports(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectReport>>> {
     let reports = sqlx::query_as::<_, ProjectReport>(
-        only_own_schema_query!("pm", "id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -66,7 +66,7 @@ async fn get_report(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectReport>> {
     let report =
-        sqlx::query_as::<_, ProjectReport>(only_own_schema_query!("pm", "id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE id = $1"))
+        sqlx::query_as::<_, ProjectReport>(only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;

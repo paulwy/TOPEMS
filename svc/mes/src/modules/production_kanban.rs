@@ -397,7 +397,7 @@ pub async fn get_dashboard(
         r#"
         SELECT
             e.id            AS equipment_id,
-            e.name          AS equipment_name,
+            e.equipment_name AS equipment_name,
             e.equipment_no   AS equipment_code,
             e.status        AS status,
             latest_oee.oee  AS oee
@@ -409,7 +409,7 @@ pub async fn get_dashboard(
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
-        ORDER BY e.name
+        ORDER BY e.equipment_name
         "#,
     )
     .fetch_all(&state.pool)
@@ -726,7 +726,7 @@ pub async fn get_equipment_status(
         r#"
         SELECT
             e.id            AS equipment_id,
-            e.name          AS equipment_name,
+            e.equipment_name AS equipment_name,
             e.equipment_no   AS equipment_code,
             e.status        AS status,
             latest_oee.oee  AS oee
@@ -738,7 +738,7 @@ pub async fn get_equipment_status(
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
-        ORDER BY e.name
+        ORDER BY e.equipment_name
         "#,
     )
     .fetch_all(&state.pool)
