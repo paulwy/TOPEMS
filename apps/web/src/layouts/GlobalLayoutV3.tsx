@@ -268,7 +268,7 @@ const navItems: NavItem[] = [
     path: '/admin/dashboard',
     children: [
       { id: 'admin-dashboard', label: '系统仪表盘', icon: BarChart3, path: '/admin/dashboard' },
-      { id: 'admin-account', label: '账号管理', icon: Users, path: '/admin/account' },
+      { id: 'admin-account', label: '账号管理', icon: Users, path: '/iam/user' },
       {
         id: 'admin-permission',
         label: '权限审计',
