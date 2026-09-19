@@ -55,9 +55,9 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
               content: `
             <div style="padding: 10px;">
               <h4>${point.name}</h4>
-              <p>{i18n.t('components.amap_layer.k0')}</p>
-              <p>{i18n.t('components.amap_layer.pointstatus_1')}</p>
-              <p>{i18n.t('components.amap_layer.k2')}</p>
+              <p>${i18n.t('components.amap_layer.k0')}</p>
+              <p>${i18n.t('components.amap_layer.pointstatus_1', { point })}</p>
+              <p>${i18n.t('components.amap_layer.k2', { point })}</p>
             </div>
           `,
             });
@@ -85,9 +85,9 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
               content: `
             <div style="padding: 10px;">
               <h4>${location.name}</h4>
-              <p>{i18n.t('components.amap_layer.k3')}</p>
-              <p>{i18n.t('components.amap_layer.k0')}${location.capacity || i18n.t('gis.amap_layer.k1')}</p>
-              <p>{i18n.t('components.amap_layer.k4')}</p>
+              <p>${i18n.t('components.amap_layer.k3', { location })}</p>
+              <p>${i18n.t('components.amap_layer.k0')}${location.capacity || i18n.t('gis.amap_layer.k1')}</p>
+              <p>${i18n.t('components.amap_layer.k4', { location })}</p>
             </div>
           `,
             });

@@ -283,7 +283,7 @@
   "integration.integration_external_erp_overview_page.e4": "已连接",
   "integration.integration_external_erp_overview_page.e5": "已启用",
   "integration.integration_external_erp_overview_page.e6": "未连接",
-  "integration.integration_external_erp_overview_page.e7": "${conns.length} 个连接",
+  "integration.integration_external_erp_overview_page.e7": "个连接",
   "integration.integration_external_erp_overview_page.e9": "连接金蝶K/3 WMS Cloud系统，实现数据同步",
   "integration.integration_external_erp_overview_page.e11": "连接用友U8或NC系统，实现财务数据同步",
   "integration.integration_external_erp_overview_page.e13": "连接SAP S/4HANA系统，实现业务数据集成",

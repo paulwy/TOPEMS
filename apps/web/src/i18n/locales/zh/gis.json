@@ -298,7 +298,7 @@
   "gis.index.k9": "禁用",
   "gis.index.k10": "暂无数据",
   "gis.index.k11": "刷新数据",
-  "gis.dashboard_page.e1": "${getGreeting()}，地图视图与空间分析",
+  "gis.dashboard_page.e1": "地图视图与空间分析",
   "gis.gis_fence_page.e1": "搜索: {{v1}}",
   "gis.gis_fence_page.e2": "选中: {{v1}}",
   "gis.gis_fence_page.e3": "地理围栏管理",
