@@ -2361,5 +2361,6 @@
   "erp.voucher.batchAction.batchSubmit.error": "Error",
   "erp.voucher.batchAction.batchApprove.success": "Success",
   "erp.voucher.batchAction.batchApprove.fail": "Failed",
-  "erp.voucher.batchAction.batchApprove.error": "Error"
+  "erp.voucher.batchAction.batchApprove.error": "Error",
+  "schema.crud_page_adapter.k4": "Record not found"
 }

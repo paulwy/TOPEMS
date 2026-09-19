@@ -3123,5 +3123,6 @@
   "ehs.nav.ehs-emergency": "Emergency",
   "ehs.nav.ehs-drill": "Drills",
   "ehs.nav.ehs-incident-report": "Incident Reports",
-  "ehs.nav.ehs-hazard-detail": "Hazards Detail"
+  "ehs.nav.ehs-hazard-detail": "Hazards Detail",
+  "ehs.nav.module_name_desc": "EHS"
 }

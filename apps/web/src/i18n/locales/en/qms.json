@@ -3157,5 +3157,7 @@
   "qms.nav.qms-standard-detail": "Standards Detail",
   "qms.nav.qms-inspection-detail": "Inspections Detail",
   "qms.nav.qms-issue-detail": "Detail",
-  "qms.nav.qms-audit-plan-detail": "Detail"
+  "qms.nav.qms-audit-plan-detail": "Detail",
+  "qms.qms_inspection_detail_page.k31": "No inspection records",
+  "qms.nav.module_name_desc": "QMS"
 }

@@ -7660,5 +7660,9 @@
   "admin.nav.admin-permission-audit": "Permission Audit",
   "admin.nav.admin-monitoring-alert": "Monitoring Alerts",
   "admin.nav.admin-tenant-detail": "Tenant Management Detail",
-  "admin.nav.admin-tenant-settings": "admin-tenant-settings"
+  "admin.nav.admin-tenant-settings": "admin-tenant-settings",
+  "admin.rate_limit_config_page.actions_title": "Rate Limit Actions",
+  "admin.rate_limit_config_page.default_rules_desc": "Configure default rate limiting rules",
+  "admin.rate_limit_config_page.default_rules_title": "Default Rules",
+  "admin.nav.module_name_desc": "System Management"
 }

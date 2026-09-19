@@ -1163,5 +1163,10 @@
       }
     }
   },
-  "...": "..."
+  "...": "...",
+  "common.crud.action.create": "Created successfully",
+  "common.crud.action.delete": "Deleted successfully",
+  "common.crud.action.update": "Updated successfully",
+  "common.crud.error": "{{action}} failed: {{error}}",
+  "common.crud.success": "{{action}} succeeded"
 }

@@ -1351,5 +1351,6 @@
   "crm.nav.crm-opportunity-detail": "Detail",
   "crm.nav.crm-customer-create": "Customers Create",
   "crm.nav.crm-customer-edit": "Customers Edit",
-  "crm.nav.crm-return-detail": "Returns Detail"
+  "crm.nav.crm-return-detail": "Returns Detail",
+  "crm.nav.module_name_desc": "CRM"
 }

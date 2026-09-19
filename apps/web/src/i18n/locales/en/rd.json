@@ -2767,5 +2767,6 @@
   "rd.nav.rd-formula-create": "Formulas Create",
   "rd.nav.rd-project-detail": "Projects Detail",
   "rd.nav.rd-experiment-detail": "Experiments Detail",
-  "rd.nav.rd-formula-detail": "Formulas Detail"
+  "rd.nav.rd-formula-detail": "Formulas Detail",
+  "rd.nav.module_name_desc": "R&D"
 }

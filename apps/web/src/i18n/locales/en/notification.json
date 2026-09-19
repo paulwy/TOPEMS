@@ -907,5 +907,6 @@
   "notification.nav.notification-templates": "Templates",
   "notification.nav.notification-statistics": "Statistics",
   "notification.nav.notification-settings": "Settings",
-  "notification.nav.notification-detail": "Statistics Detail"
+  "notification.nav.notification-detail": "Statistics Detail",
+  "notification.nav.module_name_desc": "Notifications"
 }

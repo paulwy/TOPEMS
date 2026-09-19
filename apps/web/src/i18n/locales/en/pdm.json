@@ -1803,5 +1803,6 @@
   "pdm.nav.pdm-bom-template": "BOM Templates",
   "pdm.nav.pdm-category-rule": "Category Rules",
   "pdm.nav.pdm-doc-approval-flow": "Doc Approval Flow",
-  "pdm.nav.pdm-change-template": "Change Templates"
+  "pdm.nav.pdm-change-template": "Change Templates",
+  "pdm.nav.module_name_desc": "PDM"
 }

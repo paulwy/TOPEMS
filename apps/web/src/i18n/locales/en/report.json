@@ -224,5 +224,6 @@
   "report.nav.report-subscription": "Subscriptions",
   "report.nav.report-template": "Templates",
   "report.nav.report-report": "My Reports",
-  "report.nav.report-viewer": "Viewer"
+  "report.nav.report-viewer": "Viewer",
+  "report.nav.module_name_desc": "Reports"
 }

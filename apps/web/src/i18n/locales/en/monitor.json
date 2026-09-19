@@ -2672,5 +2672,6 @@
   "monitor.nav.monitor-rules": "Rules",
   "monitor.nav.monitor-metrics": "Metrics",
   "monitor.nav.monitor-logs": "Logs",
-  "monitor.nav.monitor-settings": "Settings"
+  "monitor.nav.monitor-settings": "Settings",
+  "monitor.nav.module_name_desc": "Monitoring"
 }

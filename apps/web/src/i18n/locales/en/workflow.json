@@ -1065,5 +1065,6 @@
   "workflow.nav.workflow-templates": "Templates",
   "workflow.nav.workflow-settings": "Settings",
   "workflow.nav.workflow-instance-detail": "Instances Detail",
-  "workflow.nav.workflow-approval-detail": "Approvals Detail"
+  "workflow.nav.workflow-approval-detail": "Approvals Detail",
+  "workflow.nav.module_name_desc": "Workflow"
 }

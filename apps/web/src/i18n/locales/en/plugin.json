@@ -698,5 +698,9 @@
   "plugin.nav.plugin-dashboard": "Plugin Overview",
   "plugin.nav.plugin-marketplace": "Marketplace",
   "plugin.nav.plugin-upload": "Upload",
-  "plugin.nav.plugin-detail": "Marketplace Detail"
+  "plugin.nav.plugin-detail": "Marketplace Detail",
+  "plugin.common.author": "Author",
+  "plugin.common.downloads": "Downloads",
+  "plugin.common.rating": "Rating",
+  "plugin.nav.module_name_desc": "Plugins"
 }

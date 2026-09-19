@@ -18,5 +18,7 @@
   "utils": {
     "lazy_load_failed": "Failed to load component",
     "lazy_refresh_retry": "Please refresh and retry"
-  }
+  },
+  "routes.utils.lazy_load_failed": "Failed to load page",
+  "routes.utils.lazy_refresh_retry": "Click to refresh and retry"
 }

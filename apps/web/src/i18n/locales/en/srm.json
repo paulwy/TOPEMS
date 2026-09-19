@@ -1511,5 +1511,6 @@
   "srm.nav.srm-finance": "Finance",
   "srm.nav.srm-portal": "Portal",
   "srm.nav.srm-supplier-detail": "Suppliers Detail",
-  "srm.nav.srm-contract-detail": "Contracts Detail"
+  "srm.nav.srm-contract-detail": "Contracts Detail",
+  "srm.nav.module_name_desc": "SRM"
 }

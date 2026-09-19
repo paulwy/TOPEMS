@@ -939,5 +939,6 @@
   "integration.nav.integration-lims-qms": "LIMS-QMS",
   "integration.nav.integration-mes-erp": "MES-ERP",
   "integration.nav.integration-wms-scm": "WMS-SCM",
-  "integration.nav.integration-settings": "Settings"
+  "integration.nav.integration-settings": "Settings",
+  "integration.nav.module_name_desc": "Integration"
 }

@@ -2915,5 +2915,12 @@
   "lims.nav.lims-proficiency-testing": "Proficiency Testing",
   "lims.nav.lims-sample-detail": "Samples Detail",
   "lims.nav.lims-task-detail": "Tasks Detail",
-  "lims.nav.lims-instrument-detail": "Instruments Detail"
+  "lims.nav.lims-instrument-detail": "Instruments Detail",
+  "lims.inspection_result_page.col_inspection_date": "Inspection Date",
+  "lims.inspection_result_page.col_inspector": "Inspector",
+  "lims.inspection_result_page.col_item_name": "Item Name",
+  "lims.inspection_result_page.col_result": "Result",
+  "lims.inspection_result_page.col_sample_no": "Sample No.",
+  "lims.inspection_result_page.col_status": "Status",
+  "lims.nav.module_name_desc": "LIMS"
 }

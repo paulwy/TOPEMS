@@ -2976,5 +2976,6 @@
   "mobile.nav.mobile-scan": "Scan",
   "mobile.nav.mobile-notifications": "Notifications",
   "mobile.nav.mobile-profile": "Profile",
-  "mobile.nav.mobile-settings": "Settings"
+  "mobile.nav.mobile-settings": "Settings",
+  "mobile.nav.module_name_desc": "Mobile"
 }

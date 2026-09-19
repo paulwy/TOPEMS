@@ -4097,5 +4097,13 @@
   "erp.nav.erp-meeting-room": "Meeting Rooms",
   "erp.nav.erp-announcement": "Announcements",
   "erp.nav.erp-vehicle-request": "Vehicle Requests",
-  "erp.nav.erp-financial-analysis": "Financial Analysis"
+  "erp.nav.erp-financial-analysis": "Financial Analysis",
+  "erp.financial_analysis_page.030_8": "0-30 days",
+  "erp.financial_analysis_page.3160_6": "31-60 days",
+  "erp.financial_report.label.closing_balance": "Closing Balance",
+  "erp.financial_report.label.opening_balance": "Opening Balance",
+  "erp.financial_report.label.total_expense": "Total Expense",
+  "erp.financial_report.label.total_inflow": "Total Inflow",
+  "erp.financial_report.label.total_outflow": "Total Outflow",
+  "erp.nav.module_name_desc": "ERP"
 }

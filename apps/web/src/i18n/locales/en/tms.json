@@ -963,5 +963,7 @@
   "tms.nav.tms-driver-detail": "Drivers Detail",
   "tms.nav.tms-carrier-detail": "Carriers Detail",
   "tms.nav.tms-route-detail": "Routes Detail",
-  "tms.nav.tms-transport-plan-detail": "Detail"
+  "tms.nav.tms-transport-plan-detail": "Detail",
+  "tms.freight_cost_page.k20": "Freight cost is calculated automatically based on distance and weight",
+  "tms.nav.module_name_desc": "TMS"
 }

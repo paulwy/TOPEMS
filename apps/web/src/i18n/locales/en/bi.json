@@ -3042,5 +3042,6 @@
   "bi.nav.bi-index": "Indicators",
   "bi.nav.bi-gis": "GIS Analytics",
   "bi.nav.bi-data-analysis": "Data Analysis",
-  "bi.nav.bi-module-detail": "Detail"
+  "bi.nav.bi-module-detail": "Detail",
+  "bi.nav.module_name_desc": "Business Intelligence"
 }

@@ -993,5 +993,6 @@
   "gis.nav.gis-dashboard": "GIS Overview",
   "gis.nav.gis-map": "Map",
   "gis.nav.gis-tracking": "Tracking",
-  "gis.nav.gis-fence": "Geofence"
+  "gis.nav.gis-fence": "Geofence",
+  "gis.nav.module_name_desc": "GIS"
 }

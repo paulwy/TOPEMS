@@ -861,5 +861,6 @@
   "aps.nav.aps-capacity-detail": "Detail",
   "aps.nav.aps-material-plan-detail": "Material Plans Detail",
   "aps.nav.aps-forecast-detail": "Forecasts Detail",
-  "aps.nav.aps-plan-comparison": "Plan Comparison"
+  "aps.nav.aps-plan-comparison": "Plan Comparison",
+  "aps.nav.module_name_desc": "Advanced Planning & Scheduling"
 }

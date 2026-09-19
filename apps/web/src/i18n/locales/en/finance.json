@@ -3533,5 +3533,7 @@
   "finance.nav.finance-consolidation-reports": "Consolidation Reports",
   "finance.nav.finance-budget-detail": "Budget Details",
   "finance.nav.finance-voucher-create": "Vouchers Create",
-  "finance.nav.finance-voucher-detail": "Vouchers Detail"
+  "finance.nav.finance-voucher-detail": "Vouchers Detail",
+  "finance.consolidation_scope_page.action_delete": "Delete",
+  "finance.nav.module_name_desc": "Finance"
 }

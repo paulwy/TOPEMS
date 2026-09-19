@@ -3353,5 +3353,6 @@
   "pm.nav.pm-project-detail": "Projects Detail",
   "pm.nav.pm-contract-detail": "Contracts Detail",
   "pm.nav.pm-project-create": "Projects Create",
-  "pm.nav.pm-contract-create": "Contracts Create"
+  "pm.nav.pm-contract-create": "Contracts Create",
+  "pm.nav.module_name_desc": "PM"
 }
