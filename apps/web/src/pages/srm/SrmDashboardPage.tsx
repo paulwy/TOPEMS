@@ -207,7 +207,7 @@ const SrmDashboardPage: React.FC = () => {
   return (
     <PageContainer
       title={t('srm.title')}
-      subtitle='Supplier Relationship Management'
+      subtitle={t('srm.subtitle')}
       padding={false}
       maxWidth={false}
     >
