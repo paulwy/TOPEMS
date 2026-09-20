@@ -51,7 +51,7 @@ pub async fn create_material_return(
         }
     };
 
-    let order_no_flat = order_no;
+    let order_no_flat = order_no.flatten();
     let order_no_arg = order_no_flat.as_deref();
     let return_result = sqlx::query!(
         r#"
@@ -116,8 +116,8 @@ pub async fn create_material_return(
     }
 
     let response = MaterialReturnResponse {
-        id: return_record.id.to_string(),
-        return_no: return_record.return_no,
+        id: return_record.id.map(|u| u.to_string()).unwrap_or_default(),
+        return_no: return_record.return_no.unwrap_or_default(),
         order_id: return_record.order_id.map(|u| u.to_string()),
         order_no: return_record.order_no,
         status: return_record
@@ -329,7 +329,7 @@ pub async fn get_material_return(
     };
 
     let return_json = serde_json::json!({
-        "id": return_record.id.to_string(),
+        "id": return_record.id.map(|u| u.to_string()).unwrap_or_default(),
         "return_no": return_record.return_no,
         "order_id": return_record.order_id.map(|u| u.to_string()),
         "order_no": return_record.order_no,
@@ -341,13 +341,13 @@ pub async fn get_material_return(
         "created_at": datetime_to_string(return_record.created_at),
         "updated_at": datetime_to_string(return_record.updated_at),
         "items": items.iter().map(|i| serde_json::json!({
-            "id": i.id.to_string(),
-            "return_id": i.return_id.to_string(),
+            "id": i.id.map(|u| u.to_string()).unwrap_or_default(),
+            "return_id": i.return_id.map(|u| u.to_string()).unwrap_or_default(),
             "material_id": i.material_id.map(|u| u.to_string()),
             "material_code": i.material_code,
             "material_name": i.material_name,
             "unit": i.unit,
-            "quantity": big_decimal_to_f64(Some(i.quantity.clone())),
+            "quantity": big_decimal_to_f64(i.quantity.clone()),
             "reason": i.reason,
             "batch_no": i.batch_no,
             "notes": i.notes,
@@ -405,7 +405,7 @@ pub async fn update_material_return(
     };
 
     let return_json = serde_json::json!({
-        "id": return_record.id.to_string(),
+        "id": return_record.id.map(|u| u.to_string()).unwrap_or_default(),
         "return_no": return_record.return_no,
         "order_id": return_record.order_id.map(|u| u.to_string()),
         "order_no": return_record.order_no,

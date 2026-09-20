@@ -389,7 +389,7 @@ pub async fn create_wip(
         None
     };
 
-    let order_no_flat = order_no;
+    let order_no_flat = order_no.flatten();
     let order_no_arg = order_no_flat.as_deref();
     let result = sqlx::query!(
         r#"
@@ -432,14 +432,14 @@ pub async fn create_wip(
     };
 
     let wip = WipResponse {
-        id: result.id,
-        wip_no: result.wip_no,
+        id: result.id.unwrap_or_default(),
+        wip_no: result.wip_no.unwrap_or_default(),
         order_id: result.order_id,
         order_no: result.order_no,
         product_id: result.product_id,
-        product_name: result.product_name,
-        product_code: result.product_code,
-        quantity: big_decimal_to_f64(Some(result.quantity)),
+        product_name: result.product_name.unwrap_or_default(),
+        product_code: result.product_code.unwrap_or_default(),
+        quantity: big_decimal_to_f64(result.quantity),
         current_process_id: result.current_process_id,
         current_process_name: None,
         current_work_station_id: result.current_work_station_id,
@@ -510,18 +510,18 @@ pub async fn get_wip(
     match result {
         Some(r) => {
             let wip = WipResponse {
-                id: r.id,
-                wip_no: r.wip_no,
+                id: r.id.unwrap_or_default(),
+                wip_no: r.wip_no.unwrap_or_default(),
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,
-                product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
                 current_process_id: r.current_process_id,
-                current_process_name: Some(r.process_name),
+                current_process_name: r.process_name,
                 current_work_station_id: r.current_work_station_id,
-                current_work_station_name: Some(r.work_station_name),
+                current_work_station_name: r.work_station_name,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
                 start_time: opt_naive_to_utc(r.start_time),
@@ -598,14 +598,14 @@ pub async fn update_wip(
     match result {
         Some(r) => {
             let wip = WipResponse {
-                id: r.id,
-                wip_no: r.wip_no,
+                id: r.id.unwrap_or_default(),
+                wip_no: r.wip_no.unwrap_or_default(),
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,
-                product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
                 current_process_id: r.current_process_id,
                 current_process_name: None,
                 current_work_station_id: r.current_work_station_id,
@@ -727,7 +727,7 @@ pub async fn transfer_wip(
         }
     };
 
-    let current_qty = big_decimal_to_f64(Some(wip.quantity));
+    let current_qty = big_decimal_to_f64(wip.quantity);
     if req.quantity > current_qty {
         let _ = tx.rollback().await;
         return Json(ApiResponse::error(400, "转移数量不能大于当前WIP数量"));
@@ -852,19 +852,19 @@ pub async fn transfer_wip(
     };
 
     let response = WipTransferResponse {
-        id: transfer.id,
-        transfer_no: transfer.transfer_no,
-        wip_id: transfer.wip_id,
+        id: transfer.id.unwrap_or_default(),
+        transfer_no: transfer.transfer_no.unwrap_or_default(),
+        wip_id: transfer.wip_id.unwrap_or_default(),
         from_process_id: transfer.from_process_id,
-        from_process_name: from_process_name,
+        from_process_name: from_process_name.flatten(),
         from_work_station_id: transfer.from_work_station_id,
-        from_work_station_name: from_workstation_name,
+        from_work_station_name: from_workstation_name.flatten(),
         to_process_id: transfer.to_process_id,
-        to_process_name: to_process_name,
+        to_process_name: to_process_name.flatten(),
         to_work_station_id: transfer.to_work_station_id,
-        to_work_station_name: to_workstation_name,
-        quantity: big_decimal_to_f64(Some(transfer.quantity)),
-        transfer_time: naive_to_utc(Some(transfer.transfer_time)),
+        to_work_station_name: to_workstation_name.flatten(),
+        quantity: big_decimal_to_f64(transfer.quantity),
+        transfer_time: naive_to_utc(transfer.transfer_time),
         operator: transfer.operator,
         transfer_type: transfer
             .transfer_type
@@ -932,19 +932,19 @@ pub async fn list_wip_transfers(
     let transfer_list: Vec<WipTransferResponse> = transfers
         .into_iter()
         .map(|r| WipTransferResponse {
-            id: r.id,
-            transfer_no: r.transfer_no,
-            wip_id: r.wip_id,
+            id: r.id.unwrap_or_default(),
+            transfer_no: r.transfer_no.unwrap_or_default(),
+            wip_id: r.wip_id.unwrap_or_default(),
             from_process_id: r.from_process_id,
-            from_process_name: Some(r.from_process_name),
+            from_process_name: r.from_process_name,
             from_work_station_id: r.from_work_station_id,
-            from_work_station_name: Some(r.from_work_station_name),
+            from_work_station_name: r.from_work_station_name,
             to_process_id: r.to_process_id,
-            to_process_name: Some(r.to_process_name),
+            to_process_name: r.to_process_name,
             to_work_station_id: r.to_work_station_id,
-            to_work_station_name: Some(r.to_work_station_name),
-            quantity: big_decimal_to_f64(Some(r.quantity)),
-            transfer_time: naive_to_utc(Some(r.transfer_time)),
+            to_work_station_name: r.to_work_station_name,
+            quantity: big_decimal_to_f64(r.quantity),
+            transfer_time: naive_to_utc(r.transfer_time),
             operator: r.operator,
             transfer_type: r
                 .transfer_type

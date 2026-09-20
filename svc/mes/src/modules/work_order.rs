@@ -513,8 +513,8 @@ pub async fn create_work_order(
     match result {
         Ok(r) => Json(ApiResponse::success(
             WorkOrderResponse {
-                id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                id: r.id.map(|u| u.to_string()).unwrap_or_default(),
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
