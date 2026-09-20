@@ -94,6 +94,8 @@ pub async fn get_audit_plan(
 
     match plan {
         Ok(data) => Json(ApiResponse::success(data, "获取审核计划成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch audit plan: {}", e);
             Json(ApiResponse::error(500, "获取审核计划失败"))

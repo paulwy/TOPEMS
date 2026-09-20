@@ -262,10 +262,11 @@ pub async fn generate_barcode(
                 Ok(u) => u,
                 Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
             };
-            let sample_row = sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
-                .bind(id)
-                .fetch_optional(&state.pool)
-                .await;
+            let sample_row =
+                sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
+                    .bind(id)
+                    .fetch_optional(&state.pool)
+                    .await;
             match sample_row {
                 Ok(Some(row)) => {
                     sample_no = Some(row.get::<String, _>("sample_no"));
@@ -369,6 +370,8 @@ pub async fn get_barcode(
             },
             "获取条码成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch barcode: {}", e);
             Json(ApiResponse::error(500, "获取条码失败"))

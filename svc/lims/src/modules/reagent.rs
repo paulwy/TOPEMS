@@ -290,6 +290,8 @@ pub async fn get_reagent(
             },
             "获取试剂成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch reagent: {}", e);
             Json(ApiResponse::error(500, "获取试剂失败"))

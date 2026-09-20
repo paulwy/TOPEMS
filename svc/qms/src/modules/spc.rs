@@ -209,6 +209,8 @@ pub async fn get_spc_chart(
 
     match chart {
         Ok(data) => Json(ApiResponse::success(data, "获取SPC控制图成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch SPC chart: {}", e);
             Json(ApiResponse::error(500, "获取SPC控制图失败"))

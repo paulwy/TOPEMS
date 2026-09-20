@@ -100,6 +100,8 @@ pub async fn get_fmea_analysis(
 
     match fmea {
         Ok(data) => Json(ApiResponse::success(data, "获取FMEA分析成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch FMEA analysis: {}", e);
             Json(ApiResponse::error(500, "获取FMEA分析失败"))
@@ -245,6 +247,8 @@ pub async fn get_fmea_item(
 
     match item {
         Ok(data) => Json(ApiResponse::success(data, "获取FMEA条目成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch FMEA item: {}", e);
             Json(ApiResponse::error(500, "获取FMEA条目失败"))

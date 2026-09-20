@@ -135,7 +135,7 @@ pub async fn list_audit_logs(
 )]
 pub async fn get_audit_log(
     State(_state): State<ApiState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

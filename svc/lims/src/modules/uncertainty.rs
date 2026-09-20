@@ -432,6 +432,8 @@ pub async fn get_project(
             },
             "获取不确定度评定项目成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty project: {}", e);
             Json(ApiResponse::error(500, "获取不确定度评定项目失败"))

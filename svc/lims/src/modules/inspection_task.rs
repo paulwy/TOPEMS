@@ -172,7 +172,10 @@ pub async fn complete_step(
         Ok(Some(_)) => {}
     }
 
-    let record_no = format!("REC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let record_no = format!(
+        "REC-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let test_data = serde_json::json!({
         "step_id": req.step_id,
         "step_name": req.step_name,
@@ -210,7 +213,10 @@ pub async fn complete_step(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(task_from_row(&r), "步骤完成，检验记录已保存")),
+        Ok(r) => Json(ApiResponse::success(
+            task_from_row(&r),
+            "步骤完成，检验记录已保存",
+        )),
         Err(e) => {
             tracing::error!("Failed to update task after step: {}", e);
             Json(ApiResponse::error(500, "任务更新失败"))
@@ -461,6 +467,8 @@ pub async fn get_task(
             }
             Json(ApiResponse::success(task, "获取检测任务成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch task: {}", e);
             Json(ApiResponse::error(500, "获取检测任务失败"))
@@ -662,12 +670,13 @@ pub async fn delete_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let result =
-        sqlx::query("UPDATE public.qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(ctx.tenant_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE public.qa_lab_tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(ctx.tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {

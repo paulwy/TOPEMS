@@ -313,7 +313,11 @@ pub async fn create_method(
     )
     .bind(&req.method_code)
     .bind(&req.method_name)
-    .bind(req.category_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.category_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(&req.standard)
     .bind(&version)
     .bind(&req.description)
@@ -424,6 +428,8 @@ pub async fn get_method(
             state.test_method_cache.set(cache_key, method.clone()).await;
             Json(ApiResponse::success(method, "获取检测方法成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch test method: {}", e);
             Json(ApiResponse::error(500, "获取检测方法失败"))
@@ -468,7 +474,11 @@ pub async fn update_method(
     )
     .bind(id)
     .bind(&req.method_name)
-    .bind(req.category_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.category_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(&req.standard)
     .bind(&req.description)
     .bind(&req.principle)

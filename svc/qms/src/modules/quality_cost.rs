@@ -192,6 +192,8 @@ pub async fn get_quality_cost(
 
     match cost {
         Ok(data) => Json(ApiResponse::success(data, "获取质量成本记录成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch quality cost: {}", e);
             Json(ApiResponse::error(500, "获取质量成本记录失败"))

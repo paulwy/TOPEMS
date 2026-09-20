@@ -186,12 +186,14 @@ pub async fn get_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#)).bind(id.to_string()).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match inspection {
         Ok(data) => Json(ApiResponse::success(data, "获取质量检查成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch inspection: {}", e);
             Json(ApiResponse::error(500, "获取质量检查失败"))
@@ -236,7 +238,7 @@ pub async fn update_inspection(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET inspection_type = COALESCE($2, inspection_type), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), standard_id = COALESCE($5, standard_id), quantity = COALESCE($6, quantity), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $7 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(tenant_id)
+    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET inspection_type = COALESCE($2, inspection_type), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), standard_id = COALESCE($5, standard_id), quantity = COALESCE($6, quantity), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $7 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id.to_string()).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

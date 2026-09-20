@@ -406,6 +406,8 @@ pub async fn get_alert_rule(
 
     match rule {
         Ok(data) => Json(ApiResponse::success(data, "获取预警规则成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch alert rule: {}", e);
             Json(ApiResponse::error(500, "获取预警规则失败"))

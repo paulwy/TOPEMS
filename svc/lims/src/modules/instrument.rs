@@ -264,6 +264,8 @@ pub async fn get_instrument(
             },
             "获取仪器成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch instrument: {}", e);
             Json(ApiResponse::error(500, "获取仪器失败"))

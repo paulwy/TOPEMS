@@ -528,6 +528,8 @@ pub async fn get_plan(
             },
             "获取能力验证计划成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch PT plan: {}", e);
             Json(ApiResponse::error(500, "获取能力验证计划失败"))

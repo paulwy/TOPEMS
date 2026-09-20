@@ -163,6 +163,8 @@ pub async fn get_sync_record(
             },
             "获取同步记录成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch sync record: {}", e);
             Json(ApiResponse::error(500, "获取同步记录失败"))

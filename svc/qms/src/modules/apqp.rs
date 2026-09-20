@@ -177,6 +177,8 @@ pub async fn get_apqp_project(
 
     match project {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP项目成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch APQP project: {}", e);
             Json(ApiResponse::error(500, "获取APQP项目失败"))
@@ -390,6 +392,8 @@ pub async fn get_apqp_phase(
 
     match phase {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP阶段成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch APQP phase: {}", e);
             Json(ApiResponse::error(500, "获取APQP阶段失败"))
@@ -588,6 +592,8 @@ pub async fn get_apqp_task(
 
     match task {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP任务成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch APQP task: {}", e);
             Json(ApiResponse::error(500, "获取APQP任务失败"))
@@ -775,6 +781,8 @@ pub async fn get_apqp_risk(
 
     match risk {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP风险成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch APQP risk: {}", e);
             Json(ApiResponse::error(500, "获取APQP风险失败"))

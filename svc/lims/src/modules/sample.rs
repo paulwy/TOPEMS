@@ -9,8 +9,8 @@ use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
-use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -128,7 +128,11 @@ pub async fn list_samples(
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     // 缓存读取：先查多级缓存，miss 再回源数据库
     let list_key = sample_list_key(&tenant_id, &query);
@@ -339,7 +343,11 @@ pub async fn get_sample(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let cache_key = sample_detail_key(&tenant_id, &id.to_string());
 
     // 缓存读取
@@ -381,6 +389,8 @@ pub async fn get_sample(
             }
             Json(ApiResponse::success(sample, "获取样品成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch sample: {}", e);
             Json(ApiResponse::error(500, "获取样品失败"))
@@ -399,7 +409,11 @@ pub async fn update_sample(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let row = sqlx::query(
         "UPDATE public.qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9, expired_at), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
@@ -472,7 +486,11 @@ pub async fn delete_sample(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let result = sqlx::query(
         "UPDATE public.qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
@@ -620,7 +638,11 @@ pub async fn record_lifecycle_event(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let sample_row =
         sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
@@ -712,7 +734,11 @@ pub async fn transition_sample_stage(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(ctx.tenant_id) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let valid_stage = LIFECYCLE_STAGES.iter().any(|(stage, _)| *stage == to_stage);
 

@@ -173,6 +173,8 @@ pub async fn get_issue(
 
     match issue {
         Ok(data) => Json(ApiResponse::success(data, "获取质量问题成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch issue: {}", e);
             Json(ApiResponse::error(500, "获取质量问题失败"))

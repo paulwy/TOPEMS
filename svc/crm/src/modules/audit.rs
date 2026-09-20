@@ -142,7 +142,7 @@ async fn get_audit_log(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Json<ApiResponse<AuditLog>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");

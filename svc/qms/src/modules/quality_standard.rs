@@ -248,6 +248,8 @@ pub async fn get_standard(
 
     match standard {
         Ok(data) => Json(ApiResponse::success(data, "获取质量标准成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch standard: {}", e);
             Json(ApiResponse::error(500, "获取质量标准失败"))

@@ -178,6 +178,8 @@ pub async fn get_eightd_report(
 
     match report {
         Ok(data) => Json(ApiResponse::success(data, "获取8D报告成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch 8D report: {}", e);
             Json(ApiResponse::error(500, "获取8D报告失败"))

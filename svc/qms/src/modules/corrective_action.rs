@@ -168,6 +168,8 @@ pub async fn get_action(
 
     match action {
         Ok(data) => Json(ApiResponse::success(data, "获取整改措施成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to fetch action: {}", e);
             Json(ApiResponse::error(500, "获取整改措施失败"))
