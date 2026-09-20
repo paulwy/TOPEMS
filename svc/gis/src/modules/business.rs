@@ -144,6 +144,7 @@ pub async fn update_business_location(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     let external_id: Option<Uuid> = payload
         .external_id
         .as_deref()
@@ -152,7 +153,7 @@ pub async fn update_business_location(
         only_own_schema_query!("gis", r#"
         UPDATE gis.business_locations 
         SET business_name = $1, business_code = $2, business_type = $3, position = $4, external_id = $5, status = $6, description = $7, updated_at = NOW()
-        WHERE id = $8
+        WHERE id = $8 AND tenant_id = $9
         RETURNING *
         "#),
     )
@@ -164,6 +165,7 @@ pub async fn update_business_location(
     .bind(&status)
     .bind(&payload.description)
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {
@@ -181,11 +183,13 @@ pub async fn delete_business_location(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::BusinessLocationWrite).await {
         return e;
     }
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query(only_own_schema_query!(
         "gis",
-        "UPDATE gis.business_locations SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE gis.business_locations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
+    .bind(tenant_id)
     .execute(&pool)
     .await
     {

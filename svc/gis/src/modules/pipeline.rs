@@ -152,11 +152,14 @@ pub async fn delete_pipeline(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::PipelineWrite).await {
         return e;
     }
+    let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
+
     match sqlx::query(only_own_schema_query!(
         "gis",
-        "UPDATE gis.pipelines SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE gis.pipelines SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
+    .bind(tenant_id)
     .execute(&pool)
     .await
     {
