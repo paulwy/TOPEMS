@@ -248,7 +248,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                     }}
                   >
                     <Typography color='text.secondary'>
-                      点击"{i18n.t('parsetestdialog.开始解析')}"{i18n.t('ai.v55-copilot-panel.k47')}
+                      {i18n.t('lims.parse_test_dialog.empty_hint', { action: i18n.t('lims.parse_test_dialog.k3'), suffix: i18n.t('ai.v55-copilot-panel.k47') })}
                     </Typography>
                   </Box>
                 )}

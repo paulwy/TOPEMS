@@ -51,7 +51,7 @@ export const DocApprovalFlowPage: React.FC = () => {
       });
       await pdmSettingsApi.updateSettings(CATEGORY, stringData);
       setSettings(stringData);
-      setSuccess('文档审批流程设置保存成功');
+      setSuccess(i18n.t('pdm.doc_approval.save_success'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
       console.error('[DocApprovalFlow] 保存设置失败:', e);
@@ -64,30 +64,30 @@ export const DocApprovalFlowPage: React.FC = () => {
   const sections: SettingSection[] = [
     {
       id: 'levels',
-      title: '审批层级',
-      description: '文档审批的默认层级与审批人配置',
+      title: i18n.t('pdm.doc_approval.sec_levels_title'),
+      description: i18n.t('pdm.doc_approval.sec_levels_desc'),
       fields: [
         {
           id: 'default_approval_levels',
-          label: '默认审批层级数',
+          label: i18n.t('pdm.doc_approval.fld_approval_levels'),
           type: 'number',
           value: Number(settings.default_approval_levels),
         },
         {
           id: 'default_approver_role',
-          label: '默认审批人角色',
+          label: i18n.t('pdm.doc_approval.fld_approver_role'),
           type: 'select',
           value: settings.default_approver_role,
           options: [
-            { label: '部门经理', value: 'manager' },
-            { label: '技术负责人', value: 'tech_lead' },
-            { label: '质量负责人', value: 'qa_lead' },
-            { label: '项目经理', value: 'pm' },
+            { label: i18n.t('pdm.doc_approval.opt_role_manager'), value: 'manager' },
+            { label: i18n.t('pdm.doc_approval.opt_role_tech_lead'), value: 'tech_lead' },
+            { label: i18n.t('pdm.doc_approval.opt_role_qa_lead'), value: 'qa_lead' },
+            { label: i18n.t('pdm.doc_approval.opt_role_pm'), value: 'pm' },
           ],
         },
         {
           id: 'require_parallel_approval',
-          label: '启用并行审批',
+          label: i18n.t('pdm.doc_approval.fld_parallel'),
           type: 'switch',
           value: settings.require_parallel_approval === 'true',
         },
@@ -95,24 +95,24 @@ export const DocApprovalFlowPage: React.FC = () => {
     },
     {
       id: 'timeout',
-      title: '超时与委托',
-      description: '审批超时处理及委托权限配置',
+      title: i18n.t('pdm.doc_approval.sec_timeout_title'),
+      description: i18n.t('pdm.doc_approval.sec_timeout_desc'),
       fields: [
         {
           id: 'auto_approve_on_timeout',
-          label: '超时自动通过',
+          label: i18n.t('pdm.doc_approval.fld_auto_approve_timeout'),
           type: 'switch',
           value: settings.auto_approve_on_timeout === 'true',
         },
         {
           id: 'approval_timeout_hours',
-          label: '审批超时时间（小时）',
+          label: i18n.t('pdm.doc_approval.fld_timeout_hours'),
           type: 'number',
           value: Number(settings.approval_timeout_hours),
         },
         {
           id: 'allow_delegation',
-          label: '允许审批委托',
+          label: i18n.t('pdm.doc_approval.fld_allow_delegation'),
           type: 'switch',
           value: settings.allow_delegation === 'true',
         },

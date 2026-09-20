@@ -271,5 +271,11 @@
   "system.backup_page.k57": "后端备份服务未接入，操作未执行",
   "system.backup_page.k42": "创建备份",
   "system.backup_page.k43": "备份名称",
-  "system.backup_page.k44": "例如：weekly-backup-20240115"
+  "system.backup_page.k44": "例如：weekly-backup-20240115",
+  "system.log_config_panel.level_trace": "跟踪",
+  "system.log_config_panel.level_debug": "调试",
+  "system.log_config_panel.level_info": "信息",
+  "system.log_config_panel.level_warn": "警告",
+  "system.log_config_panel.level_error": "错误",
+  "system.log_config_panel.level_fatal": "致命"
 }

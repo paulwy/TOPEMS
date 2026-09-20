@@ -41,6 +41,7 @@ import type {
   AssetSensitivity,
   AssetCatalogDashboard,
 } from '@/api/master/dataAssetCatalogV66';
+import i18n from '@/i18n';
 
 // 类型标签颜色映射
 const TYPE_COLORS: Record<AssetType, string> = {
@@ -99,7 +100,7 @@ const DataAssetCatalogPage: React.FC = () => {
       }
     } catch (err) {
       console.error('加载资产列表失败', err);
-      setError('加载资产列表失败，请稍后重试');
+      setError(i18n.t('master.data_asset_catalog.load_failed'));
       setAssets([]);
       setTotal(0);
     } finally {
@@ -166,14 +167,14 @@ const DataAssetCatalogPage: React.FC = () => {
             sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <DatasetIcon sx={{ color: 'primary.main' }} />
-            数据资产目录
+            {i18n.t('master.data_asset_catalog.title')}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
             sx={{ mt: 0.5 }}
           >
-            数据资产编目、搜索与治理 · V66 试点（后端复用 V60 metadata）
+            {i18n.t('master.data_asset_catalog.subtitle')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -184,16 +185,16 @@ const DataAssetCatalogPage: React.FC = () => {
               loadDashboard();
             }}
           >
-            刷新
+            {i18n.t('master.data_asset_catalog.refresh')}
           </Button>
-          <Tooltip title='新建资产功能开发中'>
+          <Tooltip title={i18n.t('master.data_asset_catalog.new_disabled')}>
             <span>
               <Button
                 variant='contained'
                 startIcon={<AddIcon />}
                 disabled
               >
-                新建资产
+                {i18n.t('master.data_asset_catalog.new_asset')}
               </Button>
             </span>
           </Tooltip>
@@ -211,7 +212,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  总资产数
+                  {i18n.t('master.data_asset_catalog.stat_total')}
                 </Typography>
               </Box>
               {dashboardLoading ? (
@@ -236,7 +237,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  活跃资产
+                  {i18n.t('master.data_asset_catalog.stat_active')}
                 </Typography>
               </Box>
               {dashboardLoading ? (
@@ -260,7 +261,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  已弃用
+                  {i18n.t('master.data_asset_catalog.stat_deprecated')}
                 </Typography>
               </Box>
               {dashboardLoading ? (
@@ -285,7 +286,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  未分配负责人
+                  {i18n.t('master.data_asset_catalog.stat_unassigned')}
                 </Typography>
               </Box>
               {dashboardLoading ? (
@@ -307,7 +308,7 @@ const DataAssetCatalogPage: React.FC = () => {
       <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
         <input
           type='text'
-          placeholder='搜索资产名称/描述，按回车查询'
+          placeholder={i18n.t('master.data_asset_catalog.search_placeholder')}
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
           onKeyDown={(e) => {
@@ -332,7 +333,7 @@ const DataAssetCatalogPage: React.FC = () => {
             loadAssets();
           }}
         >
-          查询
+          {i18n.t('master.data_asset_catalog.search')}
         </Button>
       </Paper>
 
@@ -353,15 +354,15 @@ const DataAssetCatalogPage: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow sx={{ backgroundColor: 'grey.100' }}>
-                <TableCell sx={{ fontWeight: 600 }}>资产名称</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>显示名</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>敏感度</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>负责人</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>数据库/表</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>更新时间</TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_name')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_display_name')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_type')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_status')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_sensitivity')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_owner')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_db_table')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_updated_at')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>{i18n.t('master.data_asset_catalog.col_actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -380,7 +381,7 @@ const DataAssetCatalogPage: React.FC = () => {
                     colSpan={9}
                     sx={{ textAlign: 'center', py: 4 }}
                   >
-                    <Typography color='text.secondary'>暂无数据资产</Typography>
+                    <Typography color='text.secondary'>{i18n.t('master.data_asset_catalog.empty')}</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -465,7 +466,7 @@ const DataAssetCatalogPage: React.FC = () => {
                       {asset.updated_at ? new Date(asset.updated_at).toLocaleString('zh-CN') : '-'}
                     </TableCell>
                     <TableCell sx={{ textAlign: 'center' }}>
-                      <Tooltip title='详情'>
+                      <Tooltip title={i18n.t('master.data_asset_catalog.detail')}>
                         <IconButton
                           size='small'
                           onClick={() => handleView(asset)}
@@ -473,7 +474,7 @@ const DataAssetCatalogPage: React.FC = () => {
                           <VisibilityIcon fontSize='small' />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title='删除'>
+                      <Tooltip title={i18n.t('master.data_asset_catalog.delete')}>
                         <IconButton
                           size='small'
                           color='error'
@@ -500,8 +501,8 @@ const DataAssetCatalogPage: React.FC = () => {
             setPage(0);
           }}
           rowsPerPageOptions={[10, 20, 50, 100]}
-          labelRowsPerPage='每页行数'
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / 共 ${count} 条`}
+          labelRowsPerPage={i18n.t('master.data_asset_catalog.rows_per_page')}
+          labelDisplayedRows={({ from, to, count }) => i18n.t('master.data_asset_catalog.rows_range', { from, to, count })}
         />
       </Card>
 
@@ -522,7 +523,7 @@ const DataAssetCatalogPage: React.FC = () => {
           }}
         >
           <DatasetIcon sx={{ color: 'primary.main' }} />
-          资产详情
+          {i18n.t('master.data_asset_catalog.detail_title')}
           {detailAsset && (
             <Chip
               label={detailAsset.name}
@@ -539,7 +540,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  资产名称
+                  {i18n.t('master.data_asset_catalog.col_name')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -553,7 +554,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  显示名
+                  {i18n.t('master.data_asset_catalog.col_display_name')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.display_name || '-'}</Typography>
               </Box>
@@ -562,7 +563,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  类型
+                  {i18n.t('master.data_asset_catalog.col_type')}
                 </Typography>
                 <Chip
                   label={detailAsset.type}
@@ -579,7 +580,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  状态
+                  {i18n.t('master.data_asset_catalog.col_status')}
                 </Typography>
                 <Chip
                   label={detailAsset.status}
@@ -596,7 +597,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  敏感度
+                  {i18n.t('master.data_asset_catalog.col_sensitivity')}
                 </Typography>
                 <Chip
                   label={detailAsset.sensitivity}
@@ -613,7 +614,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  负责人
+                  {i18n.t('master.data_asset_catalog.col_owner')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.owner || '-'}</Typography>
               </Box>
@@ -622,7 +623,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  所属团队
+                  {i18n.t('master.data_asset_catalog.fld_owner_team')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.owner_team || '-'}</Typography>
               </Box>
@@ -631,7 +632,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  分类
+                  {i18n.t('master.data_asset_catalog.fld_category')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.category || '-'}</Typography>
               </Box>
@@ -640,7 +641,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  数据库
+                  {i18n.t('master.data_asset_catalog.fld_database')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.database || '-'}</Typography>
               </Box>
@@ -658,7 +659,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  表名
+                  {i18n.t('master.data_asset_catalog.fld_table_name')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.table_name || '-'}</Typography>
               </Box>
@@ -667,7 +668,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  行数
+                  {i18n.t('master.data_asset_catalog.fld_row_count')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.row_count ?? '-'}</Typography>
               </Box>
@@ -676,7 +677,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  列数
+                  {i18n.t('master.data_asset_catalog.fld_column_count')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.column_count ?? '-'}</Typography>
               </Box>
@@ -686,7 +687,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  描述
+                  {i18n.t('master.data_asset_catalog.fld_description')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.description || '-'}</Typography>
               </Box>
@@ -695,7 +696,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  标签
+                  {i18n.t('master.data_asset_catalog.fld_tags')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
                   {detailAsset.tags && detailAsset.tags.length > 0 ? (
@@ -716,7 +717,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  创建时间
+                  {i18n.t('master.data_asset_catalog.fld_created_at')}
                 </Typography>
                 <Typography variant='body1'>
                   {detailAsset.created_at
@@ -729,7 +730,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  更新时间
+                  {i18n.t('master.data_asset_catalog.col_updated_at')}
                 </Typography>
                 <Typography variant='body1'>
                   {detailAsset.updated_at
@@ -741,7 +742,7 @@ const DataAssetCatalogPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailOpen(false)}>关闭</Button>
+          <Button onClick={() => setDetailOpen(false)}>{i18n.t('master.data_asset_catalog.close')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

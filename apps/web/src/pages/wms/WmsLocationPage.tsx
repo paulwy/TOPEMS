@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -165,12 +166,12 @@ const mockLocations: Location[] = [
   },
 ];
 
-const statusConfig = {
-  available: { label: '空闲', variant: 'success' as const, icon: CheckCircle },
-  occupied: { label: '已占用', variant: 'info' as const, icon: Package },
-  locked: { label: '已锁定', variant: 'warning' as const, icon: AlertTriangle },
-  maintenance: { label: '维护中', variant: 'default' as const, icon: Clock },
-};
+const buildStatusConfig = (t: (k: string) => string) => ({
+  available: { label: t('wms.location_page.status_available'), variant: 'success' as const, icon: CheckCircle },
+  occupied: { label: t('wms.location_page.status_occupied'), variant: 'info' as const, icon: Package },
+  locked: { label: t('wms.location_page.status_locked'), variant: 'warning' as const, icon: AlertTriangle },
+  maintenance: { label: t('wms.location_page.status_maintenance'), variant: 'default' as const, icon: Clock },
+});
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -178,7 +179,9 @@ const formatDateTime = (value?: string) => {
 };
 
 const WmsLocationPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const statusConfig = useMemo(() => buildStatusConfig(t), [t]);
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'available' | 'occupied' | 'locked' | 'maintenance'
@@ -271,10 +274,10 @@ const WmsLocationPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '库位删除成功');
+      pushToast('success', t('wms.location_page.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('wms.location_page.toast_delete_error'));
     },
   });
 
@@ -298,10 +301,10 @@ const WmsLocationPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '库位创建成功');
+      pushToast('success', t('wms.location_page.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('wms.location_page.toast_create_error'));
     },
   });
 
@@ -321,10 +324,10 @@ const WmsLocationPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '库位更新成功');
+      pushToast('success', t('wms.location_page.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('wms.location_page.toast_update_error'));
     },
   });
 
@@ -349,28 +352,28 @@ const WmsLocationPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'available', label: '空闲', badge: stats.available },
-      { id: 'occupied', label: '已占用', badge: stats.occupied },
+      { id: 'all', label: t('wms.location_page.tab_all') },
+      { id: 'available', label: t('wms.location_page.status_available'), badge: stats.available },
+      { id: 'occupied', label: t('wms.location_page.status_occupied'), badge: stats.occupied },
       {
         id: 'locked',
-        label: '已锁定',
+        label: t('wms.location_page.status_locked'),
         badge: locations.filter((l) => l.status === 'locked').length,
       },
       {
         id: 'maintenance',
-        label: '维护中',
+        label: t('wms.location_page.status_maintenance'),
         badge: locations.filter((l) => l.status === 'maintenance').length,
       },
     ],
-    [stats, locations]
+    [stats, locations, t]
   );
 
   const columns: DataTableColumn<Location>[] = useMemo(
     () => [
       {
         key: 'code',
-        header: '库位编码',
+        header: t('wms.location_page.col_code'),
         sortable: true,
         render: (row) => (
           <span
@@ -386,7 +389,7 @@ const WmsLocationPage: React.FC = () => {
       },
       {
         key: 'name',
-        header: '库位名称',
+        header: t('wms.location_page.col_name'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.name}</div>
@@ -398,12 +401,12 @@ const WmsLocationPage: React.FC = () => {
       },
       {
         key: 'warehouse',
-        header: '所属仓库',
+        header: t('wms.location_page.col_warehouse'),
         render: (row) => <Tag variant='default'>{row.warehouse}</Tag>,
       },
       {
         key: 'capacity',
-        header: '容量利用率',
+        header: t('wms.location_page.col_capacity'),
         render: (row) => {
           const percent = row.capacity > 0 ? Math.round((row.occupied / row.capacity) * 100) : 0;
           return (
@@ -448,7 +451,7 @@ const WmsLocationPage: React.FC = () => {
       },
       {
         key: 'current_product',
-        header: '当前存放',
+        header: t('wms.location_page.col_current_product'),
         render: (row) =>
           row.current_product ? (
             <div>
@@ -463,7 +466,7 @@ const WmsLocationPage: React.FC = () => {
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('wms.location_page.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.available;
@@ -472,7 +475,7 @@ const WmsLocationPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('wms.location_page.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -485,7 +488,7 @@ const WmsLocationPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('wms.location_page.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -496,7 +499,7 @@ const WmsLocationPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('wms.location_page.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -504,13 +507,13 @@ const WmsLocationPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('wms.location_page.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedLocation, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedLocation, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -527,17 +530,17 @@ const WmsLocationPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('wms.location_page.demo_banner')}
         </div>
       )}
       <ListPageTemplate<Location>
         header={{
-          title: '库位管理',
-          subtitle: '管理仓库库位，监控库位使用状态和容量利用率',
+          title: t('wms.location_page.title'),
+          subtitle: t('wms.location_page.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '仓储物流', href: WMS_PATHS.root },
-            { label: '库位管理' },
+            { label: t('wms.location_page.breadcrumb_home'), href: '/dashboard' },
+            { label: t('wms.location_page.breadcrumb_warehouse'), href: WMS_PATHS.root },
+            { label: t('wms.location_page.title') },
           ],
         }}
         toolbar={
@@ -551,7 +554,7 @@ const WmsLocationPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索库位编码/名称/区域...'
+                placeholder={t('wms.location_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -561,10 +564,10 @@ const WmsLocationPage: React.FC = () => {
                 value={warehouseFilter}
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部仓库' },
-                  { value: '原材料仓', label: '原材料仓' },
-                  { value: '半成品仓', label: '半成品仓' },
-                  { value: '成品仓', label: '成品仓' },
+                  { value: 'all', label: t('wms.location_page.filter_all_warehouse') },
+                  { value: '原材料仓', label: t('wms.location_page.wh_raw_material') },
+                  { value: '半成品仓', label: t('wms.location_page.wh_semi_finished') },
+                  { value: '成品仓', label: t('wms.location_page.wh_finished') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -575,7 +578,7 @@ const WmsLocationPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('wms.location_page.action_refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -585,7 +588,7 @@ const WmsLocationPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建库位
+                {t('wms.location_page.action_new')}
               </Button>
             </div>
           </>
@@ -595,8 +598,8 @@ const WmsLocationPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无库位数据'
-        emptyDescription='点击右上角「新建库位」按钮创建第一个库位'
+        emptyTitle={t('wms.location_page.empty_title')}
+        emptyDescription={t('wms.location_page.empty_description')}
         footer={
           <div
             style={{
@@ -606,25 +609,25 @@ const WmsLocationPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='库位总数'
+              label={t('wms.location_page.stat_total')}
               value={stats.total}
               icon={MapPin}
               accent='cyan'
             />
             <StatTile
-              label='空闲库位'
+              label={t('wms.location_page.stat_available')}
               value={stats.available}
               icon={CheckCircle}
               accent='success'
             />
             <StatTile
-              label='已占用'
+              label={t('wms.location_page.status_occupied')}
               value={stats.occupied}
               icon={Package}
               accent='amber'
             />
             <StatTile
-              label='锁定/维护'
+              label={t('wms.location_page.stat_locked_maintenance')}
               value={stats.locked}
               icon={AlertTriangle}
               accent='warning'
@@ -664,7 +667,7 @@ const WmsLocationPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedLocation(null);
         }}
-        title='库位详情'
+        title={t('wms.location_page.drawer_title')}
         size='lg'
       >
         {selectedLocation && (
@@ -699,12 +702,12 @@ const WmsLocationPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedLocation.status]?.variant || 'default'}>
-                  {statusConfig[selectedLocation.status]?.label || '未知'}
+                  {statusConfig[selectedLocation.status]?.label || t('wms.location_page.status_unknown')}
                 </Badge>
               </div>
             </Card>
 
-            <Card title='容量信息'>
+            <Card title={t('wms.location_page.section_capacity')}>
               <div style={{ marginTop: 'var(--space-2)' }}>
                 <div
                   style={{
@@ -715,7 +718,10 @@ const WmsLocationPage: React.FC = () => {
                   }}
                 >
                   <span>
-                    已用 {selectedLocation.occupied} / 总容量 {selectedLocation.capacity}
+                    {t('wms.location_page.capacity_used', {
+                      occupied: selectedLocation.occupied,
+                      capacity: selectedLocation.capacity,
+                    })}
                   </span>
                   <span style={{ fontWeight: 'var(--font-semibold)' }}>
                     {selectedLocation.capacity > 0
@@ -754,13 +760,13 @@ const WmsLocationPage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='基本信息'>
+            <Card title={t('wms.location_page.section_basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    所属仓库
+                    {t('wms.location_page.col_warehouse')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedLocation.warehouse}
@@ -768,7 +774,7 @@ const WmsLocationPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    所属区域
+                    {t('wms.location_page.label_zone')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedLocation.zone}
@@ -778,7 +784,7 @@ const WmsLocationPage: React.FC = () => {
                   <>
                     <div>
                       <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                        当前存放物料
+                        {t('wms.location_page.label_current_material')}
                       </div>
                       <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                         {selectedLocation.current_product}
@@ -786,7 +792,7 @@ const WmsLocationPage: React.FC = () => {
                     </div>
                     <div>
                       <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                        物料 SKU
+                        {t('wms.location_page.label_sku')}
                       </div>
                       <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                         {selectedLocation.current_sku}
@@ -796,7 +802,7 @@ const WmsLocationPage: React.FC = () => {
                 )}
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('wms.location_page.label_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedLocation.created_at)}
@@ -812,7 +818,7 @@ const WmsLocationPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedLocation ? '编辑库位' : '新建库位'}
+        title={selectedLocation ? t('wms.location_page.modal_edit_title') : t('wms.location_page.action_new')}
         size='lg'
         footer={
           <>
@@ -820,28 +826,22 @@ const WmsLocationPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('wms.location_page.button_cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
+                const codeEl = document.getElementById('field-1') as HTMLInputElement | null;
+                const nameEl = document.getElementById('field-2') as HTMLInputElement | null;
+                const warehouseEl = document.getElementById('field-3') as HTMLSelectElement | null;
+                const zoneEl = document.getElementById('field-4') as HTMLInputElement | null;
+                const capacityEl = document.getElementById('field-5') as HTMLInputElement | null;
                 const formData: Partial<Location> = {
-                  code:
-                    (document.querySelector('input[placeholder*="库位编码"]') as HTMLInputElement)
-                      ?.value || '',
-                  name:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="库位名称"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
-                  warehouse: (document.querySelector('select') as HTMLSelectElement)?.value || '',
-                  zone:
-                    (document.querySelectorAll('input[placeholder*="区域"]')[0] as HTMLInputElement)
-                      ?.value || '',
-                  capacity: Number(
-                    (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
-                  ),
+                  code: codeEl?.value || '',
+                  name: nameEl?.value || '',
+                  warehouse: warehouseEl?.value || '',
+                  zone: zoneEl?.value || '',
+                  capacity: Number(capacityEl?.value || 0),
                 };
                 if (selectedLocation) {
                   updateMutation.mutate({ id: selectedLocation.id, data: formData });
@@ -850,7 +850,7 @@ const WmsLocationPage: React.FC = () => {
                 }
               }}
             >
-              {selectedLocation ? '保存修改' : '创建库位'}
+              {selectedLocation ? t('wms.location_page.button_save') : t('wms.location_page.button_create')}
             </Button>
           </>
         }
@@ -862,11 +862,11 @@ const WmsLocationPage: React.FC = () => {
                 htmlFor='field-1'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                库位编码 *
+                {t('wms.location_page.field_code')}
               </label>
               <Input
                 id='field-1'
-                placeholder='例如：A-01-01'
+                placeholder={t('wms.location_page.placeholder_code')}
                 defaultValue={selectedLocation?.code}
               />
             </div>
@@ -875,11 +875,11 @@ const WmsLocationPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                库位名称
+                {t('wms.location_page.field_name')}
               </label>
               <Input
                 id='field-2'
-                placeholder='例如：原材料区-01排-01位'
+                placeholder={t('wms.location_page.placeholder_name')}
                 defaultValue={selectedLocation?.name}
               />
             </div>
@@ -888,15 +888,15 @@ const WmsLocationPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                所属仓库 *
+                {t('wms.location_page.field_warehouse')}
               </label>
               <Select
                 id='field-3'
                 defaultValue={selectedLocation?.warehouse || '原材料仓'}
                 options={[
-                  { value: '原材料仓', label: '原材料仓' },
-                  { value: '半成品仓', label: '半成品仓' },
-                  { value: '成品仓', label: '成品仓' },
+                  { value: '原材料仓', label: t('wms.location_page.wh_raw_material') },
+                  { value: '半成品仓', label: t('wms.location_page.wh_semi_finished') },
+                  { value: '成品仓', label: t('wms.location_page.wh_finished') },
                 ]}
               />
             </div>
@@ -905,11 +905,11 @@ const WmsLocationPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                所属区域
+                {t('wms.location_page.field_zone')}
               </label>
               <Input
                 id='field-4'
-                placeholder='例如：A区'
+                placeholder={t('wms.location_page.placeholder_zone')}
                 defaultValue={selectedLocation?.zone}
               />
             </div>
@@ -918,12 +918,12 @@ const WmsLocationPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                容量（件）
+                {t('wms.location_page.field_capacity')}
               </label>
               <Input
                 id='field-5'
                 type='number'
-                placeholder='例如：100'
+                placeholder={t('wms.location_page.placeholder_capacity')}
                 defaultValue={selectedLocation?.capacity}
               />
             </div>
@@ -932,16 +932,16 @@ const WmsLocationPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                状态
+                {t('wms.location_page.col_status')}
               </label>
               <Select
                 id='field-6'
                 defaultValue={selectedLocation?.status || 'available'}
                 options={[
-                  { value: 'available', label: '空闲' },
-                  { value: 'occupied', label: '已占用' },
-                  { value: 'locked', label: '已锁定' },
-                  { value: 'maintenance', label: '维护中' },
+                  { value: 'available', label: t('wms.location_page.status_available') },
+                  { value: 'occupied', label: t('wms.location_page.status_occupied') },
+                  { value: 'locked', label: t('wms.location_page.status_locked') },
+                  { value: 'maintenance', label: t('wms.location_page.status_maintenance') },
                 ]}
               />
             </div>
@@ -953,7 +953,7 @@ const WmsLocationPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除库位'
+        title={t('wms.location_page.delete_modal_title')}
         size='sm'
         footer={
           <>
@@ -961,20 +961,20 @@ const WmsLocationPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('wms.location_page.button_cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('wms.location_page.button_confirm_delete')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除库位「{deleteTarget?.code}」吗？此操作不可撤销。
+          {t('wms.location_page.delete_confirm_message', { code: deleteTarget?.code })}
         </p>
       </Modal>
 

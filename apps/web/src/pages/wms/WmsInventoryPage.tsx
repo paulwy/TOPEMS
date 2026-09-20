@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -173,27 +174,28 @@ const mockInventory: InventoryItem[] = [
   },
 ];
 
-const statusConfig = {
-  normal: { label: '正常', variant: 'success' as const },
-  low: { label: '库存不足', variant: 'warning' as const },
-  out: { label: '缺货', variant: 'error' as const },
-  overstock: { label: '积压', variant: 'amber' as const },
-};
+const buildStatusConfig = (t: (k: string) => string) => ({
+  normal: { label: t('wms.inventory_page.status_normal'), variant: 'success' as const },
+  low: { label: t('wms.inventory_page.status_low'), variant: 'warning' as const },
+  out: { label: t('wms.inventory_page.status_out'), variant: 'error' as const },
+  overstock: { label: t('wms.inventory_page.status_overstock'), variant: 'amber' as const },
+});
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
 };
 
-const formatAmount = (value: number) => {
-  if (value >= 10000) {
-    return `${(value / 10000).toFixed(1)}万`;
-  }
-  return value.toLocaleString('zh-CN');
-};
-
 const WmsInventoryPage: React.FC = () => {
-  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const statusConfig = useMemo(() => buildStatusConfig(t), [t]);
+
+  const formatAmount = (value: number) => {
+    if (value >= 10000) {
+      return `${(value / 10000).toFixed(1)}${t('wms.inventory_page.unit_wan')}`;
+    }
+    return value.toLocaleString('zh-CN');
+  };
 
   const [activeTab, setActiveTab] = useState<'all' | 'normal' | 'low' | 'out' | 'overstock'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -282,11 +284,11 @@ const WmsInventoryPage: React.FC = () => {
   }, [items]);
 
   const tabsConfig = [
-    { id: 'all', label: '全部' },
-    { id: 'normal', label: '正常', badge: items.filter((i) => i.status === 'normal').length },
-    { id: 'low', label: '库存不足', badge: items.filter((i) => i.status === 'low').length },
-    { id: 'out', label: '缺货', badge: items.filter((i) => i.status === 'out').length },
-    { id: 'overstock', label: '积压', badge: items.filter((i) => i.status === 'overstock').length },
+    { id: 'all', label: t('wms.inventory_page.tab_all') },
+    { id: 'normal', label: t('wms.inventory_page.status_normal'), badge: items.filter((i) => i.status === 'normal').length },
+    { id: 'low', label: t('wms.inventory_page.status_low'), badge: items.filter((i) => i.status === 'low').length },
+    { id: 'out', label: t('wms.inventory_page.status_out'), badge: items.filter((i) => i.status === 'out').length },
+    { id: 'overstock', label: t('wms.inventory_page.status_overstock'), badge: items.filter((i) => i.status === 'overstock').length },
   ];
 
   const columns: DataTableColumn<InventoryItem>[] = [
@@ -302,7 +304,7 @@ const WmsInventoryPage: React.FC = () => {
     },
     {
       key: 'product_name',
-      header: '物料名称',
+      header: t('wms.inventory_page.col_product_name'),
       sortable: true,
       render: (row) => (
         <div>
@@ -315,12 +317,12 @@ const WmsInventoryPage: React.FC = () => {
     },
     {
       key: 'warehouse',
-      header: '仓库',
+      header: t('wms.inventory_page.col_warehouse'),
       render: (row) => <Tag variant='default'>{row.warehouse}</Tag>,
     },
     {
       key: 'location',
-      header: '库位',
+      header: t('wms.inventory_page.col_location'),
       render: (row) => (
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>
           {row.location}
@@ -329,7 +331,7 @@ const WmsInventoryPage: React.FC = () => {
     },
     {
       key: 'quantity',
-      header: '库存数量',
+      header: t('wms.inventory_page.col_quantity'),
       align: 'right',
       sortable: true,
       render: (row) => (
@@ -338,14 +340,14 @@ const WmsInventoryPage: React.FC = () => {
             {row.quantity.toLocaleString()} {row.unit}
           </div>
           <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-            安全库存: {row.safety_stock}
+            {t('wms.inventory_page.safety_stock_label', { count: row.safety_stock })}
           </div>
         </div>
       ),
     },
     {
       key: 'total_value',
-      header: '库存价值',
+      header: t('wms.inventory_page.col_value'),
       align: 'right',
       render: (row) => (
         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
@@ -355,7 +357,7 @@ const WmsInventoryPage: React.FC = () => {
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('wms.inventory_page.col_status'),
       align: 'center',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.normal;
@@ -364,7 +366,7 @@ const WmsInventoryPage: React.FC = () => {
     },
     {
       key: 'actions',
-      header: '操作',
+      header: t('wms.inventory_page.col_actions'),
       align: 'right',
       render: (row) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -377,15 +379,15 @@ const WmsInventoryPage: React.FC = () => {
               setDetailDrawerOpen(true);
             }}
           >
-            详情
+            {t('wms.inventory_page.action_detail')}
           </Button>
           <Button
             variant='ghost'
             size='sm'
             leftIcon={<Edit2 size={14} />}
-            onClick={() => pushToast('info', '库存调整功能开发中')}
+            onClick={() => pushToast('info', t('wms.inventory_page.toast_adjust_dev'))}
           >
-            调整
+            {t('wms.inventory_page.action_adjust')}
           </Button>
         </div>
       ),
@@ -396,12 +398,12 @@ const WmsInventoryPage: React.FC = () => {
     <>
       <ListPageTemplate<InventoryItem>
         header={{
-          title: '库存管理',
-          subtitle: '实时查看库存水平，预警低库存和积压物料',
+          title: t('wms.inventory_page.title'),
+          subtitle: t('wms.inventory_page.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '仓储物流', href: WMS_PATHS.root },
-            { label: '库存管理' },
+            { label: t('wms.inventory_page.breadcrumb_home'), href: '/dashboard' },
+            { label: t('wms.inventory_page.breadcrumb_warehouse'), href: WMS_PATHS.root },
+            { label: t('wms.inventory_page.title') },
           ],
         }}
         toolbar={
@@ -415,7 +417,7 @@ const WmsInventoryPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索 SKU/物料名称/编码...'
+                placeholder={t('wms.inventory_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -425,10 +427,10 @@ const WmsInventoryPage: React.FC = () => {
                 value={warehouseFilter}
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部仓库' },
-                  { value: '原材料仓', label: '原材料仓' },
-                  { value: '半成品仓', label: '半成品仓' },
-                  { value: '成品仓', label: '成品仓' },
+                  { value: 'all', label: t('wms.inventory_page.filter_all_warehouse') },
+                  { value: '原材料仓', label: t('wms.inventory_page.wh_raw_material') },
+                  { value: '半成品仓', label: t('wms.inventory_page.wh_semi_finished') },
+                  { value: '成品仓', label: t('wms.inventory_page.wh_finished') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -439,14 +441,14 @@ const WmsInventoryPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('wms.inventory_page.action_refresh')}
               </Button>
               <Button
                 variant='primary'
                 leftIcon={<Plus size={16} />}
-                onClick={() => pushToast('info', '库存调整功能开发中')}
+                onClick={() => pushToast('info', t('wms.inventory_page.toast_adjust_dev'))}
               >
-                库存调整
+                {t('wms.inventory_page.action_adjust_stock')}
               </Button>
             </div>
           </>
@@ -456,8 +458,8 @@ const WmsInventoryPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无库存数据'
-        emptyDescription='请先入库物料后查看库存'
+        emptyTitle={t('wms.inventory_page.empty_title')}
+        emptyDescription={t('wms.inventory_page.empty_description')}
         footer={
           <div
             style={{
@@ -467,25 +469,25 @@ const WmsInventoryPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='物料 SKU 数'
+              label={t('wms.inventory_page.stat_sku_count')}
               value={stats.totalSKU}
               icon={Package}
               accent='cyan'
             />
             <StatTile
-              label='低库存预警'
+              label={t('wms.inventory_page.stat_low_warning')}
               value={stats.lowStock}
               icon={AlertTriangle}
               accent='warning'
             />
             <StatTile
-              label='库存总价值'
+              label={t('wms.inventory_page.stat_total_value')}
               value={`¥${formatAmount(stats.totalValue)}`}
               icon={TrendingUp}
               accent='success'
             />
             <StatTile
-              label='积压物料'
+              label={t('wms.inventory_page.stat_overstock')}
               value={stats.overstock}
               icon={TrendingDown}
               accent='amber'
@@ -525,7 +527,7 @@ const WmsInventoryPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedItem(null);
         }}
-        title='库存详情'
+        title={t('wms.inventory_page.drawer_title')}
         size='lg'
       >
         {selectedItem && (
@@ -556,18 +558,18 @@ const WmsInventoryPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedItem.status]?.variant || 'default'}>
-                  {statusConfig[selectedItem.status]?.label || '未知'}
+                  {statusConfig[selectedItem.status]?.label || t('wms.inventory_page.status_unknown')}
                 </Badge>
               </div>
             </Card>
 
-            <Card title='库存信息'>
+            <Card title={t('wms.inventory_page.section_inventory_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    当前库存
+                    {t('wms.inventory_page.label_current_stock')}
                   </div>
                   <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
                     {selectedItem.quantity.toLocaleString()} {selectedItem.unit}
@@ -575,7 +577,7 @@ const WmsInventoryPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    安全库存
+                    {t('wms.inventory_page.label_safety_stock')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-semibold)' }}>
                     {selectedItem.safety_stock.toLocaleString()} {selectedItem.unit}
@@ -583,7 +585,7 @@ const WmsInventoryPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    仓库 / 库位
+                    {t('wms.inventory_page.label_warehouse_location')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedItem.warehouse} / {selectedItem.location}
@@ -591,7 +593,7 @@ const WmsInventoryPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    单价 / 总价值
+                    {t('wms.inventory_page.label_price_value')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     ¥{selectedItem.unit_price.toLocaleString()} / ¥
@@ -601,7 +603,7 @@ const WmsInventoryPage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='库存水平分析'>
+            <Card title={t('wms.inventory_page.section_level_analysis')}>
               <div style={{ marginTop: 'var(--space-2)' }}>
                 <div
                   style={{
@@ -611,7 +613,7 @@ const WmsInventoryPage: React.FC = () => {
                     marginBottom: 'var(--space-1)',
                   }}
                 >
-                  <span>库存水平</span>
+                  <span>{t('wms.inventory_page.stock_level')}</span>
                   <span>
                     {selectedItem.safety_stock > 0
                       ? Math.round((selectedItem.quantity / selectedItem.safety_stock) * 100)
@@ -652,7 +654,7 @@ const WmsInventoryPage: React.FC = () => {
                     marginTop: 'var(--space-2)',
                   }}
                 >
-                  最后更新：{formatDateTime(selectedItem.updated_at)}
+                  {t('wms.inventory_page.last_updated', { date: formatDateTime(selectedItem.updated_at) })}
                 </div>
               </div>
             </Card>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   BarChart,
@@ -16,6 +17,7 @@ import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getLocationUtilization, type LocationUtilizationData } from '@/api/wms/analytics';
 
 export default function WmsLocationUtilizationPage() {
+  const { t } = useTranslation();
   const { data: response, loading } = useAnalyticsData({
     fetcher: () => getLocationUtilization(),
     deps: [],
@@ -58,13 +60,13 @@ export default function WmsLocationUtilizationPage() {
       },
       {
         id: 'total-locations',
-        title: '库位总数',
+        title: t('wms.location_utilization.stat_total_locations'),
         value: response?.total_locations ?? 0,
         color: 'info' as const,
       },
       {
         id: 'used-locations',
-        title: '已用库位',
+        title: t('wms.location_utilization.stat_used_locations'),
         value: response?.used_locations ?? 0,
         color: 'warning' as const,
       },
@@ -72,11 +74,11 @@ export default function WmsLocationUtilizationPage() {
         id: 'warehouse-count',
         title: i18n.t('pages.wms_location_utilization_page.k4'),
         value: locationUtil.length,
-        suffix: '个仓库',
+        suffix: t('wms.location_utilization.suffix_warehouse_count'),
         color: 'secondary' as const,
       },
     ],
-    [avgUtil, locationUtil.length, response]
+    [avgUtil, locationUtil.length, response, t]
   );
 
   return (
@@ -145,16 +147,16 @@ export default function WmsLocationUtilizationPage() {
       </div>
 
       <div className='mt-4 rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>仓库库位明细</h3>
+        <h3 className='mb-2 font-semibold'>{t('wms.location_utilization.section_detail')}</h3>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left font-medium'>仓库</th>
-                <th className='px-3 py-2 text-right font-medium'>库位总数</th>
-                <th className='px-3 py-2 text-right font-medium'>已用库位</th>
-                <th className='px-3 py-2 text-right font-medium'>利用率</th>
-                <th className='px-3 py-2 text-right font-medium'>呆滞库位</th>
+                <th className='px-3 py-2 text-left font-medium'>{t('wms.location_utilization.col_warehouse')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_total_locations')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_used_locations')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_utilization')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_dead_stock')}</th>
               </tr>
             </thead>
             <tbody>

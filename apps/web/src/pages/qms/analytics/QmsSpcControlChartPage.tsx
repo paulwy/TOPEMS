@@ -151,7 +151,7 @@ export default function QmsSpcControlChartPage() {
           sx={{ mb: 2 }}
           onClose={reload}
         >
-          加载失败：{error}
+          {t('qms.qms_spc_control_chart_page.load_failed', { error: String(error) })}
         </Alert>
       )}
       <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>

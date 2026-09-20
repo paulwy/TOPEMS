@@ -420,5 +420,12 @@
   "iam.nav.iam-user_desc": "Users",
   "iam.nav.iam-role_desc": "Roles",
   "iam.nav.iam-permission_desc": "Permissions",
-  "iam.nav.iam-company-structure_desc": "Company Structure"
+  "iam.nav.iam-company-structure_desc": "Company Structure",
+  "iam.user_management.filter_all": "All",
+  "iam.user_management.status_active": "Active",
+  "iam.user_management.status_inactive": "Disabled",
+  "iam.role_management.all_with_count": "All ({{count}})",
+  "iam.role_management.search_filter": "Search: {{keyword}}",
+  "iam.user_management.confirm_delete": "Are you sure you want to delete user \"{{name}}\"? This action cannot be undone.",
+  "iam.role_management.confirm_delete": "Are you sure you want to delete role \"{{name}}\"? This action cannot be undone."
 }

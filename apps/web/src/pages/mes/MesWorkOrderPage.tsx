@@ -41,6 +41,7 @@ import type { DataTableColumn, Toast, UploadFile, DateRange } from '@/components
 import { mesApi } from '@/api/mes';
 import type { WorkOrder as ApiWorkOrder } from '@/api/mes/types';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -68,31 +69,31 @@ interface WorkOrder {
 
 const statusConfig = {
   pending: {
-    label: '待开始',
+    labelKey: 'mes.work_order.k25',
     variant: 'default' as const,
     icon: Clock,
     color: 'var(--text-secondary)',
   },
   in_progress: {
-    label: '进行中',
+    labelKey: 'mes.work_order.k26',
     variant: 'info' as const,
     icon: Play,
     color: 'var(--accent-primary)',
   },
   paused: {
-    label: '已暂停',
+    labelKey: 'mes.work_order.k27',
     variant: 'warning' as const,
     icon: Pause,
     color: 'var(--warning-500)',
   },
   completed: {
-    label: '已完成',
+    labelKey: 'mes.work_order.k28',
     variant: 'success' as const,
     icon: CheckCircle,
     color: 'var(--success-500)',
   },
   cancelled: {
-    label: '已取消',
+    labelKey: 'mes.work_order.k29',
     variant: 'error' as const,
     icon: XCircle,
     color: 'var(--error-500)',
@@ -100,12 +101,13 @@ const statusConfig = {
 };
 
 const priorityConfig = {
-  high: { label: '高优先级', variant: 'error' as const },
-  medium: { label: '中优先级', variant: 'warning' as const },
-  low: { label: '低优先级', variant: 'default' as const },
+  high: { labelKey: 'mes.work_order_page.priority_high', variant: 'error' as const },
+  medium: { labelKey: 'mes.work_order_page.priority_medium', variant: 'warning' as const },
+  low: { labelKey: 'mes.work_order_page.priority_low', variant: 'default' as const },
 };
 
 const MesWorkOrderPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_progress' | 'completed'>(
@@ -262,11 +264,11 @@ const MesWorkOrderPage: React.FC = () => {
     mutationFn: (id: string) => mesApi.workOrders.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '工单已删除');
+      pushToast('success', t('mes.work_order_page.toast_deleted'));
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '工单已删除');
+      pushToast('success', t('mes.work_order_page.toast_deleted'));
     },
   });
 
@@ -320,10 +322,10 @@ const MesWorkOrderPage: React.FC = () => {
   }, [orders]);
 
   const tabsConfig = [
-    { id: 'all', label: '全部' },
-    { id: 'pending', label: '待开始', badge: stats.pending },
-    { id: 'in_progress', label: '进行中', badge: stats.inProgress },
-    { id: 'completed', label: '已完成' },
+    { id: 'all', label: t('mes.work_order_page.tab_all') },
+    { id: 'pending', label: t('mes.work_order.k25'), badge: stats.pending },
+    { id: 'in_progress', label: t('mes.work_order.k26'), badge: stats.inProgress },
+    { id: 'completed', label: t('mes.work_order.k28') },
   ];
 
   const formatDateTime = (value: string) => {
@@ -339,7 +341,7 @@ const MesWorkOrderPage: React.FC = () => {
   const columns: DataTableColumn<WorkOrder>[] = [
     {
       key: 'order_no',
-      header: '工单号',
+      header: t('mes.work_order.k2'),
       sortable: true,
       render: (row) => (
         <div>
@@ -352,7 +354,7 @@ const MesWorkOrderPage: React.FC = () => {
     },
     {
       key: 'product',
-      header: '产品',
+      header: t('mes.work_order_page.col_product'),
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <div
@@ -378,7 +380,7 @@ const MesWorkOrderPage: React.FC = () => {
     },
     {
       key: 'quantity',
-      header: '数量/进度',
+      header: t('mes.work_order_page.col_qty_progress'),
       align: 'center',
       render: (row) => (
         <div style={{ minWidth: 120 }}>
@@ -416,7 +418,7 @@ const MesWorkOrderPage: React.FC = () => {
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('mes.work_order.k24'),
       render: (row) => {
         const config = statusConfig[row.status];
         const StatusIcon = config.icon;
@@ -426,22 +428,22 @@ const MesWorkOrderPage: React.FC = () => {
               size={14}
               style={{ color: config.color }}
             />
-            <Badge variant={config.variant}>{config.label}</Badge>
+            <Badge variant={config.variant}>{t(config.labelKey)}</Badge>
           </div>
         );
       },
     },
     {
       key: 'priority',
-      header: '优先级',
+      header: t('mes.work_order.k15'),
       render: (row) => {
         const config = priorityConfig[row.priority];
-        return <Tag variant={config.variant}>{config.label}</Tag>;
+        return <Tag variant={config.variant}>{t(config.labelKey)}</Tag>;
       },
     },
     {
       key: 'workshop',
-      header: '车间/产线',
+      header: t('mes.work_order_page.col_workshop_line'),
       render: (row) => (
         <div>
           <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{row.workshop}</div>
@@ -451,7 +453,7 @@ const MesWorkOrderPage: React.FC = () => {
     },
     {
       key: 'operator',
-      header: '操作员',
+      header: t('mes.work_order_page.operator'),
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <div
@@ -476,7 +478,7 @@ const MesWorkOrderPage: React.FC = () => {
     },
     {
       key: 'planned_end',
-      header: '计划完成',
+      header: t('mes.work_order_page.planned_end'),
       sortable: true,
       render: (row) => (
         <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -486,7 +488,7 @@ const MesWorkOrderPage: React.FC = () => {
     },
     {
       key: 'actions',
-      header: '操作',
+      header: t('mes.work_order_page.actions'),
       align: 'right',
       width: 150,
       render: (row) => (
@@ -500,15 +502,15 @@ const MesWorkOrderPage: React.FC = () => {
               setDetailDrawerOpen(true);
             }}
           >
-            详情
+            {t('mes.work_order_page.action_detail')}
           </Button>
           <Button
             size='sm'
             variant='ghost'
             leftIcon={<Edit2 size={14} />}
-            onClick={() => pushToast('info', '编辑功能开发中')}
+            onClick={() => pushToast('info', t('mes.work_order_page.toast_editing_soon'))}
           >
-            编辑
+            {t('mes.work_order_page.action_edit')}
           </Button>
           <Button
             size='sm'
@@ -517,7 +519,7 @@ const MesWorkOrderPage: React.FC = () => {
             onClick={() => deleteMutation.mutate(row.id)}
             style={{ color: 'var(--error-500)' }}
           >
-            删除
+            {t('mes.work_order_page.action_delete')}
           </Button>
         </div>
       ),
@@ -528,8 +530,8 @@ const MesWorkOrderPage: React.FC = () => {
     <>
       <ListPageTemplate<WorkOrder>
         header={{
-          title: '工单管理',
-          subtitle: '管理生产工单，跟踪生产进度和状态',
+          title: t('mes.work_order_page.k10'),
+          subtitle: t('mes.work_order_page.subtitle'),
         }}
         toolbar={
           <>
@@ -542,7 +544,7 @@ const MesWorkOrderPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索工单号/产品/操作员...'
+                placeholder={t('mes.work_order_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -552,10 +554,10 @@ const MesWorkOrderPage: React.FC = () => {
                 value={workshopFilter}
                 onChange={(e) => setWorkshopFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部车间' },
-                  { value: '一车间', label: '一车间' },
-                  { value: '二车间', label: '二车间' },
-                  { value: '三车间', label: '三车间' },
+                  { value: 'all', label: t('mes.work_order_page.workshop_all') },
+                  { value: '一车间', label: t('mes.work_order_page.workshop_1') },
+                  { value: '二车间', label: t('mes.work_order_page.workshop_2') },
+                  { value: '三车间', label: t('mes.work_order_page.workshop_3') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -563,8 +565,8 @@ const MesWorkOrderPage: React.FC = () => {
                 <DateRangePicker
                   value={dateRange}
                   onChange={setDateRange}
-                  startPlaceholder='计划开始日期'
-                  endPlaceholder='计划结束日期'
+                  startPlaceholder={t('mes.work_order_page.date_start_placeholder')}
+                  endPlaceholder={t('mes.work_order_page.date_end_placeholder')}
                 />
               </div>
             </div>
@@ -574,14 +576,14 @@ const MesWorkOrderPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('mes.work_order_page.btn_refresh')}
               </Button>
               <Button
                 variant='primary'
                 leftIcon={<Plus size={16} />}
                 onClick={() => setCreateModalOpen(true)}
               >
-                新建工单
+                {t('mes.work_order_page.btn_new')}
               </Button>
             </div>
           </>
@@ -591,8 +593,8 @@ const MesWorkOrderPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无工单'
-        emptyDescription='点击右上角「新建工单」按钮创建第一个工单'
+        emptyTitle={t('mes.work_order_page.empty_title')}
+        emptyDescription={t('mes.work_order_page.empty_description')}
         tableProps={{
           onRowClick: (row) => {
             setSelectedOrder(row);
@@ -608,25 +610,25 @@ const MesWorkOrderPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='工单总数'
+              label={t('mes.work_order_page.stat_total')}
               value={stats.total}
               icon={Factory}
               accent='amber'
             />
             <StatTile
-              label='进行中'
+              label={t('mes.work_order.k26')}
               value={stats.inProgress}
               icon={Play}
               accent='cyan'
             />
             <StatTile
-              label='待开始'
+              label={t('mes.work_order.k25')}
               value={stats.pending}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='已完成'
+              label={t('mes.work_order.k28')}
               value={stats.completed}
               icon={CheckCircle}
               accent='success'
@@ -666,7 +668,7 @@ const MesWorkOrderPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedOrder(null);
         }}
-        title='工单详情'
+        title={t('mes.work_order.k55')}
         size='lg'
       >
         {selectedOrder && (
@@ -697,10 +699,10 @@ const MesWorkOrderPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={statusConfig[selectedOrder.status].variant}>
-                    {statusConfig[selectedOrder.status].label}
+                    {t(statusConfig[selectedOrder.status].labelKey)}
                   </Badge>
                   <Tag variant={priorityConfig[selectedOrder.priority].variant}>
-                    {priorityConfig[selectedOrder.priority].label}
+                    {t(priorityConfig[selectedOrder.priority].labelKey)}
                   </Tag>
                 </div>
               </div>
@@ -708,7 +710,7 @@ const MesWorkOrderPage: React.FC = () => {
               {/* 进度条 */}
               <div style={{ marginTop: 'var(--space-4)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>生产进度</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('mes.work_order_page.progress_label')}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                     {selectedOrder.completed_quantity} / {selectedOrder.quantity} (
                     {getProgress(selectedOrder)}%)
@@ -741,64 +743,64 @@ const MesWorkOrderPage: React.FC = () => {
             </Card>
 
             {/* 基本信息 */}
-            <Card title='基本信息'>
+            <Card title={t('mes.work_order.k49')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <InfoItem
-                  label='产品名称'
+                  label={t('mes.work_order_page.product_name')}
                   value={selectedOrder.product_name}
                 />
                 <InfoItem
-                  label='产品编码'
+                  label={t('mes.work_order_page.product_code')}
                   value={selectedOrder.product_code}
                 />
                 <InfoItem
-                  label='计划数量'
+                  label={t('mes.work_order.k7')}
                   value={`${selectedOrder.quantity} 件`}
                 />
                 <InfoItem
-                  label='已完成数量'
+                  label={t('mes.work_order.k8')}
                   value={`${selectedOrder.completed_quantity} 件`}
                 />
                 <InfoItem
-                  label='车间'
+                  label={t('mes.work_order_page.workshop')}
                   value={selectedOrder.workshop}
                 />
                 <InfoItem
-                  label='产线'
+                  label={t('mes.work_order_page.line')}
                   value={selectedOrder.production_line}
                 />
                 <InfoItem
-                  label='操作员'
+                  label={t('mes.work_order_page.operator')}
                   value={selectedOrder.operator}
                 />
                 <InfoItem
-                  label='优先级'
-                  value={priorityConfig[selectedOrder.priority].label}
+                  label={t('mes.work_order.k15')}
+                  value={t(priorityConfig[selectedOrder.priority].labelKey)}
                 />
               </div>
             </Card>
 
             {/* 时间信息 */}
-            <Card title='时间信息'>
+            <Card title={t('mes.work_order_page.card_time_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <InfoItem
-                  label='计划开始'
+                  label={t('mes.work_order.k11')}
                   value={formatDateTime(selectedOrder.planned_start)}
                 />
                 <InfoItem
-                  label='计划完成'
+                  label={t('mes.work_order_page.planned_end')}
                   value={formatDateTime(selectedOrder.planned_end)}
                 />
                 <InfoItem
-                  label='实际开始'
+                  label={t('mes.work_order.k13')}
                   value={formatDateTime(selectedOrder.actual_start || '-')}
                 />
                 <InfoItem
-                  label='实际完成'
+                  label={t('mes.work_order_page.actual_end')}
                   value={formatDateTime(selectedOrder.actual_end || '-')}
                 />
               </div>
@@ -806,7 +808,7 @@ const MesWorkOrderPage: React.FC = () => {
 
             {/* 备注 */}
             {selectedOrder.remark && (
-              <Card title='备注'>
+              <Card title={t('mes.work_order.k30')}>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                   {selectedOrder.remark}
                 </p>
@@ -819,9 +821,9 @@ const MesWorkOrderPage: React.FC = () => {
                 <Button
                   variant='primary'
                   leftIcon={<Play size={16} />}
-                  onClick={() => pushToast('success', '工单已开始')}
+                  onClick={() => pushToast('success', t('mes.work_order_page.toast_started'))}
                 >
-                  开始生产
+                  {t('mes.work_order_page.btn_start_prod')}
                 </Button>
               </div>
             )}
@@ -830,16 +832,16 @@ const MesWorkOrderPage: React.FC = () => {
                 <Button
                   variant='ghost'
                   leftIcon={<Pause size={16} />}
-                  onClick={() => pushToast('info', '工单已暂停')}
+                  onClick={() => pushToast('info', t('mes.work_order_page.toast_paused'))}
                 >
-                  暂停
+                  {t('mes.work_order_page.k6')}
                 </Button>
                 <Button
                   variant='primary'
                   leftIcon={<CheckCircle size={16} />}
-                  onClick={() => pushToast('success', '工单已完成')}
+                  onClick={() => pushToast('success', t('mes.work_order_page.toast_completed'))}
                 >
-                  完成
+                  {t('mes.work_order_page.btn_complete')}
                 </Button>
               </div>
             )}
@@ -848,9 +850,9 @@ const MesWorkOrderPage: React.FC = () => {
                 <Button
                   variant='primary'
                   leftIcon={<Play size={16} />}
-                  onClick={() => pushToast('success', '工单已恢复')}
+                  onClick={() => pushToast('success', t('mes.work_order_page.toast_resumed'))}
                 >
-                  恢复生产
+                  {t('mes.work_order_page.btn_resume_prod')}
                 </Button>
               </div>
             )}
@@ -862,7 +864,7 @@ const MesWorkOrderPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title='新建工单'
+        title={t('mes.work_order_page.btn_new')}
         size='lg'
         footer={
           <>
@@ -870,16 +872,16 @@ const MesWorkOrderPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('mes.work_order_page.btn_cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 setCreateModalOpen(false);
-                pushToast('success', '工单创建成功');
+                pushToast('success', t('mes.work_order_page.toast_created'));
               }}
             >
-              创建工单
+              {t('mes.work_order_page.btn_create_order')}
             </Button>
           </>
         }
@@ -891,11 +893,11 @@ const MesWorkOrderPage: React.FC = () => {
                 htmlFor='wo-product-name'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                产品名称 *
+                {t('mes.work_order_page.product_name')} *
               </label>
               <Input
                 id='wo-product-name'
-                placeholder='请输入产品名称'
+                placeholder={t('mes.work_order_page.ph_product_name')}
               />
             </div>
             <div>
@@ -903,11 +905,11 @@ const MesWorkOrderPage: React.FC = () => {
                 htmlFor='wo-product-code'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                产品编码 *
+                {t('mes.work_order_page.product_code')} *
               </label>
               <Input
                 id='wo-product-code'
-                placeholder='请输入产品编码'
+                placeholder={t('mes.work_order_page.ph_product_code')}
               />
             </div>
             <div>
@@ -915,12 +917,12 @@ const MesWorkOrderPage: React.FC = () => {
                 htmlFor='wo-quantity'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                计划数量 *
+                {t('mes.work_order.k7')} *
               </label>
               <Input
                 id='wo-quantity'
                 type='number'
-                placeholder='请输入数量'
+                placeholder={t('mes.work_order_page.ph_quantity')}
               />
             </div>
             <div>
@@ -928,15 +930,15 @@ const MesWorkOrderPage: React.FC = () => {
                 htmlFor='wo-priority'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                优先级
+                {t('mes.work_order.k15')}
               </label>
               <Select
                 id='wo-priority'
                 defaultValue='medium'
                 options={[
-                  { value: 'high', label: '高优先级' },
-                  { value: 'medium', label: '中优先级' },
-                  { value: 'low', label: '低优先级' },
+                  { value: 'high', label: t('mes.work_order_page.priority_high') },
+                  { value: 'medium', label: t('mes.work_order_page.priority_medium') },
+                  { value: 'low', label: t('mes.work_order_page.priority_low') },
                 ]}
               />
             </div>
@@ -945,15 +947,15 @@ const MesWorkOrderPage: React.FC = () => {
                 htmlFor='wo-workshop'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                车间
+                {t('mes.work_order_page.workshop')}
               </label>
               <Select
                 id='wo-workshop'
                 defaultValue='一车间'
                 options={[
-                  { value: '一车间', label: '一车间' },
-                  { value: '二车间', label: '二车间' },
-                  { value: '三车间', label: '三车间' },
+                  { value: '一车间', label: t('mes.work_order_page.workshop_1') },
+                  { value: '二车间', label: t('mes.work_order_page.workshop_2') },
+                  { value: '三车间', label: t('mes.work_order_page.workshop_3') },
                 ]}
               />
             </div>
@@ -962,15 +964,15 @@ const MesWorkOrderPage: React.FC = () => {
                 htmlFor='wo-line'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                产线
+                {t('mes.work_order_page.line')}
               </label>
               <Select
                 id='wo-line'
                 defaultValue='A 线'
                 options={[
-                  { value: 'A 线', label: 'A 线' },
-                  { value: 'B 线', label: 'B 线' },
-                  { value: 'C 线', label: 'C 线' },
+                  { value: 'A 线', label: t('mes.work_order_page.line_a') },
+                  { value: 'B 线', label: t('mes.work_order_page.line_b') },
+                  { value: 'C 线', label: t('mes.work_order_page.line_c') },
                 ]}
               />
             </div>
@@ -980,12 +982,12 @@ const MesWorkOrderPage: React.FC = () => {
               htmlFor='wo-remark'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              备注
+              {t('mes.work_order.k30')}
             </label>
             <textarea
               id='wo-remark'
               rows={3}
-              placeholder='请输入备注信息...'
+              placeholder={t('mes.work_order_page.ph_remark')}
               style={{
                 width: '100%',
                 padding: 'var(--space-3)',
@@ -1004,7 +1006,7 @@ const MesWorkOrderPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              附件
+              {t('mes.work_order_page.attachments')}
             </label>
             <FileUpload
               id='field-1'
@@ -1013,7 +1015,7 @@ const MesWorkOrderPage: React.FC = () => {
               multiple
               maxSize={20}
               accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg,.zip'
-              hint='上传工艺图纸、技术文档等附件，单个文件不超过 20MB'
+              hint={t('mes.work_order_page.attachment_hint')}
             />
           </div>
         </div>

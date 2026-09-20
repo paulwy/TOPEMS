@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import {
   Megaphone,
   Plus,
@@ -32,7 +34,6 @@ import {
 } from '@/components/redesign';
 import type { DataTableColumn, Toast, UploadFile } from '@/components/redesign';
 import { announcementApi } from '@/api/erp/core';
-import i18n from '@/i18n';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -55,29 +56,30 @@ const categoryConfig: Record<
   string,
   { label: string; variant: 'default' | 'info' | 'success' | 'warning' | 'error' }
 > = {
-  notice: { label: '通知', variant: 'info' },
-  announcement: { label: '公告', variant: 'info' },
-  policy: { label: '制度', variant: 'success' },
-  activity: { label: '活动', variant: 'warning' },
-  other: { label: '其他', variant: 'default' },
+  notice: { label: i18n.t('oa.announcement_page.k5'), variant: 'info' },
+  announcement: { label: i18n.t('oa.announcement_page.k6'), variant: 'info' },
+  policy: { label: i18n.t('oa.announcement_page.k7'), variant: 'success' },
+  activity: { label: i18n.t('oa.announcement_page.k8'), variant: 'warning' },
+  other: { label: i18n.t('oa.announcement_page.k9'), variant: 'default' },
 };
 
 const statusConfig: Record<
   string,
   { label: string; variant: 'success' | 'warning' | 'error' | 'info' | 'default' }
 > = {
-  published: { label: '已发布', variant: 'success' },
-  draft: { label: '草稿', variant: 'warning' },
-  archived: { label: '已归档', variant: 'default' },
+  published: { label: i18n.t('oa.announcement_page.k15'), variant: 'success' },
+  draft: { label: i18n.t('oa.announcement_page.k16'), variant: 'warning' },
+  archived: { label: i18n.t('oa.announcement_page.k17'), variant: 'default' },
 };
 
 const priorityConfig = {
-  high: { label: '置顶', variant: 'error' as const },
-  normal: { label: '普通', variant: 'default' as const },
-  low: { label: '低优先级', variant: 'default' as const },
+  high: { label: i18n.t('oa.announcement_page.k18'), variant: 'error' as const },
+  normal: { label: i18n.t('oa.announcement_page.k19'), variant: 'default' as const },
+  low: { label: i18n.t('oa.announcement_page.k20'), variant: 'default' as const },
 };
 
 const AnnouncementPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'all' | 'published' | 'draft'>('all');
@@ -207,14 +209,14 @@ const AnnouncementPage: React.FC = () => {
     mutationFn: (data: any) => announcementApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '公告发布成功');
+      pushToast('success', t('oa.announcement_page.k45'));
       setCreateModalOpen(false);
       setFormData({ title: '', content: '', category: 'notice', priority: 'normal' });
     },
     onError: () => {
       // Mock 模式下直接成功
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '公告发布成功');
+      pushToast('success', t('oa.announcement_page.k45'));
       setCreateModalOpen(false);
       setFormData({ title: '', content: '', category: 'notice', priority: 'normal' });
     },
@@ -224,11 +226,11 @@ const AnnouncementPage: React.FC = () => {
     mutationFn: (id: string) => announcementApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '公告已删除');
+      pushToast('success', t('oa.announcement_page.k46'));
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '公告已删除');
+      pushToast('success', t('oa.announcement_page.k46'));
     },
   });
 
@@ -271,9 +273,9 @@ const AnnouncementPage: React.FC = () => {
   const draftCount = announcements.filter((a) => a.status === 'draft').length;
 
   const tabsConfig = [
-    { id: 'all', label: '全部' },
-    { id: 'published', label: '已发布', badge: publishedCount },
-    { id: 'draft', label: '草稿', badge: draftCount },
+    { id: 'all', label: t('oa.announcement_page.k14') },
+    { id: 'published', label: t('oa.announcement_page.k15'), badge: publishedCount },
+    { id: 'draft', label: t('oa.announcement_page.k16'), badge: draftCount },
   ];
 
   const formatTime = (value: string) => {
@@ -289,7 +291,7 @@ const AnnouncementPage: React.FC = () => {
   const columns: DataTableColumn<Announcement>[] = [
     {
       key: 'title',
-      header: '标题',
+      header: t('oa.announcement_page.k21'),
       sortable: true,
       render: (row) => (
         <div>
@@ -301,7 +303,7 @@ const AnnouncementPage: React.FC = () => {
               marginBottom: 2,
             }}
           >
-            {row.priority === 'high' && <Tag variant='error'>置顶</Tag>}
+            {row.priority === 'high' && <Tag variant='error'>{t('oa.announcement_page.k18')}</Tag>}
             <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.title}</span>
           </div>
           <div
@@ -333,7 +335,7 @@ const AnnouncementPage: React.FC = () => {
     },
     {
       key: 'category',
-      header: '分类',
+      header: t('oa.announcement_page.k22'),
       width: 100,
       render: (row) => {
         const config = categoryConfig[row.category] || categoryConfig.other;
@@ -342,7 +344,7 @@ const AnnouncementPage: React.FC = () => {
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('oa.announcement_page.k23'),
       width: 100,
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.draft;
@@ -351,7 +353,7 @@ const AnnouncementPage: React.FC = () => {
     },
     {
       key: 'actions',
-      header: '操作',
+      header: t('oa.announcement_page.k24'),
       align: 'right',
       width: 150,
       render: (row) => (
@@ -365,7 +367,7 @@ const AnnouncementPage: React.FC = () => {
               setDetailDrawerOpen(true);
             }}
           >
-            查看
+            {t('oa.announcement_page.k25')}
           </Button>
           <Button
             size='sm'
@@ -382,7 +384,7 @@ const AnnouncementPage: React.FC = () => {
               setCreateModalOpen(true);
             }}
           >
-            编辑
+            {t('oa.announcement_page.k26')}
           </Button>
           <Button
             size='sm'
@@ -391,7 +393,7 @@ const AnnouncementPage: React.FC = () => {
             onClick={() => deleteMutation.mutate(row.id)}
             style={{ color: 'var(--error-500)' }}
           >
-            删除
+            {t('oa.announcement_page.k27')}
           </Button>
         </div>
       ),
@@ -402,8 +404,8 @@ const AnnouncementPage: React.FC = () => {
     <>
       <ListPageTemplate<Announcement>
         header={{
-          title: '公告管理',
-          subtitle: '发布和管理公司通知、公告、制度等信息',
+          title: t('oa.announcement_page.k1'),
+          subtitle: t('oa.announcement_page.k2'),
         }}
         toolbar={
           <>
@@ -416,7 +418,7 @@ const AnnouncementPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索公告...'
+                placeholder={t('oa.announcement_page.k3')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -426,12 +428,12 @@ const AnnouncementPage: React.FC = () => {
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部分类' },
-                  { value: 'notice', label: '通知' },
-                  { value: 'announcement', label: '公告' },
-                  { value: 'policy', label: '制度' },
-                  { value: 'activity', label: '活动' },
-                  { value: 'other', label: '其他' },
+                  { value: 'all', label: t('oa.announcement_page.k4') },
+                  { value: 'notice', label: t('oa.announcement_page.k5') },
+                  { value: 'announcement', label: t('oa.announcement_page.k6') },
+                  { value: 'policy', label: t('oa.announcement_page.k7') },
+                  { value: 'activity', label: t('oa.announcement_page.k8') },
+                  { value: 'other', label: t('oa.announcement_page.k9') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -442,14 +444,14 @@ const AnnouncementPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('oa.announcement_page.k10')}
               </Button>
               <Button
                 variant='primary'
                 leftIcon={<Plus size={16} />}
                 onClick={() => setCreateModalOpen(true)}
               >
-                发布公告
+                {t('oa.announcement_page.k11')}
               </Button>
             </div>
           </>
@@ -459,8 +461,8 @@ const AnnouncementPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无公告'
-        emptyDescription='点击右上角「发布公告」按钮创建第一条公告'
+        emptyTitle={t('oa.announcement_page.k12')}
+        emptyDescription={t('oa.announcement_page.k13')}
         tableProps={{
           onRowClick: (row) => {
             setSelectedAnnouncement(row);
@@ -500,7 +502,7 @@ const AnnouncementPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedAnnouncement(null);
         }}
-        title='公告详情'
+        title={t('oa.announcement_page.k28')}
         size='lg'
       >
         {selectedAnnouncement && (
@@ -515,14 +517,16 @@ const AnnouncementPage: React.FC = () => {
                   marginBottom: 'var(--space-2)',
                 }}
               >
-                {selectedAnnouncement.priority === 'high' && <Tag variant='error'>置顶</Tag>}
+                {selectedAnnouncement.priority === 'high' && (
+                  <Tag variant='error'>{t('oa.announcement_page.k18')}</Tag>
+                )}
                 <Badge
                   variant={categoryConfig[selectedAnnouncement.category]?.variant || 'default'}
                 >
-                  {categoryConfig[selectedAnnouncement.category]?.label || '其他'}
+                  {categoryConfig[selectedAnnouncement.category]?.label || t('oa.announcement_page.k9')}
                 </Badge>
                 <Badge variant={statusConfig[selectedAnnouncement.status]?.variant || 'default'}>
-                  {statusConfig[selectedAnnouncement.status]?.label || '草稿'}
+                  {statusConfig[selectedAnnouncement.status]?.label || t('oa.announcement_page.k16')}
                 </Badge>
               </div>
               <h2
@@ -546,22 +550,24 @@ const AnnouncementPage: React.FC = () => {
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <User size={14} />
-                发布人：{selectedAnnouncement.author}
+                {t('oa.announcement_page.k29', { author: selectedAnnouncement.author })}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Calendar size={14} />
-                发布时间：{formatTime(selectedAnnouncement.created_at)}
+                {t('oa.announcement_page.k30', {
+                  time: formatTime(selectedAnnouncement.created_at),
+                })}
               </span>
               {selectedAnnouncement.views !== undefined && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Eye size={14} />
-                  浏览量：{selectedAnnouncement.views}
+                  {t('oa.announcement_page.k31', { views: selectedAnnouncement.views })}
                 </span>
               )}
             </div>
 
             {/* 正文 */}
-            <Card title='公告内容'>
+            <Card title={t('oa.announcement_page.k32')}>
               <div
                 style={{
                   fontSize: 14,
@@ -584,7 +590,11 @@ const AnnouncementPage: React.FC = () => {
           setCreateModalOpen(false);
           setFormData({ title: '', content: '', category: 'notice', priority: 'normal' });
         }}
-        title={selectedAnnouncement && formData.title ? '编辑公告' : '发布公告'}
+        title={
+          selectedAnnouncement && formData.title
+            ? t('oa.announcement_page.k33')
+            : t('oa.announcement_page.k34')
+        }
         size='lg'
         footer={
           <>
@@ -595,7 +605,7 @@ const AnnouncementPage: React.FC = () => {
                 setFormData({ title: '', content: '', category: 'notice', priority: 'normal' });
               }}
             >
-              取消
+              {t('oa.announcement_page.k35')}
             </Button>
             <Button
               variant='primary'
@@ -603,7 +613,9 @@ const AnnouncementPage: React.FC = () => {
               disabled={!formData.title.trim() || !formData.content.trim()}
               loading={createMutation.isPending}
             >
-              {selectedAnnouncement && formData.title ? '保存修改' : '发布公告'}
+              {selectedAnnouncement && formData.title
+                ? t('oa.announcement_page.k36')
+                : t('oa.announcement_page.k34')}
             </Button>
           </>
         }
@@ -619,13 +631,13 @@ const AnnouncementPage: React.FC = () => {
                 fontWeight: 500,
               }}
             >
-              公告标题 *
+              {t('oa.announcement_page.k37')}
             </label>
             <Input
               id='announcement-title'
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder='请输入公告标题'
+              placeholder={t('oa.announcement_page.k38')}
               required
             />
           </div>
@@ -641,18 +653,18 @@ const AnnouncementPage: React.FC = () => {
                   fontWeight: 500,
                 }}
               >
-                分类
+                {t('oa.announcement_page.k39')}
               </label>
               <Select
                 id='announcement-category'
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 options={[
-                  { value: 'notice', label: '通知' },
-                  { value: 'announcement', label: '公告' },
-                  { value: 'policy', label: '制度' },
-                  { value: 'activity', label: '活动' },
-                  { value: 'other', label: '其他' },
+                  { value: 'notice', label: t('oa.announcement_page.k5') },
+                  { value: 'announcement', label: t('oa.announcement_page.k6') },
+                  { value: 'policy', label: t('oa.announcement_page.k7') },
+                  { value: 'activity', label: t('oa.announcement_page.k8') },
+                  { value: 'other', label: t('oa.announcement_page.k9') },
                 ]}
               />
             </div>
@@ -666,16 +678,16 @@ const AnnouncementPage: React.FC = () => {
                   fontWeight: 500,
                 }}
               >
-                优先级
+                {t('oa.announcement_page.k40')}
               </label>
               <Select
                 id='announcement-priority'
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
                 options={[
-                  { value: 'high', label: '置顶' },
-                  { value: 'normal', label: '普通' },
-                  { value: 'low', label: '低优先级' },
+                  { value: 'high', label: t('oa.announcement_page.k18') },
+                  { value: 'normal', label: t('oa.announcement_page.k19') },
+                  { value: 'low', label: t('oa.announcement_page.k20') },
                 ]}
               />
             </div>
@@ -691,13 +703,13 @@ const AnnouncementPage: React.FC = () => {
                 fontWeight: 500,
               }}
             >
-              公告内容 *
+              {t('oa.announcement_page.k41')}
             </label>
             <textarea
               id='announcement-content'
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder='请输入公告内容...'
+              placeholder={t('oa.announcement_page.k42')}
               rows={10}
               style={{
                 width: '100%',
@@ -724,7 +736,7 @@ const AnnouncementPage: React.FC = () => {
                 fontWeight: 500,
               }}
             >
-              附件
+              {t('oa.announcement_page.k43')}
             </label>
             <FileUpload
               id='announcement-attachments'
@@ -733,7 +745,7 @@ const AnnouncementPage: React.FC = () => {
               multiple
               maxSize={10}
               accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.jpeg,.png'
-              hint='点击或拖拽文件到此处上传，支持 PDF/Word/Excel/图片等格式'
+              hint={t('oa.announcement_page.k44')}
             />
           </div>
         </div>

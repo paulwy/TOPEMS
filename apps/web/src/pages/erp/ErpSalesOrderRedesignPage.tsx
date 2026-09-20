@@ -32,6 +32,7 @@ import {
   ToastContainer,
 } from '@/components/redesign';
 import type { DataTableColumn, Toast } from '@/components/redesign';
+import { useTranslation } from 'react-i18next';
 import { salesOrderApi } from '@/api/erp/core/salesOrder';
 import type { SalesOrder as ApiSalesOrder } from '@/api/erp/core/types';
 
@@ -151,14 +152,6 @@ const mockSalesOrders: SalesOrder[] = [
   },
 ];
 
-const statusConfig = {
-  draft: { label: '草稿', variant: 'default' as const },
-  confirmed: { label: '已确认', variant: 'info' as const },
-  shipped: { label: '已发货', variant: 'warning' as const },
-  delivered: { label: '已交付', variant: 'success' as const },
-  cancelled: { label: '已取消', variant: 'error' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -172,7 +165,16 @@ const formatAmount = (value: number) => {
 };
 
 const ErpSalesOrderRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const statusConfig = useMemo(() => ({
+    draft: { label: t('erp.erp_sales_order_redesign.status.draft'), variant: 'default' as const },
+    confirmed: { label: t('erp.erp_sales_order_redesign.status.confirmed'), variant: 'info' as const },
+    shipped: { label: t('erp.erp_sales_order_redesign.status.shipped'), variant: 'warning' as const },
+    delivered: { label: t('erp.erp_sales_order_redesign.status.delivered'), variant: 'success' as const },
+    cancelled: { label: t('erp.erp_sales_order_redesign.status.cancelled'), variant: 'error' as const },
+  }), [t]);
 
   const [activeTab, setActiveTab] = useState<'all' | 'confirmed' | 'shipped' | 'delivered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -269,10 +271,10 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '销售订单删除成功');
+      pushToast('success', t('erp.erp_sales_order_redesign.toast.delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('erp.erp_sales_order_redesign.toast.delete_failed'));
     },
   });
 
@@ -297,10 +299,10 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '销售订单创建成功');
+      pushToast('success', t('erp.erp_sales_order_redesign.toast.create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('erp.erp_sales_order_redesign.toast.create_failed'));
     },
   });
 
@@ -322,10 +324,10 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '销售订单更新成功');
+      pushToast('success', t('erp.erp_sales_order_redesign.toast.update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('erp.erp_sales_order_redesign.toast.update_failed'));
     },
   });
 
@@ -351,23 +353,23 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'confirmed', label: '已确认', badge: stats.confirmed },
-      { id: 'shipped', label: '已发货', badge: stats.shipped },
+      { id: 'all', label: t('erp.erp_sales_order_redesign.tab.all') },
+      { id: 'confirmed', label: t('erp.erp_sales_order_redesign.tab.confirmed'), badge: stats.confirmed },
+      { id: 'shipped', label: t('erp.erp_sales_order_redesign.tab.shipped'), badge: stats.shipped },
       {
         id: 'delivered',
-        label: '已交付',
+        label: t('erp.erp_sales_order_redesign.tab.delivered'),
         badge: orders.filter((o) => o.status === 'delivered').length,
       },
     ],
-    [stats, orders]
+    [t, stats, orders]
   );
 
   const columns: DataTableColumn<SalesOrder>[] = useMemo(
     () => [
       {
         key: 'order_no',
-        header: '订单编号',
+        header: t('erp.erp_sales_order_redesign.column.order_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -383,7 +385,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       },
       {
         key: 'customer_name',
-        header: '客户名称',
+        header: t('erp.erp_sales_order_redesign.column.customer_name'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.customer_name}</div>
@@ -395,13 +397,13 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       },
       {
         key: 'quantity',
-        header: '数量',
+        header: t('erp.erp_sales_order_redesign.column.quantity'),
         align: 'center',
         render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.quantity}</span>,
       },
       {
         key: 'total_amount',
-        header: '订单金额',
+        header: t('erp.erp_sales_order_redesign.column.total_amount'),
         align: 'right',
         sortable: true,
         render: (row) => (
@@ -412,17 +414,17 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       },
       {
         key: 'order_date',
-        header: '订单日期',
+        header: t('erp.erp_sales_order_redesign.column.order_date'),
         sortable: true,
       },
       {
         key: 'delivery_date',
-        header: '交付日期',
+        header: t('erp.erp_sales_order_redesign.column.delivery_date'),
         sortable: true,
       },
       {
         key: 'salesperson',
-        header: '销售员',
+        header: t('erp.erp_sales_order_redesign.column.salesperson'),
         render: (row) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <User
@@ -435,7 +437,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('erp.erp_sales_order_redesign.column.status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.draft;
@@ -444,7 +446,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('erp.erp_sales_order_redesign.column.actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -457,7 +459,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('erp.erp_sales_order_redesign.action.detail')}
             </Button>
             <Button
               variant='ghost'
@@ -468,7 +470,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('erp.erp_sales_order_redesign.action.edit')}
             </Button>
             <Button
               variant='ghost'
@@ -476,7 +478,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('erp.erp_sales_order_redesign.action.delete')}
             </Button>
           </div>
         ),
@@ -499,17 +501,17 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('erp.erp_sales_order_redesign.demo_banner')}
         </div>
       )}
       <ListPageTemplate<SalesOrder>
         header={{
-          title: '销售订单',
-          subtitle: '管理销售订单，跟踪订单状态和交付进度',
+          title: t('erp.erp_sales_order_redesign.title'),
+          subtitle: t('erp.erp_sales_order_redesign.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '企业资源' },
-            { label: '销售订单' },
+            { label: t('erp.erp_sales_order_redesign.breadcrumb.home'), href: '/dashboard' },
+            { label: t('erp.erp_sales_order_redesign.breadcrumb.erp') },
+            { label: t('erp.erp_sales_order_redesign.breadcrumb.sales_order') },
           ],
         }}
         toolbar={
@@ -523,7 +525,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索订单编号/客户/产品...'
+                placeholder={t('erp.erp_sales_order_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -533,12 +535,12 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部状态' },
-                  { value: 'draft', label: '草稿' },
-                  { value: 'confirmed', label: '已确认' },
-                  { value: 'shipped', label: '已发货' },
-                  { value: 'delivered', label: '已交付' },
-                  { value: 'cancelled', label: '已取消' },
+                  { value: 'all', label: t('erp.erp_sales_order_redesign.filter.all_status') },
+                  { value: 'draft', label: t('erp.erp_sales_order_redesign.status.draft') },
+                  { value: 'confirmed', label: t('erp.erp_sales_order_redesign.status.confirmed') },
+                  { value: 'shipped', label: t('erp.erp_sales_order_redesign.status.shipped') },
+                  { value: 'delivered', label: t('erp.erp_sales_order_redesign.status.delivered') },
+                  { value: 'cancelled', label: t('erp.erp_sales_order_redesign.status.cancelled') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -549,7 +551,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('erp.erp_sales_order_redesign.button.refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -559,7 +561,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建订单
+                {t('erp.erp_sales_order_redesign.button.create_order')}
               </Button>
             </div>
           </>
@@ -569,8 +571,8 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无销售订单'
-        emptyDescription='点击右上角「新建订单」按钮创建第一个销售订单'
+        emptyTitle={t('erp.erp_sales_order_redesign.empty.title')}
+        emptyDescription={t('erp.erp_sales_order_redesign.empty.description')}
         footer={
           <div
             style={{
@@ -580,25 +582,25 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='订单总数'
+              label={t('erp.erp_sales_order_redesign.stat.total')}
               value={stats.total}
               icon={FileText}
               accent='cyan'
             />
             <StatTile
-              label='已确认'
+              label={t('erp.erp_sales_order_redesign.stat.confirmed')}
               value={stats.confirmed}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='已发货'
+              label={t('erp.erp_sales_order_redesign.stat.shipped')}
               value={stats.shipped}
               icon={Truck}
               accent='amber'
             />
             <StatTile
-              label='订单总金额'
+              label={t('erp.erp_sales_order_redesign.stat.total_amount')}
               value={formatAmount(stats.totalAmount)}
               icon={DollarSign}
               accent='success'
@@ -638,7 +640,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedOrder(null);
         }}
-        title='销售订单详情'
+        title={t('erp.erp_sales_order_redesign.drawer.detail_title')}
         size='lg'
       >
         {selectedOrder && (
@@ -669,13 +671,13 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                  {statusConfig[selectedOrder.status]?.label || '未知'}
+                  {statusConfig[selectedOrder.status]?.label || t('erp.erp_sales_order_redesign.status.unknown')}
                 </Badge>
               </div>
             </Card>
 
             {/* 订单金额大字体 */}
-            <Card title='订单金额'>
+            <Card title={t('erp.erp_sales_order_redesign.card.total_amount')}>
               <div
                 style={{
                   fontSize: 'var(--text-3xl)',
@@ -687,13 +689,13 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='订单信息'>
+            <Card title={t('erp.erp_sales_order_redesign.card.order_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    产品名称
+                    {t('erp.erp_sales_order_redesign.field.product_name')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOrder.product_name}
@@ -701,15 +703,15 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    数量
+                    {t('erp.erp_sales_order_redesign.field.quantity')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
-                    {selectedOrder.quantity} 件
+                    {selectedOrder.quantity} {t('erp.erp_sales_order_redesign.field.piece_unit')}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    单价
+                    {t('erp.erp_sales_order_redesign.field.unit_price')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     ¥{selectedOrder.unit_price.toLocaleString('zh-CN')}
@@ -717,7 +719,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    销售员
+                    {t('erp.erp_sales_order_redesign.field.salesperson')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOrder.salesperson}
@@ -725,13 +727,13 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    订单日期
+                    {t('erp.erp_sales_order_redesign.field.order_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.order_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    交付日期
+                    {t('erp.erp_sales_order_redesign.field.delivery_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.delivery_date}</div>
                 </div>
@@ -745,7 +747,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOrder ? '编辑销售订单' : '新建销售订单'}
+        title={selectedOrder ? t('erp.erp_sales_order_redesign.modal.edit_title') : t('erp.erp_sales_order_redesign.modal.create_title')}
         size='lg'
         footer={
           <>
@@ -753,7 +755,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('erp.erp_sales_order_redesign.button.cancel')}
             </Button>
             <Button
               variant='primary'
@@ -779,7 +781,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedOrder ? '保存修改' : '创建订单'}
+              {selectedOrder ? t('erp.erp_sales_order_redesign.modal.save_changes') : t('erp.erp_sales_order_redesign.modal.create')}
             </Button>
           </>
         }
@@ -791,7 +793,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-1'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                客户名称 *
+                {t('erp.erp_sales_order_redesign.form.customer_name')} *
               </label>
               <Select
                 id='field-1'
@@ -810,11 +812,11 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                产品名称 *
+                {t('erp.erp_sales_order_redesign.form.product_name')} *
               </label>
               <Input
                 id='field-2'
-                placeholder='例如：伺服电机 SM-750W'
+                placeholder={t('erp.erp_sales_order_redesign.form.product_name_placeholder')}
                 defaultValue={selectedOrder?.product_name}
               />
             </div>
@@ -823,12 +825,12 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                数量
+                {t('erp.erp_sales_order_redesign.form.quantity')}
               </label>
               <Input
                 id='field-3'
                 type='number'
-                placeholder='例如：50'
+                placeholder={t('erp.erp_sales_order_redesign.form.quantity_placeholder')}
                 defaultValue={selectedOrder?.quantity || 50}
               />
             </div>
@@ -837,12 +839,12 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                单价（元）
+                {t('erp.erp_sales_order_redesign.form.unit_price')}
               </label>
               <Input
                 id='field-4'
                 type='number'
-                placeholder='例如：3500'
+                placeholder={t('erp.erp_sales_order_redesign.form.unit_price_placeholder')}
                 defaultValue={selectedOrder?.unit_price || 3500}
               />
             </div>
@@ -851,7 +853,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                订单日期
+                {t('erp.erp_sales_order_redesign.form.order_date')}
               </label>
               <Input
                 id='field-5'
@@ -864,7 +866,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                交付日期
+                {t('erp.erp_sales_order_redesign.form.delivery_date')}
               </label>
               <Input
                 id='field-6'
@@ -877,11 +879,11 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-7'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                销售员
+                {t('erp.erp_sales_order_redesign.form.salesperson')}
               </label>
               <Input
                 id='field-7'
-                placeholder='请输入销售员'
+                placeholder={t('erp.erp_sales_order_redesign.form.salesperson_placeholder')}
                 defaultValue={selectedOrder?.salesperson || '张三'}
               />
             </div>
@@ -890,17 +892,17 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 htmlFor='field-8'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                订单状态
+                {t('erp.erp_sales_order_redesign.form.status')}
               </label>
               <Select
                 id='field-8'
                 defaultValue={selectedOrder?.status || 'draft'}
                 options={[
-                  { value: 'draft', label: '草稿' },
-                  { value: 'confirmed', label: '已确认' },
-                  { value: 'shipped', label: '已发货' },
-                  { value: 'delivered', label: '已交付' },
-                  { value: 'cancelled', label: '已取消' },
+                  { value: 'draft', label: t('erp.erp_sales_order_redesign.status.draft') },
+                  { value: 'confirmed', label: t('erp.erp_sales_order_redesign.status.confirmed') },
+                  { value: 'shipped', label: t('erp.erp_sales_order_redesign.status.shipped') },
+                  { value: 'delivered', label: t('erp.erp_sales_order_redesign.status.delivered') },
+                  { value: 'cancelled', label: t('erp.erp_sales_order_redesign.status.cancelled') },
                 ]}
               />
             </div>
@@ -912,7 +914,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除销售订单'
+        title={t('erp.erp_sales_order_redesign.delete.title')}
         size='sm'
         footer={
           <>
@@ -920,20 +922,20 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('erp.erp_sales_order_redesign.button.cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('erp.erp_sales_order_redesign.delete.confirm')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除订单「{deleteTarget?.order_no}」吗？此操作不可撤销。
+          {t('erp.erp_sales_order_redesign.delete.confirm_message', { order_no: deleteTarget?.order_no })}
         </p>
       </Modal>
 

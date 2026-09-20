@@ -38,7 +38,7 @@ import {
 import type { DataTableColumn, Toast, UploadFile } from '@/components/redesign';
 import { erpApi } from '@/api/erp';
 import type { PurchaseOrder as ApiPurchaseOrder } from '@/api/erp/core/types';
-import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -63,24 +63,26 @@ interface PurchaseOrder {
   remark?: string;
 }
 
-const statusConfig = {
-  draft: { label: '草稿', variant: 'default' as const, color: 'var(--text-secondary)' },
-  pending_approval: { label: '待审批', variant: 'warning' as const, color: 'var(--warning-500)' },
-  approved: { label: '已批准', variant: 'info' as const, color: 'var(--info-500)' },
-  rejected: { label: '已驳回', variant: 'error' as const, color: 'var(--error-500)' },
-  ordered: { label: '已下单', variant: 'cyan' as const, color: 'var(--accent-primary)' },
-  received: { label: '已收货', variant: 'success' as const, color: 'var(--success-500)' },
-  cancelled: { label: '已取消', variant: 'default' as const, color: 'var(--text-secondary)' },
-};
-
-const priorityConfig = {
-  high: { label: '高优先级', variant: 'error' as const },
-  medium: { label: '中优先级', variant: 'warning' as const },
-  low: { label: '低优先级', variant: 'default' as const },
-};
 
 const PurchaseOrderPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const statusConfig = useMemo(() => ({
+    draft: { label: t('erp.purchase_order.status.draft'), variant: 'default' as const, color: 'var(--text-secondary)' },
+    pending_approval: { label: t('erp.purchase_order.status.pending_approval'), variant: 'warning' as const, color: 'var(--warning-500)' },
+    approved: { label: t('erp.purchase_order.status.approved'), variant: 'info' as const, color: 'var(--info-500)' },
+    rejected: { label: t('erp.purchase_order.status.rejected'), variant: 'error' as const, color: 'var(--error-500)' },
+    ordered: { label: t('erp.purchase_order.status.ordered'), variant: 'cyan' as const, color: 'var(--accent-primary)' },
+    received: { label: t('erp.purchase_order.status.received'), variant: 'success' as const, color: 'var(--success-500)' },
+    cancelled: { label: t('erp.purchase_order.status.cancelled'), variant: 'default' as const, color: 'var(--text-secondary)' },
+  }), [t]);
+
+  const priorityConfig = useMemo(() => ({
+    high: { label: t('erp.purchase_order.priority.high'), variant: 'error' as const },
+    medium: { label: t('erp.purchase_order.priority.medium'), variant: 'warning' as const },
+    low: { label: t('erp.purchase_order.priority.low'), variant: 'default' as const },
+  }), [t]);
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'pending_approval' | 'approved' | 'ordered' | 'received'
@@ -248,11 +250,11 @@ const PurchaseOrderPage: React.FC = () => {
     mutationFn: (id: string) => erpApi.purchaseOrders.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '采购订单已删除');
+      pushToast('success', t('erp.purchase_order.toast.deleted'));
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '采购订单已删除');
+      pushToast('success', t('erp.purchase_order.toast.deleted'));
     },
   });
 
@@ -301,11 +303,11 @@ const PurchaseOrderPage: React.FC = () => {
   }, [orders]);
 
   const tabsConfig = [
-    { id: 'all', label: '全部' },
-    { id: 'pending_approval', label: '待审批', badge: stats.pendingApproval },
-    { id: 'approved', label: '已批准' },
-    { id: 'ordered', label: '已下单' },
-    { id: 'received', label: '已收货' },
+    { id: 'all', label: t('erp.purchase_order.tab.all') },
+    { id: 'pending_approval', label: t('erp.purchase_order.tab.pending_approval'), badge: stats.pendingApproval },
+    { id: 'approved', label: t('erp.purchase_order.tab.approved') },
+    { id: 'ordered', label: t('erp.purchase_order.tab.ordered') },
+    { id: 'received', label: t('erp.purchase_order.tab.received') },
   ];
 
   const formatAmount = (amount: number, currency: string) => {
@@ -316,7 +318,7 @@ const PurchaseOrderPage: React.FC = () => {
   const columns: DataTableColumn<PurchaseOrder>[] = [
     {
       key: 'order_no',
-      header: '订单号',
+      header: t('erp.purchase_order.column.order_no'),
       sortable: true,
       render: (row) => (
         <div>
@@ -324,14 +326,14 @@ const PurchaseOrderPage: React.FC = () => {
             {row.order_no}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            {row.items_count} 项商品
+            {row.items_count} {t('erp.purchase_order.column.items_count_unit')}
           </div>
         </div>
       ),
     },
     {
       key: 'supplier',
-      header: '供应商',
+      header: t('erp.purchase_order.column.supplier'),
       render: (row) => (
         <div>
           <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 2 }}>
@@ -343,7 +345,7 @@ const PurchaseOrderPage: React.FC = () => {
     },
     {
       key: 'total_amount',
-      header: '金额',
+      header: t('erp.purchase_order.column.amount'),
       align: 'right',
       sortable: true,
       render: (row) => (
@@ -354,7 +356,7 @@ const PurchaseOrderPage: React.FC = () => {
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('erp.purchase_order.column.status'),
       render: (row) => {
         const config = statusConfig[row.status];
         return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -362,7 +364,7 @@ const PurchaseOrderPage: React.FC = () => {
     },
     {
       key: 'priority',
-      header: '优先级',
+      header: t('erp.purchase_order.column.priority'),
       render: (row) => {
         const config = priorityConfig[row.priority];
         return <Tag variant={config.variant}>{config.label}</Tag>;
@@ -370,7 +372,7 @@ const PurchaseOrderPage: React.FC = () => {
     },
     {
       key: 'buyer',
-      header: '采购员',
+      header: t('erp.purchase_order.column.buyer'),
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <div
@@ -395,14 +397,14 @@ const PurchaseOrderPage: React.FC = () => {
     },
     {
       key: 'department',
-      header: '部门',
+      header: t('erp.purchase_order.column.department'),
       render: (row) => (
         <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{row.department}</span>
       ),
     },
     {
       key: 'expected_date',
-      header: '期望到货',
+      header: t('erp.purchase_order.column.expected_date'),
       sortable: true,
       render: (row) => (
         <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{row.expected_date}</span>
@@ -410,7 +412,7 @@ const PurchaseOrderPage: React.FC = () => {
     },
     {
       key: 'actions',
-      header: '操作',
+      header: t('erp.purchase_order.column.actions'),
       align: 'right',
       width: 150,
       render: (row) => (
@@ -424,15 +426,15 @@ const PurchaseOrderPage: React.FC = () => {
               setDetailDrawerOpen(true);
             }}
           >
-            详情
+            {t('erp.purchase_order.action.detail')}
           </Button>
           <Button
             size='sm'
             variant='ghost'
             leftIcon={<Edit2 size={14} />}
-            onClick={() => pushToast('info', '编辑功能开发中')}
+            onClick={() => pushToast('info', t('erp.purchase_order.toast.edit_in_progress'))}
           >
-            编辑
+            {t('erp.purchase_order.action.edit')}
           </Button>
           <Button
             size='sm'
@@ -441,7 +443,7 @@ const PurchaseOrderPage: React.FC = () => {
             onClick={() => deleteMutation.mutate(row.id)}
             style={{ color: 'var(--error-500)' }}
           >
-            删除
+            {t('erp.purchase_order.action.delete')}
           </Button>
         </div>
       ),
@@ -452,8 +454,8 @@ const PurchaseOrderPage: React.FC = () => {
     <>
       <ListPageTemplate<PurchaseOrder>
         header={{
-          title: '采购订单',
-          subtitle: '管理采购订单，跟踪审批状态和到货情况',
+          title: t('erp.purchase_order.title'),
+          subtitle: t('erp.purchase_order.subtitle'),
         }}
         toolbar={
           <>
@@ -466,7 +468,7 @@ const PurchaseOrderPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索订单号/供应商/采购员...'
+                placeholder={t('erp.purchase_order.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -476,10 +478,10 @@ const PurchaseOrderPage: React.FC = () => {
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部部门' },
-                  { value: '采购部', label: '采购部' },
-                  { value: '生产部', label: '生产部' },
-                  { value: '行政部', label: '行政部' },
+                  { value: 'all', label: t('erp.purchase_order.filter.all_departments') },
+                  { value: '采购部', label: t('erp.purchase_order.department.purchase') },
+                  { value: '生产部', label: t('erp.purchase_order.department.production') },
+                  { value: '行政部', label: t('erp.purchase_order.department.admin') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -490,14 +492,14 @@ const PurchaseOrderPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('erp.purchase_order.button.refresh')}
               </Button>
               <Button
                 variant='primary'
                 leftIcon={<Plus size={16} />}
                 onClick={() => setCreateModalOpen(true)}
               >
-                新建订单
+                {t('erp.purchase_order.button.create')}
               </Button>
             </div>
           </>
@@ -507,8 +509,8 @@ const PurchaseOrderPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无采购订单'
-        emptyDescription='点击右上角「新建订单」按钮创建第一个采购订单'
+        emptyTitle={t('erp.purchase_order.empty.title')}
+        emptyDescription={t('erp.purchase_order.empty.description')}
         tableProps={{
           onRowClick: (row) => {
             setSelectedOrder(row);
@@ -524,25 +526,25 @@ const PurchaseOrderPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='订单总数'
+              label={t('erp.purchase_order.stat.total')}
               value={stats.total}
               icon={FileText}
               accent='amber'
             />
             <StatTile
-              label='待审批'
+              label={t('erp.purchase_order.stat.pending_approval')}
               value={stats.pendingApproval}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='采购总额'
+              label={t('erp.purchase_order.stat.total_amount')}
               value={formatAmount(stats.totalAmount, 'CNY')}
               icon={DollarSign}
               accent='cyan'
             />
             <StatTile
-              label='已收货'
+              label={t('erp.purchase_order.stat.received')}
               value={stats.received}
               icon={Truck}
               accent='success'
@@ -582,7 +584,7 @@ const PurchaseOrderPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedOrder(null);
         }}
-        title='采购订单详情'
+        title={t('erp.purchase_order.drawer.detail_title')}
         size='lg'
       >
         {selectedOrder && (
@@ -633,40 +635,40 @@ const PurchaseOrderPage: React.FC = () => {
             </Card>
 
             {/* 基本信息 */}
-            <Card title='基本信息'>
+            <Card title={t('erp.purchase_order.drawer.basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <InfoItem
-                  label='供应商名称'
+                  label={t('"+K+".drawer.supplier_name')}
                   value={selectedOrder.supplier_name}
                 />
                 <InfoItem
-                  label='供应商编码'
+                  label={t('"+K+".drawer.supplier_code')}
                   value={selectedOrder.supplier_code}
                 />
                 <InfoItem
-                  label='采购员'
+                  label={t('"+K+".drawer.buyer')}
                   value={selectedOrder.buyer}
                 />
                 <InfoItem
-                  label='所属部门'
+                  label={t('"+K+".drawer.department')}
                   value={selectedOrder.department}
                 />
                 <InfoItem
-                  label='商品数量'
-                  value={`${selectedOrder.items_count} 项`}
+                  label={t('"+K+".drawer.item_count')}
+                  value={`${selectedOrder.items_count} ${t('"+K+".drawer.item_unit')}`}
                 />
                 <InfoItem
-                  label='订单金额'
+                  label={t('"+K+".drawer.amount')}
                   value={formatAmount(selectedOrder.total_amount, selectedOrder.currency)}
                 />
                 <InfoItem
-                  label='创建时间'
+                  label={t('"+K+".drawer.created_at')}
                   value={selectedOrder.created_at}
                 />
                 <InfoItem
-                  label='期望到货'
+                  label={t('"+K+".drawer.expected_date')}
                   value={selectedOrder.expected_date}
                 />
               </div>
@@ -674,7 +676,7 @@ const PurchaseOrderPage: React.FC = () => {
 
             {/* 备注 */}
             {selectedOrder.remark && (
-              <Card title='备注'>
+              <Card title={t('erp.purchase_order.drawer.remark')}>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                   {selectedOrder.remark}
                 </p>
@@ -687,17 +689,17 @@ const PurchaseOrderPage: React.FC = () => {
                 <Button
                   variant='ghost'
                   leftIcon={<XCircle size={16} />}
-                  onClick={() => pushToast('info', '已驳回')}
+                  onClick={() => pushToast('info', t('erp.purchase_order.toast.rejected'))}
                   style={{ color: 'var(--error-500)' }}
                 >
-                  驳回
+                  {t('erp.purchase_order.action.reject')}
                 </Button>
                 <Button
                   variant='primary'
                   leftIcon={<CheckCircle size={16} />}
-                  onClick={() => pushToast('success', '审批通过')}
+                  onClick={() => pushToast('success', t('erp.purchase_order.toast.approved'))}
                 >
-                  批准
+                  {t('erp.purchase_order.action.approve')}
                 </Button>
               </div>
             )}
@@ -706,9 +708,9 @@ const PurchaseOrderPage: React.FC = () => {
                 <Button
                   variant='primary'
                   leftIcon={<Truck size={16} />}
-                  onClick={() => pushToast('success', '已下单')}
+                  onClick={() => pushToast('success', t('erp.purchase_order.toast.ordered'))}
                 >
-                  下单
+                  {t('erp.purchase_order.action.place_order')}
                 </Button>
               </div>
             )}
@@ -717,9 +719,9 @@ const PurchaseOrderPage: React.FC = () => {
                 <Button
                   variant='primary'
                   leftIcon={<CheckCircle size={16} />}
-                  onClick={() => pushToast('success', '已确认收货')}
+                  onClick={() => pushToast('success', t('erp.purchase_order.toast.confirm_received'))}
                 >
-                  确认收货
+                  {t('erp.purchase_order.action.confirm_receipt')}
                 </Button>
               </div>
             )}
@@ -731,7 +733,7 @@ const PurchaseOrderPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title='新建采购订单'
+        title={t('erp.purchase_order.modal.title')}
         size='lg'
         footer={
           <>
@@ -739,16 +741,16 @@ const PurchaseOrderPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('"+K+".button.cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 setCreateModalOpen(false);
-                pushToast('success', '采购订单创建成功');
+                pushToast('success', t('erp.purchase_order.toast.created'));
               }}
             >
-              创建订单
+              {t('erp.purchase_order.modal.create')}
             </Button>
           </>
         }
@@ -760,11 +762,11 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-supplier'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                供应商 *
+                {t('erp.purchase_order.form.supplier')} *
               </label>
               <Input
                 id='po-supplier'
-                placeholder='请选择供应商'
+                placeholder={t('erp.purchase_order.form.supplier_placeholder')}
               />
             </div>
             <div>
@@ -772,11 +774,11 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-buyer'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                采购员
+                {t('erp.purchase_order.form.buyer')}
               </label>
               <Input
                 id='po-buyer'
-                placeholder='请输入采购员'
+                placeholder={t('erp.purchase_order.form.buyer_placeholder')}
               />
             </div>
             <div>
@@ -784,15 +786,15 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-department'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                所属部门
+                {t('erp.purchase_order.form.department')}
               </label>
               <Select
                 id='po-department'
                 defaultValue='采购部'
                 options={[
-                  { value: '采购部', label: '采购部' },
-                  { value: '生产部', label: '生产部' },
-                  { value: '行政部', label: '行政部' },
+                  { value: '采购部', label: t('erp.purchase_order.department.purchase') },
+                  { value: '生产部', label: t('erp.purchase_order.department.production') },
+                  { value: '行政部', label: t('erp.purchase_order.department.admin') },
                 ]}
               />
             </div>
@@ -801,15 +803,15 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-priority'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                优先级
+                {t('erp.purchase_order.form.priority')}
               </label>
               <Select
                 id='po-priority'
                 defaultValue='medium'
                 options={[
-                  { value: 'high', label: '高优先级' },
-                  { value: 'medium', label: '中优先级' },
-                  { value: 'low', label: '低优先级' },
+                  { value: 'high', label: t('erp.purchase_order.priority.high') },
+                  { value: 'medium', label: t('erp.purchase_order.priority.medium') },
+                  { value: 'low', label: t('erp.purchase_order.priority.low') },
                 ]}
               />
             </div>
@@ -818,7 +820,7 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-expected-date'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                期望到货日期
+                {t('erp.purchase_order.form.expected_date')}
               </label>
               <Input
                 id='po-expected-date'
@@ -830,14 +832,14 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-currency'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                币种
+                {t('erp.purchase_order.form.currency')}
               </label>
               <Select
                 id='po-currency'
                 defaultValue='CNY'
                 options={[
-                  { value: 'CNY', label: '人民币 (CNY)' },
-                  { value: 'USD', label: '美元 (USD)' },
+                  { value: 'CNY', label: t('erp.purchase_order.form.currency_cny') },
+                  { value: 'USD', label: t('erp.purchase_order.form.currency_usd') },
                 ]}
               />
             </div>
@@ -847,12 +849,12 @@ const PurchaseOrderPage: React.FC = () => {
               htmlFor='po-remark'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              备注
+              {t('"+K+".form.remark')}
             </label>
             <textarea
               id='po-remark'
               rows={3}
-              placeholder='请输入备注信息...'
+              placeholder={t('erp.purchase_order.form.remark_placeholder')}
               style={{
                 width: '100%',
                 padding: 'var(--space-3)',
@@ -871,7 +873,7 @@ const PurchaseOrderPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              附件
+              {t('"+K+".form.attachment')}
             </label>
             <FileUpload
               id='field-1'
@@ -880,7 +882,7 @@ const PurchaseOrderPage: React.FC = () => {
               multiple
               maxSize={20}
               accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip,.rar'
-              hint='上传采购合同、报价单等附件，单个文件不超过 20MB'
+              hint={t('"+K+".form.attachment_hint')}
             />
           </div>
         </div>

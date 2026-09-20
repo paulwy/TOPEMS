@@ -51,7 +51,7 @@ export const CategoryRulePage: React.FC = () => {
       });
       await pdmSettingsApi.updateSettings(CATEGORY, stringData);
       setSettings(stringData);
-      setSuccess('分类规则设置保存成功');
+      setSuccess(i18n.t('pdm.category_rule.save_success'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
       console.error('[CategoryRule] 保存设置失败:', e);
@@ -64,55 +64,55 @@ export const CategoryRulePage: React.FC = () => {
   const sections: SettingSection[] = [
     {
       id: 'coding',
-      title: '编码规则',
-      description: '物料/产品分类的编码生成规则',
+      title: i18n.t('pdm.category_rule.sec_coding_title'),
+      description: i18n.t('pdm.category_rule.sec_coding_desc'),
       fields: [
         {
           id: 'category_code_prefix',
-          label: '分类编码前缀',
+          label: i18n.t('pdm.category_rule.fld_code_prefix'),
           type: 'text',
           value: settings.category_code_prefix,
-          placeholder: '如 CAT',
+          placeholder: i18n.t('pdm.category_rule.fld_code_prefix_ph'),
         },
         {
           id: 'auto_generate_category_code',
-          label: '自动生成分类编码',
+          label: i18n.t('pdm.category_rule.fld_auto_code'),
           type: 'switch',
           value: settings.auto_generate_category_code === 'true',
         },
         {
           id: 'category_naming_pattern',
-          label: '编码命名模板',
+          label: i18n.t('pdm.category_rule.fld_naming_template'),
           type: 'text',
           value: settings.category_naming_pattern,
-          placeholder: '如 {prefix}-{seq}',
+          placeholder: i18n.t('pdm.category_rule.fld_naming_template_ph'),
         },
       ],
     },
     {
       id: 'hierarchy',
-      title: '层级与状态',
-      description: '分类层级深度及默认状态配置',
+      title: i18n.t('pdm.category_rule.sec_hierarchy_title'),
+      description: i18n.t('pdm.category_rule.sec_hierarchy_desc'),
       fields: [
         {
           id: 'default_category_status',
-          label: '默认分类状态',
+          label: i18n.t('pdm.category_rule.fld_default_status'),
           type: 'select',
           value: settings.default_category_status,
           options: [
-            { label: '启用', value: 'active' },
-            { label: '停用', value: 'inactive' },
+            { label: i18n.t('pdm.category_rule.opt_status_active'), value: 'active' },
+            { label: i18n.t('pdm.category_rule.opt_status_inactive'), value: 'inactive' },
           ],
         },
         {
           id: 'allow_subcategory',
-          label: '允许创建子分类',
+          label: i18n.t('pdm.category_rule.fld_allow_subcategory'),
           type: 'switch',
           value: settings.allow_subcategory === 'true',
         },
         {
           id: 'max_category_depth',
-          label: '最大分类层级',
+          label: i18n.t('pdm.category_rule.fld_max_depth'),
           type: 'number',
           value: Number(settings.max_category_depth),
         },

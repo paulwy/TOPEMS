@@ -168,7 +168,7 @@ export default function QmsCostAnalysisPage() {
           sx={{ mb: 2 }}
           onClose={reload}
         >
-          加载失败：{error}
+          {t('qms.qms_cost_analysis_page.load_failed', { error: String(error) })}
         </Alert>
       )}
       <Grid

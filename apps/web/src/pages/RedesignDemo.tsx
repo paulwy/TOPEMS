@@ -38,93 +38,95 @@ import {
   Tabs,
   Tag,
 } from '@/components/redesign';
+import { useTranslation } from 'react-i18next';
 
 const modules = [
   {
     id: 'mes',
-    name: '制造执行 MES',
-    desc: '产线实时状态与工单追踪',
+    name: 'demo.modules.mes_name',
+    desc: 'demo.modules.mes_desc',
     icon: Factory,
     status: 'running' as const,
     stat: '87.3%',
   },
   {
     id: 'erp',
-    name: '企业资源 ERP',
-    desc: '财务、采购、库存一体化',
+    name: 'demo.modules.erp_name',
+    desc: 'demo.modules.erp_desc',
     icon: Box,
     status: 'running' as const,
-    stat: '12 笔待审',
+    stat: 'demo.modules.erp_stat',
   },
   {
     id: 'scm',
-    name: '供应链 SCM',
-    desc: '供应商协同与交付计划',
+    name: 'demo.modules.scm_name',
+    desc: 'demo.modules.scm_desc',
     icon: Truck,
     status: 'warning' as const,
-    stat: '3 单延期',
+    stat: 'demo.modules.scm_stat',
   },
   {
     id: 'qms',
-    name: '质量管理 QMS',
-    desc: '质检记录与不合格品处理',
+    name: 'demo.modules.qms_name',
+    desc: 'demo.modules.qms_desc',
     icon: CheckCircle2,
     status: 'running' as const,
     stat: '99.2%',
   },
   {
     id: 'wms',
-    name: '仓储物流 WMS',
-    desc: '入库、出库、盘点、库位',
+    name: 'demo.modules.wms_name',
+    desc: 'demo.modules.wms_desc',
     icon: Package,
     status: 'idle' as const,
-    stat: '4,821 件',
+    stat: 'demo.modules.wms_stat',
   },
   {
     id: 'bi',
-    name: '数据决策 BI',
-    desc: '指标看板与自定义报表',
+    name: 'demo.modules.bi_name',
+    desc: 'demo.modules.bi_desc',
     icon: TrendingUp,
     status: 'running' as const,
-    stat: '实时',
+    stat: 'demo.modules.bi_stat',
   },
 ];
 
 const alerts = [
-  { id: 1, level: 'error' as const, message: '产线 A-03 设备温度过高', time: '2 min ago' },
-  { id: 2, level: 'warning' as const, message: '原材料库存低于安全水位', time: '15 min ago' },
-  { id: 3, level: 'info' as const, message: '月度质量审核已完成', time: '1 h ago' },
+  { id: 1, level: 'error' as const, message: 'demo.alerts.a1_msg', time: '2 min ago' },
+  { id: 2, level: 'warning' as const, message: 'demo.alerts.a2_msg', time: '15 min ago' },
+  { id: 3, level: 'info' as const, message: 'demo.alerts.a3_msg', time: '1 h ago' },
 ];
 
 const tasks = [
-  { id: 1, title: '审批采购申请 PO-2026-0914-001', priority: 'high' as const, due: '今天' },
-  { id: 2, title: '复核工单 WO-8821 工艺参数', priority: 'medium' as const, due: '明天' },
-  { id: 3, title: '更新供应商准入资料', priority: 'low' as const, due: '周五' },
+  { id: 1, title: 'demo.tasks.t1_title', priority: 'high' as const, due: 'demo.tasks.t1_due' },
+  { id: 2, title: 'demo.tasks.t2_title', priority: 'medium' as const, due: 'demo.tasks.t2_due' },
+  { id: 3, title: 'demo.tasks.t3_title', priority: 'low' as const, due: 'demo.tasks.t3_due' },
 ];
 
 const tabs = [
-  { id: 'overview', label: '概览' },
-  { id: 'modules', label: '模块', badge: 6 },
-  { id: 'alerts', label: '告警', badge: 3 },
-  { id: 'empty', label: '空态' },
-  { id: 'error', label: '错误' },
+  { id: 'overview', label: 'demo.tabs.overview' },
+  { id: 'modules', label: 'demo.tabs.modules', badge: 6 },
+  { id: 'alerts', label: 'demo.tabs.alerts', badge: 3 },
+  { id: 'empty', label: 'demo.tabs.empty' },
+  { id: 'error', label: 'demo.tabs.error' },
 ];
 
 const timeRangeOptions = [
-  { value: '1h', label: '最近 1 小时' },
-  { value: '24h', label: '最近 24 小时' },
-  { value: '7d', label: '最近 7 天' },
-  { value: '30d', label: '最近 30 天' },
+  { value: '1h', label: 'demo.time_range.1h' },
+  { value: '24h', label: 'demo.time_range.24h' },
+  { value: '7d', label: 'demo.time_range.7d' },
+  { value: '30d', label: 'demo.time_range.30d' },
 ];
 
 const lineOptions = [
-  { value: 'all', label: '全部产线' },
-  { value: 'a', label: '产线 A' },
-  { value: 'b', label: '产线 B' },
-  { value: 'c', label: '产线 C' },
+  { value: 'all', label: 'demo.line.all' },
+  { value: 'a', label: 'demo.line.a' },
+  { value: 'b', label: 'demo.line.b' },
+  { value: 'c', label: 'demo.line.c' },
 ];
 
 const RedesignDemo: React.FC = () => {
+  const { t } = useTranslation();
   const [activeNav, setActiveNav] = useState('home');
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,7 +136,7 @@ const RedesignDemo: React.FC = () => {
   const [showSuccessAlert, setShowSuccessAlert] = useState(true);
 
   const filteredModules = modules.filter((m) =>
-    m.name.toLowerCase().includes(searchQuery.toLowerCase())
+    t(m.name).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const renderOverview = () => (
@@ -149,7 +151,7 @@ const RedesignDemo: React.FC = () => {
       >
         <div className='animate-fade-in-up stagger-1'>
           <StatTile
-            label='设备综合效率 OEE'
+            label={t('demo.stat.oee')}
             value='87.3'
             unit='%'
             trend='up'
@@ -160,7 +162,7 @@ const RedesignDemo: React.FC = () => {
         </div>
         <div className='animate-fade-in-up stagger-2'>
           <StatTile
-            label='本月产量'
+            label={t('demo.stat.monthly_output')}
             value='124,582'
             unit='件'
             trend='up'
@@ -171,7 +173,7 @@ const RedesignDemo: React.FC = () => {
         </div>
         <div className='animate-fade-in-up stagger-3'>
           <StatTile
-            label='订单准时交付率'
+            label={t('demo.stat.delivery_rate')}
             value='94.6'
             unit='%'
             trend='down'
@@ -182,7 +184,7 @@ const RedesignDemo: React.FC = () => {
         </div>
         <div className='animate-fade-in-up stagger-4'>
           <StatTile
-            label='质量合格率'
+            label={t('demo.stat.quality_rate')}
             value='99.2'
             unit='%'
             trend='neutral'
@@ -245,7 +247,7 @@ const RedesignDemo: React.FC = () => {
                     color: 'var(--text-primary)',
                   }}
                 >
-                  {m.name}
+                  {t(m.name)}
                 </h3>
                 <p
                   style={{
@@ -254,7 +256,7 @@ const RedesignDemo: React.FC = () => {
                     color: 'var(--text-secondary)',
                   }}
                 >
-                  {m.desc}
+                  {t(m.desc)}
                 </p>
                 <div
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
@@ -267,13 +269,13 @@ const RedesignDemo: React.FC = () => {
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {m.stat}
+                    {t(m.stat)}
                   </span>
                   <Button
                     variant='ghost'
                     size='sm'
                   >
-                    进入 →
+                    {t('demo.enter')}
                   </Button>
                 </div>
               </Card>
@@ -310,7 +312,7 @@ const RedesignDemo: React.FC = () => {
                   color: 'var(--text-primary)',
                 }}
               >
-                实时告警
+                {t('demo.section.realtime_alerts')}
               </h2>
               <Badge
                 variant='error'
@@ -339,17 +341,17 @@ const RedesignDemo: React.FC = () => {
                       dot={alert.level === 'error' || alert.level === 'warning'}
                     >
                       {alert.level === 'error'
-                        ? '错误'
+                        ? t('demo.alert_level.error')
                         : alert.level === 'warning'
-                          ? '警告'
-                          : '信息'}
+                          ? t('demo.alert_level.warning')
+                          : t('demo.alert_level.info')}
                     </Badge>
                     <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
                       {alert.time}
                     </span>
                   </div>
                   <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
-                    {alert.message}
+                    {t(alert.message)}
                   </span>
                 </div>
               ))}
@@ -381,7 +383,7 @@ const RedesignDemo: React.FC = () => {
                   color: 'var(--text-primary)',
                 }}
               >
-                待办任务
+                {t('demo.section.todo')}
               </h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -399,10 +401,10 @@ const RedesignDemo: React.FC = () => {
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
-                      {task.title}
+                      {t(task.title)}
                     </span>
                     <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-                      截止：{task.due}
+                      {t('demo.task_due', { due: t(task.due) })}
                     </span>
                   </div>
                   <Badge
@@ -414,7 +416,11 @@ const RedesignDemo: React.FC = () => {
                           : 'default'
                     }
                   >
-                    {task.priority === 'high' ? '高' : task.priority === 'medium' ? '中' : '低'}
+                    {task.priority === 'high'
+                        ? t('demo.priority.high')
+                        : task.priority === 'medium'
+                          ? t('demo.priority.medium')
+                          : t('demo.priority.low')}
                   </Badge>
                 </div>
               ))}
@@ -446,15 +452,15 @@ const RedesignDemo: React.FC = () => {
                   color: 'var(--text-primary)',
                 }}
               >
-                系统健康
+                {t('demo.section.system_health')}
               </h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               {[
-                { label: 'API 服务', status: 'running' as const },
-                { label: '消息队列', status: 'running' as const },
-                { label: '数据库集群', status: 'idle' as const },
-                { label: '文件存储', status: 'running' as const },
+                { label: t('demo.svc.api'), status: 'running' as const },
+                { label: t('demo.svc.mq'), status: 'running' as const },
+                { label: t('demo.svc.db'), status: 'idle' as const },
+                { label: t('demo.svc.storage'), status: 'running' as const },
               ].map((svc) => (
                 <div
                   key={svc.label}
@@ -465,7 +471,9 @@ const RedesignDemo: React.FC = () => {
                   </span>
                   <StatusLight
                     state={svc.status}
-                    label={svc.status === 'running' ? '正常' : '空闲'}
+                    label={
+                      svc.status === 'running' ? t('demo.svc_status.running') : t('demo.svc_status.idle')
+                    }
                     pulse={svc.status === 'running'}
                   />
                 </div>
@@ -524,7 +532,7 @@ const RedesignDemo: React.FC = () => {
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {m.name}
+                    {t(m.name)}
                   </h3>
                   <StatusLight
                     state={m.status}
@@ -538,7 +546,7 @@ const RedesignDemo: React.FC = () => {
                     color: 'var(--text-secondary)',
                   }}
                 >
-                  {m.desc}
+                  {t(m.desc)}
                 </p>
                 <span
                   style={{
@@ -548,7 +556,7 @@ const RedesignDemo: React.FC = () => {
                     color: 'var(--text-primary)',
                   }}
                 >
-                  {m.stat}
+                  {t(m.stat)}
                 </span>
               </div>
             </div>
@@ -558,10 +566,10 @@ const RedesignDemo: React.FC = () => {
       {filteredModules.length === 0 && (
         <EmptyState
           variant='search'
-          title='未找到模块'
-          description={`没有匹配 "${searchQuery}" 的业务模块，请尝试其他关键词。`}
+          title={t('demo.modules.empty_title')}
+          description={t('demo.modules.empty_desc', { query: searchQuery })}
           action={{
-            label: '清除搜索',
+            label: t('demo.modules.clear_search'),
             onClick: () => setSearchQuery(''),
             icon: <Search size={16} />,
           }}
@@ -577,31 +585,31 @@ const RedesignDemo: React.FC = () => {
     >
       <Alert
         variant='info'
-        title='系统通知'
+        title={t('demo.banner_notification.title')}
         dismissible
         onDismiss={() => {}}
       >
-        Industrial OS 新界面已进入灰度阶段，旧版入口将于下月下线。
+        {t('demo.banner_notification.body')}
       </Alert>
       <Alert
         variant='success'
-        title='数据同步完成'
+        title={t('demo.banner_sync.title')}
         dismissible
         onDismiss={() => {}}
       >
-        所有制造数据已成功同步至数仓，耗时 12.4 秒。
+        {t('demo.banner_sync.body')}
       </Alert>
       <Alert
         variant='warning'
-        title='库存预警'
+        title={t('demo.banner_stock.title')}
       >
-        原材料库存低于安全水位，建议尽快发起采购申请。
+        {t('demo.banner_stock.body')}
       </Alert>
       <Alert
         variant='error'
-        title='设备故障'
+        title={t('demo.banner_equipment.title')}
       >
-        产线 A-03 温度传感器读数异常，请立即检查。
+        {t('demo.banner_equipment.body')}
       </Alert>
 
       <Card style={{ marginTop: 'var(--space-4)' }}>
@@ -614,7 +622,7 @@ const RedesignDemo: React.FC = () => {
             color: 'var(--text-primary)',
           }}
         >
-          实时告警流
+          {t('demo.section.realtime_alert_stream')}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           {alerts.map((alert) => (
@@ -622,7 +630,7 @@ const RedesignDemo: React.FC = () => {
               key={alert.id}
               variant={alert.level}
             >
-              <strong>{alert.time}</strong> — {alert.message}
+              <strong>{alert.time}</strong> — {t(alert.message)}
             </Alert>
           ))}
         </div>
@@ -642,10 +650,10 @@ const RedesignDemo: React.FC = () => {
       <Card>
         <EmptyState
           variant='default'
-          title='暂无待办'
-          description='当前没有需要处理的审批或任务。'
+          title={t('demo.empty.todo_title')}
+          description={t('demo.empty.todo_desc')}
           action={{
-            label: '新建任务',
+            label: t('demo.empty.new_task'),
             onClick: () => setIsCreateModalOpen(true),
             icon: <Plus size={16} />,
           }}
@@ -654,10 +662,10 @@ const RedesignDemo: React.FC = () => {
       <Card>
         <EmptyState
           variant='search'
-          title='未找到结果'
-          description='请调整筛选条件或搜索关键词后重试。'
+          title={t('demo.empty.no_result_title')}
+          description={t('demo.empty.no_result_desc')}
           action={{
-            label: '清除筛选',
+            label: t('demo.empty.clear_filter'),
             onClick: () => setSearchQuery(''),
             icon: <Search size={16} />,
           }}
@@ -666,21 +674,25 @@ const RedesignDemo: React.FC = () => {
       <Card>
         <EmptyState
           variant='data'
-          title='没有相关记录'
-          description='该时间段内未产生任何数据记录。'
-          action={{ label: '查看帮助', onClick: () => {}, icon: <FileQuestion size={16} /> }}
+          title={t('demo.empty.no_record_title')}
+          description={t('demo.empty.no_record_desc')}
+          action={{
+            label: t('demo.empty.help'),
+            onClick: () => {},
+            icon: <FileQuestion size={16} />,
+          }}
         />
       </Card>
       <Card>
         <EmptyState
           variant='default'
           icon={Inbox}
-          title='自定义空态'
-          description='通过 children 传入任意补充内容。'
+          title={t('demo.empty.custom_title')}
+          description={t('demo.empty.custom_desc')}
         >
           <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center' }}>
-            <Tag variant='amber'>标签 A</Tag>
-            <Tag variant='cyan'>标签 B</Tag>
+            <Tag variant='amber'>{t('demo.tag.a')}</Tag>
+            <Tag variant='cyan'>{t('demo.tag.b')}</Tag>
           </div>
         </EmptyState>
       </Card>
@@ -691,11 +703,11 @@ const RedesignDemo: React.FC = () => {
     <section className='animate-fade-in-up'>
       <ErrorState
         code={500}
-        title='服务暂时不可用'
-        message='Industrial OS 核心服务响应超时，请稍后重试或联系运维团队。'
+        title={t('demo.error.title')}
+        message={t('demo.error.message')}
         traceId='trace-20260914-8f3a2c1d'
         onRetry={() => window.location.reload()}
-        onFeedback={() => alert('反馈功能（演示）')}
+        onFeedback={() => alert(t('demo.error_feedback'))}
       />
     </section>
   );
@@ -717,13 +729,13 @@ const RedesignDemo: React.FC = () => {
       >
         <PageHeader
           title='Industrial OS Dashboard'
-          subtitle='实时监控生产、供应链与质量数据，统一运营决策入口。'
-          breadcrumbs={[{ label: '工作台' }, { label: 'Industrial OS' }]}
+          subtitle={t('demo.page_subtitle')}
+          breadcrumbs={[{ label: t('demo.breadcrumb.workbench') }, { label: 'Industrial OS' }]}
           secondaryActions={[
-            { label: '刷新数据', onClick: () => {}, icon: <RefreshCw size={16} /> },
+            { label: t('demo.refresh_data'), onClick: () => {}, icon: <RefreshCw size={16} /> },
           ]}
           primaryAction={{
-            label: '新建工单',
+            label: t('demo.new_workorder'),
             onClick: () => setIsCreateModalOpen(true),
             icon: <Zap size={16} />,
           }}
@@ -739,7 +751,7 @@ const RedesignDemo: React.FC = () => {
               dismissible
               onDismiss={() => setShowSuccessAlert(false)}
             >
-              新设计语言已应用至当前演示环境，所有组件均来自 redesign 组件库。
+              {t('demo.success_banner')}
             </Alert>
           </div>
         )}
@@ -756,7 +768,7 @@ const RedesignDemo: React.FC = () => {
           }}
         >
           <Tabs
-            tabs={tabs}
+            tabs={tabs.map((tab) => ({ ...tab, label: t(tab.label) }))}
             activeTab={activeTab}
             onChange={setActiveTab}
           />
@@ -770,23 +782,23 @@ const RedesignDemo: React.FC = () => {
           >
             <div style={{ width: '160px' }}>
               <Select
-                label='时间范围'
-                options={timeRangeOptions}
+                label={t('demo.select.time_range')}
+                options={timeRangeOptions.map((o) => ({ value: o.value, label: t(o.label) }))}
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
               />
             </div>
             <div style={{ width: '140px' }}>
               <Select
-                label='产线'
-                options={lineOptions}
+                label={t('demo.select.line')}
+                options={lineOptions.map((o) => ({ value: o.value, label: t(o.label) }))}
                 value={line}
                 onChange={(e) => setLine(e.target.value)}
               />
             </div>
             <div style={{ width: '260px' }}>
               <Input
-                placeholder='搜索订单、工单、物料、设备...'
+                placeholder={t('demo.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={
@@ -798,13 +810,13 @@ const RedesignDemo: React.FC = () => {
               />
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-              <Tag variant='amber'>产线 A</Tag>
-              <Tag variant='cyan'>今日班次</Tag>
+              <Tag variant='amber'>{t('demo.tag.today_line')}</Tag>
+              <Tag variant='cyan'>{t('demo.tag.today_shift')}</Tag>
               <Tag
                 variant='success'
                 onRemove={() => {}}
               >
-                正常运行
+                {t('demo.tag.running')}
               </Tag>
             </div>
           </div>
@@ -820,8 +832,8 @@ const RedesignDemo: React.FC = () => {
       <Modal
         open={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title='新建工单'
-        description='填写基础信息后，系统将自动生成工单并下发至对应产线。'
+        title={t('demo.modal.title')}
+        description={t('demo.modal.description')}
         size='md'
         footer={
           <>
@@ -829,36 +841,36 @@ const RedesignDemo: React.FC = () => {
               variant='secondary'
               onClick={() => setIsCreateModalOpen(false)}
             >
-              取消
+              {t('demo.modal.cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => setIsCreateModalOpen(false)}
             >
-              确认创建
+              {t('demo.modal.confirm_create')}
             </Button>
           </>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <Input
-            label='工单标题'
-            placeholder='例如：WO-2026-0914-001'
+            label={t('demo.modal.wo_title')}
+            placeholder={t('demo.modal.wo_title_ph')}
           />
           <Select
-            label='所属模块'
+            label={t('demo.modal.module')}
             options={[
-              { value: 'mes', label: '制造执行 MES' },
-              { value: 'erp', label: '企业资源 ERP' },
-              { value: 'scm', label: '供应链 SCM' },
-              { value: 'qms', label: '质量管理 QMS' },
+              { value: 'mes', label: t('demo.modules.mes_name') },
+              { value: 'erp', label: t('demo.modules.erp_name') },
+              { value: 'scm', label: t('demo.modules.scm_name') },
+              { value: 'qms', label: t('demo.modules.qms_name') },
             ]}
           />
           <Input
-            label='计划产量'
-            placeholder='输入数字'
+            label={t('demo.modal.plan_qty')}
+            placeholder={t('demo.modal.qty_ph')}
           />
-          <Alert variant='info'>工单创建后将触发 MES 排程与 ERP 成本核算流程。</Alert>
+          <Alert variant='info'>{t('demo.modal.note')}</Alert>
         </div>
       </Modal>
     </AppShell>

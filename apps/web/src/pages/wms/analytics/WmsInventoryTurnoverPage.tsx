@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   LineChart,
@@ -19,6 +20,7 @@ import { wmsAnalyticsApi } from '@/api/wms/analytics';
 import type { InventoryTurnoverData } from '@/api/wms/types';
 
 export default function WmsInventoryTurnoverPage() {
+  const { t } = useTranslation();
   const { startDate, endDate } = getDefaultDateRange();
   const [groupBy, setGroupBy] = useState<'month' | 'week' | 'day'>('month');
 
@@ -77,7 +79,7 @@ export default function WmsInventoryTurnoverPage() {
       },
       {
         id: 'outbound-count',
-        title: '出库单数',
+        title: t('wms.inventory_turnover.stat_outbound_count'),
         value: summary.outbound,
         color: 'secondary' as const,
       },
@@ -104,7 +106,7 @@ export default function WmsInventoryTurnoverPage() {
         showTables={false}
       >
         <div className='flex h-64 items-center justify-center'>
-          <div className='text-gray-500'>加载中...</div>
+          <div className='text-gray-500'>{t('wms.inventory_turnover.loading')}</div>
         </div>
       </StatsPageTemplate>
     );
@@ -123,12 +125,12 @@ export default function WmsInventoryTurnoverPage() {
         showTables={false}
       >
         <div className='flex h-64 flex-col items-center justify-center gap-4'>
-          <div className='text-red-500'>加载失败: {error}</div>
+          <div className='text-red-500'>{t('wms.inventory_turnover.load_failed')}: {error}</div>
           <button
             onClick={reload}
             className='rounded bg-primary px-4 py-2 text-white hover:bg-primary-dark'
           >
-            重试
+            {t('wms.inventory_turnover.retry')}
           </button>
         </div>
       </StatsPageTemplate>
@@ -150,7 +152,7 @@ export default function WmsInventoryTurnoverPage() {
       <div className='space-y-4'>
         {/* 时间粒度选择 */}
         <div className='flex items-center gap-4'>
-          <span className='text-sm text-gray-600'>时间粒度:</span>
+          <span className='text-sm text-gray-600'>{t('wms.inventory_turnover.time_granularity')}:</span>
           <div className='flex gap-2'>
             {(['month', 'week', 'day'] as const).map((g) => (
               <button
@@ -162,7 +164,11 @@ export default function WmsInventoryTurnoverPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {g === 'month' ? '月' : g === 'week' ? '周' : '日'}
+                {g === 'month'
+                  ? t('wms.inventory_turnover.granularity_month')
+                  : g === 'week'
+                    ? t('wms.inventory_turnover.granularity_week')
+                    : t('wms.inventory_turnover.granularity_day')}
               </button>
             ))}
           </div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import {
   Plus,
   Search,
@@ -163,11 +165,14 @@ const levelConfig = {
   M2: { label: 'M2', variant: 'error' as const },
 };
 
-const statusConfig = {
-  active: { label: '在职', variant: 'success' as const },
-  probation: { label: '试用期', variant: 'warning' as const },
-  leave: { label: '休假', variant: 'info' as const },
-  resigned: { label: '已离职', variant: 'default' as const },
+const statusConfig: Record<
+  string,
+  { label: string; variant: 'success' | 'warning' | 'info' | 'default' }
+> = {
+  active: { label: i18n.t('hrm.employee_redesign_page.k15'), variant: 'success' },
+  probation: { label: i18n.t('hrm.employee_redesign_page.k16'), variant: 'warning' },
+  leave: { label: i18n.t('hrm.employee_redesign_page.k17'), variant: 'info' },
+  resigned: { label: i18n.t('hrm.employee_redesign_page.k18'), variant: 'default' },
 };
 
 const formatDateTime = (value?: string) => {
@@ -180,6 +185,7 @@ const formatSalary = (value: number) => {
 };
 
 const HrmEmployeeRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'probation' | 'leave'>('all');
@@ -276,10 +282,10 @@ const HrmEmployeeRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '员工删除成功');
+      pushToast('success', t('hrm.employee_redesign_page.k60'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('hrm.employee_redesign_page.k61'));
     },
   });
 
@@ -308,10 +314,10 @@ const HrmEmployeeRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '员工创建成功');
+      pushToast('success', t('hrm.employee_redesign_page.k62'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('hrm.employee_redesign_page.k63'));
     },
   });
 
@@ -339,10 +345,10 @@ const HrmEmployeeRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '员工更新成功');
+      pushToast('success', t('hrm.employee_redesign_page.k64'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('hrm.employee_redesign_page.k65'));
     },
   });
 
@@ -368,19 +374,23 @@ const HrmEmployeeRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'active', label: '在职', badge: stats.active },
-      { id: 'probation', label: '试用期', badge: stats.probation },
-      { id: 'leave', label: '休假', badge: employees.filter((e) => e.status === 'leave').length },
+      { id: 'all', label: t('hrm.employee_redesign_page.k14') },
+      { id: 'active', label: t('hrm.employee_redesign_page.k15'), badge: stats.active },
+      { id: 'probation', label: t('hrm.employee_redesign_page.k16'), badge: stats.probation },
+      {
+        id: 'leave',
+        label: t('hrm.employee_redesign_page.k17'),
+        badge: employees.filter((e) => e.status === 'leave').length,
+      },
     ],
-    [stats, employees]
+    [stats, employees, t]
   );
 
   const columns: DataTableColumn<Employee>[] = useMemo(
     () => [
       {
         key: 'emp_no',
-        header: '工号',
+        header: t('hrm.employee_redesign_page.k19'),
         sortable: true,
         render: (row) => (
           <span
@@ -396,7 +406,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       },
       {
         key: 'name',
-        header: '姓名',
+        header: t('hrm.employee_redesign_page.k20'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.name}</div>
@@ -408,7 +418,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       },
       {
         key: 'department',
-        header: '部门',
+        header: t('hrm.employee_redesign_page.k21'),
         render: (row) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <Building
@@ -421,7 +431,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       },
       {
         key: 'level',
-        header: '职级',
+        header: t('hrm.employee_redesign_page.k22'),
         align: 'center',
         render: (row) => {
           const config = levelConfig[row.level] || levelConfig.P5;
@@ -430,7 +440,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       },
       {
         key: 'phone',
-        header: '联系电话',
+        header: t('hrm.employee_redesign_page.k23'),
         render: (row) => (
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)' }}>
             {row.phone}
@@ -439,7 +449,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       },
       {
         key: 'salary',
-        header: '月薪',
+        header: t('hrm.employee_redesign_page.k24'),
         align: 'right',
         sortable: true,
         render: (row) => (
@@ -450,12 +460,12 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       },
       {
         key: 'join_date',
-        header: '入职日期',
+        header: t('hrm.employee_redesign_page.k25'),
         sortable: true,
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('hrm.employee_redesign_page.k26'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.active;
@@ -464,7 +474,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('hrm.employee_redesign_page.k27'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -477,7 +487,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('hrm.employee_redesign_page.k28')}
             </Button>
             <Button
               variant='ghost'
@@ -488,7 +498,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('hrm.employee_redesign_page.k29')}
             </Button>
             <Button
               variant='ghost'
@@ -496,13 +506,13 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('hrm.employee_redesign_page.k30')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedEmployee, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedEmployee, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -519,17 +529,17 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('hrm.employee_redesign_page.k32')}
         </div>
       )}
       <ListPageTemplate<Employee>
         header={{
-          title: '员工管理',
-          subtitle: '管理员工信息，跟踪员工状态和职级',
+          title: t('hrm.employee_redesign_page.k0'),
+          subtitle: t('hrm.employee_redesign_page.k1'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '人力资源' },
-            { label: '员工管理' },
+            { label: t('hrm.employee_redesign_page.k2'), href: '/dashboard' },
+            { label: t('hrm.employee_redesign_page.k3') },
+            { label: t('hrm.employee_redesign_page.k0') },
           ],
         }}
         toolbar={
@@ -543,7 +553,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索工号/姓名/职位...'
+                placeholder={t('hrm.employee_redesign_page.k4')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -553,7 +563,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 value={deptFilter}
                 onChange={(e) => setDeptFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部部门' },
+                  { value: 'all', label: t('hrm.employee_redesign_page.k5') },
                   { value: '技术部', label: '技术部' },
                   { value: '产品部', label: '产品部' },
                   { value: '设计部', label: '设计部' },
@@ -568,7 +578,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('hrm.employee_redesign_page.k6')}
               </Button>
               <Button
                 variant='primary'
@@ -578,7 +588,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建员工
+                {t('hrm.employee_redesign_page.k7')}
               </Button>
             </div>
           </>
@@ -588,8 +598,8 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无员工'
-        emptyDescription='点击右上角「新建员工」按钮创建第一个员工'
+        emptyTitle={t('hrm.employee_redesign_page.k8')}
+        emptyDescription={t('hrm.employee_redesign_page.k9')}
         footer={
           <div
             style={{
@@ -599,25 +609,25 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='员工总数'
+              label={t('hrm.employee_redesign_page.k10')}
               value={stats.total}
               icon={Users}
               accent='cyan'
             />
             <StatTile
-              label='在职员工'
+              label={t('hrm.employee_redesign_page.k11')}
               value={stats.active}
               icon={UserCheck}
               accent='success'
             />
             <StatTile
-              label='试用期员工'
+              label={t('hrm.employee_redesign_page.k12')}
               value={stats.probation}
               icon={UserMinus}
               accent='warning'
             />
             <StatTile
-              label='月度薪资总额'
+              label={t('hrm.employee_redesign_page.k13')}
               value={formatSalary(stats.totalSalary)}
               icon={DollarSign}
               accent='amber'
@@ -657,7 +667,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedEmployee(null);
         }}
-        title='员工详情'
+        title={t('hrm.employee_redesign_page.k33')}
         size='lg'
       >
         {selectedEmployee && (
@@ -689,22 +699,22 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={levelConfig[selectedEmployee.level]?.variant || 'default'}>
-                    {levelConfig[selectedEmployee.level]?.label || '未知'}
+                    {levelConfig[selectedEmployee.level]?.label || t('hrm.employee_redesign_page.k31')}
                   </Badge>
                   <Badge variant={statusConfig[selectedEmployee.status]?.variant || 'default'}>
-                    {statusConfig[selectedEmployee.status]?.label || '未知'}
+                    {statusConfig[selectedEmployee.status]?.label || t('hrm.employee_redesign_page.k31')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card title='联系信息'>
+            <Card title={t('hrm.employee_redesign_page.k34')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    联系电话
+                    {t('hrm.employee_redesign_page.k23')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedEmployee.phone}
@@ -712,13 +722,13 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    邮箱
+                    {t('hrm.employee_redesign_page.k35')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedEmployee.email}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    直属上级
+                    {t('hrm.employee_redesign_page.k36')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedEmployee.manager}
@@ -726,20 +736,20 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    入职日期
+                    {t('hrm.employee_redesign_page.k25')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedEmployee.join_date}</div>
                 </div>
               </div>
             </Card>
 
-            <Card title='薪资信息'>
+            <Card title={t('hrm.employee_redesign_page.k37')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    月薪
+                    {t('hrm.employee_redesign_page.k24')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                     {formatSalary(selectedEmployee.salary)}
@@ -747,7 +757,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('hrm.employee_redesign_page.k38')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedEmployee.created_at)}
@@ -763,7 +773,11 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedEmployee ? '编辑员工' : '新建员工'}
+        title={
+          selectedEmployee
+            ? t('hrm.employee_redesign_page.k39')
+            : t('hrm.employee_redesign_page.k40')
+        }
         size='lg'
         footer={
           <>
@@ -771,35 +785,29 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('hrm.employee_redesign_page.k41')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<Employee> = {
                   name:
-                    (document.querySelector('input[placeholder*="姓名"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   emp_no:
-                    (document.querySelector('input[placeholder*="工号"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   department:
-                    (document.querySelectorAll('select')[0] as HTMLSelectElement)?.value || '',
+                    (document.getElementById('field-3') as HTMLSelectElement)?.value || '',
                   position:
-                    (document.querySelectorAll('input[placeholder*="职位"]')[0] as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                   level:
-                    ((document.querySelectorAll('select')[1] as HTMLSelectElement)
+                    ((document.getElementById('field-5') as HTMLSelectElement)
                       ?.value as Employee['level']) || 'P5',
                   phone:
-                    (document.querySelector('input[type="tel"]') as HTMLInputElement)?.value || '',
-                  email:
-                    (document.querySelector('input[type="email"]') as HTMLInputElement)?.value ||
-                    '',
+                    (document.getElementById('field-7') as HTMLInputElement)?.value || '',
                   join_date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                    (document.getElementById('field-8') as HTMLInputElement)?.value || '',
                   salary: Number(
-                    (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
+                    (document.getElementById('field-6') as HTMLInputElement)?.value || 0
                   ),
                 };
                 if (selectedEmployee) {
@@ -809,7 +817,9 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedEmployee ? '保存修改' : '创建员工'}
+              {selectedEmployee
+                ? t('hrm.employee_redesign_page.k42')
+                : t('hrm.employee_redesign_page.k43')}
             </Button>
           </>
         }
@@ -821,11 +831,11 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-1'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                姓名 *
+                {t('hrm.employee_redesign_page.k44')}
               </label>
               <Input
                 id='field-1'
-                placeholder='请输入姓名'
+                placeholder={t('hrm.employee_redesign_page.k45')}
                 defaultValue={selectedEmployee?.name}
               />
             </div>
@@ -834,11 +844,11 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                工号 *
+                {t('hrm.employee_redesign_page.k46')}
               </label>
               <Input
                 id='field-2'
-                placeholder='例如：EMP006'
+                placeholder={t('hrm.employee_redesign_page.k47')}
                 defaultValue={selectedEmployee?.emp_no}
               />
             </div>
@@ -847,7 +857,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                部门
+                {t('hrm.employee_redesign_page.k48')}
               </label>
               <Select
                 id='field-3'
@@ -865,11 +875,11 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                职位
+                {t('hrm.employee_redesign_page.k49')}
               </label>
               <Input
                 id='field-4'
-                placeholder='例如：高级工程师'
+                placeholder={t('hrm.employee_redesign_page.k50')}
                 defaultValue={selectedEmployee?.position}
               />
             </div>
@@ -878,7 +888,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                职级
+                {t('hrm.employee_redesign_page.k22')}
               </label>
               <Select
                 id='field-5'
@@ -898,12 +908,12 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                月薪（元）
+                {t('hrm.employee_redesign_page.k52')}
               </label>
               <Input
                 id='field-6'
                 type='number'
-                placeholder='例如：15000'
+                placeholder={t('hrm.employee_redesign_page.k53')}
                 defaultValue={selectedEmployee?.salary}
               />
             </div>
@@ -912,11 +922,11 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-7'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                联系电话
+                {t('hrm.employee_redesign_page.k54')}
               </label>
               <Input
                 id='field-7'
-                placeholder='请输入联系电话'
+                placeholder={t('hrm.employee_redesign_page.k55')}
                 defaultValue={selectedEmployee?.phone}
               />
             </div>
@@ -925,7 +935,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 htmlFor='field-8'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                入职日期
+                {t('hrm.employee_redesign_page.k56')}
               </label>
               <Input
                 id='field-8'
@@ -941,7 +951,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除员工'
+        title={t('hrm.employee_redesign_page.k57')}
         size='sm'
         footer={
           <>
@@ -949,20 +959,20 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('hrm.employee_redesign_page.k41')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('hrm.employee_redesign_page.k58')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除员工「{deleteTarget?.name}」吗？此操作不可撤销。
+          {t('hrm.employee_redesign_page.k59', { name: deleteTarget?.name })}
         </p>
       </Modal>
 

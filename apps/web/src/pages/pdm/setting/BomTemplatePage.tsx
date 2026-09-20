@@ -51,7 +51,7 @@ export const BomTemplatePage: React.FC = () => {
       });
       await pdmSettingsApi.updateSettings(CATEGORY, stringData);
       setSettings(stringData);
-      setSuccess('BOM模板设置保存成功');
+      setSuccess(i18n.t('pdm.bom_template.save_success'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
       console.error('[BomTemplate] 保存设置失败:', e);
@@ -64,56 +64,56 @@ export const BomTemplatePage: React.FC = () => {
   const sections: SettingSection[] = [
     {
       id: 'basic',
-      title: '基础配置',
-      description: 'BOM模板的默认类型与编号规则',
+      title: i18n.t('pdm.bom_template.sec_basic_title'),
+      description: i18n.t('pdm.bom_template.sec_basic_desc'),
       fields: [
         {
           id: 'default_bom_type',
-          label: '默认BOM类型',
+          label: i18n.t('pdm.bom_template.fld_bom_type'),
           type: 'select',
           value: settings.default_bom_type,
           options: [
-            { label: '制造BOM', value: 'manufacturing' },
-            { label: '工程BOM', value: 'engineering' },
-            { label: '销售BOM', value: 'sales' },
+            { label: i18n.t('pdm.bom_template.opt_bom_manufacturing'), value: 'manufacturing' },
+            { label: i18n.t('pdm.bom_template.opt_bom_engineering'), value: 'engineering' },
+            { label: i18n.t('pdm.bom_template.opt_bom_sales'), value: 'sales' },
           ],
         },
         {
           id: 'auto_number_prefix',
-          label: '自动编号前缀',
+          label: i18n.t('pdm.bom_template.fld_no_prefix'),
           type: 'text',
           value: settings.auto_number_prefix,
-          placeholder: '如 BOM',
+          placeholder: i18n.t('pdm.bom_template.fld_no_prefix_ph'),
         },
         {
           id: 'default_version',
-          label: '默认初始版本',
+          label: i18n.t('pdm.bom_template.fld_init_version'),
           type: 'text',
           value: settings.default_version,
-          placeholder: '如 1.0',
+          placeholder: i18n.t('pdm.bom_template.fld_init_version_ph'),
         },
       ],
     },
     {
       id: 'control',
-      title: '版本与替代料控制',
-      description: 'BOM版本管理及替代物料规则',
+      title: i18n.t('pdm.bom_template.sec_control_title'),
+      description: i18n.t('pdm.bom_template.sec_control_desc'),
       fields: [
         {
           id: 'enable_version_control',
-          label: '启用版本控制',
+          label: i18n.t('pdm.bom_template.fld_version_control'),
           type: 'switch',
           value: settings.enable_version_control === 'true',
         },
         {
           id: 'allow_alternative_items',
-          label: '允许替代物料',
+          label: i18n.t('pdm.bom_template.fld_allow_substitute'),
           type: 'switch',
           value: settings.allow_alternative_items === 'true',
         },
         {
           id: 'max_bom_levels',
-          label: '最大BOM层级',
+          label: i18n.t('pdm.bom_template.fld_max_levels'),
           type: 'number',
           value: Number(settings.max_bom_levels),
         },

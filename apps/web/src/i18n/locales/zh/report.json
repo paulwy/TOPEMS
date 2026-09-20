@@ -174,5 +174,6 @@
   "report.nav.report-report": "我的报表",
   "report.nav.report-report_desc": "我的报表",
   "report.nav.report-viewer": "报表查看",
-  "report.nav.report-viewer_desc": "报表查看"
+  "report.nav.report-viewer_desc": "报表查看",
+  "report.template_management.category_label": "分类："
 }

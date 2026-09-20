@@ -562,5 +562,11 @@
   "system.backup_page.k57": "Backend backup service not connected, action not executed",
   "system.backup_page.k42": "Create Backup",
   "system.backup_page.k43": "Backup Name",
-  "system.backup_page.k44": "e.g. weekly-backup-20240115"
+  "system.backup_page.k44": "e.g. weekly-backup-20240115",
+  "system.log_config_panel.level_trace": "Trace",
+  "system.log_config_panel.level_debug": "Debug",
+  "system.log_config_panel.level_info": "Info",
+  "system.log_config_panel.level_warn": "Warn",
+  "system.log_config_panel.level_error": "Error",
+  "system.log_config_panel.level_fatal": "Fatal"
 }

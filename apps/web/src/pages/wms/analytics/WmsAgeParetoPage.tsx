@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -18,6 +19,7 @@ import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getAgePareto, type AgeParetoData } from '@/api/wms/analytics';
 
 export default function WmsAgeParetoPage() {
+  const { t } = useTranslation();
   const { data: response, loading } = useAnalyticsData({
     fetcher: () => getAgePareto(),
     deps: [],
@@ -50,24 +52,24 @@ export default function WmsAgeParetoPage() {
         id: 'top80-count',
         title: i18n.t('pages.wms_age_pareto_page.80sku_1'),
         value: top80,
-        suffix: '个库龄段',
+        suffix: t('wms.age_pareto.suffix_age_bucket'),
         color: 'info' as const,
       },
       {
         id: 'sku-count',
         title: i18n.t('wms.analytics.agePareto.k1'),
         value: pareto.length,
-        suffix: '个库龄段',
+        suffix: t('wms.age_pareto.suffix_age_bucket'),
         color: 'secondary' as const,
       },
       {
         id: 'total-materials',
-        title: '物料总数',
+        title: t('wms.age_pareto.stat_total_materials'),
         value: response?.total_materials ?? 0,
         color: 'warning' as const,
       },
     ],
-    [totalAmount, top80, pareto.length, response]
+    [totalAmount, top80, pareto.length, response, t]
   );
 
   return (
@@ -148,15 +150,15 @@ export default function WmsAgeParetoPage() {
       </div>
 
       <div className='mt-4 rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>库龄分布明细</h3>
+        <h3 className='mb-2 font-semibold'>{t('wms.age_pareto.section_detail')}</h3>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left font-medium'>库龄段</th>
-                <th className='px-3 py-2 text-right font-medium'>物料数量</th>
-                <th className='px-3 py-2 text-right font-medium'>库存价值</th>
-                <th className='px-3 py-2 text-right font-medium'>累计占比</th>
+                <th className='px-3 py-2 text-left font-medium'>{t('wms.age_pareto.col_age_bucket')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{t('wms.age_pareto.col_material_count')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{t('wms.age_pareto.col_inventory_value')}</th>
+                <th className='px-3 py-2 text-right font-medium'>{t('wms.age_pareto.col_cumulative')}</th>
               </tr>
             </thead>
             <tbody>

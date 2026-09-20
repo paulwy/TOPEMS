@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -138,12 +139,12 @@ const mockOrders: InboundOrder[] = [
   },
 ];
 
-const statusConfig = {
-  pending: { label: '待入库', variant: 'warning' as const, icon: Clock },
-  in_progress: { label: '入库中', variant: 'info' as const, icon: Truck },
-  completed: { label: '已完成', variant: 'success' as const, icon: CheckCircle },
-  cancelled: { label: '已取消', variant: 'default' as const, icon: AlertCircle },
-};
+const buildStatusConfig = (t: (k: string) => string) => ({
+  pending: { label: t('wms.inbound_order_page.status_pending'), variant: 'warning' as const, icon: Clock },
+  in_progress: { label: t('wms.inbound_order_page.status_in_progress'), variant: 'info' as const, icon: Truck },
+  completed: { label: t('wms.inbound_order_page.status_completed'), variant: 'success' as const, icon: CheckCircle },
+  cancelled: { label: t('wms.inbound_order_page.status_cancelled'), variant: 'default' as const, icon: AlertCircle },
+});
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -155,7 +156,9 @@ const formatAmount = (value: number) => {
 };
 
 const WmsInboundOrderPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const statusConfig = useMemo(() => buildStatusConfig(t), [t]);
 
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_progress' | 'completed'>(
     'all'
@@ -252,10 +255,10 @@ const WmsInboundOrderPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '入库单删除成功');
+      pushToast('success', t('wms.inbound_order_page.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('wms.inbound_order_page.toast_delete_error'));
     },
   });
 
@@ -279,10 +282,10 @@ const WmsInboundOrderPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '入库单创建成功');
+      pushToast('success', t('wms.inbound_order_page.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('wms.inbound_order_page.toast_create_error'));
     },
   });
 
@@ -302,10 +305,10 @@ const WmsInboundOrderPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '入库单更新成功');
+      pushToast('success', t('wms.inbound_order_page.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('wms.inbound_order_page.toast_update_error'));
     },
   });
 
@@ -331,19 +334,19 @@ const WmsInboundOrderPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'pending', label: '待入库', badge: stats.pending },
-      { id: 'in_progress', label: '入库中', badge: stats.inProgress },
-      { id: 'completed', label: '已完成' },
+      { id: 'all', label: t('wms.inbound_order_page.tab_all') },
+      { id: 'pending', label: t('wms.inbound_order_page.status_pending'), badge: stats.pending },
+      { id: 'in_progress', label: t('wms.inbound_order_page.status_in_progress'), badge: stats.inProgress },
+      { id: 'completed', label: t('wms.inbound_order_page.status_completed') },
     ],
-    [stats]
+    [stats, t]
   );
 
   const columns: DataTableColumn<InboundOrder>[] = useMemo(
     () => [
       {
         key: 'order_no',
-        header: '入库单号',
+        header: t('wms.inbound_order_page.col_order_no'),
         sortable: true,
         render: (row) => (
           <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--accent-primary)' }}>
@@ -353,23 +356,23 @@ const WmsInboundOrderPage: React.FC = () => {
       },
       {
         key: 'supplier_name',
-        header: '供应商',
+        header: t('wms.inbound_order_page.col_supplier'),
         sortable: true,
       },
       {
         key: 'warehouse',
-        header: '入库仓库',
+        header: t('wms.inbound_order_page.col_warehouse'),
         render: (row) => <Tag variant='default'>{row.warehouse}</Tag>,
       },
       {
         key: 'total_quantity',
-        header: '数量',
+        header: t('wms.inbound_order_page.col_quantity'),
         align: 'right',
         render: (row) => <span>{row.total_quantity.toLocaleString()}</span>,
       },
       {
         key: 'total_amount',
-        header: '金额',
+        header: t('wms.inbound_order_page.col_amount'),
         align: 'right',
         render: (row) => (
           <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
@@ -379,12 +382,12 @@ const WmsInboundOrderPage: React.FC = () => {
       },
       {
         key: 'expected_date',
-        header: '预计到货',
+        header: t('wms.inbound_order_page.col_expected_date'),
         sortable: true,
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('wms.inbound_order_page.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.pending;
@@ -393,7 +396,7 @@ const WmsInboundOrderPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('wms.inbound_order_page.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -406,7 +409,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('wms.inbound_order_page.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -417,7 +420,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('wms.inbound_order_page.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -425,13 +428,13 @@ const WmsInboundOrderPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('wms.inbound_order_page.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedOrder, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedOrder, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -448,17 +451,17 @@ const WmsInboundOrderPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('wms.inbound_order_page.demo_banner')}
         </div>
       )}
       <ListPageTemplate<InboundOrder>
         header={{
-          title: '入库单管理',
-          subtitle: '管理采购入库单，跟踪入库进度和状态',
+          title: t('wms.inbound_order_page.title'),
+          subtitle: t('wms.inbound_order_page.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '仓储物流', href: WMS_PATHS.root },
-            { label: '入库单管理' },
+            { label: t('wms.inbound_order_page.breadcrumb_home'), href: '/dashboard' },
+            { label: t('wms.inbound_order_page.breadcrumb_warehouse'), href: WMS_PATHS.root },
+            { label: t('wms.inbound_order_page.title') },
           ],
         }}
         toolbar={
@@ -472,7 +475,7 @@ const WmsInboundOrderPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索入库单号/供应商...'
+                placeholder={t('wms.inbound_order_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -482,12 +485,12 @@ const WmsInboundOrderPage: React.FC = () => {
                 value={warehouseFilter}
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部仓库' },
-                  { value: '原材料仓', label: '原材料仓' },
-                  { value: '半成品仓', label: '半成品仓' },
-                  { value: '成品仓', label: '成品仓' },
-                  { value: '化学品仓', label: '化学品仓' },
-                  { value: '包材仓', label: '包材仓' },
+                  { value: 'all', label: t('wms.inbound_order_page.filter_all_warehouse') },
+                  { value: '原材料仓', label: t('wms.inbound_order_page.wh_raw_material') },
+                  { value: '半成品仓', label: t('wms.inbound_order_page.wh_semi_finished') },
+                  { value: '成品仓', label: t('wms.inbound_order_page.wh_finished') },
+                  { value: '化学品仓', label: t('wms.inbound_order_page.wh_chemical') },
+                  { value: '包材仓', label: t('wms.inbound_order_page.wh_packaging') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -498,7 +501,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('wms.inbound_order_page.action_refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -508,7 +511,7 @@ const WmsInboundOrderPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建入库单
+                {t('wms.inbound_order_page.action_new')}
               </Button>
             </div>
           </>
@@ -518,8 +521,8 @@ const WmsInboundOrderPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无入库单'
-        emptyDescription='点击右上角「新建入库单」按钮创建第一个入库单'
+        emptyTitle={t('wms.inbound_order_page.empty_title')}
+        emptyDescription={t('wms.inbound_order_page.empty_description')}
         footer={
           <div
             style={{
@@ -529,25 +532,25 @@ const WmsInboundOrderPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='入库单总数'
+              label={t('wms.inbound_order_page.stat_total')}
               value={stats.total}
               icon={Package}
               accent='amber'
             />
             <StatTile
-              label='待入库'
+              label={t('wms.inbound_order_page.status_pending')}
               value={stats.pending}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='入库中'
+              label={t('wms.inbound_order_page.status_in_progress')}
               value={stats.inProgress}
               icon={Truck}
               accent='cyan'
             />
             <StatTile
-              label='已完成'
+              label={t('wms.inbound_order_page.status_completed')}
               value={stats.completed}
               icon={CheckCircle}
               accent='success'
@@ -587,7 +590,7 @@ const WmsInboundOrderPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedOrder(null);
         }}
-        title='入库单详情'
+        title={t('wms.inbound_order_page.drawer_title')}
         size='lg'
       >
         {selectedOrder && (
@@ -603,7 +606,7 @@ const WmsInboundOrderPage: React.FC = () => {
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    入库单号
+                    {t('wms.inbound_order_page.col_order_no')}
                   </div>
                   <div
                     style={{
@@ -617,19 +620,19 @@ const WmsInboundOrderPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                  {statusConfig[selectedOrder.status]?.label || '未知'}
+                  {statusConfig[selectedOrder.status]?.label || t('wms.inbound_order_page.status_unknown')}
                 </Badge>
               </div>
             </Card>
 
             {/* 基本信息 */}
-            <Card title='基本信息'>
+            <Card title={t('wms.inbound_order_page.section_basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    供应商
+                    {t('wms.inbound_order_page.col_supplier')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOrder.supplier_name}
@@ -637,7 +640,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    入库仓库
+                    {t('wms.inbound_order_page.col_warehouse')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOrder.warehouse}
@@ -645,7 +648,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    总数量
+                    {t('wms.inbound_order_page.label_total_quantity')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOrder.total_quantity.toLocaleString()}
@@ -653,7 +656,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    总金额
+                    {t('wms.inbound_order_page.label_total_amount')}
                   </div>
                   <div
                     style={{
@@ -669,19 +672,19 @@ const WmsInboundOrderPage: React.FC = () => {
             </Card>
 
             {/* 时间信息 */}
-            <Card title='时间信息'>
+            <Card title={t('wms.inbound_order_page.section_time_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    预计到货日期
+                    {t('wms.inbound_order_page.label_expected_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.expected_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    实际入库日期
+                    {t('wms.inbound_order_page.label_actual_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {selectedOrder.actual_date || '-'}
@@ -689,7 +692,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('wms.inbound_order_page.label_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedOrder.created_at)}
@@ -700,7 +703,7 @@ const WmsInboundOrderPage: React.FC = () => {
 
             {/* 备注 */}
             {selectedOrder.remark && (
-              <Card title='备注'>
+              <Card title={t('wms.inbound_order_page.section_remark')}>
                 <p
                   style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: 0 }}
                 >
@@ -716,7 +719,7 @@ const WmsInboundOrderPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOrder ? '编辑入库单' : '新建入库单'}
+        title={selectedOrder ? t('wms.inbound_order_page.modal_edit_title') : t('wms.inbound_order_page.action_new')}
         size='lg'
         footer={
           <>
@@ -724,21 +727,18 @@ const WmsInboundOrderPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('wms.inbound_order_page.button_cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
+                const supplierEl = document.getElementById('supplier') as HTMLInputElement | null;
+                const warehouseEl = document.getElementById('warehouse') as HTMLSelectElement | null;
+                const expectedEl = document.getElementById('expected-date') as HTMLInputElement | null;
                 const formData: Partial<InboundOrder> = {
-                  order_no:
-                    (document.querySelector('input[placeholder*="入库单号"]') as HTMLInputElement)
-                      ?.value || '',
-                  supplier_name:
-                    (document.querySelector('input[placeholder*="供应商"]') as HTMLInputElement)
-                      ?.value || '',
-                  warehouse: (document.querySelector('select') as HTMLSelectElement)?.value || '',
-                  expected_date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                  supplier_name: supplierEl?.value || '',
+                  warehouse: warehouseEl?.value || '',
+                  expected_date: expectedEl?.value || '',
                 };
                 if (selectedOrder) {
                   updateMutation.mutate({ id: selectedOrder.id, data: formData });
@@ -747,7 +747,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 }
               }}
             >
-              {selectedOrder ? '保存修改' : '创建入库单'}
+              {selectedOrder ? t('wms.inbound_order_page.button_save') : t('wms.inbound_order_page.button_create')}
             </Button>
           </>
         }
@@ -759,11 +759,11 @@ const WmsInboundOrderPage: React.FC = () => {
                 htmlFor='supplier'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                供应商 *
+                {t('wms.inbound_order_page.field_supplier')}
               </label>
               <Input
                 id='supplier'
-                placeholder='请选择供应商'
+                placeholder={t('wms.inbound_order_page.placeholder_supplier')}
                 defaultValue={selectedOrder?.supplier_name}
               />
             </div>
@@ -772,17 +772,17 @@ const WmsInboundOrderPage: React.FC = () => {
                 htmlFor='warehouse'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                入库仓库 *
+                {t('wms.inbound_order_page.field_warehouse')}
               </label>
               <Select
                 id='warehouse'
                 defaultValue={selectedOrder?.warehouse || '原材料仓'}
                 options={[
-                  { value: '原材料仓', label: '原材料仓' },
-                  { value: '半成品仓', label: '半成品仓' },
-                  { value: '成品仓', label: '成品仓' },
-                  { value: '化学品仓', label: '化学品仓' },
-                  { value: '包材仓', label: '包材仓' },
+                  { value: '原材料仓', label: t('wms.inbound_order_page.wh_raw_material') },
+                  { value: '半成品仓', label: t('wms.inbound_order_page.wh_semi_finished') },
+                  { value: '成品仓', label: t('wms.inbound_order_page.wh_finished') },
+                  { value: '化学品仓', label: t('wms.inbound_order_page.wh_chemical') },
+                  { value: '包材仓', label: t('wms.inbound_order_page.wh_packaging') },
                 ]}
               />
             </div>
@@ -791,7 +791,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 htmlFor='expected-date'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                预计到货日期
+                {t('wms.inbound_order_page.label_expected_date')}
               </label>
               <Input
                 id='expected-date'
@@ -804,15 +804,15 @@ const WmsInboundOrderPage: React.FC = () => {
                 htmlFor='status'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                状态
+                {t('wms.inbound_order_page.col_status')}
               </label>
               <Select
                 id='status'
                 defaultValue={selectedOrder?.status || 'pending'}
                 options={[
-                  { value: 'pending', label: '待入库' },
-                  { value: 'in_progress', label: '入库中' },
-                  { value: 'completed', label: '已完成' },
+                  { value: 'pending', label: t('wms.inbound_order_page.status_pending') },
+                  { value: 'in_progress', label: t('wms.inbound_order_page.status_in_progress') },
+                  { value: 'completed', label: t('wms.inbound_order_page.status_completed') },
                 ]}
               />
             </div>
@@ -822,12 +822,12 @@ const WmsInboundOrderPage: React.FC = () => {
               htmlFor='remark'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              备注
+              {t('wms.inbound_order_page.section_remark')}
             </label>
             <textarea
               id='remark'
               rows={3}
-              placeholder='请输入备注信息...'
+              placeholder={t('wms.inbound_order_page.placeholder_remark')}
               defaultValue={selectedOrder?.remark}
               style={{
                 width: '100%',
@@ -849,7 +849,7 @@ const WmsInboundOrderPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除入库单'
+        title={t('wms.inbound_order_page.delete_modal_title')}
         size='sm'
         footer={
           <>
@@ -857,20 +857,20 @@ const WmsInboundOrderPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('wms.inbound_order_page.button_cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('wms.inbound_order_page.button_confirm_delete')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除入库单「{deleteTarget?.order_no}」吗？此操作不可撤销。
+          {t('wms.inbound_order_page.delete_confirm_message', { order_no: deleteTarget?.order_no })}
         </p>
       </Modal>
 

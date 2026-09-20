@@ -30,6 +30,7 @@ import type { DataTableColumn, Toast } from '@/components/redesign';
 import { tenantApi } from '@/api/tenant';
 import type { Tenant, TenantStatus, TenantPlan } from '@/api/tenant/types';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -49,21 +50,22 @@ const formatDateTime = (value?: string) => {
 
 const statusConfig: Record<
   TenantStatus,
-  { label: string; variant: 'success' | 'warning' | 'error' | 'info' }
+  { labelKey: string; variant: 'success' | 'warning' | 'error' | 'info' }
 > = {
-  active: { label: '活跃', variant: 'success' },
-  trial: { label: '试用', variant: 'info' },
-  suspended: { label: '已暂停', variant: 'warning' },
-  expired: { label: '已过期', variant: 'error' },
+  active: { labelKey: 'admin.tenant_management_page.status_active', variant: 'success' },
+  trial: { labelKey: 'admin.tenant_management_page.status_trial', variant: 'info' },
+  suspended: { labelKey: 'admin.tenant_management_page.status_suspended', variant: 'warning' },
+  expired: { labelKey: 'admin.tenant_management_page.status_expired', variant: 'error' },
 };
 
-const planConfig: Record<TenantPlan, { label: string; variant: 'default' | 'info' | 'cyan' }> = {
-  basic: { label: '基础版', variant: 'default' },
-  professional: { label: '专业版', variant: 'info' },
-  enterprise: { label: '企业版', variant: 'cyan' },
+const planConfig: Record<TenantPlan, { labelKey: string; variant: 'default' | 'info' | 'cyan' }> = {
+  basic: { labelKey: 'admin.tenantOnboarding.基础版', variant: 'default' },
+  professional: { labelKey: 'admin.tenantOnboarding.专业版', variant: 'info' },
+  enterprise: { labelKey: 'admin.tenantOnboarding.企业版', variant: 'cyan' },
 };
 
 const TenantManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
@@ -99,7 +101,7 @@ const TenantManagementPage: React.FC = () => {
         status: statusFilter !== 'all' ? statusFilter : undefined,
       });
       if (!response.success) {
-        throw new Error(response.message || '加载租户列表失败');
+        throw new Error(response.message || t('admin.tenant_management_page.load_failed'));
       }
       return {
         tenants: response.data?.items || [],
@@ -113,7 +115,7 @@ const TenantManagementPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDrawerOpen(false);
-      pushToast('success', '租户创建成功');
+      pushToast('success', t('admin.tenant_management_page.created'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -125,7 +127,7 @@ const TenantManagementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDrawerOpen(false);
       setEditingTenant(null);
-      pushToast('success', '租户更新成功');
+      pushToast('success', t('admin.tenant_management_page.updated'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -135,7 +137,7 @@ const TenantManagementPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '租户删除成功');
+      pushToast('success', t('admin.tenant_management_page.deleted'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -153,7 +155,7 @@ const TenantManagementPage: React.FC = () => {
   const columns: DataTableColumn<Tenant>[] = [
     {
       key: 'name',
-      header: '租户名称',
+      header: t('admin.tenant_management_page.col_name'),
       sortable: true,
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
@@ -171,31 +173,31 @@ const TenantManagementPage: React.FC = () => {
     },
     {
       key: 'plan',
-      header: '订阅计划',
+      header: t('admin.tenant_management_page.col_plan'),
       sortable: true,
       render: (row) => {
         const config = planConfig[row.plan] || planConfig.basic;
-        return <Badge variant={config.variant}>{config.label}</Badge>;
+        return <Badge variant={config.variant}>{t(config.labelKey)}</Badge>;
       },
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('admin.tenant_management_page.col_status'),
       sortable: true,
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.active;
-        return <Badge variant={config.variant}>{config.label}</Badge>;
+        return <Badge variant={config.variant}>{t(config.labelKey)}</Badge>;
       },
     },
     {
       key: 'quota_users',
-      header: '用户配额',
+      header: t('admin.tenant_management_page.col_quota'),
       align: 'right',
       render: (row) => <span>{row.quota_users || '-'}</span>,
     },
     {
       key: 'created_at',
-      header: '创建时间',
+      header: t('admin.tenant_management_page.col_created'),
       sortable: true,
       render: (row) => (
         <span style={{ color: 'var(--text-secondary)' }}>{formatDateTime(row.created_at)}</span>
@@ -203,7 +205,7 @@ const TenantManagementPage: React.FC = () => {
     },
     {
       key: 'actions',
-      header: '操作',
+      header: t('admin.tenant_management_page.col_actions'),
       align: 'right',
       width: 120,
       render: (row) => (
@@ -217,7 +219,7 @@ const TenantManagementPage: React.FC = () => {
               setDrawerOpen(true);
             }}
           >
-            编辑
+            {t('admin.tenant_management_page.btn_edit')}
           </Button>
           <Button
             size='sm'
@@ -226,7 +228,7 @@ const TenantManagementPage: React.FC = () => {
             onClick={() => setDeleteTarget(row)}
             style={{ color: 'var(--error-500)' }}
           >
-            删除
+            {t('admin.tenant_management_page.btn_delete')}
           </Button>
         </div>
       ),
@@ -250,14 +252,14 @@ const TenantManagementPage: React.FC = () => {
     <>
       <ListPageTemplate<Tenant>
         header={{
-          title: '租户管理',
-          subtitle: '管理系统中的所有租户，包括创建、编辑、删除和状态管理',
+          title: t('admin.tenant_management_page.title'),
+          subtitle: t('admin.tenant_management_page.subtitle'),
         }}
         toolbar={
           <>
             <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
               <Input
-                placeholder='搜索租户名称或编码...'
+                placeholder={t('admin.tenant_management_page.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -267,11 +269,11 @@ const TenantManagementPage: React.FC = () => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
                 options={[
-                  { value: 'all', label: '全部状态' },
-                  { value: 'active', label: '活跃' },
-                  { value: 'trial', label: '试用' },
-                  { value: 'suspended', label: '已暂停' },
-                  { value: 'expired', label: '已过期' },
+                  { value: 'all', label: t('admin.tenant_management_page.filter_status_all') },
+                  { value: 'active', label: t('admin.tenant_management_page.status_active') },
+                  { value: 'trial', label: t('admin.tenant_management_page.status_trial') },
+                  { value: 'suspended', label: t('admin.tenant_management_page.status_suspended') },
+                  { value: 'expired', label: t('admin.tenant_management_page.status_expired') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -282,14 +284,14 @@ const TenantManagementPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('admin.tenant_management_page.btn_refresh')}
               </Button>
               <Button
                 variant='primary'
                 leftIcon={<Plus size={16} />}
                 onClick={handleCreate}
               >
-                新建租户
+                {t('admin.tenant_management_page.btn_new')}
               </Button>
             </div>
           </>
@@ -299,30 +301,30 @@ const TenantManagementPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无租户'
-        emptyDescription='点击右上角「新建租户」按钮创建第一个租户'
+        emptyTitle={t('admin.tenant_management_page.empty_title')}
+        emptyDescription={t('admin.tenant_management_page.empty_description')}
         footer={
           <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
             <StatTile
-              label='租户总数'
+              label={t('admin.tenant_management_page.stat_total')}
               value={stats.total}
               icon={Building2}
               accent='amber'
             />
             <StatTile
-              label='活跃租户'
+              label={t('admin.tenant_management_page.stat_active')}
               value={stats.active}
               icon={CheckCircle}
               accent='success'
             />
             <StatTile
-              label='试用租户'
+              label={t('admin.tenant_management_page.stat_trial')}
               value={stats.trial}
               icon={Clock}
               accent='cyan'
             />
             <StatTile
-              label='过期租户'
+              label={t('admin.tenant_management_page.stat_expired')}
               value={stats.expired}
               icon={XCircle}
               accent='error'
@@ -338,7 +340,7 @@ const TenantManagementPage: React.FC = () => {
           setDrawerOpen(false);
           setEditingTenant(null);
         }}
-        title={editingTenant ? '编辑租户' : '新建租户'}
+        title={editingTenant ? t('admin.tenant_management_page.drawer_edit_title') : t('admin.tenant_management_page.drawer_new_title')}
         size='md'
       >
         <TenantForm
@@ -356,7 +358,7 @@ const TenantManagementPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='确认删除'
+        title={t('admin.tenant_management_page.modal_delete_title')}
         size='sm'
         footer={
           <>
@@ -364,20 +366,20 @@ const TenantManagementPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('admin.tenant_management_page.btn_cancel')}
             </Button>
             <Button
               variant='danger'
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
               loading={deleteMutation.isPending}
             >
-              确认删除
+              {t('admin.tenant_management_page.btn_confirm_delete')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除租户「{deleteTarget?.name}」吗？此操作不可撤销，租户下的所有数据将被清除。
+          {t('admin.tenant_management_page.delete_confirm', { name: deleteTarget?.name })}
         </p>
       </Modal>
 
@@ -398,6 +400,7 @@ interface TenantFormProps {
 }
 
 const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel, submitting }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<Partial<Tenant>>({
     name: initialData?.name || '',
     code: initialData?.code || '',
@@ -430,13 +433,13 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
             fontWeight: 500,
           }}
         >
-          租户名称 *
+          {t('admin.tenant_management_page.form_name')} *
         </label>
         <Input
           id='tenant-name'
           value={formData.name || ''}
           onChange={(e) => handleChange('name', e.target.value)}
-          placeholder='请输入租户名称'
+          placeholder={t('admin.tenant_management_page.ph_name')}
           required
         />
       </div>
@@ -451,13 +454,13 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
             fontWeight: 500,
           }}
         >
-          租户编码 *
+          {t('admin.tenant_management_page.form_code')} *
         </label>
         <Input
           id='tenant-code'
           value={formData.code || ''}
           onChange={(e) => handleChange('code', e.target.value)}
-          placeholder='请输入租户编码（英文小写）'
+          placeholder={t('admin.tenant_management_page.ph_code')}
           required
           disabled={!!initialData}
         />
@@ -474,16 +477,16 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
               fontWeight: 500,
             }}
           >
-            订阅计划
+            {t('admin.tenant_management_page.form_plan')}
           </label>
           <Select
             id='tenant-plan'
             value={formData.plan || 'basic'}
             onChange={(e) => handleChange('plan', e.target.value)}
             options={[
-              { value: 'basic', label: '基础版' },
-              { value: 'professional', label: '专业版' },
-              { value: 'enterprise', label: '企业版' },
+              { value: 'basic', label: t('admin.tenantOnboarding.基础版') },
+              { value: 'professional', label: t('admin.tenantOnboarding.专业版') },
+              { value: 'enterprise', label: t('admin.tenantOnboarding.企业版') },
             ]}
           />
         </div>
@@ -497,17 +500,17 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
               fontWeight: 500,
             }}
           >
-            状态
+            {t('admin.tenant_management_page.form_status')}
           </label>
           <Select
             id='tenant-status'
             value={formData.status || 'active'}
             onChange={(e) => handleChange('status', e.target.value)}
             options={[
-              { value: 'active', label: '活跃' },
-              { value: 'trial', label: '试用' },
-              { value: 'suspended', label: '已暂停' },
-              { value: 'expired', label: '已过期' },
+              { value: 'active', label: t('admin.tenant_management_page.status_active') },
+              { value: 'trial', label: t('admin.tenant_management_page.status_trial') },
+              { value: 'suspended', label: t('admin.tenant_management_page.status_suspended') },
+              { value: 'expired', label: t('admin.tenant_management_page.status_expired') },
             ]}
           />
         </div>
@@ -523,7 +526,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
             fontWeight: 500,
           }}
         >
-          用户配额
+          {t('admin.tenant_management_page.form_quota')}
         </label>
         <Input
           id='tenant-quota'
@@ -547,14 +550,14 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
           variant='ghost'
           onClick={onCancel}
         >
-          取消
+          {t('admin.tenant_management_page.btn_cancel')}
         </Button>
         <Button
           type='submit'
           variant='primary'
           loading={submitting}
         >
-          {initialData ? '保存修改' : '创建租户'}
+          {initialData ? t('admin.tenant_management_page.btn_save_edit') : t('admin.tenantOnboarding.创建租户')}
         </Button>
       </div>
     </form>

@@ -122,7 +122,7 @@ export default function QmsDefectParetoPage() {
           sx={{ mb: 2 }}
           onClose={reload}
         >
-          加载失败：{error}
+          {i18n.t('qms.qms_defect_pareto_page.load_failed', { error: String(error) })}
         </Alert>
       )}
 

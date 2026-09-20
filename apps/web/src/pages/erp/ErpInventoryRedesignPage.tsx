@@ -27,6 +27,7 @@ import {
   Tag,
 } from '@/components/redesign';
 import type { DataTableColumn } from '@/components/redesign';
+import { useTranslation } from 'react-i18next';
 import { inventoryApi } from '@/api/erp/core/inventory';
 import type { Inventory as ApiInventory } from '@/api/erp/core/types';
 
@@ -146,13 +147,6 @@ const mockInventory: InventoryItem[] = [
   },
 ];
 
-const statusConfig = {
-  in_stock: { label: '库存充足', variant: 'success' as const },
-  low_stock: { label: '库存偏低', variant: 'warning' as const },
-  out_of_stock: { label: '缺货', variant: 'error' as const },
-  overstock: { label: '积压', variant: 'info' as const },
-};
-
 const formatAmount = (value: number) => {
   if (value >= 10000) {
     return `¥${(value / 10000).toFixed(1)}万`;
@@ -161,6 +155,15 @@ const formatAmount = (value: number) => {
 };
 
 const ErpInventoryRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
+
+  const statusConfig = useMemo(() => ({
+    in_stock: { label: t('erp.erp_inventory_redesign.status.in_stock'), variant: 'success' as const },
+    low_stock: { label: t('erp.erp_inventory_redesign.status.low_stock'), variant: 'warning' as const },
+    out_of_stock: { label: t('erp.erp_inventory_redesign.status.out_of_stock'), variant: 'error' as const },
+    overstock: { label: t('erp.erp_inventory_redesign.status.overstock'), variant: 'info' as const },
+  }), [t]);
+
   const [activeTab, setActiveTab] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>(
     'all'
   );
@@ -243,28 +246,28 @@ const ErpInventoryRedesignPage: React.FC = () => {
   }, [items]);
 
   const tabsConfig = [
-    { id: 'all', label: '全部' },
+    { id: 'all', label: t('erp.erp_inventory_redesign.tab.all') },
     {
       id: 'in_stock',
-      label: '库存充足',
+      label: t('erp.erp_inventory_redesign.tab.in_stock'),
       badge: items.filter((i) => i.status === 'in_stock').length,
     },
-    { id: 'low_stock', label: '库存偏低', badge: stats.lowStock },
-    { id: 'out_of_stock', label: '缺货', badge: stats.outOfStock },
+    { id: 'low_stock', label: t('erp.erp_inventory_redesign.tab.low_stock'), badge: stats.lowStock },
+    { id: 'out_of_stock', label: t('erp.erp_inventory_redesign.tab.out_of_stock'), badge: stats.outOfStock },
   ];
 
   const getStockLevel = (item: InventoryItem) => {
     const ratio = item.quantity / item.safety_stock;
-    if (ratio >= 2) return { color: 'var(--success)', label: '充足' };
-    if (ratio >= 1) return { color: 'var(--warning)', label: '正常' };
-    if (ratio >= 0.5) return { color: 'var(--error)', label: '偏低' };
-    return { color: 'var(--error)', label: '严重不足' };
+    if (ratio >= 2) return { color: 'var(--success)', label: t('erp.erp_inventory_redesign.stock_level.sufficient') };
+    if (ratio >= 1) return { color: 'var(--warning)', label: t('erp.erp_inventory_redesign.stock_level.normal') };
+    if (ratio >= 0.5) return { color: 'var(--error)', label: t('erp.erp_inventory_redesign.stock_level.low') };
+    return { color: 'var(--error)', label: t('erp.erp_inventory_redesign.stock_level.critical') };
   };
 
   const columns: DataTableColumn<InventoryItem>[] = [
     {
       key: 'sku',
-      header: 'SKU 编码',
+      header: t('erp.erp_inventory_redesign.column.sku'),
       sortable: true,
       render: (row) => (
         <span
@@ -280,7 +283,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
     {
       key: 'product_name',
-      header: '产品名称',
+      header: t('erp.erp_inventory_redesign.column.product_name'),
       render: (row) => (
         <div>
           <div style={{ fontWeight: 500 }}>{row.product_name}</div>
@@ -292,7 +295,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
     {
       key: 'warehouse',
-      header: '仓库',
+      header: t('erp.erp_inventory_redesign.column.warehouse'),
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <Warehouse
@@ -305,7 +308,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
     {
       key: 'quantity',
-      header: '库存数量',
+      header: t('erp.erp_inventory_redesign.column.quantity'),
       align: 'right',
       sortable: true,
       render: (row) => (
@@ -337,7 +340,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
     {
       key: 'safety_stock',
-      header: '安全库存',
+      header: t('erp.erp_inventory_redesign.column.safety_stock'),
       align: 'right',
       render: (row) => (
         <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
@@ -347,7 +350,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
     {
       key: 'total_value',
-      header: '库存价值',
+      header: t('erp.erp_inventory_redesign.column.total_value'),
       align: 'right',
       sortable: true,
       render: (row) => (
@@ -358,7 +361,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('erp.erp_inventory_redesign.column.status'),
       align: 'center',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.in_stock;
@@ -367,7 +370,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
     {
       key: 'actions',
-      header: '操作',
+      header: t('erp.erp_inventory_redesign.column.actions'),
       align: 'right',
       render: (row) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -380,7 +383,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
               setDetailDrawerOpen(true);
             }}
           >
-            详情
+            {t('erp.erp_inventory_redesign.action.detail')}
           </Button>
         </div>
       ),
@@ -391,12 +394,12 @@ const ErpInventoryRedesignPage: React.FC = () => {
     <>
       <ListPageTemplate<InventoryItem>
         header={{
-          title: '库存管理',
-          subtitle: '管理库存商品，跟踪库存水平和库存价值',
+          title: t('erp.erp_inventory_redesign.title'),
+          subtitle: t('erp.erp_inventory_redesign.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '企业资源' },
-            { label: '库存管理' },
+            { label: t('erp.erp_inventory_redesign.breadcrumb.home'), href: '/dashboard' },
+            { label: t('erp.erp_inventory_redesign.breadcrumb.erp') },
+            { label: t('erp.erp_inventory_redesign.breadcrumb.inventory') },
           ],
         }}
         toolbar={
@@ -410,7 +413,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索 SKU/产品名称/分类...'
+                placeholder={t('erp.erp_inventory_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -420,10 +423,10 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 value={warehouseFilter}
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部仓库' },
-                  { value: '华东仓', label: '华东仓' },
-                  { value: '华南仓', label: '华南仓' },
-                  { value: '华北仓', label: '华北仓' },
+                  { value: 'all', label: t('erp.erp_inventory_redesign.filter.all_warehouses') },
+                  { value: '华东仓', label: t('erp.erp_inventory_redesign.warehouse.east') },
+                  { value: '华南仓', label: t('erp.erp_inventory_redesign.warehouse.south') },
+                  { value: '华北仓', label: t('erp.erp_inventory_redesign.warehouse.north') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -434,7 +437,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('erp.erp_inventory_redesign.button.refresh')}
               </Button>
             </div>
           </>
@@ -444,8 +447,8 @@ const ErpInventoryRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无库存商品'
-        emptyDescription='暂无库存数据'
+        emptyTitle={t('erp.erp_inventory_redesign.empty.title')}
+        emptyDescription={t('erp.erp_inventory_redesign.empty.description')}
         footer={
           <div
             style={{
@@ -455,25 +458,25 @@ const ErpInventoryRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='SKU 总数'
+              label={t('erp.erp_inventory_redesign.stat.total_sku')}
               value={stats.totalSKU}
               icon={Package}
               accent='cyan'
             />
             <StatTile
-              label='库存偏低'
+              label={t('erp.erp_inventory_redesign.stat.low_stock')}
               value={stats.lowStock}
               icon={AlertTriangle}
               accent='warning'
             />
             <StatTile
-              label='缺货商品'
+              label={t('erp.erp_inventory_redesign.stat.out_of_stock')}
               value={stats.outOfStock}
               icon={TrendingDown}
               accent='error'
             />
             <StatTile
-              label='库存总价值'
+              label={t('erp.erp_inventory_redesign.stat.total_value')}
               value={formatAmount(stats.totalValue)}
               icon={Boxes}
               accent='amber'
@@ -513,7 +516,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedItem(null);
         }}
-        title='库存详情'
+        title={t('erp.erp_inventory_redesign.drawer.detail_title')}
         size='lg'
       >
         {selectedItem && (
@@ -544,13 +547,13 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedItem.status]?.variant || 'default'}>
-                  {statusConfig[selectedItem.status]?.label || '未知'}
+                  {statusConfig[selectedItem.status]?.label || t('erp.erp_inventory_redesign.status.unknown')}
                 </Badge>
               </div>
             </Card>
 
             {/* 库存水平可视化 */}
-            <Card title='库存水平'>
+            <Card title={t('erp.erp_inventory_redesign.drawer.stock_level')}>
               <div style={{ marginBottom: 'var(--space-3)' }}>
                 <div
                   style={{
@@ -560,7 +563,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                     fontSize: 'var(--text-sm)',
                   }}
                 >
-                  <span>当前库存</span>
+                  <span>{t('erp.erp_inventory_redesign.drawer.current_stock')}</span>
                   <span style={{ fontWeight: 'var(--font-bold)', fontFamily: 'var(--font-mono)' }}>
                     {selectedItem.quantity} {selectedItem.unit}
                   </span>
@@ -593,20 +596,20 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   }}
                 >
                   <span>
-                    安全库存：{selectedItem.safety_stock} {selectedItem.unit}
+                    {t('"+K+".drawer.safety_stock_label', { value: selectedItem.safety_stock, unit: selectedItem.unit })}
                   </span>
                   <span>{getStockLevel(selectedItem).label}</span>
                 </div>
               </div>
             </Card>
 
-            <Card title='库存信息'>
+            <Card title={t('erp.erp_inventory_redesign.drawer.stock_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    仓库
+                    {t('erp.erp_inventory_redesign.drawer.warehouse')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedItem.warehouse}
@@ -614,7 +617,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    计量单位
+                    {t('erp.erp_inventory_redesign.drawer.unit')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedItem.unit}
@@ -622,7 +625,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    单价
+                    {t('erp.erp_inventory_redesign.drawer.unit_price')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     ¥{selectedItem.unit_price.toLocaleString('zh-CN')}
@@ -630,7 +633,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    库存价值
+                    {t('erp.erp_inventory_redesign.drawer.total_value')}
                   </div>
                   <div
                     style={{
@@ -644,7 +647,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    最近补货日期
+                    {t('erp.erp_inventory_redesign.drawer.last_restock')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedItem.last_restock}</div>
                 </div>

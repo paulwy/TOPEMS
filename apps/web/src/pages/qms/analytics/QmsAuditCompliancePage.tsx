@@ -214,7 +214,7 @@ export default function QmsAuditCompliancePage() {
           sx={{ mb: 2 }}
           onClose={reload}
         >
-          加载失败：{error}
+          {t('qms.qms_audit_compliance_page.load_failed', { error: String(error) })}
         </Alert>
       )}
       <Grid

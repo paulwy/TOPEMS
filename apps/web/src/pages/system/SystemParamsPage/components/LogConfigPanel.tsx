@@ -105,12 +105,12 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                     }))
                   }
                 >
-                  <MenuItem value='trace'>跟踪</MenuItem>
-                  <MenuItem value='debug'>调试</MenuItem>
-                  <MenuItem value='info'>信息</MenuItem>
-                  <MenuItem value='warn'>警告</MenuItem>
-                  <MenuItem value='error'>错误</MenuItem>
-                  <MenuItem value='fatal'>致命</MenuItem>
+                  <MenuItem value='trace'>{t('system.log_config_panel.level_trace')}</MenuItem>
+                  <MenuItem value='debug'>{t('system.log_config_panel.level_debug')}</MenuItem>
+                  <MenuItem value='info'>{t('system.log_config_panel.level_info')}</MenuItem>
+                  <MenuItem value='warn'>{t('system.log_config_panel.level_warn')}</MenuItem>
+                  <MenuItem value='error'>{t('system.log_config_panel.level_error')}</MenuItem>
+                  <MenuItem value='fatal'>{t('system.log_config_panel.level_fatal')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

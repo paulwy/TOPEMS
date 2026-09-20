@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -140,23 +141,6 @@ const mockOpportunities: Opportunity[] = [
   },
 ];
 
-const stageConfig = {
-  lead: { label: '线索', variant: 'default' as const, step: 1 },
-  qualified: { label: '已确认', variant: 'info' as const, step: 2 },
-  proposal: { label: '方案报价', variant: 'amber' as const, step: 3 },
-  negotiation: { label: '商务谈判', variant: 'warning' as const, step: 4 },
-  won: { label: '赢单', variant: 'success' as const, step: 5 },
-  lost: { label: '输单', variant: 'error' as const, step: 6 },
-};
-
-const sourceConfig = {
-  referral: { label: '转介绍', variant: 'success' as const },
-  website: { label: '官网', variant: 'info' as const },
-  cold_call: { label: '陌拜', variant: 'cyan' as const },
-  exhibition: { label: '展会', variant: 'amber' as const },
-  other: { label: '其他', variant: 'default' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -170,7 +154,26 @@ const formatAmount = (value: number) => {
 };
 
 const CrmOpportunityRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const stageConfig = {
+    lead: { label: t('crm.opportunity_redesign.stage_lead'), variant: 'default' as const, step: 1 },
+    qualified: { label: t('crm.opportunity_redesign.stage_qualified'), variant: 'info' as const, step: 2 },
+    proposal: { label: t('crm.opportunity_redesign.stage_proposal'), variant: 'amber' as const, step: 3 },
+    negotiation: { label: t('crm.opportunity_redesign.stage_negotiation'), variant: 'warning' as const, step: 4 },
+    won: { label: t('crm.opportunity_redesign.stage_won'), variant: 'success' as const, step: 5 },
+    lost: { label: t('crm.opportunity_redesign.stage_lost'), variant: 'error' as const, step: 6 },
+  };
+
+  const sourceConfig = {
+    referral: { label: t('crm.opportunity_redesign.source_referral'), variant: 'success' as const },
+    website: { label: t('crm.opportunity_redesign.source_website'), variant: 'info' as const },
+    cold_call: { label: t('crm.opportunity_redesign.source_cold_call'), variant: 'cyan' as const },
+    exhibition: { label: t('crm.opportunity_redesign.source_exhibition'), variant: 'amber' as const },
+    other: { label: t('crm.opportunity_redesign.source_other'), variant: 'default' as const },
+  };
+
 
   const [activeTab, setActiveTab] = useState<'all' | 'pipeline' | 'won' | 'lost'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -268,10 +271,10 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '商机删除成功');
+      pushToast('success', t('crm.opportunity_redesign.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('crm.opportunity_redesign.toast_delete_fail'));
     },
   });
 
@@ -297,10 +300,10 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '商机创建成功');
+      pushToast('success', t('crm.opportunity_redesign.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('crm.opportunity_redesign.toast_create_fail'));
     },
   });
 
@@ -326,10 +329,10 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '商机更新成功');
+      pushToast('success', t('crm.opportunity_redesign.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('crm.opportunity_redesign.toast_update_fail'));
     },
   });
 
@@ -359,19 +362,19 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'pipeline', label: '销售漏斗', badge: stats.pipeline },
-      { id: 'won', label: '赢单', badge: opportunities.filter((o) => o.stage === 'won').length },
-      { id: 'lost', label: '输单', badge: opportunities.filter((o) => o.stage === 'lost').length },
+      { id: 'all', label: t('crm.opportunity_redesign.tab_all') },
+      { id: 'pipeline', label: t('crm.opportunity_redesign.tab_pipeline'), badge: stats.pipeline },
+      { id: 'won', label: t('crm.opportunity_redesign.stage_won'), badge: opportunities.filter((o) => o.stage === 'won').length },
+      { id: 'lost', label: t('crm.opportunity_redesign.stage_lost'), badge: opportunities.filter((o) => o.stage === 'lost').length },
     ],
-    [stats, opportunities]
+    [stats, opportunities, t]
   );
 
   const columns: DataTableColumn<Opportunity>[] = useMemo(
     () => [
       {
         key: 'opp_no',
-        header: '商机编号',
+        header: t('crm.opportunity_redesign.col_opp_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -387,7 +390,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       },
       {
         key: 'name',
-        header: '商机名称',
+        header: t('crm.opportunity_redesign.col_name'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.name}</div>
@@ -399,7 +402,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       },
       {
         key: 'stage',
-        header: '阶段',
+        header: t('crm.opportunity_redesign.col_stage'),
         align: 'center',
         render: (row) => {
           const config = stageConfig[row.stage] || stageConfig.lead;
@@ -408,7 +411,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       },
       {
         key: 'amount',
-        header: '商机金额',
+        header: t('crm.opportunity_redesign.col_amount'),
         align: 'right',
         sortable: true,
         render: (row) => (
@@ -419,13 +422,13 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       },
       {
         key: 'probability',
-        header: '成交概率',
+        header: t('crm.opportunity_redesign.col_probability'),
         align: 'center',
         render: (row) => <span style={{ fontSize: 'var(--text-sm)' }}>{row.probability}%</span>,
       },
       {
         key: 'source',
-        header: '来源',
+        header: t('crm.opportunity_redesign.col_source'),
         align: 'center',
         render: (row) => {
           const config = sourceConfig[row.source] || sourceConfig.other;
@@ -434,7 +437,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       },
       {
         key: 'owner',
-        header: '负责人',
+        header: t('crm.opportunity_redesign.field_owner'),
         render: (row) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <User
@@ -447,12 +450,12 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       },
       {
         key: 'expected_date',
-        header: '预计成交',
+        header: t('crm.opportunity_redesign.col_expected_date'),
         sortable: true,
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('crm.opportunity_redesign.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -465,7 +468,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('crm.opportunity_redesign.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -476,7 +479,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('crm.opportunity_redesign.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -484,13 +487,13 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('crm.opportunity_redesign.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedOpp, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedOpp, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -507,17 +510,17 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('crm.opportunity_redesign.mock_banner')}
         </div>
       )}
       <ListPageTemplate<Opportunity>
         header={{
-          title: '商机管理',
-          subtitle: '跟踪销售商机，管理销售漏斗和成交概率',
+          title: t('crm.opportunity_redesign.title'),
+          subtitle: t('crm.opportunity_redesign.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '客户管理' },
-            { label: '商机管理' },
+            { label: t('crm.opportunity_redesign.breadcrumb_home'), href: '/dashboard' },
+            { label: t('crm.opportunity_redesign.breadcrumb_crm') },
+            { label: t('crm.opportunity_redesign.title') },
           ],
         }}
         toolbar={
@@ -531,7 +534,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索商机编号/名称/客户...'
+                placeholder={t('crm.opportunity_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -541,13 +544,13 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 value={stageFilter}
                 onChange={(e) => setStageFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部阶段' },
-                  { value: 'lead', label: '线索' },
-                  { value: 'qualified', label: '已确认' },
-                  { value: 'proposal', label: '方案报价' },
-                  { value: 'negotiation', label: '商务谈判' },
-                  { value: 'won', label: '赢单' },
-                  { value: 'lost', label: '输单' },
+                  { value: 'all', label: t('crm.opportunity_redesign.filter_stage_all') },
+                  { value: 'lead', label: t('crm.opportunity_redesign.stage_lead') },
+                  { value: 'qualified', label: t('crm.opportunity_redesign.stage_qualified') },
+                  { value: 'proposal', label: t('crm.opportunity_redesign.stage_proposal') },
+                  { value: 'negotiation', label: t('crm.opportunity_redesign.stage_negotiation') },
+                  { value: 'won', label: t('crm.opportunity_redesign.stage_won') },
+                  { value: 'lost', label: t('crm.opportunity_redesign.stage_lost') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -558,7 +561,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('crm.opportunity_redesign.btn_refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -568,7 +571,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建商机
+                {t('crm.opportunity_redesign.btn_create')}
               </Button>
             </div>
           </>
@@ -578,8 +581,8 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无商机'
-        emptyDescription='点击右上角「新建商机」按钮创建第一个销售商机'
+        emptyTitle={t('crm.opportunity_redesign.empty_title')}
+        emptyDescription={t('crm.opportunity_redesign.empty_description')}
         footer={
           <div
             style={{
@@ -589,25 +592,25 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='商机总数'
+              label={t('crm.opportunity_redesign.stat_total')}
               value={stats.total}
               icon={Target}
               accent='cyan'
             />
             <StatTile
-              label='漏斗中商机'
+              label={t('crm.opportunity_redesign.stat_pipeline')}
               value={stats.pipeline}
               icon={TrendingUp}
               accent='warning'
             />
             <StatTile
-              label='漏斗加权金额'
+              label={t('crm.opportunity_redesign.stat_pipeline_amount')}
               value={formatAmount(stats.pipelineAmount)}
               icon={DollarSign}
               accent='amber'
             />
             <StatTile
-              label='累计赢单金额'
+              label={t('crm.opportunity_redesign.stat_won_amount')}
               value={formatAmount(stats.wonAmount)}
               icon={CheckCircle}
               accent='success'
@@ -647,7 +650,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedOpp(null);
         }}
-        title='商机详情'
+        title={t('crm.opportunity_redesign.drawer_title')}
         size='lg'
       >
         {selectedOpp && (
@@ -678,13 +681,13 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={stageConfig[selectedOpp.stage]?.variant || 'default'}>
-                  {stageConfig[selectedOpp.stage]?.label || '未知'}
+                  {stageConfig[selectedOpp.stage]?.label || t('crm.opportunity_redesign.label_unknown')}
                 </Badge>
               </div>
             </Card>
 
             {/* 销售阶段进度 */}
-            <Card title='销售阶段'>
+            <Card title={t('crm.opportunity_redesign.section_stage')}>
               <div style={{ marginTop: 'var(--space-2)' }}>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {['lead', 'qualified', 'proposal', 'negotiation', 'won'].map((stage) => {
@@ -712,13 +715,13 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='商机信息'>
+            <Card title={t('crm.opportunity_redesign.section_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    商机金额
+                    {t('crm.opportunity_redesign.col_amount')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                     {formatAmount(selectedOpp.amount)}
@@ -726,7 +729,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    成交概率
+                    {t('crm.opportunity_redesign.col_probability')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                     {selectedOpp.probability}%
@@ -734,21 +737,21 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    预计成交日期
+                    {t('crm.opportunity_redesign.field_expected_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOpp.expected_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    商机来源
+                    {t('crm.opportunity_redesign.field_source')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {sourceConfig[selectedOpp.source]?.label || '未知'}
+                    {sourceConfig[selectedOpp.source]?.label || t('crm.opportunity_redesign.label_unknown')}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    负责人
+                    {t('crm.opportunity_redesign.field_owner')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOpp.owner}
@@ -756,7 +759,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('crm.opportunity_redesign.field_create_time')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedOpp.created_at)}
@@ -772,7 +775,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOpp ? '编辑商机' : '新建商机'}
+        title={selectedOpp ? t('crm.opportunity_redesign.modal_edit_title') : t('crm.opportunity_redesign.modal_create_title')}
         size='lg'
         footer={
           <>
@@ -780,33 +783,25 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('crm.opportunity_redesign.btn_cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<Opportunity> = {
                   name:
-                    (document.querySelector('input[placeholder*="商机名称"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   customer_name:
-                    (document.querySelectorAll('input[placeholder*="客户"]')[0] as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   amount: Number(
-                    (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
+                    (document.getElementById('field-4') as HTMLInputElement)?.value || 0
                   ),
                   expected_date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                    (document.getElementById('field-6') as HTMLInputElement)?.value || '',
                   probability: Number(
-                    (document.querySelectorAll('input[type="number"]')[1] as HTMLInputElement)
-                      ?.value || 0
+                    (document.getElementById('field-5') as HTMLInputElement)?.value || 0
                   ),
-                  owner:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="负责人"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
+                  owner: '',
                 };
                 if (selectedOpp) {
                   updateMutation.mutate({ id: selectedOpp.id, data: formData });
@@ -815,7 +810,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedOpp ? '保存修改' : '创建商机'}
+              {selectedOpp ? t('crm.opportunity_redesign.btn_save') : t('crm.opportunity_redesign.btn_submit_create')}
             </Button>
           </>
         }
@@ -826,11 +821,11 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              商机名称 *
+              {t('crm.opportunity_redesign.field_name_required')}
             </label>
             <Input
               id='field-1'
-              placeholder='例如：伺服电机批量采购项目'
+              placeholder={t('crm.opportunity_redesign.ph_name_example')}
               defaultValue={selectedOpp?.name}
             />
           </div>
@@ -840,11 +835,11 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                客户名称 *
+                {t('crm.opportunity_redesign.field_customer_name_required')}
               </label>
               <Input
                 id='field-2'
-                placeholder='请输入客户名称'
+                placeholder={t('crm.opportunity_redesign.ph_customer_name')}
                 defaultValue={selectedOpp?.customer_name}
               />
             </div>
@@ -853,18 +848,18 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                销售阶段 *
+                {t('crm.opportunity_redesign.field_stage_required')}
               </label>
               <Select
                 id='field-3'
                 defaultValue={selectedOpp?.stage || 'lead'}
                 options={[
-                  { value: 'lead', label: '线索' },
-                  { value: 'qualified', label: '已确认' },
-                  { value: 'proposal', label: '方案报价' },
-                  { value: 'negotiation', label: '商务谈判' },
-                  { value: 'won', label: '赢单' },
-                  { value: 'lost', label: '输单' },
+                  { value: 'lead', label: t('crm.opportunity_redesign.stage_lead') },
+                  { value: 'qualified', label: t('crm.opportunity_redesign.stage_qualified') },
+                  { value: 'proposal', label: t('crm.opportunity_redesign.stage_proposal') },
+                  { value: 'negotiation', label: t('crm.opportunity_redesign.stage_negotiation') },
+                  { value: 'won', label: t('crm.opportunity_redesign.stage_won') },
+                  { value: 'lost', label: t('crm.opportunity_redesign.stage_lost') },
                 ]}
               />
             </div>
@@ -873,12 +868,12 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                商机金额（元）
+                {t('crm.opportunity_redesign.field_amount')}
               </label>
               <Input
                 id='field-4'
                 type='number'
-                placeholder='例如：100000'
+                placeholder={t('crm.opportunity_redesign.ph_amount_example')}
                 defaultValue={selectedOpp?.amount}
               />
             </div>
@@ -887,12 +882,12 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                成交概率（%）
+                {t('crm.opportunity_redesign.field_probability')}
               </label>
               <Input
                 id='field-5'
                 type='number'
-                placeholder='例如：50'
+                placeholder={t('crm.opportunity_redesign.ph_probability_example')}
                 defaultValue={selectedOpp?.probability}
               />
             </div>
@@ -901,7 +896,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                预计成交日期
+                {t('crm.opportunity_redesign.field_expected_date')}
               </label>
               <Input
                 id='field-6'
@@ -914,17 +909,17 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 htmlFor='field-7'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                商机来源
+                {t('crm.opportunity_redesign.field_source')}
               </label>
               <Select
                 id='field-7'
                 defaultValue={selectedOpp?.source || 'other'}
                 options={[
-                  { value: 'referral', label: '转介绍' },
-                  { value: 'website', label: '官网' },
-                  { value: 'cold_call', label: '陌拜' },
-                  { value: 'exhibition', label: '展会' },
-                  { value: 'other', label: '其他' },
+                  { value: 'referral', label: t('crm.opportunity_redesign.source_referral') },
+                  { value: 'website', label: t('crm.opportunity_redesign.source_website') },
+                  { value: 'cold_call', label: t('crm.opportunity_redesign.source_cold_call') },
+                  { value: 'exhibition', label: t('crm.opportunity_redesign.source_exhibition') },
+                  { value: 'other', label: t('crm.opportunity_redesign.source_other') },
                 ]}
               />
             </div>
@@ -936,7 +931,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除商机'
+        title={t('crm.opportunity_redesign.delete_title')}
         size='sm'
         footer={
           <>
@@ -944,20 +939,20 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('crm.opportunity_redesign.btn_cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('crm.opportunity_redesign.btn_confirm_delete')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除商机「{deleteTarget?.name}」吗？此操作不可撤销。
+          {t('crm.opportunity_redesign.delete_confirm_message', { name: deleteTarget?.name })}
         </p>
       </Modal>
 

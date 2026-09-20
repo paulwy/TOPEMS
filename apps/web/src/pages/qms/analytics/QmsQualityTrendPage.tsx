@@ -80,7 +80,7 @@ export default function QmsQualityTrendPage() {
     {
       id: 'trendLength',
       title: t('qms.qms_quality_trend_page.k6'),
-      value: `${trend.length} 天`,
+      value: t('qms.qms_quality_trend_page.days_count', { count: trend.length }),
       color: 'primary' as const,
     },
   ];
@@ -106,7 +106,7 @@ export default function QmsQualityTrendPage() {
           sx={{ mb: 2 }}
           onClose={reload}
         >
-          加载失败：{error}
+          {t('qms.qms_quality_trend_page.load_failed', { error: String(error) })}
         </Alert>
       )}
 

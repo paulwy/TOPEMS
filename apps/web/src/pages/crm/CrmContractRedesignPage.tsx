@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -147,22 +148,6 @@ const mockContracts: Contract[] = [
   },
 ];
 
-const typeConfig = {
-  sales: { label: '销售合同', variant: 'success' as const },
-  purchase: { label: '采购合同', variant: 'info' as const },
-  service: { label: '服务合同', variant: 'cyan' as const },
-  framework: { label: '框架协议', variant: 'amber' as const },
-};
-
-const statusConfig = {
-  draft: { label: '草稿', variant: 'default' as const },
-  pending: { label: '待签署', variant: 'warning' as const },
-  active: { label: '生效中', variant: 'success' as const },
-  completed: { label: '已完成', variant: 'info' as const },
-  expired: { label: '已过期', variant: 'default' as const },
-  terminated: { label: '已终止', variant: 'error' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -176,7 +161,25 @@ const formatAmount = (value: number) => {
 };
 
 const CrmContractRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const typeConfig = {
+    sales: { label: t('crm.contract_redesign.type_sales'), variant: 'success' as const },
+    purchase: { label: t('crm.contract_redesign.type_purchase'), variant: 'info' as const },
+    service: { label: t('crm.contract_redesign.type_service'), variant: 'cyan' as const },
+    framework: { label: t('crm.contract_redesign.type_framework'), variant: 'amber' as const },
+  };
+
+  const statusConfig = {
+    draft: { label: t('crm.contract_redesign.status_draft'), variant: 'default' as const },
+    pending: { label: t('crm.contract_redesign.status_pending'), variant: 'warning' as const },
+    active: { label: t('crm.contract_redesign.status_active'), variant: 'success' as const },
+    completed: { label: t('crm.contract_redesign.status_completed'), variant: 'info' as const },
+    expired: { label: t('crm.contract_redesign.status_expired'), variant: 'default' as const },
+    terminated: { label: t('crm.contract_redesign.status_terminated'), variant: 'error' as const },
+  };
+
 
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'pending' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -268,10 +271,10 @@ const CrmContractRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '合同删除成功');
+      pushToast('success', t('crm.contract_redesign.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('crm.contract_redesign.toast_delete_fail'));
     },
   });
 
@@ -299,10 +302,10 @@ const CrmContractRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '合同创建成功');
+      pushToast('success', t('crm.contract_redesign.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('crm.contract_redesign.toast_create_fail'));
     },
   });
 
@@ -319,10 +322,10 @@ const CrmContractRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '合同更新成功');
+      pushToast('success', t('crm.contract_redesign.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('crm.contract_redesign.toast_update_fail'));
     },
   });
 
@@ -348,23 +351,23 @@ const CrmContractRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'active', label: '生效中', badge: stats.active },
-      { id: 'pending', label: '待签署', badge: stats.pending },
+      { id: 'all', label: t('crm.contract_redesign.tab_all') },
+      { id: 'active', label: t('crm.contract_redesign.status_active'), badge: stats.active },
+      { id: 'pending', label: t('crm.contract_redesign.status_pending'), badge: stats.pending },
       {
         id: 'completed',
-        label: '已完成',
+        label: t('crm.contract_redesign.status_completed'),
         badge: contracts.filter((c) => c.status === 'completed').length,
       },
     ],
-    [stats, contracts]
+    [stats, contracts, t]
   );
 
   const columns: DataTableColumn<Contract>[] = useMemo(
     () => [
       {
         key: 'contract_no',
-        header: '合同编号',
+        header: t('crm.contract_redesign.col_contract_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -380,7 +383,7 @@ const CrmContractRedesignPage: React.FC = () => {
       },
       {
         key: 'title',
-        header: '合同名称',
+        header: t('crm.contract_redesign.col_title'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.title}</div>
@@ -392,7 +395,7 @@ const CrmContractRedesignPage: React.FC = () => {
       },
       {
         key: 'type',
-        header: '合同类型',
+        header: t('crm.contract_redesign.col_type'),
         align: 'center',
         render: (row) => {
           const config = typeConfig[row.type] || typeConfig.sales;
@@ -401,7 +404,7 @@ const CrmContractRedesignPage: React.FC = () => {
       },
       {
         key: 'amount',
-        header: '合同金额',
+        header: t('crm.contract_redesign.col_amount'),
         align: 'right',
         sortable: true,
         render: (row) => (
@@ -412,17 +415,17 @@ const CrmContractRedesignPage: React.FC = () => {
       },
       {
         key: 'start_date',
-        header: '生效日期',
+        header: t('crm.contract_redesign.col_start_date'),
         sortable: true,
       },
       {
         key: 'end_date',
-        header: '到期日期',
+        header: t('crm.contract_redesign.col_end_date'),
         sortable: true,
       },
       {
         key: 'owner',
-        header: '负责人',
+        header: t('crm.contract_redesign.field_owner'),
         render: (row) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <User
@@ -435,7 +438,7 @@ const CrmContractRedesignPage: React.FC = () => {
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('crm.contract_redesign.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.draft;
@@ -444,7 +447,7 @@ const CrmContractRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('crm.contract_redesign.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -457,7 +460,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('crm.contract_redesign.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -468,7 +471,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('crm.contract_redesign.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -476,13 +479,13 @@ const CrmContractRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('crm.contract_redesign.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedContract, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedContract, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -499,17 +502,17 @@ const CrmContractRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('crm.contract_redesign.mock_banner')}
         </div>
       )}
       <ListPageTemplate<Contract>
         header={{
-          title: '合同管理',
-          subtitle: '管理销售合同、框架协议和服务合同，跟踪合同执行状态',
+          title: t('crm.contract_redesign.title'),
+          subtitle: t('crm.contract_redesign.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '客户管理' },
-            { label: '合同管理' },
+            { label: t('crm.contract_redesign.breadcrumb_home'), href: '/dashboard' },
+            { label: t('crm.contract_redesign.breadcrumb_crm') },
+            { label: t('crm.contract_redesign.title') },
           ],
         }}
         toolbar={
@@ -523,7 +526,7 @@ const CrmContractRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索合同编号/名称/客户...'
+                placeholder={t('crm.contract_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -533,11 +536,11 @@ const CrmContractRedesignPage: React.FC = () => {
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部类型' },
-                  { value: 'sales', label: '销售合同' },
-                  { value: 'purchase', label: '采购合同' },
-                  { value: 'service', label: '服务合同' },
-                  { value: 'framework', label: '框架协议' },
+                  { value: 'all', label: t('crm.contract_redesign.filter_type_all') },
+                  { value: 'sales', label: t('crm.contract_redesign.type_sales') },
+                  { value: 'purchase', label: t('crm.contract_redesign.type_purchase') },
+                  { value: 'service', label: t('crm.contract_redesign.type_service') },
+                  { value: 'framework', label: t('crm.contract_redesign.type_framework') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -548,7 +551,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('crm.contract_redesign.btn_refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -558,7 +561,7 @@ const CrmContractRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建合同
+                {t('crm.contract_redesign.btn_create')}
               </Button>
             </div>
           </>
@@ -568,8 +571,8 @@ const CrmContractRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无合同'
-        emptyDescription='点击右上角「新建合同」按钮创建第一个合同'
+        emptyTitle={t('crm.contract_redesign.empty_title')}
+        emptyDescription={t('crm.contract_redesign.empty_description')}
         footer={
           <div
             style={{
@@ -579,25 +582,25 @@ const CrmContractRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='合同总数'
+              label={t('crm.contract_redesign.stat_total')}
               value={stats.total}
               icon={FileText}
               accent='cyan'
             />
             <StatTile
-              label='生效中'
+              label={t('crm.contract_redesign.stat_active')}
               value={stats.active}
               icon={CheckCircle}
               accent='success'
             />
             <StatTile
-              label='待签署'
+              label={t('crm.contract_redesign.stat_pending')}
               value={stats.pending}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='生效中合同金额'
+              label={t('crm.contract_redesign.stat_active_amount')}
               value={formatAmount(stats.activeAmount)}
               icon={DollarSign}
               accent='amber'
@@ -637,7 +640,7 @@ const CrmContractRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedContract(null);
         }}
-        title='合同详情'
+        title={t('crm.contract_redesign.drawer_title')}
         size='lg'
       >
         {selectedContract && (
@@ -669,36 +672,36 @@ const CrmContractRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={typeConfig[selectedContract.type]?.variant || 'default'}>
-                    {typeConfig[selectedContract.type]?.label || '未知'}
+                    {typeConfig[selectedContract.type]?.label || t('crm.contract_redesign.label_unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedContract.status]?.variant || 'default'}>
-                    {statusConfig[selectedContract.status]?.label || '未知'}
+                    {statusConfig[selectedContract.status]?.label || t('crm.contract_redesign.label_unknown')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card title='合同金额'>
+            <Card title={t('crm.contract_redesign.section_amount')}>
               <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)' }}>
                 {formatAmount(selectedContract.amount)}
               </div>
             </Card>
 
-            <Card title='合同信息'>
+            <Card title={t('crm.contract_redesign.section_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    签署日期
+                    {t('crm.contract_redesign.field_sign_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedContract.sign_date || '未签署'}
+                    {selectedContract.sign_date || t('crm.contract_redesign.not_signed')}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    负责人
+                    {t('crm.contract_redesign.field_owner')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedContract.owner}
@@ -706,19 +709,19 @@ const CrmContractRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    生效日期
+                    {t('crm.contract_redesign.col_start_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedContract.start_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    到期日期
+                    {t('crm.contract_redesign.col_end_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedContract.end_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('crm.contract_redesign.field_create_time')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedContract.created_at)}
@@ -734,7 +737,7 @@ const CrmContractRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedContract ? '编辑合同' : '新建合同'}
+        title={selectedContract ? t('crm.contract_redesign.modal_edit_title') : t('crm.contract_redesign.modal_create_title')}
         size='lg'
         footer={
           <>
@@ -742,32 +745,24 @@ const CrmContractRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('crm.contract_redesign.btn_cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<Contract> = {
                   title:
-                    (document.querySelector('input[placeholder*="合同标题"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   customer_name:
-                    (document.querySelector('input[placeholder*="客户名称"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   amount: Number(
-                    (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
+                    (document.getElementById('field-4') as HTMLInputElement)?.value || 0
                   ),
                   sign_date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                    (document.getElementById('field-6') as HTMLInputElement)?.value || '',
                   end_date:
-                    (document.querySelectorAll('input[type="date"]')[1] as HTMLInputElement)
-                      ?.value || '',
-                  owner:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="负责人"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
+                    (document.getElementById('field-7') as HTMLInputElement)?.value || '',
+                  owner: '',
                 };
                 if (selectedContract) {
                   updateMutation.mutate({ id: selectedContract.id, data: formData });
@@ -776,7 +771,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedContract ? '保存修改' : '创建合同'}
+              {selectedContract ? t('crm.contract_redesign.btn_save') : t('crm.contract_redesign.btn_submit_create')}
             </Button>
           </>
         }
@@ -787,11 +782,11 @@ const CrmContractRedesignPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              合同名称 *
+              {t('crm.contract_redesign.field_title_required')}
             </label>
             <Input
               id='field-1'
-              placeholder='例如：伺服电机年度采购合同'
+              placeholder={t('crm.contract_redesign.ph_title_example')}
               defaultValue={selectedContract?.title}
             />
           </div>
@@ -801,11 +796,11 @@ const CrmContractRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                客户名称 *
+                {t('crm.contract_redesign.field_customer_name_required')}
               </label>
               <Input
                 id='field-2'
-                placeholder='请输入客户名称'
+                placeholder={t('crm.contract_redesign.ph_customer_name')}
                 defaultValue={selectedContract?.customer_name}
               />
             </div>
@@ -814,16 +809,16 @@ const CrmContractRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                合同类型 *
+                {t('crm.contract_redesign.field_type_required')}
               </label>
               <Select
                 id='field-3'
                 defaultValue={selectedContract?.type || 'sales'}
                 options={[
-                  { value: 'sales', label: '销售合同' },
-                  { value: 'purchase', label: '采购合同' },
-                  { value: 'service', label: '服务合同' },
-                  { value: 'framework', label: '框架协议' },
+                  { value: 'sales', label: t('crm.contract_redesign.type_sales') },
+                  { value: 'purchase', label: t('crm.contract_redesign.type_purchase') },
+                  { value: 'service', label: t('crm.contract_redesign.type_service') },
+                  { value: 'framework', label: t('crm.contract_redesign.type_framework') },
                 ]}
               />
             </div>
@@ -832,12 +827,12 @@ const CrmContractRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                合同金额（元）
+                {t('crm.contract_redesign.field_amount')}
               </label>
               <Input
                 id='field-4'
                 type='number'
-                placeholder='例如：100000'
+                placeholder={t('crm.contract_redesign.ph_amount_example')}
                 defaultValue={selectedContract?.amount}
               />
             </div>
@@ -846,18 +841,18 @@ const CrmContractRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                合同状态
+                {t('crm.contract_redesign.field_status')}
               </label>
               <Select
                 id='field-5'
                 defaultValue={selectedContract?.status || 'draft'}
                 options={[
-                  { value: 'draft', label: '草稿' },
-                  { value: 'pending', label: '待签署' },
-                  { value: 'active', label: '生效中' },
-                  { value: 'completed', label: '已完成' },
-                  { value: 'expired', label: '已过期' },
-                  { value: 'terminated', label: '已终止' },
+                  { value: 'draft', label: t('crm.contract_redesign.status_draft') },
+                  { value: 'pending', label: t('crm.contract_redesign.status_pending') },
+                  { value: 'active', label: t('crm.contract_redesign.status_active') },
+                  { value: 'completed', label: t('crm.contract_redesign.status_completed') },
+                  { value: 'expired', label: t('crm.contract_redesign.status_expired') },
+                  { value: 'terminated', label: t('crm.contract_redesign.status_terminated') },
                 ]}
               />
             </div>
@@ -866,7 +861,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                生效日期
+                {t('crm.contract_redesign.col_start_date')}
               </label>
               <Input
                 id='field-6'
@@ -879,7 +874,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 htmlFor='field-7'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                到期日期
+                {t('crm.contract_redesign.col_end_date')}
               </label>
               <Input
                 id='field-7'
@@ -895,7 +890,7 @@ const CrmContractRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除合同'
+        title={t('crm.contract_redesign.delete_title')}
         size='sm'
         footer={
           <>
@@ -903,20 +898,20 @@ const CrmContractRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('crm.contract_redesign.btn_cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('crm.contract_redesign.btn_confirm_delete')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除合同「{deleteTarget?.title}」吗？此操作不可撤销。
+          {t('crm.contract_redesign.delete_confirm_message', { name: deleteTarget?.title })}
         </p>
       </Modal>
 

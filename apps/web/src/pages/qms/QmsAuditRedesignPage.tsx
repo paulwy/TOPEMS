@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -148,29 +149,36 @@ const mockAuditPlans: AuditPlan[] = [
   },
 ];
 
-const statusConfig = {
-  planned: { label: '已计划', variant: 'info' as const, icon: Calendar },
-  in_progress: { label: '审核中', variant: 'warning' as const, icon: ClipboardCheck },
-  completed: { label: '已完成', variant: 'success' as const, icon: CheckCircle },
-  cancelled: { label: '已取消', variant: 'default' as const, icon: AlertTriangle },
-};
-
-const typeConfig = {
-  internal: { label: '内部审核', variant: 'cyan' as const },
-  external: { label: '外部审核', variant: 'info' as const },
-  system: { label: '体系审核', variant: 'amber' as const },
-  process: { label: '过程审核', variant: 'warning' as const },
-  product: { label: '产品审核', variant: 'success' as const },
-  supplier: { label: '供应商审核', variant: 'default' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
 };
 
 const QmsAuditRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const statusConfig = useMemo(
+    () => ({
+      planned: { label: t('qms.audit_redesign.status_planned'), variant: 'info' as const, icon: Calendar },
+      in_progress: { label: t('qms.audit_redesign.status_in_progress'), variant: 'warning' as const, icon: ClipboardCheck },
+      completed: { label: t('qms.audit_redesign.status_completed'), variant: 'success' as const, icon: CheckCircle },
+      cancelled: { label: t('qms.audit_redesign.status_cancelled'), variant: 'default' as const, icon: AlertTriangle },
+    }),
+    [t]
+  );
+
+  const typeConfig = useMemo(
+    () => ({
+      internal: { label: t('qms.audit_redesign.type_internal'), variant: 'cyan' as const },
+      external: { label: t('qms.audit_redesign.type_external'), variant: 'info' as const },
+      system: { label: t('qms.audit_redesign.type_system'), variant: 'amber' as const },
+      process: { label: t('qms.audit_redesign.type_process'), variant: 'warning' as const },
+      product: { label: t('qms.audit_redesign.type_product'), variant: 'success' as const },
+      supplier: { label: t('qms.audit_redesign.type_supplier'), variant: 'default' as const },
+    }),
+    [t]
+  );
 
   const [activeTab, setActiveTab] = useState<'all' | 'planned' | 'in_progress' | 'completed'>(
     'all'
@@ -262,10 +270,10 @@ const QmsAuditRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '审核计划删除成功');
+      pushToast('success', t('qms.audit_redesign.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('qms.audit_redesign.toast_delete_fail'));
     },
   });
 
@@ -290,10 +298,10 @@ const QmsAuditRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '审核计划创建成功');
+      pushToast('success', t('qms.audit_redesign.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('qms.audit_redesign.toast_create_fail'));
     },
   });
 
@@ -314,10 +322,10 @@ const QmsAuditRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '审核计划更新成功');
+      pushToast('success', t('qms.audit_redesign.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('qms.audit_redesign.toast_update_fail'));
     },
   });
 
@@ -343,19 +351,19 @@ const QmsAuditRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'planned', label: '已计划', badge: stats.planned },
-      { id: 'in_progress', label: '审核中', badge: stats.inProgress },
-      { id: 'completed', label: '已完成', badge: stats.completed },
+      { id: 'all', label: t('qms.audit_redesign.tab_all') },
+      { id: 'planned', label: t('qms.audit_redesign.tab_planned'), badge: stats.planned },
+      { id: 'in_progress', label: t('qms.audit_redesign.tab_in_progress'), badge: stats.inProgress },
+      { id: 'completed', label: t('qms.audit_redesign.tab_completed'), badge: stats.completed },
     ],
-    [stats]
+    [stats, t]
   );
 
   const columns: DataTableColumn<AuditPlan>[] = useMemo(
     () => [
       {
         key: 'audit_no',
-        header: '审核编号',
+        header: t('qms.audit_redesign.col_audit_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -371,7 +379,7 @@ const QmsAuditRedesignPage: React.FC = () => {
       },
       {
         key: 'title',
-        header: '审核标题',
+        header: t('qms.audit_redesign.col_title'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.title}</div>
@@ -383,7 +391,7 @@ const QmsAuditRedesignPage: React.FC = () => {
       },
       {
         key: 'audit_type',
-        header: '审核类型',
+        header: t('qms.audit_redesign.col_type'),
         align: 'center',
         render: (row) => {
           const config = typeConfig[row.audit_type] || typeConfig.internal;
@@ -392,31 +400,31 @@ const QmsAuditRedesignPage: React.FC = () => {
       },
       {
         key: 'auditor',
-        header: '审核员',
+        header: t('qms.audit_redesign.col_auditor'),
       },
       {
         key: 'auditee',
-        header: '受审核方',
+        header: t('qms.audit_redesign.col_auditee'),
       },
       {
         key: 'plan_date',
-        header: '计划日期',
+        header: t('qms.audit_redesign.col_plan_date'),
         sortable: true,
       },
       {
         key: 'findings',
-        header: '发现项',
+        header: t('qms.audit_redesign.col_findings'),
         align: 'center',
         render: (row) =>
           row.findings > 0 ? (
-            <Badge variant='warning'>{row.findings} 项</Badge>
+            <Badge variant='warning'>{row.findings} {t('qms.audit_redesign.findings_unit')}</Badge>
           ) : (
             <span style={{ color: 'var(--text-tertiary)' }}>-</span>
           ),
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('qms.audit_redesign.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.planned;
@@ -425,7 +433,7 @@ const QmsAuditRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('qms.audit_redesign.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -438,7 +446,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('qms.audit_redesign.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -449,7 +457,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('qms.audit_redesign.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -457,13 +465,13 @@ const QmsAuditRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('qms.audit_redesign.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedAudit, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedAudit, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -480,17 +488,17 @@ const QmsAuditRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('qms.audit_redesign.banner_demo_mode')}
         </div>
       )}
       <ListPageTemplate<AuditPlan>
         header={{
-          title: '质量审核管理',
-          subtitle: '管理内部审核、外部审核和专项审核计划',
+          title: t('qms.audit_redesign.header_title'),
+          subtitle: t('qms.audit_redesign.header_subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '质量管理' },
-            { label: '审核管理' },
+            { label: t('qms.audit_redesign.breadcrumb_home'), href: '/dashboard' },
+            { label: t('qms.audit_redesign.breadcrumb_qms') },
+            { label: t('qms.audit_redesign.breadcrumb_audit') },
           ],
         }}
         toolbar={
@@ -504,7 +512,7 @@ const QmsAuditRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索审核编号/标题/范围...'
+                placeholder={t('qms.audit_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -514,12 +522,12 @@ const QmsAuditRedesignPage: React.FC = () => {
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部类型' },
-                  { value: 'internal', label: '内部审核' },
-                  { value: 'external', label: '外部审核' },
-                  { value: 'process', label: '过程审核' },
-                  { value: 'product', label: '产品审核' },
-                  { value: 'supplier', label: '供应商审核' },
+                  { value: 'all', label: t('qms.audit_redesign.type_filter_all') },
+                  { value: 'internal', label: t('qms.audit_redesign.type_internal') },
+                  { value: 'external', label: t('qms.audit_redesign.type_external') },
+                  { value: 'process', label: t('qms.audit_redesign.type_process') },
+                  { value: 'product', label: t('qms.audit_redesign.type_product') },
+                  { value: 'supplier', label: t('qms.audit_redesign.type_supplier') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -530,7 +538,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('qms.audit_redesign.refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -540,7 +548,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建审核计划
+                {t('qms.audit_redesign.create')}
               </Button>
             </div>
           </>
@@ -550,8 +558,8 @@ const QmsAuditRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无审核计划'
-        emptyDescription='点击右上角「新建审核计划」按钮创建第一个审核任务'
+        emptyTitle={t('qms.audit_redesign.empty_title')}
+        emptyDescription={t('qms.audit_redesign.empty_description')}
         footer={
           <div
             style={{
@@ -561,25 +569,25 @@ const QmsAuditRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='审核计划总数'
+              label={t('qms.audit_redesign.stat_total')}
               value={stats.total}
               icon={ClipboardCheck}
               accent='cyan'
             />
             <StatTile
-              label='已计划'
+              label={t('qms.audit_redesign.tab_planned')}
               value={stats.planned}
               icon={Calendar}
               accent='amber'
             />
             <StatTile
-              label='审核中'
+              label={t('qms.audit_redesign.tab_in_progress')}
               value={stats.inProgress}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='累计发现项'
+              label={t('qms.audit_redesign.stat_findings')}
               value={stats.totalFindings}
               icon={AlertTriangle}
               accent='success'
@@ -619,7 +627,7 @@ const QmsAuditRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedAudit(null);
         }}
-        title='审核计划详情'
+        title={t('qms.audit_redesign.drawer_title')}
         size='lg'
       >
         {selectedAudit && (
@@ -648,28 +656,28 @@ const QmsAuditRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={typeConfig[selectedAudit.audit_type]?.variant || 'default'}>
-                    {typeConfig[selectedAudit.audit_type]?.label || '未知'}
+                    {typeConfig[selectedAudit.audit_type]?.label || t('qms.audit_redesign.unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedAudit.status]?.variant || 'default'}>
-                    {statusConfig[selectedAudit.status]?.label || '未知'}
+                    {statusConfig[selectedAudit.status]?.label || t('qms.audit_redesign.unknown')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card title='审核范围'>
+            <Card title={t('qms.audit_redesign.card_scope')}>
               <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
                 {selectedAudit.scope}
               </p>
             </Card>
 
-            <Card title='基本信息'>
+            <Card title={t('qms.audit_redesign.card_basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    审核员
+                    {t('qms.audit_redesign.col_auditor')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedAudit.auditor}
@@ -677,7 +685,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    受审核方
+                    {t('qms.audit_redesign.col_auditee')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedAudit.auditee}
@@ -685,13 +693,13 @@ const QmsAuditRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    计划日期
+                    {t('qms.audit_redesign.col_plan_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedAudit.plan_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    实际日期
+                    {t('qms.audit_redesign.drawer_actual_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {selectedAudit.actual_date || '-'}
@@ -699,15 +707,15 @@ const QmsAuditRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    发现项数
+                    {t('qms.audit_redesign.drawer_findings')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
-                    {selectedAudit.findings} 项
+                    {selectedAudit.findings} {t('qms.audit_redesign.findings_unit')}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('qms.audit_redesign.drawer_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedAudit.created_at)}
@@ -723,7 +731,11 @@ const QmsAuditRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedAudit ? '编辑审核计划' : '新建审核计划'}
+        title={
+          selectedAudit
+            ? t('qms.audit_redesign.modal_edit_title')
+            : t('qms.audit_redesign.create')
+        }
         size='lg'
         footer={
           <>
@@ -731,29 +743,22 @@ const QmsAuditRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('qms.audit_redesign.cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<AuditPlan> = {
-                  audit_no:
-                    (document.querySelector('input[placeholder*="计划编号"]') as HTMLInputElement)
-                      ?.value || '',
+                  audit_no: '',
                   title:
-                    (document.querySelector('input[placeholder*="审核标题"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   audit_type:
-                    ((document.querySelector('select') as HTMLSelectElement)
+                    ((document.getElementById('field-2') as HTMLSelectElement)
                       ?.value as AuditPlan['audit_type']) || 'internal',
                   auditor:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="审核员"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
+                    (document.getElementById('field-3') as HTMLInputElement)?.value || '',
                   plan_date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                    (document.getElementById('field-5') as HTMLInputElement)?.value || '',
                 };
                 if (selectedAudit) {
                   updateMutation.mutate({ id: selectedAudit.id, data: formData });
@@ -762,7 +767,9 @@ const QmsAuditRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedAudit ? '保存修改' : '创建审核计划'}
+              {selectedAudit
+                ? t('qms.audit_redesign.modal_save')
+                : t('qms.audit_redesign.modal_submit_create')}
             </Button>
           </>
         }
@@ -773,11 +780,11 @@ const QmsAuditRedesignPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              审核标题 *
+              {t('qms.audit_redesign.field_title_label')}
             </label>
             <Input
               id='field-1'
-              placeholder='例如：9月内部质量体系审核'
+              placeholder={t('qms.audit_redesign.field_title_placeholder')}
               defaultValue={selectedAudit?.title}
             />
           </div>
@@ -787,17 +794,17 @@ const QmsAuditRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                审核类型 *
+                {t('qms.audit_redesign.field_type_label')}
               </label>
               <Select
                 id='field-2'
                 defaultValue={selectedAudit?.audit_type || 'internal'}
                 options={[
-                  { value: 'internal', label: '内部审核' },
-                  { value: 'external', label: '外部审核' },
-                  { value: 'process', label: '过程审核' },
-                  { value: 'product', label: '产品审核' },
-                  { value: 'supplier', label: '供应商审核' },
+                  { value: 'internal', label: t('qms.audit_redesign.type_internal') },
+                  { value: 'external', label: t('qms.audit_redesign.type_external') },
+                  { value: 'process', label: t('qms.audit_redesign.type_process') },
+                  { value: 'product', label: t('qms.audit_redesign.type_product') },
+                  { value: 'supplier', label: t('qms.audit_redesign.type_supplier') },
                 ]}
               />
             </div>
@@ -806,11 +813,11 @@ const QmsAuditRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                审核员
+                {t('qms.audit_redesign.col_auditor')}
               </label>
               <Input
                 id='field-3'
-                placeholder='请输入审核员'
+                placeholder={t('qms.audit_redesign.field_auditor_placeholder')}
                 defaultValue={selectedAudit?.auditor}
               />
             </div>
@@ -819,11 +826,11 @@ const QmsAuditRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                受审核方
+                {t('qms.audit_redesign.col_auditee')}
               </label>
               <Input
                 id='field-4'
-                placeholder='请输入受审核方'
+                placeholder={t('qms.audit_redesign.field_auditee_placeholder')}
                 defaultValue={selectedAudit?.auditee}
               />
             </div>
@@ -832,7 +839,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                计划日期
+                {t('qms.audit_redesign.col_plan_date')}
               </label>
               <Input
                 id='field-5'
@@ -846,11 +853,11 @@ const QmsAuditRedesignPage: React.FC = () => {
               htmlFor='field-6'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              审核范围
+              {t('qms.audit_redesign.card_scope')}
             </label>
             <Input
               id='field-6'
-              placeholder='例如：全公司 ISO 9001 体系'
+              placeholder={t('qms.audit_redesign.field_scope_placeholder')}
               defaultValue={selectedAudit?.scope}
             />
           </div>
@@ -861,7 +868,7 @@ const QmsAuditRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除审核计划'
+        title={t('qms.audit_redesign.delete_title')}
         size='sm'
         footer={
           <>
@@ -869,20 +876,20 @@ const QmsAuditRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('qms.audit_redesign.cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('qms.audit_redesign.delete_confirm')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除审核计划「{deleteTarget?.audit_no}」吗？此操作不可撤销。
+          {t('qms.audit_redesign.delete_message', { audit_no: deleteTarget?.audit_no })}
         </p>
       </Modal>
 

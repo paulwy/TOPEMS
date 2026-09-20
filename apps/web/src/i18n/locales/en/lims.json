@@ -2947,5 +2947,6 @@
   "lims.nav.lims-proficiency-testing_desc": "Proficiency Testing",
   "lims.nav.lims-sample-detail_desc": "Sample Details",
   "lims.nav.lims-task-detail_desc": "Task Details",
-  "lims.nav.lims-instrument-detail_desc": "Instrument Details"
+  "lims.nav.lims-instrument-detail_desc": "Instrument Details",
+  "lims.parse_test_dialog.empty_hint": "Click \"{{action}}\" to {{suffix}}"
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   Line,
@@ -20,6 +21,7 @@ import { wmsAnalyticsApi } from '@/api/wms/analytics';
 import type { WmsOrderFulfillmentData } from '@/api/wms/analytics';
 
 export default function WmsOrderFulfillmentPage() {
+  const { t } = useTranslation();
   const { startDate, endDate } = getDefaultDateRange();
   const [groupBy, setGroupBy] = useState<'month' | 'week' | 'day'>('month');
 
@@ -63,33 +65,33 @@ export default function WmsOrderFulfillmentPage() {
     () => [
       {
         id: 'fulfillment-rate',
-        title: '履约率',
+        title: t('wms.order_fulfillment.stat_fulfillment_rate'),
         value: summary.fulfillmentRate.toFixed(1),
         suffix: '%',
         color: 'success' as const,
       },
       {
         id: 'avg-days',
-        title: '平均履约天数',
+        title: t('wms.order_fulfillment.stat_avg_days'),
         value: summary.avgDays.toFixed(1),
-        suffix: '天',
+        suffix: t('wms.order_fulfillment.unit_day'),
         color: 'info' as const,
       },
       {
         id: 'on-time-rate',
-        title: '准时率',
+        title: t('wms.order_fulfillment.stat_on_time_rate'),
         value: summary.onTimeRate.toFixed(1),
         suffix: '%',
         color: 'secondary' as const,
       },
       {
         id: 'total-orders',
-        title: '总订单数',
+        title: t('wms.order_fulfillment.stat_total_orders'),
         value: summary.totalOrders,
         color: 'warning' as const,
       },
     ],
-    [summary]
+    [summary, t]
   );
 
   if (loading) {
@@ -105,7 +107,7 @@ export default function WmsOrderFulfillmentPage() {
         showTables={false}
       >
         <div className='flex h-64 items-center justify-center'>
-          <div className='text-gray-500'>加载中...</div>
+          <div className='text-gray-500'>{t('wms.order_fulfillment.loading')}</div>
         </div>
       </StatsPageTemplate>
     );
@@ -124,12 +126,12 @@ export default function WmsOrderFulfillmentPage() {
         showTables={false}
       >
         <div className='flex h-64 flex-col items-center justify-center gap-4'>
-          <div className='text-red-500'>加载失败: {error}</div>
+          <div className='text-red-500'>{t('wms.order_fulfillment.load_failed')}: {error}</div>
           <button
             onClick={reload}
             className='rounded bg-primary px-4 py-2 text-white hover:bg-primary-dark'
           >
-            重试
+            {t('wms.order_fulfillment.retry')}
           </button>
         </div>
       </StatsPageTemplate>
@@ -151,7 +153,7 @@ export default function WmsOrderFulfillmentPage() {
       <div className='space-y-4'>
         {/* 时间粒度选择 */}
         <div className='flex items-center gap-4'>
-          <span className='text-sm text-gray-600'>时间粒度:</span>
+          <span className='text-sm text-gray-600'>{t('wms.order_fulfillment.time_granularity')}:</span>
           <div className='flex gap-2'>
             {(['month', 'week', 'day'] as const).map((g) => (
               <button
@@ -163,7 +165,11 @@ export default function WmsOrderFulfillmentPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {g === 'month' ? '月' : g === 'week' ? '周' : '日'}
+                {g === 'month'
+                  ? t('wms.order_fulfillment.granularity_month')
+                  : g === 'week'
+                    ? t('wms.order_fulfillment.granularity_week')
+                    : t('wms.order_fulfillment.granularity_day')}
               </button>
             ))}
           </div>
@@ -171,7 +177,7 @@ export default function WmsOrderFulfillmentPage() {
 
         {/* 履约率趋势图 */}
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>履约率趋势</h3>
+          <h3 className='mb-2 font-semibold'>{t('wms.order_fulfillment.chart_fulfillment_trend')}</h3>
           <ResponsiveContainer
             width='100%'
             height={360}
@@ -201,7 +207,7 @@ export default function WmsOrderFulfillmentPage() {
                 yAxisId='left'
                 type='monotone'
                 dataKey='fulfillmentRate'
-                name='履约率(%)'
+                name={t('wms.order_fulfillment.series_fulfillment_rate')}
                 fill={designTokens.colors.success.light}
                 stroke={designTokens.colors.success.dark}
                 strokeWidth={2}
@@ -210,7 +216,7 @@ export default function WmsOrderFulfillmentPage() {
                 yAxisId='left'
                 type='monotone'
                 dataKey='onTimeRate'
-                name='准时率(%)'
+                name={t('wms.order_fulfillment.series_on_time_rate')}
                 stroke={designTokens.colors.primary.main}
                 strokeWidth={2}
                 dot={{ r: 2 }}
@@ -218,7 +224,7 @@ export default function WmsOrderFulfillmentPage() {
               <Bar
                 yAxisId='right'
                 dataKey='totalOrders'
-                name='订单数'
+                name={t('wms.order_fulfillment.series_order_count')}
                 fill={designTokens.colors.secondary.light}
                 radius={[4, 4, 0, 0]}
               />
@@ -228,7 +234,7 @@ export default function WmsOrderFulfillmentPage() {
 
         {/* 平均履约天数趋势 */}
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>平均履约天数趋势</h3>
+          <h3 className='mb-2 font-semibold'>{t('wms.order_fulfillment.chart_avg_days_trend')}</h3>
           <ResponsiveContainer
             width='100%'
             height={300}
@@ -244,7 +250,7 @@ export default function WmsOrderFulfillmentPage() {
               <Legend />
               <Bar
                 dataKey='avgDays'
-                name='平均履约天数'
+                name={t('wms.order_fulfillment.stat_avg_days')}
                 fill={designTokens.colors.primary.main}
                 radius={[4, 4, 0, 0]}
               />
@@ -254,7 +260,7 @@ export default function WmsOrderFulfillmentPage() {
 
         {/* 订单数量对比 */}
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>订单数量对比</h3>
+          <h3 className='mb-2 font-semibold'>{t('wms.order_fulfillment.chart_order_comparison')}</h3>
           <ResponsiveContainer
             width='100%'
             height={300}
@@ -270,19 +276,19 @@ export default function WmsOrderFulfillmentPage() {
               <Legend />
               <Bar
                 dataKey='totalOrders'
-                name='总订单'
+                name={t('wms.order_fulfillment.series_total_orders')}
                 fill={designTokens.colors.secondary.light}
                 radius={[4, 4, 0, 0]}
               />
               <Bar
                 dataKey='fulfilledOrders'
-                name='已履约'
+                name={t('wms.order_fulfillment.series_fulfilled')}
                 fill={designTokens.colors.success.dark}
                 radius={[4, 4, 0, 0]}
               />
               <Bar
                 dataKey='onTimeOrders'
-                name='准时履约'
+                name={t('wms.order_fulfillment.series_on_time_fulfilled')}
                 fill={designTokens.colors.primary.main}
                 radius={[4, 4, 0, 0]}
               />

@@ -215,8 +215,11 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
           }}
         >
           <Typography variant='body2'>
-            暂无根因分析数据，点击上方"{i18n.t('pages.qms_eight_d_page.k15')}"
-            {i18n.t('ai.document_analysis.button.start_analysis')}
+            {i18n.t('qms.eight_d_page.no_root_cause_data', {
+              action:
+                i18n.t('pages.qms_eight_d_page.k15') +
+                i18n.t('ai.document_analysis.button.start_analysis'),
+            })}
           </Typography>
         </Paper>
       )}

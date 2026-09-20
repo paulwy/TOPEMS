@@ -187,7 +187,7 @@ const UserManagementPage: React.FC = () => {
         align: 'center',
         render: (row) => (
           <Badge variant={row.isactive ? 'success' : 'default'}>
-            {row.isactive ? '启用' : '禁用'}
+            {row.isactive ? i18n.t('iam.user_management.status_active') : i18n.t('iam.user_management.status_inactive')}
           </Badge>
         ),
       },
@@ -259,19 +259,19 @@ const UserManagementPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
           <FilterChip
-            label='全部'
+            label={i18n.t('iam.user_management.filter_all')}
             active={statusFilter === 'all'}
             onRemove={statusFilter === 'all' ? undefined : () => setStatusFilter('all')}
             onClick={() => setStatusFilter('all')}
           />
           <FilterChip
-            label='启用'
+            label={i18n.t('iam.user_management.status_active')}
             active={statusFilter === 'active'}
             onRemove={statusFilter === 'active' ? undefined : () => setStatusFilter('all')}
             onClick={() => setStatusFilter('active')}
           />
           <FilterChip
-            label='禁用'
+            label={i18n.t('iam.user_management.status_inactive')}
             active={statusFilter === 'inactive'}
             onRemove={statusFilter === 'inactive' ? undefined : () => setStatusFilter('all')}
             onClick={() => setStatusFilter('inactive')}
@@ -352,7 +352,7 @@ const UserManagementPage: React.FC = () => {
         title={i18n.t('iam.user_management_page.k18')}
         description={
           deleteTarget
-            ? `${i18n.t('iam.user_management_page.k19')}「${deleteTarget.username}」？此操作不可撤销。`
+            ? i18n.t('iam.user_management.confirm_delete', { name: deleteTarget.username })
             : ''
         }
         size='sm'
@@ -487,8 +487,8 @@ const UserDrawer: React.FC<{
               label={i18n.t('iam.user_management_page.k32')}
               value={formData.isactive ? 'active' : 'inactive'}
               options={[
-                { value: 'active', label: '启用' },
-                { value: 'inactive', label: '禁用' },
+                { value: 'active', label: i18n.t('iam.user_management.status_active') },
+                { value: 'inactive', label: i18n.t('iam.user_management.status_inactive') },
               ]}
               onChange={(e) =>
                 setFormData((d) => ({ ...d, isactive: e.target.value === 'active' }))

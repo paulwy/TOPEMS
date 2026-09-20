@@ -187,7 +187,7 @@ export const MonitorSettingsPage: React.FC = () => {
       } catch {
         addNotification({
           title: i18n.t('monitor.monitor_settings_page.k0'),
-          message: '设置保存失败，请稍后重试',
+          message: i18n.t('monitor.monitor_settings.save_failed'),
           type: 'error',
         });
       }

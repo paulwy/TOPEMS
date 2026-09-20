@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -141,32 +142,42 @@ const mockInspections: Inspection[] = [
   },
 ];
 
-const statusConfig = {
-  pending: { label: '待检验', variant: 'warning' as const, icon: Clock },
-  in_progress: { label: '检验中', variant: 'info' as const, icon: ClipboardCheck },
-  completed: { label: '已完成', variant: 'success' as const, icon: CheckCircle },
-  rejected: { label: '不合格', variant: 'error' as const, icon: XCircle },
-};
-
-const typeConfig = {
-  incoming: { label: '来料检验', variant: 'cyan' as const },
-  process: { label: '过程检验', variant: 'info' as const },
-  final: { label: '成品检验', variant: 'amber' as const },
-};
-
-const resultConfig = {
-  qualified: { label: '合格', variant: 'success' as const },
-  unqualified: { label: '不合格', variant: 'error' as const },
-  pending: { label: '待判定', variant: 'default' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
 };
 
 const QmsInspectionPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const statusConfig = useMemo(
+    () => ({
+      pending: { label: t('qms.inspection_redesign.status_pending'), variant: 'warning' as const, icon: Clock },
+      in_progress: { label: t('qms.inspection_redesign.status_in_progress'), variant: 'info' as const, icon: ClipboardCheck },
+      completed: { label: t('qms.inspection_redesign.status_completed'), variant: 'success' as const, icon: CheckCircle },
+      rejected: { label: t('qms.inspection_redesign.status_rejected'), variant: 'error' as const, icon: XCircle },
+    }),
+    [t]
+  );
+
+  const typeConfig = useMemo(
+    () => ({
+      incoming: { label: t('qms.inspection_redesign.type_incoming'), variant: 'cyan' as const },
+      process: { label: t('qms.inspection_redesign.type_process'), variant: 'info' as const },
+      final: { label: t('qms.inspection_redesign.type_final'), variant: 'amber' as const },
+    }),
+    [t]
+  );
+
+  const resultConfig = useMemo(
+    () => ({
+      qualified: { label: t('qms.inspection_redesign.result_qualified'), variant: 'success' as const },
+      unqualified: { label: t('qms.inspection_redesign.result_unqualified'), variant: 'error' as const },
+      pending: { label: t('qms.inspection_redesign.result_pending'), variant: 'default' as const },
+    }),
+    [t]
+  );
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'pending' | 'in_progress' | 'completed' | 'rejected'
@@ -258,10 +269,10 @@ const QmsInspectionPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '检验单删除成功');
+      pushToast('success', t('qms.inspection_redesign.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('qms.inspection_redesign.toast_delete_fail'));
     },
   });
 
@@ -287,10 +298,10 @@ const QmsInspectionPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '检验单创建成功');
+      pushToast('success', t('qms.inspection_redesign.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('qms.inspection_redesign.toast_create_fail'));
     },
   });
 
@@ -311,10 +322,10 @@ const QmsInspectionPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '检验单更新成功');
+      pushToast('success', t('qms.inspection_redesign.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('qms.inspection_redesign.toast_update_fail'));
     },
   });
 
@@ -340,20 +351,20 @@ const QmsInspectionPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'pending', label: '待检验', badge: stats.pending },
-      { id: 'in_progress', label: '检验中', badge: stats.inProgress },
-      { id: 'completed', label: '已完成', badge: stats.completed },
-      { id: 'rejected', label: '不合格', badge: stats.rejected },
+      { id: 'all', label: t('qms.inspection_redesign.tab_all') },
+      { id: 'pending', label: t('qms.inspection_redesign.tab_pending'), badge: stats.pending },
+      { id: 'in_progress', label: t('qms.inspection_redesign.tab_in_progress'), badge: stats.inProgress },
+      { id: 'completed', label: t('qms.inspection_redesign.tab_completed'), badge: stats.completed },
+      { id: 'rejected', label: t('qms.inspection_redesign.tab_rejected'), badge: stats.rejected },
     ],
-    [stats]
+    [stats, t]
   );
 
   const columns: DataTableColumn<Inspection>[] = useMemo(
     () => [
       {
         key: 'check_no',
-        header: '检验单号',
+        header: t('qms.inspection_redesign.col_check_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -369,7 +380,7 @@ const QmsInspectionPage: React.FC = () => {
       },
       {
         key: 'title',
-        header: '检验标题',
+        header: t('qms.inspection_redesign.col_title'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.title}</div>
@@ -381,7 +392,7 @@ const QmsInspectionPage: React.FC = () => {
       },
       {
         key: 'inspection_type',
-        header: '检验类型',
+        header: t('qms.inspection_redesign.col_type'),
         align: 'center',
         render: (row) => {
           const config = typeConfig[row.inspection_type] || typeConfig.incoming;
@@ -390,17 +401,17 @@ const QmsInspectionPage: React.FC = () => {
       },
       {
         key: 'product_name',
-        header: '产品',
+        header: t('qms.inspection_redesign.col_product'),
       },
       {
         key: 'quantity',
-        header: '检验数量',
+        header: t('qms.inspection_redesign.col_quantity'),
         align: 'right',
         render: (row) => <span>{row.quantity.toLocaleString()}</span>,
       },
       {
         key: 'inspector',
-        header: '检验员',
+        header: t('qms.inspection_redesign.col_inspector'),
         render: (row) =>
           row.inspector ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
@@ -416,7 +427,7 @@ const QmsInspectionPage: React.FC = () => {
       },
       {
         key: 'result',
-        header: '检验结果',
+        header: t('qms.inspection_redesign.col_result'),
         align: 'center',
         render: (row) => {
           if (!row.result) return <span style={{ color: 'var(--text-tertiary)' }}>-</span>;
@@ -426,7 +437,7 @@ const QmsInspectionPage: React.FC = () => {
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('qms.inspection_redesign.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.pending;
@@ -435,7 +446,7 @@ const QmsInspectionPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('qms.inspection_redesign.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -448,7 +459,7 @@ const QmsInspectionPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('qms.inspection_redesign.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -459,7 +470,7 @@ const QmsInspectionPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('qms.inspection_redesign.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -467,13 +478,13 @@ const QmsInspectionPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('qms.inspection_redesign.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedInspection, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedInspection, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -490,17 +501,17 @@ const QmsInspectionPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('qms.inspection_redesign.banner_demo_mode')}
         </div>
       )}
       <ListPageTemplate<Inspection>
         header={{
-          title: '质量检验',
-          subtitle: '管理来料检验、过程检验和成品检验任务',
+          title: t('qms.inspection_redesign.header_title'),
+          subtitle: t('qms.inspection_redesign.header_subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '质量管理' },
-            { label: '质量检验' },
+            { label: t('qms.inspection_redesign.breadcrumb_home'), href: '/dashboard' },
+            { label: t('qms.inspection_redesign.breadcrumb_qms') },
+            { label: t('qms.inspection_redesign.breadcrumb_inspection') },
           ],
         }}
         toolbar={
@@ -514,7 +525,7 @@ const QmsInspectionPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索检验单号/标题/产品...'
+                placeholder={t('qms.inspection_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -524,10 +535,10 @@ const QmsInspectionPage: React.FC = () => {
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部类型' },
-                  { value: 'incoming', label: '来料检验' },
-                  { value: 'process', label: '过程检验' },
-                  { value: 'final', label: '成品检验' },
+                  { value: 'all', label: t('qms.inspection_redesign.type_filter_all') },
+                  { value: 'incoming', label: t('qms.inspection_redesign.type_incoming') },
+                  { value: 'process', label: t('qms.inspection_redesign.type_process') },
+                  { value: 'final', label: t('qms.inspection_redesign.type_final') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -538,7 +549,7 @@ const QmsInspectionPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('qms.inspection_redesign.refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -548,7 +559,7 @@ const QmsInspectionPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建检验单
+                {t('qms.inspection_redesign.create')}
               </Button>
             </div>
           </>
@@ -558,8 +569,8 @@ const QmsInspectionPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无检验单'
-        emptyDescription='点击右上角「新建检验单」按钮创建第一个检验任务'
+        emptyTitle={t('qms.inspection_redesign.empty_title')}
+        emptyDescription={t('qms.inspection_redesign.empty_description')}
         footer={
           <div
             style={{
@@ -569,25 +580,25 @@ const QmsInspectionPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='检验单总数'
+              label={t('qms.inspection_redesign.stat_total')}
               value={stats.total}
               icon={ClipboardCheck}
               accent='cyan'
             />
             <StatTile
-              label='待检验'
+              label={t('qms.inspection_redesign.tab_pending')}
               value={stats.pending}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='检验中'
+              label={t('qms.inspection_redesign.tab_in_progress')}
               value={stats.inProgress}
               icon={AlertTriangle}
               accent='amber'
             />
             <StatTile
-              label='已完成'
+              label={t('qms.inspection_redesign.tab_completed')}
               value={stats.completed}
               icon={CheckCircle}
               accent='success'
@@ -627,7 +638,7 @@ const QmsInspectionPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedInspection(null);
         }}
-        title='检验单详情'
+        title={t('qms.inspection_redesign.drawer_title')}
         size='lg'
       >
         {selectedInspection && (
@@ -658,22 +669,22 @@ const QmsInspectionPage: React.FC = () => {
                   <Badge
                     variant={typeConfig[selectedInspection.inspection_type]?.variant || 'default'}
                   >
-                    {typeConfig[selectedInspection.inspection_type]?.label || '未知'}
+                    {typeConfig[selectedInspection.inspection_type]?.label || t('qms.inspection_redesign.unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedInspection.status]?.variant || 'default'}>
-                    {statusConfig[selectedInspection.status]?.label || '未知'}
+                    {statusConfig[selectedInspection.status]?.label || t('qms.inspection_redesign.unknown')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card title='基本信息'>
+            <Card title={t('qms.inspection_redesign.card_basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    产品名称
+                    {t('qms.inspection_redesign.drawer_product_name')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedInspection.product_name}
@@ -681,7 +692,7 @@ const QmsInspectionPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    批次号
+                    {t('qms.inspection_redesign.drawer_batch_no')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedInspection.batch_no}
@@ -689,7 +700,7 @@ const QmsInspectionPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    检验数量
+                    {t('qms.inspection_redesign.col_quantity')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedInspection.quantity.toLocaleString()}
@@ -697,22 +708,22 @@ const QmsInspectionPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    检验员
+                    {t('qms.inspection_redesign.col_inspector')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedInspection.inspector || '未分配'}
+                    {selectedInspection.inspector || t('qms.inspection_redesign.unassigned')}
                   </div>
                 </div>
               </div>
             </Card>
 
-            <Card title='时间信息'>
+            <Card title={t('qms.inspection_redesign.card_time')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('qms.inspection_redesign.drawer_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedInspection.created_at)}
@@ -720,7 +731,7 @@ const QmsInspectionPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    完成时间
+                    {t('qms.inspection_redesign.drawer_completed_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedInspection.completed_at)}
@@ -730,7 +741,7 @@ const QmsInspectionPage: React.FC = () => {
             </Card>
 
             {selectedInspection.result && (
-              <Card title='检验结果'>
+              <Card title={t('qms.inspection_redesign.card_result')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                   {selectedInspection.result === 'qualified' ? (
                     <CheckCircle
@@ -744,7 +755,9 @@ const QmsInspectionPage: React.FC = () => {
                     />
                   )}
                   <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedInspection.result === 'qualified' ? '检验合格' : '检验不合格'}
+                    {selectedInspection.result === 'qualified'
+                      ? t('qms.inspection_redesign.result_qualified_text')
+                      : t('qms.inspection_redesign.result_unqualified_text')}
                   </span>
                 </div>
               </Card>
@@ -757,7 +770,11 @@ const QmsInspectionPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedInspection ? '编辑检验单' : '新建检验单'}
+        title={
+          selectedInspection
+            ? t('qms.inspection_redesign.modal_edit_title')
+            : t('qms.inspection_redesign.create')
+        }
         size='lg'
         footer={
           <>
@@ -765,32 +782,23 @@ const QmsInspectionPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('qms.inspection_redesign.cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<Inspection> = {
-                  check_no:
-                    (document.querySelector('input[placeholder*="检验单号"]') as HTMLInputElement)
-                      ?.value || '',
+                  check_no: '',
                   product_name:
-                    (document.querySelector('input[placeholder*="产品名称"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-3') as HTMLInputElement)?.value || '',
                   batch_no:
-                    (document.querySelector('input[placeholder*="批次号"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                   inspection_type:
-                    ((document.querySelector('select') as HTMLSelectElement)
+                    ((document.getElementById('field-2') as HTMLSelectElement)
                       ?.value as Inspection['inspection_type']) || 'incoming',
-                  inspector:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="检验员"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
+                  inspector: '',
                   quantity: Number(
-                    (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
+                    (document.getElementById('field-5') as HTMLInputElement)?.value || 0
                   ),
                 };
                 if (selectedInspection) {
@@ -800,7 +808,9 @@ const QmsInspectionPage: React.FC = () => {
                 }
               }}
             >
-              {selectedInspection ? '保存修改' : '创建检验单'}
+              {selectedInspection
+                ? t('qms.inspection_redesign.modal_save')
+                : t('qms.inspection_redesign.modal_submit_create')}
             </Button>
           </>
         }
@@ -811,11 +821,11 @@ const QmsInspectionPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              检验标题 *
+              {t('qms.inspection_redesign.field_title_label')}
             </label>
             <Input
               id='field-1'
-              placeholder='例如：原材料入库检验-伺服电机'
+              placeholder={t('qms.inspection_redesign.field_title_placeholder')}
               defaultValue={selectedInspection?.title}
             />
           </div>
@@ -825,15 +835,15 @@ const QmsInspectionPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                检验类型 *
+                {t('qms.inspection_redesign.field_type_label')}
               </label>
               <Select
                 id='field-2'
                 defaultValue={selectedInspection?.inspection_type || 'incoming'}
                 options={[
-                  { value: 'incoming', label: '来料检验' },
-                  { value: 'process', label: '过程检验' },
-                  { value: 'final', label: '成品检验' },
+                  { value: 'incoming', label: t('qms.inspection_redesign.type_incoming') },
+                  { value: 'process', label: t('qms.inspection_redesign.type_process') },
+                  { value: 'final', label: t('qms.inspection_redesign.type_final') },
                 ]}
               />
             </div>
@@ -842,11 +852,11 @@ const QmsInspectionPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                产品名称 *
+                {t('qms.inspection_redesign.field_product_label')}
               </label>
               <Input
                 id='field-3'
-                placeholder='请输入产品名称'
+                placeholder={t('qms.inspection_redesign.field_product_placeholder')}
                 defaultValue={selectedInspection?.product_name}
               />
             </div>
@@ -855,11 +865,11 @@ const QmsInspectionPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                批次号
+                {t('qms.inspection_redesign.field_batch_no_label')}
               </label>
               <Input
                 id='field-4'
-                placeholder='例如：BATCH-2026-0901'
+                placeholder={t('qms.inspection_redesign.field_batch_no_placeholder')}
                 defaultValue={selectedInspection?.batch_no}
               />
             </div>
@@ -868,12 +878,12 @@ const QmsInspectionPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                检验数量
+                {t('qms.inspection_redesign.field_quantity_label')}
               </label>
               <Input
                 id='field-5'
                 type='number'
-                placeholder='例如：100'
+                placeholder={t('qms.inspection_redesign.field_quantity_placeholder')}
                 defaultValue={selectedInspection?.quantity}
               />
             </div>
@@ -885,7 +895,7 @@ const QmsInspectionPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除检验单'
+        title={t('qms.inspection_redesign.delete_title')}
         size='sm'
         footer={
           <>
@@ -893,20 +903,20 @@ const QmsInspectionPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('qms.inspection_redesign.cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('qms.inspection_redesign.delete_confirm')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除检验单「{deleteTarget?.check_no}」吗？此操作不可撤销。
+          {t('qms.inspection_redesign.delete_message', { check_no: deleteTarget?.check_no })}
         </p>
       </Modal>
 

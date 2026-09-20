@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -164,34 +165,44 @@ const mockNonconformances: Nonconformance[] = [
   },
 ];
 
-const statusConfig = {
-  open: { label: '待处理', variant: 'warning' as const, icon: AlertTriangle },
-  investigating: { label: '调查中', variant: 'info' as const, icon: Clock },
-  contained: { label: '已隔离', variant: 'amber' as const, icon: Package },
-  resolved: { label: '已解决', variant: 'success' as const, icon: CheckCircle },
-  closed: { label: '已关闭', variant: 'default' as const, icon: XCircle },
-};
-
-const typeConfig = {
-  product: { label: '产品不合格', variant: 'cyan' as const },
-  process: { label: '过程不合格', variant: 'info' as const },
-  material: { label: '物料不合格', variant: 'amber' as const },
-  service: { label: '服务不合格', variant: 'default' as const },
-};
-
-const severityConfig = {
-  minor: { label: '轻微', variant: 'default' as const },
-  major: { label: '严重', variant: 'warning' as const },
-  critical: { label: '致命', variant: 'error' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
 };
 
 const QmsNonconformancePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const statusConfig = useMemo(
+    () => ({
+      open: { label: t('qms.nonconformance_redesign.status_open'), variant: 'warning' as const, icon: AlertTriangle },
+      investigating: { label: t('qms.nonconformance_redesign.status_investigating'), variant: 'info' as const, icon: Clock },
+      contained: { label: t('qms.nonconformance_redesign.status_contained'), variant: 'amber' as const, icon: Package },
+      resolved: { label: t('qms.nonconformance_redesign.status_resolved'), variant: 'success' as const, icon: CheckCircle },
+      closed: { label: t('qms.nonconformance_redesign.status_closed'), variant: 'default' as const, icon: XCircle },
+    }),
+    [t]
+  );
+
+  const typeConfig = useMemo(
+    () => ({
+      product: { label: t('qms.nonconformance_redesign.type_product'), variant: 'cyan' as const },
+      process: { label: t('qms.nonconformance_redesign.type_process'), variant: 'info' as const },
+      material: { label: t('qms.nonconformance_redesign.type_material'), variant: 'amber' as const },
+      service: { label: t('qms.nonconformance_redesign.type_service'), variant: 'default' as const },
+    }),
+    [t]
+  );
+
+  const severityConfig = useMemo(
+    () => ({
+      minor: { label: t('qms.nonconformance_redesign.severity_minor'), variant: 'default' as const },
+      major: { label: t('qms.nonconformance_redesign.severity_major'), variant: 'warning' as const },
+      critical: { label: t('qms.nonconformance_redesign.severity_critical'), variant: 'error' as const },
+    }),
+    [t]
+  );
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'open' | 'investigating' | 'contained' | 'resolved'
@@ -283,10 +294,10 @@ const QmsNonconformancePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '不合格品单删除成功');
+      pushToast('success', t('qms.nonconformance_redesign.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('qms.nonconformance_redesign.toast_delete_fail'));
     },
   });
 
@@ -314,10 +325,10 @@ const QmsNonconformancePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '不合格品单创建成功');
+      pushToast('success', t('qms.nonconformance_redesign.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('qms.nonconformance_redesign.toast_create_fail'));
     },
   });
 
@@ -339,10 +350,10 @@ const QmsNonconformancePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '不合格品单更新成功');
+      pushToast('success', t('qms.nonconformance_redesign.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('qms.nonconformance_redesign.toast_update_fail'));
     },
   });
 
@@ -367,32 +378,32 @@ const QmsNonconformancePage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'open', label: '待处理', badge: items.filter((i) => i.status === 'open').length },
+      { id: 'all', label: t('qms.nonconformance_redesign.tab_all') },
+      { id: 'open', label: t('qms.nonconformance_redesign.tab_open'), badge: items.filter((i) => i.status === 'open').length },
       {
         id: 'investigating',
-        label: '调查中',
+        label: t('qms.nonconformance_redesign.tab_investigating'),
         badge: items.filter((i) => i.status === 'investigating').length,
       },
       {
         id: 'contained',
-        label: '已隔离',
+        label: t('qms.nonconformance_redesign.tab_contained'),
         badge: items.filter((i) => i.status === 'contained').length,
       },
       {
         id: 'resolved',
-        label: '已解决',
+        label: t('qms.nonconformance_redesign.tab_resolved'),
         badge: items.filter((i) => i.status === 'resolved').length,
       },
     ],
-    [items]
+    [items, t]
   );
 
   const columns: DataTableColumn<Nonconformance>[] = useMemo(
     () => [
       {
         key: 'nc_no',
-        header: '不合格单号',
+        header: t('qms.nonconformance_redesign.col_nc_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -408,7 +419,7 @@ const QmsNonconformancePage: React.FC = () => {
       },
       {
         key: 'title',
-        header: '不合格描述',
+        header: t('qms.nonconformance_redesign.col_title'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.title}</div>
@@ -420,7 +431,7 @@ const QmsNonconformancePage: React.FC = () => {
       },
       {
         key: 'nc_type',
-        header: '类型',
+        header: t('qms.nonconformance_redesign.col_type'),
         align: 'center',
         render: (row) => {
           const config = typeConfig[row.nc_type] || typeConfig.product;
@@ -429,7 +440,7 @@ const QmsNonconformancePage: React.FC = () => {
       },
       {
         key: 'severity',
-        header: '严重程度',
+        header: t('qms.nonconformance_redesign.col_severity'),
         align: 'center',
         render: (row) => {
           const config = severityConfig[row.severity] || severityConfig.minor;
@@ -438,22 +449,22 @@ const QmsNonconformancePage: React.FC = () => {
       },
       {
         key: 'quantity',
-        header: '不合格数量',
+        header: t('qms.nonconformance_redesign.col_quantity'),
         align: 'right',
         render: (row) => <span>{row.quantity.toLocaleString()}</span>,
       },
       {
         key: 'discovered_by',
-        header: '发现人',
+        header: t('qms.nonconformance_redesign.col_discovered_by'),
       },
       {
         key: 'discovered_date',
-        header: '发现日期',
+        header: t('qms.nonconformance_redesign.col_discovered_date'),
         sortable: true,
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('qms.nonconformance_redesign.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.open;
@@ -462,7 +473,7 @@ const QmsNonconformancePage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('qms.nonconformance_redesign.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -475,7 +486,7 @@ const QmsNonconformancePage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('qms.nonconformance_redesign.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -486,7 +497,7 @@ const QmsNonconformancePage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('qms.nonconformance_redesign.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -494,13 +505,13 @@ const QmsNonconformancePage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('qms.nonconformance_redesign.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedNc, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedNc, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -517,17 +528,17 @@ const QmsNonconformancePage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('qms.nonconformance_redesign.banner_demo_mode')}
         </div>
       )}
       <ListPageTemplate<Nonconformance>
         header={{
-          title: '不合格品管理',
-          subtitle: '跟踪和处理生产过程中的不合格品问题',
+          title: t('qms.nonconformance_redesign.header_title'),
+          subtitle: t('qms.nonconformance_redesign.header_subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '质量管理' },
-            { label: '不合格品管理' },
+            { label: t('qms.nonconformance_redesign.breadcrumb_home'), href: '/dashboard' },
+            { label: t('qms.nonconformance_redesign.breadcrumb_qms') },
+            { label: t('qms.nonconformance_redesign.breadcrumb_nc') },
           ],
         }}
         toolbar={
@@ -541,7 +552,7 @@ const QmsNonconformancePage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索不合格单号/描述/产品...'
+                placeholder={t('qms.nonconformance_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -551,10 +562,10 @@ const QmsNonconformancePage: React.FC = () => {
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部严重程度' },
-                  { value: 'minor', label: '轻微' },
-                  { value: 'major', label: '严重' },
-                  { value: 'critical', label: '致命' },
+                  { value: 'all', label: t('qms.nonconformance_redesign.severity_filter_all') },
+                  { value: 'minor', label: t('qms.nonconformance_redesign.severity_minor') },
+                  { value: 'major', label: t('qms.nonconformance_redesign.severity_major') },
+                  { value: 'critical', label: t('qms.nonconformance_redesign.severity_critical') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -565,7 +576,7 @@ const QmsNonconformancePage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('qms.nonconformance_redesign.refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -575,7 +586,7 @@ const QmsNonconformancePage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建不合格单
+                {t('qms.nonconformance_redesign.create')}
               </Button>
             </div>
           </>
@@ -585,8 +596,8 @@ const QmsNonconformancePage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无不合格品记录'
-        emptyDescription='点击右上角「新建不合格单」按钮记录第一个不合格问题'
+        emptyTitle={t('qms.nonconformance_redesign.empty_title')}
+        emptyDescription={t('qms.nonconformance_redesign.empty_description')}
         footer={
           <div
             style={{
@@ -596,25 +607,25 @@ const QmsNonconformancePage: React.FC = () => {
             }}
           >
             <StatTile
-              label='不合格单总数'
+              label={t('qms.nonconformance_redesign.stat_total')}
               value={stats.total}
               icon={AlertTriangle}
               accent='cyan'
             />
             <StatTile
-              label='待处理/调查中'
+              label={t('qms.nonconformance_redesign.stat_open')}
               value={stats.open}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='致命问题'
+              label={t('qms.nonconformance_redesign.stat_critical')}
               value={stats.critical}
               icon={XCircle}
               accent='error'
             />
             <StatTile
-              label='已解决'
+              label={t('qms.nonconformance_redesign.stat_resolved')}
               value={stats.resolved}
               icon={CheckCircle}
               accent='success'
@@ -654,7 +665,7 @@ const QmsNonconformancePage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedNc(null);
         }}
-        title='不合格单详情'
+        title={t('qms.nonconformance_redesign.drawer_title')}
         size='lg'
       >
         {selectedNc && (
@@ -683,28 +694,28 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={severityConfig[selectedNc.severity]?.variant || 'default'}>
-                    {severityConfig[selectedNc.severity]?.label || '未知'}
+                    {severityConfig[selectedNc.severity]?.label || t('qms.nonconformance_redesign.unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedNc.status]?.variant || 'default'}>
-                    {statusConfig[selectedNc.status]?.label || '未知'}
+                    {statusConfig[selectedNc.status]?.label || t('qms.nonconformance_redesign.unknown')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card title='问题描述'>
+            <Card title={t('qms.nonconformance_redesign.card_problem_desc')}>
               <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
                 {selectedNc.description}
               </p>
             </Card>
 
-            <Card title='基本信息'>
+            <Card title={t('qms.nonconformance_redesign.card_basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    产品名称
+                    {t('qms.nonconformance_redesign.drawer_product_name')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedNc.product_name}
@@ -712,7 +723,7 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    批次号
+                    {t('qms.nonconformance_redesign.drawer_batch_no')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedNc.batch_no}
@@ -720,7 +731,7 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    不合格数量
+                    {t('qms.nonconformance_redesign.col_quantity')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedNc.quantity.toLocaleString()}
@@ -728,7 +739,7 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    发现人
+                    {t('qms.nonconformance_redesign.col_discovered_by')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedNc.discovered_by}
@@ -736,13 +747,13 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    发现日期
+                    {t('qms.nonconformance_redesign.col_discovered_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedNc.discovered_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('qms.nonconformance_redesign.drawer_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedNc.created_at)}
@@ -751,11 +762,11 @@ const QmsNonconformancePage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='分类信息'>
+            <Card title={t('qms.nonconformance_redesign.card_category')}>
               <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-                <Tag variant='default'>{typeConfig[selectedNc.nc_type]?.label || '未知'}</Tag>
+                <Tag variant='default'>{typeConfig[selectedNc.nc_type]?.label || t('qms.nonconformance_redesign.unknown')}</Tag>
                 <Tag variant='default'>
-                  {severityConfig[selectedNc.severity]?.label || '未知'}严重
+                  {severityConfig[selectedNc.severity]?.label || t('qms.nonconformance_redesign.unknown')} {t('qms.nonconformance_redesign.severity_suffix')}
                 </Tag>
               </div>
             </Card>
@@ -767,7 +778,11 @@ const QmsNonconformancePage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedNc ? '编辑不合格单' : '新建不合格单'}
+        title={
+          selectedNc
+            ? t('qms.nonconformance_redesign.modal_edit_title')
+            : t('qms.nonconformance_redesign.create')
+        }
         size='lg'
         footer={
           <>
@@ -775,35 +790,24 @@ const QmsNonconformancePage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('qms.nonconformance_redesign.cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<Nonconformance> = {
-                  nc_no:
-                    (document.querySelector('input[placeholder*="不合格单号"]') as HTMLInputElement)
-                      ?.value || '',
+                  nc_no: '',
                   product_name:
-                    (document.querySelector('input[placeholder*="产品名称"]') as HTMLInputElement)
-                      ?.value || '',
-                  batch_no:
-                    (document.querySelector('input[placeholder*="批次号"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
+                  batch_no: '',
                   quantity: Number(
-                    (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
+                    (document.getElementById('field-5') as HTMLInputElement)?.value || 0
                   ),
                   nc_type:
-                    ((document.querySelector('select') as HTMLSelectElement)
+                    ((document.getElementById('field-2') as HTMLSelectElement)
                       ?.value as Nonconformance['nc_type']) || 'product',
-                  discovered_by:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="报告人"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
-                  discovered_date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                  discovered_by: '',
+                  discovered_date: '',
                 };
                 if (selectedNc) {
                   updateMutation.mutate({ id: selectedNc.id, data: formData });
@@ -812,7 +816,9 @@ const QmsNonconformancePage: React.FC = () => {
                 }
               }}
             >
-              {selectedNc ? '保存修改' : '创建不合格单'}
+              {selectedNc
+                ? t('qms.nonconformance_redesign.modal_save')
+                : t('qms.nonconformance_redesign.modal_submit_create')}
             </Button>
           </>
         }
@@ -823,11 +829,11 @@ const QmsNonconformancePage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              问题描述 *
+              {t('qms.nonconformance_redesign.field_title_label')}
             </label>
             <Input
               id='field-1'
-              placeholder='例如：伺服电机外观划痕'
+              placeholder={t('qms.nonconformance_redesign.field_title_placeholder')}
               defaultValue={selectedNc?.title}
             />
           </div>
@@ -837,16 +843,16 @@ const QmsNonconformancePage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                不合格类型 *
+                {t('qms.nonconformance_redesign.field_type_label')}
               </label>
               <Select
                 id='field-2'
                 defaultValue={selectedNc?.nc_type || 'product'}
                 options={[
-                  { value: 'product', label: '产品不合格' },
-                  { value: 'process', label: '过程不合格' },
-                  { value: 'material', label: '物料不合格' },
-                  { value: 'service', label: '服务不合格' },
+                  { value: 'product', label: t('qms.nonconformance_redesign.type_product') },
+                  { value: 'process', label: t('qms.nonconformance_redesign.type_process') },
+                  { value: 'material', label: t('qms.nonconformance_redesign.type_material') },
+                  { value: 'service', label: t('qms.nonconformance_redesign.type_service') },
                 ]}
               />
             </div>
@@ -855,15 +861,15 @@ const QmsNonconformancePage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                严重程度 *
+                {t('qms.nonconformance_redesign.field_severity_label')}
               </label>
               <Select
                 id='field-3'
                 defaultValue={selectedNc?.severity || 'minor'}
                 options={[
-                  { value: 'minor', label: '轻微' },
-                  { value: 'major', label: '严重' },
-                  { value: 'critical', label: '致命' },
+                  { value: 'minor', label: t('qms.nonconformance_redesign.severity_minor') },
+                  { value: 'major', label: t('qms.nonconformance_redesign.severity_major') },
+                  { value: 'critical', label: t('qms.nonconformance_redesign.severity_critical') },
                 ]}
               />
             </div>
@@ -872,11 +878,11 @@ const QmsNonconformancePage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                产品名称
+                {t('qms.nonconformance_redesign.drawer_product_name')}
               </label>
               <Input
                 id='field-4'
-                placeholder='请输入产品名称'
+                placeholder={t('qms.nonconformance_redesign.field_product_placeholder')}
                 defaultValue={selectedNc?.product_name}
               />
             </div>
@@ -885,12 +891,12 @@ const QmsNonconformancePage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                不合格数量
+                {t('qms.nonconformance_redesign.col_quantity')}
               </label>
               <Input
                 id='field-5'
                 type='number'
-                placeholder='例如：10'
+                placeholder={t('qms.nonconformance_redesign.field_quantity_placeholder')}
                 defaultValue={selectedNc?.quantity}
               />
             </div>
@@ -900,12 +906,12 @@ const QmsNonconformancePage: React.FC = () => {
               htmlFor='field-6'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              详细描述
+              {t('qms.nonconformance_redesign.field_detail_label')}
             </label>
             <textarea
               id='field-6'
               rows={3}
-              placeholder='请输入详细的问题描述...'
+              placeholder={t('qms.nonconformance_redesign.field_detail_placeholder')}
               defaultValue={selectedNc?.description}
               style={{
                 width: '100%',
@@ -927,7 +933,7 @@ const QmsNonconformancePage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除不合格单'
+        title={t('qms.nonconformance_redesign.delete_title')}
         size='sm'
         footer={
           <>
@@ -935,20 +941,20 @@ const QmsNonconformancePage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('qms.nonconformance_redesign.cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('qms.nonconformance_redesign.delete_confirm')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除不合格单「{deleteTarget?.nc_no}」吗？此操作不可撤销。
+          {t('qms.nonconformance_redesign.delete_message', { nc_no: deleteTarget?.nc_no })}
         </p>
       </Modal>
 

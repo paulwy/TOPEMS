@@ -2072,5 +2072,6 @@
   "monitor.nav.monitor-logs": "日志管理",
   "monitor.nav.monitor-logs_desc": "日志管理",
   "monitor.nav.monitor-settings": "监控设置",
-  "monitor.nav.monitor-settings_desc": "监控设置"
+  "monitor.nav.monitor-settings_desc": "监控设置",
+  "monitor.monitor_settings.save_failed": "设置保存失败，请稍后重试"
 }

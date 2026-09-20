@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -22,6 +23,7 @@ const RANGE_OPTIONS = [
 ];
 
 export default function WmsFlowTrendPage() {
+  const { t } = useTranslation();
   const [range, setRange] = useState<'7d' | '15d' | '30d'>('30d');
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
 
@@ -84,11 +86,11 @@ export default function WmsFlowTrendPage() {
         value={groupBy}
         onChange={(e) => setGroupBy(e.target.value as 'day' | 'week' | 'month')}
         className='border rounded px-3 py-1.5 text-sm'
-        aria-label='时间粒度'
+        aria-label={t('wms.flow_trend.aria_granularity')}
       >
-        <option value='day'>按日</option>
-        <option value='week'>按周</option>
-        <option value='month'>按月</option>
+        <option value='day'>{t('wms.flow_trend.by_day')}</option>
+        <option value='week'>{t('wms.flow_trend.by_week')}</option>
+        <option value='month'>{t('wms.flow_trend.by_month')}</option>
       </select>
       <select
         value={range}

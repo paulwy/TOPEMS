@@ -51,7 +51,7 @@ export const ChangeTemplatePage: React.FC = () => {
       });
       await pdmSettingsApi.updateSettings(CATEGORY, stringData);
       setSettings(stringData);
-      setSuccess('变更模板设置保存成功');
+      setSuccess(i18n.t('pdm.change_template.save_success'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
       console.error('[ChangeTemplate] 保存设置失败:', e);
@@ -64,60 +64,60 @@ export const ChangeTemplatePage: React.FC = () => {
   const sections: SettingSection[] = [
     {
       id: 'default',
-      title: '默认属性',
-      description: '变更单的默认类型、优先级与编号规则',
+      title: i18n.t('pdm.change_template.sec_default_title'),
+      description: i18n.t('pdm.change_template.sec_default_desc'),
       fields: [
         {
           id: 'default_change_type',
-          label: '默认变更类型',
+          label: i18n.t('pdm.change_template.fld_change_type'),
           type: 'select',
           value: settings.default_change_type,
           options: [
-            { label: '设计变更', value: 'design' },
-            { label: '工艺变更', value: 'process' },
-            { label: '紧急变更', value: 'emergency' },
+            { label: i18n.t('pdm.change_template.opt_change_design'), value: 'design' },
+            { label: i18n.t('pdm.change_template.opt_change_process'), value: 'process' },
+            { label: i18n.t('pdm.change_template.opt_change_emergency'), value: 'emergency' },
           ],
         },
         {
           id: 'default_priority',
-          label: '默认优先级',
+          label: i18n.t('pdm.change_template.fld_priority'),
           type: 'select',
           value: settings.default_priority,
           options: [
-            { label: '高', value: 'high' },
-            { label: '中', value: 'medium' },
-            { label: '低', value: 'low' },
+            { label: i18n.t('pdm.change_template.opt_priority_high'), value: 'high' },
+            { label: i18n.t('pdm.change_template.opt_priority_medium'), value: 'medium' },
+            { label: i18n.t('pdm.change_template.opt_priority_low'), value: 'low' },
           ],
         },
         {
           id: 'auto_generate_change_no',
-          label: '自动生成变更单号',
+          label: i18n.t('pdm.change_template.fld_auto_no'),
           type: 'switch',
           value: settings.auto_generate_change_no === 'true',
         },
         {
           id: 'change_no_prefix',
-          label: '变更单号前缀',
+          label: i18n.t('pdm.change_template.fld_no_prefix'),
           type: 'text',
           value: settings.change_no_prefix,
-          placeholder: '如 ECN',
+          placeholder: i18n.t('pdm.change_template.fld_no_prefix_ph'),
         },
       ],
     },
     {
       id: 'workflow',
-      title: '流程控制',
-      description: '变更影响分析与实施周期配置',
+      title: i18n.t('pdm.change_template.sec_workflow_title'),
+      description: i18n.t('pdm.change_template.sec_workflow_desc'),
       fields: [
         {
           id: 'require_impact_analysis',
-          label: '必须填写影响分析',
+          label: i18n.t('pdm.change_template.fld_require_impact'),
           type: 'switch',
           value: settings.require_impact_analysis === 'true',
         },
         {
           id: 'default_implementation_days',
-          label: '默认实施周期（天）',
+          label: i18n.t('pdm.change_template.fld_impl_days'),
           type: 'number',
           value: Number(settings.default_implementation_days),
         },

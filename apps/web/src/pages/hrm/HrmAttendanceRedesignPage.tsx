@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import {
   Plus,
   Search,
@@ -139,13 +141,16 @@ const mockAttendance: AttendanceRecord[] = [
   },
 ];
 
-const statusConfig = {
-  normal: { label: '正常', variant: 'success' as const },
-  late: { label: '迟到', variant: 'warning' as const },
-  early: { label: '早退', variant: 'amber' as const },
-  absent: { label: '旷工', variant: 'error' as const },
-  leave: { label: '请假', variant: 'info' as const },
-  holiday: { label: '节假日', variant: 'cyan' as const },
+const statusConfig: Record<
+  string,
+  { label: string; variant: 'success' | 'warning' | 'amber' | 'error' | 'info' | 'cyan' | 'default' }
+> = {
+  normal: { label: i18n.t('hrm.attendance_redesign_page.k15'), variant: 'success' },
+  late: { label: i18n.t('hrm.attendance_redesign_page.k18'), variant: 'warning' },
+  early: { label: i18n.t('hrm.attendance_redesign_page.k19'), variant: 'amber' },
+  absent: { label: i18n.t('hrm.attendance_redesign_page.k20'), variant: 'error' },
+  leave: { label: i18n.t('hrm.attendance_redesign_page.k17'), variant: 'info' },
+  holiday: { label: i18n.t('hrm.attendance_redesign_page.k21'), variant: 'cyan' },
 };
 
 const formatDateTime = (value?: string) => {
@@ -154,6 +159,7 @@ const formatDateTime = (value?: string) => {
 };
 
 const HrmAttendanceRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'all' | 'normal' | 'abnormal' | 'leave'>('all');
@@ -252,10 +258,10 @@ const HrmAttendanceRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '考勤记录删除成功');
+      pushToast('success', t('hrm.attendance_redesign_page.k60'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('hrm.attendance_redesign_page.k61'));
     },
   });
 
@@ -280,10 +286,10 @@ const HrmAttendanceRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '考勤记录创建成功');
+      pushToast('success', t('hrm.attendance_redesign_page.k62'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('hrm.attendance_redesign_page.k63'));
     },
   });
 
@@ -304,10 +310,10 @@ const HrmAttendanceRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '考勤记录更新成功');
+      pushToast('success', t('hrm.attendance_redesign_page.k64'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('hrm.attendance_redesign_page.k65'));
     },
   });
 
@@ -331,19 +337,23 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'normal', label: '正常', badge: stats.normal },
-      { id: 'abnormal', label: '异常', badge: stats.abnormal },
-      { id: 'leave', label: '请假', badge: records.filter((r) => r.status === 'leave').length },
+      { id: 'all', label: t('hrm.attendance_redesign_page.k14') },
+      { id: 'normal', label: t('hrm.attendance_redesign_page.k15'), badge: stats.normal },
+      { id: 'abnormal', label: t('hrm.attendance_redesign_page.k16'), badge: stats.abnormal },
+      {
+        id: 'leave',
+        label: t('hrm.attendance_redesign_page.k17'),
+        badge: records.filter((r) => r.status === 'leave').length,
+      },
     ],
-    [stats, records]
+    [stats, records, t]
   );
 
   const columns: DataTableColumn<AttendanceRecord>[] = useMemo(
     () => [
       {
         key: 'date',
-        header: '日期',
+        header: t('hrm.attendance_redesign_page.k22'),
         sortable: true,
         render: (row) => (
           <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-medium)' }}>
@@ -353,7 +363,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       },
       {
         key: 'emp_no',
-        header: '工号',
+        header: t('hrm.attendance_redesign_page.k23'),
         render: (row) => (
           <span
             style={{
@@ -368,7 +378,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       },
       {
         key: 'employee_name',
-        header: '员工姓名',
+        header: t('hrm.attendance_redesign_page.k24'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.employee_name}</div>
@@ -380,26 +390,26 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       },
       {
         key: 'check_in',
-        header: '签到时间',
+        header: t('hrm.attendance_redesign_page.k25'),
         align: 'center',
         render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.check_in}</span>,
       },
       {
         key: 'check_out',
-        header: '签退时间',
+        header: t('hrm.attendance_redesign_page.k26'),
         align: 'center',
         render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.check_out}</span>,
       },
       {
         key: 'work_hours',
-        header: '工时',
+        header: t('hrm.attendance_redesign_page.k27'),
         align: 'right',
         sortable: true,
         render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.work_hours}h</span>,
       },
       {
         key: 'overtime_hours',
-        header: '加班',
+        header: t('hrm.attendance_redesign_page.k28'),
         align: 'right',
         render: (row) => (
           <span
@@ -414,7 +424,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('hrm.attendance_redesign_page.k29'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.normal;
@@ -423,7 +433,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('hrm.attendance_redesign_page.k30'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -436,7 +446,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('hrm.attendance_redesign_page.k31')}
             </Button>
             <Button
               variant='ghost'
@@ -447,7 +457,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('hrm.attendance_redesign_page.k32')}
             </Button>
             <Button
               variant='ghost'
@@ -455,13 +465,13 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('hrm.attendance_redesign_page.k33')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedRecord, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedRecord, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -478,17 +488,17 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('hrm.attendance_redesign_page.k35')}
         </div>
       )}
       <ListPageTemplate<AttendanceRecord>
         header={{
-          title: '考勤管理',
-          subtitle: '管理员工考勤记录，跟踪出勤状态和加班情况',
+          title: t('hrm.attendance_redesign_page.k0'),
+          subtitle: t('hrm.attendance_redesign_page.k1'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '人力资源' },
-            { label: '考勤管理' },
+            { label: t('hrm.attendance_redesign_page.k2'), href: '/dashboard' },
+            { label: t('hrm.attendance_redesign_page.k3') },
+            { label: t('hrm.attendance_redesign_page.k0') },
           ],
         }}
         toolbar={
@@ -502,7 +512,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索工号/姓名...'
+                placeholder={t('hrm.attendance_redesign_page.k4')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -512,7 +522,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 value={deptFilter}
                 onChange={(e) => setDeptFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部部门' },
+                  { value: 'all', label: t('hrm.attendance_redesign_page.k5') },
                   { value: '技术部', label: '技术部' },
                   { value: '产品部', label: '产品部' },
                   { value: '设计部', label: '设计部' },
@@ -527,7 +537,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('hrm.attendance_redesign_page.k6')}
               </Button>
               <Button
                 variant='primary'
@@ -537,7 +547,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                补录考勤
+                {t('hrm.attendance_redesign_page.k7')}
               </Button>
             </div>
           </>
@@ -547,8 +557,8 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无考勤记录'
-        emptyDescription='点击右上角「补录考勤」按钮添加考勤记录'
+        emptyTitle={t('hrm.attendance_redesign_page.k8')}
+        emptyDescription={t('hrm.attendance_redesign_page.k9')}
         footer={
           <div
             style={{
@@ -558,25 +568,25 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='考勤记录总数'
+              label={t('hrm.attendance_redesign_page.k10')}
               value={stats.total}
               icon={Calendar}
               accent='cyan'
             />
             <StatTile
-              label='正常出勤'
+              label={t('hrm.attendance_redesign_page.k11')}
               value={stats.normal}
               icon={CheckCircle}
               accent='success'
             />
             <StatTile
-              label='异常考勤'
+              label={t('hrm.attendance_redesign_page.k12')}
               value={stats.abnormal}
               icon={AlertTriangle}
               accent='warning'
             />
             <StatTile
-              label='总加班时长'
+              label={t('hrm.attendance_redesign_page.k13')}
               value={`${stats.totalOvertime}h`}
               icon={Clock}
               accent='amber'
@@ -616,7 +626,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedRecord(null);
         }}
-        title='考勤详情'
+        title={t('hrm.attendance_redesign_page.k36')}
         size='lg'
       >
         {selectedRecord && (
@@ -647,18 +657,18 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedRecord.status]?.variant || 'default'}>
-                  {statusConfig[selectedRecord.status]?.label || '未知'}
+                  {statusConfig[selectedRecord.status]?.label || t('hrm.attendance_redesign_page.k34')}
                 </Badge>
               </div>
             </Card>
 
-            <Card title='考勤时间'>
+            <Card title={t('hrm.attendance_redesign_page.k37')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    签到时间
+                    {t('hrm.attendance_redesign_page.k25')}
                   </div>
                   <div
                     style={{
@@ -672,7 +682,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    签退时间
+                    {t('hrm.attendance_redesign_page.k26')}
                   </div>
                   <div
                     style={{
@@ -687,21 +697,21 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='工时统计'>
+            <Card title={t('hrm.attendance_redesign_page.k38')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    工作时长
+                    {t('hrm.attendance_redesign_page.k39')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                    {selectedRecord.work_hours} 小时
+                    {selectedRecord.work_hours} {t('hrm.attendance_redesign_page.k40')}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    加班时长
+                    {t('hrm.attendance_redesign_page.k41')}
                   </div>
                   <div
                     style={{
@@ -714,15 +724,15 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                     }}
                   >
                     {selectedRecord.overtime_hours > 0
-                      ? `+${selectedRecord.overtime_hours} 小时`
-                      : '无'}
+                      ? `+${selectedRecord.overtime_hours} ${t('hrm.attendance_redesign_page.k40')}`
+                      : t('hrm.attendance_redesign_page.k42')}
                   </div>
                 </div>
               </div>
             </Card>
 
             {selectedRecord.remark && (
-              <Card title='备注'>
+              <Card title={t('hrm.attendance_redesign_page.k43')}>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{selectedRecord.remark}</p>
               </Card>
             )}
@@ -734,7 +744,11 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedRecord ? '编辑考勤' : '补录考勤'}
+        title={
+          selectedRecord
+            ? t('hrm.attendance_redesign_page.k44')
+            : t('hrm.attendance_redesign_page.k45')
+        }
         size='lg'
         footer={
           <>
@@ -742,23 +756,20 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('hrm.attendance_redesign_page.k46')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<AttendanceRecord> = {
                   employee_name:
-                    (document.querySelector('input[placeholder*="员工姓名"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-1') as HTMLSelectElement)?.value || '',
                   date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   check_in:
-                    (document.querySelectorAll('input[type="time"]')[0] as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-3') as HTMLInputElement)?.value || '',
                   check_out:
-                    (document.querySelectorAll('input[type="time"]')[1] as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                 };
                 if (selectedRecord) {
                   updateMutation.mutate({ id: selectedRecord.id, data: formData });
@@ -767,7 +778,9 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedRecord ? '保存修改' : '确认补录'}
+              {selectedRecord
+                ? t('hrm.attendance_redesign_page.k47')
+                : t('hrm.attendance_redesign_page.k48')}
             </Button>
           </>
         }
@@ -779,7 +792,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 htmlFor='field-1'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                员工 *
+                {t('hrm.attendance_redesign_page.k49')}
               </label>
               <Select
                 id='field-1'
@@ -798,7 +811,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                日期 *
+                {t('hrm.attendance_redesign_page.k50')}
               </label>
               <Input
                 id='field-2'
@@ -811,7 +824,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                签到时间
+                {t('hrm.attendance_redesign_page.k25')}
               </label>
               <Input
                 id='field-3'
@@ -824,7 +837,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                签退时间
+                {t('hrm.attendance_redesign_page.k26')}
               </label>
               <Input
                 id='field-4'
@@ -837,18 +850,18 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                考勤状态
+                {t('hrm.attendance_redesign_page.k53')}
               </label>
               <Select
                 id='field-5'
                 defaultValue={selectedRecord?.status || 'normal'}
                 options={[
-                  { value: 'normal', label: '正常' },
-                  { value: 'late', label: '迟到' },
-                  { value: 'early', label: '早退' },
-                  { value: 'absent', label: '旷工' },
-                  { value: 'leave', label: '请假' },
-                  { value: 'holiday', label: '节假日' },
+                  { value: 'normal', label: t('hrm.attendance_redesign_page.k15') },
+                  { value: 'late', label: t('hrm.attendance_redesign_page.k18') },
+                  { value: 'early', label: t('hrm.attendance_redesign_page.k19') },
+                  { value: 'absent', label: t('hrm.attendance_redesign_page.k20') },
+                  { value: 'leave', label: t('hrm.attendance_redesign_page.k17') },
+                  { value: 'holiday', label: t('hrm.attendance_redesign_page.k21') },
                 ]}
               />
             </div>
@@ -857,12 +870,12 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                加班时长（小时）
+                {t('hrm.attendance_redesign_page.k54')}
               </label>
               <Input
                 id='field-6'
                 type='number'
-                placeholder='例如：2'
+                placeholder={t('hrm.attendance_redesign_page.k55')}
                 defaultValue={selectedRecord?.overtime_hours || 0}
               />
             </div>
@@ -872,11 +885,11 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               htmlFor='field-7'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              备注
+              {t('hrm.attendance_redesign_page.k43')}
             </label>
             <Input
               id='field-7'
-              placeholder='请输入备注说明'
+              placeholder={t('hrm.attendance_redesign_page.k56')}
               defaultValue={selectedRecord?.remark}
             />
           </div>
@@ -887,7 +900,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除考勤记录'
+        title={t('hrm.attendance_redesign_page.k57')}
         size='sm'
         footer={
           <>
@@ -895,21 +908,23 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('hrm.attendance_redesign_page.k46')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('hrm.attendance_redesign_page.k58')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除 {deleteTarget?.employee_name} 在 {deleteTarget?.date}{' '}
-          的考勤记录吗？此操作不可撤销。
+          {t('hrm.attendance_redesign_page.k59', {
+            name: deleteTarget?.employee_name,
+            date: deleteTarget?.date,
+          })}
         </p>
       </Modal>
 

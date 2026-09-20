@@ -32,6 +32,7 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -57,26 +58,27 @@ interface ApprovalTask {
 }
 
 const tabsConfig = [
-  { id: 'pending', label: '待审批', badge: 0 },
-  { id: 'approved', label: '已通过' },
-  { id: 'rejected', label: '已驳回' },
-  { id: 'all', label: '全部' },
+  { id: 'pending', labelKey: 'workflow.workflow_approvals_page.k17', badge: 0 },
+  { id: 'approved', labelKey: 'workflow.workflow_approvals_page.k18' },
+  { id: 'rejected', labelKey: 'workflow.workflow_approvals_page.k19' },
+  { id: 'all', labelKey: 'workflow.approvals_page.tab_all' },
 ];
 
 const priorityConfig = {
-  high: { label: '高优先级', variant: 'error' as const, color: 'var(--error-500)' },
-  medium: { label: '中优先级', variant: 'warning' as const, color: 'var(--warning-500)' },
-  low: { label: '低优先级', variant: 'default' as const, color: 'var(--text-secondary)' },
+  high: { labelKey: 'workflow.approvals_page.priority_high', variant: 'error' as const, color: 'var(--error-500)' },
+  medium: { labelKey: 'workflow.approvals_page.priority_medium', variant: 'warning' as const, color: 'var(--warning-500)' },
+  low: { labelKey: 'workflow.approvals_page.priority_low', variant: 'default' as const, color: 'var(--text-secondary)' },
 };
 
 const statusConfig = {
-  pending: { label: '待审批', variant: 'warning' as const, icon: Clock },
-  approved: { label: '已通过', variant: 'success' as const, icon: CheckCircle },
-  rejected: { label: '已驳回', variant: 'error' as const, icon: XCircle },
-  claimed: { label: '已认领', variant: 'info' as const, icon: Eye },
+  pending: { labelKey: 'workflow.workflow_approvals_page.k17', variant: 'warning' as const, icon: Clock },
+  approved: { labelKey: 'workflow.workflow_approvals_page.k18', variant: 'success' as const, icon: CheckCircle },
+  rejected: { labelKey: 'workflow.workflow_approvals_page.k19', variant: 'error' as const, icon: XCircle },
+  claimed: { labelKey: 'workflow.approvals_page.status_claimed', variant: 'info' as const, icon: Eye },
 };
 
 const WorkflowApprovalsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>('pending');
@@ -208,14 +210,14 @@ const WorkflowApprovalsPage: React.FC = () => {
     mutationFn: (id: string) => approvalTaskApi.approveTask(id, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '审批通过');
+      pushToast('success', t('workflow.approval_timeline.k5'));
       setDetailDrawerOpen(false);
       setSelectedTask(null);
     },
     onError: (err: Error) => {
       // Mock 模式下直接更新本地状态
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '审批通过');
+      pushToast('success', t('workflow.approval_timeline.k5'));
       setDetailDrawerOpen(false);
       setSelectedTask(null);
     },
@@ -226,7 +228,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       approvalTaskApi.rejectTask(id, { comment: reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '已驳回');
+      pushToast('success', t('workflow.workflow_approvals_page.k19'));
       setRejectDialogOpen(false);
       setRejectReason('');
       setDetailDrawerOpen(false);
@@ -235,7 +237,7 @@ const WorkflowApprovalsPage: React.FC = () => {
     onError: (err: Error) => {
       // Mock 模式下直接更新本地状态
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '已驳回');
+      pushToast('success', t('workflow.workflow_approvals_page.k19'));
       setRejectDialogOpen(false);
       setRejectReason('');
       setDetailDrawerOpen(false);
@@ -276,9 +278,11 @@ const WorkflowApprovalsPage: React.FC = () => {
   }, [activeTab, priorityFilter, debouncedSearch]);
 
   const pendingCount = tasks.filter((t) => t.status === 'pending').length;
-  const tabsWithBadge = tabsConfig.map((t) =>
-    t.id === 'pending' ? { ...t, badge: pendingCount } : t
-  );
+  const tabsWithBadge = tabsConfig.map((tab) => ({
+    id: tab.id,
+    label: t(tab.labelKey),
+    ...(tab.id === 'pending' ? { badge: pendingCount } : {}),
+  }));
 
   const formatTime = (value: string) => {
     try {
@@ -289,10 +293,10 @@ const WorkflowApprovalsPage: React.FC = () => {
       const hours = Math.floor(diff / 3600000);
       const days = Math.floor(diff / 86400000);
 
-      if (minutes < 1) return '刚刚';
-      if (minutes < 60) return `${minutes} 分钟前`;
-      if (hours < 24) return `${hours} 小时前`;
-      if (days < 7) return `${days} 天前`;
+      if (minutes < 1) return t('workflow.approvals_page.just_now');
+      if (minutes < 60) return t('workflow.approvals_page.minutes_ago', { count: minutes });
+      if (hours < 24) return t('workflow.approvals_page.hours_ago', { count: hours });
+      if (days < 7) return t('workflow.approvals_page.days_ago', { count: days });
 
       const pad = (n: number) => n.toString().padStart(2, '0');
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -304,7 +308,7 @@ const WorkflowApprovalsPage: React.FC = () => {
   const columns: DataTableColumn<ApprovalTask>[] = [
     {
       key: 'title',
-      header: '审批事项',
+      header: t('workflow.approvals_page.col_subject'),
       sortable: true,
       render: (row) => (
         <div>
@@ -319,7 +323,7 @@ const WorkflowApprovalsPage: React.FC = () => {
     },
     {
       key: 'initiator',
-      header: '发起人',
+      header: t('workflow.approvals_page.col_initiator'),
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <div
@@ -344,15 +348,15 @@ const WorkflowApprovalsPage: React.FC = () => {
     },
     {
       key: 'priority',
-      header: '优先级',
+      header: t('workflow.approvals_page.col_priority'),
       render: (row) => {
         const config = priorityConfig[row.priority];
-        return <Tag variant={config.variant}>{config.label}</Tag>;
+        return <Tag variant={config.variant}>{t(config.labelKey)}</Tag>;
       },
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('workflow.approvals_page.col_status'),
       render: (row) => {
         const config = statusConfig[row.status];
         const StatusIcon = config.icon;
@@ -369,14 +373,14 @@ const WorkflowApprovalsPage: React.FC = () => {
                       : 'var(--warning-500)',
               }}
             />
-            <Badge variant={config.variant}>{config.label}</Badge>
+            <Badge variant={config.variant}>{t(config.labelKey)}</Badge>
           </div>
         );
       },
     },
     {
       key: 'receivedAt',
-      header: '收到时间',
+      header: t('workflow.approvals_page.col_received_at'),
       sortable: true,
       render: (row) => (
         <span style={{ color: 'var(--text-secondary)' }}>{formatTime(row.receivedAt)}</span>
@@ -384,7 +388,7 @@ const WorkflowApprovalsPage: React.FC = () => {
     },
     {
       key: 'actions',
-      header: '操作',
+      header: t('workflow.approvals_page.col_actions'),
       align: 'right',
       width: 180,
       render: (row) => (
@@ -398,7 +402,7 @@ const WorkflowApprovalsPage: React.FC = () => {
               setDetailDrawerOpen(true);
             }}
           >
-            详情
+            {t('workflow.approvals_page.btn_detail')}
           </Button>
           {row.status === 'pending' && (
             <>
@@ -408,7 +412,7 @@ const WorkflowApprovalsPage: React.FC = () => {
                 leftIcon={<CheckCircle size={14} />}
                 onClick={() => approveMutation.mutate(row.id)}
               >
-                通过
+                {t('workflow.approvals_page.btn_approve')}
               </Button>
               <Button
                 size='sm'
@@ -420,7 +424,7 @@ const WorkflowApprovalsPage: React.FC = () => {
                 }}
                 style={{ color: 'var(--error-500)' }}
               >
-                驳回
+                {t('workflow.workflow_approvals_page.k14')}
               </Button>
             </>
           )}
@@ -433,8 +437,8 @@ const WorkflowApprovalsPage: React.FC = () => {
     <>
       <ListPageTemplate<ApprovalTask>
         header={{
-          title: '审批中心',
-          subtitle: '查看和处理待审批事项，支持通过、驳回和详情查看',
+          title: t('workflow.approvals_page.title'),
+          subtitle: t('workflow.approvals_page.subtitle'),
         }}
         toolbar={
           <>
@@ -447,7 +451,7 @@ const WorkflowApprovalsPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索审批事项...'
+                placeholder={t('workflow.approvals_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -457,10 +461,10 @@ const WorkflowApprovalsPage: React.FC = () => {
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value as any)}
                 options={[
-                  { value: 'all', label: '全部优先级' },
-                  { value: 'high', label: '高优先级' },
-                  { value: 'medium', label: '中优先级' },
-                  { value: 'low', label: '低优先级' },
+                  { value: 'all', label: t('workflow.approvals_page.filter_priority_all') },
+                  { value: 'high', label: t('workflow.approvals_page.priority_high') },
+                  { value: 'medium', label: t('workflow.approvals_page.priority_medium') },
+                  { value: 'low', label: t('workflow.approvals_page.priority_low') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -471,9 +475,9 @@ const WorkflowApprovalsPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('workflow.approvals_page.btn_refresh')}
               </Button>
-              {pendingCount > 0 && <Badge variant='warning'>{pendingCount} 项待审批</Badge>}
+              {pendingCount > 0 && <Badge variant='warning'>{t('workflow.approvals_page.pending_badge', { count: pendingCount })}</Badge>}
             </div>
           </>
         }
@@ -482,9 +486,11 @@ const WorkflowApprovalsPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无审批事项'
+        emptyTitle={t('workflow.approvals_page.empty_title')}
         emptyDescription={
-          activeTab === 'pending' ? '您目前没有待审批的事项' : '该分类下暂无审批记录'
+          activeTab === 'pending'
+            ? t('workflow.approvals_page.empty_pending')
+            : t('workflow.approvals_page.empty_category')
         }
         tableProps={{
           onRowClick: (row) => {
@@ -525,63 +531,63 @@ const WorkflowApprovalsPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedTask(null);
         }}
-        title='审批详情'
+        title={t('workflow.index.k19')}
         size='lg'
       >
         {selectedTask && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
             {/* 基本信息 */}
-            <Card title='基本信息'>
+            <Card title={t('workflow.approvals_page.card_basic')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <InfoItem
-                  label='审批事项'
+                  label={t('workflow.approvals_page.col_subject')}
                   value={selectedTask.title}
                 />
                 <InfoItem
-                  label='流程名称'
+                  label={t('workflow.approvals_page.label_workflow_name')}
                   value={selectedTask.workflowName}
                 />
                 <InfoItem
-                  label='流程类型'
+                  label={t('workflow.approvals_page.label_workflow_type')}
                   value={selectedTask.workflowType}
                 />
                 <InfoItem
-                  label='当前节点'
+                  label={t('workflow.approvals_page.label_current_node')}
                   value={selectedTask.nodeName}
                 />
                 <InfoItem
-                  label='发起人'
+                  label={t('workflow.approvals_page.col_initiator')}
                   value={selectedTask.initiator}
                 />
                 <InfoItem
-                  label='所属部门'
+                  label={t('workflow.approvals_page.label_department')}
                   value={selectedTask.department || '-'}
                 />
                 <InfoItem
-                  label='收到时间'
+                  label={t('workflow.approvals_page.col_received_at')}
                   value={formatTime(selectedTask.receivedAt)}
                 />
                 <InfoItem
-                  label='优先级'
+                  label={t('workflow.approvals_page.col_priority')}
                   value={
                     <Tag variant={priorityConfig[selectedTask.priority].variant}>
-                      {priorityConfig[selectedTask.priority].label}
+                      {t(priorityConfig[selectedTask.priority].labelKey)}
                     </Tag>
                   }
                 />
                 {selectedTask.amount && (
                   <InfoItem
-                    label='金额'
+                    label={t('workflow.approvals_page.label_amount')}
                     value={`¥ ${selectedTask.amount.toLocaleString()}`}
                   />
                 )}
                 <InfoItem
-                  label='状态'
+                  label={t('workflow.approvals_page.col_status')}
                   value={
                     <Badge variant={statusConfig[selectedTask.status].variant}>
-                      {statusConfig[selectedTask.status].label}
+                      {t(statusConfig[selectedTask.status].labelKey)}
                     </Badge>
                   }
                 />
@@ -589,33 +595,37 @@ const WorkflowApprovalsPage: React.FC = () => {
             </Card>
 
             {/* 审批内容 */}
-            <Card title='审批内容'>
+            <Card title={t('workflow.approvals_page.card_content')}>
               <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {selectedTask.description || '暂无详细描述'}
+                {selectedTask.description || t('workflow.approvals_page.no_description')}
               </p>
             </Card>
 
             {/* 审批流程 */}
-            <Card title='审批流程'>
+            <Card title={t('workflow.approvals_page.card_flow')}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 <FlowStep
                   icon={<User size={16} />}
-                  title='发起申请'
-                  description={`${selectedTask.initiator} 发起申请`}
+                  title={t('workflow.approvals_page.flow_start_title')}
+                  description={t('workflow.approvals_page.flow_start_desc', { initiator: selectedTask.initiator })}
                   status='completed'
                   time={formatTime(selectedTask.receivedAt)}
                 />
                 <FlowStep
                   icon={<ArrowRightLeft size={16} />}
                   title={selectedTask.nodeName}
-                  description='当前审批节点'
+                  description={t('workflow.approvals_page.flow_current_node')}
                   status={selectedTask.status === 'pending' ? 'current' : 'completed'}
-                  time={selectedTask.status === 'pending' ? '处理中' : '已完成'}
+                  time={
+                    selectedTask.status === 'pending'
+                      ? t('workflow.approvals_page.flow_processing')
+                      : t('workflow.approvals_page.flow_completed')
+                  }
                 />
                 <FlowStep
                   icon={<FileText size={16} />}
-                  title='归档'
-                  description='审批完成后自动归档'
+                  title={t('workflow.approvals_page.flow_archive_title')}
+                  description={t('workflow.approvals_page.flow_archive_desc')}
                   status={
                     selectedTask.status === 'approved' || selectedTask.status === 'rejected'
                       ? 'completed'
@@ -623,8 +633,8 @@ const WorkflowApprovalsPage: React.FC = () => {
                   }
                   time={
                     selectedTask.status === 'approved' || selectedTask.status === 'rejected'
-                      ? '已归档'
-                      : '待处理'
+                      ? t('workflow.approvals_page.flow_archived')
+                      : t('workflow.approvals_page.flow_pending')
                   }
                 />
               </div>
@@ -639,7 +649,7 @@ const WorkflowApprovalsPage: React.FC = () => {
                   onClick={() => setRejectDialogOpen(true)}
                   style={{ color: 'var(--error-500)' }}
                 >
-                  驳回
+                  {t('workflow.workflow_approvals_page.k14')}
                 </Button>
                 <Button
                   variant='primary'
@@ -647,7 +657,7 @@ const WorkflowApprovalsPage: React.FC = () => {
                   onClick={() => approveMutation.mutate(selectedTask.id)}
                   loading={approveMutation.isPending}
                 >
-                  审批通过
+                  {t('workflow.approval_timeline.k5')}
                 </Button>
               </div>
             )}
@@ -662,7 +672,7 @@ const WorkflowApprovalsPage: React.FC = () => {
           setRejectDialogOpen(false);
           setRejectReason('');
         }}
-        title='驳回审批'
+        title={t('workflow.workflow_approvals_page.k25')}
         size='sm'
         footer={
           <>
@@ -673,7 +683,7 @@ const WorkflowApprovalsPage: React.FC = () => {
                 setRejectReason('');
               }}
             >
-              取消
+              {t('workflow.workflow_approvals_page.k27')}
             </Button>
             <Button
               variant='danger'
@@ -685,17 +695,17 @@ const WorkflowApprovalsPage: React.FC = () => {
               disabled={!rejectReason.trim()}
               loading={rejectMutation.isPending}
             >
-              确认驳回
+              {t('workflow.workflow_approvals_page.k26')}
             </Button>
           </>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>请填写驳回原因（必填）：</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{t('workflow.approvals_page.reject_reason_label')}</p>
           <textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder='请输入驳回原因...'
+            placeholder={t('workflow.approvals_page.reject_reason_placeholder')}
             rows={4}
             style={{
               width: '100%',

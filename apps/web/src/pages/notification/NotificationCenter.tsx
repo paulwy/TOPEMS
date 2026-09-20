@@ -40,6 +40,7 @@ import {
 } from '@/api/notification';
 import type { Notification, NotificationTypeEnum } from '@/api/notification';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -48,25 +49,26 @@ const QUERY_KEY = ['notifications', 'list'];
 
 type NotificationFilterType = 'all' | 'unread' | NotificationTypeEnum;
 
-const notificationTypeConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
-  info: { label: '系统通知', icon: Info, color: 'var(--info-500)' },
-  success: { label: '成功通知', icon: CheckCircle2, color: 'var(--success-500)' },
-  warning: { label: '警告通知', icon: AlertTriangle, color: 'var(--warning-500)' },
-  error: { label: '错误通知', icon: AlertCircle, color: 'var(--error-500)' },
-  message: { label: '消息通知', icon: MessageSquare, color: 'var(--accent-primary)' },
-  reminder: { label: '提醒通知', icon: Calendar, color: 'var(--warning-500)' },
-  system: { label: '系统更新', icon: Cpu, color: 'var(--text-secondary)' },
+const notificationTypeConfig: Record<string, { labelKey: string; icon: LucideIcon; color: string }> = {
+  info: { labelKey: 'notification.notification_center.k13', icon: Info, color: 'var(--info-500)' },
+  success: { labelKey: 'notification.notification_center.type_success', icon: CheckCircle2, color: 'var(--success-500)' },
+  warning: { labelKey: 'notification.notification_center.type_warning', icon: AlertTriangle, color: 'var(--warning-500)' },
+  error: { labelKey: 'notification.notification_center.type_error', icon: AlertCircle, color: 'var(--error-500)' },
+  message: { labelKey: 'notification.notification_center.k17', icon: MessageSquare, color: 'var(--accent-primary)' },
+  reminder: { labelKey: 'notification.notification_center.k15', icon: Calendar, color: 'var(--warning-500)' },
+  system: { labelKey: 'notification.notification_center.type_system_update', icon: Cpu, color: 'var(--text-secondary)' },
 };
 
 const filterTabs = [
-  { id: 'all', label: '全部' },
-  { id: 'unread', label: '未读', badge: 0 },
-  { id: 'info', label: '系统' },
-  { id: 'warning', label: '警告' },
-  { id: 'message', label: '消息' },
+  { id: 'all', labelKey: 'notification.notification_center.k12' },
+  { id: 'unread', labelKey: 'notification.notification_center.tab_unread', badge: 0 },
+  { id: 'info', labelKey: 'notification.notification_center.tab_system' },
+  { id: 'warning', labelKey: 'notification.notification_center.tab_warning' },
+  { id: 'message', labelKey: 'notification.notification_center.tab_message' },
 ];
 
 const NotificationCenter: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeFilter, setActiveFilter] = useState<NotificationFilterType>('all');
@@ -125,7 +127,7 @@ const NotificationCenter: React.FC = () => {
     mutationFn: (id: string) => markAsRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '已标记为已读');
+      pushToast('success', t('notification.notification_center.mark_read_success'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -134,7 +136,7 @@ const NotificationCenter: React.FC = () => {
     mutationFn: () => markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '全部标记为已读');
+      pushToast('success', t('notification.notification_center.mark_all_read_success'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -143,7 +145,7 @@ const NotificationCenter: React.FC = () => {
     mutationFn: (id: string) => deleteNotification(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '通知已删除');
+      pushToast('success', t('notification.notification_center.delete_success'));
     },
     onError: (err: Error) => pushToast('error', err.message),
   });
@@ -153,8 +155,13 @@ const NotificationCenter: React.FC = () => {
 
   // 更新未读 Tab 的 badge
   const tabsWithBadge = useMemo(
-    () => filterTabs.map((t) => (t.id === 'unread' ? { ...t, badge: unreadCount } : t)),
-    [unreadCount]
+    () =>
+      filterTabs.map((tab) =>
+        tab.id === 'unread'
+          ? { id: tab.id, label: t(tab.labelKey), badge: unreadCount }
+          : { id: tab.id, label: t(tab.labelKey) }
+      ),
+    [unreadCount, t]
   );
 
   const formatTime = (value?: string) => {
@@ -167,10 +174,10 @@ const NotificationCenter: React.FC = () => {
       const hours = Math.floor(diff / 3600000);
       const days = Math.floor(diff / 86400000);
 
-      if (minutes < 1) return '刚刚';
-      if (minutes < 60) return `${minutes} 分钟前`;
-      if (hours < 24) return `${hours} 小时前`;
-      if (days < 7) return `${days} 天前`;
+      if (minutes < 1) return t('notification.notification_center.just_now');
+      if (minutes < 60) return t('notification.notification_center.minutes_ago', { count: minutes });
+      if (hours < 24) return t('notification.notification_center.hours_ago', { count: hours });
+      if (days < 7) return t('notification.notification_center.days_ago', { count: days });
 
       const pad = (n: number) => n.toString().padStart(2, '0');
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -209,8 +216,8 @@ const NotificationCenter: React.FC = () => {
     <>
       <ListPageTemplate<Notification>
         header={{
-          title: '消息中心',
-          subtitle: '查看和管理所有系统通知、消息和提醒',
+          title: t('notification.notification_center.title'),
+          subtitle: t('notification.notification_center.subtitle'),
         }}
         toolbar={
           <>
@@ -223,13 +230,15 @@ const NotificationCenter: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索通知...'
+                placeholder={t('notification.notification_center.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
                 style={{ width: 240 }}
               />
-              {selectedIds.size > 0 && <Badge variant='cyan'>已选 {selectedIds.size} 项</Badge>}
+              {selectedIds.size > 0 && (
+              <Badge variant='cyan'>{t('notification.notification_center.selected_badge', { count: selectedIds.size })}</Badge>
+            )}
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <Button
@@ -238,21 +247,21 @@ const NotificationCenter: React.FC = () => {
                 onClick={() => markAllAsReadMutation.mutate()}
                 disabled={unreadCount === 0}
               >
-                全部已读
+                {t('notification.notification_center.mark_all_read')}
               </Button>
               <Button
                 variant='ghost'
                 leftIcon={<Settings size={16} />}
                 onClick={() => setShowSettings(true)}
               >
-                设置
+                {t('notification.notification_center.settings')}
               </Button>
               <Button
                 variant='ghost'
                 leftIcon={<Trash2 size={16} />}
                 disabled={selectedIds.size === 0}
               >
-                删除选中
+                {t('notification.notification_center.delete_selected')}
               </Button>
             </div>
           </>
@@ -262,22 +271,22 @@ const NotificationCenter: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无通知'
-        emptyDescription='您目前没有任何通知'
+        emptyTitle={t('notification.notification_center.empty_title')}
+        emptyDescription={t('notification.notification_center.empty_description')}
         tableProps={{
           onRowClick: handleNotificationClick,
         }}
         footer={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              共 {notifications.length} 条通知，{unreadCount} 条未读
+              {t('notification.notification_center.footer_summary', { total: notifications.length, unread: unreadCount })}
             </span>
             <Button
               size='sm'
               variant='ghost'
               onClick={() => refetch()}
             >
-              刷新
+              {t('notification.notification_center.refresh')}
             </Button>
           </div>
         }
@@ -320,7 +329,9 @@ const NotificationCenter: React.FC = () => {
                 style={{ width: 16, height: 16, cursor: 'pointer' }}
               />
               <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                {selectedIds.size > 0 ? `已选择 ${selectedIds.size} 项` : '全选'}
+                {selectedIds.size > 0
+                  ? t('notification.notification_center.selected_count', { count: selectedIds.size })
+                  : t('notification.notification_center.k21')}
               </span>
             </div>
 
@@ -414,7 +425,7 @@ const NotificationCenter: React.FC = () => {
                         variant='default'
                         style={{ fontSize: 11 }}
                       >
-                        {typeConfig.label}
+                        {t(typeConfig.labelKey)}
                       </Badge>
                     </div>
                     <p
@@ -429,7 +440,7 @@ const NotificationCenter: React.FC = () => {
                         overflow: 'hidden',
                       }}
                     >
-                      {notification.content || notification.content || '暂无内容'}
+                      {notification.content || t('notification.notification_center.no_content')}
                     </p>
                     <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
                       {formatTime(notification.created_at || notification.created_at)}
@@ -454,7 +465,7 @@ const NotificationCenter: React.FC = () => {
                           markAsReadMutation.mutate(notification.id);
                         }}
                       >
-                        已读
+                        {t('notification.notification_center.btn_read')}
                       </Button>
                     )}
                     <Button
@@ -467,7 +478,7 @@ const NotificationCenter: React.FC = () => {
                       }}
                       style={{ color: 'var(--error-500)' }}
                     >
-                      删除
+                      {t('notification.notification_center.btn_delete')}
                     </Button>
                   </div>
                 </div>
@@ -481,7 +492,7 @@ const NotificationCenter: React.FC = () => {
       <Modal
         open={showSettings}
         onClose={() => setShowSettings(false)}
-        title='通知设置'
+        title={t('notification.notification_center.k22')}
         size='md'
         footer={
           <>
@@ -489,13 +500,13 @@ const NotificationCenter: React.FC = () => {
               variant='ghost'
               onClick={() => setShowSettings(false)}
             >
-              取消
+              {t('notification.notification_center.cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => setShowSettings(false)}
             >
-              保存设置
+              {t('notification.notification_center.save_settings')}
             </Button>
           </>
         }
@@ -509,22 +520,22 @@ const NotificationCenter: React.FC = () => {
             }}
           >
             <h4 style={{ margin: '0 0 var(--space-3) 0', fontSize: 14, fontWeight: 600 }}>
-              通知渠道
+              {t('notification.notification_center.section_channels')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               <SettingToggle
-                label='站内通知'
-                description='在系统内显示通知'
+                label={t('notification.notification_center.channel_inapp')}
+                description={t('notification.notification_center.channel_inapp_desc')}
                 defaultChecked
               />
               <SettingToggle
-                label='邮件通知'
-                description='发送通知到绑定邮箱'
+                label={t('notification.notification_center.channel_email')}
+                description={t('notification.notification_center.channel_email_desc')}
                 defaultChecked
               />
               <SettingToggle
-                label='短信通知'
-                description='发送重要通知到手机'
+                label={t('notification.notification_center.channel_sms')}
+                description={t('notification.notification_center.channel_sms_desc')}
               />
             </div>
           </div>
@@ -537,27 +548,27 @@ const NotificationCenter: React.FC = () => {
             }}
           >
             <h4 style={{ margin: '0 0 var(--space-3) 0', fontSize: 14, fontWeight: 600 }}>
-              通知类型
+              {t('notification.notification_center.section_types')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               <SettingToggle
-                label='系统通知'
-                description='系统更新、维护等通知'
+                label={t('notification.notification_center.k13')}
+                description={t('notification.notification_center.type_system_desc')}
                 defaultChecked
               />
               <SettingToggle
-                label='任务提醒'
-                description='待办任务、审批提醒'
+                label={t('notification.notification_center.type_task_reminder')}
+                description={t('notification.notification_center.type_task_reminder_desc')}
                 defaultChecked
               />
               <SettingToggle
-                label='告警通知'
-                description='设备异常、质量告警'
+                label={t('notification.notification_center.type_alert')}
+                description={t('notification.notification_center.type_alert_desc')}
                 defaultChecked
               />
               <SettingToggle
-                label='消息通知'
-                description='同事消息、评论回复'
+                label={t('notification.notification_center.k17')}
+                description={t('notification.notification_center.type_message_desc')}
                 defaultChecked
               />
             </div>
@@ -571,12 +582,12 @@ const NotificationCenter: React.FC = () => {
             }}
           >
             <h4 style={{ margin: '0 0 var(--space-3) 0', fontSize: 14, fontWeight: 600 }}>
-              免打扰
+              {t('notification.notification_center.section_dnd')}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               <SettingToggle
-                label='启用免打扰'
-                description='在指定时间段内不发送通知'
+                label={t('notification.notification_center.dnd_enable')}
+                description={t('notification.notification_center.dnd_enable_desc')}
               />
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}
@@ -591,7 +602,7 @@ const NotificationCenter: React.FC = () => {
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    开始时间
+                    {t('notification.notification_center.dnd_start')}
                   </label>
                   <Input
                     id='dnd-start-time'
@@ -609,7 +620,7 @@ const NotificationCenter: React.FC = () => {
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    结束时间
+                    {t('notification.notification_center.dnd_end')}
                   </label>
                   <Input
                     id='dnd-end-time'

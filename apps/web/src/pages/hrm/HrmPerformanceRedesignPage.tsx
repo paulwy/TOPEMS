@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import {
   Plus,
   Search,
@@ -154,10 +156,10 @@ const ratingConfig = {
   D: { label: 'D', variant: 'default' as const, score: '<60' },
 };
 
-const statusConfig = {
-  pending: { label: '待评估', variant: 'warning' as const },
-  in_review: { label: '评估中', variant: 'info' as const },
-  completed: { label: '已完成', variant: 'success' as const },
+const statusConfig: Record<string, { label: string; variant: 'warning' | 'info' | 'success' | 'default' }> = {
+  pending: { label: i18n.t('hrm.performance_redesign_page.k15'), variant: 'warning' },
+  in_review: { label: i18n.t('hrm.performance_redesign_page.k16'), variant: 'info' },
+  completed: { label: i18n.t('hrm.performance_redesign_page.k17'), variant: 'success' },
 };
 
 const formatDateTime = (value?: string) => {
@@ -166,6 +168,7 @@ const formatDateTime = (value?: string) => {
 };
 
 const HrmPerformanceRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_review' | 'completed'>('all');
@@ -264,10 +267,10 @@ const HrmPerformanceRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '绩效评估删除成功');
+      pushToast('success', t('hrm.performance_redesign_page.k59'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('hrm.performance_redesign_page.k60'));
     },
   });
 
@@ -292,10 +295,10 @@ const HrmPerformanceRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '绩效评估创建成功');
+      pushToast('success', t('hrm.performance_redesign_page.k61'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('hrm.performance_redesign_page.k62'));
     },
   });
 
@@ -317,10 +320,10 @@ const HrmPerformanceRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '绩效评估更新成功');
+      pushToast('success', t('hrm.performance_redesign_page.k63'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('hrm.performance_redesign_page.k64'));
     },
   });
 
@@ -350,27 +353,27 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
+      { id: 'all', label: t('hrm.performance_redesign_page.k14') },
       {
         id: 'pending',
-        label: '待评估',
+        label: t('hrm.performance_redesign_page.k15'),
         badge: reviews.filter((r) => r.status === 'pending').length,
       },
       {
         id: 'in_review',
-        label: '评估中',
+        label: t('hrm.performance_redesign_page.k16'),
         badge: reviews.filter((r) => r.status === 'in_review').length,
       },
-      { id: 'completed', label: '已完成', badge: stats.completed },
+      { id: 'completed', label: t('hrm.performance_redesign_page.k17'), badge: stats.completed },
     ],
-    [stats, reviews]
+    [stats, reviews, t]
   );
 
   const columns: DataTableColumn<PerformanceReview>[] = useMemo(
     () => [
       {
         key: 'review_no',
-        header: '评估编号',
+        header: t('hrm.performance_redesign_page.k18'),
         sortable: true,
         render: (row) => (
           <span
@@ -386,7 +389,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       },
       {
         key: 'employee_name',
-        header: '员工姓名',
+        header: t('hrm.performance_redesign_page.k19'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.employee_name}</div>
@@ -398,11 +401,11 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       },
       {
         key: 'period',
-        header: '考核周期',
+        header: t('hrm.performance_redesign_page.k20'),
       },
       {
         key: 'reviewer',
-        header: '评估人',
+        header: t('hrm.performance_redesign_page.k21'),
         render: (row) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <User
@@ -415,7 +418,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       },
       {
         key: 'rating',
-        header: '评级',
+        header: t('hrm.performance_redesign_page.k22'),
         align: 'center',
         render: (row) => {
           const config = ratingConfig[row.rating] || ratingConfig.C;
@@ -432,7 +435,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       },
       {
         key: 'score',
-        header: '综合得分',
+        header: t('hrm.performance_redesign_page.k23'),
         align: 'right',
         sortable: true,
         render: (row) => (
@@ -443,13 +446,13 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               color: row.score >= 90 ? 'var(--accent-primary)' : 'var(--text-primary)',
             }}
           >
-            {row.score > 0 ? `${row.score} 分` : '-'}
+            {row.score > 0 ? `${row.score} ${t('hrm.performance_redesign_page.k30')}` : '-'}
           </span>
         ),
       },
       {
         key: 'kpi_completion',
-        header: 'KPI 完成率',
+        header: t('hrm.performance_redesign_page.k24'),
         align: 'right',
         render: (row) => (
           <span style={{ fontFamily: 'var(--font-mono)' }}>
@@ -459,7 +462,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('hrm.performance_redesign_page.k25'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.pending;
@@ -468,7 +471,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('hrm.performance_redesign_page.k26'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -481,7 +484,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('hrm.performance_redesign_page.k27')}
             </Button>
             <Button
               variant='ghost'
@@ -492,7 +495,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              评估
+              {t('hrm.performance_redesign_page.k28')}
             </Button>
             <Button
               variant='ghost'
@@ -500,13 +503,13 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('hrm.performance_redesign_page.k29')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedReview, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedReview, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -523,17 +526,17 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('hrm.performance_redesign_page.k33')}
         </div>
       )}
       <ListPageTemplate<PerformanceReview>
         header={{
-          title: '绩效管理',
-          subtitle: '管理员工绩效考核，跟踪评级和 KPI 完成情况',
+          title: t('hrm.performance_redesign_page.k0'),
+          subtitle: t('hrm.performance_redesign_page.k1'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '人力资源' },
-            { label: '绩效管理' },
+            { label: t('hrm.performance_redesign_page.k2'), href: '/dashboard' },
+            { label: t('hrm.performance_redesign_page.k3') },
+            { label: t('hrm.performance_redesign_page.k0') },
           ],
         }}
         toolbar={
@@ -547,7 +550,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索评估编号/姓名...'
+                placeholder={t('hrm.performance_redesign_page.k4')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -557,7 +560,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 value={deptFilter}
                 onChange={(e) => setDeptFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部部门' },
+                  { value: 'all', label: t('hrm.performance_redesign_page.k5') },
                   { value: '技术部', label: '技术部' },
                   { value: '产品部', label: '产品部' },
                   { value: '设计部', label: '设计部' },
@@ -572,7 +575,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('hrm.performance_redesign_page.k6')}
               </Button>
               <Button
                 variant='primary'
@@ -582,7 +585,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                发起评估
+                {t('hrm.performance_redesign_page.k7')}
               </Button>
             </div>
           </>
@@ -592,8 +595,8 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无绩效评估'
-        emptyDescription='点击右上角「发起评估」按钮创建第一个绩效评估'
+        emptyTitle={t('hrm.performance_redesign_page.k8')}
+        emptyDescription={t('hrm.performance_redesign_page.k9')}
         footer={
           <div
             style={{
@@ -603,25 +606,25 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='评估总数'
+              label={t('hrm.performance_redesign_page.k10')}
               value={stats.total}
               icon={Target}
               accent='cyan'
             />
             <StatTile
-              label='已完成'
+              label={t('hrm.performance_redesign_page.k11')}
               value={stats.completed}
               icon={Award}
               accent='success'
             />
             <StatTile
-              label='平均得分'
-              value={`${stats.avgScore} 分`}
+              label={t('hrm.performance_redesign_page.k12')}
+              value={`${stats.avgScore} ${t('hrm.performance_redesign_page.k30')}`}
               icon={TrendingUp}
               accent='warning'
             />
             <StatTile
-              label='S 级员工'
+              label={t('hrm.performance_redesign_page.k13')}
               value={stats.sCount}
               icon={Star}
               accent='amber'
@@ -661,7 +664,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedReview(null);
         }}
-        title='绩效评估详情'
+        title={t('hrm.performance_redesign_page.k34')}
         size='lg'
       >
         {selectedReview && (
@@ -696,7 +699,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                     {ratingConfig[selectedReview.rating]?.label || '-'}
                   </Badge>
                   <Badge variant={statusConfig[selectedReview.status]?.variant || 'default'}>
-                    {statusConfig[selectedReview.status]?.label || '未知'}
+                    {statusConfig[selectedReview.status]?.label || t('hrm.performance_redesign_page.k32')}
                   </Badge>
                 </div>
               </div>
@@ -704,7 +707,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
             {/* 评分大字体 */}
             {selectedReview.score > 0 && (
-              <Card title='综合得分'>
+              <Card title={t('hrm.performance_redesign_page.k23')}>
                 <div
                   style={{
                     fontSize: 'var(--text-4xl)',
@@ -717,24 +720,24 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                   {selectedReview.score}
                   <span style={{ fontSize: 'var(--text-xl)', color: 'var(--text-secondary)' }}>
                     {' '}
-                    分
+                    {t('hrm.performance_redesign_page.k30')}
                   </span>
                 </div>
                 <div style={{ textAlign: 'center', marginTop: 'var(--space-2)' }}>
                   <Badge variant={ratingConfig[selectedReview.rating]?.variant || 'default'}>
-                    {ratingConfig[selectedReview.rating]?.label} 级
+                    {ratingConfig[selectedReview.rating]?.label} {t('hrm.performance_redesign_page.k31')}
                   </Badge>
                 </div>
               </Card>
             )}
 
-            <Card title='考核信息'>
+            <Card title={t('hrm.performance_redesign_page.k35')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    考核周期
+                    {t('hrm.performance_redesign_page.k20')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedReview.period}
@@ -742,7 +745,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    评估人
+                    {t('hrm.performance_redesign_page.k21')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedReview.reviewer}
@@ -750,7 +753,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    KPI 完成率
+                    {t('hrm.performance_redesign_page.k24')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedReview.kpi_completion > 0 ? `${selectedReview.kpi_completion}%` : '-'}
@@ -758,7 +761,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('hrm.performance_redesign_page.k36')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedReview.created_at)}
@@ -768,7 +771,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             </Card>
 
             {selectedReview.improvement && (
-              <Card title='改进建议'>
+              <Card title={t('hrm.performance_redesign_page.k37')}>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
                   {selectedReview.improvement}
                 </p>
@@ -782,7 +785,11 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedReview ? '编辑绩效评估' : '发起绩效评估'}
+        title={
+          selectedReview
+            ? t('hrm.performance_redesign_page.k38')
+            : t('hrm.performance_redesign_page.k39')
+        }
         size='lg'
         footer={
           <>
@@ -790,28 +797,23 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('hrm.performance_redesign_page.k40')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<PerformanceReview> = {
                   employee_name:
-                    (document.querySelector('input[placeholder*="员工姓名"]') as HTMLInputElement)
-                      ?.value || '',
-                  period: (document.querySelector('select') as HTMLSelectElement)?.value || '',
+                    (document.getElementById('field-1') as HTMLSelectElement)?.value || '',
+                  period: (document.getElementById('field-2') as HTMLSelectElement)?.value || '',
                   rating:
-                    ((document.querySelectorAll('select')[1] as HTMLSelectElement)
+                    ((document.getElementById('field-4') as HTMLSelectElement)
                       ?.value as PerformanceReview['rating']) || 'B',
                   score: Number(
-                    (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
+                    (document.getElementById('field-5') as HTMLInputElement)?.value || 0
                   ),
                   reviewer:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="评估人"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
+                    (document.getElementById('field-3') as HTMLInputElement)?.value || '',
                 };
                 if (selectedReview) {
                   updateMutation.mutate({ id: selectedReview.id, data: formData });
@@ -820,7 +822,9 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedReview ? '保存修改' : '发起评估'}
+              {selectedReview
+                ? t('hrm.performance_redesign_page.k41')
+                : t('hrm.performance_redesign_page.k7')}
             </Button>
           </>
         }
@@ -832,7 +836,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 htmlFor='field-1'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                员工 *
+                {t('hrm.performance_redesign_page.k42')}
               </label>
               <Select
                 id='field-1'
@@ -851,7 +855,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                考核周期 *
+                {t('hrm.performance_redesign_page.k43')}
               </label>
               <Select
                 id='field-2'
@@ -871,11 +875,11 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                评估人
+                {t('hrm.performance_redesign_page.k21')}
               </label>
               <Input
                 id='field-3'
-                placeholder='请输入评估人'
+                placeholder={t('hrm.performance_redesign_page.k44')}
                 defaultValue={selectedReview?.reviewer || '王经理'}
               />
             </div>
@@ -884,17 +888,17 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                评级
+                {t('hrm.performance_redesign_page.k22')}
               </label>
               <Select
                 id='field-4'
                 defaultValue={selectedReview?.rating || 'B'}
                 options={[
-                  { value: 'S', label: 'S（95-100分）' },
-                  { value: 'A', label: 'A（85-94分）' },
-                  { value: 'B', label: 'B（75-84分）' },
-                  { value: 'C', label: 'C（60-74分）' },
-                  { value: 'D', label: 'D（<60分）' },
+                  { value: 'S', label: t('hrm.performance_redesign_page.k51') },
+                  { value: 'A', label: t('hrm.performance_redesign_page.k52') },
+                  { value: 'B', label: t('hrm.performance_redesign_page.k53') },
+                  { value: 'C', label: t('hrm.performance_redesign_page.k54') },
+                  { value: 'D', label: t('hrm.performance_redesign_page.k55') },
                 ]}
               />
             </div>
@@ -903,12 +907,12 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                综合得分
+                {t('hrm.performance_redesign_page.k23')}
               </label>
               <Input
                 id='field-5'
                 type='number'
-                placeholder='例如：85'
+                placeholder={t('hrm.performance_redesign_page.k47')}
                 defaultValue={selectedReview?.score || 85}
               />
             </div>
@@ -917,12 +921,12 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                KPI 完成率（%）
+                {t('hrm.performance_redesign_page.k48')}
               </label>
               <Input
                 id='field-6'
                 type='number'
-                placeholder='例如：95'
+                placeholder={t('hrm.performance_redesign_page.k49')}
                 defaultValue={selectedReview?.kpi_completion || 95}
               />
             </div>
@@ -932,11 +936,11 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               htmlFor='field-7'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              改进建议
+              {t('hrm.performance_redesign_page.k37')}
             </label>
             <Input
               id='field-7'
-              placeholder='请输入改进建议'
+              placeholder={t('hrm.performance_redesign_page.k50')}
               defaultValue={selectedReview?.improvement}
             />
           </div>
@@ -947,7 +951,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除绩效评估'
+        title={t('hrm.performance_redesign_page.k56')}
         size='sm'
         footer={
           <>
@@ -955,21 +959,23 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('hrm.performance_redesign_page.k40')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('hrm.performance_redesign_page.k57')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除 {deleteTarget?.employee_name} 的 {deleteTarget?.period}{' '}
-          绩效评估吗？此操作不可撤销。
+          {t('hrm.performance_redesign_page.k58', {
+            name: deleteTarget?.employee_name,
+            period: deleteTarget?.period,
+          })}
         </p>
       </Modal>
 

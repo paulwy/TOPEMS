@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -158,18 +159,18 @@ const mockStocktakes: StocktakeOrder[] = [
   },
 ];
 
-const statusConfig = {
-  draft: { label: '草稿', variant: 'default' as const, icon: ClipboardList },
-  in_progress: { label: '盘点中', variant: 'info' as const, icon: Clock },
-  completed: { label: '已完成', variant: 'success' as const, icon: CheckCircle },
-  cancelled: { label: '已取消', variant: 'default' as const, icon: AlertTriangle },
-};
+const buildStatusConfig = (t: (k: string) => string) => ({
+  draft: { label: t('wms.stocktake_page.status_draft'), variant: 'default' as const, icon: ClipboardList },
+  in_progress: { label: t('wms.stocktake_page.status_in_progress'), variant: 'info' as const, icon: Clock },
+  completed: { label: t('wms.stocktake_page.status_completed'), variant: 'success' as const, icon: CheckCircle },
+  cancelled: { label: t('wms.stocktake_page.status_cancelled'), variant: 'default' as const, icon: AlertTriangle },
+});
 
-const typeConfig = {
-  full: { label: '全盘', variant: 'cyan' as const },
-  partial: { label: '抽盘', variant: 'info' as const },
-  cycle: { label: '循环盘点', variant: 'default' as const },
-};
+const buildTypeConfig = (t: (k: string) => string) => ({
+  full: { label: t('wms.stocktake_page.type_full'), variant: 'cyan' as const },
+  partial: { label: t('wms.stocktake_page.type_partial'), variant: 'info' as const },
+  cycle: { label: t('wms.stocktake_page.type_cycle'), variant: 'default' as const },
+});
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -177,7 +178,10 @@ const formatDateTime = (value?: string) => {
 };
 
 const WmsStocktakePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const statusConfig = useMemo(() => buildStatusConfig(t), [t]);
+  const typeConfig = useMemo(() => buildTypeConfig(t), [t]);
 
   const [activeTab, setActiveTab] = useState<'all' | 'draft' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -268,10 +272,10 @@ const WmsStocktakePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '盘点单删除成功');
+      pushToast('success', t('wms.stocktake_page.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('wms.stocktake_page.toast_delete_error'));
     },
   });
 
@@ -295,10 +299,10 @@ const WmsStocktakePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '盘点单创建成功');
+      pushToast('success', t('wms.stocktake_page.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('wms.stocktake_page.toast_create_error'));
     },
   });
 
@@ -318,10 +322,10 @@ const WmsStocktakePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '盘点单更新成功');
+      pushToast('success', t('wms.stocktake_page.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('wms.stocktake_page.toast_update_error'));
     },
   });
 
@@ -346,19 +350,19 @@ const WmsStocktakePage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'draft', label: '草稿', badge: orders.filter((o) => o.status === 'draft').length },
-      { id: 'in_progress', label: '盘点中', badge: stats.inProgress },
-      { id: 'completed', label: '已完成', badge: stats.completed },
+      { id: 'all', label: t('wms.stocktake_page.tab_all') },
+      { id: 'draft', label: t('wms.stocktake_page.status_draft'), badge: orders.filter((o) => o.status === 'draft').length },
+      { id: 'in_progress', label: t('wms.stocktake_page.status_in_progress'), badge: stats.inProgress },
+      { id: 'completed', label: t('wms.stocktake_page.status_completed'), badge: stats.completed },
     ],
-    [stats, orders]
+    [stats, orders, t]
   );
 
   const columns: DataTableColumn<StocktakeOrder>[] = useMemo(
     () => [
       {
         key: 'order_no',
-        header: '盘点单号',
+        header: t('wms.stocktake_page.col_order_no'),
         sortable: true,
         render: (row) => (
           <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--accent-primary)' }}>
@@ -368,7 +372,7 @@ const WmsStocktakePage: React.FC = () => {
       },
       {
         key: 'title',
-        header: '盘点标题',
+        header: t('wms.stocktake_page.col_title'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.title}</div>
@@ -380,12 +384,12 @@ const WmsStocktakePage: React.FC = () => {
       },
       {
         key: 'warehouse',
-        header: '盘点仓库',
+        header: t('wms.stocktake_page.col_warehouse'),
         render: (row) => <Tag variant='default'>{row.warehouse}</Tag>,
       },
       {
         key: 'type',
-        header: '盘点类型',
+        header: t('wms.stocktake_page.col_type'),
         align: 'center',
         render: (row) => {
           const config = typeConfig[row.type] || typeConfig.partial;
@@ -394,7 +398,7 @@ const WmsStocktakePage: React.FC = () => {
       },
       {
         key: 'progress',
-        header: '盘点进度',
+        header: t('wms.stocktake_page.col_progress'),
         render: (row) => {
           const progress =
             row.total_items > 0 ? Math.round((row.counted_items / row.total_items) * 100) : 0;
@@ -436,23 +440,23 @@ const WmsStocktakePage: React.FC = () => {
       },
       {
         key: 'discrepancy_items',
-        header: '差异项',
+        header: t('wms.stocktake_page.col_discrepancy'),
         align: 'center',
         render: (row) =>
           row.discrepancy_items > 0 ? (
-            <Badge variant='warning'>{row.discrepancy_items} 项</Badge>
+            <Badge variant='warning'>{t('wms.stocktake_page.items_unit', { count: row.discrepancy_items })}</Badge>
           ) : (
             <span style={{ color: 'var(--text-tertiary)' }}>0</span>
           ),
       },
       {
         key: 'start_date',
-        header: '开始日期',
+        header: t('wms.stocktake_page.col_start_date'),
         sortable: true,
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('wms.stocktake_page.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.draft;
@@ -461,7 +465,7 @@ const WmsStocktakePage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('wms.stocktake_page.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -474,16 +478,16 @@ const WmsStocktakePage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('wms.stocktake_page.action_detail')}
             </Button>
             {row.status === 'draft' && (
               <Button
                 variant='ghost'
                 size='sm'
                 leftIcon={<Play size={14} />}
-                onClick={() => pushToast('info', '开始盘点功能开发中')}
+                onClick={() => pushToast('info', t('wms.stocktake_page.toast_start_dev'))}
               >
-                开始
+                {t('wms.stocktake_page.action_start')}
               </Button>
             )}
             <Button
@@ -495,7 +499,7 @@ const WmsStocktakePage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('wms.stocktake_page.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -503,13 +507,13 @@ const WmsStocktakePage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('wms.stocktake_page.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedOrder, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedOrder, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -526,17 +530,17 @@ const WmsStocktakePage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('wms.stocktake_page.demo_banner')}
         </div>
       )}
       <ListPageTemplate<StocktakeOrder>
         header={{
-          title: '库存盘点',
-          subtitle: '创建盘点任务，跟踪盘点进度和差异处理',
+          title: t('wms.stocktake_page.title'),
+          subtitle: t('wms.stocktake_page.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '仓储物流', href: WMS_PATHS.root },
-            { label: '库存盘点' },
+            { label: t('wms.stocktake_page.breadcrumb_home'), href: '/dashboard' },
+            { label: t('wms.stocktake_page.breadcrumb_warehouse'), href: WMS_PATHS.root },
+            { label: t('wms.stocktake_page.title') },
           ],
         }}
         toolbar={
@@ -550,7 +554,7 @@ const WmsStocktakePage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索盘点单号/标题...'
+                placeholder={t('wms.stocktake_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -560,10 +564,10 @@ const WmsStocktakePage: React.FC = () => {
                 value={warehouseFilter}
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部仓库' },
-                  { value: '原材料仓', label: '原材料仓' },
-                  { value: '半成品仓', label: '半成品仓' },
-                  { value: '成品仓', label: '成品仓' },
+                  { value: 'all', label: t('wms.stocktake_page.filter_all_warehouse') },
+                  { value: '原材料仓', label: t('wms.stocktake_page.wh_raw_material') },
+                  { value: '半成品仓', label: t('wms.stocktake_page.wh_semi_finished') },
+                  { value: '成品仓', label: t('wms.stocktake_page.wh_finished') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -574,7 +578,7 @@ const WmsStocktakePage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('wms.stocktake_page.action_refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -584,7 +588,7 @@ const WmsStocktakePage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建盘点单
+                {t('wms.stocktake_page.action_new')}
               </Button>
             </div>
           </>
@@ -594,8 +598,8 @@ const WmsStocktakePage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无盘点单'
-        emptyDescription='点击右上角「新建盘点单」按钮创建第一个盘点任务'
+        emptyTitle={t('wms.stocktake_page.empty_title')}
+        emptyDescription={t('wms.stocktake_page.empty_description')}
         footer={
           <div
             style={{
@@ -605,25 +609,25 @@ const WmsStocktakePage: React.FC = () => {
             }}
           >
             <StatTile
-              label='盘点单总数'
+              label={t('wms.stocktake_page.stat_total')}
               value={stats.total}
               icon={ClipboardList}
               accent='cyan'
             />
             <StatTile
-              label='盘点中'
+              label={t('wms.stocktake_page.status_in_progress')}
               value={stats.inProgress}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='已完成'
+              label={t('wms.stocktake_page.status_completed')}
               value={stats.completed}
               icon={CheckCircle}
               accent='success'
             />
             <StatTile
-              label='累计差异项'
+              label={t('wms.stocktake_page.stat_discrepancy')}
               value={stats.discrepancy}
               icon={AlertTriangle}
               accent='amber'
@@ -663,7 +667,7 @@ const WmsStocktakePage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedOrder(null);
         }}
-        title='盘点单详情'
+        title={t('wms.stocktake_page.drawer_title')}
         size='lg'
       >
         {selectedOrder && (
@@ -692,16 +696,16 @@ const WmsStocktakePage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={typeConfig[selectedOrder.type]?.variant || 'default'}>
-                    {typeConfig[selectedOrder.type]?.label || '未知'}
+                    {typeConfig[selectedOrder.type]?.label || t('wms.stocktake_page.status_unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                    {statusConfig[selectedOrder.status]?.label || '未知'}
+                    {statusConfig[selectedOrder.status]?.label || t('wms.stocktake_page.status_unknown')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card title='盘点进度'>
+            <Card title={t('wms.stocktake_page.section_progress')}>
               <div style={{ marginTop: 'var(--space-2)' }}>
                 <div
                   style={{
@@ -712,7 +716,10 @@ const WmsStocktakePage: React.FC = () => {
                   }}
                 >
                   <span>
-                    已盘点 {selectedOrder.counted_items} / {selectedOrder.total_items} 项
+                    {t('wms.stocktake_page.progress_counted', {
+                      counted: selectedOrder.counted_items,
+                      total: selectedOrder.total_items,
+                    })}
                   </span>
                   <span style={{ fontWeight: 'var(--font-semibold)' }}>
                     {selectedOrder.total_items > 0
@@ -744,13 +751,13 @@ const WmsStocktakePage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='基本信息'>
+            <Card title={t('wms.stocktake_page.section_basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    盘点仓库
+                    {t('wms.stocktake_page.col_warehouse')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOrder.warehouse}
@@ -758,7 +765,7 @@ const WmsStocktakePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建人
+                    {t('wms.stocktake_page.label_creator')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedOrder.creator}
@@ -766,27 +773,27 @@ const WmsStocktakePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    开始日期
+                    {t('wms.stocktake_page.col_start_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.start_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    完成日期
+                    {t('wms.stocktake_page.label_finish_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.end_date || '-'}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    差异项数
+                    {t('wms.stocktake_page.label_discrepancy_count')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
-                    {selectedOrder.discrepancy_items} 项
+                    {t('wms.stocktake_page.items_unit', { count: selectedOrder.discrepancy_items })}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('wms.stocktake_page.label_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedOrder.created_at)}
@@ -802,7 +809,7 @@ const WmsStocktakePage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOrder ? '编辑盘点单' : '新建盘点单'}
+        title={selectedOrder ? t('wms.stocktake_page.modal_edit_title') : t('wms.stocktake_page.action_new')}
         size='lg'
         footer={
           <>
@@ -810,22 +817,16 @@ const WmsStocktakePage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('wms.stocktake_page.button_cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
+                const warehouseEl = document.getElementById('field-2') as HTMLSelectElement | null;
+                const startEl = document.getElementById('field-4') as HTMLInputElement | null;
                 const formData: Partial<StocktakeOrder> = {
-                  order_no:
-                    (document.querySelector('input[placeholder*="盘点单号"]') as HTMLInputElement)
-                      ?.value || '',
-                  warehouse: (document.querySelector('select') as HTMLSelectElement)?.value || '',
-                  start_date:
-                    (document.querySelectorAll('input[type="date"]')[0] as HTMLInputElement)
-                      ?.value || '',
-                  end_date:
-                    (document.querySelectorAll('input[type="date"]')[1] as HTMLInputElement)
-                      ?.value || '',
+                  warehouse: warehouseEl?.value || '',
+                  start_date: startEl?.value || '',
                 };
                 if (selectedOrder) {
                   updateMutation.mutate({ id: selectedOrder.id, data: formData });
@@ -834,7 +835,7 @@ const WmsStocktakePage: React.FC = () => {
                 }
               }}
             >
-              {selectedOrder ? '保存修改' : '创建盘点单'}
+              {selectedOrder ? t('wms.stocktake_page.button_save') : t('wms.stocktake_page.button_create')}
             </Button>
           </>
         }
@@ -845,11 +846,11 @@ const WmsStocktakePage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              盘点标题 *
+              {t('wms.stocktake_page.field_title')}
             </label>
             <Input
               id='field-1'
-              placeholder='例如：9月原材料仓月度盘点'
+              placeholder={t('wms.stocktake_page.placeholder_title')}
               defaultValue={selectedOrder?.title}
             />
           </div>
@@ -859,16 +860,16 @@ const WmsStocktakePage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                盘点仓库 *
+                {t('wms.stocktake_page.field_warehouse')}
               </label>
               <Select
                 id='field-2'
                 defaultValue={selectedOrder?.warehouse || '原材料仓'}
                 options={[
-                  { value: '原材料仓', label: '原材料仓' },
-                  { value: '半成品仓', label: '半成品仓' },
-                  { value: '成品仓', label: '成品仓' },
-                  { value: '全部仓库', label: '全部仓库' },
+                  { value: '原材料仓', label: t('wms.stocktake_page.wh_raw_material') },
+                  { value: '半成品仓', label: t('wms.stocktake_page.wh_semi_finished') },
+                  { value: '成品仓', label: t('wms.stocktake_page.wh_finished') },
+                  { value: '全部仓库', label: t('wms.stocktake_page.filter_all_warehouse') },
                 ]}
               />
             </div>
@@ -877,15 +878,15 @@ const WmsStocktakePage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                盘点类型
+                {t('wms.stocktake_page.field_type')}
               </label>
               <Select
                 id='field-3'
                 defaultValue={selectedOrder?.type || 'cycle'}
                 options={[
-                  { value: 'full', label: '全盘' },
-                  { value: 'partial', label: '抽盘' },
-                  { value: 'cycle', label: '循环盘点' },
+                  { value: 'full', label: t('wms.stocktake_page.type_full') },
+                  { value: 'partial', label: t('wms.stocktake_page.type_partial') },
+                  { value: 'cycle', label: t('wms.stocktake_page.type_cycle') },
                 ]}
               />
             </div>
@@ -894,7 +895,7 @@ const WmsStocktakePage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                开始日期
+                {t('wms.stocktake_page.col_start_date')}
               </label>
               <Input
                 id='field-4'
@@ -910,7 +911,7 @@ const WmsStocktakePage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除盘点单'
+        title={t('wms.stocktake_page.delete_modal_title')}
         size='sm'
         footer={
           <>
@@ -918,20 +919,20 @@ const WmsStocktakePage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('wms.stocktake_page.button_cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('wms.stocktake_page.button_confirm_delete')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除盘点单「{deleteTarget?.order_no}」吗？此操作不可撤销。
+          {t('wms.stocktake_page.delete_confirm_message', { order_no: deleteTarget?.order_no })}
         </p>
       </Modal>
 

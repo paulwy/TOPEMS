@@ -351,5 +351,12 @@
   "iam.user_management_page.k29": "邮箱",
   "iam.user_management_page.k30": "姓名",
   "iam.user_management_page.k31": "密码",
-  "iam.user_management_page.k32": "状态"
+  "iam.user_management_page.k32": "状态",
+  "iam.user_management.filter_all": "全部",
+  "iam.user_management.status_active": "启用",
+  "iam.user_management.status_inactive": "禁用",
+  "iam.role_management.all_with_count": "全部 ({{count}})",
+  "iam.role_management.search_filter": "搜索: {{keyword}}",
+  "iam.user_management.confirm_delete": "确定要删除用户「{{name}}」？此操作不可撤销。",
+  "iam.role_management.confirm_delete": "确定要删除角色「{{name}}」？此操作不可撤销。"
 }

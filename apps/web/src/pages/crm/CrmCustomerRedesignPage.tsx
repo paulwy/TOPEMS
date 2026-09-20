@@ -161,19 +161,6 @@ const mockCustomers: Customer[] = [
   },
 ];
 
-const levelConfig = {
-  A: { label: 'A级', variant: 'error' as const, icon: Star },
-  B: { label: 'B级', variant: 'warning' as const, icon: Star },
-  C: { label: 'C级', variant: 'info' as const, icon: Star },
-  D: { label: 'D级', variant: 'default' as const, icon: Star },
-};
-
-const statusConfig = {
-  active: { label: '活跃', variant: 'success' as const },
-  inactive: { label: '休眠', variant: 'default' as const },
-  potential: { label: '潜在', variant: 'info' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -189,6 +176,19 @@ const formatAmount = (value: number) => {
 const CrmCustomerRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const levelConfig = {
+    A: { label: t('crm.customer_list_page.badge_level_a'), variant: 'error' as const, icon: Star },
+    B: { label: t('crm.customer_list_page.badge_level_b'), variant: 'warning' as const, icon: Star },
+    C: { label: t('crm.customer_list_page.badge_level_c'), variant: 'info' as const, icon: Star },
+    D: { label: t('crm.customer_list_page.badge_level_d'), variant: 'default' as const, icon: Star },
+  };
+
+  const statusConfig = {
+    active: { label: t('crm.customer_list_page.status_active'), variant: 'success' as const },
+    inactive: { label: t('crm.customer_list_page.status_inactive'), variant: 'default' as const },
+    potential: { label: t('crm.customer_list_page.status_potential'), variant: 'info' as const },
+  };
 
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive' | 'potential'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -289,10 +289,10 @@ const CrmCustomerRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '客户删除成功');
+      pushToast('success', t('crm.customer_list_page.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('crm.customer_list_page.toast_delete_fail'));
     },
   });
 
@@ -318,10 +318,10 @@ const CrmCustomerRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '客户创建成功');
+      pushToast('success', t('crm.customer_list_page.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('crm.customer_list_page.toast_create_fail'));
     },
   });
 
@@ -346,10 +346,10 @@ const CrmCustomerRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '客户更新成功');
+      pushToast('success', t('crm.customer_list_page.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('crm.customer_list_page.toast_update_fail'));
     },
   });
 
@@ -373,27 +373,27 @@ const CrmCustomerRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'active', label: '活跃', badge: stats.active },
+      { id: 'all', label: t('crm.customer_list_page.tab_all') },
+      { id: 'active', label: t('crm.customer_list_page.status_active'), badge: stats.active },
       {
         id: 'potential',
-        label: '潜在',
+        label: t('crm.customer_list_page.status_potential'),
         badge: customers.filter((c) => c.status === 'potential').length,
       },
       {
         id: 'inactive',
-        label: '休眠',
+        label: t('crm.customer_list_page.status_inactive'),
         badge: customers.filter((c) => c.status === 'inactive').length,
       },
     ],
-    [stats, customers]
+    [stats, customers, t]
   );
 
   const columns: DataTableColumn<Customer>[] = useMemo(
     () => [
       {
         key: 'customer_no',
-        header: '客户编号',
+        header: t('crm.customer_list_page.col_customer_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -409,7 +409,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       },
       {
         key: 'customer_name',
-        header: '客户名称',
+        header: t('crm.customer_list_page.col_customer_name'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.customer_name}</div>
@@ -421,7 +421,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       },
       {
         key: 'level',
-        header: '客户等级',
+        header: t('crm.customer_list_page.col_level'),
         align: 'center',
         render: (row) => {
           const config = levelConfig[row.level] || levelConfig.D;
@@ -430,7 +430,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       },
       {
         key: 'contact_person',
-        header: '联系人',
+        header: t('crm.customer_list_page.field_contact_person'),
         render: (row) => (
           <div>
             <div style={{ fontSize: 'var(--text-sm)' }}>{row.contact_person}</div>
@@ -442,7 +442,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       },
       {
         key: 'total_order_amount',
-        header: '累计订单金额',
+        header: t('crm.customer_list_page.col_total_order_amount'),
         align: 'right',
         sortable: true,
         render: (row) => (
@@ -453,16 +453,16 @@ const CrmCustomerRedesignPage: React.FC = () => {
       },
       {
         key: 'order_count',
-        header: '订单数',
+        header: t('crm.customer_list_page.col_order_count'),
         align: 'center',
       },
       {
         key: 'owner',
-        header: '负责人',
+        header: t('crm.customer_list_page.field_owner'),
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('crm.customer_list_page.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.active;
@@ -471,7 +471,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('crm.customer_list_page.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -484,7 +484,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('crm.customer_list_page.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -495,7 +495,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('crm.customer_list_page.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -503,13 +503,13 @@ const CrmCustomerRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('crm.customer_list_page.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedCustomer, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedCustomer, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -526,7 +526,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('crm.customer_list_page.mock_banner')}
         </div>
       )}
       <ListPageTemplate<Customer>
@@ -575,7 +575,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('crm.customer_list_page.btn_refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -585,7 +585,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建客户
+                {t('crm.customer_list_page.btn_create')}
               </Button>
             </div>
           </>
@@ -595,8 +595,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无客户'
-        emptyDescription='点击右上角「新建客户」按钮创建第一个客户'
+        emptyTitle={t('crm.customer_list_page.empty_title')}
+        emptyDescription={t('crm.customer_list_page.empty_description')}
         footer={
           <div
             style={{
@@ -606,25 +606,25 @@ const CrmCustomerRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='客户总数'
+              label={t('crm.customer_list_page.stat_total_customers')}
               value={stats.total}
               icon={Building2}
               accent='cyan'
             />
             <StatTile
-              label='活跃客户'
+              label={t('crm.customer_list_page.stat_active_customers')}
               value={stats.active}
               icon={Users}
               accent='success'
             />
             <StatTile
-              label='A级客户'
+              label={t('crm.customer_list_page.stat_a_level_customers')}
               value={stats.aLevel}
               icon={Star}
               accent='warning'
             />
             <StatTile
-              label='累计订单金额'
+              label={t('crm.customer_list_page.stat_total_order_amount')}
               value={formatAmount(stats.totalAmount)}
               icon={DollarSign}
               accent='amber'
@@ -664,7 +664,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedCustomer(null);
         }}
-        title='客户详情'
+        title={t('crm.customer_list_page.drawer_title')}
         size='lg'
       >
         {selectedCustomer && (
@@ -696,22 +696,22 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={levelConfig[selectedCustomer.level]?.variant || 'default'}>
-                    {levelConfig[selectedCustomer.level]?.label || '未知'}
+                    {levelConfig[selectedCustomer.level]?.label || t('crm.customer_list_page.label_unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedCustomer.status]?.variant || 'default'}>
-                    {statusConfig[selectedCustomer.status]?.label || '未知'}
+                    {statusConfig[selectedCustomer.status]?.label || t('crm.customer_list_page.label_unknown')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card title='联系信息'>
+            <Card title={t('crm.customer_list_page.section_contact_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    联系人
+                    {t('crm.customer_list_page.field_contact_person')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedCustomer.contact_person}
@@ -719,7 +719,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    联系电话
+                    {t('crm.customer_list_page.field_contact_phone')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedCustomer.contact_phone}
@@ -727,26 +727,26 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    邮箱
+                    {t('crm.customer_list_page.field_email')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedCustomer.email}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    地址
+                    {t('crm.customer_list_page.field_address')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedCustomer.address}</div>
                 </div>
               </div>
             </Card>
 
-            <Card title='交易信息'>
+            <Card title={t('crm.customer_list_page.section_transaction_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    累计订单金额
+                    {t('crm.customer_list_page.col_total_order_amount')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                     {formatAmount(selectedCustomer.total_order_amount)}
@@ -754,15 +754,15 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    订单数量
+                    {t('crm.customer_list_page.field_order_count')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                    {selectedCustomer.order_count} 单
+                    {selectedCustomer.order_count} {t('crm.customer_list_page.unit_orders')}
                   </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    负责人
+                    {t('crm.customer_list_page.field_owner')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedCustomer.owner}
@@ -770,7 +770,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('crm.customer_list_page.field_create_time')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedCustomer.created_at)}
@@ -786,7 +786,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedCustomer ? '编辑客户' : '新建客户'}
+        title={selectedCustomer ? t('crm.customer_list_page.modal_edit_title') : t('crm.customer_list_page.modal_create_title')}
         size='lg'
         footer={
           <>
@@ -794,35 +794,26 @@ const CrmCustomerRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('crm.customer_list_page.btn_cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<Customer> = {
                   customer_name:
-                    (
-                      document.querySelector(
-                        'input[placeholder="例如：上海科技有限公司"]'
-                      ) as HTMLInputElement
-                    )?.value || '',
+                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   contact_phone:
-                    (document.querySelectorAll('input[type="tel"]')[0] as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-5') as HTMLInputElement)?.value || '',
                   email:
-                    (document.querySelector('input[type="email"]') as HTMLInputElement)?.value ||
-                    '',
+                    (document.getElementById('field-6') as HTMLInputElement)?.value || '',
                   address:
-                    (document.querySelectorAll('input[placeholder*="地址"]')[0] as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-7') as HTMLInputElement)?.value || '',
                   industry:
-                    (document.querySelectorAll('select')[0] as HTMLSelectElement)?.value || '',
+                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   level:
-                    ((document.querySelectorAll('select')[1] as HTMLSelectElement)
-                      ?.value as Customer['level']) || 'C',
-                  status:
-                    ((document.querySelectorAll('select')[2] as HTMLSelectElement)
-                      ?.value as Customer['status']) || 'active',
+                    (document.getElementById('field-3') as HTMLSelectElement)
+                      ?.value as Customer['level'] || 'C',
+                  status: 'active',
                 };
                 if (selectedCustomer) {
                   updateMutation.mutate({ id: selectedCustomer.id, data: formData });
@@ -831,7 +822,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedCustomer ? '保存修改' : '创建客户'}
+              {selectedCustomer ? t('crm.customer_list_page.btn_save') : t('crm.customer_list_page.btn_submit_create')}
             </Button>
           </>
         }
@@ -843,11 +834,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 htmlFor='field-1'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                客户名称 *
+                {t('crm.customer_list_page.field_customer_name_required')}
               </label>
               <Input
                 id='field-1'
-                placeholder='例如：上海科技有限公司'
+                placeholder={t('crm.customer_list_page.ph_customer_name_example')}
                 defaultValue={selectedCustomer?.customer_name}
               />
             </div>
@@ -856,11 +847,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                所属行业
+                {t('crm.customer_list_page.field_industry')}
               </label>
               <Input
                 id='field-2'
-                placeholder='例如：电子制造'
+                placeholder={t('crm.customer_list_page.ph_industry_example')}
                 defaultValue={selectedCustomer?.industry}
               />
             </div>
@@ -869,16 +860,16 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                客户等级 *
+                {t('crm.customer_list_page.field_level_required')}
               </label>
               <Select
                 id='field-3'
                 defaultValue={selectedCustomer?.level || 'B'}
                 options={[
-                  { value: 'A', label: 'A级客户' },
-                  { value: 'B', label: 'B级客户' },
-                  { value: 'C', label: 'C级客户' },
-                  { value: 'D', label: 'D级客户' },
+                  { value: 'A', label: t('crm.customer_list_page.level_a') },
+                  { value: 'B', label: t('crm.customer_list_page.level_b') },
+                  { value: 'C', label: t('crm.customer_list_page.level_c') },
+                  { value: 'D', label: t('crm.customer_list_page.level_d') },
                 ]}
               />
             </div>
@@ -887,11 +878,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                联系人
+                {t('crm.customer_list_page.field_contact_person')}
               </label>
               <Input
                 id='field-4'
-                placeholder='请输入联系人'
+                placeholder={t('crm.customer_list_page.ph_contact_person')}
                 defaultValue={selectedCustomer?.contact_person}
               />
             </div>
@@ -900,11 +891,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                联系电话
+                {t('crm.customer_list_page.field_contact_phone')}
               </label>
               <Input
                 id='field-5'
-                placeholder='请输入联系电话'
+                placeholder={t('crm.customer_list_page.ph_contact_phone')}
                 defaultValue={selectedCustomer?.contact_phone}
               />
             </div>
@@ -913,11 +904,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                邮箱
+                {t('crm.customer_list_page.field_email')}
               </label>
               <Input
                 id='field-6'
-                placeholder='请输入邮箱'
+                placeholder={t('crm.customer_list_page.ph_email')}
                 defaultValue={selectedCustomer?.email}
               />
             </div>
@@ -927,11 +918,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
               htmlFor='field-7'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              地址
+              {t('crm.customer_list_page.field_address')}
             </label>
             <Input
               id='field-7'
-              placeholder='请输入地址'
+              placeholder={t('crm.customer_list_page.ph_address')}
               defaultValue={selectedCustomer?.address}
             />
           </div>
@@ -942,7 +933,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除客户'
+        title={t('crm.customer_list_page.delete_title')}
         size='sm'
         footer={
           <>
@@ -950,20 +941,20 @@ const CrmCustomerRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('crm.customer_list_page.btn_cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('crm.customer_list_page.btn_confirm_delete')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除客户「{deleteTarget?.customer_name}」吗？此操作不可撤销。
+          {t('crm.customer_list_page.delete_confirm_message', { name: deleteTarget?.customer_name })}
         </p>
       </Modal>
 

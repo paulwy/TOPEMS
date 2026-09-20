@@ -15,6 +15,7 @@ import {
 import type { Toast } from '@/components/redesign';
 import { systemSettingApi } from '@/api/admin/systemSetting';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -61,13 +62,14 @@ type SettingsType = typeof defaultSettings;
 type TabKey = keyof SettingsType;
 
 const tabsConfig = [
-  { id: 'basic', label: '基础设置', icon: Settings },
-  { id: 'mail', label: '邮件设置', icon: Mail },
-  { id: 'sms', label: '短信设置', icon: MessageSquare },
-  { id: 'log', label: '日志设置', icon: FileText },
+  { id: 'basic', labelKey: 'admin.system_settings_page.tab_basic', icon: Settings },
+  { id: 'mail', labelKey: 'system_settings.email_settings', icon: Mail },
+  { id: 'sms', labelKey: 'system_settings.sms_settings', icon: MessageSquare },
+  { id: 'log', labelKey: 'system_settings.log_settings', icon: FileText },
 ];
 
 const SystemSettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>('basic');
   const [settings, setSettings] = useState<SettingsType>(defaultSettings);
@@ -122,9 +124,9 @@ const SystemSettingsPage: React.FC = () => {
       systemSettingApi.updateSystemConfig(newSettings as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', '系统设置保存成功');
+      pushToast('success', t('admin.system_settings_page.save_success'));
     },
-    onError: (err: Error) => pushToast('error', `保存失败：${err.message}`),
+    onError: (err: Error) => pushToast('error', t('admin.system_settings_page.save_failed', { message: err.message })),
   });
 
   const handleSave = () => {
@@ -143,49 +145,49 @@ const SystemSettingsPage: React.FC = () => {
 
   const renderBasicTab = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-      <FieldGroup title='系统信息'>
+      <FieldGroup title={t('admin.system_settings_page.group_system_info')}>
         <FormField
-          label='系统名称'
+          label={t('system_settings.system_name')}
           required
         >
           <Input
             value={settings.basic.systemName}
             onChange={(e) => updateField('basic', 'systemName', e.target.value)}
-            placeholder='请输入系统名称'
+            placeholder={t('admin.system_settings_page.ph_system_name')}
           />
         </FormField>
-        <FormField label='公司名称'>
+        <FormField label={t('system_settings.company_name')}>
           <Input
             value={settings.basic.companyName}
             onChange={(e) => updateField('basic', 'companyName', e.target.value)}
-            placeholder='请输入公司名称'
+            placeholder={t('admin.system_settings_page.ph_company_name')}
           />
         </FormField>
       </FieldGroup>
 
-      <FieldGroup title='联系方式'>
+      <FieldGroup title={t('admin.system_settings_page.group_contact')}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-          <FormField label='联系邮箱'>
+          <FormField label={t('system_settings.contact_email')}>
             <Input
               type='email'
               value={settings.basic.contactEmail}
               onChange={(e) => updateField('basic', 'contactEmail', e.target.value)}
-              placeholder='请输入联系邮箱'
+              placeholder={t('admin.system_settings_page.ph_contact_email')}
             />
           </FormField>
-          <FormField label='联系电话'>
+          <FormField label={t('system_settings.contact_phone')}>
             <Input
               value={settings.basic.contactPhone}
               onChange={(e) => updateField('basic', 'contactPhone', e.target.value)}
-              placeholder='请输入联系电话'
+              placeholder={t('admin.system_settings_page.ph_contact_phone')}
             />
           </FormField>
         </div>
-        <FormField label='公司地址'>
+        <FormField label={t('system_settings.company_address')}>
           <Input
             value={settings.basic.address}
             onChange={(e) => updateField('basic', 'address', e.target.value)}
-            placeholder='请输入公司地址'
+            placeholder={t('admin.system_settings_page.ph_company_address')}
           />
         </FormField>
       </FieldGroup>
@@ -194,20 +196,20 @@ const SystemSettingsPage: React.FC = () => {
 
   const renderMailTab = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-      <FieldGroup title='邮件服务'>
-        <FormField label='启用邮件服务'>
+      <FieldGroup title={t('admin.system_settings_page.group_mail_service')}>
+        <FormField label={t('system_settings.enable_email_service')}>
           <Toggle
             checked={settings.mail.enabled}
             onChange={(checked) => updateField('mail', 'enabled', checked)}
-            label={settings.mail.enabled ? '已启用' : '已禁用'}
+            label={settings.mail.enabled ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
           />
         </FormField>
       </FieldGroup>
 
-      <FieldGroup title='SMTP 配置'>
+      <FieldGroup title={t('admin.system_settings_page.group_smtp')}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-3)' }}>
           <FormField
-            label='SMTP 服务器'
+            label={t('admin.system_settings_page.smtp_server')}
             required
           >
             <Input
@@ -218,7 +220,7 @@ const SystemSettingsPage: React.FC = () => {
             />
           </FormField>
           <FormField
-            label='端口'
+            label={t('admin.system_settings_page.port')}
             required
           >
             <Input
@@ -230,7 +232,7 @@ const SystemSettingsPage: React.FC = () => {
           </FormField>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-          <FormField label='用户名'>
+          <FormField label={t('system_settings.username')}>
             <Input
               value={settings.mail.smtpUsername}
               onChange={(e) => updateField('mail', 'smtpUsername', e.target.value)}
@@ -238,29 +240,29 @@ const SystemSettingsPage: React.FC = () => {
               disabled={!settings.mail.enabled}
             />
           </FormField>
-          <FormField label='密码'>
+          <FormField label={t('system_settings.password')}>
             <Input
               type='password'
               value={settings.mail.smtpPassword}
               onChange={(e) => updateField('mail', 'smtpPassword', e.target.value)}
-              placeholder='请输入 SMTP 密码'
+              placeholder={t('admin.system_settings_page.ph_smtp_password')}
               disabled={!settings.mail.enabled}
             />
           </FormField>
         </div>
-        <FormField label='启用 TLS'>
+        <FormField label={t('admin.system_settings_page.enable_tls')}>
           <Toggle
             checked={settings.mail.useTLS}
             onChange={(checked) => updateField('mail', 'useTLS', checked)}
-            label={settings.mail.useTLS ? '已启用 TLS' : '未启用 TLS'}
+            label={settings.mail.useTLS ? t('admin.system_settings_page.tls_on') : t('admin.system_settings_page.tls_off')}
             disabled={!settings.mail.enabled}
           />
         </FormField>
       </FieldGroup>
 
-      <FieldGroup title='发件人配置'>
+      <FieldGroup title={t('admin.system_settings_page.group_sender')}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-          <FormField label='发件人邮箱'>
+          <FormField label={t('admin.system_settings_page.sender_email')}>
             <Input
               value={settings.mail.fromEmail}
               onChange={(e) => updateField('mail', 'fromEmail', e.target.value)}
@@ -268,11 +270,11 @@ const SystemSettingsPage: React.FC = () => {
               disabled={!settings.mail.enabled}
             />
           </FormField>
-          <FormField label='发件人名称'>
+          <FormField label={t('admin.system_settings_page.sender_name')}>
             <Input
               value={settings.mail.fromName}
               onChange={(e) => updateField('mail', 'fromName', e.target.value)}
-              placeholder='TOPEMS 系统通知'
+              placeholder={t('admin.system_settings_page.ph_sender_name')}
               disabled={!settings.mail.enabled}
             />
           </FormField>
@@ -283,25 +285,25 @@ const SystemSettingsPage: React.FC = () => {
 
   const renderSmsTab = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-      <FieldGroup title='短信服务'>
-        <FormField label='启用短信服务'>
+      <FieldGroup title={t('admin.system_settings_page.group_sms_service')}>
+        <FormField label={t('system_settings.enable_sms_service')}>
           <Toggle
             checked={settings.sms.enabled}
             onChange={(checked) => updateField('sms', 'enabled', checked)}
-            label={settings.sms.enabled ? '已启用' : '已禁用'}
+            label={settings.sms.enabled ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
           />
         </FormField>
       </FieldGroup>
 
-      <FieldGroup title='服务商配置'>
-        <FormField label='短信服务商'>
+      <FieldGroup title={t('admin.system_settings_page.group_provider')}>
+        <FormField label={t('system_settings.sms_provider')}>
           <Select
             value={settings.sms.provider}
             onChange={(e) => updateField('sms', 'provider', e.target.value)}
             options={[
-              { value: 'aliyun', label: '阿里云短信' },
-              { value: 'tencent', label: '腾讯云短信' },
-              { value: 'huawei', label: '华为云短信' },
+              { value: 'aliyun', label: t('admin.system_settings_page.sms_aliyun') },
+              { value: 'tencent', label: t('admin.system_settings_page.sms_tencent') },
+              { value: 'huawei', label: t('admin.system_settings_page.sms_huawei') },
             ]}
             disabled={!settings.sms.enabled}
           />
@@ -311,7 +313,7 @@ const SystemSettingsPage: React.FC = () => {
             <Input
               value={settings.sms.accessKeyId}
               onChange={(e) => updateField('sms', 'accessKeyId', e.target.value)}
-              placeholder='请输入 Access Key ID'
+              placeholder={t('admin.system_settings_page.ph_access_key_id')}
               disabled={!settings.sms.enabled}
             />
           </FormField>
@@ -320,12 +322,12 @@ const SystemSettingsPage: React.FC = () => {
               type='password'
               value={settings.sms.accessKeySecret}
               onChange={(e) => updateField('sms', 'accessKeySecret', e.target.value)}
-              placeholder='请输入 Access Key Secret'
+              placeholder={t('admin.system_settings_page.ph_access_key_secret')}
               disabled={!settings.sms.enabled}
             />
           </FormField>
         </div>
-        <FormField label='短信签名'>
+        <FormField label={t('admin.system_settings_page.sms_signature')}>
           <Input
             value={settings.sms.signName}
             onChange={(e) => updateField('sms', 'signName', e.target.value)}
@@ -339,20 +341,20 @@ const SystemSettingsPage: React.FC = () => {
 
   const renderLogTab = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-      <FieldGroup title='日志级别'>
-        <FormField label='日志级别'>
+      <FieldGroup title={t('system_settings.log_level')}>
+        <FormField label={t('system_settings.log_level')}>
           <Select
             value={settings.log.level}
             onChange={(e) => updateField('log', 'level', e.target.value)}
             options={[
-              { value: 'debug', label: 'Debug（详细调试）' },
-              { value: 'info', label: 'Info（常规信息）' },
-              { value: 'warn', label: 'Warn（警告）' },
-              { value: 'error', label: 'Error（仅错误）' },
+              { value: 'debug', label: t('admin.system_settings_page.log_level_debug') },
+              { value: 'info', label: t('admin.system_settings_page.log_level_info') },
+              { value: 'warn', label: t('admin.system_settings_page.log_level_warn') },
+              { value: 'error', label: t('admin.system_settings_page.log_level_error') },
             ]}
           />
         </FormField>
-        <FormField label='日志保留天数'>
+        <FormField label={t('system_settings.log_retention_days')}>
           <Input
             type='number'
             value={settings.log.retentionDays.toString()}
@@ -363,26 +365,26 @@ const SystemSettingsPage: React.FC = () => {
         </FormField>
       </FieldGroup>
 
-      <FieldGroup title='日志类型'>
-        <FormField label='访问日志'>
+      <FieldGroup title={t('admin.system_settings_page.group_log_type')}>
+        <FormField label={t('admin.system_settings_page.access_log')}>
           <Toggle
             checked={settings.log.enableAccessLog}
             onChange={(checked) => updateField('log', 'enableAccessLog', checked)}
-            label={settings.log.enableAccessLog ? '已启用' : '已禁用'}
+            label={settings.log.enableAccessLog ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
           />
         </FormField>
-        <FormField label='操作日志'>
+        <FormField label={t('admin.system_settings_page.operation_log')}>
           <Toggle
             checked={settings.log.enableOperationLog}
             onChange={(checked) => updateField('log', 'enableOperationLog', checked)}
-            label={settings.log.enableOperationLog ? '已启用' : '已禁用'}
+            label={settings.log.enableOperationLog ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
           />
         </FormField>
-        <FormField label='安全日志'>
+        <FormField label={t('admin.system_settings_page.security_log')}>
           <Toggle
             checked={settings.log.enableSecurityLog}
             onChange={(checked) => updateField('log', 'enableSecurityLog', checked)}
-            label={settings.log.enableSecurityLog ? '已启用' : '已禁用'}
+            label={settings.log.enableSecurityLog ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
           />
         </FormField>
       </FieldGroup>
@@ -408,24 +410,24 @@ const SystemSettingsPage: React.FC = () => {
     <>
       <FormPageTemplate
         header={{
-          title: '系统设置',
-          subtitle: '管理系统基础配置、邮件服务、短信服务和日志设置',
+          title: t('system_settings.system_settings'),
+          subtitle: t('admin.system_settings_page.subtitle'),
         }}
         onSubmit={handleSave}
         loading={saveMutation.isPending}
-        submitLabel='保存设置'
+        submitLabel={t('admin.system_settings_page.submit_save')}
         actions={
           <Button
             variant='ghost'
             leftIcon={<RefreshCw size={16} />}
             onClick={() => refetch()}
           >
-            重置
+            {t('system_settings.reset')}
           </Button>
         }
       >
         <Tabs
-          tabs={tabsConfig.map((t) => ({ id: t.id, label: t.label }))}
+          tabs={tabsConfig.map((tab) => ({ id: tab.id, label: t(tab.labelKey) }))}
           activeTab={activeTab}
           onChange={(id) => setActiveTab(id as TabKey)}
         />
@@ -439,13 +441,13 @@ const SystemSettingsPage: React.FC = () => {
                 color: 'var(--text-secondary)',
               }}
             >
-              加载中...
+              {t('admin.system_settings_page.loading')}
             </div>
           ) : error ? (
             <div
               style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--error-500)' }}
             >
-              加载失败，使用默认设置
+              {t('admin.system_settings_page.load_failed_default')}
             </div>
           ) : (
             renderTabContent()

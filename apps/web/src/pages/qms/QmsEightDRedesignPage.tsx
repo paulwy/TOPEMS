@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -149,38 +150,50 @@ const mockEightDReports: EightDReport[] = [
   },
 ];
 
-const statusConfig: Record<string, { label: string; variant: any; step: number }> = {
-  d1: { label: 'D1 组建团队', variant: 'warning', step: 1 },
-  d2: { label: 'D2 问题描述', variant: 'warning', step: 2 },
-  d3: { label: 'D3 临时措施', variant: 'amber', step: 3 },
-  d4: { label: 'D4 根本原因', variant: 'info', step: 4 },
-  d5: { label: 'D5 永久措施', variant: 'info', step: 5 },
-  d6: { label: 'D6 实施验证', variant: 'cyan', step: 6 },
-  d7: { label: 'D7 预防再发', variant: 'cyan', step: 7 },
-  d8: { label: 'D8 表彰团队', variant: 'success', step: 8 },
-  closed: { label: '已关闭', variant: 'default', step: 9 },
-};
-
-const sourceConfig = {
-  internal: { label: '内部发现', variant: 'cyan' as const },
-  customer: { label: '客户投诉', variant: 'error' as const },
-  supplier: { label: '供应商问题', variant: 'amber' as const },
-  audit: { label: '审核发现', variant: 'info' as const },
-};
-
-const severityConfig = {
-  minor: { label: '轻微', variant: 'default' as const },
-  major: { label: '严重', variant: 'warning' as const },
-  critical: { label: '致命', variant: 'error' as const },
-};
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
 };
 
 const QmsEightDRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const statusConfig = useMemo<
+    Record<string, { label: string; variant: any; step: number }>
+  >(
+    () => ({
+      d1: { label: t('qms.eight_d_redesign.status_d1'), variant: 'warning', step: 1 },
+      d2: { label: t('qms.eight_d_redesign.status_d2'), variant: 'warning', step: 2 },
+      d3: { label: t('qms.eight_d_redesign.status_d3'), variant: 'amber', step: 3 },
+      d4: { label: t('qms.eight_d_redesign.status_d4'), variant: 'info', step: 4 },
+      d5: { label: t('qms.eight_d_redesign.status_d5'), variant: 'info', step: 5 },
+      d6: { label: t('qms.eight_d_redesign.status_d6'), variant: 'cyan', step: 6 },
+      d7: { label: t('qms.eight_d_redesign.status_d7'), variant: 'cyan', step: 7 },
+      d8: { label: t('qms.eight_d_redesign.status_d8'), variant: 'success', step: 8 },
+      closed: { label: t('qms.eight_d_redesign.status_closed'), variant: 'default', step: 9 },
+    }),
+    [t]
+  );
+
+  const sourceConfig = useMemo(
+    () => ({
+      internal: { label: t('qms.eight_d_redesign.source_internal'), variant: 'cyan' as const },
+      customer: { label: t('qms.eight_d_redesign.source_customer'), variant: 'error' as const },
+      supplier: { label: t('qms.eight_d_redesign.source_supplier'), variant: 'amber' as const },
+      audit: { label: t('qms.eight_d_redesign.source_audit'), variant: 'info' as const },
+    }),
+    [t]
+  );
+
+  const severityConfig = useMemo(
+    () => ({
+      minor: { label: t('qms.eight_d_redesign.severity_minor'), variant: 'default' as const },
+      major: { label: t('qms.eight_d_redesign.severity_major'), variant: 'warning' as const },
+      critical: { label: t('qms.eight_d_redesign.severity_critical'), variant: 'error' as const },
+    }),
+    [t]
+  );
 
   const [activeTab, setActiveTab] = useState<'all' | 'in_progress' | 'closed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -270,10 +283,10 @@ const QmsEightDRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
-      pushToast('success', '8D 报告删除成功');
+      pushToast('success', t('qms.eight_d_redesign.toast_delete_success'));
     },
     onError: () => {
-      pushToast('error', '删除失败，请重试');
+      pushToast('error', t('qms.eight_d_redesign.toast_delete_fail'));
     },
   });
 
@@ -301,10 +314,10 @@ const QmsEightDRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '8D 报告创建成功');
+      pushToast('success', t('qms.eight_d_redesign.toast_create_success'));
     },
     onError: () => {
-      pushToast('error', '创建失败，请重试');
+      pushToast('error', t('qms.eight_d_redesign.toast_create_fail'));
     },
   });
 
@@ -326,10 +339,10 @@ const QmsEightDRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', '8D 报告更新成功');
+      pushToast('success', t('qms.eight_d_redesign.toast_update_success'));
     },
     onError: () => {
-      pushToast('error', '更新失败，请重试');
+      pushToast('error', t('qms.eight_d_redesign.toast_update_fail'));
     },
   });
 
@@ -354,18 +367,18 @@ const QmsEightDRedesignPage: React.FC = () => {
 
   const tabsConfig = useMemo(
     () => [
-      { id: 'all', label: '全部' },
-      { id: 'in_progress', label: '进行中', badge: stats.inProgress },
-      { id: 'closed', label: '已关闭', badge: stats.closed },
+      { id: 'all', label: t('qms.eight_d_redesign.tab_all') },
+      { id: 'in_progress', label: t('qms.eight_d_redesign.tab_in_progress'), badge: stats.inProgress },
+      { id: 'closed', label: t('qms.eight_d_redesign.tab_closed'), badge: stats.closed },
     ],
-    [stats]
+    [stats, t]
   );
 
   const columns: DataTableColumn<EightDReport>[] = useMemo(
     () => [
       {
         key: 'report_no',
-        header: '报告编号',
+        header: t('qms.eight_d_redesign.col_report_no'),
         sortable: true,
         render: (row) => (
           <span
@@ -381,7 +394,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'title',
-        header: '问题描述',
+        header: t('qms.eight_d_redesign.col_title'),
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.title}</div>
@@ -394,7 +407,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'problem_source',
-        header: '来源',
+        header: t('qms.eight_d_redesign.col_source'),
         align: 'center',
         render: (row) => {
           const config = sourceConfig[row.problem_source] || sourceConfig.internal;
@@ -403,7 +416,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'severity',
-        header: '严重程度',
+        header: t('qms.eight_d_redesign.col_severity'),
         align: 'center',
         render: (row) => {
           const config = severityConfig[row.severity] || severityConfig.minor;
@@ -412,7 +425,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'current_step',
-        header: '当前阶段',
+        header: t('qms.eight_d_redesign.col_current_step'),
         render: (row) => (
           <div>
             <div style={{ fontSize: 'var(--text-sm)' }}>{row.current_step}</div>
@@ -441,7 +454,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'owner',
-        header: '负责人',
+        header: t('qms.eight_d_redesign.col_owner'),
         render: (row) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <User
@@ -454,7 +467,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'due_date',
-        header: '截止日期',
+        header: t('qms.eight_d_redesign.col_due_date'),
         sortable: true,
         render: (row) => (
           <span
@@ -471,7 +484,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'status',
-        header: '状态',
+        header: t('qms.eight_d_redesign.col_status'),
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.d1;
@@ -480,7 +493,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: '操作',
+        header: t('qms.eight_d_redesign.col_actions'),
         align: 'right',
         render: (row) => (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
@@ -493,7 +506,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 setDetailDrawerOpen(true);
               }}
             >
-              详情
+              {t('qms.eight_d_redesign.action_detail')}
             </Button>
             <Button
               variant='ghost'
@@ -504,7 +517,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 setCreateModalOpen(true);
               }}
             >
-              编辑
+              {t('qms.eight_d_redesign.action_edit')}
             </Button>
             <Button
               variant='ghost'
@@ -512,13 +525,13 @@ const QmsEightDRedesignPage: React.FC = () => {
               leftIcon={<Trash2 size={14} />}
               onClick={() => setDeleteTarget(row)}
             >
-              删除
+              {t('qms.eight_d_redesign.action_delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [setSelectedReport, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget]
+    [setSelectedReport, setDetailDrawerOpen, setCreateModalOpen, setDeleteTarget, t]
   );
 
   return (
@@ -535,17 +548,17 @@ const QmsEightDRedesignPage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          ⚠️ 当前为演示模式，数据可能不是最新。API 连接失败，正在使用本地演示数据。
+          {t('qms.eight_d_redesign.banner_demo_mode')}
         </div>
       )}
       <ListPageTemplate<EightDReport>
         header={{
-          title: '8D 问题解决报告',
-          subtitle: '系统化解决质量问题，跟踪 8D 报告进展',
+          title: t('qms.eight_d_redesign.header_title'),
+          subtitle: t('qms.eight_d_redesign.header_subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '质量管理' },
-            { label: '8D 报告' },
+            { label: t('qms.eight_d_redesign.breadcrumb_home'), href: '/dashboard' },
+            { label: t('qms.eight_d_redesign.breadcrumb_qms') },
+            { label: t('qms.eight_d_redesign.breadcrumb_eight_d') },
           ],
         }}
         toolbar={
@@ -559,7 +572,7 @@ const QmsEightDRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索报告编号/标题/产品...'
+                placeholder={t('qms.eight_d_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -569,10 +582,10 @@ const QmsEightDRedesignPage: React.FC = () => {
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部严重程度' },
-                  { value: 'minor', label: '轻微' },
-                  { value: 'major', label: '严重' },
-                  { value: 'critical', label: '致命' },
+                  { value: 'all', label: t('qms.eight_d_redesign.severity_filter_all') },
+                  { value: 'minor', label: t('qms.eight_d_redesign.severity_minor') },
+                  { value: 'major', label: t('qms.eight_d_redesign.severity_major') },
+                  { value: 'critical', label: t('qms.eight_d_redesign.severity_critical') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -583,7 +596,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
               >
-                刷新
+                {t('qms.eight_d_redesign.refresh')}
               </Button>
               <Button
                 variant='primary'
@@ -593,7 +606,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                   setCreateModalOpen(true);
                 }}
               >
-                新建 8D 报告
+                {t('qms.eight_d_redesign.create')}
               </Button>
             </div>
           </>
@@ -603,8 +616,8 @@ const QmsEightDRedesignPage: React.FC = () => {
         rowKey='id'
         loading={isLoading}
         error={error ? (error as Error).message : null}
-        emptyTitle='暂无 8D 报告'
-        emptyDescription='点击右上角「新建 8D 报告」按钮创建第一个问题解决报告'
+        emptyTitle={t('qms.eight_d_redesign.empty_title')}
+        emptyDescription={t('qms.eight_d_redesign.empty_description')}
         footer={
           <div
             style={{
@@ -614,25 +627,25 @@ const QmsEightDRedesignPage: React.FC = () => {
             }}
           >
             <StatTile
-              label='8D 报告总数'
+              label={t('qms.eight_d_redesign.stat_total')}
               value={stats.total}
               icon={FileText}
               accent='cyan'
             />
             <StatTile
-              label='进行中'
+              label={t('qms.eight_d_redesign.tab_in_progress')}
               value={stats.inProgress}
               icon={Clock}
               accent='warning'
             />
             <StatTile
-              label='已关闭'
+              label={t('qms.eight_d_redesign.tab_closed')}
               value={stats.closed}
               icon={CheckCircle}
               accent='success'
             />
             <StatTile
-              label='未关闭致命问题'
+              label={t('qms.eight_d_redesign.stat_critical_open')}
               value={stats.critical}
               icon={AlertTriangle}
               accent='error'
@@ -672,7 +685,7 @@ const QmsEightDRedesignPage: React.FC = () => {
           setDetailDrawerOpen(false);
           setSelectedReport(null);
         }}
-        title='8D 报告详情'
+        title={t('qms.eight_d_redesign.drawer_title')}
         size='lg'
       >
         {selectedReport && (
@@ -701,20 +714,20 @@ const QmsEightDRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={severityConfig[selectedReport.severity]?.variant || 'default'}>
-                    {severityConfig[selectedReport.severity]?.label || '未知'}
+                    {severityConfig[selectedReport.severity]?.label || t('qms.eight_d_redesign.unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedReport.status]?.variant || 'default'}>
-                    {statusConfig[selectedReport.status]?.label || '未知'}
+                    {statusConfig[selectedReport.status]?.label || t('qms.eight_d_redesign.unknown')}
                   </Badge>
                 </div>
               </div>
             </Card>
 
             {/* 8D 步骤进度 */}
-            <Card title='8D 步骤进度'>
+            <Card title={t('qms.eight_d_redesign.drawer_steps_title')}>
               <div style={{ marginTop: 'var(--space-2)' }}>
                 <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>
-                  当前阶段：{selectedReport.current_step}
+                  {t('qms.eight_d_redesign.drawer_current_step')}{selectedReport.current_step}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
@@ -753,13 +766,13 @@ const QmsEightDRedesignPage: React.FC = () => {
               </div>
             </Card>
 
-            <Card title='基本信息'>
+            <Card title={t('qms.eight_d_redesign.drawer_basic_info')}>
               <div
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    产品名称
+                    {t('qms.eight_d_redesign.drawer_product_name')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedReport.product_name}
@@ -767,16 +780,16 @@ const QmsEightDRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    问题来源
+                    {t('qms.eight_d_redesign.drawer_problem_source')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {sourceConfig[selectedReport.problem_source]?.label || '未知'}
+                    {sourceConfig[selectedReport.problem_source]?.label || t('qms.eight_d_redesign.unknown')}
                   </div>
                 </div>
                 {selectedReport.customer_name && (
                   <div>
                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                      客户
+                      {t('qms.eight_d_redesign.drawer_customer')}
                     </div>
                     <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                       {selectedReport.customer_name}
@@ -785,7 +798,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 )}
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    负责人
+                    {t('qms.eight_d_redesign.col_owner')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedReport.owner}
@@ -793,13 +806,13 @@ const QmsEightDRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    截止日期
+                    {t('qms.eight_d_redesign.col_due_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedReport.due_date}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    创建时间
+                    {t('qms.eight_d_redesign.drawer_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedReport.created_at)}
@@ -815,7 +828,11 @@ const QmsEightDRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedReport ? '编辑 8D 报告' : '新建 8D 报告'}
+        title={
+          selectedReport
+            ? t('qms.eight_d_redesign.modal_edit_title')
+            : t('qms.eight_d_redesign.create')
+        }
         size='lg'
         footer={
           <>
@@ -823,32 +840,22 @@ const QmsEightDRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              取消
+              {t('qms.eight_d_redesign.cancel')}
             </Button>
             <Button
               variant='primary'
               onClick={() => {
                 const formData: Partial<EightDReport> = {
-                  report_no:
-                    (document.querySelector('input[placeholder*="报告编号"]') as HTMLInputElement)
-                      ?.value || '',
+                  report_no: '',
                   title:
-                    (document.querySelector('input[placeholder*="问题标题"]') as HTMLInputElement)
-                      ?.value || '',
-                  customer_name:
-                    (document.querySelector('input[placeholder*="客户名称"]') as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  customer_name: '',
                   product_name:
-                    (document.querySelectorAll('input[placeholder*="产品"]')[0] as HTMLInputElement)
-                      ?.value || '',
+                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                   owner:
-                    (
-                      document.querySelectorAll(
-                        'input[placeholder*="负责人"]'
-                      )[0] as HTMLInputElement
-                    )?.value || '',
+                    (document.getElementById('field-5') as HTMLInputElement)?.value || '',
                   due_date:
-                    (document.querySelector('input[type="date"]') as HTMLInputElement)?.value || '',
+                    (document.getElementById('field-6') as HTMLInputElement)?.value || '',
                 };
                 if (selectedReport) {
                   updateMutation.mutate({ id: selectedReport.id, data: formData });
@@ -857,7 +864,9 @@ const QmsEightDRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedReport ? '保存修改' : '创建 8D 报告'}
+              {selectedReport
+                ? t('qms.eight_d_redesign.modal_save')
+                : t('qms.eight_d_redesign.modal_submit_create')}
             </Button>
           </>
         }
@@ -868,11 +877,11 @@ const QmsEightDRedesignPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              问题描述 *
+              {t('qms.eight_d_redesign.field_title_label')}
             </label>
             <Input
               id='field-1'
-              placeholder='例如：伺服电机批量外观不良问题'
+              placeholder={t('qms.eight_d_redesign.field_title_placeholder')}
               defaultValue={selectedReport?.title}
             />
           </div>
@@ -882,16 +891,16 @@ const QmsEightDRedesignPage: React.FC = () => {
                 htmlFor='field-2'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                问题来源 *
+                {t('qms.eight_d_redesign.field_source_label')}
               </label>
               <Select
                 id='field-2'
                 defaultValue={selectedReport?.problem_source || 'internal'}
                 options={[
-                  { value: 'internal', label: '内部发现' },
-                  { value: 'customer', label: '客户投诉' },
-                  { value: 'supplier', label: '供应商问题' },
-                  { value: 'audit', label: '审核发现' },
+                  { value: 'internal', label: t('qms.eight_d_redesign.source_internal') },
+                  { value: 'customer', label: t('qms.eight_d_redesign.source_customer') },
+                  { value: 'supplier', label: t('qms.eight_d_redesign.source_supplier') },
+                  { value: 'audit', label: t('qms.eight_d_redesign.source_audit') },
                 ]}
               />
             </div>
@@ -900,15 +909,15 @@ const QmsEightDRedesignPage: React.FC = () => {
                 htmlFor='field-3'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                严重程度 *
+                {t('qms.eight_d_redesign.field_severity_label')}
               </label>
               <Select
                 id='field-3'
                 defaultValue={selectedReport?.severity || 'minor'}
                 options={[
-                  { value: 'minor', label: '轻微' },
-                  { value: 'major', label: '严重' },
-                  { value: 'critical', label: '致命' },
+                  { value: 'minor', label: t('qms.eight_d_redesign.severity_minor') },
+                  { value: 'major', label: t('qms.eight_d_redesign.severity_major') },
+                  { value: 'critical', label: t('qms.eight_d_redesign.severity_critical') },
                 ]}
               />
             </div>
@@ -917,11 +926,11 @@ const QmsEightDRedesignPage: React.FC = () => {
                 htmlFor='field-4'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                产品名称
+                {t('qms.eight_d_redesign.drawer_product_name')}
               </label>
               <Input
                 id='field-4'
-                placeholder='请输入产品名称'
+                placeholder={t('qms.eight_d_redesign.field_product_placeholder')}
                 defaultValue={selectedReport?.product_name}
               />
             </div>
@@ -930,11 +939,11 @@ const QmsEightDRedesignPage: React.FC = () => {
                 htmlFor='field-5'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                负责人
+                {t('qms.eight_d_redesign.col_owner')}
               </label>
               <Input
                 id='field-5'
-                placeholder='请输入负责人'
+                placeholder={t('qms.eight_d_redesign.field_owner_placeholder')}
                 defaultValue={selectedReport?.owner}
               />
             </div>
@@ -943,7 +952,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 htmlFor='field-6'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                截止日期
+                {t('qms.eight_d_redesign.col_due_date')}
               </label>
               <Input
                 id='field-6'
@@ -959,7 +968,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title='删除 8D 报告'
+        title={t('qms.eight_d_redesign.delete_title')}
         size='sm'
         footer={
           <>
@@ -967,20 +976,20 @@ const QmsEightDRedesignPage: React.FC = () => {
               variant='ghost'
               onClick={() => setDeleteTarget(null)}
             >
-              取消
+              {t('qms.eight_d_redesign.cancel')}
             </Button>
             <Button
               variant='danger'
               loading={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              确认删除
+              {t('qms.eight_d_redesign.delete_confirm')}
             </Button>
           </>
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          确定要删除 8D 报告「{deleteTarget?.report_no}」吗？此操作不可撤销。
+          {t('qms.eight_d_redesign.delete_message', { report_no: deleteTarget?.report_no })}
         </p>
       </Modal>
 

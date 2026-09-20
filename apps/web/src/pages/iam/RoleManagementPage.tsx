@@ -305,13 +305,13 @@ const RoleManagementPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
           <FilterChip
-            label={`全部 (${data?.total ?? 0})`}
+            label={i18n.t('iam.role_management.all_with_count', { count: data?.total ?? 0 })}
             active={!debouncedSearch}
             onClick={() => setSearch('')}
           />
           {debouncedSearch && (
             <FilterChip
-              label={`搜索: ${debouncedSearch}`}
+              label={i18n.t('iam.role_management.search_filter', { keyword: debouncedSearch })}
               active
               onRemove={() => setSearch('')}
               onClick={() => {}}
@@ -392,7 +392,7 @@ const RoleManagementPage: React.FC = () => {
         title={i18n.t('iam.role_management_page.k31')}
         description={
           deleteTarget
-            ? `${i18n.t('iam.role_management_page.k32')}「${deleteTarget.name}」？此操作不可撤销。`
+            ? i18n.t('iam.role_management.confirm_delete', { name: deleteTarget.name })
             : ''
         }
         size='sm'

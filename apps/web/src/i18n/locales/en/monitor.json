@@ -2680,5 +2680,6 @@
   "monitor.nav.monitor-rules_desc": "Rules",
   "monitor.nav.monitor-metrics_desc": "Metrics",
   "monitor.nav.monitor-logs_desc": "Logs",
-  "monitor.nav.monitor-settings_desc": "Settings"
+  "monitor.nav.monitor-settings_desc": "Settings",
+  "monitor.monitor_settings.save_failed": "Failed to save settings. Please try again later."
 }

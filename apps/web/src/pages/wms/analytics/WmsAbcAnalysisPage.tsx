@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   PieChart,
@@ -25,6 +26,7 @@ const ABC_COLORS: Record<string, string> = {
 };
 
 export default function WmsAbcAnalysisPage() {
+  const { t } = useTranslation();
   const { data: response, loading } = useAnalyticsData({
     fetcher: () => getAbcAnalysis(),
     deps: [],
@@ -68,12 +70,12 @@ export default function WmsAbcAnalysisPage() {
       },
       {
         id: 'total-value',
-        title: '库存总价值',
+        title: t('wms.abc_analysis.stat_total_value'),
         value: `¥${totalAmount.toLocaleString()}`,
         color: 'info' as const,
       },
     ],
-    [abc, totalAmount]
+    [abc, totalAmount, t]
   );
 
   return (
@@ -118,9 +120,9 @@ export default function WmsAbcAnalysisPage() {
                 </Pie>
                 <Tooltip
                   formatter={(v: unknown) => [
-                    `¥${Number(v).toLocaleString()}（${
+                    `¥${Number(v).toLocaleString()} (${
                       totalAmount ? ((Number(v) / totalAmount) * 100).toFixed(1) : 0
-                    }%）`,
+                    }%)`,
                     i18n.t('pages.wms_abc_analysis_page.k1'),
                   ]}
                 />
@@ -144,7 +146,7 @@ export default function WmsAbcAnalysisPage() {
                 <YAxis fontSize={11} />
                 <Tooltip
                   formatter={(v: unknown) => [
-                    `${v}（${totalCount ? ((Number(v) / totalCount) * 100).toFixed(1) : 0}%）`,
+                    `${v} (${totalCount ? ((Number(v) / totalCount) * 100).toFixed(1) : 0}%)`,
                     i18n.t('pages.wms_abc_analysis_page.sku_1'),
                   ]}
                 />
@@ -160,16 +162,16 @@ export default function WmsAbcAnalysisPage() {
         </div>
 
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>ABC 分类明细</h3>
+          <h3 className='mb-2 font-semibold'>{t('wms.abc_analysis.section_detail')}</h3>
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50'>
                 <tr>
-                  <th className='px-3 py-2 text-left font-medium'>分类</th>
-                  <th className='px-3 py-2 text-right font-medium'>SKU 数量</th>
-                  <th className='px-3 py-2 text-right font-medium'>数量占比</th>
-                  <th className='px-3 py-2 text-right font-medium'>库存价值</th>
-                  <th className='px-3 py-2 text-right font-medium'>价值占比</th>
+                  <th className='px-3 py-2 text-left font-medium'>{t('wms.abc_analysis.col_category')}</th>
+                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_sku_count')}</th>
+                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_count_pct')}</th>
+                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_inventory_value')}</th>
+                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_value_pct')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,7 +184,7 @@ export default function WmsAbcAnalysisPage() {
                       className='px-3 py-2 font-semibold'
                       style={{ color: ABC_COLORS[item.category] }}
                     >
-                      {item.category} 类
+                      {t('wms.abc_analysis.category_label', { category: item.category })}
                     </td>
                     <td className='px-3 py-2 text-right'>{item.count.toLocaleString()}</td>
                     <td className='px-3 py-2 text-right'>{item.count_percentage.toFixed(1)}%</td>
@@ -191,7 +193,7 @@ export default function WmsAbcAnalysisPage() {
                   </tr>
                 ))}
                 <tr className='font-semibold bg-gray-100'>
-                  <td className='px-3 py-2'>合计</td>
+                  <td className='px-3 py-2'>{t('wms.abc_analysis.total')}</td>
                   <td className='px-3 py-2 text-right'>{totalCount.toLocaleString()}</td>
                   <td className='px-3 py-2 text-right'>100%</td>
                   <td className='px-3 py-2 text-right'>¥{totalAmount.toLocaleString()}</td>
