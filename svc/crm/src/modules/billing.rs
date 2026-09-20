@@ -13,7 +13,6 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use sqlx::Row;
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
-use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::api_error;
 
 pub fn create_routes() -> Router<ApiState> {
@@ -42,7 +41,7 @@ async fn list_billing_records(
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<BillingQueryParams>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -57,7 +56,14 @@ async fn list_billing_records(
 
     let customer_id_filter = params.customer_id;
     let status_filter = params.status.clone();
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
@@ -120,7 +126,7 @@ async fn get_billing_record(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<BillingRecord>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -129,7 +135,14 @@ async fn get_billing_record(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
@@ -160,7 +173,7 @@ async fn create_billing_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateBillingRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
@@ -170,7 +183,14 @@ async fn create_billing_record(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let invoice_no = req.invoice_no.unwrap_or_else(|| {
         format!(
             "BR-{}",
@@ -234,7 +254,7 @@ async fn update_billing_record(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<UpdateBillingRequest>,
 ) -> Json<ApiResponse<BillingRecord>> {
     let mut guard = txn_arc.lock().await;
@@ -244,7 +264,14 @@ async fn update_billing_record(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let items = req
         .items
         .as_ref()
@@ -296,7 +323,7 @@ async fn delete_billing_record(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -305,7 +332,14 @@ async fn delete_billing_record(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query(
         "UPDATE crm.billing_records SET deleted_at = $3 WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
@@ -335,7 +369,7 @@ async fn mark_billing_paid(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -344,7 +378,14 @@ async fn mark_billing_paid(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let now = chrono::Utc::now();
     // 幂等：已 paid 直接返回成功（与 PaymentReceived 事件链核销语义一致）
     let result = sqlx::query(
@@ -379,7 +420,7 @@ async fn send_billing_notification(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -388,7 +429,14 @@ async fn send_billing_notification(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let exists = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM crm.billing_records WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )

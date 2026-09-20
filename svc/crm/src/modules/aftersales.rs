@@ -19,7 +19,6 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
-use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::api_error;
 use topems_shared_event::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
 
@@ -208,7 +207,7 @@ async fn list_returns(
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReturnQuery>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -222,7 +221,14 @@ async fn list_returns(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, Return>(
         r#"
@@ -309,7 +315,14 @@ async fn create_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let now = Utc::now();
     let id = Uuid::new_v4();
     let operator_id = extract_operator_id(&claims);
@@ -411,7 +424,7 @@ async fn get_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -420,7 +433,14 @@ async fn get_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, Return>(
         r#"
@@ -463,7 +483,14 @@ async fn update_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let existing = sqlx::query_as::<_, Return>(
         r#"
@@ -597,7 +624,14 @@ async fn delete_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     // 先查询退换单状态
     let existing = sqlx::query_as::<_, Return>(
@@ -694,7 +728,7 @@ async fn approve_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -704,7 +738,14 @@ async fn approve_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -787,7 +828,7 @@ async fn reject_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -797,7 +838,14 @@ async fn reject_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -880,7 +928,7 @@ async fn receive_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -890,7 +938,14 @@ async fn receive_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -980,7 +1035,7 @@ async fn complete_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -990,7 +1045,14 @@ async fn complete_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1163,7 +1225,7 @@ async fn cancel_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -1173,7 +1235,14 @@ async fn cancel_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1252,7 +1321,7 @@ async fn list_return_items(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ReturnItem>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1261,7 +1330,14 @@ async fn list_return_items(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, ReturnItem>(
         r#"
@@ -1292,7 +1368,7 @@ async fn add_return_item(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateReturnItemRequest>,
 ) -> Json<ApiResponse<ReturnItem>> {
     let mut guard = txn_arc.lock().await;
@@ -1309,7 +1385,14 @@ async fn add_return_item(
         return Json(api_error(400, "单价不能为负"));
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     // 校验退换单存在
     let exists: Option<Uuid> = sqlx::query_scalar(
@@ -1644,7 +1727,7 @@ async fn get_return_finance_status(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1653,7 +1736,14 @@ async fn get_return_finance_status(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     // 校验退换单存在且属于租户
     let exists: Option<Uuid> = sqlx::query_scalar(
@@ -1720,7 +1810,7 @@ async fn get_return_inventory_status(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1729,7 +1819,14 @@ async fn get_return_inventory_status(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     // 校验退换单存在且属于租户
     let exists: Option<Uuid> = sqlx::query_scalar(
@@ -1803,7 +1900,7 @@ async fn accept_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(_req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -1813,7 +1910,14 @@ async fn accept_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1892,7 +1996,7 @@ async fn process_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(_req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -1902,7 +2006,14 @@ async fn process_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1987,7 +2098,7 @@ async fn resolve_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -1997,7 +2108,14 @@ async fn resolve_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -2091,7 +2209,7 @@ async fn confirm_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
@@ -2101,7 +2219,14 @@ async fn confirm_return(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
