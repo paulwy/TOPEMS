@@ -1,7 +1,7 @@
 /* eslint-disable topems-design/no-hardcoded-colors -- theme.ts defines the color tokens */
 import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
-import { zhCN } from '@mui/material/locale';
+import { enUS, zhCN } from '@mui/material/locale';
 import i18n from '@/i18n';
 import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
@@ -155,6 +155,8 @@ const customShadowsDark = {
  * —— 自定义组件通过 theme.applyStyles('dark', {...}) 实现多态
  */
 export const createCustomTheme = (): Theme => {
+  // MUI 组件默认文案（TablePagination/DatePicker 等）跟随应用语言
+  const muiLocale = i18n.language === 'en' ? enUS : zhCN;
   return createTheme(
     {
       palette: {
@@ -980,7 +982,7 @@ export const createCustomTheme = (): Theme => {
         },
       },
     },
-    zhCN
+    muiLocale
   );
 };
 

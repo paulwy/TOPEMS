@@ -172,7 +172,7 @@
   "im.hooks.k47": "Templates",
   "im.index.k0": "Instant Messaging",
   "im.index.k1": "Email Records",
-  "im.index.k2": "EmailTemplates",
+  "im.index.k2": "Email Templates",
   "im.mail_page_components_confirm_dialogs.e1": "Are you sure you want to delete the selected {{v1}} email records?",
   "im.mail_page_components_confirm_dialogs.e2": "Are you sure you want to resend the selected {{v1}} emails?",
   "im.mail_page_components_create_template_dialog.e1": "Create new email templates, supports variable substitution",
@@ -188,21 +188,21 @@
   "im.mail_page_components_email_detail_dialog.e6": "Created At",
   "im.mail_page_components_email_detail_dialog.e7": "Sent At",
   "im.mail_page_components_email_detail_dialog.e8": "Send Failed",
-  "im.mail_page_components_email_detail_dialog.e9": "EmailContent",
+  "im.mail_page_components_email_detail_dialog.e9": "Email Content",
   "im.mail_page_components_email_detail_dialog.e10": "Close",
   "im.mail_page_components_email_list.e1": "Batch Resend",
   "im.mail_page_components_email_list.e2": "Batch Delete",
   "im.mail_page_components_email_list.e3": "Subject",
   "im.mail_page_components_email_list.e6": "Status",
   "im.mail_page_components_email_list.e9": "Actions",
-  "im.mail_page_components_email_stats_cards.e1": "EmailTotal",
+  "im.mail_page_components_email_stats_cards.e1": "Email Total",
   "im.mail_page_components_send_email_dialog.e1": "Send Email",
   "im.mail_page_components_send_email_dialog.e2": "Select Email Templates",
   "im.mail_page_components_template_list.e1": "Name",
   "im.mail_page_components_template_list.e2": "Code",
   "im.mail_page_components_template_list.e3": "Category",
   "im.mail_page_components_template_list.e4": "Subject Template",
-  "im.mail_page_components_template_preview_dialog.e1": "TemplatesPreview",
+  "im.mail_page_components_template_preview_dialog.e1": "Templates Preview",
   "im.mail_page_components_template_preview_dialog.e2": "Below is the preview of the rendered template",
   "im.mail_page_components_template_preview_dialog.e4": "Body Content",
   "im.mail_page_hooks.e1": "Invalid email address: {{v1}}",
@@ -225,12 +225,12 @@
   "im.mail_page_components_send_email_dialog.r3": "EmailContent *",
   "im.mail_page_components_create_template_dialog.m1": "e.g. workflow_approval",
   "im.mail_page_components_create_template_dialog.m2": "e.g.: Process Approval Notifications",
-  "im.mail_page_components_create_template_dialog.m3": "Supports variable substitution，e.g.: 【TOPEMS】{{title}}",
+  "im.mail_page_components_create_template_dialog.m3": "Supports variable substitution, e.g.: 【TOPEMS】{{title}}",
   "im.mail_page_components_create_template_dialog.m4": "Supports variable substitution, e.g.: Dear {{user_name}}",
   "im.mail_page_components_create_template_dialog.m5": "HTML format email content",
-  "im.mail_page_components_email_list.m1": "Search Email Subject、 Sender...",
+  "im.mail_page_components_email_list.m1": "Search Email Subject,  Sender...",
   "im.mail_page_components_email_list.m2": "Loading...",
-  "im.mail_page_components_template_list.m1": "Search Templates Name、 Code...",
+  "im.mail_page_components_template_list.m1": "Search Templates Name,  Code...",
   "im.mail_page_components_create_template_dialog.l1": "{{Variable Name}}",
   "im.mail_page_constants.l1": "Pending",
   "im.mail_page_constants.l2": "Sent",
@@ -250,7 +250,7 @@
   "im.mail_page_constants.l17": "Signed",
   "im.mail_page_constants.l18": "24 hours",
   "im.mail_page_constants.l19": "Test Title",
-  "im.mail_page_constants.l20": "TestContent",
+  "im.mail_page_constants.l20": "Test Content",
   "im.mail_page_components_edit_template_dialog.e1": "HTML Body Templates",
   "im.chat_interface.k0": "Connection Successful",
   "im.chat_interface.k1": "Connection Lost",
@@ -307,7 +307,7 @@
   "im.chat_settings_modal.k4": "Receive new message notifications",
   "im.chat_settings_modal.k5": "No longer receive new message notifications",
   "im.chat_settings_modal.k6": "Remove from Pinned List",
-  "im.chat_settings_modal.k7": "DeleteConversations",
+  "im.chat_settings_modal.k7": "Delete Conversations",
   "im.chat_settings_modal.k8": "Cannot be restored after deletion",
   "im.contact_list.k0": "Success",
   "im.contact_list.k1": "Group created successfully",
@@ -347,9 +347,9 @@
   "im.create_room_modal.k16": "Enter group name",
   "im.create_room_modal.k17": "Group Name",
   "im.create_room_modal.k18": "Enter group description (optional)",
-  "im.create_room_modal.k19": "GroupsDescription",
+  "im.create_room_modal.k19": "Groups Description",
   "im.create_room_modal.id_20": "Enter User ID",
-  "im.create_room_modal.k21": "CreateGroups",
+  "im.create_room_modal.k21": "Create Groups",
   "im.message_bubble.k0": "Chat Image",
   "im.notification_list.k0": "All notifications marked as read",
   "im.notification_list.k1": "Just now",
@@ -429,7 +429,7 @@
       "e6": "Created At",
       "e7": "Sent At",
       "e8": "Send Failed",
-      "e9": "EmailContent"
+      "e9": "Email Content"
     },
     "chat_interface": {
       "k4": "Create failed",
@@ -497,13 +497,13 @@
       "k9": "Chat Room",
       "k13": "Name",
       "k17": "Group Name",
-      "k19": "GroupsDescription",
-      "k21": "CreateGroups"
+      "k19": "Groups Description",
+      "k21": "Create Groups"
     },
     "index": {
       "k1": "Email Records",
       "k0": "Instant Messaging",
-      "k2": "EmailTemplates"
+      "k2": "Email Templates"
     },
     "mail_page_components_confirm_dialogs": {
       "e1": "Are you sure you want to delete the selected {{v1}} email records?",
@@ -518,7 +518,7 @@
       "m2": "e.g.: Process Approval Notifications",
       "m4": "Supports variable substitution, e.g.: Dear {{user_name}}",
       "m5": "HTML format email content",
-      "m3": "Supports variable substitution，e.g.: 【TOPEMS】{{title}}",
+      "m3": "Supports variable substitution, e.g.: 【TOPEMS】{{title}}",
       "e3": "Variable Usage Instructions",
       "e5": "Cancel",
       "r1": "TemplatesCode *",
@@ -535,7 +535,7 @@
       "e9": "Actions",
       "r1": "{{v1}} records selected",
       "r2": "{{v1}} total records",
-      "m1": "Search Email Subject、 Sender...",
+      "m1": "Search Email Subject,  Sender...",
       "m2": "Loading..."
     },
     "mail_page_components_send_email_dialog": {
@@ -548,7 +548,7 @@
     "mail_page_components_template_preview_dialog": {
       "e2": "Below is the preview of the rendered template",
       "e4": "Body Content",
-      "e1": "TemplatesPreview"
+      "e1": "Templates Preview"
     },
     "mail_page_hooks": {
       "e2": "Invalid CC email: {{v1}}",
@@ -581,7 +581,7 @@
       "l16": "Service Contract",
       "l17": "Signed",
       "l18": "24 hours",
-      "l20": "TestContent"
+      "l20": "Test Content"
     },
     "mail_page_components_edit_template_dialog": {
       "e1": "HTML Body Templates"
@@ -602,7 +602,7 @@
       "k2": "Group Chat",
       "k3": "Private Chat",
       "k6": "Remove from Pinned List",
-      "k7": "DeleteConversations"
+      "k7": "Delete Conversations"
     },
     "contact_list": {
       "k1": "Group created successfully",
@@ -709,14 +709,14 @@
       "k14": "Send Email"
     },
     "mail_page_components_email_stats_cards": {
-      "e1": "EmailTotal"
+      "e1": "Email Total"
     },
     "mail_page_components_template_list": {
       "e1": "Name",
       "e2": "Code",
       "e3": "Category",
       "e4": "Subject Template",
-      "m1": "Search Templates Name、 Code..."
+      "m1": "Search Templates Name,  Code..."
     },
     "message_bubble": {
       "k0": "Chat Image"

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { ThemeProvider as MuiThemeProvider, useColorScheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/store';
 import { createCustomTheme } from '@/theme';
 
@@ -14,9 +15,6 @@ import { createCustomTheme } from '@/theme';
  * - system 走 setMode('system')，由系统暗/亮决定
  */
 type ResolvedThemeScheme = 'light' | 'dark';
-
-// 模块级别创建一次主题（CSS Variables 模式下无需根据 mode 重建）
-const theme = createCustomTheme();
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -95,6 +93,10 @@ function ThemeSync({ children }: ThemeProviderProps) {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
+  // 订阅语言变化：切语言时重建主题，使 MUI 组件 locale（分页/日期等默认文案）跟随语言
+  const { i18n: _i18n } = useTranslation();
+  const theme = React.useMemo(() => createCustomTheme(), [_i18n.language]);
+
   return (
     <MuiThemeProvider
       theme={theme}

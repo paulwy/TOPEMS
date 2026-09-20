@@ -312,8 +312,8 @@
     },
     "notification_channel": {
       "type_email": "Email",
-      "type_dingtalk": "DingTalk",
-      "type_wechat": "WeChat",
+      "type_dingtalk": "Ding Talk",
+      "type_wechat": "We Chat",
       "type_sms": "SMS",
       "name": "Channel Name",
       "type": "Type",
@@ -666,9 +666,9 @@
       "currency": {
         "label": "Currency",
         "option": {
-          "CNY": "CNY",
-          "USD": "USD",
-          "EUR": "EUR",
+          "CNY": "CNY (CNY)",
+          "USD": "USD (USD)",
+          "EUR": "EUR (EUR)",
           "GBP": "GBP",
           "JPY": "JPY",
           "HKD": "HKD"
@@ -1008,7 +1008,7 @@
       "type_pdf": "PDF Document",
       "type_word": "Word Document",
       "type_excel": "Excel Spreadsheet",
-      "type_ppt": "PowerPoint",
+      "type_ppt": "Power Point",
       "type_image": "Image",
       "name": "Document Name",
       "type": "Type",
@@ -1283,9 +1283,9 @@
       "currency": {
         "label": "Currency",
         "option": {
-          "CNY": "CNY",
-          "USD": "USD",
-          "EUR": "EUR"
+          "CNY": "CNY (CNY)",
+          "USD": "USD (USD)",
+          "EUR": "EUR (EUR)"
         }
       },
       "status": {
@@ -1897,9 +1897,9 @@
       "currency": {
         "label": "Currency",
         "option": {
-          "CNY": "CNY",
-          "USD": "USD",
-          "EUR": "EUR"
+          "CNY": "CNY (CNY)",
+          "USD": "USD (USD)",
+          "EUR": "EUR (EUR)"
         }
       },
       "status": {
@@ -1968,9 +1968,9 @@
       "currency": {
         "label": "Currency",
         "option": {
-          "CNY": "CNY",
-          "USD": "USD",
-          "EUR": "EUR"
+          "CNY": "CNY (CNY)",
+          "USD": "USD (USD)",
+          "EUR": "EUR (EUR)"
         }
       },
       "status": {
