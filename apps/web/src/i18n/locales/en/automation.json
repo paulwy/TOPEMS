@@ -479,5 +479,10 @@
   "automation.nav.automation-runs": "Runs",
   "automation.nav.automation-designer": "Designer",
   "automation.nav.automation-variables": "Variables",
-  "automation.nav.module_name_desc": "Automation"
+  "automation.nav.module_name_desc": "Automation",
+  "automation.nav.automation-dashboard_desc": "Automation Overview",
+  "automation.nav.automation-rules_desc": "Rules",
+  "automation.nav.automation-runs_desc": "Runs",
+  "automation.nav.automation-designer_desc": "Designer",
+  "automation.nav.automation-variables_desc": "Variables"
 }

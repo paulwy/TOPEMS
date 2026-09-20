@@ -167,5 +167,11 @@
   "doc.nav.doc-document-center": "Document Center",
   "doc.nav.doc-knowledge-base": "Knowledge Base",
   "doc.nav.doc-file-detail": "File Detail",
-  "doc.nav.module_name_desc": "Document Collaboration"
+  "doc.nav.module_name_desc": "Document Collaboration",
+  "doc.nav.doc-dashboard_desc": "Doc Overview",
+  "doc.nav.doc-list_desc": "Documents",
+  "doc.nav.doc-documents_desc": "My Documents",
+  "doc.nav.doc-document-center_desc": "Document Center",
+  "doc.nav.doc-knowledge-base_desc": "Knowledge Base",
+  "doc.nav.doc-file-detail_desc": "File Detail"
 }

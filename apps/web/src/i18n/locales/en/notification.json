@@ -908,5 +908,13 @@
   "notification.nav.notification-statistics": "Statistics",
   "notification.nav.notification-settings": "Settings",
   "notification.nav.notification-detail": "Statistics Detail",
-  "notification.nav.module_name_desc": "Notifications"
+  "notification.nav.module_name_desc": "Notifications",
+  "notification.nav.notification-dashboard_desc": "Notification Overview",
+  "notification.nav.notification-list_desc": "Messages",
+  "notification.nav.notification-archive_desc": "Archive",
+  "notification.nav.notification-center_desc": "Center",
+  "notification.nav.notification-templates_desc": "Templates",
+  "notification.nav.notification-statistics_desc": "Statistics",
+  "notification.nav.notification-settings_desc": "Settings",
+  "notification.nav.notification-detail_desc": "Statistics Detail"
 }

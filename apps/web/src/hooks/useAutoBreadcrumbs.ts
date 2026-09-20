@@ -433,7 +433,14 @@ function generateSmartFallbackBreadcrumbs(
         label = pluralMatch.label;
         href = isLast ? undefined : pluralMatch.path;
       } else {
-        label = formatSegmentLabel(segment);
+        // 未注册导航的专业模块（如 asset/crm/finance，经插件市场安装后由 PluginManager 动态注册）：
+        // 优先查模块级 i18n 键，避免 fallback 出英文段（如 Asset）
+        const moduleNameKey = `${segment}.nav.module_name`;
+        const translated =
+          typeof segment === 'string' && i18n.exists(moduleNameKey)
+            ? i18n.t(moduleNameKey)
+            : undefined;
+        label = translated || formatSegmentLabel(segment);
         href = isLast ? undefined : currentPath;
       }
     }

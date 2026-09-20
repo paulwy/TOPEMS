@@ -725,5 +725,7 @@
   "im.nav.module_name": "IM",
   "im.nav.im-dashboard": "IM Overview",
   "im.nav.im-mail": "Mail",
-  "im.nav.module_name_desc": "IM"
+  "im.nav.module_name_desc": "IM",
+  "im.nav.im-dashboard_desc": "IM Overview",
+  "im.nav.im-mail_desc": "Mail"
 }

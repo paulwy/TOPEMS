@@ -702,5 +702,9 @@
   "plugin.common.author": "Author",
   "plugin.common.downloads": "Downloads",
   "plugin.common.rating": "Rating",
-  "plugin.nav.module_name_desc": "Plugins"
+  "plugin.nav.module_name_desc": "Plugins",
+  "plugin.nav.plugin-dashboard_desc": "Plugin Overview",
+  "plugin.nav.plugin-marketplace_desc": "Marketplace",
+  "plugin.nav.plugin-upload_desc": "Upload",
+  "plugin.nav.plugin-detail_desc": "Marketplace Detail"
 }

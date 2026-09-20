@@ -6155,5 +6155,16 @@
   "prompt_library.placeholder.search": "Search templates...",
   "prompt_library.view.all_templates": "All Templates",
   "prompt_library.view.my_templates": "My Templates",
-  "ai.nav.module_name_desc": "AI"
+  "ai.nav.module_name_desc": "AI",
+  "ai.nav.ai-dashboard_desc": "AI Overview",
+  "ai.nav.ai-chat_desc": "AI Chat",
+  "ai.nav.ai-code_desc": "AI Code",
+  "ai.nav.ai-document_desc": "AI Document",
+  "ai.nav.ai-knowledge_desc": "Knowledge Base",
+  "ai.nav.ai-prompts_desc": "Prompts",
+  "ai.nav.ai-settings_desc": "AI Settings",
+  "ai.nav.ai-assistant_desc": "Assistant",
+  "ai.nav.ai-dify-chat_desc": "Dify Chat",
+  "ai.nav.ai-businessCopilot_desc": "Business Copilot",
+  "ai.nav.ai-governanceDashboard_desc": "Governance Dashboard"
 }

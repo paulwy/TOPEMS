@@ -135,6 +135,13 @@ export const BOOTSTRAP_NAMESPACES: readonly string[] = Object.freeze([
   'schemas', // schema 层翻译（表单字段标签等）
   'ehs', // EHS（schema 顶层 t() 需启动即注入，避免 key 固化）
   'services', // 服务层公共文案
+  // 静态路由页面（routes/common.ts 的 redesign 页不走 DynamicRoutes）所需的业务 ns，
+  // 必须在 i18nReady 前同步注入，避免 useTranslation 首次渲染返回 rawkey
+  'crm', // 客户管理（/crm/* 静态路由）
+  'erp', // 企业资源（/erp/* 静态路由）
+  'hrm', // 人力资源（/hrm/* 静态路由）
+  'qms', // 质量管理（/qms/* 静态路由）
+  'wms', // 仓储物流（/wms/* 静态路由）
 ]);
 
 const FRAMEWORK_NAMESPACES: readonly string[] = Object.freeze([
@@ -686,3 +693,8 @@ augmented.ensureLanguageLoaded = ensureLanguageLoaded;
 augmented.resolveNamespacesForPath = resolveNamespacesForPath;
 
 export default augmented;
+
+// dev 调试:暴露 i18n 实例(仅开发环境)
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__i18n = i18n;
+}

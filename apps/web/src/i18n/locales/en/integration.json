@@ -940,5 +940,14 @@
   "integration.nav.integration-mes-erp": "MES-ERP",
   "integration.nav.integration-wms-scm": "WMS-SCM",
   "integration.nav.integration-settings": "Settings",
-  "integration.nav.module_name_desc": "Integration"
+  "integration.nav.module_name_desc": "Integration",
+  "integration.nav.integration-dashboard_desc": "Integration Overview",
+  "integration.nav.integration-connections_desc": "Connections",
+  "integration.nav.integration-mappings_desc": "Mappings",
+  "integration.nav.integration-events_desc": "Events",
+  "integration.nav.integration-erp_desc": "ERP",
+  "integration.nav.integration-lims-qms_desc": "LIMS-QMS",
+  "integration.nav.integration-mes-erp_desc": "MES-ERP",
+  "integration.nav.integration-wms-scm_desc": "WMS-SCM",
+  "integration.nav.integration-settings_desc": "Settings"
 }

@@ -1512,5 +1512,22 @@
   "srm.nav.srm-portal": "Portal",
   "srm.nav.srm-supplier-detail": "Suppliers Detail",
   "srm.nav.srm-contract-detail": "Contracts Detail",
-  "srm.nav.module_name_desc": "SRM"
+  "srm.nav.module_name_desc": "SRM",
+  "srm.nav.srm-dashboard_desc": "SRM Overview",
+  "srm.nav.srm-supplier_desc": "Suppliers",
+  "srm.nav.srm-category_desc": "Categories",
+  "srm.nav.srm-product_desc": "Products",
+  "srm.nav.srm-contract_desc": "Contracts",
+  "srm.nav.srm-order_desc": "Orders",
+  "srm.nav.srm-evaluation_desc": "Evaluations",
+  "srm.nav.srm-performance_desc": "Performance",
+  "srm.nav.srm-scoring-dimension_desc": "Scoring Dimensions",
+  "srm.nav.srm-inquiry_desc": "Inquiries",
+  "srm.nav.srm-bidding_desc": "Bidding",
+  "srm.nav.srm-quotation_desc": "Quotations",
+  "srm.nav.srm-finance_desc": "Finance",
+  "srm.nav.srm-portal_desc": "Portal",
+  "srm.nav.srm-supplier-detail_desc": "Suppliers Detail",
+  "srm.nav.srm-contract-detail_desc": "Contracts Detail",
+  "srm.subtitle": "Supplier Relationship Management"
 }

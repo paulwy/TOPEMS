@@ -1299,5 +1299,15 @@
   "crm.nav.crm-customer-edit": "客户管理编辑",
   "crm.nav.crm-customer-edit_desc": "客户管理编辑",
   "crm.nav.crm-return-detail": "退货管理详情",
-  "crm.nav.crm-return-detail_desc": "退货管理详情"
+  "crm.nav.crm-return-detail_desc": "退货管理详情",
+  "crm.customer_list_page.title": "客户管理",
+  "crm.customer_list_page.subtitle": "管理客户信息，跟踪客户等级和订单情况",
+  "crm.customer_list_page.breadcrumb_self": "客户管理",
+  "crm.customer_list_page.breadcrumb_list": "客户列表",
+  "crm.customer_list_page.search_placeholder": "搜索客户编号/名称/联系人...",
+  "crm.customer_list_page.level_all": "全部等级",
+  "crm.customer_list_page.level_a": "A级客户",
+  "crm.customer_list_page.level_b": "B级客户",
+  "crm.customer_list_page.level_c": "C级客户",
+  "crm.customer_list_page.level_d": "D级客户"
 }

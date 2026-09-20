@@ -415,5 +415,10 @@
   "iam.user_management_page.k14": "Add User",
   "iam.user_management_page.k15": "Manage user accounts, roles and access permissions",
   "iam.user_management_page.k16": "No users yet",
-  "iam.user_management_page.k17": "Click \"Add User\" to create the first user account"
+  "iam.user_management_page.k17": "Click \"Add User\" to create the first user account",
+  "iam.nav.iam-dashboard_desc": "IAM Overview",
+  "iam.nav.iam-user_desc": "Users",
+  "iam.nav.iam-role_desc": "Roles",
+  "iam.nav.iam-permission_desc": "Permissions",
+  "iam.nav.iam-company-structure_desc": "Company Structure"
 }

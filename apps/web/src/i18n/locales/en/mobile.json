@@ -2977,5 +2977,17 @@
   "mobile.nav.mobile-notifications": "Notifications",
   "mobile.nav.mobile-profile": "Profile",
   "mobile.nav.mobile-settings": "Settings",
-  "mobile.nav.module_name_desc": "Mobile"
+  "mobile.nav.module_name_desc": "Mobile",
+  "mobile.nav.mobile-home_desc": "Home",
+  "mobile.nav.mobile-workbench_desc": "Workbench",
+  "mobile.nav.mobile-attendance_desc": "Attendance",
+  "mobile.nav.mobile-tasks_desc": "Tasks",
+  "mobile.nav.mobile-approvals_desc": "Approvals",
+  "mobile.nav.mobile-inventory_desc": "Inventory",
+  "mobile.nav.mobile-quality_desc": "Quality",
+  "mobile.nav.mobile-production_desc": "Production",
+  "mobile.nav.mobile-scan_desc": "Scan",
+  "mobile.nav.mobile-notifications_desc": "Notifications",
+  "mobile.nav.mobile-profile_desc": "Profile",
+  "mobile.nav.mobile-settings_desc": "Settings"
 }

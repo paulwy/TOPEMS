@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -186,6 +187,7 @@ const formatAmount = (value: number) => {
 };
 
 const CrmCustomerRedesignPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive' | 'potential'>('all');
@@ -529,12 +531,12 @@ const CrmCustomerRedesignPage: React.FC = () => {
       )}
       <ListPageTemplate<Customer>
         header={{
-          title: '客户管理',
-          subtitle: '管理客户信息，跟踪客户等级和订单情况',
+          title: t('crm.customer_list_page.title'),
+          subtitle: t('crm.customer_list_page.subtitle'),
           breadcrumbs: [
-            { label: '首页', href: '/dashboard' },
-            { label: '客户管理' },
-            { label: '客户列表' },
+            { label: t('shared.use_auto_breadcrumbs.k0'), href: '/dashboard' },
+            { label: t('crm.customer_list_page.breadcrumb_self') },
+            { label: t('crm.customer_list_page.breadcrumb_list') },
           ],
         }}
         toolbar={
@@ -548,7 +550,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
               }}
             >
               <Input
-                placeholder='搜索客户编号/名称/联系人...'
+                placeholder={t('crm.customer_list_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
@@ -558,11 +560,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 value={levelFilter}
                 onChange={(e) => setLevelFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: '全部等级' },
-                  { value: 'A', label: 'A级客户' },
-                  { value: 'B', label: 'B级客户' },
-                  { value: 'C', label: 'C级客户' },
-                  { value: 'D', label: 'D级客户' },
+                  { value: 'all', label: t('crm.customer_list_page.level_all') },
+                  { value: 'A', label: t('crm.customer_list_page.level_a') },
+                  { value: 'B', label: t('crm.customer_list_page.level_b') },
+                  { value: 'C', label: t('crm.customer_list_page.level_c') },
+                  { value: 'D', label: t('crm.customer_list_page.level_d') },
                 ]}
                 style={{ width: 140 }}
               />

@@ -3354,5 +3354,19 @@
   "pm.nav.pm-contract-detail": "Contracts Detail",
   "pm.nav.pm-project-create": "Projects Create",
   "pm.nav.pm-contract-create": "Contracts Create",
-  "pm.nav.module_name_desc": "PM"
+  "pm.nav.module_name_desc": "PM",
+  "pm.nav.pm-dashboard_desc": "PM Overview",
+  "pm.nav.pm-projects_desc": "Projects",
+  "pm.nav.pm-project-list_desc": "Project List",
+  "pm.nav.pm-task-kanban_desc": "Task Kanban",
+  "pm.nav.pm-project-wizard_desc": "Project Wizard",
+  "pm.nav.pm-contracts_desc": "Contracts",
+  "pm.nav.pm-resources_desc": "Resources",
+  "pm.nav.pm-templates_desc": "Templates",
+  "pm.nav.pm-reports_desc": "Reports",
+  "pm.nav.pm-timeline_desc": "Timeline",
+  "pm.nav.pm-project-detail_desc": "Projects Detail",
+  "pm.nav.pm-contract-detail_desc": "Contracts Detail",
+  "pm.nav.pm-project-create_desc": "Projects Create",
+  "pm.nav.pm-contract-create_desc": "Contracts Create"
 }

@@ -2136,5 +2136,8 @@
   "wms.nav.wms-inventory-threshold_desc": "Threshold settings",
   "wms.nav.wms-transfer-detail": "Transfer Detail",
   "wms.nav.wms-wavepick-detail": "Wave Pick Detail",
-  "wms.nav.wms-movement-detail": "Movement Detail"
+  "wms.nav.wms-movement-detail": "Movement Detail",
+  "wms.nav.wms-transfer-detail_desc": "Transfer Detail",
+  "wms.nav.wms-wavepick-detail_desc": "Wave Pick Detail",
+  "wms.nav.wms-movement-detail_desc": "Movement Detail"
 }

@@ -129,5 +129,10 @@
   "oa.nav.oa-announcements": "Announcements",
   "oa.nav.oa-meetings": "Meetings",
   "oa.nav.oa-vehicles": "Vehicles",
-  "oa.nav.module_name_desc": "OA"
+  "oa.nav.module_name_desc": "OA",
+  "oa.nav.oa-dashboard_desc": "OA Overview",
+  "oa.nav.oa-documents_desc": "Documents",
+  "oa.nav.oa-announcements_desc": "Announcements",
+  "oa.nav.oa-meetings_desc": "Meetings",
+  "oa.nav.oa-vehicles_desc": "Vehicles"
 }

@@ -2673,5 +2673,12 @@
   "monitor.nav.monitor-metrics": "Metrics",
   "monitor.nav.monitor-logs": "Logs",
   "monitor.nav.monitor-settings": "Settings",
-  "monitor.nav.module_name_desc": "Monitoring"
+  "monitor.nav.module_name_desc": "Monitoring",
+  "monitor.nav.monitor-dashboard_desc": "Monitor Overview",
+  "monitor.nav.monitor-alerts_desc": "Alerts",
+  "monitor.nav.monitor-alert-history_desc": "Alert History",
+  "monitor.nav.monitor-rules_desc": "Rules",
+  "monitor.nav.monitor-metrics_desc": "Metrics",
+  "monitor.nav.monitor-logs_desc": "Logs",
+  "monitor.nav.monitor-settings_desc": "Settings"
 }

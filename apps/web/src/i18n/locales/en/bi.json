@@ -3043,5 +3043,18 @@
   "bi.nav.bi-gis": "GIS Analytics",
   "bi.nav.bi-data-analysis": "Data Analysis",
   "bi.nav.bi-module-detail": "Detail",
-  "bi.nav.module_name_desc": "Business Intelligence"
+  "bi.nav.module_name_desc": "Business Intelligence",
+  "bi.nav.bi-dashboard_desc": "BI Overview",
+  "bi.nav.bi-analytics_desc": "Analytics",
+  "bi.nav.bi-comparison_desc": "Comparison",
+  "bi.nav.bi-data-source_desc": "Data Sources",
+  "bi.nav.bi-dataset_desc": "Datasets",
+  "bi.nav.bi-report_desc": "Reports",
+  "bi.nav.bi-visualization_desc": "Visualizations",
+  "bi.nav.bi-report-builder_desc": "Report Builder",
+  "bi.nav.bi-permission_desc": "Permissions",
+  "bi.nav.bi-index_desc": "Indicators",
+  "bi.nav.bi-gis_desc": "GIS Analytics",
+  "bi.nav.bi-data-analysis_desc": "Data Analysis",
+  "bi.nav.bi-module-detail_desc": "Detail"
 }

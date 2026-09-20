@@ -325,5 +325,10 @@
   "asset.fixed_asset.k50": "Edit Fixed Asset",
   "asset.fixed_asset.k51": "Fixed Asset Details",
   "asset.fixed_asset.k52": "Batch Depreciation",
-  "asset.fixed_asset.k53": "Calculate depreciation for selected assets"
+  "asset.fixed_asset.k53": "Calculate depreciation for selected assets",
+  "asset.nav.asset-dashboard_desc": "Asset Overview",
+  "asset.nav.asset-list_desc": "Asset List",
+  "asset.nav.asset-categories_desc": "Categories",
+  "asset.nav.asset-depreciation_desc": "Depreciation",
+  "asset.nav.asset-transfers_desc": "Transfers"
 }

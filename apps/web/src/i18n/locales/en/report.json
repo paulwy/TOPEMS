@@ -225,5 +225,14 @@
   "report.nav.report-template": "Templates",
   "report.nav.report-report": "My Reports",
   "report.nav.report-viewer": "Viewer",
-  "report.nav.module_name_desc": "Reports"
+  "report.nav.module_name_desc": "Reports",
+  "report.nav.report-dashboard_desc": "Report Overview",
+  "report.nav.report-list_desc": "Reports",
+  "report.nav.report-design_desc": "Design",
+  "report.nav.report-builder_desc": "Builder",
+  "report.nav.report-schedule_desc": "Schedules",
+  "report.nav.report-subscription_desc": "Subscriptions",
+  "report.nav.report-template_desc": "Templates",
+  "report.nav.report-report_desc": "My Reports",
+  "report.nav.report-viewer_desc": "Viewer"
 }

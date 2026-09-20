@@ -73,5 +73,7 @@
   "ticket.nav.module_name": "Tickets",
   "ticket.nav.ticket-dashboard": "Ticket Overview",
   "ticket.nav.ticket-center": "Ticket Center",
-  "ticket.nav.module_name_desc": "Tickets"
+  "ticket.nav.module_name_desc": "Tickets",
+  "ticket.nav.ticket-dashboard_desc": "Ticket Overview",
+  "ticket.nav.ticket-center_desc": "Ticket Center"
 }
