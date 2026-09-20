@@ -59,10 +59,10 @@ export default function PaginationComponent({
       {showTotal && totalItems && (
         <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
           {i18next.t('components.pagination.total', {
-            start: startItem,
-            end: endItem,
             total: totalItems,
-            defaultValue: 'Showing {{start}}-{{end}} of {{total}}',
+            current: page,
+            pageCount: total,
+            defaultValue: 'Total {{total}} items · page {{current}}/{{pageCount}}',
           })}
         </Typography>
       )}

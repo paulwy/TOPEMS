@@ -722,7 +722,7 @@ const __TEST_TRANSLATIONS__: Record<string, string> = {
   'shared.status_badge.project_active': '进行中',
   'shared.status_badge.workflow_approved': '已通过',
   'shared.status_badge.finance_posted': '已记账',
-  'components.pagination.total': '显示 {{start}}-{{end}} / 共 {{total}} 条',
+  'components.pagination.total': '共 {{total}} 条，第 {{current}}/{{pageCount}} 页',
   'components.pagination.first_page': '第一页',
   'components.pagination.last_page': '最后一页',
   'components.pagination.prev_page': '上一页',
@@ -756,10 +756,7 @@ const __TEST_TRANSLATIONS__: Record<string, string> = {
 // 很多组件直接调用 `i18n.t('module.page.key')`，其译文保存在 src/i18n/locales/zh/*.json。
 // 这里把真实 zh locale 合并进 __TEST_TRANSLATIONS__（仅填充缺失键，不覆盖手工维护值），
 // 使 `i18n.t()` 返回真实中文而不是原始 key。扁平 key 与嵌套对象都会被展开。
-const __flattenLocale = (
-  obj: Record<string, unknown>,
-  prefix = ''
-): Record<string, string> => {
+const __flattenLocale = (obj: Record<string, unknown>, prefix = ''): Record<string, string> => {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(obj)) {
     const key = prefix ? `${prefix}.${k}` : k;
@@ -773,16 +770,72 @@ const __flattenLocale = (
 };
 (() => {
   const localeFiles = [
-    'admin', 'ai', 'api', 'aps', 'asset', 'automation', 'bi', 'common',
-    'components', 'config', 'context', 'crm', 'debug', 'design_system',
-    'design-system', 'desktop', 'dev_platform', 'dev-platform', 'devtools',
-    'doc', 'ehs', 'erp', 'finance', 'fullstack_automation', 'gis', 'help',
-    'hooks', 'hrm', 'iam', 'im', 'integration', 'intelligent_ops',
-    'intelligent-ops', 'layouts', 'lib', 'lims', 'mes',
-    'microfrontend', 'mobile', 'monitor', 'notification', 'oa', 'pages',
-    'pdm', 'performance', 'plugin', 'pm', 'qms', 'rd', 'report', 'routes',
-    'schema', 'schemas', 'scm', 'services', 'shared', 'srm', 'store',
-    'system', 'templates', 'theme', 'ticket', 'tms', 'utils', 'wms', 'workflow',
+    'admin',
+    'ai',
+    'api',
+    'aps',
+    'asset',
+    'automation',
+    'bi',
+    'common',
+    'components',
+    'config',
+    'context',
+    'crm',
+    'debug',
+    'design_system',
+    'design-system',
+    'desktop',
+    'dev_platform',
+    'dev-platform',
+    'devtools',
+    'doc',
+    'ehs',
+    'erp',
+    'finance',
+    'fullstack_automation',
+    'gis',
+    'help',
+    'hooks',
+    'hrm',
+    'iam',
+    'im',
+    'integration',
+    'intelligent_ops',
+    'intelligent-ops',
+    'layouts',
+    'lib',
+    'lims',
+    'mes',
+    'microfrontend',
+    'mobile',
+    'monitor',
+    'notification',
+    'oa',
+    'pages',
+    'pdm',
+    'performance',
+    'plugin',
+    'pm',
+    'qms',
+    'rd',
+    'report',
+    'routes',
+    'schema',
+    'schemas',
+    'scm',
+    'services',
+    'shared',
+    'srm',
+    'store',
+    'system',
+    'templates',
+    'theme',
+    'ticket',
+    'tms',
+    'utils',
+    'wms',
+    'workflow',
   ];
   for (const name of localeFiles) {
     try {
@@ -796,17 +849,26 @@ const __flattenLocale = (
   }
 })();
 
-const __mockTranslate = (key: string, ns?: string): string => {
+const __mockTranslate = (key: string, ns?: string, opts?: Record<string, unknown>): string => {
+  let text: string | undefined;
   if (ns) {
     const full = `${ns}.${key}`;
-    if (__TEST_TRANSLATIONS__[full]) return __TEST_TRANSLATIONS__[full];
+    text = __TEST_TRANSLATIONS__[full] ?? __TEST_TRANSLATIONS__[key];
+  } else {
+    text = __TEST_TRANSLATIONS__[key];
   }
-  return __TEST_TRANSLATIONS__[key] ?? key;
+  if (text === undefined) return key;
+  if (opts && Object.keys(opts).length > 0) {
+    return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, name: string) =>
+      name in opts ? String(opts[name]) : `{{${name}}}`
+    );
+  }
+  return text;
 };
 
 vi.mock('react-i18next', () => ({
   useTranslation: (ns?: string) => ({
-    t: (key: string) => __mockTranslate(key, ns),
+    t: (key: string, opts?: Record<string, unknown>) => __mockTranslate(key, ns, opts),
     i18n: {
       language: 'zh-CN',
       changeLanguage: vi.fn(),
@@ -983,7 +1045,12 @@ const __listPageTemplate = ({
       })
       .catch((err: any) => {
         if (!active) return;
-        setState((s: any) => ({ ...s, loading: false, data: [], error: err?.message ?? String(err) }));
+        setState((s: any) => ({
+          ...s,
+          loading: false,
+          data: [],
+          error: err?.message ?? String(err),
+        }));
       });
     return () => {
       active = false;
@@ -993,19 +1060,18 @@ const __listPageTemplate = ({
   const nodes: React.ReactNode[] = [];
   if (title != null) nodes.push(React.createElement('div', { key: '__t' }, title));
   if (subtitle != null) nodes.push(React.createElement('div', { key: '__s' }, subtitle));
-  const toolbarActions = hasCrud && crud?.createButtonText
-    ? [
-        {
-          label: crud.createButtonText,
-          onClick: () => setState((s: any) => ({ ...s, formOpen: true, formValues: {} })),
-        },
-      ]
-    : actions ?? [];
+  const toolbarActions =
+    hasCrud && crud?.createButtonText
+      ? [
+          {
+            label: crud.createButtonText,
+            onClick: () => setState((s: any) => ({ ...s, formOpen: true, formValues: {} })),
+          },
+        ]
+      : (actions ?? []);
   if (toolbarActions && toolbarActions.length > 0) {
     toolbarActions.forEach((a: any, ai: number) => {
-      nodes.push(
-        React.createElement('button', { key: `__a${ai}`, onClick: a?.onClick }, a?.label)
-      );
+      nodes.push(React.createElement('button', { key: `__a${ai}`, onClick: a?.onClick }, a?.label));
     });
   }
   if (state.loading) {
@@ -1014,44 +1080,61 @@ const __listPageTemplate = ({
     // 表头（列标签）：真实 ListPageTemplate 在空态/数据态都渲染表头
     (columns ?? []).forEach((col: any, ci: number) => {
       nodes.push(
-        React.createElement('div', { key: `__h${ci}`, 'data-testid': `header-${col?.id ?? ci}` }, col?.label)
+        React.createElement(
+          'div',
+          { key: `__h${ci}`, 'data-testid': `header-${col?.id ?? ci}` },
+          col?.label
+        )
       );
     });
     if (state.error != null) {
       nodes.push(React.createElement('div', { key: '__err' }, state.error));
     } else if (!state.data || state.data.length === 0) {
-      if (emptyMessage != null) nodes.push(React.createElement('div', { key: '__empty' }, emptyMessage));
+      if (emptyMessage != null)
+        nodes.push(React.createElement('div', { key: '__empty' }, emptyMessage));
     } else {
-    (state.data as any[]).forEach((row, ri) => {
-      (columns ?? []).forEach((col: any, ci: number) => {
-        const cell = col?.render ? col.render(row) : row?.[col?.id ?? col?.field ?? ''];
-        nodes.push(
-          React.createElement('div', { key: `__r${ri}c${ci}`, 'data-testid': `cell-${col?.id ?? ci}` }, cell)
-        );
-      });
-      const acts: any[] = [...((rowActions ?? crud?.rowActions) ?? [])];
-      if (hasCrud) {
-        acts.push({
-          key: '__del',
-          label: '删除',
-          onClick: (r: any) => {
-            const delFn = api?.delete ?? api?.remove;
-            if (delFn) void delFn(r?.id ?? r?.key);
-          },
-        });
-      }
-      if (renderRowActions) {
-        nodes.push(
-          React.createElement('div', { key: `__ra${ri}`, 'data-testid': `row-actions-${ri}` }, renderRowActions(row))
-        );
-      } else if (acts.length > 0) {
-        acts.forEach((ra: any, rj: number) => {
+      (state.data as any[]).forEach((row, ri) => {
+        (columns ?? []).forEach((col: any, ci: number) => {
+          const cell = col?.render ? col.render(row) : row?.[col?.id ?? col?.field ?? ''];
           nodes.push(
-            React.createElement('button', { key: `__rr${ri}-${rj}`, onClick: () => ra?.onClick?.(row) }, ra?.label)
+            React.createElement(
+              'div',
+              { key: `__r${ri}c${ci}`, 'data-testid': `cell-${col?.id ?? ci}` },
+              cell
+            )
           );
         });
-      }
-    });
+        const acts: any[] = [...(rowActions ?? crud?.rowActions ?? [])];
+        if (hasCrud) {
+          acts.push({
+            key: '__del',
+            label: '删除',
+            onClick: (r: any) => {
+              const delFn = api?.delete ?? api?.remove;
+              if (delFn) void delFn(r?.id ?? r?.key);
+            },
+          });
+        }
+        if (renderRowActions) {
+          nodes.push(
+            React.createElement(
+              'div',
+              { key: `__ra${ri}`, 'data-testid': `row-actions-${ri}` },
+              renderRowActions(row)
+            )
+          );
+        } else if (acts.length > 0) {
+          acts.forEach((ra: any, rj: number) => {
+            nodes.push(
+              React.createElement(
+                'button',
+                { key: `__rr${ri}-${rj}`, onClick: () => ra?.onClick?.(row) },
+                ra?.label
+              )
+            );
+          });
+        }
+      });
     }
   }
   if (hasCrud && state.formOpen) {
@@ -1072,7 +1155,10 @@ const __listPageTemplate = ({
             'aria-label': f?.label ?? String(f?.key),
             value: state.formValues[f?.key] ?? '',
             onChange: (e: any) =>
-              setState((s: any) => ({ ...s, formValues: { ...s.formValues, [f?.key]: e.target.value } })),
+              setState((s: any) => ({
+                ...s,
+                formValues: { ...s.formValues, [f?.key]: e.target.value },
+              })),
           })
         ),
         React.createElement(
@@ -1098,7 +1184,14 @@ const __listPageTemplate = ({
   return React.createElement('div', null, ...nodes, children);
 };
 // 显式具名导出（vitest mock 校验走普通属性访问，Proxy 不可靠）。
-const __statsPageTemplate = ({ children, loading, statCards, title, tables, customToolbar }: any) => {
+const __statsPageTemplate = ({
+  children,
+  loading,
+  statCards,
+  title,
+  tables,
+  customToolbar,
+}: any) => {
   if (loading) {
     return React.createElement('div', { role: 'progressbar' }, 'Loading...');
   }
@@ -1119,9 +1212,15 @@ const __statsPageTemplate = ({ children, loading, statCards, title, tables, cust
     if (tb?.title != null) nodes.push(React.createElement('div', { key: `__tt${ti}` }, tb.title));
     (tb?.data ?? []).forEach((row: any, ri: number) => {
       (tb?.columns ?? []).forEach((col: any, ci: number) => {
-        const cell = col?.render ? col.render(row[col?.field ?? col?.id]) : row[col?.field ?? col?.id ?? ''];
+        const cell = col?.render
+          ? col.render(row[col?.field ?? col?.id])
+          : row[col?.field ?? col?.id ?? ''];
         nodes.push(
-          React.createElement('div', { key: `__tr${ti}-${ri}-${ci}`, 'data-testid': `tcell-${col?.id ?? ci}` }, cell)
+          React.createElement(
+            'div',
+            { key: `__tr${ti}-${ri}-${ci}`, 'data-testid': `tcell-${col?.id ?? ci}` },
+            cell
+          )
         );
       });
     });
@@ -1162,18 +1261,55 @@ vi.mock('@/components/templates', () => ({
   default: __templateStub,
 }));
 // 子路径模板导入（部分页面直接从子路径 import，不走 barrel）
-vi.mock('@/components/templates/StatsPageTemplate', () => ({ StatsPageTemplate: __statsPageTemplate, default: __statsPageTemplate }));
-vi.mock('@/components/templates/ListPageTemplate', () => ({ ListPageTemplate: __listPageTemplate, default: __listPageTemplate }));
-vi.mock('@/components/templates/DashboardTemplate', () => ({ DashboardTemplate: __dashboardTemplate, StatCard: __templateStub, default: __dashboardTemplate }));
-vi.mock('@/components/templates/DetailPageTemplate', () => ({ DetailPageTemplate: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/FormPageTemplate', () => ({ FormPageTemplate: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/SettingsPageTemplate', () => ({ SettingsPageTemplate: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/DesignerTemplate', () => ({ DesignerTemplate: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/GisMapTemplate', () => ({ GisMapTemplate: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/KanbanPageTemplate', () => ({ KanbanPageTemplate: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/ReportViewerTemplate', () => ({ ReportViewerTemplate: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/CrudPage', () => ({ CrudPage: __templateStub, default: __templateStub }));
-vi.mock('@/components/templates/TreeBuilder', () => ({ TreeBuilder: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/StatsPageTemplate', () => ({
+  StatsPageTemplate: __statsPageTemplate,
+  default: __statsPageTemplate,
+}));
+vi.mock('@/components/templates/ListPageTemplate', () => ({
+  ListPageTemplate: __listPageTemplate,
+  default: __listPageTemplate,
+}));
+vi.mock('@/components/templates/DashboardTemplate', () => ({
+  DashboardTemplate: __dashboardTemplate,
+  StatCard: __templateStub,
+  default: __dashboardTemplate,
+}));
+vi.mock('@/components/templates/DetailPageTemplate', () => ({
+  DetailPageTemplate: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/FormPageTemplate', () => ({
+  FormPageTemplate: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/SettingsPageTemplate', () => ({
+  SettingsPageTemplate: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/DesignerTemplate', () => ({
+  DesignerTemplate: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/GisMapTemplate', () => ({
+  GisMapTemplate: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/KanbanPageTemplate', () => ({
+  KanbanPageTemplate: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/ReportViewerTemplate', () => ({
+  ReportViewerTemplate: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/CrudPage', () => ({
+  CrudPage: __templateStub,
+  default: __templateStub,
+}));
+vi.mock('@/components/templates/TreeBuilder', () => ({
+  TreeBuilder: __templateStub,
+  default: __templateStub,
+}));
 
 const __commonFallback = ({ children, title }: any) =>
   React.createElement('div', null, children, title);
@@ -1183,9 +1319,7 @@ vi.mock('@/components/common', () => ({
   LoadingSpinner: () => React.createElement('div', { 'data-testid': 'loading' }, 'Loading...'),
   FormBuilder: () => React.createElement('div', null, 'Form'),
   FormDialog: ({ children, title, open }: any) =>
-    open === false
-      ? null
-      : React.createElement('div', { role: 'dialog' }, children, title),
+    open === false ? null : React.createElement('div', { role: 'dialog' }, children, title),
   FormDrawer: ({ children }: any) => React.createElement('div', null, children),
   ActionButton: __commonFallback,
   BackButton: __commonFallback,

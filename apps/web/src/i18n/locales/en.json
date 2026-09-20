@@ -239,11 +239,6 @@
       "separator": "to"
     },
     "pagination": {
-      "total": "Showing {{start}}-{{end}} of {{total}}",
-      "first_page": "First page",
-      "prev_page": "Previous page",
-      "next_page": "Next page",
-      "last_page": "Last page",
       "per_page": "per page"
     }
   },

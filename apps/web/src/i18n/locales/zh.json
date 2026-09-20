@@ -239,11 +239,6 @@
       "separator": "至"
     },
     "pagination": {
-      "total": "显示 {{start}}-{{end}} / 共 {{total}} 条",
-      "first_page": "第一页",
-      "prev_page": "上一页",
-      "next_page": "下一页",
-      "last_page": "最后一页",
       "per_page": "每页"
     }
   },

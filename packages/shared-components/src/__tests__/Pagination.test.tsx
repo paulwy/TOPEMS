@@ -18,7 +18,7 @@ describe('PaginationComponent', () => {
 
   it('renders correctly with default props', () => {
     render(<PaginationComponent {...defaultProps} />);
-    expect(screen.getByText('显示 1-10 / 共 100 条')).toBeInTheDocument();
+    expect(screen.getByText('共 100 条，第 1/10 页')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '上一页' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '下一页' })).not.toBeDisabled();
   });
@@ -84,7 +84,7 @@ describe('PaginationComponent', () => {
 
   it('hides total when showTotal is false', () => {
     render(<PaginationComponent {...defaultProps} showTotal={false} />);
-    expect(screen.queryByText('显示 1-10 / 共 100 条')).not.toBeInTheDocument();
+    expect(screen.queryByText('共 100 条，第 1/10 页')).not.toBeInTheDocument();
   });
 
   it('disables all controls when disabled', () => {
@@ -99,7 +99,7 @@ describe('PaginationComponent', () => {
 
   it('shows correct item range', () => {
     render(<PaginationComponent {...defaultProps} page={3} pageSize={20} totalItems={100} />);
-    expect(screen.getByText('显示 41-60 / 共 100 条')).toBeInTheDocument();
+    expect(screen.getByText('共 100 条，第 3/10 页')).toBeInTheDocument();
   });
 
   it('renders all pages when total <= 5', () => {
