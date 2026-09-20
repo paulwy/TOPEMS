@@ -132,6 +132,12 @@ pub async fn list_teams(
         return e;
     }
 
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
@@ -158,12 +164,19 @@ pub async fn list_teams(
         params.push(serde_json::Value::String(pattern));
     }
 
+    where_clause.push_str(&format!(
+        " AND (${}::uuid IS NULL OR t.tenant_id = ${})",
+        params.len() + 1,
+        params.len() + 1
+    ));
+
     let count_sql = format!("SELECT COUNT(*) as total FROM teams t{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
+    count_query = count_query.bind(tenant_opt);
 
     let count_result = count_query.fetch_one(&state.pool).await;
     let total: Option<i64> = match count_result {
@@ -182,20 +195,21 @@ pub async fn list_teams(
             t.created_at, t.updated_at,
             COALESCE(ws.station_name, '') as work_station_name
         FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
+        LEFT JOIN work_stations ws ON t.work_station_id = ws.id AND ws.tenant_id = t.tenant_id
         {}
         ORDER BY t.created_at DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 1,
-        params.len() + 2
+        params.len() + 2,
+        params.len() + 3
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
+    fetch_query = fetch_query.bind(tenant_opt);
     fetch_query = fetch_query.bind(pagesize).bind(offset);
 
     let teams = match fetch_query.fetch_all(&state.pool).await {
@@ -279,6 +293,12 @@ pub async fn get_team(
         return e;
     }
 
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -287,10 +307,12 @@ pub async fn get_team(
             t.created_at, t.updated_at,
             ws.station_name as work_station_name
         FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
+        LEFT JOIN work_stations ws ON t.work_station_id = ws.id AND ws.tenant_id = t.tenant_id
         WHERE t.id = $1
+          AND ($2::uuid IS NULL OR t.tenant_id = $2)
         "#,
         id,
+        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -339,6 +361,12 @@ pub async fn create_team(
 
     let now = Utc::now();
 
+    let new_tenant: uuid::Uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| "00000000-0000-0000-0000-000000000001".parse().unwrap());
+
     let work_station_id: Option<Uuid> = req
         .work_station_id
         .as_ref()
@@ -350,8 +378,8 @@ pub async fn create_team(
         INSERT INTO teams (
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8)
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8, $9)
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -365,6 +393,7 @@ pub async fn create_team(
         req.leader_name,
         req.description,
         now.naive_utc(),
+        new_tenant,
     )
     .fetch_one(&state.pool)
     .await;
@@ -380,7 +409,6 @@ pub async fn create_team(
     if let Some(members) = req.members {
         for member in members {
             let emp_uuid = Uuid::parse_str(&member.employee_id).ok();
-            let emp_uuid_arg = emp_uuid.as_ref().map(|u| u.to_string());
             let _ = sqlx::query!(
                 r#"
                     INSERT INTO team_members (
@@ -442,6 +470,12 @@ pub async fn update_team(
         return e;
     }
 
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let work_station_id: Option<Uuid> = req
         .work_station_id
         .as_ref()
@@ -460,6 +494,7 @@ pub async fn update_team(
             description = COALESCE($8, description),
             updated_at = $9
         WHERE id = $1
+          AND ($10::uuid IS NULL OR tenant_id = $10)
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -474,6 +509,7 @@ pub async fn update_team(
         req.status,
         req.description,
         Utc::now().naive_utc(),
+        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -520,12 +556,20 @@ pub async fn delete_team(
         return e;
     }
 
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let result = sqlx::query!(
         r#"
         UPDATE teams SET deleted_at = NOW()
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         id,
+        tenant_opt,
     )
     .execute(&state.pool)
     .await;
@@ -612,7 +656,6 @@ pub async fn add_team_member(
     let now = Utc::now();
 
     let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
-    let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());
 
     let result = sqlx::query!(
         r#"

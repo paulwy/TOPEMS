@@ -403,13 +403,14 @@ async fn run_aps_scheduling(
     pool: &sqlx::PgPool,
     request: &ApsScheduleRequest,
     simulate_only: bool,
+    tenant_opt: Option<uuid::Uuid>,
 ) -> Result<ApsScheduleResult, String> {
     let schedule_start = request.schedule_start.unwrap_or_else(Utc::now);
     let strategy = request.strategy.clone().unwrap_or_default();
     let _weights = request.optimization_weights.clone().unwrap_or_default();
 
     // 1. 获取待排程订单
-    let orders = fetch_pending_orders(pool, request.order_ids.as_ref()).await?;
+    let orders = fetch_pending_orders(pool, request.order_ids.as_ref(), tenant_opt).await?;
     if orders.is_empty() {
         return Ok(ApsScheduleResult {
             schedule_id: Uuid::new_v4(),
@@ -427,13 +428,13 @@ async fn run_aps_scheduling(
     }
 
     // 2. 获取可用工位
-    let stations = fetch_available_work_stations(pool).await?;
+    let stations = fetch_available_work_stations(pool, tenant_opt).await?;
     if stations.is_empty() {
         return Err("没有可用的工位".to_string());
     }
 
     // 3. 获取设备信息
-    let equipment_map = fetch_equipment_map(pool).await?;
+    let equipment_map = fetch_equipment_map(pool, tenant_opt).await?;
 
     // 4. 按优先级排序订单
     let mut sorted_orders = orders.clone();
@@ -457,7 +458,7 @@ async fn run_aps_scheduling(
 
     for order in &sorted_orders {
         // 6.1 检查物料齐套性
-        let material_ready = check_material_availability(pool, order.id, order.quantity).await?;
+        let material_ready = check_material_availability(pool, order.id, order.quantity, tenant_opt).await?;
 
         // 6.2 选择合适的工位
         let suitable_stations: Vec<&WorkStationInfo> =
@@ -684,6 +685,7 @@ fn calculate_feasibility_score(
 async fn fetch_pending_orders(
     pool: &sqlx::PgPool,
     order_ids: Option<&Vec<Uuid>>,
+    tenant_opt: Option<uuid::Uuid>,
 ) -> Result<Vec<WorkOrderInfo>, String> {
     let query = if let Some(ids) = order_ids {
         if ids.is_empty() {
@@ -696,9 +698,12 @@ async fn fetch_pending_orders(
                    planned_start_date, planned_end_date, status, priority, product_id
             FROM production_orders
             WHERE id IN ({}) AND status IN ('pending', 'released')
+              AND (${}::uuid IS NULL OR tenant_id = ${})
             ORDER BY priority DESC, planned_start_date ASC
             "#,
-            placeholders.join(", ")
+            placeholders.join(", "),
+            ids.len() + 1,
+            ids.len() + 1
         )
     } else {
         r#"
@@ -706,6 +711,7 @@ async fn fetch_pending_orders(
                planned_start_date, planned_end_date, status, priority, product_id
         FROM production_orders
         WHERE status IN ('pending', 'released')
+          AND ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY priority DESC, planned_start_date ASC
         "#
         .to_string()
@@ -716,6 +722,11 @@ async fn fetch_pending_orders(
         for id in ids {
             query_builder = query_builder.bind(*id);
         }
+    }
+    if let Some(t) = tenant_opt {
+        query_builder = query_builder.bind(t);
+    } else {
+        query_builder = query_builder.bind(Option::<uuid::Uuid>::None);
     }
 
     let rows = query_builder
@@ -762,15 +773,18 @@ async fn fetch_pending_orders(
 
 async fn fetch_available_work_stations(
     pool: &sqlx::PgPool,
+    tenant_opt: Option<uuid::Uuid>,
 ) -> Result<Vec<WorkStationInfo>, String> {
     let rows = sqlx::query(
         r#"
         SELECT id, name, capacity, status, equipment_id, process_id
         FROM work_stations
         WHERE status = 'active'
+          AND ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY capacity DESC
         "#,
     )
+    .bind(tenant_opt)
     .fetch_all(pool)
     .await
     .map_err(|e| format!("获取工位信息失败: {}", e))?;
@@ -796,13 +810,18 @@ async fn fetch_available_work_stations(
         .collect())
 }
 
-async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, EquipmentInfo>, String> {
+async fn fetch_equipment_map(
+    pool: &sqlx::PgPool,
+    tenant_opt: Option<uuid::Uuid>,
+) -> Result<HashMap<Uuid, EquipmentInfo>, String> {
     let rows = sqlx::query(
         r#"
         SELECT id, name, status, next_maintenance_date
         FROM equipment
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         "#,
     )
+    .bind(tenant_opt)
     .fetch_all(pool)
     .await
     .map_err(|e| format!("获取设备信息失败: {}", e))?;
@@ -835,11 +854,16 @@ async fn check_material_availability(
     pool: &sqlx::PgPool,
     order_id: Uuid,
     _order_quantity: f64,
+    tenant_opt: Option<uuid::Uuid>,
 ) -> Result<bool, String> {
     // 获取订单关联的 BOM（简化逻辑：通过产品编码匹配）
     // 实际场景需要更复杂的物料需求计算
-    let product = sqlx::query(r#"SELECT product_code FROM production_orders WHERE id = $1"#)
+    let product = sqlx::query(
+        r#"SELECT product_code FROM production_orders WHERE id = $1
+           AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+    )
         .bind(order_id)
+        .bind(tenant_opt)
         .fetch_optional(pool)
         .await
         .map_err(|e| format!("查询产品信息失败: {}", e))?;
@@ -919,7 +943,13 @@ pub async fn execute_aps_schedule(
         return e;
     }
 
-    match run_aps_scheduling(&state.pool, &req, false).await {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
+    match run_aps_scheduling(&state.pool, &req, false, tenant_opt).await {
         Ok(result) => Json(ApiResponse::success(result, "APS 智能排程执行成功")),
         Err(err) => {
             tracing::error!("APS排程失败: {}", err);
@@ -943,6 +973,12 @@ pub async fn simulate_aps_schedule(
         return e;
     }
 
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     // 将 SimulateRequest 转换为 ApsScheduleRequest
     let aps_req = ApsScheduleRequest {
         order_ids: Some(req.orders.iter().map(|o| o.order_id).collect()),
@@ -952,7 +988,7 @@ pub async fn simulate_aps_schedule(
         overwrite_existing: Some(false),
     };
 
-    match run_aps_scheduling(&state.pool, &aps_req, true).await {
+    match run_aps_scheduling(&state.pool, &aps_req, true, tenant_opt).await {
         Ok(result) => {
             // 计算资源利用率
             let mut resource_utilization: HashMap<String, f64> = HashMap::new();
@@ -1008,6 +1044,12 @@ pub async fn check_schedule_constraints(
         return e;
     }
 
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let mut results = Vec::new();
 
     for order_id in &req.order_ids {
@@ -1018,9 +1060,11 @@ pub async fn check_schedule_constraints(
                    planned_start_date, planned_end_date
             FROM production_orders
             WHERE id = $1
+              AND ($2::uuid IS NULL OR tenant_id = $2)
             "#,
         )
         .bind(order_id)
+        .bind(tenant_opt)
         .fetch_optional(&state.pool)
         .await;
 
@@ -1067,9 +1111,11 @@ pub async fn check_schedule_constraints(
                 JOIN material_boms b ON bi.bom_id = b.id
                 JOIN production_orders po ON po.product_code = b.product_code
                 WHERE po.id = $1
+                  AND ($2::uuid IS NULL OR po.tenant_id = $2)
                 "#,
             )
             .bind(order_id)
+            .bind(tenant_opt)
             .fetch_all(&state.pool)
             .await;
 
@@ -1104,9 +1150,11 @@ pub async fn check_schedule_constraints(
                 SELECT id, name, status, next_maintenance_date
                 FROM equipment
                 WHERE status = 'normal'
+                  AND ($1::uuid IS NULL OR tenant_id = $1)
                 LIMIT 5
                 "#,
             )
+            .bind(tenant_opt)
             .fetch_all(&state.pool)
             .await;
 
@@ -1148,9 +1196,11 @@ pub async fn check_schedule_constraints(
                 SELECT id, team_name, member_count
                 FROM teams
                 WHERE status = 'active'
+                  AND ($1::uuid IS NULL OR tenant_id = $1)
                 LIMIT 5
                 "#,
             )
+            .bind(tenant_opt)
             .fetch_all(&state.pool)
             .await;
 
@@ -1214,20 +1264,29 @@ pub async fn get_optimization_report(
         return e;
     }
 
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     // 统计订单状态
-    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM production_orders")
+    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE ($1::uuid IS NULL OR tenant_id = $1)")
+        .bind(tenant_opt)
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let scheduled_orders: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'scheduled'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'scheduled' AND ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let completed_orders: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'completed'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -1238,8 +1297,10 @@ pub async fn get_optimization_report(
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - created_at)) / 3600)
         FROM production_orders
         WHERE status IN ('completed', 'in_progress')
+          AND ($1::uuid IS NULL OR tenant_id = $1)
         "#,
     )
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok()
@@ -1262,12 +1323,15 @@ pub async fn get_optimization_report(
         FROM work_stations ws
         LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
+            AND ps.tenant_id = ws.tenant_id
         WHERE ws.status = 'active'
+          AND ($1::uuid IS NULL OR ws.tenant_id = $1)
         GROUP BY ws.id, ws.station_name
         ORDER BY task_count DESC
         LIMIT 10
         "#
     )
+    .bind(tenant_opt)
     .fetch_all(&state.pool)
     .await;
 
@@ -1353,6 +1417,11 @@ pub async fn get_bottleneck_analysis(
     {
         return e;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let time_period = params
         .get("period")
@@ -1360,25 +1429,29 @@ pub async fn get_bottleneck_analysis(
         .unwrap_or_else(|| "7d".to_string());
 
     // 吞吐量分析
-    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM production_orders")
+    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE ($1::uuid IS NULL OR tenant_id = $1)")
+        .bind(tenant_opt)
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let completed: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'completed'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let in_progress: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'in_progress'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'in_progress' AND ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let pending: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'pending'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'pending' AND ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -1388,8 +1461,10 @@ pub async fn get_bottleneck_analysis(
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - actual_start_date)) / 3600)
         FROM production_orders
         WHERE status = 'completed' AND actual_start_date IS NOT NULL
+          AND ($1::uuid IS NULL OR tenant_id = $1)
         "#
     )
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok()
@@ -1401,8 +1476,10 @@ pub async fn get_bottleneck_analysis(
         SELECT COUNT(*) * 8.0 * 5.0 as capacity_hours
         FROM work_stations
         WHERE status = 'active'
+          AND ($1::uuid IS NULL OR tenant_id = $1)
         "#,
     )
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
@@ -1412,8 +1489,10 @@ pub async fn get_bottleneck_analysis(
         SELECT COALESCE(SUM(quantity * 0.1), 0) as demand_hours
         FROM production_orders
         WHERE status IN ('pending', 'released')
+          AND ($1::uuid IS NULL OR tenant_id = $1)
         "#,
     )
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
@@ -1434,12 +1513,15 @@ pub async fn get_bottleneck_analysis(
         FROM work_stations ws
         LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
+            AND ps.tenant_id = ws.tenant_id
         WHERE ws.status = 'active'
+          AND ($1::uuid IS NULL OR ws.tenant_id = $1)
         GROUP BY ws.id, ws.station_name
         ORDER BY scheduled_tasks DESC
         LIMIT 10
         "#,
     )
+    .bind(tenant_opt)
     .fetch_all(&state.pool)
     .await;
 

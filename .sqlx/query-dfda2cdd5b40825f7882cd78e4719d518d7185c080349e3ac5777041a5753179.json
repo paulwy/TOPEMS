@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE teams SET deleted_at = NOW()\n        WHERE id = $1\n          AND ($2::uuid IS NULL OR tenant_id = $2)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dfda2cdd5b40825f7882cd78e4719d518d7185c080349e3ac5777041a5753179"
+}
