@@ -10,11 +10,11 @@
   "hooks.use_auth.k2": "MINUTE_5: 5 * 60 * 1000, // 5 minutes",
   "hooks.use_auth.k3": ", SESSION.TOKEN_REFRESH_INTERVAL); // use session refresh interval constant",
   "hooks.use_auth.k4": "REFRESH_INTERVAL.MINUTE_5 // refresh every 5 minutes",
-  "hooks.use_code.k0": "staleTime: 0, // fetch new code each time",
-  "hooks.use_code.k1": "staleTime: 30 * 60 * 1000, // 30 minutes",
-  "hooks.use_crud_queries.k0": "setPageState(1); // return to page 1 when changing page size",
-  "hooks.use_crud_queries.k1": "staleTime: 5 * 60 * 1000, // 5 minutes",
-  "hooks.use_feature_flag.k0": "staleTime: 60_000, // 1 minute cache",
+  "hooks.use_code.k0": "stale Time: 0, // fetch new code each time",
+  "hooks.use_code.k1": "stale Time: 30 * 60 * 1000, // 30 minutes",
+  "hooks.use_crud_queries.k0": "set Page State(1); // return to page 1 when changing page size",
+  "hooks.use_crud_queries.k1": "stale Time: 5 * 60 * 1000, // 5 minutes",
+  "hooks.use_feature_flag.k0": "stale Time: 60_000, // 1 minute cache",
   "hooks.use_performance_monitor.typography_0": "Performance warning</Typography>",
   "hooks.use_performance_monitor.api_1": "Slow API call (",
   "hooks.use_performance_monitor.k2": "Slow component render (",
@@ -25,9 +25,9 @@
   "hooks.use_pm_finance.cvnumber_2": "cv: number; // cost variance",
   "hooks.use_pm_finance.svnumber_3": "sv: number; // schedule variance",
   "hooks.use_theme_mode.cyberpunk_0": "// cyberpunk based on dark background",
-  "use_performance_monitor.k0": "\n                {{v0}}: {{v1}}ms (updates: {{v2}} times)\n              ",
-  "use_performance_monitor.v0_1": "\n            Slow component render ({{v0}}):\n          ",
-  "use_performance_monitor.k2": "\n            Slow API call ({{v0}}):\n          ",
+  "use_performance_monitor.k0": "\n        {{v0}}: {{v1}}ms (updates: {{v2}} times)\n       ",
+  "use_performance_monitor.v0_1": "\n       Slow component render ({{v0}}):\n     ",
+  "use_performance_monitor.k2": "\n       Slow API call ({{v0}}):\n     ",
   "use_performance_monitor.k3": "⚠️ Performance warning",
   "hooks": {
     "use_bff_suspense": {
@@ -46,15 +46,15 @@
       "k4": "REFRESH_INTERVAL.MINUTE_5 // refresh every 5 minutes"
     },
     "use_code": {
-      "k0": "staleTime: 0, // fetch new code each time",
-      "k1": "staleTime: 30 * 60 * 1000, // 30 minutes"
+      "k0": "stale Time: 0, // fetch new code each time",
+      "k1": "stale Time: 30 * 60 * 1000, // 30 minutes"
     },
     "use_crud_queries": {
-      "k0": "setPageState(1); // return to page 1 when changing page size",
-      "k1": "staleTime: 5 * 60 * 1000, // 5 minutes"
+      "k0": "set Page State(1); // return to page 1 when changing page size",
+      "k1": "stale Time: 5 * 60 * 1000, // 5 minutes"
     },
     "use_feature_flag": {
-      "k0": "staleTime: 60_000, // 1 minute cache"
+      "k0": "stale Time: 60_000, // 1 minute cache"
     },
     "use_performance_monitor": {
       "typography_0": "Performance warning</Typography>",
@@ -74,9 +74,9 @@
     }
   },
   "use_performance_monitor": {
-    "k0": "\n                {{v0}}: {{v1}}ms (updates: {{v2}} times)\n              ",
-    "v0_1": "\n            Slow component render ({{v0}}):\n          ",
-    "k2": "\n            Slow API call ({{v0}}):\n          ",
+    "k0": "\n        {{v0}}: {{v1}}ms (updates: {{v2}} times)\n       ",
+    "v0_1": "\n       Slow component render ({{v0}}):\n     ",
+    "k2": "\n       Slow API call ({{v0}}):\n     ",
     "k3": "⚠️ Performance warning"
   }
 }

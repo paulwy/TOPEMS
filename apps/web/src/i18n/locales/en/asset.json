@@ -92,10 +92,10 @@
   "asset.dashboard_page.k0": "Asset Management Overview",
   "asset.dashboard_page.k1": "Asset Management Data Overview",
   "asset.dashboard_page.k2": "Quick Actions",
-  "asset.asset_list_page.k0": "AssetListPage under development",
-  "asset.category_management_page.k0": "CategoryManagementPage under development",
-  "asset.depreciation_page.k0": "DepreciationPage under development",
-  "asset.transfer_page.k0": "TransferPage under development",
+  "asset.asset_list_page.k0": "Asset List Page under development",
+  "asset.category_management_page.k0": "Category Management Page under development",
+  "asset.depreciation_page.k0": "Depreciation Page under development",
+  "asset.transfer_page.k0": "Transfer Page under development",
   "depreciation_page": {
     "create_fail": "Create failed",
     "fail": "Update failed"
@@ -137,13 +137,13 @@
       "k2": "Quick Actions"
     },
     "asset_list_page": {
-      "k0": "AssetListPage under development"
+      "k0": "Asset List Page under development"
     },
     "category_management_page": {
-      "k0": "CategoryManagementPage under development"
+      "k0": "Category Management Page under development"
     },
     "depreciation_page": {
-      "k0": "DepreciationPage under development",
+      "k0": "Depreciation Page under development",
       "success": "Success",
       "fail": "Failed",
       "fail_1": "Title",
@@ -170,7 +170,7 @@
       "breadcrumb_module": "Module"
     },
     "transfer_page": {
-      "k0": "TransferPage under development",
+      "k0": "Transfer Page under development",
       "success": "Success",
       "submit": "Submit",
       "fail": "Failed",

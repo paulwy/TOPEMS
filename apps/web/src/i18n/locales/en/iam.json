@@ -145,7 +145,7 @@
   },
   "iam": {
     "companystructure": {
-      "v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const TreeNodeComponent: React.FC"
+      "v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const Tree Node Component: React.FC"
     },
     "permissionmanagement": {},
     "rolemanagement": {},
@@ -382,7 +382,7 @@
   "iam.user_management_page.k4": "Home",
   "iam.user_management_page.k5": "Identity Management",
   "iam.user_management_page.k6": "User Management",
-  "iam.companystructure.v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const TreeNodeComponent: React.FC",
+  "iam.companystructure.v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const Tree Node Component: React.FC",
   "iam.nav.module_name": "IAM",
   "iam.nav.iam-dashboard": "IAM Overview",
   "iam.nav.iam-user": "Users",

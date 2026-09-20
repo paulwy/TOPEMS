@@ -59,7 +59,7 @@
   "ticket.dashboard_page.k0": "Ticket Center Overview",
   "ticket.dashboard_page.k1": "Ticket Center Data Overview",
   "ticket.dashboard_page.k2": "Quick Actions",
-  "ticket.ticket_center_page.k0": "TicketCenterPage under development",
+  "ticket.ticket_center_page.k0": "Ticket Center Page under development",
   "ticket": {
     "dashboard_page": {
       "k0": "Ticket Center Overview",
@@ -67,7 +67,7 @@
       "k2": "Quick Actions"
     },
     "ticket_center_page": {
-      "k0": "TicketCenterPage under development"
+      "k0": "Ticket Center Page under development"
     }
   },
   "ticket.nav.module_name": "Tickets",

@@ -81,7 +81,7 @@
           },
           "onDemand": {
             "title": "V48.0 On-Demand Loading",
-            "subtitle": "onDemandLoader engine status",
+            "subtitle": "on Demand Loader engine status",
             "statusWithLoader": "✅ Loaded (Loaded: {{loaded}}, pending: {{pending}})"
           },
           "aiOpsV2": {
@@ -97,7 +97,7 @@
         "sublabel": "Design system"
       },
       "v51DevEx": {
-        "tooltip": "V51.0 DevEx Developer Experience",
+        "tooltip": "V51.0 Dev Ex Developer Experience",
         "label": "Developer Experience",
         "sublabel": "Debug + Performance"
       },
@@ -162,8 +162,8 @@
         "sublabel": "Model · A/B · Security"
       },
       "v59DevEx": {
-        "tooltip": "V59.0 AI DevEx Smart Developer Experience",
-        "label": "V59 smart DevEx",
+        "tooltip": "V59.0 AI Dev Ex Smart Developer Experience",
+        "label": "V59 smart Dev Ex",
         "sublabel": "Smart Debug · Performance · Refactor"
       },
       "v59Security": {
@@ -232,7 +232,7 @@
   "devtools.panels.v47Integration.cards.aiDriven.subtitle": "Smart router / auto ops / predictive scaler",
   "devtools.panels.v47Integration.cards.aiDriven.status": "✅ Loaded (Smart routing + auto ops + predictive scaling)",
   "devtools.panels.v47Integration.cards.onDemand.title": "V48.0 On-Demand Loading",
-  "devtools.panels.v47Integration.cards.onDemand.subtitle": "onDemandLoader engine status",
+  "devtools.panels.v47Integration.cards.onDemand.subtitle": "on Demand Loader engine status",
   "devtools.panels.v47Integration.cards.onDemand.statusWithLoader": "✅ Loaded (Loaded: {{loaded}}, pending: {{pending}})",
   "devtools.panels.v47Integration.cards.aiOpsV2.title": "V50.0 AI Ops V2",
   "devtools.panels.v47Integration.cards.aiOpsV2.subtitle": "Intelligent monitor / root cause analyzer / auto remediation",
@@ -240,7 +240,7 @@
   "devtools.panels.v51Design.tooltip": "V51.0 Design System",
   "devtools.panels.v51Design.label": "V51.x",
   "devtools.panels.v51Design.sublabel": "Design system",
-  "devtools.panels.v51DevEx.tooltip": "V51.0 DevEx Developer Experience",
+  "devtools.panels.v51DevEx.tooltip": "V51.0 Dev Ex Developer Experience",
   "devtools.panels.v51DevEx.label": "Developer Experience",
   "devtools.panels.v51DevEx.sublabel": "Debug + Performance",
   "devtools.panels.v53Ai.tooltip": "V53.0 AI Enhancement",
@@ -279,8 +279,8 @@
   "devtools.panels.v58Evolution.tooltip": "V58.0 AI Evolution",
   "devtools.panels.v58Evolution.label": "V58 AI evolution",
   "devtools.panels.v58Evolution.sublabel": "Model · A/B · Security",
-  "devtools.panels.v59DevEx.tooltip": "V59.0 AI DevEx Smart Developer Experience",
-  "devtools.panels.v59DevEx.label": "V59 smart DevEx",
+  "devtools.panels.v59DevEx.tooltip": "V59.0 AI Dev Ex Smart Developer Experience",
+  "devtools.panels.v59DevEx.label": "V59 smart Dev Ex",
   "devtools.panels.v59DevEx.sublabel": "Smart Debug · Performance · Refactor",
   "devtools.panels.v59Security.tooltip": "V59.0 AI Security",
   "devtools.panels.v59Security.label": "V59 Security",

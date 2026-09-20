@@ -1,5 +1,5 @@
 {
-  "design_system.design_system_panel.k0": "V51.0 Design Token System with CSS custom properties and TypeScript constants support",
+  "design_system.design_system_panel.k0": "V51.0 Design Token System with CSS custom properties and Type Script constants support",
   "design_system.design_system_panel.11_1": "11 core components",
   "design_system.design_system_panel.k2": "V51 Design System components based on MUI, providing a consistent visual experience",
   "design_system.design_system_panel.k3": "Complete theme management system, supporting light/dark/system modes",
@@ -35,14 +35,14 @@
   "design_system.design-lint.k6": "❌ Fail",
   "design_system.design-lint.k7": "✅ Pass",
   "design_system.design-lint.k8": "❌ Fail",
-  "design_system_panel.k0": "\n                (Requires {{v0}}:1)\n              ",
-  "design_system_panel.k1": "\n                Toggle {{v0}} mode\n              ",
-  "design_system_panel.k2": " Spacing & Border Radius\n          ",
-  "design_system_panel.k3": " Typography\n          ",
-  "design_system_panel.k4": " Color Palette\n      ",
+  "design_system_panel.k0": "\n        (Requires {{v0}}:1)\n       ",
+  "design_system_panel.k1": "\n         Toggle {{v0}} mode\n       ",
+  "design_system_panel.k2": " Spacing & Border Radius\n     ",
+  "design_system_panel.k3": " Typography\n     ",
+  "design_system_panel.k4": " Color Palette\n   ",
   "design_system": {
     "design_system_panel": {
-      "k0": "V51.0 Design Token System with CSS custom properties and TypeScript constants support",
+      "k0": "V51.0 Design Token System with CSS custom properties and Type Script constants support",
       "11_1": "11 core components",
       "k2": "V51 Design System components based on MUI, providing a consistent visual experience",
       "k3": "Complete theme management system, supporting light/dark/system modes",
@@ -85,10 +85,10 @@
     }
   },
   "design_system_panel": {
-    "k0": "\n                (Requires {{v0}}:1)\n              ",
-    "k1": "\n                Toggle {{v0}} mode\n              ",
-    "k2": " Spacing & Border Radius\n          ",
-    "k3": " Typography\n          ",
-    "k4": " Color Palette\n      "
+    "k0": "\n        (Requires {{v0}}:1)\n       ",
+    "k1": "\n         Toggle {{v0}} mode\n       ",
+    "k2": " Spacing & Border Radius\n     ",
+    "k3": " Typography\n     ",
+    "k4": " Color Palette\n   "
   }
 }

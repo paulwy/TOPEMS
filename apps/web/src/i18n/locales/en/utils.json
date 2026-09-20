@@ -28,7 +28,7 @@
   "utils.ui-recommender.arialive_33": " or aria-live=",
   "utils.ui-recommender.k34": "// Form combination example",
   "utils.ui-recommender.k35": "Submit",
-  "utils.ui-recommender.k36": "  {/* Form fields */}",
+  "utils.ui-recommender.k36": " {/* Form fields */}",
   "utils.ui-recommender.k37": "// Navigation combination example",
   "utils.ui-recommender.k38": "Application name",
   "utils.ui-recommender.k39": "// Data display combination example",
@@ -71,7 +71,7 @@
       "arialive_33": " or aria-live=",
       "k34": "// Form combination example",
       "k35": "Submit",
-      "k36": "  {/* Form fields */}",
+      "k36": " {/* Form fields */}",
       "k37": "// Navigation combination example",
       "k38": "Application name",
       "k39": "// Data display combination example"

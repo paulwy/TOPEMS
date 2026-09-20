@@ -7,7 +7,7 @@
   "lib.module_loading_progress.k0": "Estimated remaining",
   "lib.plugin_loader.k0": "Loading module...",
   "lib.plugin_loader.k1": "Module loading failed",
-  "lib.plugin_loader.k2": ">Loading plugins: {loadingPlugins.join(",
+  "lib.plugin_loader.k2": ">Loading plugins: {loading Plugins.join(",
   "lib.plugin_loader.k3": "Plugin loading error",
   "lib.pluginLoader.k0": "Loading module",
   "lib.pluginLoader.k10": "Load",
@@ -28,7 +28,7 @@
     "plugin_loader": {
       "k0": "Loading module...",
       "k1": "Module loading failed",
-      "k2": ">Loading plugins: {loadingPlugins.join(",
+      "k2": ">Loading plugins: {loading Plugins.join(",
       "k3": "Plugin loading error"
     },
     "pluginLoader": {

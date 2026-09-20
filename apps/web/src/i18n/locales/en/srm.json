@@ -610,23 +610,23 @@
   "srmcategory": {},
   "srmcontractdetail": {},
   "srmcontract": {
-    "0_if_response_success_response_data_thro": "[0]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to Create Contract');\n    return response.data as unknown as Record",
-    "1_if_response_success_response_data_thro": "[1]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to Update Contract');\n    return response.data as unknown as Record"
+    "0_if_response_success_response_data_thro": "[0]\n  ); if (!response.success || !response.data) throw new Error('Failed to Create Contract'); return response.data as unknown as Record",
+    "1_if_response_success_response_data_thro": "[1]\n  ); if (!response.success || !response.data) throw new Error('Failed to Update Contract'); return response.data as unknown as Record"
   },
   "srmevaluation": {
-    "0_if_response_success_response_data_thro": "[0]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to Create Evaluation');\n    return response.data as unknown as Record",
-    "1_if_response_success_response_data_thro": "[1]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to Update Evaluation');\n    return response.data as unknown as Record"
+    "0_if_response_success_response_data_thro": "[0]\n  ); if (!response.success || !response.data) throw new Error('Failed to Create Evaluation'); return response.data as unknown as Record",
+    "1_if_response_success_response_data_thro": "[1]\n  ); if (!response.success || !response.data) throw new Error('Failed to Update Evaluation'); return response.data as unknown as Record"
   },
   "srmfinance": {},
   "srmorder": {},
   "srmperformance": {},
   "srmquotation": {
-    "0_if_response_success_throw_new_error_t_": "[0]\n    );\n    if (!response.success) throw new Error(t('srmquotation.Failed to Create Quotation'));\n    return response.data as unknown as Record",
-    "1_if_response_success_throw_new_error_t_": "[1]\n    );\n    if (!response.success) throw new Error(t('srmquotation.Failed to Update Quotation'));\n    return response.data as unknown as Record"
+    "0_if_response_success_throw_new_error_t_": "[0]\n  ); if (!response.success) throw new Error(t('srmquotation.Failed to Create Quotation')); return response.data as unknown as Record",
+    "1_if_response_success_throw_new_error_t_": "[1]\n  ); if (!response.success) throw new Error(t('srmquotation.Failed to Update Quotation')); return response.data as unknown as Record"
   },
   "srmscoringdimension": {
-    "0_if_response_success_response_data_thro": "[0]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to Create Scoring Dimension');\n    return response.data as unknown as Record",
-    "1_if_response_success_response_data_thro": "[1]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to Update Scoring Dimension');\n    return response.data as unknown as Record"
+    "0_if_response_success_response_data_thro": "[0]\n  ); if (!response.success || !response.data) throw new Error('Failed to Create Scoring Dimension'); return response.data as unknown as Record",
+    "1_if_response_success_response_data_thro": "[1]\n  ); if (!response.success || !response.data) throw new Error('Failed to Update Scoring Dimension'); return response.data as unknown as Record"
   },
   "srmsupplierdetail": {},
   "srmsupplier": {},
